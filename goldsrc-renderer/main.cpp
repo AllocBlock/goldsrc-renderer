@@ -17,19 +17,19 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "VulkanApp.h"
+
 
 #ifdef _DEBUG
 #define IMGUI_VULKAN_DEBUG_REPORT
 #endif
 
-static VkAllocationCallbacks*   g_Allocator = NULL;
 static VkInstance               g_Instance = VK_NULL_HANDLE;
 static VkPhysicalDevice         g_PhysicalDevice = VK_NULL_HANDLE;
 static VkDevice                 g_Device = VK_NULL_HANDLE;
 static uint32_t                 g_QueueFamily = (uint32_t)-1;
 static VkQueue                  g_Queue = VK_NULL_HANDLE;
 static VkDebugReportCallbackEXT g_DebugReport = VK_NULL_HANDLE;
-static VkPipelineCache          g_PipelineCache = VK_NULL_HANDLE;
 static VkDescriptorPool         g_DescriptorPool = VK_NULL_HANDLE;
 
 static ImGui_ImplVulkanH_Window g_MainWindowData;
@@ -76,7 +76,7 @@ static void SetupVulkan(const char** extensions, uint32_t extensions_count)
         create_info.ppEnabledExtensionNames = extensions_ext;
 
         // Create Vulkan Instance
-        err = vkCreateInstance(&create_info, g_Allocator, &g_Instance);
+        err = vkCreateInstance(&create_info, nullptr, &g_Instance);
         check_vk_result(err);
         free(extensions_ext);
 
@@ -90,11 +90,11 @@ static void SetupVulkan(const char** extensions, uint32_t extensions_count)
         debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
         debug_report_ci.pfnCallback = debug_report;
         debug_report_ci.pUserData = NULL;
-        err = vkCreateDebugReportCallbackEXT(g_Instance, &debug_report_ci, g_Allocator, &g_DebugReport);
+        err = vkCreateDebugReportCallbackEXT(g_Instance, &debug_report_ci, nullptr, &g_DebugReport);
         check_vk_result(err);
 #else
         // Create Vulkan Instance without any debug feature
-        err = vkCreateInstance(&create_info, g_Allocator, &g_Instance);
+        err = vkCreateInstance(&create_info, nullptr, &g_Instance);
         check_vk_result(err);
         IM_UNUSED(g_DebugReport);
 #endif
@@ -150,7 +150,7 @@ static void SetupVulkan(const char** extensions, uint32_t extensions_count)
         create_info.pQueueCreateInfos = queue_info;
         create_info.enabledExtensionCount = device_extension_count;
         create_info.ppEnabledExtensionNames = device_extensions;
-        err = vkCreateDevice(g_PhysicalDevice, &create_info, g_Allocator, &g_Device);
+        err = vkCreateDevice(g_PhysicalDevice, &create_info, nullptr, &g_Device);
         check_vk_result(err);
         vkGetDeviceQueue(g_Device, g_QueueFamily, 0, &g_Queue);
     }
@@ -177,7 +177,7 @@ static void SetupVulkan(const char** extensions, uint32_t extensions_count)
         pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
         pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
         pool_info.pPoolSizes = pool_sizes;
-        err = vkCreateDescriptorPool(g_Device, &pool_info, g_Allocator, &g_DescriptorPool);
+        err = vkCreateDescriptorPool(g_Device, &pool_info, nullptr, &g_DescriptorPool);
         check_vk_result(err);
     }
 }
@@ -213,26 +213,26 @@ static void SetupVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR m_Surfa
 
     // Create SwapChain, RenderPass, Framebuffer, etc.
     IM_ASSERT(g_MinImageCount >= 2);
-    ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, wd, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
+    ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, wd, g_QueueFamily, nullptr, width, height, g_MinImageCount);
 }
 
 static void CleanupVulkan()
 {
-    vkDestroyDescriptorPool(g_Device, g_DescriptorPool, g_Allocator);
+    vkDestroyDescriptorPool(g_Device, g_DescriptorPool, nullptr);
 
 #ifdef IMGUI_VULKAN_DEBUG_REPORT
     // Remove the debug report callback
     auto vkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(g_Instance, "vkDestroyDebugReportCallbackEXT");
-    vkDestroyDebugReportCallbackEXT(g_Instance, g_DebugReport, g_Allocator);
+    vkDestroyDebugReportCallbackEXT(g_Instance, g_DebugReport, nullptr);
 #endif // IMGUI_VULKAN_DEBUG_REPORT
 
-    vkDestroyDevice(g_Device, g_Allocator);
-    vkDestroyInstance(g_Instance, g_Allocator);
+    vkDestroyDevice(g_Device, nullptr);
+    vkDestroyInstance(g_Instance, nullptr);
 }
 
 static void CleanupVulkanWindow()
 {
-    ImGui_ImplVulkanH_DestroyWindow(g_Instance, g_Device, &g_MainWindowData, g_Allocator);
+    ImGui_ImplVulkanH_DestroyWindow(g_Instance, g_Device, &g_MainWindowData, nullptr);
 }
 
 static void FrameRender(ImGui_ImplVulkanH_Window* wd, ImDrawData* draw_data)
@@ -326,36 +326,6 @@ static void FramePresent(ImGui_ImplVulkanH_Window* wd)
 
 int main(int, char**)
 {
-    // init glfw
-    if (!glfwInit())
-        return 1;
-
-    // setup glfw
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* m_Window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+Vulkan example", NULL, NULL);
-
-    // setup Vulkan
-    if (!glfwVulkanSupported())
-    {
-        printf("GLFW: Vulkan Not Supported\n");
-        return 1;
-    }
-
-    uint32_t extensions_count = 0;
-    const char** extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
-    SetupVulkan(extensions, extensions_count);
-
-    // Create Window Surface
-    VkSurfaceKHR m_Surface;
-    VkResult err = glfwCreateWindowSurface(g_Instance, m_Window, g_Allocator, &m_Surface);
-    check_vk_result(err);
-
-    // Create Framebuffers
-    int w, h;
-    glfwGetFramebufferSize(m_Window, &w, &h);
-    ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
-    SetupVulkanWindow(wd, m_Surface, w, h);
-
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -367,19 +337,31 @@ int main(int, char**)
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
 
+    // xxx
+    CVulkanApp App;
+    App.initWindow();
+    uint32_t ExtensionsCount = 0;
+    const char** ppExtension = glfwGetRequiredInstanceExtensions(&ExtensionsCount);
+
+    vector<const char*> Extensions;
+    for (uint32_t i = 0; i < ExtensionsCount; i++)
+        Extensions.emplace_back(ppExtension[i]);
+
+    App.initVulkan(Extensions);
+
     // Setup Platform/Renderer bindings
-    ImGui_ImplGlfw_InitForVulkan(m_Window, true);
+    ImGui_ImplGlfw_InitForVulkan(App.m_pWindow, true);
     ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = g_Instance;
-    init_info.PhysicalDevice = g_PhysicalDevice;
-    init_info.Device = g_Device;
-    init_info.QueueFamily = g_QueueFamily;
-    init_info.Queue = g_Queue;
-    init_info.PipelineCache = g_PipelineCache;
+    init_info.Instance = App.m_Instance;
+    init_info.PhysicalDevice = App.m_PhysicalDevice;
+    init_info.Device = App.m_Device;
+    init_info.QueueFamily = 0;
+    init_info.Queue = App.m_GraphicsQueue;
+    init_info.PipelineCache = VK_NULL_HANDLE;
     init_info.DescriptorPool = g_DescriptorPool;
-    init_info.Allocator = g_Allocator;
+    init_info.Allocator = nullptr;
     init_info.MinImageCount = g_MinImageCount;
-    init_info.ImageCount = wd->ImageCount;
+    init_info.ImageCount = g_MinImageCount;
     init_info.CheckVkResultFn = check_vk_result;
     ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 
@@ -430,7 +412,7 @@ int main(int, char**)
 
     // Our state
     bool show_demo_window = true;
-    bool show_another_window = false;
+    bool show_another_window = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Main loop
@@ -451,7 +433,7 @@ int main(int, char**)
             if (width > 0 && height > 0)
             {
                 ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
-                ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
+                ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, nullptr, width, height, g_MinImageCount);
                 g_MainWindowData.FrameIndex = 0;
                 g_SwapChainRebuild = false;
             }

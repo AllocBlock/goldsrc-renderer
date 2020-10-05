@@ -97,7 +97,7 @@ public:
 
     GLFWwindow* getWindowPointer() { return m_pWindow; }
     const VkSurfaceKHR getSurface() const { return m_Surface; }
-
+    
 public:
     const vector<const char*> m_ValidationLayers = {
         //"VK_LAYER_KHRONOS_validation"
@@ -108,7 +108,7 @@ public:
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-    GLFWwindow* m_pWindow = nullptr;
+    GLFWwindow*                     m_pWindow = nullptr;
     VkInstance                      m_Instance;
     vector<VkPhysicalDevice>        m_PhysicalDevices;
     VkDebugUtilsMessengerEXT        m_DebugMessenger;

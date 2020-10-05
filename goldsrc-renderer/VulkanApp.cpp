@@ -77,7 +77,6 @@ void                CVulkanApp::initVulkan(vector<const char*> vExtensions)
     _ASSERT(__createCommandPool() == VK_SUCCESS); // 创建命令池
     __createVertexBuffer(); // 创建顶点缓存
     __createIndexBuffer(); // 创建索引缓存
-    __createUniformBuffers();
     _ASSERT(__createDescriptorPool() == VK_SUCCESS); // 创建描述符池
     _ASSERT(__createDescriptorSets() == VK_SUCCESS); // 创建描述符集
 
@@ -107,7 +106,7 @@ void                    CVulkanApp::initWindow()
 }
 
 /*******************************
-*
+* 
 */
 void                    CVulkanApp::drawFrame()
 {
@@ -318,7 +317,7 @@ VkResult                CVulkanApp::__createInstance(vector<const char*> vExtens
 }
 
 /*******************************
-*
+* 
 */
 VkResult                CVulkanApp::__createDebugUtilsMessengerEXT(VkInstance vInstance, const VkDebugUtilsMessengerCreateInfoEXT* vpCreateInfo, const VkAllocationCallbacks* vpAllocator, VkDebugUtilsMessengerEXT* vpDebugMessenger)
 {
@@ -331,7 +330,7 @@ VkResult                CVulkanApp::__createDebugUtilsMessengerEXT(VkInstance vI
 }
 
 /*******************************
-*
+* 
 */
 void                    CVulkanApp::__destroyDebugUtilsMessengerEXT(VkInstance m_Instance, VkDebugUtilsMessengerEXT m_DebugMessenger, const VkAllocationCallbacks* pAllocator)
 {
@@ -491,10 +490,10 @@ VkResult                CVulkanApp::__createSwapChain()
 
     // 使用swap chain之前需要查询其信息
     SSwapChainSupportDetails SwapChainSupport
-        = __querySwapChainSupport(m_PhysicalDevice);
+    = __querySwapChainSupport(m_PhysicalDevice);
 
     uint32_t PresentModesCount = static_cast<uint32_t>(SwapChainSupport.PresentModes.size());
-    vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevice, m_Surface, &PresentModesCount, SwapChainSupport.PresentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(m_PhysicalDevice, m_Surface, &PresentModesCount, SwapChainSupport.PresentModes.data());
     // VK_PRESENT_MODE_IMMEDIATE_KHR: Images submitted by your application are transferred to the screen right away, which may result in tearing.
     // VK_PRESENT_MODE_FIFO_KHR: The swap chain is a queue where the display takes an image from the front of the queue when the display is refreshed and the program inserts rendered images at the back of the queue. If the queue is full then the program has to wait. This is most similar to vertical sync as found in modern games. The moment that the display is refreshed is known as "vertical blank".
     // VK_PRESENT_MODE_FIFO_RELAXED_KHR: This mode only differs from the previous one if the application is late and the queue was empty at the last vertical blank. Instead of waiting for the next vertical blank, the image is transferred right away when it finally arrives. This may result in visible tearing.
@@ -567,7 +566,7 @@ VkResult                CVulkanApp::__createSwapChain()
 
     m_SwapChainImageFormat = SurfaceFormat.format; // 保存图像格式
     m_SwapChainExtent = Extent; // 保存区域信息
-
+    
     return VK_SUCCESS;
 }
 
@@ -668,8 +667,8 @@ VkResult                CVulkanApp::__createRenderPass()
 }
 
 /*******************************
-* required:
-* assigned:
+* required: 
+* assigned: 
 */
 VkResult                CVulkanApp::__createDescriptorSetLayout()
 {
@@ -684,7 +683,9 @@ VkResult                CVulkanApp::__createDescriptorSetLayout()
     CreateInfoLayout.bindingCount = 1;
     CreateInfoLayout.pBindings = &UboLayoutBinding;
 
-    return vkCreateDescriptorSetLayout(m_Device, &CreateInfoLayout, nullptr, &m_DescriptorSetLayout);
+    if (vkCreateDescriptorSetLayout(m_Device, &CreateInfoLayout, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
 }
 
 /*******************************
@@ -800,8 +801,8 @@ VkResult                CVulkanApp::__createGraphicsPipeline()
     CreateInfoRasterizer.lineWidth = 1.0f;
     CreateInfoRasterizer.cullMode = VK_CULL_MODE_BACK_BIT;                // 隐藏面消除
     //CreateInfoRasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    CreateInfoRasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-
+    //CreateInfoRasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;        // 正面的指定方式,右手定则
+    CreateInfoRasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     // 用于shadow mapping,现在我们不用
     CreateInfoRasterizer.depthBiasEnable = VK_FALSE;
     CreateInfoRasterizer.depthBiasConstantFactor = 0.0f; // Optional
@@ -840,11 +841,11 @@ VkResult                CVulkanApp::__createGraphicsPipeline()
     ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
     ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
     ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
-    /*if (blendEnable)
+    /*if (blendEnable) 
     {
         finalColor.rgb = (srcColorBlendFactor * newColor.rgb) <colorBlendOp> (dstColorBlendFactor * oldColor.rgb);
         finalColor.a = (srcAlphaBlendFactor * newColor.a) <alphaBlendOp> (dstAlphaBlendFactor * oldColor.a);
-    } else
+    } else 
     {
         finalColor = newColor;
     }
@@ -865,7 +866,7 @@ VkResult                CVulkanApp::__createGraphicsPipeline()
 
     // Dynamic state： A limited amount of the state that we've specified in the previous structs can 
     // actually be changed without recreating the pipeline.
-    /*VkDynamicState dynamicStates[] =
+    /*VkDynamicState dynamicStates[] = 
     {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_LINE_WIDTH
@@ -907,7 +908,7 @@ VkResult                CVulkanApp::__createGraphicsPipeline()
 
     Result = vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &CreateInfoPipeline, nullptr, &m_GraphicsPipeline);
     if (Result != VK_SUCCESS) return Result;
-
+    
     // shader module使用后即可销毁
     vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
     vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
@@ -927,7 +928,7 @@ VkResult                CVulkanApp::__createFramebuffers()
     VkResult Result;
     for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
     {
-        /*VkImageView Attachments[] =
+        /*VkImageView Attachments[] = 
         {
             m_SwapChainImageViews[i]
         };*/
@@ -1170,7 +1171,7 @@ VkResult                CVulkanApp::__createCommandBuffers()
         RenderPassInfo.renderArea.offset = { 0, 0 }; // 绘制区域大小
         RenderPassInfo.renderArea.extent = m_SwapChainExtent;
 
-        VkClearValue ClearColor = { 0.3f, 0.3f, 0.3f, 1.0f }; // 背景颜色
+        VkClearValue ClearColor = {0.3f, 0.3f, 0.3f, 1.0f}; // 背景颜色
         RenderPassInfo.clearValueCount = 1;
         RenderPassInfo.pClearValues = &ClearColor;
 
@@ -1195,7 +1196,7 @@ VkResult                CVulkanApp::__createCommandBuffers()
 }
 
 /*******************************
-* required:
+* required: 
 * assigned: m_ImageAvailableSemaphores, m_RenderFinishedSemaphores, m_InFlightFences
 */
 VkResult                CVulkanApp::__createSemaphores()
@@ -1255,7 +1256,7 @@ void                    CVulkanApp::__cleanupSwapChain()
 }
 
 /*******************************
-*
+* 
 */
 void                    CVulkanApp::__recreateSwapChain()
 {
@@ -1639,7 +1640,7 @@ VkFormat                CVulkanApp::__findSupportedFormat(const vector<VkFormat>
 }
 
 /*******************************
-*
+* 
 */
 VkFormat                CVulkanApp::__findDepthFormat()
 {
@@ -1652,7 +1653,7 @@ VkFormat                CVulkanApp::__findDepthFormat()
 
 #include <fstream>
 /*******************************
-*
+* 
 */
 vector<char>            CVulkanApp::readFile(const string& vFilename)
 {

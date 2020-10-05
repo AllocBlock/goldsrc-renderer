@@ -17,3 +17,4 @@
 ## 库
 - 图形API：vulkan
 - GUI库：imgui+glfw
+- 数学库：glm
