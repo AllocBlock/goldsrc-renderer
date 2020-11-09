@@ -473,6 +473,8 @@ VkResult                CVulkanApp::__createDevice()
     VkResult Result = vkCreateDevice(m_PhysicalDevice, &CreateInfoDevice, nullptr, &m_Device);
     if (Result != VK_SUCCESS) return Result;
 
+    m_GraphicsQueueIndex = Indices.GraphicsFamily.value();
+    m_PresentQueueIndex = Indices.PresentFamily.value();
     vkGetDeviceQueue(m_Device, Indices.GraphicsFamily.value(), 0, &m_GraphicsQueue);
     vkGetDeviceQueue(m_Device, Indices.PresentFamily.value(), 0, &m_PresentQueue);
 
@@ -1071,15 +1073,29 @@ void                CVulkanApp::__createUniformBuffers()
 */
 VkResult            CVulkanApp::__createDescriptorPool()
 {
-    VkDescriptorPoolSize PoolSize = {};
-    PoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    PoolSize.descriptorCount = static_cast<uint32_t>(m_SwapChainImages.size());
+    vector<VkDescriptorPoolSize> PoolSize =
+    {
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_SwapChainImages.size()) },
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+
 
     VkDescriptorPoolCreateInfo CreateaInfoPool = {};
     CreateaInfoPool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    CreateaInfoPool.poolSizeCount = 1;
-    CreateaInfoPool.pPoolSizes = &PoolSize;
-    CreateaInfoPool.maxSets = static_cast<uint32_t>(m_SwapChainImages.size());
+    CreateaInfoPool.poolSizeCount = static_cast<uint32_t>(PoolSize.size());
+    CreateaInfoPool.pPoolSizes = PoolSize.data();
+    CreateaInfoPool.maxSets = static_cast<uint32_t>(m_SwapChainImages.size()) + 1000 * (PoolSize.size() - 1);
 
     return vkCreateDescriptorPool(m_Device, &CreateaInfoPool, nullptr, &m_DescriptorPool);
 }

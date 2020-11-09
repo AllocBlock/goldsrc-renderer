@@ -116,6 +116,8 @@ public:
     VkDevice                        m_Device;
     VkQueue                         m_GraphicsQueue;
     VkQueue                         m_PresentQueue;
+    uint32_t                        m_GraphicsQueueIndex;
+    uint32_t                        m_PresentQueueIndex;
     VkSurfaceKHR                    m_Surface;
     VkSwapchainKHR                  m_SwapChain;
     vector<VkImage>                 m_SwapChainImages;

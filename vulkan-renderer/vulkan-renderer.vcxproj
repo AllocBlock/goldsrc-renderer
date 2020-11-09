@@ -21,9 +21,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{efd0be93-e2b8-4321-b830-4c352b7ed084}</ProjectGuid>
-    <RootNamespace>vulkantest</RootNamespace>
+    <ProjectGuid>{3e79566c-b4d2-4012-bc0b-f901932b7395}</ProjectGuid>
+    <RootNamespace>goldsrcrenderer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>vulkan-renderer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -89,13 +90,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>E:\tools\glm;$(SolutionDir)imgui;E:\tools\glfw\glfw-3.3.2.bin.WIN32\include;$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\tools\glfw\glfw-3.3.2.bin.WIN32\lib-vc2019;$(VULKAN_SDK)\Lib32</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -106,15 +106,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;E:\tools\glfw\glfw-3.3.2.bin.WIN32\include;$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\tools\glfw\glfw-3.3.2.bin.WIN32\lib-vc2019;$(VULKAN_SDK)\Lib32</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -129,8 +129,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\tools\glfw\glfw-3.3.2.bin.WIN64\lib-vc2019;$(VULKAN_SDK)\Lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -141,15 +141,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;E:\tools\glfw\glfw-3.3.2.bin.WIN64\include;$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\tools\glfw\glfw-3.3.2.bin.WIN64\lib-vc2019;$(VULKAN_SDK)\Lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -157,19 +157,20 @@
     <ClCompile Include="VulkanApp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VulkanApp.h" />
-  </ItemGroup>
-  <ItemGroup>
     <CustomBuild Include="shader\shader.frag">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile fragment shader</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile fragment shader</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile fragment shader</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile fragment shader</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RelativeDir)\frag.spv</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RelativeDir)\frag.spv</Outputs>
@@ -178,29 +179,21 @@
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)\frag.spv</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </RootFolder>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </RootFolder>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </RootFolder>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      </RootFolder>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile fragment shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile fragment shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile fragment shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile fragment shader</Message>
     </CustomBuild>
     <CustomBuild Include="shader\shader.vert">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile vertex shader</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile vertex shader</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vertex shader</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vertex shader</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RelativeDir)\vert.spv </Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RelativeDir)\vert.spv </Outputs>
@@ -209,19 +202,10 @@
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)\vert.spv </Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </RootFolder>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </RootFolder>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </RootFolder>
-      <RootFolder Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      </RootFolder>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile vertex shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile vertex shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vertex shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vertex shader</Message>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="VulkanApp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
