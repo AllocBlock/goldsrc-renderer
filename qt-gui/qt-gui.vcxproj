@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClCompile Include="src\GoldsrcRenderer.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="include\GoldsrcRenderer.h" />
@@ -100,12 +101,23 @@
     <QtUic Include="resources\GoldsrcRenderer.ui" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\vulkan-backend\vulkan-backend.vcxproj">
-      <Project>{3e79566c-b4d2-4012-bc0b-f901932b7395}</Project>
-    </ProjectReference>
+    <ClInclude Include="include\VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\VulkanRenderer.h" />
+    <CustomBuild Include="shader\shader.frag">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)frag.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile Shader</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)frag.spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+    <CustomBuild Include="shader\shader.vert">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)vert.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile Shader</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)vert.spv</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
