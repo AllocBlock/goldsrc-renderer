@@ -22,20 +22,21 @@ VulkanRenderer::VulkanRenderer(QVulkanWindow* vWindow)
 void VulkanRenderer::initResources()
 {
     qDebug("initResources");
+    // init device functions pointer
     const VkDevice& Device = m_pWindow->device();
-
     m_pDevFuncs = m_pWindow->vulkanInstance()->deviceFunctions(Device);
-    __initBuffer();
-    VkPipelineVertexInputStateCreateInfo VertexInputInfo = __getVertexInputInfo();
-    __initDescriptor();
-    __initPipeline(VertexInputInfo);
 
+    __initBuffer();
+    __initDescriptor();
+    VkPipelineVertexInputStateCreateInfo VertexInputInfo = __getVertexInputInfo();
+    __initPipeline(VertexInputInfo);
 }
 
 void VulkanRenderer::__initBuffer()
 {
     _ASSERTE(m_pWindow);
     qDebug("initBuffer");
+
     const VkDevice& Device = m_pWindow->device();
     const int ConcurrentFrameCount = m_pWindow->concurrentFrameCount();
     const VkPhysicalDeviceLimits* pDevLimits = &m_pWindow->physicalDeviceProperties()->limits;
@@ -48,8 +49,7 @@ void VulkanRenderer::__initBuffer()
     BufferInfo.size = VertexAllocSize + UniformAllocSize * ConcurrentFrameCount;
     BufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     VkResult Err = m_pDevFuncs->vkCreateBuffer(Device, &BufferInfo, nullptr, &m_Buffer);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to create buffer: %d", Err);
+    __checkVkError(Err);
 
     VkMemoryRequirements MemReq;
     m_pDevFuncs->vkGetBufferMemoryRequirements(Device, m_Buffer, &MemReq);
@@ -59,15 +59,12 @@ void VulkanRenderer::__initBuffer()
     MemAllocInfo.memoryTypeIndex = m_pWindow->hostVisibleMemoryIndex();
 
     Err = m_pDevFuncs->vkAllocateMemory(Device, &MemAllocInfo, nullptr, &m_BufferMemory);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to allocate memory: %d", Err);
+    __checkVkError(Err);
     Err = m_pDevFuncs->vkBindBufferMemory(Device, m_Buffer, m_BufferMemory, 0);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to bind buffer memory: %d", Err);
+    __checkVkError(Err);
     quint8* pDev;
     Err = m_pDevFuncs->vkMapMemory(Device, m_BufferMemory, 0, MemReq.size, 0, reinterpret_cast<void**>(&pDev));
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to map memory: %d", Err);
+    __checkVkError(Err);
     memcpy(pDev, g_VertexData, sizeof(g_VertexData)); // copy vertex data
     QMatrix4x4 MatIdent;
     for (int i = 0; i < ConcurrentFrameCount; i++) {
@@ -83,12 +80,12 @@ void VulkanRenderer::__initBuffer()
 
 VkPipelineVertexInputStateCreateInfo VulkanRenderer::__getVertexInputInfo()
 {
-    VkVertexInputBindingDescription VertexBindingDesc = {};
-    VertexBindingDesc.binding = 0;
-    VertexBindingDesc.stride = 5 * sizeof(float);
-    VertexBindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    VkVertexInputBindingDescription* pVertexBindingDesc = new VkVertexInputBindingDescription;
+    pVertexBindingDesc->binding = 0;
+    pVertexBindingDesc->stride = 5 * sizeof(float);
+    pVertexBindingDesc->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    VkVertexInputAttributeDescription VertexAttrDesc[2];
+    VkVertexInputAttributeDescription* VertexAttrDesc = new VkVertexInputAttributeDescription[2];
     VertexAttrDesc[0] = {};
     VertexAttrDesc[0].location = 0;
     VertexAttrDesc[0].binding = 0;
@@ -104,7 +101,7 @@ VkPipelineVertexInputStateCreateInfo VulkanRenderer::__getVertexInputInfo()
     VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     VertexInputInfo.flags = 0;
     VertexInputInfo.vertexBindingDescriptionCount = 1;
-    VertexInputInfo.pVertexBindingDescriptions = &VertexBindingDesc;
+    VertexInputInfo.pVertexBindingDescriptions = pVertexBindingDesc;
     VertexInputInfo.vertexAttributeDescriptionCount = 2;
     VertexInputInfo.pVertexAttributeDescriptions = VertexAttrDesc;
 
@@ -123,8 +120,7 @@ void VulkanRenderer::__initDescriptor()
     DescPoolInfo.poolSizeCount = 1;
     DescPoolInfo.pPoolSizes = &DescPoolSizes;
     VkResult Err = m_pDevFuncs->vkCreateDescriptorPool(Device, &DescPoolInfo, nullptr, &m_DescPool);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to create descriptor pool: %d", Err);
+    __checkVkError(Err);
     VkDescriptorSetLayoutBinding LayoutBinding = {};
     LayoutBinding.binding = 0;
     LayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -138,8 +134,7 @@ void VulkanRenderer::__initDescriptor()
     DescLayoutInfo.pBindings = &LayoutBinding;
 
     Err = m_pDevFuncs->vkCreateDescriptorSetLayout(Device, &DescLayoutInfo, nullptr, &m_DescSetLayout);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to create descriptor set layout: %d", Err);
+    __checkVkError(Err);
     for (int i = 0; i < ConcurrentFrameCount; i++)
     {
         VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
@@ -149,8 +144,7 @@ void VulkanRenderer::__initDescriptor()
         DescSetAllocInfo.pSetLayouts = &m_DescSetLayout;
 
         Err = m_pDevFuncs->vkAllocateDescriptorSets(Device, &DescSetAllocInfo, &m_DescSet[i]);
-        if (Err != VK_SUCCESS)
-            qFatal("Failed to allocate descriptor set: %d", Err);
+        __checkVkError(Err);
         VkWriteDescriptorSet DescWrite = {};
         DescWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         DescWrite.dstSet = m_DescSet[i];
@@ -168,8 +162,7 @@ void VulkanRenderer::__initPipeline(VkPipelineVertexInputStateCreateInfo vVertex
     VkPipelineCacheCreateInfo PipelineCacheInfo = {};
     PipelineCacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     VkResult Err = m_pDevFuncs->vkCreatePipelineCache(Device, &PipelineCacheInfo, nullptr, &m_PipelineCache);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to create pipeline cache: %d", Err);
+    __checkVkError(Err);
 
     // Pipeline layout
     VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
@@ -177,8 +170,7 @@ void VulkanRenderer::__initPipeline(VkPipelineVertexInputStateCreateInfo vVertex
     PipelineLayoutInfo.setLayoutCount = 1;
     PipelineLayoutInfo.pSetLayouts = &m_DescSetLayout;
     Err = m_pDevFuncs->vkCreatePipelineLayout(Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to create pipeline layout: %d", Err);
+    __checkVkError(Err);
 
     // Shaders
     VkShaderModule VertShaderModule = __createShader(QStringLiteral("shader/vert.spv"));
@@ -257,8 +249,7 @@ void VulkanRenderer::__initPipeline(VkPipelineVertexInputStateCreateInfo vVertex
     PipelineInfo.layout = m_PipelineLayout;
     PipelineInfo.renderPass = m_pWindow->defaultRenderPass();
     Err = m_pDevFuncs->vkCreateGraphicsPipelines(Device, m_PipelineCache, 1, &PipelineInfo, nullptr, &m_Pipeline);
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to create graphics pipeline: %d", Err);
+    __checkVkError(Err);
 
     if (VertShaderModule)
         m_pDevFuncs->vkDestroyShaderModule(Device, VertShaderModule, nullptr);
@@ -346,8 +337,8 @@ void VulkanRenderer::startNextFrame()
     quint8* pDev;
     VkResult Err = m_pDevFuncs->vkMapMemory(Device, m_BufferMemory, m_UniformBufferInfo[m_pWindow->currentFrame()].offset,
         UNIFORM_DATA_SIZE, 0, reinterpret_cast<void**>(&pDev));
-    if (Err != VK_SUCCESS)
-        qFatal("Failed to map memory: %d", Err);
+    __checkVkError(Err);
+
     QMatrix4x4 TempMatProj = m_MatProj;
     TempMatProj.rotate(m_Rotation, 0, 1, 0);
     memcpy(pDev, TempMatProj.constData(), 16 * sizeof(float));
@@ -395,11 +386,13 @@ VkShaderModule VulkanRenderer::__createShader(const QString& vName)
 
     VkShaderModule ShaderModule;
     VkResult Err = m_pDevFuncs->vkCreateShaderModule(m_pWindow->device(), &ShaderInfo, nullptr, &ShaderModule);
-    if (Err != VK_SUCCESS) {
-        qWarning("Failed to create shader module: %d", Err);
-        return VK_NULL_HANDLE;
-    }
+    __checkVkError(Err);
     return ShaderModule;
+}
+
+void VulkanRenderer::__checkVkError(VkResult vErr)
+{
+    if (vErr != VK_SUCCESS) throw "Vulkan Failed";
 }
 
 QVulkanWindowRenderer* VulkanWindow::createRenderer()

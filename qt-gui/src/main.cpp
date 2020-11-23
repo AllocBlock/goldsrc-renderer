@@ -8,6 +8,7 @@ int main(int vArgc, char *vArgv[])
 {
     QApplication App(vArgc, vArgv);
     QVulkanInstance inst;
+    inst.setLayers(QByteArrayList() << "VK_LAYER_LUNARG_standard_validation");
     inst.create();
     /*GoldsrcRenderer Window;
     Window.show();*/

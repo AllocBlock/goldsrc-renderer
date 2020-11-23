@@ -20,6 +20,7 @@ private:
     VkPipelineVertexInputStateCreateInfo __getVertexInputInfo();
     void __initDescriptor();
     void __initPipeline(VkPipelineVertexInputStateCreateInfo vVertexInputInfo);
+    void __checkVkError(VkResult vErr);
 
     QVulkanWindow* m_pWindow = nullptr;
     QVulkanDeviceFunctions* m_pDevFuncs = nullptr;
