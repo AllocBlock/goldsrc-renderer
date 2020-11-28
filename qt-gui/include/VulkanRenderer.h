@@ -2,10 +2,10 @@
 #include <QVulkanWindowRenderer>
 #include <QVulkanDeviceFunctions>
 
-class VulkanRenderer : public QVulkanWindowRenderer
+class CVulkanRenderer : public QVulkanWindowRenderer
 {
 public:
-    VulkanRenderer(QVulkanWindow* vWindow);
+    CVulkanRenderer(QVulkanWindow* vWindow);
 
     void initResources() override;
     void initSwapChainResources() override;
@@ -19,7 +19,7 @@ private:
     void __initBuffer();
     VkPipelineVertexInputStateCreateInfo __getVertexInputInfo();
     void __initDescriptor();
-    void __initPipeline(VkPipelineVertexInputStateCreateInfo vVertexInputInfo);
+    void __initPipeline();
     void __checkVkError(VkResult vErr);
 
     QVulkanWindow* m_pWindow = nullptr;
@@ -41,7 +41,7 @@ private:
     float m_Rotation = 0.0f;
 };
 
-class VulkanWindow : public QVulkanWindow
+class CVulkanWindow : public QVulkanWindow
 {
 public:
     QVulkanWindowRenderer* createRenderer() override;

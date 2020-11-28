@@ -3,18 +3,22 @@
 #include <QVulkanInstance>
 #include <QVulkanWindow>
 #include "../include/VulkanRenderer.h"
+#include "IOObj.h"
+
 
 int main(int vArgc, char *vArgv[])
 {
-    QApplication App(vArgc, vArgv);
-    QVulkanInstance inst;
-    inst.setLayers(QByteArrayList() << "VK_LAYER_LUNARG_standard_validation");
-    inst.create();
-    /*GoldsrcRenderer Window;
-    Window.show();*/
-    VulkanWindow w;
-    w.setVulkanInstance(&inst);
-    w.resize(1024, 768);
-    w.show();
-    return App.exec();
+    CIOObj Obj("../data/ball.obj");
+    Obj.read();
+    //QApplication App(vArgc, vArgv);
+    //QVulkanInstance QtVkInstance;
+    //QtVkInstance.setLayers(QByteArrayList() << "VK_LAYER_LUNARG_standard_validation");
+    //QtVkInstance.create();
+    ///*GoldsrcRenderer Window;
+    //Window.show();*/
+    //CVulkanWindow Window;
+    //Window.setVulkanInstance(&QtVkInstance);
+    //Window.resize(1024, 768);
+    //Window.show();
+    //return App.exec();
 }

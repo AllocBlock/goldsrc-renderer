@@ -14,12 +14,12 @@ static inline VkDeviceSize aligned(VkDeviceSize v, VkDeviceSize byteAlign)
     return (v + byteAlign - 1) & ~(byteAlign - 1);
 }
 
-VulkanRenderer::VulkanRenderer(QVulkanWindow* vWindow)
+CVulkanRenderer::CVulkanRenderer(QVulkanWindow* vWindow)
     : m_pWindow(vWindow)
 {
 }
 
-void VulkanRenderer::initResources()
+void CVulkanRenderer::initResources()
 {
     qDebug("initResources");
     // init device functions pointer
@@ -28,11 +28,10 @@ void VulkanRenderer::initResources()
 
     __initBuffer();
     __initDescriptor();
-    VkPipelineVertexInputStateCreateInfo VertexInputInfo = __getVertexInputInfo();
-    __initPipeline(VertexInputInfo);
+    __initPipeline();
 }
 
-void VulkanRenderer::__initBuffer()
+void CVulkanRenderer::__initBuffer()
 {
     _ASSERTE(m_pWindow);
     qDebug("initBuffer");
@@ -78,7 +77,7 @@ void VulkanRenderer::__initBuffer()
     m_pDevFuncs->vkUnmapMemory(Device, m_BufferMemory);
 }
 
-VkPipelineVertexInputStateCreateInfo VulkanRenderer::__getVertexInputInfo()
+VkPipelineVertexInputStateCreateInfo CVulkanRenderer::__getVertexInputInfo()
 {
     VkVertexInputBindingDescription* pVertexBindingDesc = new VkVertexInputBindingDescription;
     pVertexBindingDesc->binding = 0;
@@ -108,7 +107,7 @@ VkPipelineVertexInputStateCreateInfo VulkanRenderer::__getVertexInputInfo()
     return VertexInputInfo;
 }
 
-void VulkanRenderer::__initDescriptor()
+void CVulkanRenderer::__initDescriptor()
 {
     const VkDevice& Device = m_pWindow->device();
     const int ConcurrentFrameCount = m_pWindow->concurrentFrameCount();
@@ -155,7 +154,7 @@ void VulkanRenderer::__initDescriptor()
     }
 }
 
-void VulkanRenderer::__initPipeline(VkPipelineVertexInputStateCreateInfo vVertexInputInfo)
+void CVulkanRenderer::__initPipeline()
 {
     const VkDevice& Device = m_pWindow->device();
     // Pipeline cache
@@ -195,7 +194,7 @@ void VulkanRenderer::__initPipeline(VkPipelineVertexInputStateCreateInfo vVertex
     ShaderStages[1].pName = "main";
     PipelineInfo.stageCount = 2;
     PipelineInfo.pStages = ShaderStages;
-    PipelineInfo.pVertexInputState = &vVertexInputInfo;
+    PipelineInfo.pVertexInputState = &__getVertexInputInfo();
 
     VkPipelineInputAssemblyStateCreateInfo InputAssembleCreateInfo = {};
     InputAssembleCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -257,7 +256,7 @@ void VulkanRenderer::__initPipeline(VkPipelineVertexInputStateCreateInfo vVertex
         m_pDevFuncs->vkDestroyShaderModule(Device, FragShaderModule, nullptr);
 } 
 
-void VulkanRenderer::initSwapChainResources()
+void CVulkanRenderer::initSwapChainResources()
 {
     qDebug("initSwapChainResources");
 
@@ -268,12 +267,12 @@ void VulkanRenderer::initSwapChainResources()
     m_MatProj.translate(0, 0, -4);
 }
 
-void VulkanRenderer::releaseSwapChainResources()
+void CVulkanRenderer::releaseSwapChainResources()
 {
     qDebug("releaseSwapChainResources");
 }
 
-void VulkanRenderer::releaseResources()
+void CVulkanRenderer::releaseResources()
 {
     qDebug("releaseResources");
 
@@ -308,7 +307,7 @@ void VulkanRenderer::releaseResources()
     }
 }
 
-void VulkanRenderer::startNextFrame()
+void CVulkanRenderer::startNextFrame()
 {
     VkDevice Device = m_pWindow->device();
     VkCommandBuffer CommandBuffer = m_pWindow->currentCommandBuffer();
@@ -368,7 +367,7 @@ void VulkanRenderer::startNextFrame()
     m_pWindow->requestUpdate(); // render continuously, throttled by the presentation rate
 }
 
-VkShaderModule VulkanRenderer::__createShader(const QString& vName)
+VkShaderModule CVulkanRenderer::__createShader(const QString& vName)
 {
     QFile File(vName);
     if (!File.open(QIODevice::ReadOnly))
@@ -390,12 +389,12 @@ VkShaderModule VulkanRenderer::__createShader(const QString& vName)
     return ShaderModule;
 }
 
-void VulkanRenderer::__checkVkError(VkResult vErr)
+void CVulkanRenderer::__checkVkError(VkResult vErr)
 {
     if (vErr != VK_SUCCESS) throw "Vulkan Failed";
 }
 
-QVulkanWindowRenderer* VulkanWindow::createRenderer()
+QVulkanWindowRenderer* CVulkanWindow::createRenderer()
 {
-    return new VulkanRenderer(this);
+    return new CVulkanRenderer(this);
 }

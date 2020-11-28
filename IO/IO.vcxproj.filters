@@ -15,21 +15,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\shader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\VulkanRenderer.cpp">
+    <ClCompile Include="IOObj.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="IOMtl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="IOBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="IOLog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\VulkanRenderer.h">
+    <ClInclude Include="IOObj.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="IOLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IOMtl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IOBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

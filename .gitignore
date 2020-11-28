@@ -265,3 +265,4 @@ __pycache__/
 
 # compiled shader
 *.spv
+/data
