@@ -153,54 +153,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\shader.frag">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\frag.spv </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile fragment shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile fragment shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile fragment shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile fragment shader</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RelativeDir)\frag.spv</Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RelativeDir)\frag.spv</Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)\frag.spv</Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)\frag.spv</Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.vert">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">glslangValidator.exe -V %(FullPath) -o %(RelativeDir)\vert.spv </Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compile vertex shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compile vertex shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vertex shader</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vertex shader</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RelativeDir)\vert.spv </Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(RelativeDir)\vert.spv </Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)\vert.spv </Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)\vert.spv </Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="src\VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>

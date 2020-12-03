@@ -9,9 +9,9 @@
 
 struct SObjFaceNode
 {
-    int VectexId = -1;
-    int TexCoorIndex = -1;
-    int NormalIndex = -1;
+    uint32_t VectexId = 0;
+    uint32_t TexCoorId = 0;
+    uint32_t NormalId = 0;
 };
 
 struct SObjFace
@@ -28,7 +28,6 @@ struct SObj
     std::vector<glm::vec2> TexCoors;
     std::vector<glm::vec3> Normals;
     std::vector<SObjFace> Faces;
-    
 };
 
 class CIOObj : public CIOBase
@@ -37,10 +36,11 @@ public:
     CIOObj() = default;
     CIOObj(std::string vFileName) :CIOBase(vFileName) {}
 
-    uint32_t getIndex(int faceIndex, int vectexIndex);
-    glm::vec3 getVertex(int faceIndex, int index);
-    glm::vec2 getTexCoor(int faceIndex, int index);
-    glm::vec3 getNormal(int faceIndex, int index);
+    size_t getFaceNum() const;
+    size_t getFaceNodeNum(int vFaceIndex) const;
+    glm::vec3 getVertex(int vFaceIndex, int vNodeIndex) const;
+    glm::vec2 getTexCoor(int vFaceIndex, int vNodeIndex) const;
+    glm::vec3 getNormal(int vFaceIndex, int vNodeIndex) const;
 
 protected:
     virtual bool _readV(std::string vFileName) override;

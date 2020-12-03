@@ -1,6 +1,7 @@
 #pragma once
 #include <QVulkanWindowRenderer>
 #include <QVulkanDeviceFunctions>
+#include "IOObj.h"
 
 class CVulkanRenderer : public QVulkanWindowRenderer
 {
@@ -39,6 +40,8 @@ private:
       
     QMatrix4x4 m_MatProj;
     float m_Rotation = 0.0f;
+
+    std::vector<float> m_VertexData;
 };
 
 class CVulkanWindow : public QVulkanWindow

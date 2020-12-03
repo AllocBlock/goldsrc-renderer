@@ -2,10 +2,16 @@
 
 #include <QFile>
 
-static float g_VertexData[] = { // Y up, front = CCW
-     0.0f,   0.5f,   1.0f, 0.0f, 0.0f,
-    -0.5f,  -0.5f,   0.0f, 1.0f, 0.0f,
-     0.5f,  -0.5f,   0.0f, 0.0f, 1.0f
+static std::vector<float> g_VertexData = { // Y up, front = CCW
+     0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+     1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+     0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+     1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+     0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+     1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+     0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
 };
 static const int UNIFORM_DATA_SIZE = 16 * sizeof(float);
 
@@ -21,6 +27,38 @@ CVulkanRenderer::CVulkanRenderer(QVulkanWindow* vWindow)
 
 void CVulkanRenderer::initResources()
 {
+    // 读取顶点数据
+    CIOObj Obj("../data/ball.obj");
+    Obj.read();
+    glm::vec3 Vertex;
+    for (size_t i = 0; i < Obj.getFaceNum(); i++)
+    {
+        for (size_t k = 2; k < Obj.getFaceNodeNum(i); k++)
+        {
+            Vertex = Obj.getVertex(i, 0);
+            m_VertexData.push_back(Vertex.x);
+            m_VertexData.push_back(Vertex.y);
+            m_VertexData.push_back(Vertex.z);
+            m_VertexData.push_back(1);
+            m_VertexData.push_back(0);
+            m_VertexData.push_back(0);
+            Vertex = Obj.getVertex(i, k - 1);
+            m_VertexData.push_back(Vertex.x);
+            m_VertexData.push_back(Vertex.y);
+            m_VertexData.push_back(Vertex.z);
+            m_VertexData.push_back(1);
+            m_VertexData.push_back(0);
+            m_VertexData.push_back(0);
+            Vertex = Obj.getVertex(i, k);
+            m_VertexData.push_back(Vertex.x);
+            m_VertexData.push_back(Vertex.y);
+            m_VertexData.push_back(Vertex.z);
+            m_VertexData.push_back(1);
+            m_VertexData.push_back(0);
+            m_VertexData.push_back(0);
+        }
+    }
+
     qDebug("initResources");
     // init device functions pointer
     const VkDevice& Device = m_pWindow->device();
@@ -40,7 +78,7 @@ void CVulkanRenderer::__initBuffer()
     const int ConcurrentFrameCount = m_pWindow->concurrentFrameCount();
     const VkPhysicalDeviceLimits* pDevLimits = &m_pWindow->physicalDeviceProperties()->limits;
     const VkDeviceSize UniAlign = pDevLimits->minUniformBufferOffsetAlignment;
-    const VkDeviceSize VertexAllocSize = aligned(sizeof(g_VertexData), UniAlign);
+    const VkDeviceSize VertexAllocSize = aligned(m_VertexData.size() * sizeof(float), UniAlign);
     const VkDeviceSize UniformAllocSize = aligned(UNIFORM_DATA_SIZE, UniAlign); // uniform size * frame count
 
     VkBufferCreateInfo BufferInfo = {};
@@ -64,7 +102,7 @@ void CVulkanRenderer::__initBuffer()
     quint8* pDev;
     Err = m_pDevFuncs->vkMapMemory(Device, m_BufferMemory, 0, MemReq.size, 0, reinterpret_cast<void**>(&pDev));
     __checkVkError(Err);
-    memcpy(pDev, g_VertexData, sizeof(g_VertexData)); // copy vertex data
+    memcpy(pDev, m_VertexData.data(), m_VertexData.size() * sizeof(float)); // copy vertex data
     QMatrix4x4 MatIdent;
     for (int i = 0; i < ConcurrentFrameCount; i++) {
         const VkDeviceSize Offset = VertexAllocSize + i * UniformAllocSize;
@@ -79,22 +117,23 @@ void CVulkanRenderer::__initBuffer()
 
 VkPipelineVertexInputStateCreateInfo CVulkanRenderer::__getVertexInputInfo()
 {
+    // 顶点输入信息
     VkVertexInputBindingDescription* pVertexBindingDesc = new VkVertexInputBindingDescription;
     pVertexBindingDesc->binding = 0;
-    pVertexBindingDesc->stride = 5 * sizeof(float);
-    pVertexBindingDesc->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    pVertexBindingDesc->stride = 6 * sizeof(float);
+    pVertexBindingDesc->inputRate = VkVertexInputRate::VK_VERTEX_INPUT_RATE_VERTEX;
 
     VkVertexInputAttributeDescription* VertexAttrDesc = new VkVertexInputAttributeDescription[2];
     VertexAttrDesc[0] = {};
     VertexAttrDesc[0].location = 0;
     VertexAttrDesc[0].binding = 0;
-    VertexAttrDesc[0].format = VK_FORMAT_R32G32_SFLOAT;
+    VertexAttrDesc[0].format = VK_FORMAT_R32G32B32_SFLOAT;
     VertexAttrDesc[0].offset = 0;
     VertexAttrDesc[1] = {};
     VertexAttrDesc[1].location = 1;
     VertexAttrDesc[1].binding = 0;
     VertexAttrDesc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-    VertexAttrDesc[1].offset = 2 * sizeof(float);
+    VertexAttrDesc[1].offset = 3 * sizeof(float);
 
     VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
     VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -361,7 +400,7 @@ void CVulkanRenderer::startNextFrame()
     Scissor.extent.width = Viewport.width;
     Scissor.extent.height = Viewport.height;
     m_pDevFuncs->vkCmdSetScissor(CommandBuffer, 0, 1, &Scissor);
-    m_pDevFuncs->vkCmdDraw(CommandBuffer, 3, 1, 0, 0);
+    m_pDevFuncs->vkCmdDraw(CommandBuffer, m_VertexData.size() / 6, 1, 0, 0);
     m_pDevFuncs->vkCmdEndRenderPass(CmdBuf);
     m_pWindow->frameReady();
     m_pWindow->requestUpdate(); // render continuously, throttled by the presentation rate

@@ -57,9 +57,10 @@ bool CIOObj::_readV(std::string vFileName) {
             SObjFace Face;
 
             std::string FaceNode;
-            std::regex ReFaceNode("(\\d?)/?(\\d?)/?(\\d?)");
+            std::regex ReFaceNode("(\\d*)/?(\\d*)/?(\\d*)");
             std::smatch ReResult;
             while (true) {
+                FaceNode.clear();
                 Line >> FaceNode;
                 if (FaceNode.empty()) break;
                 if (!std::regex_match(FaceNode, ReResult, ReFaceNode))
@@ -69,9 +70,9 @@ bool CIOObj::_readV(std::string vFileName) {
                 }
                 SObjFaceNode FaceNodeInfo;
 
-                FaceNodeInfo.VectexId = ReResult[0].str().empty() ? -1 : atoi(ReResult[0].str().c_str());
-                FaceNodeInfo.TexCoorIndex = ReResult[1].str().empty() ? -1 : atoi(ReResult[1].str().c_str());
-                FaceNodeInfo.NormalIndex = ReResult[2].str().empty() ? -1 : atoi(ReResult[2].str().c_str());
+                FaceNodeInfo.VectexId = ReResult[1].str().empty() ? 0 : atoi(ReResult[0].str().c_str());
+                FaceNodeInfo.TexCoorId = ReResult[2].str().empty() ? 0 : atoi(ReResult[1].str().c_str());
+                FaceNodeInfo.NormalId = ReResult[3].str().empty() ? 0 : atoi(ReResult[2].str().c_str());
 
                 Face.Nodes.push_back(FaceNodeInfo);
             }
@@ -118,41 +119,51 @@ bool CIOObj::_readV(std::string vFileName) {
     return true;
 }
 
-uint32_t CIOObj::getIndex(int faceIndex, int index) {
-    return m_pObj->Faces[faceIndex].Nodes[index].VectexId - 1;
+size_t CIOObj::getFaceNum() const
+{ 
+    if (m_pObj) return m_pObj->Faces.size();
+    else return 0;
 }
-glm::vec3 CIOObj::getVertex(int faceIndex, int index) {
-    return m_pObj->Vertices[m_pObj->Faces[faceIndex].Nodes[index].VectexId - 1] / m_ScaleFactor;
-}
-glm::vec2 CIOObj::getTexCoor(int faceIndex, int texCoorIndex) {
-    int Index = m_pObj->Faces[faceIndex].Nodes[texCoorIndex].TexCoorIndex;
-    if (Index == -1) Index = 0;
-    else Index--;
-    // 纹理映射修改，obj->vulkan
-    glm::vec2 texCoor = m_pObj->TexCoors[Index];
-    texCoor.y = 1.0 - texCoor.y;
-    //return texCoor;
-    return m_pObj->TexCoors[0];
-}
-glm::vec3 CIOObj::getNormal(int faceIndex, int normalIndex) {
-    /*uint32_t index = m_pObj->Faces[faceIndex].Nodes[normalIndex].normalIndex;
-    if (index == uint32_t(-1)) index = 0;
-    else index--;
-    return normalsList[index];*/
 
+size_t CIOObj::getFaceNodeNum(int vFaceIndex) const
+{
+    if (!m_pObj || vFaceIndex < 0 || vFaceIndex >= getFaceNum()) return 0;
+    return m_pObj->Faces[vFaceIndex].Nodes.size();
+}
 
-    glm::vec3 vert = getVertex(faceIndex, normalIndex);
-    glm::vec3 normal = glm::vec3(0.0, 0.0, 0.0);
-    for (int i = 0; i < m_pObj->Faces.size(); i++) {
-        for (int j = 0; j < m_pObj->Faces[i].Nodes.size(); j++) {
-            if (vert == getVertex(i, j)) {
-                glm::vec3 p1 = getVertex(i, 0);
-                glm::vec3 p2 = getVertex(i, 1);
-                glm::vec3 p3 = getVertex(i, 2);
-                normal += normalize(cross(p2 - p1, p3 - p1));
-                break;
-            }
-        }
-    }
-    return normalize(normal);
+glm::vec3 CIOObj::getVertex(int vFaceIndex, int vNodeIndex) const
+{
+    if (!m_pObj || 
+        vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
+        vNodeIndex < 0 || vNodeIndex >= m_pObj->Faces[vFaceIndex].Nodes.size())
+        return glm::vec3(NAN, NAN, NAN);
+    uint32_t VertexId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].VectexId;
+    return m_pObj->Vertices[VertexId - 1] / m_ScaleFactor;
+}
+
+glm::vec2 CIOObj::getTexCoor(int vFaceIndex, int vNodeIndex) const
+{
+    if (!m_pObj ||
+        vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
+        vNodeIndex < 0 || vNodeIndex >= m_pObj->Faces[vFaceIndex].Nodes.size())
+        return glm::vec2(NAN, NAN);
+    uint32_t TexCoorId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].TexCoorId;
+    if (TexCoorId == 0)
+        return glm::vec2(NAN, NAN);
+    // 纹理映射方式不同，obj->vulkan
+    glm::vec2 TexCoor = m_pObj->TexCoors[TexCoorId - 1];
+    TexCoor.y = 1.0 - TexCoor.y;
+    return TexCoor;
+}
+
+glm::vec3 CIOObj::getNormal(int vFaceIndex, int vNodeIndex) const
+{
+    if (!m_pObj ||
+        vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
+        vNodeIndex < 0 || vNodeIndex >= m_pObj->Faces[vFaceIndex].Nodes.size())
+        return glm::vec3(NAN, NAN, NAN);
+    uint32_t NormalId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].NormalId;
+    if (NormalId == 0)
+        return glm::vec3(NAN, NAN, NAN);
+    return m_pObj->Normals[NormalId - 1];
 }
