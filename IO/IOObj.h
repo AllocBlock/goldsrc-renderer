@@ -33,7 +33,7 @@ struct SObj
 class CIOObj : public CIOBase
 {
 public:
-    CIOObj() = default;
+    CIOObj() :CIOBase() {}
     CIOObj(std::string vFileName) :CIOBase(vFileName) {}
 
     size_t getFaceNum() const;
@@ -42,10 +42,17 @@ public:
     glm::vec2 getTexCoor(int vFaceIndex, int vNodeIndex) const;
     glm::vec3 getNormal(int vFaceIndex, int vNodeIndex) const;
 
+    const std::vector<glm::vec3>& getVertices() { return m_pObj->Vertices; }
+    const std::vector<glm::vec3>& getNormals() { return m_pObj->Normals; }
+    const std::vector<glm::vec2>& getTexCoors() { return m_pObj->TexCoors; }
+    const std::vector<SObjFace>& getFaces() { return m_pObj->Faces; }
+
 protected:
     virtual bool _readV(std::string vFileName) override;
 
 private:
+    void __calculateAverageNormals();
+
     std::shared_ptr<SObj> m_pObj = nullptr;
     std::shared_ptr<CIOMtl> m_pMtl = nullptr;
     float m_ScaleFactor = 1.0;

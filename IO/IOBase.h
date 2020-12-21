@@ -11,7 +11,7 @@ class CIOBase
 {
 public:
     CIOBase();
-    CIOBase(std::string vFileName = "");
+    CIOBase(std::string vFileName);
     virtual ~CIOBase() = default;
     bool read(std::string vFileName = "");
 

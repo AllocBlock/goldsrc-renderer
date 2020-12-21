@@ -116,6 +116,9 @@ bool CIOObj::_readV(std::string vFileName) {
     }
     m_ScaleFactor = std::max<float>(MaxX - MinX, std::max<float>(MaxY - MinY, MaxZ - MinZ));
 
+    if (m_pObj->Normals.empty())
+        __calculateAverageNormals();
+
     return true;
 }
 
@@ -166,4 +169,30 @@ glm::vec3 CIOObj::getNormal(int vFaceIndex, int vNodeIndex) const
     if (NormalId == 0)
         return glm::vec3(NAN, NAN, NAN);
     return m_pObj->Normals[NormalId - 1];
+}
+
+void CIOObj::__calculateAverageNormals()
+{
+    size_t NumVertex = m_pObj->Vertices.size();
+    m_pObj->Normals.resize(NumVertex);
+    std::vector<int> Counts(NumVertex);
+    for (size_t i = 0; i < NumVertex; i++)
+    {
+        m_pObj->Normals[i] = glm::vec3(0.0, 0.0, 0.0);
+        Counts[i] = 0;
+    }
+    for (size_t i = 0; i < m_pObj->Faces.size(); i++)
+    {
+        glm::vec3 V1 = getVertex(i, 1) - getVertex(i, 0);
+        glm::vec3 V2 = getVertex(i, 2) - getVertex(i, 0);
+        glm::vec3 Normal = glm::normalize(glm::cross(V1, V2));
+        for (size_t k = 0; k < getFaceNodeNum(i); k++)
+        {
+            uint32_t VertexIndex = m_pObj->Faces[i].Nodes[k].VectexId - 1;
+            m_pObj->Normals[VertexIndex] += Normal;
+            Counts[VertexIndex]++;
+        }
+    }
+    for (size_t i = 0; i < NumVertex; i++)
+        m_pObj->Normals[i] /= static_cast<double>(Counts[i]);
 }
