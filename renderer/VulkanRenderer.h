@@ -77,11 +77,16 @@ struct SPointData
     }
 };
 
-struct SUniformBufferObject
+struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Model;
     alignas(16) glm::mat4 View;
     alignas(16) glm::mat4 Proj;
+};
+
+struct SUniformBufferObjectFrag
+{
+    alignas(16) glm::vec3 Eye;
 };
 
 class CVulkanRenderer
@@ -168,8 +173,10 @@ private:
     VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
     VkBuffer m_IndexBuffer = VK_NULL_HANDLE;
     VkDeviceMemory m_IndexBufferMemory = VK_NULL_HANDLE;
-    std::vector<VkBuffer> m_UniformBuffers;
-    std::vector<VkDeviceMemory> m_UniformBufferMemories;
+    std::vector<VkBuffer> m_VertUniformBuffers;
+    std::vector<VkDeviceMemory> m_VertUniformBufferMemories;
+    std::vector<VkBuffer> m_FragUniformBuffers;
+    std::vector<VkDeviceMemory> m_FragUniformBufferMemories;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_DescriptorSets;
     std::vector<VkCommandBuffer> m_CommandBuffers;

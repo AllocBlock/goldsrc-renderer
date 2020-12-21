@@ -385,17 +385,21 @@ void CVulkanRenderer::__createRenderPass()
 
 void CVulkanRenderer::__createDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding UboLayoutBinding = {};
-    UboLayoutBinding.binding = 0;
-    UboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboLayoutBinding.descriptorCount = 1;
-    UboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    std::array<VkDescriptorSetLayoutBinding, 2> UboLayoutBindings = {};
+    UboLayoutBindings[0].binding = 0;
+    UboLayoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    UboLayoutBindings[0].descriptorCount = 1;
+    UboLayoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 1> Bindings = { UboLayoutBinding };
+    UboLayoutBindings[1].binding = 1;
+    UboLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    UboLayoutBindings[1].descriptorCount = 1;
+    UboLayoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
     VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
     LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
-    LayoutInfo.pBindings = Bindings.data();
+    LayoutInfo.bindingCount = static_cast<uint32_t>(UboLayoutBindings.size());
+    LayoutInfo.pBindings = UboLayoutBindings.data();
 
     ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorSetLayout));
 }
@@ -639,22 +643,27 @@ void CVulkanRenderer::__createIndexBuffer()
 
 void CVulkanRenderer::__createUniformBuffers()
 {
-    VkDeviceSize BufferSize = sizeof(SUniformBufferObject);
-
-    m_UniformBuffers.resize(m_SwapchainImages.size());
-    m_UniformBufferMemories.resize(m_SwapchainImages.size());
+    VkDeviceSize BufferSize = sizeof(SUniformBufferObjectVert);
+    size_t NumSwapchainImage = m_SwapchainImages.size();
+    m_VertUniformBuffers.resize(NumSwapchainImage);
+    m_VertUniformBufferMemories.resize(NumSwapchainImage);
+    m_FragUniformBuffers.resize(NumSwapchainImage);
+    m_FragUniformBufferMemories.resize(NumSwapchainImage);
 
     for (size_t i = 0; i < m_SwapchainImages.size(); i++)
     {
-        __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_UniformBuffers[i], m_UniformBufferMemories[i]);
+        __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBuffers[i], m_VertUniformBufferMemories[i]);
+        __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBuffers[i], m_FragUniformBufferMemories[i]);
     }
 }
 
 void CVulkanRenderer::__createDescriptorPool()
 {
-    std::array<VkDescriptorPoolSize, 1> PoolSizes = {};
+    std::array<VkDescriptorPoolSize, 2> PoolSizes = {};
     PoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     PoolSizes[0].descriptorCount = static_cast<uint32_t>(m_SwapchainImages.size());
+    PoolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    PoolSizes[1].descriptorCount = static_cast<uint32_t>(m_SwapchainImages.size());
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -680,19 +689,32 @@ void CVulkanRenderer::__createDescriptorSets()
 
     for (size_t i = 0; i < m_DescriptorSets.size(); i++)
     {
-        VkDescriptorBufferInfo BufferInfo = {};
-        BufferInfo.buffer = m_UniformBuffers[i];
-        BufferInfo.offset = 0;
-        BufferInfo.range = sizeof(SUniformBufferObject);
+        VkDescriptorBufferInfo VertBufferInfo = {};
+        VertBufferInfo.buffer = m_VertUniformBuffers[i];
+        VertBufferInfo.offset = 0;
+        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
 
-        std::array<VkWriteDescriptorSet, 1> DescriptorWrites = {};
+        VkDescriptorBufferInfo FragBufferInfo = {};
+        FragBufferInfo.buffer = m_FragUniformBuffers[i];
+        FragBufferInfo.offset = 0;
+        FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
+
+        std::array<VkWriteDescriptorSet, 2> DescriptorWrites = {};
         DescriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         DescriptorWrites[0].dstSet = m_DescriptorSets[i];
         DescriptorWrites[0].dstBinding = 0;
         DescriptorWrites[0].dstArrayElement = 0;
         DescriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         DescriptorWrites[0].descriptorCount = 1;
-        DescriptorWrites[0].pBufferInfo = &BufferInfo;
+        DescriptorWrites[0].pBufferInfo = &VertBufferInfo;
+
+        DescriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        DescriptorWrites[1].dstSet = m_DescriptorSets[i];
+        DescriptorWrites[1].dstBinding = 1;
+        DescriptorWrites[1].dstArrayElement = 0;
+        DescriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        DescriptorWrites[1].descriptorCount = 1;
+        DescriptorWrites[1].pBufferInfo = &FragBufferInfo;
 
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
     }
@@ -1256,8 +1278,10 @@ void CVulkanRenderer::__cleanupSwapChain()
     vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
     for (size_t i = 0; i < m_SwapchainImages.size(); i++)
     {
-        vkDestroyBuffer(m_Device, m_UniformBuffers[i], nullptr);
-        vkFreeMemory(m_Device, m_UniformBufferMemories[i], nullptr);
+        vkDestroyBuffer(m_Device, m_VertUniformBuffers[i], nullptr);
+        vkFreeMemory(m_Device, m_VertUniformBufferMemories[i], nullptr);
+        vkDestroyBuffer(m_Device, m_FragUniformBuffers[i], nullptr);
+        vkFreeMemory(m_Device, m_FragUniformBufferMemories[i], nullptr);
     }
     vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 }
@@ -1285,16 +1309,25 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vCurrentImage)
     auto CurrentTime = std::chrono::high_resolution_clock::now();
     float DeltaTime = std::chrono::duration<float, std::chrono::seconds::period>(CurrentTime - StartTime).count();
 
-    SUniformBufferObject UBO = {};
+    SUniformBufferObjectVert UBO = {};
     UBO.Model = glm::rotate(glm::mat4(1.0), DeltaTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     //UBO.Model = glm::mat4(1.0f);
     UBO.View = m_pCamera->getViewMat();
     UBO.Proj = m_pCamera->getProjMat();
 
     void* pData;
-    ck(vkMapMemory(m_Device, m_UniformBufferMemories[vCurrentImage], 0, sizeof(UBO), 0, &pData));
+    ck(vkMapMemory(m_Device, m_VertUniformBufferMemories[vCurrentImage], 0, sizeof(UBO), 0, &pData));
     memcpy(pData, &UBO, sizeof(UBO));
-    vkUnmapMemory(m_Device, m_UniformBufferMemories[vCurrentImage]);
+    vkUnmapMemory(m_Device, m_VertUniformBufferMemories[vCurrentImage]);
+
+    SUniformBufferObjectFrag UBOFrag = {};
+    UBOFrag.Eye = m_pCamera->getPos();
+
+    ck(vkMapMemory(m_Device, m_FragUniformBufferMemories[vCurrentImage], 0, sizeof(UBOFrag), 0, &pData));
+    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
+    vkUnmapMemory(m_Device, m_FragUniformBufferMemories[vCurrentImage]);
+
+
 }
 
 void CVulkanRenderer::__setupDebugMessenger()
