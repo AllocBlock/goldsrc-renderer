@@ -116,7 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)IO;E:\tools\glfw\glfw-3.3.2.bin.WIN64\include;E:\tools\VulkanSDK\1.1.106.0\Include;E:\tools\glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)IO;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile />
@@ -125,7 +125,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>E:\tools\glfw\glfw-3.3.2.bin.WIN64\lib-vc2019;E:\tools\VulkanSDK\1.1.106.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(GLFW_PATH)\lib-vc2019;$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

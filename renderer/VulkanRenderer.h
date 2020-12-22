@@ -11,9 +11,7 @@
 #include <array>
 #include <optional>
 
-#define DEBUG_ON true
-
-#ifdef DEBUG_ON
+#ifdef _DEBUG
 const bool ENABLE_VALIDATION_LAYERS = true;
 #else
 const bool ENABLE_VALIDATION_LAYERS = false;
@@ -43,6 +41,7 @@ struct SPointData
     glm::vec3 Pos;
     glm::vec3 Color;
     glm::vec3 Normal;
+    glm::vec2 TexCoord;
 
     static VkVertexInputBindingDescription getBindingDescription()
     {
@@ -54,9 +53,9 @@ struct SPointData
         return BindingDescription;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
+    static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions()
     {
-        std::array<VkVertexInputAttributeDescription, 3> AttributeDescriptions = {};
+        std::array<VkVertexInputAttributeDescription, 4> AttributeDescriptions = {};
 
         AttributeDescriptions[0].binding = 0;
         AttributeDescriptions[0].location = 0;
@@ -72,6 +71,11 @@ struct SPointData
         AttributeDescriptions[2].location = 2;
         AttributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
         AttributeDescriptions[2].offset = offsetof(SPointData, Normal);
+
+        AttributeDescriptions[3].binding = 0;
+        AttributeDescriptions[3].location = 3;
+        AttributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
+        AttributeDescriptions[3].offset = offsetof(SPointData, TexCoord);
 
         return AttributeDescriptions;
     }
@@ -115,6 +119,9 @@ private:
     void __createCommandPool();
     void __createDepthResources();
     void __createFramebuffers();
+    void __createTextureImage();
+    void __createTextureImageView();
+    void __createTextureSampler();
     void __createVertexBuffer();
     void __createIndexBuffer();
     void __createUniformBuffers();
@@ -148,6 +155,7 @@ private:
     void __createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
     void __copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
     VkShaderModule __createShaderModule(const std::vector<char>& vShaderCode);
+    void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight);
 
     void __setupDebugMessenger();
     void __destroyDebugMessenger();
@@ -183,6 +191,10 @@ private:
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
     std::vector<VkFence> m_InFlightFences;
+    VkImage m_TextureImage = VK_NULL_HANDLE;
+    VkDeviceMemory m_TextureImageMemory = VK_NULL_HANDLE;
+    VkImageView m_TextureImageView= VK_NULL_HANDLE;
+    VkSampler m_TextureSampler = VK_NULL_HANDLE;
 
     std::vector<VkImage> m_SwapchainImages;
     VkFormat m_SwapchainImageFormat = VK_FORMAT_UNDEFINED;

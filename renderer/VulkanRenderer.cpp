@@ -1,4 +1,5 @@
 #include "VulkanRenderer.h"
+#include "IOImage.h"
 
 #include <iostream>
 #include <vector>
@@ -6,7 +7,6 @@
 #include <fstream>
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
-
 
 CVulkanRenderer::CVulkanRenderer(GLFWwindow* vpWindow, CCamera* vpCamera)
     : m_pWindow(vpWindow),
@@ -17,6 +17,10 @@ CVulkanRenderer::CVulkanRenderer(GLFWwindow* vpWindow, CCamera* vpCamera)
 CVulkanRenderer::~CVulkanRenderer()
 {
     __cleanupSwapChain();
+    vkDestroySampler(m_Device, m_TextureSampler, nullptr);
+    vkDestroyImageView(m_Device, m_TextureImageView, nullptr);
+    vkDestroyImage(m_Device, m_TextureImage, nullptr);
+    vkFreeMemory(m_Device, m_TextureImageMemory, nullptr);
     vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
     vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
     vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
@@ -50,6 +54,9 @@ void CVulkanRenderer::init()
     __createCommandPool();
     __createDepthResources();
     __createFramebuffers();
+    __createTextureImage();
+    __createTextureImageView();
+    __createTextureSampler();
     __createVertexBuffer();
     __createIndexBuffer();
     __createUniformBuffers();
@@ -61,12 +68,26 @@ void CVulkanRenderer::init()
 
 void CVulkanRenderer::readData(std::string vFileName)
 {
+    // 硬编码数据
+    m_VertexData =
+    {
+        -1, -1, 0,  1, 0, 0,  0, 0, 1,  0, 0,
+        1, -1, 0,  0, 1, 0,  0, 0, 1,  1, 0,
+        1, 1, 0,  0, 0, 1,  0, 0, 1,  1, 1,
+        -1, 1, 0,  1, 0, 1,  0, 0, 1,  0, 1,
+    };
+    m_IndexData =
+    {
+        0, 1, 2, 0, 2, 3
+    };
+    return;
     // 读取顶点数据
     CIOObj Obj = CIOObj();
     Obj.read(vFileName);
 
     const std::vector<glm::vec3>& Vertices = Obj.getVertices();
-    const std::vector<glm::vec3>& Normals = Obj.getNormals();
+    std::vector<glm::vec3> Normals = Obj.getNormalPerVertex();
+    std::vector<glm::vec2> TexCoords = Obj.getRandomTexCoordPerVertex();
     for (size_t i = 0; i < Vertices.size(); i++)
     {
         m_VertexData.push_back(Vertices[i].x);
@@ -78,6 +99,8 @@ void CVulkanRenderer::readData(std::string vFileName)
         m_VertexData.push_back(Normals[i].x);
         m_VertexData.push_back(Normals[i].y);
         m_VertexData.push_back(Normals[i].z);
+        m_VertexData.push_back(TexCoords[i].x);
+        m_VertexData.push_back(TexCoords[i].y);
     }
     const std::vector<SObjFace>& Faces = Obj.getFaces();
     for (const SObjFace& Face : Faces)
@@ -385,21 +408,35 @@ void CVulkanRenderer::__createRenderPass()
 
 void CVulkanRenderer::__createDescriptorSetLayout()
 {
-    std::array<VkDescriptorSetLayoutBinding, 2> UboLayoutBindings = {};
-    UboLayoutBindings[0].binding = 0;
-    UboLayoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboLayoutBindings[0].descriptorCount = 1;
-    UboLayoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    VkDescriptorSetLayoutBinding UboVertBinding = {};
+    UboVertBinding.binding = 0;
+    UboVertBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    UboVertBinding.descriptorCount = 1;
+    UboVertBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-    UboLayoutBindings[1].binding = 1;
-    UboLayoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboLayoutBindings[1].descriptorCount = 1;
-    UboLayoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    VkDescriptorSetLayoutBinding UboFragBinding = {};
+    UboFragBinding.binding = 1;
+    UboFragBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    UboFragBinding.descriptorCount = 1;
+    UboFragBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+    VkDescriptorSetLayoutBinding SamplerBinding = {};
+    SamplerBinding.binding = 2;
+    SamplerBinding.descriptorCount = 1;
+    SamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    SamplerBinding.pImmutableSamplers = nullptr;
+    SamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    std::array<VkDescriptorSetLayoutBinding, 3> Bindings = 
+    {
+        UboVertBinding,
+        UboFragBinding,
+        SamplerBinding
+    };
     VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
     LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    LayoutInfo.bindingCount = static_cast<uint32_t>(UboLayoutBindings.size());
-    LayoutInfo.pBindings = UboLayoutBindings.data();
+    LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
+    LayoutInfo.pBindings = Bindings.data();
 
     ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorSetLayout));
 }
@@ -442,24 +479,8 @@ void CVulkanRenderer::__createGraphicsPipeline()
     InputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
     VkViewport Viewport = {};
-    float Aspect = m_WindowWidth / m_WindowHeight;
-    float CurrentWidth = (float)m_SwapchainExtent.width;
-    float CurrentHeight = (float)m_SwapchainExtent.height;
-
-    // 自动调整比例
-    if (CurrentWidth / Aspect > CurrentHeight) {
-        Viewport.x = 0.0f;
-        Viewport.y = (CurrentHeight - CurrentWidth / Aspect) / 2;
-        Viewport.width = CurrentWidth;
-        Viewport.height = CurrentWidth / Aspect;
-    }
-    else {
-        Viewport.x = (CurrentWidth - CurrentHeight * Aspect) / 2;
-        Viewport.y = 0.0f;
-        Viewport.width = CurrentHeight * Aspect;
-        Viewport.height = CurrentHeight;
-    }
-
+    Viewport.width = static_cast<float>(m_SwapchainExtent.width);
+    Viewport.height = static_cast<float>(m_SwapchainExtent.height);
     Viewport.minDepth = 0.0f;
     Viewport.maxDepth = 1.0f;
 
@@ -597,6 +618,64 @@ void CVulkanRenderer::__createFramebuffers()
     }
 }
 
+void CVulkanRenderer::__createTextureImage()
+{
+    CIOImage Image;
+    Image.read("textures/tex1.png");
+    int TexWidth = Image.getImageWidth();
+    int TexHeight = Image.getImageHeight();
+    const void* pPixelData = Image.getData();
+
+    VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
+    VkBuffer StagingBuffer;
+    VkDeviceMemory StagingBufferMemory;
+    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
+
+    void* pDevData;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pDevData));
+    memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
+    vkUnmapMemory(m_Device, StagingBufferMemory);
+
+    __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory);
+    __transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    __copyBufferToImage(StagingBuffer, m_TextureImage, TexWidth, TexHeight);
+    __transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+}
+
+void CVulkanRenderer::__createTextureImageView()
+{
+    m_TextureImageView = __createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+}
+
+void CVulkanRenderer::__createTextureSampler()
+{
+    VkPhysicalDeviceProperties Properties = {};
+    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
+
+    VkSamplerCreateInfo SamplerInfo = {};
+    SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    SamplerInfo.magFilter = VK_FILTER_NEAREST;
+    SamplerInfo.minFilter = VK_FILTER_NEAREST;
+    SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.anisotropyEnable = VK_TRUE;
+    SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
+    SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
+    SamplerInfo.compareEnable = VK_FALSE;
+    SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    SamplerInfo.mipLodBias = 0.0f;
+    SamplerInfo.minLod = 0.0f;
+    SamplerInfo.maxLod = 0.0f;
+
+    ck(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
+}
+
 void CVulkanRenderer::__createVertexBuffer()
 {
     if (m_VertexData.empty()) throw "vertex data is empty";
@@ -659,11 +738,13 @@ void CVulkanRenderer::__createUniformBuffers()
 
 void CVulkanRenderer::__createDescriptorPool()
 {
-    std::array<VkDescriptorPoolSize, 2> PoolSizes = {};
+    std::array<VkDescriptorPoolSize, 3> PoolSizes = {};
     PoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     PoolSizes[0].descriptorCount = static_cast<uint32_t>(m_SwapchainImages.size());
     PoolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     PoolSizes[1].descriptorCount = static_cast<uint32_t>(m_SwapchainImages.size());
+    PoolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    PoolSizes[2].descriptorCount = static_cast<uint32_t>(m_SwapchainImages.size());
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -699,7 +780,12 @@ void CVulkanRenderer::__createDescriptorSets()
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
 
-        std::array<VkWriteDescriptorSet, 2> DescriptorWrites = {};
+        VkDescriptorImageInfo ImageInfo = {};
+        ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        ImageInfo.imageView = m_TextureImageView;
+        ImageInfo.sampler = m_TextureSampler;
+
+        std::array<VkWriteDescriptorSet, 3> DescriptorWrites = {};
         DescriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         DescriptorWrites[0].dstSet = m_DescriptorSets[i];
         DescriptorWrites[0].dstBinding = 0;
@@ -715,6 +801,14 @@ void CVulkanRenderer::__createDescriptorSets()
         DescriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         DescriptorWrites[1].descriptorCount = 1;
         DescriptorWrites[1].pBufferInfo = &FragBufferInfo;
+
+        DescriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        DescriptorWrites[2].dstSet = m_DescriptorSets[i];
+        DescriptorWrites[2].dstBinding = 2;
+        DescriptorWrites[2].dstArrayElement = 0;
+        DescriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        DescriptorWrites[2].descriptorCount = 1;
+        DescriptorWrites[2].pImageInfo = &ImageInfo;
 
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
     }
@@ -1259,6 +1353,28 @@ void CVulkanRenderer::__copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkD
     __endSingleTimeCommands(CommandBuffer);
 }
 
+void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight)
+{
+    VkCommandBuffer CommandBuffer = __beginSingleTimeCommands();
+
+    VkBufferImageCopy Region = {};
+    Region.bufferOffset = 0;
+    Region.bufferRowLength = 0;
+    Region.bufferImageHeight = 0;
+
+    Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    Region.imageSubresource.mipLevel = 0;
+    Region.imageSubresource.baseArrayLayer = 0;
+    Region.imageSubresource.layerCount = 1;
+
+    Region.imageOffset = { 0, 0, 0 };
+    Region.imageExtent = { static_cast<uint32_t>(vWidth), static_cast<uint32_t>(vHeight), 1 };
+
+    vkCmdCopyBufferToImage(CommandBuffer, vBuffer, vImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
+    
+    __endSingleTimeCommands(CommandBuffer);
+}
+
 void CVulkanRenderer::__cleanupSwapChain()
 {
     vkDestroyImageView(m_Device, m_DepthImageView, nullptr);
@@ -1309,8 +1425,10 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vCurrentImage)
     auto CurrentTime = std::chrono::high_resolution_clock::now();
     float DeltaTime = std::chrono::duration<float, std::chrono::seconds::period>(CurrentTime - StartTime).count();
 
+    float Aspect = static_cast<float>(m_SwapchainExtent.width) / m_SwapchainExtent.height;
+    m_pCamera->setAspect(Aspect);
     SUniformBufferObjectVert UBO = {};
-    UBO.Model = glm::rotate(glm::mat4(1.0), DeltaTime * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    UBO.Model = glm::rotate(glm::mat4(1.0), DeltaTime * glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     //UBO.Model = glm::mat4(1.0f);
     UBO.View = m_pCamera->getViewMat();
     UBO.Proj = m_pCamera->getProjMat();

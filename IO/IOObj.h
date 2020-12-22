@@ -25,7 +25,7 @@ struct SObjFace
 struct SObj
 {
     std::vector<glm::vec3> Vertices;
-    std::vector<glm::vec2> TexCoors;
+    std::vector<glm::vec2> TexCoords;
     std::vector<glm::vec3> Normals;
     std::vector<SObjFace> Faces;
 };
@@ -39,12 +39,14 @@ public:
     size_t getFaceNum() const;
     size_t getFaceNodeNum(int vFaceIndex) const;
     glm::vec3 getVertex(int vFaceIndex, int vNodeIndex) const;
-    glm::vec2 getTexCoor(int vFaceIndex, int vNodeIndex) const;
+    glm::vec2 getTexCoord(int vFaceIndex, int vNodeIndex) const;
     glm::vec3 getNormal(int vFaceIndex, int vNodeIndex) const;
 
     const std::vector<glm::vec3>& getVertices() { return m_pObj->Vertices; }
+    std::vector<glm::vec3> getNormalPerVertex();
+    std::vector<glm::vec2> getRandomTexCoordPerVertex();
     const std::vector<glm::vec3>& getNormals() { return m_pObj->Normals; }
-    const std::vector<glm::vec2>& getTexCoors() { return m_pObj->TexCoors; }
+    const std::vector<glm::vec2>& getTexCoords() { return m_pObj->TexCoords; }
     const std::vector<SObjFace>& getFaces() { return m_pObj->Faces; }
 
 protected:
@@ -52,6 +54,7 @@ protected:
 
 private:
     void __calculateAverageNormals();
+    void __randomTexCoords();
 
     std::shared_ptr<SObj> m_pObj = nullptr;
     std::shared_ptr<CIOMtl> m_pMtl = nullptr;

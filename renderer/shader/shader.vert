@@ -4,6 +4,7 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inColor;
 layout(location = 2) in vec3 inNormal;
+layout(location = 3) in vec2 inTexCoord;
 
 layout(binding = 0) uniform UniformBufferObject
 {
@@ -15,6 +16,7 @@ layout(binding = 0) uniform UniformBufferObject
 layout(location = 0) out vec3 outFragColor;
 layout(location = 1) out vec3 outFragPosition;
 layout(location = 2) out vec3 outFragNormal;
+layout(location = 3) out vec2 outFragTexCoord;
 
 void main()
 {
@@ -23,4 +25,5 @@ void main()
     outFragColor = inColor;
     outFragPosition = (ubo.uModel * vec4(inPosition, 1.0)).xyz;
     outFragNormal = (ubo.uModel * vec4(inNormal, 1.0)).xyz;
+    outFragTexCoord = inTexCoord;
 }

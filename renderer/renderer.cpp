@@ -31,6 +31,7 @@ void mouseclickCallback(GLFWwindow* vpWindow, int vButton, int vAction, int vMod
 int main()
 {
 	g_pCamera = new CCamera;
+	g_pCamera->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
 
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

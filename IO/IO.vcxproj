@@ -128,6 +128,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderOutputFile />
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>$(STB_PATH)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -159,12 +160,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IOBase.cpp" />
+    <ClCompile Include="IOImage.cpp" />
     <ClCompile Include="IOLog.cpp" />
     <ClCompile Include="IOMtl.cpp" />
     <ClCompile Include="IOObj.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IOBase.h" />
+    <ClInclude Include="IOImage.h" />
     <ClInclude Include="IOLog.h" />
     <ClInclude Include="IOMtl.h" />
     <ClInclude Include="IOObj.h" />
