@@ -16,6 +16,6 @@
 - ~~读取并渲染dem文件~~
 ## 库
 - 图形API：vulkan
-- GUI库：glfw
+- GUI库：glfw+imgui
 - 数学库：glm
 - 图片读取：stb_image

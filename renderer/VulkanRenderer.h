@@ -132,7 +132,10 @@ private:
 
     void __cleanupSwapChain();
     void __recreateSwapChain();
-    void __updateUniformBuffer(uint32_t vCurrentImage);
+    void __updateUniformBuffer(uint32_t vImageIndex);
+    void __setupImgui();
+    void __renderImgui(uint32_t vImageIndex);
+    void __cleanupImgui();
     
     bool __checkValidationLayerSupport();
     std::vector<const char*> __getRequiredExtensions();
@@ -195,6 +198,11 @@ private:
     VkDeviceMemory m_TextureImageMemory = VK_NULL_HANDLE;
     VkImageView m_TextureImageView= VK_NULL_HANDLE;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
+
+    VkRenderPass m_ImguiRenderPass = VK_NULL_HANDLE;
+    VkCommandPool m_ImguiCommandPool = VK_NULL_HANDLE;
+    std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
+    std::vector<VkFramebuffer> m_ImguiFrameBuffers;
 
     std::vector<VkImage> m_SwapchainImages;
     VkFormat m_SwapchainImageFormat = VK_FORMAT_UNDEFINED;

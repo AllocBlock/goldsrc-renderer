@@ -7,8 +7,8 @@
 
 #include "VulkanRenderer.h"
 
-CCamera* g_pCamera = nullptr;
-enum Move {
+enum Move
+{
 	MOVE_STOP = 0x0000,
 	MOVE_FRONT = 0x0001,
 	MOVE_BEHIND = 0x0002,
@@ -17,6 +17,8 @@ enum Move {
 	MOVE_BOOST = 0x0010,
 	MOVE_SLOW = 0x0020,
 };
+
+CCamera* g_pCamera = nullptr;
 
 int g_MoveState = Move::MOVE_STOP;
 double g_MousePosX, g_MousePosY;
@@ -46,8 +48,8 @@ int main()
 	while (!glfwWindowShouldClose(pWindow))
 	{
 		glfwPollEvents();
-		Renderer.render();
 		updateCamera();
+		Renderer.render();
 	}
 	Renderer.waitDevice();
 	glfwDestroyWindow(pWindow);
