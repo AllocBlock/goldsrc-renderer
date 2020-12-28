@@ -1,12 +1,9 @@
 #pragma once
 #include "IOObj.h"
 #include "Camera.h"
+#include "ImguiVullkan.h"
 
 #include <vulkan/vulkan.h>
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <array>
 #include <optional>
@@ -16,8 +13,6 @@ const bool ENABLE_VALIDATION_LAYERS = true;
 #else
 const bool ENABLE_VALIDATION_LAYERS = false;
 #endif
-
-#define ck(E) do{if (E) throw "vulkan error happened";} while(0)
 
 struct SQueueFamilyIndices
 {
@@ -133,9 +128,6 @@ private:
     void __cleanupSwapChain();
     void __recreateSwapChain();
     void __updateUniformBuffer(uint32_t vImageIndex);
-    void __setupImgui();
-    void __renderImgui(uint32_t vImageIndex);
-    void __cleanupImgui();
     
     bool __checkValidationLayerSupport();
     std::vector<const char*> __getRequiredExtensions();
@@ -151,8 +143,6 @@ private:
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
     void __createImage(uint32_t vWidth, uint32_t vHeight, VkFormat vFormat, VkImageTiling vTiling, VkImageUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory);
     uint32_t __findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
-    VkCommandBuffer __beginSingleTimeCommands();
-    void __endSingleTimeCommands(VkCommandBuffer vCommandBuffer);
     void __transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout);
     bool __hasStencilComponent(VkFormat vFormat);
     void __createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
@@ -198,11 +188,7 @@ private:
     VkDeviceMemory m_TextureImageMemory = VK_NULL_HANDLE;
     VkImageView m_TextureImageView= VK_NULL_HANDLE;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-
-    VkRenderPass m_ImguiRenderPass = VK_NULL_HANDLE;
-    VkCommandPool m_ImguiCommandPool = VK_NULL_HANDLE;
-    std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
-    std::vector<VkFramebuffer> m_ImguiFrameBuffers;
+    CImguiVullkan* m_pImgui = nullptr;
 
     std::vector<VkImage> m_SwapchainImages;
     VkFormat m_SwapchainImageFormat = VK_FORMAT_UNDEFINED;

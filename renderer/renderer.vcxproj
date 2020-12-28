@@ -147,11 +147,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="ImguiVullkan.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="ImguiVullkan.h" />
     <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>

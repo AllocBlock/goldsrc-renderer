@@ -1,9 +1,6 @@
 #include "VulkanRenderer.h"
 #include "IOImage.h"
-
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
+#include "Common.h"
 
 #include <iostream>
 #include <vector>
@@ -20,7 +17,7 @@ CVulkanRenderer::CVulkanRenderer(GLFWwindow* vpWindow, CCamera* vpCamera)
 
 CVulkanRenderer::~CVulkanRenderer()
 {
-    __cleanupImgui();
+    delete m_pImgui;
     __cleanupSwapChain();
     vkDestroySampler(m_Device, m_TextureSampler, nullptr);
     vkDestroyImageView(m_Device, m_TextureImageView, nullptr);
@@ -70,7 +67,8 @@ void CVulkanRenderer::init()
     __createCommandBuffers();
     __createSemaphores();
 
-    __setupImgui();
+    SQueueFamilyIndices QueueIndex = __findQueueFamilies(m_PhysicalDevice);
+    m_pImgui = new CImguiVullkan(m_Instance, m_PhysicalDevice, m_Device, QueueIndex.GraphicsFamilyIndex.value(), m_GraphicsQueue, m_pWindow, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
 }
 
 void CVulkanRenderer::readData(std::string vFileName)
@@ -126,11 +124,7 @@ void CVulkanRenderer::readData(std::string vFileName)
 
 void CVulkanRenderer::render()
 {
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
-    ImGui::Render();
+    m_pImgui->render();
 
     ck(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()));
     ck(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex]));
@@ -141,8 +135,7 @@ void CVulkanRenderer::render()
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         __recreateSwapChain();
-        __cleanupImgui();
-        __setupImgui();
+        m_pImgui->updateFramebuffers(m_SwapchainExtent, m_SwapchainImageViews);
         return;
     }
     else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
@@ -151,14 +144,14 @@ void CVulkanRenderer::render()
     }
 
     __updateUniformBuffer(ImageIndex);
-    __renderImgui(ImageIndex);
+    VkCommandBuffer ImguiCommandBuffer = m_pImgui->requestCommandBuffer(ImageIndex);
 
     VkSemaphore WaitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrameIndex] };
     VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     std::vector<VkCommandBuffer> CommandBuffers =
     {
         m_CommandBuffers[ImageIndex],
-        m_ImguiCommandBuffers[ImageIndex]
+        ImguiCommandBuffer
     };
 
     VkSubmitInfo SubmitInfo = {};
@@ -190,8 +183,7 @@ void CVulkanRenderer::render()
     {
         m_FramebufferResized = false;
         __recreateSwapChain();
-        __cleanupImgui();
-        __setupImgui();
+        m_pImgui->updateFramebuffers(m_SwapchainExtent, m_SwapchainImageViews);
     }
     else if (Result != VK_SUCCESS)
     {
@@ -766,19 +758,7 @@ void CVulkanRenderer::__createDescriptorPool()
     {
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_SwapchainImages.size()) },
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_SwapchainImages.size()) },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(m_SwapchainImages.size()) },
-        // all below is for imgui, may use a separate pool for it
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(m_SwapchainImages.size()) }
     };
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -881,7 +861,6 @@ void CVulkanRenderer::__createCommandBuffers()
         RenderPassBeginInfo.renderArea.extent = m_SwapchainExtent;
         RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
         RenderPassBeginInfo.pClearValues = ClearValues.data();
-
 
         vkCmdBeginRenderPass(m_CommandBuffers[i], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
@@ -1239,42 +1218,8 @@ uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropert
     throw "failed to find suitable memory type!";
 }
 
-VkCommandBuffer CVulkanRenderer::__beginSingleTimeCommands() {
-    VkCommandBufferAllocateInfo CommandBufferAllocInfo = {};
-    CommandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    CommandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    CommandBufferAllocInfo.commandPool = m_CommandPool;
-    CommandBufferAllocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer CommandBuffer;
-    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, &CommandBuffer));
-
-    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
-
-    return CommandBuffer;
-}
-
-void CVulkanRenderer::__endSingleTimeCommands(VkCommandBuffer vCommandBuffer) {
-    ck(vkEndCommandBuffer(vCommandBuffer));
-
-    VkSubmitInfo SubmitInfo = {};
-    SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    SubmitInfo.commandBufferCount = 1;
-    SubmitInfo.pCommandBuffers = &vCommandBuffer;
-
-    ck(vkQueueSubmit(m_GraphicsQueue, 1, &SubmitInfo, VK_NULL_HANDLE));
-    ck(vkQueueWaitIdle(m_GraphicsQueue));
-
-    vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &vCommandBuffer);
-}
-
-
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout) {
-    VkCommandBuffer CommandBuffer = __beginSingleTimeCommands();
+    VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
 
     VkImageMemoryBarrier Barrier = {};
     Barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1347,7 +1292,7 @@ void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, 
         1, &Barrier
     );
 
-    __endSingleTimeCommands(CommandBuffer);
+    Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
 }
 
 bool CVulkanRenderer::__hasStencilComponent(VkFormat vFormat) {
@@ -1379,18 +1324,18 @@ void CVulkanRenderer::__createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsa
 
 void CVulkanRenderer::__copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize)
 {
-    VkCommandBuffer CommandBuffer = __beginSingleTimeCommands();
+    VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
 
     VkBufferCopy CopyRegion = {};
     CopyRegion.size = vSize;
     vkCmdCopyBuffer(CommandBuffer, vSrcBuffer, vDstBuffer, 1, &CopyRegion);
 
-    __endSingleTimeCommands(CommandBuffer);
+    Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
 }
 
 void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight)
 {
-    VkCommandBuffer CommandBuffer = __beginSingleTimeCommands();
+    VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
 
     VkBufferImageCopy Region = {};
     Region.bufferOffset = 0;
@@ -1407,7 +1352,7 @@ void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size
 
     vkCmdCopyBufferToImage(CommandBuffer, vBuffer, vImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
     
-    __endSingleTimeCommands(CommandBuffer);
+    Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
 }
 
 void CVulkanRenderer::__cleanupSwapChain()
@@ -1460,7 +1405,9 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     auto CurrentTime = std::chrono::high_resolution_clock::now();
     float DeltaTime = std::chrono::duration<float, std::chrono::seconds::period>(CurrentTime - StartTime).count();
 
-    float Aspect = static_cast<float>(m_SwapchainExtent.width) / m_SwapchainExtent.height;
+    float Aspect = 1.0;
+    if (m_SwapchainExtent.height > 0 && m_SwapchainExtent.width > 0)
+        Aspect = static_cast<float>(m_SwapchainExtent.width) / m_SwapchainExtent.height;
     m_pCamera->setAspect(Aspect);
     SUniformBufferObjectVert UBO = {};
     UBO.Model = glm::rotate(glm::mat4(1.0), DeltaTime * glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -1516,147 +1463,4 @@ VKAPI_ATTR VkBool32 VKAPI_CALL CVulkanRenderer::debugCallback(VkDebugUtilsMessag
     }
 
     return VK_FALSE;
-}
-
-void CVulkanRenderer::__setupImgui()
-{
-    uint32_t NumImage = static_cast<uint32_t>(m_SwapchainImages.size());
-    // setup context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& IO = ImGui::GetIO();
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForVulkan(m_pWindow, true);
-
-    // create renderpass
-    VkAttachmentDescription Attachment = {};
-    Attachment.format = m_SwapchainImageFormat;
-    Attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    Attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    Attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    Attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    Attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    Attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    Attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference ColorAttachmentRef = {};
-    ColorAttachmentRef.attachment = 0;
-    ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription Subpass = {};
-    Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    Subpass.colorAttachmentCount = 1;
-    Subpass.pColorAttachments = &ColorAttachmentRef;
-
-    VkSubpassDependency SubpassDependency = {}; // for render pass sync
-    SubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    SubpassDependency.dstSubpass = 0;
-    SubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependency.srcAccessMask = 0;
-    SubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo RenderPassInfo = {};
-    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    RenderPassInfo.attachmentCount = 1;
-    RenderPassInfo.pAttachments = &Attachment;
-    RenderPassInfo.subpassCount = 1;
-    RenderPassInfo.pSubpasses = &Subpass;
-    RenderPassInfo.dependencyCount = 1;
-    RenderPassInfo.pDependencies = &SubpassDependency;
-    ck(vkCreateRenderPass(m_Device, &RenderPassInfo, nullptr, &m_ImguiRenderPass));
-
-    // init vulkan
-    ImGui_ImplVulkan_InitInfo InitInfo = {};
-    InitInfo.Instance = m_Instance;
-    InitInfo.PhysicalDevice = m_PhysicalDevice;
-    InitInfo.Device = m_Device;
-    InitInfo.QueueFamily = __findQueueFamilies(m_PhysicalDevice).GraphicsFamilyIndex.value(); // need Graphic queue
-    InitInfo.Queue = m_GraphicsQueue;
-    InitInfo.PipelineCache = VK_NULL_HANDLE;
-    InitInfo.DescriptorPool = m_DescriptorPool;
-    InitInfo.Allocator = nullptr;
-    InitInfo.MinImageCount = NumImage;
-    InitInfo.ImageCount = NumImage;
-    InitInfo.CheckVkResultFn = nullptr;
-    ImGui_ImplVulkan_Init(&InitInfo, m_ImguiRenderPass);
-
-    // todo: image count may change when window resize
-    // for safety, use ImGui_ImplVulkan_SetMinImageCount when resizing
-
-    // upload font
-    VkCommandBuffer CommandBuffer = __beginSingleTimeCommands();
-    ImGui_ImplVulkan_CreateFontsTexture(CommandBuffer);
-    __endSingleTimeCommands(CommandBuffer);
-
-    // create command pool
-    VkCommandPoolCreateInfo CommandPoolInfo = {};
-    CommandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    CommandPoolInfo.queueFamilyIndex = __findQueueFamilies(m_PhysicalDevice).GraphicsFamilyIndex.value();
-    CommandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    ck(vkCreateCommandPool(m_Device, &CommandPoolInfo, nullptr, &m_ImguiCommandPool));
-
-    // create command buffers
-    m_ImguiCommandBuffers.resize(NumImage);
-    VkCommandBufferAllocateInfo CommandBufferInfo = {};
-    CommandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    CommandBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    CommandBufferInfo.commandPool = m_ImguiCommandPool;
-    CommandBufferInfo.commandBufferCount = NumImage;
-    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferInfo, m_ImguiCommandBuffers.data()));
-
-    // create framebuffers
-    m_ImguiFrameBuffers.resize(NumImage);
-    VkFramebufferCreateInfo FramebufferInfo = {};
-    FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    FramebufferInfo.renderPass = m_ImguiRenderPass;
-    FramebufferInfo.attachmentCount = 1;
-    FramebufferInfo.width = m_SwapchainExtent.width;
-    FramebufferInfo.height = m_SwapchainExtent.height;
-    FramebufferInfo.layers = 1;
-    for (uint32_t i = 0; i < NumImage; i++)
-    {
-        FramebufferInfo.pAttachments = &m_SwapchainImageViews[i];
-        ck(vkCreateFramebuffer(m_Device, &FramebufferInfo, nullptr, &m_ImguiFrameBuffers[i]));
-    }
-}
-
-void CVulkanRenderer::__renderImgui(uint32_t vImageIndex)
-{
-    VkClearValue ClearValue = {};
-    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CommandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    vkBeginCommandBuffer(m_ImguiCommandBuffers[vImageIndex], &CommandBufferBeginInfo);
-
-    VkRenderPassBeginInfo RenderPassBeginInfo = {};
-    RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass = m_ImguiRenderPass;
-    RenderPassBeginInfo.framebuffer = m_ImguiFrameBuffers[vImageIndex];
-    RenderPassBeginInfo.renderArea.extent = m_SwapchainExtent;
-    RenderPassBeginInfo.clearValueCount = 1;
-    RenderPassBeginInfo.pClearValues = &ClearValue;
-    vkCmdBeginRenderPass(m_ImguiCommandBuffers[vImageIndex], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[vImageIndex]);
-
-    vkCmdEndRenderPass(m_ImguiCommandBuffers[vImageIndex]);
-    ck(vkEndCommandBuffer(m_ImguiCommandBuffers[vImageIndex]));
-}
-
-void CVulkanRenderer::__cleanupImgui()
-{
-    for (auto Framebuffer : m_ImguiFrameBuffers)
-        vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
-
-    vkDestroyRenderPass(m_Device, m_ImguiRenderPass, nullptr);
-
-    vkFreeCommandBuffers(m_Device, m_ImguiCommandPool, static_cast<uint32_t>(m_ImguiCommandBuffers.size()), m_ImguiCommandBuffers.data());
-    vkDestroyCommandPool(m_Device, m_ImguiCommandPool, nullptr);
-
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
