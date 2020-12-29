@@ -9,9 +9,9 @@
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 
-CVulkanRenderer::CVulkanRenderer(GLFWwindow* vpWindow, CCamera* vpCamera)
+CVulkanRenderer::CVulkanRenderer(GLFWwindow* vpWindow)
     : m_pWindow(vpWindow),
-    m_pCamera(vpCamera)
+    m_pCamera(new CCamera)
 {
 }
 
@@ -196,6 +196,16 @@ void CVulkanRenderer::render()
 void CVulkanRenderer::waitDevice()
 {
     ck(vkDeviceWaitIdle(m_Device));
+}
+
+CCamera* CVulkanRenderer::getCamera()
+{
+    return m_pCamera;
+}
+
+GLFWwindow* CVulkanRenderer::getWindow()
+{
+    return m_pWindow;
 }
 
 void CVulkanRenderer::__createInstance()

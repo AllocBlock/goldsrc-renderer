@@ -19,7 +19,8 @@ struct SQueueFamilyIndices
     std::optional<uint32_t> GraphicsFamilyIndex;
     std::optional<uint32_t> PresentFamilyIndex;
 
-    bool isComplete() {
+    bool isComplete()
+    {
         return GraphicsFamilyIndex.has_value() && PresentFamilyIndex.has_value();
     }
 };
@@ -91,13 +92,15 @@ struct SUniformBufferObjectFrag
 class CVulkanRenderer
 {
 public:
-    CVulkanRenderer(GLFWwindow* vpWindow, CCamera* vpCamera);
+    CVulkanRenderer(GLFWwindow* vpWindow);
     ~CVulkanRenderer();
 
     void init();
     void readData(std::string vFileName);
     void render();
     void waitDevice();
+    CCamera* getCamera();
+    GLFWwindow* getWindow();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
 

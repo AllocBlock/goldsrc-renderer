@@ -149,6 +149,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="ImguiVullkan.cpp" />
+    <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
@@ -156,6 +157,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="ImguiVullkan.h" />
+    <ClInclude Include="Interactor.h" />
     <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>
