@@ -109,6 +109,7 @@ CImguiVullkan::~CImguiVullkan()
 
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
 
+    vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
     vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
     vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
 
@@ -119,6 +120,7 @@ CImguiVullkan::~CImguiVullkan()
 
 void CImguiVullkan::__createDescriptorPool()
 {
+    if (m_DescriptorPool != VK_NULL_HANDLE) vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
     std::vector<VkDescriptorPoolSize> PoolSizes =
     {
         { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -160,7 +162,7 @@ void CImguiVullkan::updateFramebuffers(VkExtent2D vExtent, const std::vector<VkI
     FramebufferInfo.width = m_Extent.width;
     FramebufferInfo.height = m_Extent.height;
     FramebufferInfo.layers = 1;
-    for (uint32_t i = 0; i < NumImage; i++)
+    for (uint32_t i = 0; i < NumImage; ++i)
     {
         FramebufferInfo.pAttachments = &vImageViews[i];
         ck(vkCreateFramebuffer(m_Device, &FramebufferInfo, nullptr, &m_FrameBuffers[i]));

@@ -175,12 +175,12 @@ std::vector<glm::vec3> CIOObj::getNormalPerVertex()
 
     std::vector<glm::vec3> Normals(NumVertex);
     std::vector<int> Counts(NumVertex);
-    for (size_t i = 0; i < NumVertex; i++)
+    for (size_t i = 0; i < NumVertex; ++i)
     {
         Normals[i] = glm::vec3(0.0, 0.0, 0.0);
         Counts[i] = 0;
     }
-    for (size_t i = 0; i < m_pObj->Faces.size(); i++)
+    for (size_t i = 0; i < m_pObj->Faces.size(); ++i)
     {
         glm::vec3 V1 = getVertex(i, 1) - getVertex(i, 0);
         glm::vec3 V2 = getVertex(i, 2) - getVertex(i, 0);
@@ -192,7 +192,7 @@ std::vector<glm::vec3> CIOObj::getNormalPerVertex()
             Counts[VertexIndex]++;
         }
     }
-    for (size_t i = 0; i < NumVertex; i++)
+    for (size_t i = 0; i < NumVertex; ++i)
         Normals[i] /= static_cast<double>(Counts[i]);
     return Normals;
 }
@@ -203,7 +203,7 @@ std::vector<glm::vec2> CIOObj::getRandomTexCoordPerVertex()
 
     std::vector<glm::vec2> TexCoords(NumVertex);
     std::default_random_engine RandomEngine;
-    for (size_t i = 0; i < NumVertex; i++)
+    for (size_t i = 0; i < NumVertex; ++i)
     {
         double RandomU = RandomEngine() / (RandomEngine.max() - RandomEngine.min());
         double RandomV = RandomEngine() / (RandomEngine.max() - RandomEngine.min());

@@ -13,7 +13,8 @@ layout(binding = 1) uniform UniformBufferObject
     vec3 uEye;
 } ubo;
 
-layout(binding = 2) uniform sampler2D uTexSampler;
+layout(binding = 2) uniform sampler uTexSampler;
+layout(binding = 3) uniform texture2D uTexture;
 
 void main()
 {
@@ -30,7 +31,7 @@ void main()
 
 	float fShadow = ambient + diffuse + specular;
 
-	vec3 TexColor = texture(uTexSampler, inFragTexCoord).xyz;
+	vec3 TexColor = texture(sampler2D(uTexture, uTexSampler), inFragTexCoord).xyz;
     
     outColor = vec4((inFragColor * 0.5 + TexColor * 0.5) * fShadow, 1.0);
 }

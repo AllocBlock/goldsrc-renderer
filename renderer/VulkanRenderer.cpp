@@ -20,15 +20,19 @@ CVulkanRenderer::~CVulkanRenderer()
     delete m_pImgui;
     __cleanupSwapChain();
     vkDestroySampler(m_Device, m_TextureSampler, nullptr);
-    vkDestroyImageView(m_Device, m_TextureImageView, nullptr);
-    vkDestroyImage(m_Device, m_TextureImage, nullptr);
-    vkFreeMemory(m_Device, m_TextureImageMemory, nullptr);
+    for (size_t i = 0; i < m_TextureImages.size(); ++i)
+    {
+        vkDestroyImageView(m_Device, m_TextureImageViews[i], nullptr);
+        vkDestroyImage(m_Device, m_TextureImages[i], nullptr);
+        vkFreeMemory(m_Device, m_TextureImageMemories[i], nullptr);
+    }
+    
     vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
     vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
     vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
     vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
     vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
-    for (size_t i = 0; i < m_MaxFrameInFlight; i++)
+    for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
         vkDestroySemaphore(m_Device, m_RenderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(m_Device, m_ImageAvailableSemaphores[i], nullptr);
@@ -56,8 +60,8 @@ void CVulkanRenderer::init()
     __createCommandPool();
     __createDepthResources();
     __createFramebuffers();
-    __createTextureImage();
-    __createTextureImageView();
+    __createTextureImages();
+    __createTextureImageViews();
     __createTextureSampler();
     __createVertexBuffer();
     __createIndexBuffer();
@@ -80,10 +84,16 @@ void CVulkanRenderer::readData(std::string vFileName)
         1, -1, 0,  0, 1, 0,  0, 0, 1,  1, 0,
         1, 1, 0,  0, 0, 1,  0, 0, 1,  1, 1,
         -1, 1, 0,  1, 0, 1,  0, 0, 1,  0, 1,
+
+        -1, 1, 0,  1, 0, 0,  0, 0, 1,  0, 0,
+        1, 1, 0,  0, 1, 0,  0, 0, 1,  1, 0,
+        1, 3, 0,  0, 0, 1,  0, 0, 1,  1, 1,
+        -1, 3, 0,  1, 0, 1,  0, 0, 1,  0, 1,
     };
     m_IndexData =
     {
-        0, 1, 2, 0, 2, 3
+        0, 1, 2, 0, 2, 3,
+        4, 5, 6, 4, 6, 7,
     };
     return;
     // 读取顶点数据
@@ -93,7 +103,7 @@ void CVulkanRenderer::readData(std::string vFileName)
     const std::vector<glm::vec3>& Vertices = Obj.getVertices();
     std::vector<glm::vec3> Normals = Obj.getNormalPerVertex();
     std::vector<glm::vec2> TexCoords = Obj.getRandomTexCoordPerVertex();
-    for (size_t i = 0; i < Vertices.size(); i++)
+    for (size_t i = 0; i < Vertices.size(); ++i)
     {
         m_VertexData.push_back(Vertices[i].x);
         m_VertexData.push_back(Vertices[i].y);
@@ -368,7 +378,7 @@ void CVulkanRenderer::__createImageViews()
 {
     m_SwapchainImageViews.resize(m_SwapchainImages.size());
 
-    for (uint32_t i = 0; i < m_SwapchainImageViews.size(); i++)
+    for (uint32_t i = 0; i < m_SwapchainImageViews.size(); ++i)
     {
         m_SwapchainImageViews[i] = __createImageView(m_SwapchainImages[i], m_SwapchainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
@@ -449,15 +459,23 @@ void CVulkanRenderer::__createDescriptorSetLayout()
     VkDescriptorSetLayoutBinding SamplerBinding = {};
     SamplerBinding.binding = 2;
     SamplerBinding.descriptorCount = 1;
-    SamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    SamplerBinding.pImmutableSamplers = nullptr;
+    SamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
     SamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    SamplerBinding.pImmutableSamplers = nullptr;
 
-    std::array<VkDescriptorSetLayoutBinding, 3> Bindings = 
+    VkDescriptorSetLayoutBinding TextureBinding = {};
+    TextureBinding.binding = 3;
+    TextureBinding.descriptorCount = 1;
+    TextureBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    TextureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    TextureBinding.pImmutableSamplers = nullptr;
+
+    std::vector<VkDescriptorSetLayoutBinding> Bindings = 
     {
         UboVertBinding,
         UboFragBinding,
-        SamplerBinding
+        SamplerBinding,
+        TextureBinding
     };
     VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
     LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -623,7 +641,7 @@ void CVulkanRenderer::__createDepthResources()
 void CVulkanRenderer::__createFramebuffers()
 {
     m_SwapchainFramebuffers.resize(m_SwapchainImageViews.size());
-    for (size_t i = 0; i < m_SwapchainImageViews.size(); i++)
+    for (size_t i = 0; i < m_SwapchainImageViews.size(); ++i)
     {
         std::array<VkImageView, 2> Attachments =
         {
@@ -644,36 +662,45 @@ void CVulkanRenderer::__createFramebuffers()
     }
 }
 
-void CVulkanRenderer::__createTextureImage()
+void CVulkanRenderer::__createTextureImages()
 {
-    CIOImage Image;
-    Image.read("textures/tex1.png");
-    int TexWidth = Image.getImageWidth();
-    int TexHeight = Image.getImageHeight();
-    const void* pPixelData = Image.getData();
+    size_t NumTextures = m_TexNames.size();
+    m_TextureImages.resize(NumTextures);
+    m_TextureImageMemories.resize(NumTextures);
+    for (size_t i = 0; i < NumTextures; ++i)
+    {
+        CIOImage Image;
+        Image.read(m_TexNames[i]);
+        int TexWidth = Image.getImageWidth();
+        int TexHeight = Image.getImageHeight();
+        const void* pPixelData = Image.getData();
 
-    VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
-    VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;
-    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
+        VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
+        VkBuffer StagingBuffer;
+        VkDeviceMemory StagingBufferMemory;
+        __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
-    void* pDevData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pDevData));
-    memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
-    vkUnmapMemory(m_Device, StagingBufferMemory);
+        void* pDevData;
+        ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pDevData));
+        memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
+        vkUnmapMemory(m_Device, StagingBufferMemory);
 
-    __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory);
-    __transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    __copyBufferToImage(StagingBuffer, m_TextureImage, TexWidth, TexHeight);
-    __transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImages[i], m_TextureImageMemories[i]);
+        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        __copyBufferToImage(StagingBuffer, m_TextureImages[i], TexWidth, TexHeight);
+        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+        vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+        vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+    }
 }
 
-void CVulkanRenderer::__createTextureImageView()
+void CVulkanRenderer::__createTextureImageViews()
 {
-    m_TextureImageView = __createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+    size_t NumTextures = m_TexNames.size();
+    m_TextureImageViews.resize(NumTextures);
+    for (size_t i = 0; i < NumTextures; ++i)
+        m_TextureImageViews[i] = __createImageView(m_TextureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CVulkanRenderer::__createTextureSampler()
@@ -755,7 +782,7 @@ void CVulkanRenderer::__createUniformBuffers()
     m_FragUniformBuffers.resize(NumSwapchainImage);
     m_FragUniformBufferMemories.resize(NumSwapchainImage);
 
-    for (size_t i = 0; i < m_SwapchainImages.size(); i++)
+    for (size_t i = 0; i < m_SwapchainImages.size(); ++i)
     {
         __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBuffers[i], m_VertUniformBufferMemories[i]);
         __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBuffers[i], m_FragUniformBufferMemories[i]);
@@ -768,14 +795,15 @@ void CVulkanRenderer::__createDescriptorPool()
     {
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_SwapchainImages.size()) },
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_SwapchainImages.size()) },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(m_SwapchainImages.size()) }
+        { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_SwapchainImages.size()) },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_SwapchainImages.size()) }
     };
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSizes.size());
     PoolInfo.pPoolSizes = PoolSizes.data();
-    PoolInfo.maxSets = static_cast<uint32_t>(m_SwapchainImages.size()) + 1000 * (PoolSizes.size() - 3);
+    PoolInfo.maxSets = static_cast<uint32_t>(m_SwapchainImages.size());
 
     ck(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
@@ -793,7 +821,13 @@ void CVulkanRenderer::__createDescriptorSets()
     m_DescriptorSets.resize(m_SwapchainImages.size());
     ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSets.data()));
 
-    for (size_t i = 0; i < m_DescriptorSets.size(); i++)
+    __updateDescriptorSetsByTexIndex(0);
+}
+
+void CVulkanRenderer::__updateDescriptorSetsByTexIndex(size_t vTexIndex)
+{
+    _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TextureImageViews.size());
+    for (size_t i = 0; i < m_DescriptorSets.size(); ++i)
     {
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_VertUniformBuffers[i];
@@ -805,12 +839,17 @@ void CVulkanRenderer::__createDescriptorSets()
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
 
-        VkDescriptorImageInfo ImageInfo = {};
-        ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        ImageInfo.imageView = m_TextureImageView;
-        ImageInfo.sampler = m_TextureSampler;
+        VkDescriptorImageInfo SamplerInfo = {};
+        SamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        SamplerInfo.imageView = VK_NULL_HANDLE;
+        SamplerInfo.sampler = m_TextureSampler;
 
-        std::array<VkWriteDescriptorSet, 3> DescriptorWrites = {};
+        VkDescriptorImageInfo ImageInfo;
+        ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        ImageInfo.imageView = m_TextureImageViews[vTexIndex];
+        ImageInfo.sampler = VK_NULL_HANDLE;
+
+        std::array<VkWriteDescriptorSet, 4> DescriptorWrites = {};
         DescriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         DescriptorWrites[0].dstSet = m_DescriptorSets[i];
         DescriptorWrites[0].dstBinding = 0;
@@ -831,9 +870,17 @@ void CVulkanRenderer::__createDescriptorSets()
         DescriptorWrites[2].dstSet = m_DescriptorSets[i];
         DescriptorWrites[2].dstBinding = 2;
         DescriptorWrites[2].dstArrayElement = 0;
-        DescriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        DescriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
         DescriptorWrites[2].descriptorCount = 1;
-        DescriptorWrites[2].pImageInfo = &ImageInfo;
+        DescriptorWrites[2].pImageInfo = &SamplerInfo;
+
+        DescriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        DescriptorWrites[3].dstSet = m_DescriptorSets[i];
+        DescriptorWrites[3].dstBinding = 3;
+        DescriptorWrites[3].dstArrayElement = 0;
+        DescriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        DescriptorWrites[3].descriptorCount = 1;
+        DescriptorWrites[3].pImageInfo = &ImageInfo;
 
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
     }
@@ -851,7 +898,7 @@ void CVulkanRenderer::__createCommandBuffers()
 
     ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_CommandBuffers.data()));
 
-    for (size_t i = 0; i < m_CommandBuffers.size(); i++)
+    for (size_t i = 0; i < m_CommandBuffers.size(); ++i)
     {
         VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -880,7 +927,9 @@ void CVulkanRenderer::__createCommandBuffers()
         vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, Offsets);
         vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-        vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(m_IndexData.size()), 1, 0, 0, 0);
+
+        vkCmdDrawIndexed(m_CommandBuffers[i], 6, 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CommandBuffers[i], 6, 1, 6, 0, 0);
 
         vkCmdEndRenderPass(m_CommandBuffers[i]);
         ck(vkEndCommandBuffer(m_CommandBuffers[i]));
@@ -900,7 +949,7 @@ void CVulkanRenderer::__createSemaphores()
     FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < m_MaxFrameInFlight; i++)
+    for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
         ck(vkCreateSemaphore(m_Device, &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
         ck(vkCreateSemaphore(m_Device, &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
@@ -993,7 +1042,7 @@ SQueueFamilyIndices CVulkanRenderer::__findQueueFamilies(const VkPhysicalDevice&
     vkGetPhysicalDeviceQueueFamilyProperties(vPhysicalDevice, &NumQueueFamily, QueueFamilies.data());
 
     SQueueFamilyIndices Indices;
-    for (size_t i = 0; i < NumQueueFamily; i++)
+    for (size_t i = 0; i < NumQueueFamily; ++i)
     {
         if (QueueFamilies[i].queueCount > 0 &&
             QueueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
@@ -1216,7 +1265,7 @@ uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropert
 {
     VkPhysicalDeviceMemoryProperties MemProperties;
     vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &MemProperties);
-    for (uint32_t i = 0; i < MemProperties.memoryTypeCount; i++)
+    for (uint32_t i = 0; i < MemProperties.memoryTypeCount; ++i)
     {
         if (vTypeFilter & (1 << i) && 
             (MemProperties.memoryTypes[i].propertyFlags & vProperties))
@@ -1382,7 +1431,7 @@ void CVulkanRenderer::__cleanupSwapChain()
         vkDestroyImageView(m_Device, ImageView, nullptr);
 
     vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
-    for (size_t i = 0; i < m_SwapchainImages.size(); i++)
+    for (size_t i = 0; i < m_SwapchainImages.size(); ++i)
     {
         vkDestroyBuffer(m_Device, m_VertUniformBuffers[i], nullptr);
         vkFreeMemory(m_Device, m_VertUniformBufferMemories[i], nullptr);

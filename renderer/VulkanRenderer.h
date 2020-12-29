@@ -117,8 +117,8 @@ private:
     void __createCommandPool();
     void __createDepthResources();
     void __createFramebuffers();
-    void __createTextureImage();
-    void __createTextureImageView();
+    void __createTextureImages();
+    void __createTextureImageViews();
     void __createTextureSampler();
     void __createVertexBuffer();
     void __createIndexBuffer();
@@ -152,6 +152,7 @@ private:
     void __copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
     VkShaderModule __createShaderModule(const std::vector<char>& vShaderCode);
     void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight);
+    void __updateDescriptorSetsByTexIndex(size_t vTexIndex);
 
     void __setupDebugMessenger();
     void __destroyDebugMessenger();
@@ -187,9 +188,9 @@ private:
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
     std::vector<VkFence> m_InFlightFences;
-    VkImage m_TextureImage = VK_NULL_HANDLE;
-    VkDeviceMemory m_TextureImageMemory = VK_NULL_HANDLE;
-    VkImageView m_TextureImageView= VK_NULL_HANDLE;
+    std::vector<VkImage> m_TextureImages;
+    std::vector<VkDeviceMemory> m_TextureImageMemories;
+    std::vector<VkImageView> m_TextureImageViews;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
     CImguiVullkan* m_pImgui = nullptr;
 
@@ -212,6 +213,12 @@ private:
     const std::vector<const char*> m_DeviceExtensions = 
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
+    const std::vector<std::string> m_TexNames =
+    {
+        "textures/tex1.png",
+        "textures/tex2.png"
     };
 
     const float m_WindowWidth = 800;
