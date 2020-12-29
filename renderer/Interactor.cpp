@@ -1,4 +1,5 @@
 #include "Interactor.h"
+#include "imgui.h"
 
 CInteractor::CInteractor(CVulkanRenderer* vpRender)
 	:m_pRenderer(vpRender)
@@ -21,6 +22,7 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 {
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
+	if (ImGui::GetIO().WantCaptureKeyboard) return;
 
 	int& MoveState = pInteractor->m_MoveState;
 	if (vKey == GLFW_KEY_W)
@@ -77,6 +79,7 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 	{
 		if (vAction == GLFW_PRESS)
 		{
+			if (ImGui::GetIO().WantCaptureMouse) return;
 			pInteractor->m_IsMoving = true;
 			glfwGetCursorPos(vpWindow, &pInteractor->m_LastMousePosX, &pInteractor->m_LastMousePosY);
 			
