@@ -160,6 +160,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IOBase.cpp" />
+    <ClCompile Include="IOGoldSrcMap.cpp" />
+    <ClCompile Include="IOGoldsrcWad.cpp" />
     <ClCompile Include="IOImage.cpp" />
     <ClCompile Include="IOLog.cpp" />
     <ClCompile Include="IOMtl.cpp" />
@@ -167,6 +169,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IOBase.h" />
+    <ClInclude Include="IOGoldSrcMap.h" />
+    <ClInclude Include="IOGoldsrcWad.h" />
     <ClInclude Include="IOImage.h" />
     <ClInclude Include="IOLog.h" />
     <ClInclude Include="IOMtl.h" />

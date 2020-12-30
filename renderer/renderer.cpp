@@ -3,9 +3,13 @@
 
 #include <GLFW/glfw3.h>
 #include <chrono>
+#include "IOGoldSrcMap.h"
 
 int main()
 {
+	CIOGoldSrcMap Map("../data/test.map");
+	Map.read();
+
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow* pWindow = glfwCreateWindow(800, 600, "Vulkan Simple Render", nullptr, nullptr);
