@@ -78,26 +78,6 @@ void CVulkanRenderer::init()
 
 void CVulkanRenderer::readData(std::string vFileName)
 {
-    // 硬编码数据
-    m_VertexData =
-    {
-        -1, -1, 0,  1, 0, 0,  0, 0, 1,  0, 0,
-        1, -1, 0,  0, 1, 0,  0, 0, 1,  1, 0,
-        1, 1, 0,  0, 0, 1,  0, 0, 1,  1, 1,
-        -1, 1, 0,  1, 0, 1,  0, 0, 1,  0, 1,
-
-        -1, 1, 0,  1, 0, 0,  0, 0, 1,  0, 0,
-        1, 1, 0,  0, 1, 0,  0, 0, 1,  1, 0,
-        1, 3, 0,  0, 0, 1,  0, 0, 1,  1, 1,
-        -1, 3, 0,  1, 0, 1,  0, 0, 1,  0, 1,
-    };
-    m_IndexData =
-    {
-        0, 1, 2, 0, 2, 3,
-        4, 5, 6, 4, 6, 7,
-    };
-    return;
-    // 读取顶点数据
     CIOObj Obj = CIOObj();
     Obj.read(vFileName);
 
@@ -948,10 +928,10 @@ void CVulkanRenderer::__createCommandBuffers()
         SPushConstant PushConstant = {};
         PushConstant.TexIndex = 0;
         vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
-        vkCmdDrawIndexed(m_CommandBuffers[i], 6, 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CommandBuffers[i], m_IndexData.size() / 2, 1, 0, 0, 0);
         PushConstant.TexIndex = 1;
         vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
-        vkCmdDrawIndexed(m_CommandBuffers[i], 6, 1, 6, 0, 0);
+        vkCmdDrawIndexed(m_CommandBuffers[i], m_IndexData.size() / 2, 1, m_IndexData.size() / 2, 0, 0);
 
         vkCmdEndRenderPass(m_CommandBuffers[i]);
         ck(vkEndCommandBuffer(m_CommandBuffers[i]));

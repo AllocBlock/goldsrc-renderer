@@ -203,10 +203,11 @@ std::vector<glm::vec2> CIOObj::getRandomTexCoordPerVertex()
 
     std::vector<glm::vec2> TexCoords(NumVertex);
     std::default_random_engine RandomEngine;
+    RandomEngine
     for (size_t i = 0; i < NumVertex; ++i)
     {
-        double RandomU = RandomEngine() / (RandomEngine.max() - RandomEngine.min());
-        double RandomV = RandomEngine() / (RandomEngine.max() - RandomEngine.min());
+        double RandomU = static_cast<double>(RandomEngine()) / (RandomEngine.max() - RandomEngine.min());
+        double RandomV = static_cast<double>(RandomEngine()) / (RandomEngine.max() - RandomEngine.min());
         TexCoords[i] = glm::vec2(RandomU, RandomV);
     }
     return TexCoords;
