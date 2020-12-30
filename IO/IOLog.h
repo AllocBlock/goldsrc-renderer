@@ -7,7 +7,7 @@ class CIOLog
 {
 public:
     static CIOLog* GlobalLogger;
-    CIOLog(std::string vFileName = "");
+    CIOLog(std::string vFileName = "Events.log");
     ~CIOLog();
 
     bool isFileSet();

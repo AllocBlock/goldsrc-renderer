@@ -89,6 +89,11 @@ struct SUniformBufferObjectFrag
     alignas(16) glm::vec3 Eye;
 };
 
+struct SPushConstant
+{
+    alignas(16) unsigned int TexIndex;
+};
+
 class CVulkanRenderer
 {
 public:
@@ -152,7 +157,8 @@ private:
     void __copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
     VkShaderModule __createShaderModule(const std::vector<char>& vShaderCode);
     void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight);
-    void __updateDescriptorSetsByTexIndex(size_t vTexIndex);
+    size_t __getActualTextureNum();
+    void __updateDescriptorSets();
 
     void __setupDebugMessenger();
     void __destroyDebugMessenger();
@@ -224,6 +230,7 @@ private:
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;
     const int m_MaxFrameInFlight = 2;
+    const size_t m_MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
 
     int m_CurrentFrameIndex = 0;
     bool m_FramebufferResized = false;

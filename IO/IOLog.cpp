@@ -18,7 +18,11 @@ bool CIOLog::isFileSet()
 
 void CIOLog::setFile(std::string vFileName)
 {
-    if (m_OutStream && m_OutStream.is_open()) m_OutStream.close();
+    if (m_OutStream && m_OutStream.is_open())
+    {
+        if (m_FileName == vFileName) return;
+        else m_OutStream.close();
+    }
     m_FileName = vFileName;
     m_OutStream.open(vFileName);
 }
@@ -51,13 +55,13 @@ namespace GlobalLogger {
     template <typename T>
     bool log(T vData)
     {
-        if (CIOLog::GlobalLogger) return false;
-        else return CIOLog::GlobalLogger->log(vData);
+        if (!CIOLog::GlobalLogger) CIOLog::GlobalLogger = new CIOLog();
+        return CIOLog::GlobalLogger->log(vData);
     }
 
     std::ostream& logStream()
     {
-        _ASSERTE(CIOLog::GlobalLogger);
+        if (!CIOLog::GlobalLogger) CIOLog::GlobalLogger = new CIOLog();
         return CIOLog::GlobalLogger->logStream();
     }
 }

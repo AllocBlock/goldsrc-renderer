@@ -1,4 +1,5 @@
 #include "VulkanRenderer.h"
+#include "IOLog.h"
 #include "IOImage.h"
 #include "Common.h"
 
@@ -465,7 +466,7 @@ void CVulkanRenderer::__createDescriptorSetLayout()
 
     VkDescriptorSetLayoutBinding TextureBinding = {};
     TextureBinding.binding = 3;
-    TextureBinding.descriptorCount = 1;
+    TextureBinding.descriptorCount = m_MaxTextureNum;
     TextureBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     TextureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     TextureBinding.pImmutableSamplers = nullptr;
@@ -588,12 +589,17 @@ void CVulkanRenderer::__createGraphicsPipeline()
     ColorBlending.blendConstants[2] = 0.0f; // Optional
     ColorBlending.blendConstants[3] = 0.0f; // Optional
 
+    VkPushConstantRange PushConstantInfo = {};
+    PushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    PushConstantInfo.offset = 0;
+    PushConstantInfo.size = sizeof(SPushConstant);
+
     VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
     PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutInfo.setLayoutCount = 1;
     PipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-    PipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-    PipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+    PipelineLayoutInfo.pushConstantRangeCount = 1;
+    PipelineLayoutInfo.pPushConstantRanges = &PushConstantInfo;
 
     ck(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
@@ -664,7 +670,7 @@ void CVulkanRenderer::__createFramebuffers()
 
 void CVulkanRenderer::__createTextureImages()
 {
-    size_t NumTextures = m_TexNames.size();
+    size_t NumTextures = __getActualTextureNum();
     m_TextureImages.resize(NumTextures);
     m_TextureImageMemories.resize(NumTextures);
     for (size_t i = 0; i < NumTextures; ++i)
@@ -697,7 +703,7 @@ void CVulkanRenderer::__createTextureImages()
 
 void CVulkanRenderer::__createTextureImageViews()
 {
-    size_t NumTextures = m_TexNames.size();
+    size_t NumTextures = __getActualTextureNum();
     m_TextureImageViews.resize(NumTextures);
     for (size_t i = 0; i < NumTextures; ++i)
         m_TextureImageViews[i] = __createImageView(m_TextureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -796,7 +802,7 @@ void CVulkanRenderer::__createDescriptorPool()
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_SwapchainImages.size()) },
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_SwapchainImages.size()) },
         { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_SwapchainImages.size()) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_SwapchainImages.size()) }
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_SwapchainImages.size() * m_MaxTextureNum) }
     };
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -821,12 +827,11 @@ void CVulkanRenderer::__createDescriptorSets()
     m_DescriptorSets.resize(m_SwapchainImages.size());
     ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSets.data()));
 
-    __updateDescriptorSetsByTexIndex(0);
+    __updateDescriptorSets();
 }
 
-void CVulkanRenderer::__updateDescriptorSetsByTexIndex(size_t vTexIndex)
+void CVulkanRenderer::__updateDescriptorSets()
 {
-    _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TextureImageViews.size());
     for (size_t i = 0; i < m_DescriptorSets.size(); ++i)
     {
         VkDescriptorBufferInfo VertBufferInfo = {};
@@ -844,11 +849,23 @@ void CVulkanRenderer::__updateDescriptorSetsByTexIndex(size_t vTexIndex)
         SamplerInfo.imageView = VK_NULL_HANDLE;
         SamplerInfo.sampler = m_TextureSampler;
 
-        VkDescriptorImageInfo ImageInfo;
-        ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        ImageInfo.imageView = m_TextureImageViews[vTexIndex];
-        ImageInfo.sampler = VK_NULL_HANDLE;
-
+        const size_t NumTexture = __getActualTextureNum();
+        std::vector<VkDescriptorImageInfo> ImageInfos(m_MaxTextureNum);
+        for (size_t i = 0; i < m_MaxTextureNum; ++i)
+        {
+            // for unused element, fill like the first one (weird method but avoid validation warning)
+            if (i >= NumTexture)
+            {
+                ImageInfos[i] = ImageInfos[0];
+            }
+            else
+            {
+                ImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                ImageInfos[i].imageView = m_TextureImageViews[i];
+                ImageInfos[i].sampler = VK_NULL_HANDLE;
+            }
+        }
+        
         std::array<VkWriteDescriptorSet, 4> DescriptorWrites = {};
         DescriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         DescriptorWrites[0].dstSet = m_DescriptorSets[i];
@@ -879,8 +896,8 @@ void CVulkanRenderer::__updateDescriptorSetsByTexIndex(size_t vTexIndex)
         DescriptorWrites[3].dstBinding = 3;
         DescriptorWrites[3].dstArrayElement = 0;
         DescriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        DescriptorWrites[3].descriptorCount = 1;
-        DescriptorWrites[3].pImageInfo = &ImageInfo;
+        DescriptorWrites[3].descriptorCount = static_cast<uint32_t>(ImageInfos.size());
+        DescriptorWrites[3].pImageInfo = ImageInfos.data();
 
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
     }
@@ -928,7 +945,12 @@ void CVulkanRenderer::__createCommandBuffers()
         vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 
+        SPushConstant PushConstant = {};
+        PushConstant.TexIndex = 0;
+        vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
         vkCmdDrawIndexed(m_CommandBuffers[i], 6, 1, 0, 0, 0);
+        PushConstant.TexIndex = 1;
+        vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
         vkCmdDrawIndexed(m_CommandBuffers[i], 6, 1, 6, 0, 0);
 
         vkCmdEndRenderPass(m_CommandBuffers[i]);
@@ -1412,6 +1434,17 @@ void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size
     vkCmdCopyBufferToImage(CommandBuffer, vBuffer, vImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
     
     Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
+}
+
+size_t CVulkanRenderer::__getActualTextureNum()
+{
+    size_t NumTexture = m_TexNames.size();
+    if (NumTexture > m_MaxTextureNum)
+    {
+        GlobalLogger::logStream() << "Warning: Texture Num = (" << std::to_string(NumTexture) << ") is greater than limit (" << std::to_string(m_MaxTextureNum) << "), overflow textures are ignored" << std::endl;
+        NumTexture = m_MaxTextureNum;
+    }
+    return NumTexture;
 }
 
 void CVulkanRenderer::__cleanupSwapChain()

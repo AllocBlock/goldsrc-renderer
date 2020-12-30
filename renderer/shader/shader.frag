@@ -8,13 +8,17 @@ layout(location = 3) in vec2 inFragTexCoord;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 1) uniform UniformBufferObject
+#define MAX_TEXTURE_NUM 2048 // if need change, you should change this in renderer config as well
+layout(binding = 1) uniform SUniformBufferObject
 {
     vec3 uEye;
 } ubo;
-
 layout(binding = 2) uniform sampler uTexSampler;
-layout(binding = 3) uniform texture2D uTexture;
+layout(binding = 3) uniform texture2D uTextures[MAX_TEXTURE_NUM];
+layout(push_constant) uniform SPushConstant 
+{
+	uint TexIndex;
+} uPushConstant;
 
 void main()
 {
@@ -31,7 +35,9 @@ void main()
 
 	float fShadow = ambient + diffuse + specular;
 
-	vec3 TexColor = texture(sampler2D(uTexture, uTexSampler), inFragTexCoord).xyz;
+	uint TexIndex = uPushConstant.TexIndex;
+	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
+	vec3 TexColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord).xyz;
     
     outColor = vec4((inFragColor * 0.5 + TexColor * 0.5) * fShadow, 1.0);
 }
