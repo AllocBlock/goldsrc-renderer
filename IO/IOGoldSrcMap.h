@@ -9,7 +9,6 @@
 
 struct CMapPlane
 {
-public:
 	std::array<glm::vec3, 3> Points;
 	std::string TextureName;
 	glm::vec3 TextureDirectionU;
@@ -20,36 +19,43 @@ public:
 	float TextureScaleU;
 	float TextureScaleV;
 
-	glm::vec3 getNormal();
-	float getDistanceToFace(glm::vec3 target);
-	glm::vec3 correctNormal(glm::vec3 o);
-
+	glm::vec3 getNormal() const;
+	float getDistanceToFace(glm::vec3 vPoint = glm::vec3(0, 0, 0)) const;
+	glm::vec3 correctNormal(glm::vec3 vN) const;
 };
 
-struct MapPolygon
+struct CMapPolygon
 {
-public:
-	std::vector<glm::vec3> vertexList;
-	CMapPlane* plane;
+	std::vector<glm::vec3> Vertices;
+	const CMapPlane* pPlane;
+
+	std::vector<glm::vec3> getVertices() const { return Vertices; }
+	std::vector<glm::vec2> getTexCoords();
+	glm::vec3 getNormal() const { return pPlane->getNormal(); };
+
+private:
+	glm::vec2 __calcTexCoord(glm::vec3 vVertex);
+	std::vector<glm::vec2> m_TexCoords;
 };
 
 struct CMapBrush
 {
-public:
 	std::vector<CMapPlane> Planes;
 
-	/*std::vector<MapPolygon> GetPolygonList();
-	bool GetIntersection(vec3& iPoint, int plane1, int plane2, int plane3);
-	void SortVertices(std::vector<MapPolygon>& polygonList);*/
+	std::vector<CMapPolygon> getPolygons();
+	
+	static void sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const glm::vec3 vNormal);
+	
+private:
+	bool __getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPlane2, size_t vPlane3);
+	
+	std::vector<CMapPolygon> m_Polygons;
 };
 
 struct CMapEntity
 {
-public:
 	std::map<std::string, std::string> Properties;
 	std::vector<CMapBrush> Brushes;
-
-	std::vector<MapPolygon> GetPolygonList();
 
 	void read(std::string vTextEntity);
 private:
@@ -84,9 +90,10 @@ public:
 	CIOGoldSrcMap(std::string vFileName) :CIOBase(vFileName) {}
 
 	std::vector<std::string> getWadPaths();
-	std::vector<MapPolygon> getPolygons();
+	const std::vector<CMapEntity>& getEntities() { return m_Entities; }
 	std::set<std::string> getUsedTextureNames();
-	void PrintMapInfo();
+	std::vector<CMapPolygon> getAllPolygons();
+	std::string toString();
 
 protected:
 	virtual bool _readV(std::string vFileName) override;
@@ -94,9 +101,3 @@ protected:
 private:
 	std::vector<CMapEntity> m_Entities;
 };
-
-//class MapParser {
-//public:
-//	static bool ParseMapFile(CIOGoldSrcMap& map, string filename);
-//	static vec2 getTexCoordinates(MapPolygon polygon, int textureWidth, int textureHeight, int index);
-//};

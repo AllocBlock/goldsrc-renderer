@@ -109,7 +109,7 @@ void SWadTexture::read(std::ifstream& vFile, uint32_t vOffset)
 
     vFile.read(reinterpret_cast<char*>(StringBuffer),     sizeof(char[16]));
     NameOrigin = StringBuffer;
-    NameUpperCase = __toUpperCase(NameOrigin);
+    NameUpperCase = CIOBase::toUpperCase(NameOrigin);
     vFile.read(reinterpret_cast<char*>(&Width),           sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(&Height),          sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(&ImageOffsets[0]), sizeof(uint32_t));

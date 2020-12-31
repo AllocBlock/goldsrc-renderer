@@ -9,6 +9,9 @@
 #include "IOGoldSrcWad.h"
 #include "IOImage.h"
 
+void readObj(std::string vFileName, CVulkanRenderer& voRenderer);
+void readMap(std::string vFileName, CVulkanRenderer& voRenderer);
+
 int main()
 {
 	glfwInit();
@@ -42,57 +45,45 @@ int main()
 
 void readObj(std::string vFileName, CVulkanRenderer& voRenderer)
 {
-    std::vector<float> VertexData;
-    std::vector<uint32_t> IndexData;
-
     CIOObj Obj = CIOObj();
     Obj.read(vFileName);
 
-    const std::vector<glm::vec3>& Vertices = Obj.getVertices();
-    std::vector<glm::vec3> Normals = Obj.getNormalPerVertex();
-    std::vector<glm::vec2> TexCoords = Obj.getRandomTexCoordPerVertex();
-    for (size_t i = 0; i < Vertices.size(); ++i)
+    S3DObject ObjObject;
+    ObjObject.Vertices = Obj.getVertices();
+    ObjObject.Normals = Obj.getNormalPerVertex();
+    ObjObject.TexCoords = Obj.getRandomTexCoordPerVertex();
+    for (size_t i = 0; i < ObjObject.Vertices.size(); ++i)
     {
-        VertexData.push_back(Vertices[i].x);
-        VertexData.push_back(Vertices[i].y);
-        VertexData.push_back(Vertices[i].z);
-        VertexData.push_back(1);
-        VertexData.push_back(0);
-        VertexData.push_back(0);
-        VertexData.push_back(Normals[i].x);
-        VertexData.push_back(Normals[i].y);
-        VertexData.push_back(Normals[i].z);
-        VertexData.push_back(TexCoords[i].x);
-        VertexData.push_back(TexCoords[i].y);
+        ObjObject.Colors.emplace_back(glm::vec3(1.0, 0.0, 0.0));
     }
+
     const std::vector<SObjFace>& Faces = Obj.getFaces();
     for (const SObjFace& Face : Faces)
     {
         uint32_t Node1 = Face.Nodes[0].VectexId - 1;
-        for (size_t k = 2; k < Face.Nodes.size(); k++)
+        for (size_t k = 2; k < Face.Nodes.size(); ++k)
         {
             uint32_t Node2 = Face.Nodes[k - 1].VectexId - 1;
             uint32_t Node3 = Face.Nodes[k].VectexId - 1;
-            IndexData.push_back(Node1);
-            IndexData.push_back(Node2);
-            IndexData.push_back(Node3);
+            ObjObject.Indices.emplace_back(Node1);
+            ObjObject.Indices.emplace_back(Node2);
+            ObjObject.Indices.emplace_back(Node3);
         }
     }
-    voRenderer.setVertexData(VertexData);
-    voRenderer.setIndexData(IndexData);
+
+    std::vector<S3DObject> SceneObjects;
+    SceneObjects.emplace_back(ObjObject);
+    voRenderer.setSceneObjects(SceneObjects);
 }
 
 void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
 {
-    std::vector<float> VertexData;
-    std::vector<uint32_t> IndexData;
-
     CIOGoldSrcMap Map = CIOGoldSrcMap(vFileName);
     Map.read();
     std::vector<std::string> WadPaths = Map.getWadPaths();
     std::vector<CIOGoldsrcWad> Wads(WadPaths.size());
     
-    for (size_t i = 0; i < WadPaths.size(); i++)
+    for (size_t i = 0; i < WadPaths.size(); ++i)
     {
         Wads[i].read(WadPaths[i]);
     }
@@ -100,9 +91,8 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
     std::vector<CIOImage> TexImages;
     std::map<std::string, uint32_t> TexIndexMap;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
-    for (size_t i = 0; i < UsedTextureNames.size(); i++)
+    for (const std::string& TexName : UsedTextureNames)
     {
-        const std::string& TexName = UsedTextureNames[i];
         for (const CIOGoldsrcWad& Wad : Wads)
         {
             std::optional<size_t> Index = Wad.findTexture(TexName);
@@ -126,6 +116,37 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
             TexIndexMap[TexName] = 0;
     }
 
-    voRenderer.setVertexData(VertexData);
-    voRenderer.setIndexData(IndexData);
+    
+    // group polygon by texture, one object per texture 
+    std::vector<S3DObject> SceneObjects(UsedTextureNames.size());
+    for (size_t i = 0; i < SceneObjects.size(); ++i)
+        SceneObjects[i].TexIndex = i;
+
+    std::vector<CMapPolygon> Polygons = Map.getAllPolygons();
+    for (CMapPolygon& Polygon : Polygons)
+    {
+        size_t TexIndex = TexIndexMap[Polygon.pPlane->TextureName];
+        S3DObject& Object = SceneObjects[TexIndex];
+
+        std::vector<glm::vec2> TexCoords = Polygon.getTexCoords();
+        glm::vec3 Normal = Polygon.getNormal();
+
+        Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
+        Object.TexCoords.insert(Object.TexCoords.end(), TexCoords.begin(), TexCoords.end());
+        for (size_t i = 0; i < Polygon.Vertices.size(); ++i)
+        {
+            Object.Colors.emplace_back(glm::vec3(1.0, 0.0, 0.0));
+            Object.Normals.emplace_back(Normal);
+        }
+
+        uint32_t IndexStart = static_cast<uint32_t>(Object.Indices.size());
+        for (size_t i = 1; i < Polygon.Vertices.size(); ++i)
+        {
+            Object.Indices.emplace_back(IndexStart);
+            Object.Indices.emplace_back(IndexStart + i - 1);
+            Object.Indices.emplace_back(IndexStart + i);
+        }
+    }
+
+    voRenderer.setSceneObjects(SceneObjects);
 }

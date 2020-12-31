@@ -1,6 +1,5 @@
 #include "VulkanRenderer.h"
 #include "IOLog.h"
-#include "IOImage.h"
 #include "Common.h"
 
 #include <iostream>
@@ -618,8 +617,7 @@ void CVulkanRenderer::__createTextureImages()
     m_TextureImageMemories.resize(NumTextures);
     for (size_t i = 0; i < NumTextures; ++i)
     {
-        CIOImage Image;
-        Image.read(m_TexNames[i]);
+        const CIOImage& Image = m_TextureImageData[i];
         int TexWidth = Image.getImageWidth();
         int TexHeight = Image.getImageHeight();
         const void* pPixelData = Image.getData();
@@ -667,7 +665,7 @@ void CVulkanRenderer::__createTextureSampler()
     SamplerInfo.anisotropyEnable = VK_TRUE;
     SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
     SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
+    SamplerInfo.unnormalizedCoordinates = VK_TRUE;
     SamplerInfo.compareEnable = VK_FALSE;
     SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
     SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -680,8 +678,13 @@ void CVulkanRenderer::__createTextureSampler()
 
 void CVulkanRenderer::__createVertexBuffer()
 {
-    if (m_VertexData.empty()) throw "vertex data is empty";
-    VkDeviceSize BufferSize = sizeof(m_VertexData[0]) * m_VertexData.size();
+    if (m_SceneObjects.empty()) throw "no object to render";
+
+    size_t NumVertex = 0;
+    for (const S3DObject& Object : m_SceneObjects)
+        NumVertex += Object.Vertices.size();
+
+    VkDeviceSize BufferSize = sizeof(SPointData) * NumVertex;
 
     VkBuffer StagingBuffer;
     VkDeviceMemory StagingBufferMemory;
@@ -689,7 +692,14 @@ void CVulkanRenderer::__createVertexBuffer()
 
     void* pData;
     ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
-    memcpy(pData, m_VertexData.data(), static_cast<size_t>(BufferSize));
+    size_t Offset = 0;
+    for (const S3DObject& Object : m_SceneObjects)
+    {
+        std::vector<SPointData> PointData = Object.getPointData();
+        size_t SubBufferSize = sizeof(SPointData) * Object.Vertices.size();
+        memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
+        Offset += SubBufferSize;
+    }
     vkUnmapMemory(m_Device, StagingBufferMemory);
 
     __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBuffer, m_VertexBufferMemory);
@@ -702,8 +712,13 @@ void CVulkanRenderer::__createVertexBuffer()
 
 void CVulkanRenderer::__createIndexBuffer()
 {
-    if (m_VertexData.empty()) throw "index data is empty";
-    VkDeviceSize BufferSize = sizeof(m_IndexData[0]) * m_IndexData.size();
+    if (m_SceneObjects.empty()) throw "no object to render";
+
+    size_t NumVertex = 0;
+    for (const S3DObject& Object : m_SceneObjects)
+        NumVertex += Object.Indices.size();
+
+    VkDeviceSize BufferSize = sizeof(uint32_t) * NumVertex;
 
     VkBuffer StagingBuffer;
     VkDeviceMemory StagingBufferMemory;
@@ -711,7 +726,17 @@ void CVulkanRenderer::__createIndexBuffer()
 
     void* pData;
     ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
-    memcpy(pData, m_IndexData.data(), static_cast<size_t>(BufferSize));
+    size_t Offset = 0;
+    for (const S3DObject& Object : m_SceneObjects)
+    {
+        size_t IndexOffset = Offset / sizeof(uint32_t);
+        std::vector<uint32_t> Indices = Object.Indices;
+        for (uint32_t& Index : Indices)
+            Index += IndexOffset;
+        size_t SubBufferSize = sizeof(uint32_t) * Indices.size();
+        memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
+        Offset += SubBufferSize;
+    }
     vkUnmapMemory(m_Device, StagingBufferMemory);
 
     __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBuffer, m_IndexBufferMemory);
@@ -889,12 +914,16 @@ void CVulkanRenderer::__createCommandBuffers()
         vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
 
         SPushConstant PushConstant = {};
-        PushConstant.TexIndex = 0;
-        vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
-        vkCmdDrawIndexed(m_CommandBuffers[i], m_IndexData.size() / 2, 1, 0, 0, 0);
-        PushConstant.TexIndex = 1;
-        vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
-        vkCmdDrawIndexed(m_CommandBuffers[i], m_IndexData.size() / 2, 1, m_IndexData.size() / 2, 0, 0);
+
+        size_t IndexOffset = 0;
+        for (const S3DObject& Object : m_SceneObjects)
+        {
+            size_t NumIndex = Object.Indices.size();
+            PushConstant.TexIndex = Object.TexIndex;
+            vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+            vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);
+            IndexOffset += NumIndex;
+        }
 
         vkCmdEndRenderPass(m_CommandBuffers[i]);
         ck(vkEndCommandBuffer(m_CommandBuffers[i]));
@@ -1381,7 +1410,7 @@ void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size
 
 size_t CVulkanRenderer::__getActualTextureNum()
 {
-    size_t NumTexture = m_TexNames.size();
+    size_t NumTexture = m_TextureImageData.size();
     if (NumTexture > m_MaxTextureNum)
     {
         GlobalLogger::logStream() << "Warning: Texture Num = (" << std::to_string(NumTexture) << ") is greater than limit (" << std::to_string(m_MaxTextureNum) << "), overflow textures are ignored" << std::endl;

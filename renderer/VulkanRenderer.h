@@ -1,5 +1,6 @@
 #pragma once
 #include "IOObj.h"
+#include "IOImage.h"
 #include "Camera.h"
 #include "ImguiVullkan.h"
 
@@ -77,6 +78,34 @@ struct SPointData
     }
 };
 
+struct S3DObject
+{
+    std::vector<glm::vec3> Vertices;
+    std::vector<glm::vec3> Colors;
+    std::vector<glm::vec3> Normals;
+    std::vector<glm::vec2> TexCoords;
+    std::vector<uint32_t> Indices;
+    uint32_t TexIndex;
+
+    std::vector<SPointData> getPointData() const
+    {
+        size_t NumPoint = Vertices.size();
+        _ASSERTE(NumPoint == Colors.size());
+        _ASSERTE(NumPoint == Normals.size());
+        _ASSERTE(NumPoint == TexCoords.size());
+
+        std::vector<SPointData> PointData(NumPoint);
+        for (size_t i = 0; i < NumPoint; ++i)
+        {
+            PointData[i].Pos = Vertices[i];
+            PointData[i].Color = Colors[i];
+            PointData[i].Normal = Normals[i];
+            PointData[i].TexCoord = TexCoords[i];
+        }
+        return PointData;
+    }
+};
+
 struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Model;
@@ -101,8 +130,8 @@ public:
     ~CVulkanRenderer();
 
     void init();
-    void setVertexData(const std::vector<float>& vVertexData) { m_VertexData = vVertexData; }
-    void setIndexData(const std::vector<uint32_t>& vIndexData) { m_IndexData = vIndexData; }
+    void setSceneObjects(const std::vector<S3DObject>& vSceneObjects) { m_SceneObjects = vSceneObjects; }
+    void setTextureImageData(const std::vector<CIOImage>& vTextureImageData) { m_TextureImageData = vTextureImageData; }
     void render();
     void waitDevice();
     CCamera* getCamera();
@@ -208,8 +237,8 @@ private:
     std::vector<VkFramebuffer> m_SwapchainFramebuffers;
     VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
 
-    std::vector<float> m_VertexData;
-    std::vector<uint32_t> m_IndexData;
+    std::vector<CIOImage> m_TextureImageData;
+    std::vector<S3DObject> m_SceneObjects;
 
     const std::vector<const char*> m_ValidationLayers = 
     {
@@ -220,12 +249,6 @@ private:
     const std::vector<const char*> m_DeviceExtensions = 
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
-
-    const std::vector<std::string> m_TexNames =
-    {
-        "textures/tex1.png",
-        "textures/tex2.png"
     };
 
     const float m_WindowWidth = 800;

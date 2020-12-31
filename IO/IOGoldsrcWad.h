@@ -43,7 +43,6 @@ struct SWadTexture
     std::array<WadColor, 256> Palette;
 
     void read(std::ifstream& vFile, uint32_t vOffset);
-    static std::string __toUpperCase(std::string vStr);
 
     friend bool operator < (const SWadTexture& vA, const SWadTexture& vB)
     {

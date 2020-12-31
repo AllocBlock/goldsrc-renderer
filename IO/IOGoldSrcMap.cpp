@@ -2,6 +2,155 @@
 
 #include <fstream>
 #include <regex>
+#include <sstream>
+
+// vertice are stored at clockwise
+glm::vec3 CMapPlane::getNormal() const
+{
+    return correctNormal(glm::normalize(glm::cross(Points[2] - Points[0], Points[1] - Points[0])));
+}
+
+float CMapPlane::getDistanceToFace(glm::vec3 vPoint) const
+{
+    return glm::dot(Points[0] - vPoint, getNormal());
+}
+
+glm::vec3 CMapPlane::correctNormal(glm::vec3 vN) const
+{
+    // solve accuracy problem which causes a negative zero
+    float Epsilon = 0.05;
+    if (vN.x > -Epsilon && vN.x < Epsilon) vN.x = 0;
+    if (vN.y > -Epsilon && vN.y < Epsilon) vN.y = 0;
+    if (vN.z > -Epsilon && vN.z < Epsilon) vN.z = 0;
+    return vN;
+}
+
+std::vector<glm::vec2> CMapPolygon::getTexCoords()
+{
+    if (!m_TexCoords.empty()) return m_TexCoords;
+
+    for (const glm::vec3& Vertex : Vertices)
+        m_TexCoords.emplace_back(__calcTexCoord(Vertex));
+    
+    return m_TexCoords;
+}
+
+glm::vec2 CMapPolygon::__calcTexCoord(glm::vec3 vVertex)
+{
+    glm::vec2 TexCoord;
+    TexCoord.x = (glm::dot(vVertex, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU);
+    TexCoord.y = (glm::dot(vVertex, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV);
+    return TexCoord;
+}
+
+std::vector<CMapPolygon> CMapBrush::getPolygons()
+{
+    if (!m_Polygons.empty()) return m_Polygons;
+    for (size_t i = 0; i < m_Polygons.size(); ++i)
+    {
+        CMapPolygon Polygon;
+        Polygon.pPlane = &Planes[i];
+        m_Polygons.emplace_back(Polygon);
+    }
+
+    // iterate every 3 planes and get intersection
+    for (size_t i1 = 0; i1 < Planes.size() - 2; ++i1)
+    {
+        for (size_t i2 = i1 + 1; i2 < Planes.size() - 1; ++i2)
+        {
+            for (size_t i3 = i2 + 1; i3 < Planes.size(); ++i3)
+            {
+                glm::vec3 IntersectionPoint;
+                if (__getIntersection(IntersectionPoint, i1, i2, i3))
+                {
+                    m_Polygons[i1].Vertices.emplace_back(IntersectionPoint);
+                    m_Polygons[i2].Vertices.emplace_back(IntersectionPoint);
+                    m_Polygons[i3].Vertices.emplace_back(IntersectionPoint);
+                }
+                else
+                {
+                    throw "some plane in current brush are parllel";
+                }
+            }
+        }
+    }
+
+    for (size_t i = 0; i < m_Polygons.size(); ++i)
+    {
+        sortVerticesInClockwise(m_Polygons[i].Vertices, m_Polygons[i].pPlane->getNormal());
+    }
+
+    return m_Polygons;
+}
+
+bool CMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPlane2, size_t vPlane3)
+{
+    glm::vec3 N1 = Planes[vPlane1].getNormal();
+    glm::vec3 N2 = Planes[vPlane2].getNormal();
+    glm::vec3 N3 = Planes[vPlane3].getNormal();
+    float D1 = Planes[vPlane1].getDistanceToFace();
+    float D2 = Planes[vPlane2].getDistanceToFace();
+    float D3 = Planes[vPlane3].getDistanceToFace();
+
+    float MixeProduct = glm::dot(N1, glm::cross(N2, N3));            // 若denominator为0，说明三平面没有交点、或有无限个交点，否则应该只有一个交点
+    // denominator相当于三阶行列式
+
+    if (MixeProduct == 0) return false;
+
+    // Cramer's Rule to solve the intersection
+    glm::vec3 IntersectionPoint = (D1 * cross(N2, N3) + D2 * cross(N3, N1) + D3 * cross(N1, N2)) / MixeProduct;
+
+    // the intersection might be not in the brush (see the map file spec. for example)
+    // we need to check if it is using the property of convex polyhedron: 
+    // if a point is on the brush, this point must be on or behind each plane (normal direction is front) 
+    const float Epsilon = 1e-6;
+    for (CMapPlane pPlane : Planes)
+    {
+        float D = pPlane.getDistanceToFace(IntersectionPoint);
+        if (D > Epsilon)
+            return false;
+    }
+
+    voPoint = IntersectionPoint;
+    return true;
+}
+
+void CMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const glm::vec3 vNormal)
+{
+    if (vVertices.size() < 3) return;
+
+    // get polygon center
+    glm::vec3 Center = { 0.0f, 0.0f, 0.0f };
+    for (const glm::vec3& Vertex : vVertices)
+        Center += Vertex;
+    Center /= vVertices.size();
+
+    // simple selection sort
+    for (size_t i = 0; i < vVertices.size() - 2; ++i)
+    {
+        glm::vec3 BaseRadialDirection = glm::normalize(vVertices[i] - Center);
+        double SmallestAngle = -1;
+        int NextVertexIndex = -1;
+        glm::vec3 ScanDirection = -glm::normalize(glm::cross(vNormal, BaseRadialDirection)); // clockwise
+
+        for (int k = i + 1; k < vVertices.size(); ++k)
+        {
+            glm::vec3 CurRadialDirection = glm::normalize(vVertices[k] - Center);
+            if (glm::dot(ScanDirection, CurRadialDirection) >= 0) 
+            {
+                double Angle = glm::dot(BaseRadialDirection, CurRadialDirection);
+                if (SmallestAngle == -1 || Angle < SmallestAngle)
+                {
+                    SmallestAngle = Angle;
+                    NextVertexIndex = k;
+                }
+            }
+        }
+        glm::vec3 Temp = vVertices[i + 1];
+        vVertices[i + 1] = vVertices[NextVertexIndex];
+        vVertices[NextVertexIndex] = Temp;
+    }
+}
 
 bool CIOGoldSrcMap::_readV(std::string vFileName)
 {
@@ -17,7 +166,7 @@ bool CIOGoldSrcMap::_readV(std::string vFileName)
 
     uint32_t EntityStartIndex = 0;
     int PairingLevel = 0;
-    for(size_t i = 0; i < Text.length(); i++)
+    for (size_t i = 0; i < Text.length(); ++i)
     {
         if (Text[i] == '{')
         {
@@ -48,235 +197,6 @@ bool CIOGoldSrcMap::_readV(std::string vFileName)
 
     return true;
 }
-
-// vertice are stored at clockwise
-glm::vec3 CMapPlane::getNormal()
-{
-    return correctNormal(normalize(cross(Points[2] - Points[0], Points[1] - Points[0])));
-}
-
-float CMapPlane::getDistanceToFace(glm::vec3 vPoint = glm::vec3(0, 0, 0))
-{
-    return dot(Points[0] - vPoint, getNormal());
-}
-
-glm::vec3 CMapPlane::correctNormal(glm::vec3 vN)
-{
-    // solve accuracy problem which causes a negative zero
-    float Epsilon = 0.05;
-    if (vN.x > -Epsilon && vN.x < Epsilon) vN.x = 0;
-    if (vN.y > -Epsilon && vN.y < Epsilon) vN.y = 0;
-    if (vN.z > -Epsilon && vN.z < Epsilon) vN.z = 0;
-    return vN;
-}
-
-//std::vector<MapPolygon> CMapBrush::GetPolygonList()
-//{
-//    vector<MapPolygon> polygonList;
-//    polygonList.resize(Planes.size());
-//
-//    // 填写纹理信息
-//
-//    for (int i = 0; i < (int)Planes.size(); i++) {
-//        polygonList[i].plane = &Planes[i];
-//    }
-//
-//    // 三个面一组遍历
-//    for (int i = 0; i < (int)Planes.size() - 2; i++) {
-//        for (int j = i + 1; j < (int)Planes.size() - 1; j++) {
-//            for (int k = j + 1; k < Planes.size(); k++) {
-//                vec3 iPoint;
-//                if (GetIntersection(iPoint, i, j, k)) {
-//                    polygonList[i].vertexList.push_back(iPoint);
-//                    polygonList[j].vertexList.push_back(iPoint);
-//                    polygonList[k].vertexList.push_back(iPoint);
-//                }
-//            }
-//        }
-//    }
-//    SortVertices(polygonList);
-//    return polygonList;
-//}
-//
-//bool CMapBrush::GetIntersection(vec3& iPoint, int plane1, int plane2, int plane3)
-//{
-//
-//    // if (i == j || i == k) continue;
-//    vec3 n1 = Planes[plane1].getNormal();
-//    vec3 n2 = Planes[plane2].getNormal();
-//    vec3 n3 = Planes[plane3].getNormal();
-//    float d1 = Planes[plane1].getDistanceToFace();
-//    float d2 = Planes[plane2].getDistanceToFace();
-//    float d3 = Planes[plane3].getDistanceToFace();
-//
-//    /*
-//    // debug输出
-//    cout << "-------------计算面交点--------------" << endl;
-//    cout << i << ": " << n1.x << ", " << n1.y << ", " << n1.z << ", " << endl;
-//    cout << j << ": " << n2.x << ", " << n2.y << ", " << n2.z << ", " << endl;
-//    cout << k << ": " << n3.x << ", " << n3.y << ", " << n3.z << ", " << endl;
-//    cout << "denom: " << dot(n1, cross(n2, n3)) << endl;
-//    cout << "-------------------------------------" << endl << endl;
-//    */
-//
-//
-//    float denom = dot(n1, cross(n2, n3));            // 若denominator为0，说明三平面没有交点、或有无限个交点，否则应该只有一个交点
-//    // denominator相当于三阶行列式
-//
-//    if (denom == 0) return false;
-//
-//    // 要得出三面交点，相当于一个齐次方程，这里用克拉默法则
-//    //     | d1 n1y n1z |                            | 1   1   1  |
-//    // x = | d2 n2y n2z |  / denom; cross(n2, n3) =  | d2 n2y n2z |
-//    //     | d3 n3y n3z |                             | d3 n3y n3z |
-//    vec3 v = (d1 * cross(n2, n3) + d2 * cross(n3, n1) + d3 * cross(n1, n2)) / denom;
-//    // 若denominator不为0，不能说明就有交点，因为还要考虑平面位置（我们之前只计算法向量，即默认平面经过原点
-//    // 因为所有固体都是凸多面体，可知如果一个顶点属于这个固体，则这个顶点一定所有模型面的后方（法线方向为前方）
-//    //cout << "判断顶点" << v.x << ", " << v.y << ", " << v.z << ", " << endl;
-//    bool illegal = false;
-//    int t = 0;
-//    const float epsilon = 0.05;
-//    for (CMapPlane plane : Planes) {
-//        if (dot(plane.getNormal(), v) > (plane.getDistanceToFace() + epsilon)) {
-//
-//            //if (dot(plane.GetNormal(), v - plane.pointList[0]) > 0) {
-//            illegal = true;
-//            break;
-//        }
-//        //cout << "在" << t++ << "后侧里" << endl;
-//
-//    }
-//    if (illegal) return false;
-//
-//    iPoint = v;
-//    return true;
-//
-//}
-//
-//void CMapBrush::SortVertices(vector<MapPolygon>& polygonList)
-//{
-//    for (MapPolygon& polygon : polygonList) {
-//        if (polygon.vertexList.size() < 3) continue;
-//
-//        // 计算中心
-//        vec3 center = { 0.0f, 0.0f, 0.0f };
-//        for (vec3& v : polygon.vertexList) {
-//            center += v;
-//        }
-//        center /= polygon.vertexList.size();
-//
-//        vec3 normal = polygon.plane->getNormal();
-//        // 选择排序
-//        for (int i = 0; i < (int)polygon.vertexList.size() - 2; i++) {
-//            vec3 a = normalize(polygon.vertexList[i] - center);
-//            double smallestAngle = -1;
-//            int smallest = -1;
-//            vec3 direct = cross(normal, a);
-//
-//            for (int j = i + 1; j < polygon.vertexList.size(); j++) {
-//                vec3 b = normalize(polygon.vertexList[j] - center);
-//                if (dot(direct, b) <= 0) {            // >=是逆时针
-//                    double angle = dot(a, b);
-//                    if (angle > smallestAngle)
-//                    {
-//                        smallestAngle = angle;
-//                        smallest = j;
-//                    }
-//                }
-//            }
-//            vec3 temp = polygon.vertexList[i + 1];
-//            polygon.vertexList[i + 1] = polygon.vertexList[smallest];
-//            polygon.vertexList[smallest] = temp;
-//        }
-//    }
-//}
-//
-//vector<MapPolygon> CMapEntity::GetPolygonList() {
-//    vector<MapPolygon> res;
-//    for (CMapBrush brush : Brushes) {
-//        vector<MapPolygon> brushPolygonList = brush.GetPolygonList();
-//        res.insert(res.end(), brushPolygonList.begin(), brushPolygonList.end());
-//    }
-//    return res;
-//}
-
-std::vector<std::string> CIOGoldSrcMap::getWadPaths()
-{
-    std::vector<std::string> WadPaths;
-
-    for (int i = 0; i < m_Entities.size(); i++)
-    {
-        auto Properties = m_Entities[i].Properties;
-        if (Properties.find("classname") != Properties.end() && Properties["classname"] == "worldspawn")
-        {
-            if (Properties.find("wad") == Properties.end())
-            {
-                throw "wad property not found in worldspawn entity";
-            }
-            else
-            {
-                return CIOBase::splitString(Properties["wad"], ';');
-            }
-        }
-    }
-    throw "worldspawn entity not found";
-}
-
-//vector<MapPolygon> CIOGoldSrcMap::GetPolygonList() {
-//    cout << "计算顶点和顶点排序" << endl;
-//    vector<MapPolygon> res;
-//    for (CMapEntity entity : m_Entities) {
-//        vector<MapPolygon> entityPolygonList = entity.GetPolygonList();
-//        res.insert(res.end(), entityPolygonList.begin(), entityPolygonList.end());
-//    }
-//    return res;
-//}
-//
-//vector<string> CIOGoldSrcMap::GetUsedTextureList() {
-//    cout << "搜寻已使用的纹理" << endl;
-//    vector<string> usedTexture;
-//    for (CMapEntity entity : m_Entities) {
-//        for (CMapBrush brush : entity.Brushes) {
-//            for (CMapPlane polygon : brush.Planes) {
-//                bool alreadyHas = false;
-//                for (string name : usedTexture) {
-//                    if (name == polygon.TextureName) {
-//                        alreadyHas = true;
-//                        break;
-//                    }
-//                }
-//                if (!alreadyHas) {
-//                    usedTexture.push_back(polygon.TextureName);
-//                    //cout << polygon.textureName << endl;
-//                }
-//            }
-//        }
-//    }
-//    // 全部转为大写
-//    for (string& name : usedTexture) {
-//        name = ToUpperCase(name);
-//    }
-//    return usedTexture;
-//}
-
-//void CIOGoldSrcMap::PrintMapInfo() {
-//    cout << "地图共含有" << m_Entities.size() << "个物体" << endl;
-//    cout << "使用的wad：" << endl;
-//    for (string wadName : GetWadList()) {
-//        cout << "\t" << wadName << endl;
-//    }
-//    cout << "使用的纹理：" << endl;
-//    for (string texName : GetUsedTextureList()) {
-//        cout << "\t" << texName << endl;
-//    }
-//}
-//
-//vec2 MapParser::getTexCoordinates(MapPolygon polygon, int textureWidth, int textureHeight, int index) {
-//    vec2 res;
-//    res.x = (dot(polygon.vertexList[index], polygon.plane->TextureDirectionU) / polygon.plane->TextureScaleU + polygon.plane->TextureOffsetU) / textureWidth;
-//    res.y = (dot(polygon.vertexList[index], polygon.plane->TextureDirectionV) / polygon.plane->TextureScaleV + polygon.plane->TextureOffsetV) / textureHeight;
-//    return res;
-//}
 
 void CMapEntity::read(std::string vTextEntity)
 {
@@ -356,8 +276,8 @@ void CMapEntity::__readBrush(std::string vTextBrush)
     CMapBrush Brush;
     for (const std::string& TextPlane : TextPlanes)
     {
-        CMapPlane Plane = __parsePlane(TextPlane);
-        Brush.Planes.emplace_back(Plane);
+        CMapPlane pPlane = __parsePlane(TextPlane);
+        Brush.Planes.emplace_back(pPlane);
     }
     Brushes.emplace_back(Brush);
 }
@@ -371,27 +291,27 @@ CMapPlane CMapEntity::__parsePlane(std::string vTextPlane)
     if (!std::regex_match(vTextPlane, Results, RePlaneInfo))
         throw "map file parse failed";
 
-    CMapPlane Plane = {};
+    CMapPlane pPlane = {};
     for (int i = 0; i < 3; ++i)
     {
         const std::vector<float> Vertex = __parseFloatArray(Results[i+1]);
         _ASSERTE(Vertex.size() == 3);
-        Plane.Points[i] = glm::vec3(Vertex[0], Vertex[1], Vertex[2]);
+        pPlane.Points[i] = glm::vec3(Vertex[0], Vertex[1], Vertex[2]);
     }
-    Plane.TextureName = Results[4];
+    pPlane.TextureName = Results[4];
     const std::vector<float> UInfo = __parseFloatArray(Results[5]);
     _ASSERTE(UInfo.size() == 4);
-    Plane.TextureDirectionU = glm::vec3(UInfo[0], UInfo[1], UInfo[2]);
-    Plane.TextureOffsetU = UInfo[3];
+    pPlane.TextureDirectionU = glm::vec3(UInfo[0], UInfo[1], UInfo[2]);
+    pPlane.TextureOffsetU = UInfo[3];
     const std::vector<float> VInfo = __parseFloatArray(Results[6]);
     _ASSERTE(VInfo.size() == 4);
-    Plane.TextureDirectionV = glm::vec3(VInfo[0], VInfo[1], VInfo[2]);
-    Plane.TextureOffsetV = VInfo[3];
-    Plane.TextureRotation = __parseFloat(Results[7]);
-    Plane.TextureScaleU = __parseFloat(Results[8]);
-    Plane.TextureScaleV = __parseFloat(Results[9]);
+    pPlane.TextureDirectionV = glm::vec3(VInfo[0], VInfo[1], VInfo[2]);
+    pPlane.TextureOffsetV = VInfo[3];
+    pPlane.TextureRotation = __parseFloat(Results[7]);
+    pPlane.TextureScaleU = __parseFloat(Results[8]);
+    pPlane.TextureScaleV = __parseFloat(Results[9]);
 
-    return Plane;
+    return pPlane;
 }
 
 std::vector<float> CMapEntity::__parseFloatArray(std::string vText)
@@ -411,4 +331,68 @@ std::vector<float> CMapEntity::__parseFloatArray(std::string vText)
 float CMapEntity::__parseFloat(std::string vText)
 {
     return atof(vText.c_str());
+}
+
+std::vector<std::string> CIOGoldSrcMap::getWadPaths()
+{
+    std::vector<std::string> WadPaths;
+
+    for (int i = 0; i < m_Entities.size(); ++i)
+    {
+        auto Properties = m_Entities[i].Properties;
+        if (Properties.find("classname") != Properties.end() && Properties["classname"] == "worldspawn")
+        {
+            if (Properties.find("wad") == Properties.end())
+            {
+                throw "wad property not found in worldspawn entity";
+            }
+            else
+            {
+                return CIOBase::splitString(Properties["wad"], ';');
+            }
+        }
+    }
+    throw "worldspawn entity not found";
+}
+
+std::set<std::string> CIOGoldSrcMap::getUsedTextureNames()
+{
+    std::set<std::string> UsedTextureNames;
+    for (const CMapEntity& Entity : m_Entities)
+    {
+        for (const CMapBrush& Brush : Entity.Brushes)
+        {
+            for (const CMapPlane& pPlane : Brush.Planes)
+            {
+                UsedTextureNames.insert(pPlane.TextureName);
+            }
+        }
+    }
+    return UsedTextureNames;
+}
+
+std::vector<CMapPolygon> CIOGoldSrcMap::getAllPolygons()
+{
+    std::vector<CMapPolygon> Polygons;
+    for (CMapEntity& Entity : m_Entities)
+    {
+        for (CMapBrush& Brush : Entity.Brushes)
+        {
+            std::vector<CMapPolygon> BrushPolygons = Brush.getPolygons();
+            Polygons.insert(Polygons.end(), BrushPolygons.begin(), BrushPolygons.end());
+        }
+    }
+    return Polygons;
+}
+
+std::string CIOGoldSrcMap::toString()
+{
+    std::ostringstream StringStream;
+    StringStream << m_FileName << " map file info:" << std::endl;
+    StringStream << "Entitiy Count: " << m_Entities.size() << std::endl;
+    StringStream << "Used texture names: " << std::endl;
+    auto TexNames = getUsedTextureNames();
+    for (std::string TexName : TexNames)
+        StringStream << "\t" << TexName << std::endl;
+    return StringStream.str();
 }
