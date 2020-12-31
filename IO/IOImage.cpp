@@ -2,6 +2,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+void CIOImage::setData(const void* vpData)
+{
+    if (m_pData) delete m_pData;
+    size_t DataSize = static_cast<size_t>(4) * m_Width * m_Height;
+    m_pData = new char[DataSize];
+    memcpy_s(m_pData, DataSize, vpData, DataSize);
+}
+
 bool CIOImage::_readV(std::string vFileName)
 {
     __cleanup();

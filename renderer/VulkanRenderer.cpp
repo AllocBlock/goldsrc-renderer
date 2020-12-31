@@ -76,43 +76,6 @@ void CVulkanRenderer::init()
     m_pImgui = new CImguiVullkan(m_Instance, m_PhysicalDevice, m_Device, QueueIndex.GraphicsFamilyIndex.value(), m_GraphicsQueue, m_pWindow, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
 }
 
-void CVulkanRenderer::readData(std::string vFileName)
-{
-    CIOObj Obj = CIOObj();
-    Obj.read(vFileName);
-
-    const std::vector<glm::vec3>& Vertices = Obj.getVertices();
-    std::vector<glm::vec3> Normals = Obj.getNormalPerVertex();
-    std::vector<glm::vec2> TexCoords = Obj.getRandomTexCoordPerVertex();
-    for (size_t i = 0; i < Vertices.size(); ++i)
-    {
-        m_VertexData.push_back(Vertices[i].x);
-        m_VertexData.push_back(Vertices[i].y);
-        m_VertexData.push_back(Vertices[i].z);
-        m_VertexData.push_back(1);
-        m_VertexData.push_back(0);
-        m_VertexData.push_back(0);
-        m_VertexData.push_back(Normals[i].x);
-        m_VertexData.push_back(Normals[i].y);
-        m_VertexData.push_back(Normals[i].z);
-        m_VertexData.push_back(TexCoords[i].x);
-        m_VertexData.push_back(TexCoords[i].y);
-    }
-    const std::vector<SObjFace>& Faces = Obj.getFaces();
-    for (const SObjFace& Face : Faces)
-    {
-        uint32_t Node1 = Face.Nodes[0].VectexId - 1;
-        for (size_t k = 2; k < Face.Nodes.size(); k++)
-        {
-            uint32_t Node2 = Face.Nodes[k-1].VectexId - 1;
-            uint32_t Node3 = Face.Nodes[k].VectexId - 1;
-            m_IndexData.push_back(Node1);
-            m_IndexData.push_back(Node2);
-            m_IndexData.push_back(Node3);
-        }
-    }
-}
-
 void CVulkanRenderer::render()
 {
     m_pImgui->render();

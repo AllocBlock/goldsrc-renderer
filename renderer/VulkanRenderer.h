@@ -101,7 +101,8 @@ public:
     ~CVulkanRenderer();
 
     void init();
-    void readData(std::string vFileName);
+    void setVertexData(const std::vector<float>& vVertexData) { m_VertexData = vVertexData; }
+    void setIndexData(const std::vector<uint32_t>& vIndexData) { m_IndexData = vIndexData; }
     void render();
     void waitDevice();
     CCamera* getCamera();

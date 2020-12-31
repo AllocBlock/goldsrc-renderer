@@ -36,31 +36,41 @@ bool CIOGoldsrcWad::_readV(std::string vFileName)
     return true;
 }
 
-size_t CIOGoldsrcWad::getTextureNum()
+size_t CIOGoldsrcWad::getTextureNum() const
 {
     return m_TexturesList.size();
 }
 
-std::string CIOGoldsrcWad::getTextureName(size_t vTexIndex)
+std::optional<size_t> CIOGoldsrcWad::findTexture(std::string vName) const
+{
+    vName = toUpperCase(vName);
+    for (size_t i = 0; i < m_TexturesList.size(); i++)
+    {
+        if (m_TexturesList[i].NameUpperCase == vName) return i;
+    }
+    return std::nullopt;
+}
+
+std::string CIOGoldsrcWad::getTextureName(size_t vTexIndex) const
 {
     _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TexturesList.size());
     return m_TexturesList[vTexIndex].NameOrigin;
 }
 
-std::string CIOGoldsrcWad::getTextureNameFormatted(size_t vTexIndex)
+std::string CIOGoldsrcWad::getTextureNameFormatted(size_t vTexIndex) const
 {
     _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TexturesList.size());
-    return m_TexturesList[vTexIndex].NameFormatted;
+    return m_TexturesList[vTexIndex].NameUpperCase;
 }
 
-void CIOGoldsrcWad::getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t& voHeight)
+void CIOGoldsrcWad::getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t& voHeight) const
 {
     _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TexturesList.size());
     voWidth = m_TexturesList[vTexIndex].Width;
     voHeight = m_TexturesList[vTexIndex].Height;
 }
 
-void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void*& vopData)
+void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void*& vopData) const
 {
     _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TexturesList.size());
     unsigned char* pIter = static_cast<unsigned char*>(vopData);
@@ -99,7 +109,7 @@ void SWadTexture::read(std::ifstream& vFile, uint32_t vOffset)
 
     vFile.read(reinterpret_cast<char*>(StringBuffer),     sizeof(char[16]));
     NameOrigin = StringBuffer;
-    NameFormatted = __toUpperCase(NameOrigin);
+    NameUpperCase = __toUpperCase(NameOrigin);
     vFile.read(reinterpret_cast<char*>(&Width),           sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(&Height),          sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(&ImageOffsets[0]), sizeof(uint32_t));
@@ -128,8 +138,3 @@ void SWadTexture::read(std::ifstream& vFile, uint32_t vOffset)
     }
 }
 
-std::string SWadTexture::__toUpperCase(std::string vStr)
-{
-    std::transform(vStr.begin(), vStr.end(), vStr.begin(), ::toupper);
-    return vStr;
-}

@@ -33,7 +33,7 @@ bool CIOGoldSrcMap::_readV(std::string vFileName)
             PairingLevel--;
             if (PairingLevel == 0)
             {
-                std::string EntityText = Text.substr(EntityStartIndex, i - EntityStartIndex);
+                std::string EntityText = Text.substr(EntityStartIndex, i - EntityStartIndex + 1);
                 CMapEntity Entity;
                 Entity.read(EntityText);
                 m_Entities.push_back(Entity);
@@ -199,42 +199,29 @@ glm::vec3 CMapPlane::correctNormal(glm::vec3 vN)
 //    }
 //    return res;
 //}
-//
-//vector<string> CIOGoldSrcMap::GetWadList() {
-//    vector<string> wadList;
-//    // 找到worldspawn实体
-//    int index = -1;
-//    for (int i = 0; i < m_Entities.size(); i++) {
-//        MapProperty& props = m_Entities[i].Properties;
-//        if (props.find("classname") != props.end() && props["classname"] == "worldspawn") {
-//            index = i;
-//            break;
-//        }
-//    }
-//    if (index == -1) {
-//        cout << "未找到worldspawn实体！" << endl;
-//        return wadList;
-//    }
-//
-//    // 提取wad纹理列表
-//    MapProperty& props = m_Entities[index].Properties;
-//    if (props.find("wad") == props.end()) {
-//        cout << "未找到wad属性！" << endl;
-//        return wadList;
-//    }
-//
-//    string wadListRaw = props["wad"];
-//    int pos1 = 0, pos2;
-//    while ((pos2 = wadListRaw.find(';', pos1)) != -1) {
-//        wadList.push_back(wadListRaw.substr(pos1, pos2 - pos1));
-//        pos1 = pos2 + 1;
-//    }
-//    if (pos1 != wadListRaw.length())
-//        wadList.push_back(wadListRaw.substr(pos1));
-//
-//    return wadList;
-//}
-//
+
+std::vector<std::string> CIOGoldSrcMap::getWadPaths()
+{
+    std::vector<std::string> WadPaths;
+
+    for (int i = 0; i < m_Entities.size(); i++)
+    {
+        auto Properties = m_Entities[i].Properties;
+        if (Properties.find("classname") != Properties.end() && Properties["classname"] == "worldspawn")
+        {
+            if (Properties.find("wad") == Properties.end())
+            {
+                throw "wad property not found in worldspawn entity";
+            }
+            else
+            {
+                return CIOBase::splitString(Properties["wad"], ';');
+            }
+        }
+    }
+    throw "worldspawn entity not found";
+}
+
 //vector<MapPolygon> CIOGoldSrcMap::GetPolygonList() {
 //    cout << "计算顶点和顶点排序" << endl;
 //    vector<MapPolygon> res;
@@ -303,7 +290,7 @@ void CMapEntity::read(std::string vTextEntity)
     }
 
     std::string TextProperties = vTextEntity.substr(1, LastQuote);
-    std::string TextBrush = vTextEntity.substr(LastQuote + 1, vTextEntity.length() - LastQuote - 1);
+    std::string TextBrush = vTextEntity.substr(LastQuote + 1, vTextEntity.length() - LastQuote - 2);
 
     __readProperties(TextProperties);
     __readBrushes(TextBrush);
@@ -340,7 +327,7 @@ void CMapEntity::__readBrushes(std::string vTextBrushes)
     bool InBrush = false;
     for (size_t i = 0; i < vTextBrushes.length(); ++i)
     {
-        if (vTextBrushes[i] == '{')
+        if (vTextBrushes[i] == '{' && !InBrush)
         {
             InBrush = true;
             StartBrushIndex = i + 1;
@@ -350,7 +337,7 @@ void CMapEntity::__readBrushes(std::string vTextBrushes)
             if (!InBrush) throw "map file parse failed";
             std::string TextBrush = vTextBrushes.substr(StartBrushIndex, i - StartBrushIndex);
             __readBrush(TextBrush);
-            StartBrushIndex = i + 1;
+            InBrush = false;
         }
         else if (!InBrush && !CIOBase::isWhiteSpace(vTextBrushes[i]))
         {
@@ -380,7 +367,7 @@ CMapPlane CMapEntity::__parsePlane(std::string vTextPlane)
     vTextPlane = CIOBase::trimString(vTextPlane);
     std::smatch Results;
 
-    static const std::regex RePlaneInfo("\\((.*?)\\)\\s*\\((.*?)\\)\\s*\\((.*?)\\)\\s*(.*?)\\s*\\[(.*?)\\]\\s*\\[(.*?)\\]\\s*(.*?)\\s*(.*?)\\s*(.*?)");
+    static const std::regex RePlaneInfo("\\((.*?)\\)\\s*\\((.*?)\\)\\s*\\((.*?)\\)\\s*(.*?)\\s*\\[(.*?)\\]\\s*\\[(.*?)\\]\\s*(\\S*?)\\s*(\\S*?)\\s*(\\S*?)");
     if (!std::regex_match(vTextPlane, Results, RePlaneInfo))
         throw "map file parse failed";
 

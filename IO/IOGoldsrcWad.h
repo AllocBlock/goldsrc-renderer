@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <array>
+#include <optional>
 
 struct WadColor
 {
@@ -34,7 +35,7 @@ struct SWadLump
 struct SWadTexture
 {
     std::string NameOrigin;
-    std::string NameFormatted;
+    std::string NameUpperCase;
     uint32_t Width;
     uint32_t Height;
     std::array<uint32_t, 4> ImageOffsets;
@@ -46,12 +47,12 @@ struct SWadTexture
 
     friend bool operator < (const SWadTexture& vA, const SWadTexture& vB)
     {
-        return vA.NameFormatted < vB.NameFormatted;
+        return vA.NameUpperCase < vB.NameUpperCase;
     }
 
     friend bool operator == (const SWadTexture& vA, const SWadTexture& vB)
     {
-        return vA.NameFormatted == vB.NameFormatted;
+        return vA.NameUpperCase == vB.NameUpperCase;
     }
 };
 
@@ -65,11 +66,12 @@ public:
     CIOGoldsrcWad() :CIOBase() {}
     CIOGoldsrcWad(std::string vFileName) :CIOBase(vFileName) {}
 
-    size_t getTextureNum();
-    std::string getTextureName(size_t vTexIndex);
-    std::string getTextureNameFormatted(size_t vTexIndex);
-    void getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t& voHeight);
-    void getRawRGBAPixels(size_t vTexIndex, void*& vopData);
+    size_t getTextureNum() const;
+    std::optional<size_t> findTexture(std::string vName) const;
+    std::string getTextureName(size_t vTexIndex) const;
+    std::string getTextureNameFormatted(size_t vTexIndex) const;
+    void getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t& voHeight) const;
+    void getRawRGBAPixels(size_t vTexIndex, void*& vopData) const;
 
 protected:
     virtual bool _readV(std::string vFileName) override;

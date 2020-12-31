@@ -19,6 +19,7 @@ public:
     static bool isWhiteSpace(char vChar);
     static std::string trimString(std::string vString);
     static std::vector<std::string> splitString(std::string vString, char vSpliter = ' ');
+    static std::string toUpperCase(std::string vString);
 
 protected:
     virtual bool _readV(std::string vFileName) = 0;

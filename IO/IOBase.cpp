@@ -1,5 +1,7 @@
 #include "IOBase.h"
 
+#include <algorithm>
+
 CIOBase::CIOBase()
 {
     if (!GlobalLogger::isFileSet()) GlobalLogger::setFile("log.txt");
@@ -63,4 +65,10 @@ std::vector<std::string> CIOBase::splitString(std::string vString, char vSpliter
         }
     }
     return Result;
+}
+
+std::string CIOBase::toUpperCase(std::string vString)
+{
+    std::transform(vString.begin(), vString.end(), vString.begin(), ::toupper);
+    return vString;
 }

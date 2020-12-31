@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <map>
+#include <set>
 #include <glm/glm.hpp>
 
 struct CMapPlane
@@ -82,10 +83,10 @@ public:
 	CIOGoldSrcMap() :CIOBase() {}
 	CIOGoldSrcMap(std::string vFileName) :CIOBase(vFileName) {}
 
-	/*std::vector<std::string> GetWadList();
-	std::vector<MapPolygon> GetPolygonList();
-	std::vector<std::string> GetUsedTextureList();
-	void PrintMapInfo();*/
+	std::vector<std::string> getWadPaths();
+	std::vector<MapPolygon> getPolygons();
+	std::set<std::string> getUsedTextureNames();
+	void PrintMapInfo();
 
 protected:
 	virtual bool _readV(std::string vFileName) override;

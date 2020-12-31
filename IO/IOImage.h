@@ -13,6 +13,9 @@ public:
     int getImageChannels() const { return m_Channels; }
     const void* getData() const { return m_pData; }
 
+    void setImageSize(int vWidth, int vHeight) { m_Width = vWidth; m_Height = vHeight; }
+    void setData(const void* vpData);
+
 protected:
     virtual bool _readV(std::string vFileName) override;
 private:
