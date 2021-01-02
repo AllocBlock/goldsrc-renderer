@@ -70,7 +70,7 @@ void CIOGoldsrcWad::getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t
     voHeight = m_TexturesList[vTexIndex].Height;
 }
 
-void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void*& vopData) const
+void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void* vopData) const
 {
     _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TexturesList.size());
     unsigned char* pIter = static_cast<unsigned char*>(vopData);

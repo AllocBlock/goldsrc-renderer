@@ -25,21 +25,21 @@ glm::vec3 CMapPlane::correctNormal(glm::vec3 vN) const
     return vN;
 }
 
-std::vector<glm::vec2> CMapPolygon::getTexCoords()
+std::vector<glm::vec2> CMapPolygon::getTexCoords(size_t vTexWidth, size_t vTexHeight)
 {
     if (!m_TexCoords.empty()) return m_TexCoords;
 
     for (const glm::vec3& Vertex : Vertices)
-        m_TexCoords.emplace_back(__calcTexCoord(Vertex));
+        m_TexCoords.emplace_back(__calcTexCoord(Vertex, vTexWidth, vTexHeight));
     
     return m_TexCoords;
 }
 
-glm::vec2 CMapPolygon::__calcTexCoord(glm::vec3 vVertex)
+glm::vec2 CMapPolygon::__calcTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight)
 {
     glm::vec2 TexCoord;
-    TexCoord.x = (glm::dot(vVertex, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU);
-    TexCoord.y = (glm::dot(vVertex, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV);
+    TexCoord.x = (glm::dot(vVertex, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU) / vTexWidth;
+    TexCoord.y = (glm::dot(vVertex, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV) / vTexHeight;
     return TexCoord;
 }
 
@@ -69,7 +69,7 @@ std::vector<CMapPolygon> CMapBrush::getPolygons()
                 }
                 else
                 {
-                    throw "some plane in current brush are parllel";
+                    GlobalLogger::logStream() << "some planes in brush " << this << "are parllel" << std::endl;
                 }
             }
         }

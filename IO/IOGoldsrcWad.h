@@ -70,7 +70,7 @@ public:
     std::string getTextureName(size_t vTexIndex) const;
     std::string getTextureNameFormatted(size_t vTexIndex) const;
     void getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t& voHeight) const;
-    void getRawRGBAPixels(size_t vTexIndex, void*& vopData) const;
+    void getRawRGBAPixels(size_t vTexIndex, void* vopData) const;
 
 protected:
     virtual bool _readV(std::string vFileName) override;

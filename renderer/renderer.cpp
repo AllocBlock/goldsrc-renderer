@@ -11,6 +11,7 @@
 
 void readObj(std::string vFileName, CVulkanRenderer& voRenderer);
 void readMap(std::string vFileName, CVulkanRenderer& voRenderer);
+bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFilePath);
 
 int main()
 {
@@ -19,10 +20,9 @@ int main()
 
 	GLFWwindow* pWindow = glfwCreateWindow(800, 600, "Vulkan Simple Render", nullptr, nullptr);
 	CVulkanRenderer Renderer(pWindow);
+    readMap("../data/test.map", Renderer);
 	Renderer.getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
     Renderer.init(); 
-
-    readMap("../data/test.map", Renderer);
 
 	CInteractor Interactor(&Renderer);
 	Interactor.bindEvent();
@@ -85,7 +85,10 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
     
     for (size_t i = 0; i < WadPaths.size(); ++i)
     {
-        Wads[i].read(WadPaths[i]);
+        std::string RealWadPath;
+        if (!findFile(WadPaths[i], "../data", RealWadPath))
+            throw "can't find wad file " + WadPaths[i];
+        Wads[i].read(RealWadPath);
     }
 
     std::vector<CIOImage> TexImages;
@@ -103,10 +106,10 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
 
                 CIOImage TexImage;
                 TexImage.setImageSize(static_cast<int>(Width), static_cast<int>(Height));
-                void* pData;
+                void* pData = new char[Width * Height * 4];
                 Wad.getRawRGBAPixels(Index.value(), pData);
                 TexImage.setData(pData);
-                delete pData;
+                delete[] pData;
                 TexImages.emplace_back(TexImage);
                 TexIndexMap[TexName] = TexIndexMap.size();
                 break;
@@ -126,9 +129,11 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
     for (CMapPolygon& Polygon : Polygons)
     {
         size_t TexIndex = TexIndexMap[Polygon.pPlane->TextureName];
+        size_t TexWidth = TexImages[TexIndex].getImageWidth();
+        size_t TexHeight = TexImages[TexIndex].getImageHeight();
         S3DObject& Object = SceneObjects[TexIndex];
 
-        std::vector<glm::vec2> TexCoords = Polygon.getTexCoords();
+        std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
 
         Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
@@ -149,4 +154,30 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
     }
 
     voRenderer.setSceneObjects(SceneObjects);
+}
+
+bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFilePath)
+{
+    std::filesystem::path CurPath(vFilePath);
+    
+    std::filesystem::path FullPath = std::filesystem::absolute(vFilePath);
+    std::filesystem::path CurDir = FullPath.parent_path();
+    while (!CurDir.empty() && CurDir != CurDir.parent_path())
+    {
+        std::filesystem::path SearchPath = std::filesystem::relative(FullPath, CurDir);
+        std::filesystem::path CombinedSearchPath = std::filesystem::path(vSearchDir) / SearchPath;
+        if (std::filesystem::exists(SearchPath))
+        {
+            voFilePath = SearchPath.string();
+            return true;
+        }
+        else if (std::filesystem::exists(CombinedSearchPath))
+        {
+            voFilePath = CombinedSearchPath.string();
+            return true;
+        }
+        CurDir = CurDir.parent_path();
+    }
+
+    return false;
 }

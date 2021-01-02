@@ -4,9 +4,9 @@
 
 void CIOImage::setData(const void* vpData)
 {
-    if (m_pData) delete m_pData;
+    if (m_pData) STBI_FREE(m_pData);
     size_t DataSize = static_cast<size_t>(4) * m_Width * m_Height;
-    m_pData = new char[DataSize];
+    m_pData = STBI_MALLOC(DataSize);
     memcpy_s(m_pData, DataSize, vpData, DataSize);
 }
 

@@ -665,7 +665,7 @@ void CVulkanRenderer::__createTextureSampler()
     SamplerInfo.anisotropyEnable = VK_TRUE;
     SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
     SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    SamplerInfo.unnormalizedCoordinates = VK_TRUE;
+    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
     SamplerInfo.compareEnable = VK_FALSE;
     SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
     SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;

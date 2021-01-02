@@ -30,11 +30,11 @@ struct CMapPolygon
 	const CMapPlane* pPlane;
 
 	std::vector<glm::vec3> getVertices() const { return Vertices; }
-	std::vector<glm::vec2> getTexCoords();
+	std::vector<glm::vec2> getTexCoords(size_t vTexWidth, size_t vTexHeight);
 	glm::vec3 getNormal() const { return pPlane->getNormal(); };
 
 private:
-	glm::vec2 __calcTexCoord(glm::vec3 vVertex);
+	glm::vec2 __calcTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight);
 	std::vector<glm::vec2> m_TexCoords;
 };
 
