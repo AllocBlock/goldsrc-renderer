@@ -24,15 +24,20 @@ void main()
 {
     vec3 Light = vec3(1.0, 1.0, 1.0);
 
-	vec3 L = normalize(Light - inFragPosition);
+	//vec3 L = normalize(Light - inFragPosition); // point light
+	vec3 L = normalize(Light); // parallel light
 	vec3 N = normalize(inFragNormal);
 	vec3 V = normalize(ubo.uEye - inFragPosition);
 	vec3 H = normalize(L + V);
 
-	float ambient = 0.2;
-	float diffuse = max(0.0, dot(L, N));
+	float ambient = 0.3;
+	float diffuse = dot(L, N);
 	float specular = pow(dot(N, H), 20.0);
-	if (diffuse == 0.0) specular = 0.0;
+	if (diffuse <= 0.0)
+	{
+		diffuse = 0.0;
+		specular = 0.0;
+	}
 
 	float fShadow = ambient + diffuse + specular;
 
@@ -41,5 +46,5 @@ void main()
 	vec3 TexColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord).xyz;
     
     //outColor = vec4((inFragColor * 0.5 + TexColor * 0.5) * fShadow, 1.0);
-    outColor = vec4(TexColor * 0.5, 1.0);
+    outColor = vec4(TexColor * fShadow, 1.0);
 }

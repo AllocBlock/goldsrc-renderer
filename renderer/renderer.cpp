@@ -21,8 +21,8 @@ int main()
 
 	GLFWwindow* pWindow = glfwCreateWindow(800, 600, "Vulkan Simple Render", nullptr, nullptr);
 	CVulkanRenderer Renderer(pWindow);
-    //readMap("../data/test.map", Renderer);
-    readObj("../data/ball.obj", Renderer);
+    readMap("../data/test.map", Renderer);
+    //readObj("../data/ball.obj", Renderer);
 	Renderer.getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
     Renderer.init(); 
 
@@ -141,6 +141,9 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
     std::vector<CIOImage> TexImages;
     std::map<std::string, uint32_t> TexIndexMap;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
+    TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    TexIndexMap["TextureNotFound"] = 0;
+    UsedTextureNames.insert("TextureNotFound");
     for (const std::string& TexName : UsedTextureNames)
     {
         for (const CIOGoldsrcWad& Wad : Wads)
@@ -173,6 +176,7 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
         SceneObjects[i].TexIndex = i;
 
     std::vector<CMapPolygon> Polygons = Map.getAllPolygons();
+    uint32_t IndexStart = 0;
     for (CMapPolygon& Polygon : Polygons)
     {
         size_t TexIndex = TexIndexMap[Polygon.pPlane->TextureName];
@@ -191,13 +195,13 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
             Object.Normals.emplace_back(Normal);
         }
 
-        uint32_t IndexStart = static_cast<uint32_t>(Object.Indices.size());
-        for (size_t i = 1; i < Polygon.Vertices.size(); ++i)
+        for (size_t i = 2; i < Polygon.Vertices.size(); ++i)
         {
             Object.Indices.emplace_back(IndexStart);
             Object.Indices.emplace_back(IndexStart + i - 1);
             Object.Indices.emplace_back(IndexStart + i);
         }
+        IndexStart += static_cast<uint32_t>(Polygon.Vertices.size());
     }
 
     voRenderer.setTextureImageData(TexImages);

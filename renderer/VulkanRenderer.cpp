@@ -657,8 +657,8 @@ void CVulkanRenderer::__createTextureSampler()
 
     VkSamplerCreateInfo SamplerInfo = {};
     SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    SamplerInfo.magFilter = VK_FILTER_NEAREST;
-    SamplerInfo.minFilter = VK_FILTER_NEAREST;
+    SamplerInfo.magFilter = VK_FILTER_LINEAR;
+    SamplerInfo.minFilter = VK_FILTER_LINEAR;
     SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -919,6 +919,7 @@ void CVulkanRenderer::__createCommandBuffers()
         for (const S3DObject& Object : m_SceneObjects)
         {
             size_t NumIndex = Object.Indices.size();
+            if (NumIndex == 0) continue;
             PushConstant.TexIndex = Object.TexIndex;
             vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
             vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);

@@ -44,7 +44,7 @@ struct CMapBrush
 	std::vector<CMapPolygon> getPolygons();
 	
 	static void sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const glm::vec3 vNormal);
-	static double GlobalScale;
+	static float GlobalScale;
 	
 private:
 	bool __getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPlane2, size_t vPlane3);

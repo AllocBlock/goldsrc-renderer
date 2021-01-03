@@ -4,7 +4,7 @@
 #include <regex>
 #include <sstream>
 
-double CMapBrush::GlobalScale = 1.0 / 64.0;
+float CMapBrush::GlobalScale = 1.0 / 64.0;
 
 // vertice are stored at clockwise
 glm::vec3 CMapPlane::getNormal() const
@@ -40,8 +40,8 @@ std::vector<glm::vec2> CMapPolygon::getTexCoords(size_t vTexWidth, size_t vTexHe
 glm::vec2 CMapPolygon::__calcTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight)
 {
     glm::vec2 TexCoord;
-    TexCoord.x = (glm::dot(vVertex, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU) / vTexWidth;
-    TexCoord.y = (glm::dot(vVertex, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV) / vTexHeight;
+    TexCoord.x = (glm::dot(vVertex / CMapBrush::GlobalScale, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU) / vTexWidth;
+    TexCoord.y = (glm::dot(vVertex / CMapBrush::GlobalScale, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV) / vTexHeight;
     return TexCoord;
 }
 
@@ -72,7 +72,8 @@ std::vector<CMapPolygon> CMapBrush::getPolygons()
                 }
                 else
                 {
-                    GlobalLogger::logStream() << "some planes in brush " << this << "are parllel" << std::endl;
+                    // TODO:: judge if two plane is the same, which cause illegal brush
+                    // GlobalLogger::logStream() << "some planes in brush " << this << "are the same" << std::endl;
                 }
             }
         }
@@ -95,13 +96,12 @@ bool CMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPl
     float D2 = Planes[vPlane2].getDistanceToFace();
     float D3 = Planes[vPlane3].getDistanceToFace();
 
-    float MixeProduct = glm::dot(N1, glm::cross(N2, N3));            // 若denominator为0，说明三平面没有交点、或有无限个交点，否则应该只有一个交点
-    // denominator相当于三阶行列式
+    float MixeProduct = glm::dot(N1, glm::cross(N2, N3));
 
     if (MixeProduct == 0) return false;
 
     // Cramer's Rule to solve the intersection
-    glm::vec3 IntersectionPoint = (D1 * cross(N2, N3) + D2 * cross(N3, N1) + D3 * cross(N1, N2)) / MixeProduct;
+    glm::vec3 IntersectionPoint = (-D1 * cross(N2, N3) + -D2 * cross(N3, N1) + -D3 * cross(N1, N2)) / MixeProduct;
 
     // the intersection might be not in the brush (see the map file spec. for example)
     // we need to check if it is using the property of convex polyhedron: 
@@ -133,7 +133,7 @@ void CMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const
     for (size_t i = 0; i < vVertices.size() - 2; ++i)
     {
         glm::vec3 BaseRadialDirection = glm::normalize(vVertices[i] - Center);
-        double SmallestAngle = -1;
+        double MaxCos = -1; // minest angle
         int NextVertexIndex = -1;
         glm::vec3 ScanDirection = -glm::normalize(glm::cross(vNormal, BaseRadialDirection)); // clockwise
 
@@ -142,10 +142,10 @@ void CMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const
             glm::vec3 CurRadialDirection = glm::normalize(vVertices[k] - Center);
             if (glm::dot(ScanDirection, CurRadialDirection) >= 0) 
             {
-                double Angle = glm::dot(BaseRadialDirection, CurRadialDirection);
-                if (SmallestAngle == -1 || Angle < SmallestAngle)
+                double Cos = glm::dot(BaseRadialDirection, CurRadialDirection);
+                if (Cos >= MaxCos)
                 {
-                    SmallestAngle = Angle;
+                    MaxCos = Cos;
                     NextVertexIndex = k;
                 }
             }
