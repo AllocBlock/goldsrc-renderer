@@ -5,6 +5,13 @@ class CIOImage : public CIOBase
 {
 public:
     CIOImage() :CIOBase() {}
+    CIOImage(const CIOImage& vObj)
+    {
+        m_Width = vObj.getImageWidth();
+        m_Height = vObj.getImageHeight();
+        m_Channels = vObj.getImageChannels();
+        setData(vObj.getData());
+    }
     CIOImage(std::string vFileName) :CIOBase(vFileName) {}
     virtual ~CIOImage() { __cleanup(); }
 

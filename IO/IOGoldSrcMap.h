@@ -29,7 +29,6 @@ struct CMapPolygon
 	std::vector<glm::vec3> Vertices;
 	const CMapPlane* pPlane;
 
-	std::vector<glm::vec3> getVertices() const { return Vertices; }
 	std::vector<glm::vec2> getTexCoords(size_t vTexWidth, size_t vTexHeight);
 	glm::vec3 getNormal() const { return pPlane->getNormal(); };
 
@@ -45,6 +44,7 @@ struct CMapBrush
 	std::vector<CMapPolygon> getPolygons();
 	
 	static void sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const glm::vec3 vNormal);
+	static double GlobalScale;
 	
 private:
 	bool __getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPlane2, size_t vPlane3);

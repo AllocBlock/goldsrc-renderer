@@ -36,6 +36,6 @@ private:
 	float m_Fov = 120.0f;
 	float m_Aspect = 1.0f;
 	float m_Near = 0.01f;
-	float m_Far = 10.0f;
+	float m_Far = 2000.0f;
 };
 

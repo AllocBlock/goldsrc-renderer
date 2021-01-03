@@ -30,8 +30,9 @@ void main()
 	vec3 H = normalize(L + V);
 
 	float ambient = 0.2;
-	float diffuse = abs(dot(L, N));
-	float specular = pow(abs(dot(N, H)), 20.0);
+	float diffuse = max(0.0, dot(L, N));
+	float specular = pow(dot(N, H), 20.0);
+	if (diffuse == 0.0) specular = 0.0;
 
 	float fShadow = ambient + diffuse + specular;
 
@@ -39,5 +40,6 @@ void main()
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
 	vec3 TexColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord).xyz;
     
-    outColor = vec4((inFragColor * 0.5 + TexColor * 0.5) * fShadow, 1.0);
+    //outColor = vec4((inFragColor * 0.5 + TexColor * 0.5) * fShadow, 1.0);
+    outColor = vec4(TexColor * 0.5, 1.0);
 }

@@ -4,6 +4,8 @@
 #include <regex>
 #include <sstream>
 
+double CMapBrush::GlobalScale = 1.0 / 64.0;
+
 // vertice are stored at clockwise
 glm::vec3 CMapPlane::getNormal() const
 {
@@ -12,7 +14,7 @@ glm::vec3 CMapPlane::getNormal() const
 
 float CMapPlane::getDistanceToFace(glm::vec3 vPoint) const
 {
-    return glm::dot(Points[0] - vPoint, getNormal());
+    return glm::dot(vPoint - Points[0], getNormal());
 }
 
 glm::vec3 CMapPlane::correctNormal(glm::vec3 vN) const
@@ -46,7 +48,7 @@ glm::vec2 CMapPolygon::__calcTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_
 std::vector<CMapPolygon> CMapBrush::getPolygons()
 {
     if (!m_Polygons.empty()) return m_Polygons;
-    for (size_t i = 0; i < m_Polygons.size(); ++i)
+    for (size_t i = 0; i < Planes.size(); ++i)
     {
         CMapPolygon Polygon;
         Polygon.pPlane = &Planes[i];
@@ -63,6 +65,7 @@ std::vector<CMapPolygon> CMapBrush::getPolygons()
                 glm::vec3 IntersectionPoint;
                 if (__getIntersection(IntersectionPoint, i1, i2, i3))
                 {
+                    IntersectionPoint *= CMapBrush::GlobalScale;
                     m_Polygons[i1].Vertices.emplace_back(IntersectionPoint);
                     m_Polygons[i2].Vertices.emplace_back(IntersectionPoint);
                     m_Polygons[i3].Vertices.emplace_back(IntersectionPoint);
@@ -107,6 +110,7 @@ bool CMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPl
     for (CMapPlane pPlane : Planes)
     {
         float D = pPlane.getDistanceToFace(IntersectionPoint);
+        auto x = pPlane.getNormal();
         if (D > Epsilon)
             return false;
     }

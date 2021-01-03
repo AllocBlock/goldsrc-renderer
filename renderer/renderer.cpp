@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <filesystem>
+#include <iostream>
 #include <set>
 #include "IOGoldSrcMap.h"
 #include "IOGoldSrcWad.h"
@@ -20,7 +21,8 @@ int main()
 
 	GLFWwindow* pWindow = glfwCreateWindow(800, 600, "Vulkan Simple Render", nullptr, nullptr);
 	CVulkanRenderer Renderer(pWindow);
-    readMap("../data/test.map", Renderer);
+    //readMap("../data/test.map", Renderer);
+    readObj("../data/ball.obj", Renderer);
 	Renderer.getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
     Renderer.init(); 
 
@@ -43,12 +45,52 @@ int main()
 	return 0;
 }
 
+CIOImage generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
+{
+    unsigned char BaseColor1[3] = { 0, 0, 0 };
+    unsigned char BaseColor2[3] = { 255, 0, 255 };
+    size_t DataSize = vNumRow * vNumCol * vCellSize * vCellSize * 4;
+    unsigned char* pData = new unsigned char[DataSize];
+    for (size_t i = 0; i < DataSize / 4; i++)
+    {
+        size_t GridRowIndex = (i / (vNumCol * vCellSize)) / vCellSize;
+        size_t GridColIndex = (i % (vNumCol * vCellSize)) / vCellSize;
+
+        unsigned char* pColor;
+        if ((GridRowIndex + GridColIndex) % 2 == 0)
+            pColor = BaseColor1;
+        else
+            pColor = BaseColor2;
+        pData[i * 4] = pColor[0];
+        pData[i * 4 + 1] = pColor[1];
+        pData[i * 4 + 2] = pColor[2];
+        pData[i * 4 + 3] = static_cast<unsigned char>(255);
+    }
+
+    // cout 
+    /*for (size_t i = 0; i < vNumRow * vCellSize; i++)
+    {
+        for (size_t k = 0; k < vNumCol * vCellSize; k++)
+        {
+            std::cout << pData[(i * vNumCol * vCellSize + k) * 4] % 2 << " ";
+        }
+        std::cout << std::endl;
+    }*/
+
+    CIOImage Grid;
+    Grid.setImageSize(vNumCol * vCellSize, vNumRow * vCellSize);
+    Grid.setData(pData);
+
+    return Grid;
+}
+
 void readObj(std::string vFileName, CVulkanRenderer& voRenderer)
 {
     CIOObj Obj = CIOObj();
     Obj.read(vFileName);
 
     S3DObject ObjObject;
+    ObjObject.TexIndex = 0;
     ObjObject.Vertices = Obj.getVertices();
     ObjObject.Normals = Obj.getNormalPerVertex();
     ObjObject.TexCoords = Obj.getRandomTexCoordPerVertex();
@@ -73,6 +115,11 @@ void readObj(std::string vFileName, CVulkanRenderer& voRenderer)
 
     std::vector<S3DObject> SceneObjects;
     SceneObjects.emplace_back(ObjObject);
+
+    std::vector<CIOImage> TexImages;
+    TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+
+    voRenderer.setTextureImageData(TexImages);
     voRenderer.setSceneObjects(SceneObjects);
 }
 
@@ -153,6 +200,7 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
         }
     }
 
+    voRenderer.setTextureImageData(TexImages);
     voRenderer.setSceneObjects(SceneObjects);
 }
 
