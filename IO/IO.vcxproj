@@ -149,6 +149,7 @@
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeaderOutputFile />
+      <AdditionalIncludeDirectories>$(STB_PATH)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>

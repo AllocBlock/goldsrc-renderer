@@ -78,8 +78,15 @@ struct SPointData
     }
 };
 
+enum class E3DObjectType
+{
+    TRIAGNLES_LIST,
+    INDEXED_TRIAGNLES_LIST
+};
+
 struct S3DObject
 {
+    E3DObjectType Type = E3DObjectType::TRIAGNLES_LIST;
     std::vector<glm::vec3> Vertices;
     std::vector<glm::vec3> Colors;
     std::vector<glm::vec3> Normals;
@@ -106,6 +113,12 @@ struct S3DObject
     }
 };
 
+struct SScene
+{
+    std::vector<S3DObject> Objects;
+    std::vector<CIOImage> TexImages;
+};
+
 struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Model;
@@ -130,8 +143,7 @@ public:
     ~CVulkanRenderer();
 
     void init();
-    void setSceneObjects(const std::vector<S3DObject>& vSceneObjects) { m_SceneObjects = vSceneObjects; }
-    void setTextureImageData(const std::vector<CIOImage>& vTextureImageData) { m_TextureImageData = vTextureImageData; }
+    void setScene(const SScene& vScene) { m_Scene = vScene; }
     void render();
     void waitDevice();
     CCamera* getCamera();
@@ -237,13 +249,11 @@ private:
     std::vector<VkFramebuffer> m_SwapchainFramebuffers;
     VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
 
-    std::vector<CIOImage> m_TextureImageData;
-    std::vector<S3DObject> m_SceneObjects;
+    SScene m_Scene;
 
     const std::vector<const char*> m_ValidationLayers = 
     {
-        //"VK_LAYER_KHRONOS_validation"
-        "VK_LAYER_LUNARG_standard_validation"
+        "VK_LAYER_KHRONOS_validation"
     };
 
     const std::vector<const char*> m_DeviceExtensions = 

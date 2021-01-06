@@ -27,7 +27,7 @@ class CIOMtl : public CIOBase
 {
 public:
     CIOMtl() = default;
-    CIOMtl(std::string vFileName = "") :CIOBase(vFileName) {}
+    CIOMtl(std::string vFileName) :CIOBase(vFileName) {}
     
 protected:
     virtual bool _readV(std::string vFileName) override;

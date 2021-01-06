@@ -10,7 +10,7 @@
 struct SObjFaceNode
 {
     uint32_t VectexId = 0;
-    uint32_t TexCoorId = 0;
+    uint32_t TexCoordId = 0;
     uint32_t NormalId = 0;
 };
 
@@ -43,8 +43,6 @@ public:
     glm::vec3 getNormal(int vFaceIndex, int vNodeIndex) const;
 
     const std::vector<glm::vec3>& getVertices() { return m_pObj->Vertices; }
-    std::vector<glm::vec3> getNormalPerVertex();
-    std::vector<glm::vec2> getRandomTexCoordPerVertex();
     const std::vector<glm::vec3>& getNormals() { return m_pObj->Normals; }
     const std::vector<glm::vec2>& getTexCoords() { return m_pObj->TexCoords; }
     const std::vector<SObjFace>& getFaces() { return m_pObj->Faces; }
@@ -53,9 +51,6 @@ protected:
     virtual bool _readV(std::string vFileName) override;
 
 private:
-    void __calculateAverageNormals();
-    void __randomTexCoords();
-
     std::shared_ptr<SObj> m_pObj = nullptr;
     std::shared_ptr<CIOMtl> m_pMtl = nullptr;
     float m_ScaleFactor = 1.0;

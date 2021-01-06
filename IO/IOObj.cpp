@@ -71,9 +71,9 @@ bool CIOObj::_readV(std::string vFileName) {
                 }
                 SObjFaceNode FaceNodeInfo;
 
-                FaceNodeInfo.VectexId = ReResult[1].str().empty() ? 0 : atoi(ReResult[0].str().c_str());
-                FaceNodeInfo.TexCoorId = ReResult[2].str().empty() ? 0 : atoi(ReResult[1].str().c_str());
-                FaceNodeInfo.NormalId = ReResult[3].str().empty() ? 0 : atoi(ReResult[2].str().c_str());
+                FaceNodeInfo.VectexId = ReResult[1].str().empty() ? 0 : atoi(ReResult[1].str().c_str());
+                FaceNodeInfo.TexCoordId = ReResult[2].str().empty() ? 0 : atoi(ReResult[2].str().c_str());
+                FaceNodeInfo.NormalId = ReResult[3].str().empty() ? 0 : atoi(ReResult[3].str().c_str());
 
                 Face.Nodes.push_back(FaceNodeInfo);
             }
@@ -89,7 +89,10 @@ bool CIOObj::_readV(std::string vFileName) {
             std::filesystem::path MtlFileName = vFileName;
             MtlFileName.replace_extension("mtl");
             if (std::filesystem::exists(MtlFileName))
+            {
+                m_pMtl = std::make_shared<CIOMtl>();
                 m_pMtl->read(MtlFileName.string());
+            }
         }
         else if (Cmd == "usemtl") { // 材质
             Line >> CurrentMtl;
@@ -107,7 +110,8 @@ bool CIOObj::_readV(std::string vFileName) {
     float MaxX, MinX, MaxY, MinY, MaxZ, MinZ;
     MinX = MinY = MinZ = INFINITY;
     MaxX = MaxY = MaxZ = -INFINITY;
-    for (glm::vec3 Vertex : m_pObj->Vertices) {
+    for (glm::vec3 Vertex : m_pObj->Vertices)
+    {
         MaxX = std::max<float>(MaxX, Vertex.x);
         MinX = std::min<float>(MinX, Vertex.x);
         MaxY = std::max<float>(MaxY, Vertex.y);
@@ -148,11 +152,11 @@ glm::vec2 CIOObj::getTexCoord(int vFaceIndex, int vNodeIndex) const
         vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
         vNodeIndex < 0 || vNodeIndex >= m_pObj->Faces[vFaceIndex].Nodes.size())
         return glm::vec2(NAN, NAN);
-    uint32_t TexCoorId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].TexCoorId;
-    if (TexCoorId == 0)
+    uint32_t TexCoordId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].TexCoordId;
+    if (TexCoordId == 0)
         return glm::vec2(NAN, NAN);
     // 纹理映射方式不同，obj->vulkan
-    glm::vec2 TexCoor = m_pObj->TexCoords[TexCoorId - 1];
+    glm::vec2 TexCoor = m_pObj->TexCoords[TexCoordId - 1];
     TexCoor.y = 1.0 - TexCoor.y;
     return TexCoor;
 }
@@ -167,47 +171,4 @@ glm::vec3 CIOObj::getNormal(int vFaceIndex, int vNodeIndex) const
     if (NormalId == 0)
         return glm::vec3(NAN, NAN, NAN);
     return m_pObj->Normals[NormalId - 1];
-}
-
-std::vector<glm::vec3> CIOObj::getNormalPerVertex()
-{
-    size_t NumVertex = m_pObj->Vertices.size();
-
-    std::vector<glm::vec3> Normals(NumVertex);
-    std::vector<int> Counts(NumVertex);
-    for (size_t i = 0; i < NumVertex; ++i)
-    {
-        Normals[i] = glm::vec3(0.0, 0.0, 0.0);
-        Counts[i] = 0;
-    }
-    for (size_t i = 0; i < m_pObj->Faces.size(); ++i)
-    {
-        glm::vec3 V1 = getVertex(i, 1) - getVertex(i, 0);
-        glm::vec3 V2 = getVertex(i, 2) - getVertex(i, 0);
-        glm::vec3 Normal = glm::normalize(glm::cross(V1, V2));
-        for (size_t k = 0; k < getFaceNodeNum(i); k++)
-        {
-            uint32_t VertexIndex = m_pObj->Faces[i].Nodes[k].VectexId - 1;
-            Normals[VertexIndex] += Normal;
-            Counts[VertexIndex]++;
-        }
-    }
-    for (size_t i = 0; i < NumVertex; ++i)
-        Normals[i] /= static_cast<double>(Counts[i]);
-    return Normals;
-}
-
-std::vector<glm::vec2> CIOObj::getRandomTexCoordPerVertex()
-{
-    size_t NumVertex = m_pObj->Vertices.size();
-
-    std::vector<glm::vec2> TexCoords(NumVertex);
-    std::default_random_engine RandomEngine;
-    for (size_t i = 0; i < NumVertex; ++i)
-    {
-        double RandomU = static_cast<double>(RandomEngine()) / (RandomEngine.max() - RandomEngine.min());
-        double RandomV = static_cast<double>(RandomEngine()) / (RandomEngine.max() - RandomEngine.min());
-        TexCoords[i] = glm::vec2(RandomU, RandomV);
-    }
-    return TexCoords;
 }

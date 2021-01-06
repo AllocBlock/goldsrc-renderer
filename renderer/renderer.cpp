@@ -10,8 +10,8 @@
 #include "IOGoldSrcWad.h"
 #include "IOImage.h"
 
-void readObj(std::string vFileName, CVulkanRenderer& voRenderer);
-void readMap(std::string vFileName, CVulkanRenderer& voRenderer);
+SScene readObj(std::string vFileName);
+SScene readMap(std::string vFileName);
 bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFilePath);
 
 int main()
@@ -21,8 +21,9 @@ int main()
 
 	GLFWwindow* pWindow = glfwCreateWindow(800, 600, "Vulkan Simple Render", nullptr, nullptr);
 	CVulkanRenderer Renderer(pWindow);
-    readMap("../data/test.map", Renderer);
-    //readObj("../data/ball.obj", Renderer);
+    //SScene Scene = readMap("../data/cy_roating_grenade.map");
+     SScene Scene = readObj("../data/Gun.obj");
+    Renderer.setScene(Scene);
 	Renderer.getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
     Renderer.init(); 
 
@@ -84,49 +85,56 @@ CIOImage generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSiz
     return Grid;
 }
 
-void readObj(std::string vFileName, CVulkanRenderer& voRenderer)
+SScene readObj(std::string vFileName)
 {
     CIOObj Obj = CIOObj();
     Obj.read(vFileName);
 
     S3DObject ObjObject;
     ObjObject.TexIndex = 0;
-    ObjObject.Vertices = Obj.getVertices();
-    ObjObject.Normals = Obj.getNormalPerVertex();
-    ObjObject.TexCoords = Obj.getRandomTexCoordPerVertex();
-    for (size_t i = 0; i < ObjObject.Vertices.size(); ++i)
-    {
-        ObjObject.Colors.emplace_back(glm::vec3(1.0, 0.0, 0.0));
-    }
-
+    
     const std::vector<SObjFace>& Faces = Obj.getFaces();
-    for (const SObjFace& Face : Faces)
+    for (size_t i = 0; i < Faces.size(); ++i)
     {
-        uint32_t Node1 = Face.Nodes[0].VectexId - 1;
+        const SObjFace& Face = Faces[i];
         for (size_t k = 2; k < Face.Nodes.size(); ++k)
         {
-            uint32_t Node2 = Face.Nodes[k - 1].VectexId - 1;
-            uint32_t Node3 = Face.Nodes[k].VectexId - 1;
-            ObjObject.Indices.emplace_back(Node1);
-            ObjObject.Indices.emplace_back(Node2);
-            ObjObject.Indices.emplace_back(Node3);
+            ObjObject.Vertices.emplace_back(Obj.getVertex(i, 0));
+            ObjObject.Vertices.emplace_back(Obj.getVertex(i, k-1));
+            ObjObject.Vertices.emplace_back(Obj.getVertex(i, k));
+            ObjObject.Normals.emplace_back(Obj.getNormal(i, 0));
+            ObjObject.Normals.emplace_back(Obj.getNormal(i, k - 1));
+            ObjObject.Normals.emplace_back(Obj.getNormal(i, k));
+            ObjObject.TexCoords.emplace_back(Obj.getTexCoord(i, 0));
+            ObjObject.TexCoords.emplace_back(Obj.getTexCoord(i, k - 1));
+            ObjObject.TexCoords.emplace_back(Obj.getTexCoord(i, k));
         }
+    }
+    for (size_t i = 0; i < ObjObject.Vertices.size(); ++i)
+    {
+        ObjObject.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
     }
 
     std::vector<S3DObject> SceneObjects;
     SceneObjects.emplace_back(ObjObject);
 
     std::vector<CIOImage> TexImages;
-    TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    //TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    CIOImage Texture("../data/Gun.png");
+    Texture.read();
+    TexImages.push_back(Texture);
 
-    voRenderer.setTextureImageData(TexImages);
-    voRenderer.setSceneObjects(SceneObjects);
+    SScene Scene;
+    Scene.Objects = SceneObjects;
+    Scene.TexImages = TexImages;
+    return Scene;
 }
 
-void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
+SScene readMap(std::string vFileName)
 {
     CIOGoldSrcMap Map = CIOGoldSrcMap(vFileName);
-    Map.read();
+    if (!Map.read())
+        throw "file read failed";
     std::vector<std::string> WadPaths = Map.getWadPaths();
     std::vector<CIOGoldsrcWad> Wads(WadPaths.size());
     
@@ -138,10 +146,11 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
         Wads[i].read(RealWadPath);
     }
 
-    std::vector<CIOImage> TexImages;
+    SScene Scene;
+
     std::map<std::string, uint32_t> TexIndexMap;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
-    TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    Scene.TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
     TexIndexMap["TextureNotFound"] = 0;
     UsedTextureNames.insert("TextureNotFound");
     for (const std::string& TexName : UsedTextureNames)
@@ -160,8 +169,8 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
                 Wad.getRawRGBAPixels(Index.value(), pData);
                 TexImage.setData(pData);
                 delete[] pData;
-                TexImages.emplace_back(TexImage);
-                TexIndexMap[TexName] = TexIndexMap.size();
+                TexIndexMap[TexName] = Scene.TexImages.size();
+                Scene.TexImages.emplace_back(TexImage);
                 break;
             }
         }
@@ -171,18 +180,19 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
 
     
     // group polygon by texture, one object per texture 
-    std::vector<S3DObject> SceneObjects(UsedTextureNames.size());
-    for (size_t i = 0; i < SceneObjects.size(); ++i)
-        SceneObjects[i].TexIndex = i;
+     Scene.Objects.resize(UsedTextureNames.size());
+    for (size_t i = 0; i < Scene.Objects.size(); ++i)
+        Scene.Objects[i].TexIndex = i;
 
     std::vector<CMapPolygon> Polygons = Map.getAllPolygons();
-    uint32_t IndexStart = 0;
+    
     for (CMapPolygon& Polygon : Polygons)
     {
         size_t TexIndex = TexIndexMap[Polygon.pPlane->TextureName];
-        size_t TexWidth = TexImages[TexIndex].getImageWidth();
-        size_t TexHeight = TexImages[TexIndex].getImageHeight();
-        S3DObject& Object = SceneObjects[TexIndex];
+        size_t TexWidth = Scene.TexImages[TexIndex].getImageWidth();
+        size_t TexHeight = Scene.TexImages[TexIndex].getImageHeight();
+        S3DObject& Object = Scene.Objects[TexIndex];
+        uint32_t IndexStart = Object.Vertices.size();
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
@@ -195,6 +205,7 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
             Object.Normals.emplace_back(Normal);
         }
 
+        
         for (size_t i = 2; i < Polygon.Vertices.size(); ++i)
         {
             Object.Indices.emplace_back(IndexStart);
@@ -204,8 +215,7 @@ void readMap(std::string vFileName, CVulkanRenderer& voRenderer)
         IndexStart += static_cast<uint32_t>(Polygon.Vertices.size());
     }
 
-    voRenderer.setTextureImageData(TexImages);
-    voRenderer.setSceneObjects(SceneObjects);
+    return Scene;
 }
 
 bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFilePath)
