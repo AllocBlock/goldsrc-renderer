@@ -30,7 +30,7 @@ public:
 
 private:
 	glm::vec3 m_Pos = glm::vec3();
-	glm::vec3 m_Up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 m_Up = glm::vec3(0.0f, 0.0f, 1.0f);
 	double m_Phi = 180.0;
 	double m_Theta = 90.0;
 	float m_Fov = 120.0f;

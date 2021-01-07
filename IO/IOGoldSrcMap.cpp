@@ -106,11 +106,10 @@ bool CMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPl
     // the intersection might be not in the brush (see the map file spec. for example)
     // we need to check if it is using the property of convex polyhedron: 
     // if a point is on the brush, this point must be on or behind each plane (normal direction is front) 
-    const float Epsilon = 1e-6;
+    const float Epsilon = 1e-3;
     for (CMapPlane pPlane : Planes)
     {
         float D = pPlane.getDistanceToFace(IntersectionPoint);
-        auto x = pPlane.getNormal();
         if (D > Epsilon)
             return false;
     }

@@ -21,8 +21,8 @@ int main()
 
 	GLFWwindow* pWindow = glfwCreateWindow(800, 600, "Vulkan Simple Render", nullptr, nullptr);
 	CVulkanRenderer Renderer(pWindow);
-    //SScene Scene = readMap("../data/cy_roating_grenade.map");
-     SScene Scene = readObj("../data/Gun.obj");
+    SScene Scene = readMap("../data/cy_roating_grenade.map");
+     //SScene Scene = readObj("../data/textured-cube.obj");
     Renderer.setScene(Scene);
 	Renderer.getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
     Renderer.init(); 
@@ -85,6 +85,25 @@ CIOImage generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSiz
     return Grid;
 }
 
+CIOImage generatePureColorTexture(unsigned char vBaseColor[3], size_t vSize)
+{
+    size_t DataSize = vSize * vSize * 4;
+    unsigned char* pData = new unsigned char[DataSize];
+    for (size_t i = 0; i < DataSize / 4; i++)
+    {
+        pData[i * 4] = vBaseColor[0];
+        pData[i * 4 + 1] = vBaseColor[1];
+        pData[i * 4 + 2] = vBaseColor[2];
+        pData[i * 4 + 3] = static_cast<unsigned char>(255);
+    }
+
+    CIOImage Grid;
+    Grid.setImageSize(vSize, vSize);
+    Grid.setData(pData);
+
+    return Grid;
+}
+
 SScene readObj(std::string vFileName)
 {
     CIOObj Obj = CIOObj();
@@ -120,7 +139,7 @@ SScene readObj(std::string vFileName)
 
     std::vector<CIOImage> TexImages;
     //TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
-    CIOImage Texture("../data/Gun.png");
+    CIOImage Texture("../data/Tex2.png");
     Texture.read();
     TexImages.push_back(Texture);
 
@@ -148,6 +167,7 @@ SScene readMap(std::string vFileName)
 
     SScene Scene;
 
+    // find used textures, load and index them
     std::map<std::string, uint32_t> TexIndexMap;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
     Scene.TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
@@ -165,7 +185,7 @@ SScene readMap(std::string vFileName)
 
                 CIOImage TexImage;
                 TexImage.setImageSize(static_cast<int>(Width), static_cast<int>(Height));
-                void* pData = new char[Width * Height * 4];
+                void* pData = new unsigned char[static_cast<size_t>(4) * Width * Height];
                 Wad.getRawRGBAPixels(Index.value(), pData);
                 TexImage.setData(pData);
                 delete[] pData;
@@ -178,9 +198,8 @@ SScene readMap(std::string vFileName)
             TexIndexMap[TexName] = 0;
     }
 
-    
     // group polygon by texture, one object per texture 
-     Scene.Objects.resize(UsedTextureNames.size());
+    Scene.Objects.resize(UsedTextureNames.size());
     for (size_t i = 0; i < Scene.Objects.size(); ++i)
         Scene.Objects[i].TexIndex = i;
 
@@ -197,14 +216,13 @@ SScene readMap(std::string vFileName)
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
 
-        Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
+        /*Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
         Object.TexCoords.insert(Object.TexCoords.end(), TexCoords.begin(), TexCoords.end());
         for (size_t i = 0; i < Polygon.Vertices.size(); ++i)
         {
             Object.Colors.emplace_back(glm::vec3(1.0, 0.0, 0.0));
             Object.Normals.emplace_back(Normal);
         }
-
         
         for (size_t i = 2; i < Polygon.Vertices.size(); ++i)
         {
@@ -212,7 +230,23 @@ SScene readMap(std::string vFileName)
             Object.Indices.emplace_back(IndexStart + i - 1);
             Object.Indices.emplace_back(IndexStart + i);
         }
-        IndexStart += static_cast<uint32_t>(Polygon.Vertices.size());
+        IndexStart += static_cast<uint32_t>(Polygon.Vertices.size());*/
+
+        for (size_t k = 2; k < Polygon.Vertices.size(); ++k)
+        {
+            Object.Vertices.emplace_back(Polygon.Vertices[0]);
+            Object.Vertices.emplace_back(Polygon.Vertices[k-1]);
+            Object.Vertices.emplace_back(Polygon.Vertices[k]);
+            Object.Normals.emplace_back(Normal);
+            Object.Normals.emplace_back(Normal);
+            Object.Normals.emplace_back(Normal);
+            Object.TexCoords.emplace_back(TexCoords[0]);
+            Object.TexCoords.emplace_back(TexCoords[k-1]);
+            Object.TexCoords.emplace_back(TexCoords[k]);
+            Object.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            Object.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            Object.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+        }
     }
 
     return Scene;

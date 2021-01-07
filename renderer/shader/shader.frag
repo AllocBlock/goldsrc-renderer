@@ -30,7 +30,7 @@ void main()
 	vec3 V = normalize(ubo.uEye - inFragPosition);
 	vec3 H = normalize(L + V);
 
-	float ambient = 0.3;
+	float ambient = 0.6;
 	float diffuse = dot(L, N);
 	float specular = pow(dot(N, H), 20.0);
 	if (diffuse <= 0.0)
@@ -46,5 +46,5 @@ void main()
 	vec3 TexColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord).xyz;
     
     //outColor = vec4((inFragColor * 0.5 + TexColor * 0.5) * fShadow, 1.0);
-    outColor = vec4(TexColor * fShadow, 1.0);
+	outColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord);
 }

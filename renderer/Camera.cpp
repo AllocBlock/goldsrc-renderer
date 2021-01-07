@@ -6,8 +6,8 @@
 glm::vec3 CCamera::getFront() const
 {
     double X = glm::sin(glm::radians(m_Theta)) * glm::sin(glm::radians(m_Phi));
-    double Y = glm::cos(glm::radians(m_Theta));
-    double Z = glm::sin(glm::radians(m_Theta)) * glm::cos(glm::radians(m_Phi));
+    double Z = glm::cos(glm::radians(m_Theta));
+    double Y = glm::sin(glm::radians(m_Theta)) * glm::cos(glm::radians(m_Phi));
     return glm::vec3(X, Y, Z);
 }
 

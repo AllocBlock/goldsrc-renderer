@@ -485,6 +485,9 @@ void CVulkanRenderer::__createGraphicsPipeline()
     VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
     RasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     RasterizerInfo.depthClampEnable = VK_FALSE;
+    RasterizerInfo.depthBiasEnable = VK_TRUE;
+    RasterizerInfo.depthBiasConstantFactor = 0.0;
+    RasterizerInfo.depthBiasSlopeFactor = 1.0;
     RasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
     RasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
     RasterizerInfo.lineWidth = 1.0f;
@@ -492,7 +495,7 @@ void CVulkanRenderer::__createGraphicsPipeline()
     RasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;*/
     //RasterizerInfo.cullMode = VK_CULL_MODE_NONE;
     RasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    RasterizerInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    RasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 
     VkPipelineMultisampleStateCreateInfo Multisampling = {};
     Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -532,6 +535,16 @@ void CVulkanRenderer::__createGraphicsPipeline()
     ColorBlending.blendConstants[2] = 0.0f; // Optional
     ColorBlending.blendConstants[3] = 0.0f; // Optional
 
+    std::vector<VkDynamicState> EnabledDynamicStates = 
+    {
+        VK_DYNAMIC_STATE_DEPTH_BIAS
+    };
+
+    VkPipelineDynamicStateCreateInfo DynamicState = {};
+    DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    DynamicState.dynamicStateCount = static_cast<uint32_t>(EnabledDynamicStates.size());
+    DynamicState.pDynamicStates = EnabledDynamicStates.data();
+
     VkPushConstantRange PushConstantInfo = {};
     PushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     PushConstantInfo.offset = 0;
@@ -557,7 +570,7 @@ void CVulkanRenderer::__createGraphicsPipeline()
     PipelineInfo.pMultisampleState = &Multisampling;
     PipelineInfo.pDepthStencilState = &DepthStencilInfo;
     PipelineInfo.pColorBlendState = &ColorBlending;
-    PipelineInfo.pDynamicState = nullptr; // Optional
+    PipelineInfo.pDynamicState = &DynamicState;
     PipelineInfo.layout = m_PipelineLayout;
     PipelineInfo.renderPass = m_RenderPass;
     PipelineInfo.subpass = 0;
@@ -633,10 +646,10 @@ void CVulkanRenderer::__createTextureImages()
         memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
         vkUnmapMemory(m_Device, StagingBufferMemory);
 
-        __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImages[i], m_TextureImageMemories[i]);
-        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImages[i], m_TextureImageMemories[i]);
+        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
         __copyBufferToImage(StagingBuffer, m_TextureImages[i], TexWidth, TexHeight);
-        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
         vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
         vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
@@ -648,7 +661,7 @@ void CVulkanRenderer::__createTextureImageViews()
     size_t NumTextures = __getActualTextureNum();
     m_TextureImageViews.resize(NumTextures);
     for (size_t i = 0; i < NumTextures; ++i)
-        m_TextureImageViews[i] = __createImageView(m_TextureImages[i], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+        m_TextureImageViews[i] = __createImageView(m_TextureImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CVulkanRenderer::__createTextureSampler()
@@ -923,13 +936,15 @@ void CVulkanRenderer::__createCommandBuffers()
 
         size_t IndexOffset = 0;
         size_t VertexOffset = 0;
-        for (const S3DObject& Object : m_Scene.Objects)
+        for (size_t k = 0; k < m_Scene.Objects.size(); ++k)
         {
+            const S3DObject& Object = m_Scene.Objects[k];
             size_t NumVertex = Object.Vertices.size();
             size_t NumIndex = Object.Indices.size();
             if (NumVertex == 0) continue;
             SPushConstant PushConstant = {};
             PushConstant.TexIndex = Object.TexIndex;
+            vkCmdSetDepthBias(m_CommandBuffers[i], k, 0, 0);
             vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
             if (Object.Type == E3DObjectType::INDEXED_TRIAGNLES_LIST)
                 vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);
