@@ -5,6 +5,8 @@
 class CCamera
 {
 public:
+	void reset();
+
 	glm::mat4 getProjMat() const;
 	glm::mat4 getViewMat() const;
 

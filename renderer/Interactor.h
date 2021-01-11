@@ -1,8 +1,9 @@
 #pragma once
 #include "Camera.h"
-#include "VulkanRenderer.h"
 
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <memory>
 
 enum EMoveState
 {
@@ -18,21 +19,30 @@ enum EMoveState
 class CInteractor
 {
 public:
-	CInteractor(CVulkanRenderer* vpRender);
+	CInteractor(GLFWwindow* vpWindow);
 
 	void bindEvent();
 	void enable() { m_Enabled = true; }
 	void disable() { m_Enabled = false; }
-	void update(float vDeltaTime);
+	void update();
+	void reset();
+
+	float getSpeed() { return m_Speed; }
+	std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
+
+	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
 
 	static void onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods);
 	static void onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY);
 	static void onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods);
 	
 private:
-	CVulkanRenderer* m_pRenderer;
+	float __getDeltaTime();
 
-	const float m_Speed = 3.0;
+	GLFWwindow* m_pWindow = nullptr;
+
+	std::shared_ptr<CCamera> m_pCamera = nullptr;
+	float m_Speed = 3.0;
 	const float m_BoostScale = 3.0;
 	const float m_CrawlScale = 0.5;
 	const float m_HorizontalSensetivity = 0.1;

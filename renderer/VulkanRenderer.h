@@ -1,7 +1,6 @@
 #pragma once
 #include "IOObj.h"
 #include "IOImage.h"
-#include "Camera.h"
 #include "ImguiVullkan.h"
 
 #include <vulkan/vulkan.h>
@@ -146,8 +145,8 @@ public:
     void setScene(const SScene& vScene) { m_Scene = vScene; }
     void render();
     void waitDevice();
-    CCamera* getCamera();
     GLFWwindow* getWindow();
+    std::shared_ptr<CInteractor> getInteractor();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
 
@@ -240,7 +239,7 @@ private:
     std::vector<VkDeviceMemory> m_TextureImageMemories;
     std::vector<VkImageView> m_TextureImageViews;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    CImguiVullkan* m_pImgui = nullptr;
+    std::shared_ptr<CImguiVullkan> m_pImgui = nullptr;
 
     std::vector<VkImage> m_SwapchainImages;
     VkFormat m_SwapchainImageFormat = VK_FORMAT_UNDEFINED;
@@ -269,5 +268,5 @@ private:
     int m_CurrentFrameIndex = 0;
     bool m_FramebufferResized = false;
 
-    CCamera* m_pCamera = nullptr;
+    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
 };

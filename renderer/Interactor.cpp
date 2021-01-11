@@ -1,21 +1,21 @@
 #include "Interactor.h"
 #include "imgui.h"
+#include <chrono>
 
-CInteractor::CInteractor(CVulkanRenderer* vpRender)
-	:m_pRenderer(vpRender)
+CInteractor::CInteractor(GLFWwindow* vpWindow)
+	:m_pWindow(vpWindow)
 {
 }
 
 void CInteractor::bindEvent()
 {
-	_ASSERTE(m_pRenderer);
-	GLFWwindow* pWindow = m_pRenderer->getWindow();
-	_ASSERTE(pWindow);
+	_ASSERTE(m_pWindow);
+	glfwSetWindowUserPointer(m_pWindow, this);
+	glfwSetKeyCallback(m_pWindow, CInteractor::onKeyboard);
+	glfwSetCursorPosCallback(m_pWindow, CInteractor::onMouseMove);
+	glfwSetMouseButtonCallback(m_pWindow, CInteractor::onMouseClick);
 
-	glfwSetWindowUserPointer(pWindow, this);
-	glfwSetKeyCallback(pWindow, CInteractor::onKeyboard);
-	glfwSetCursorPosCallback(pWindow, CInteractor::onMouseMove);
-	glfwSetMouseButtonCallback(pWindow, CInteractor::onMouseClick);
+	m_pCamera = std::make_shared<CCamera>();
 }
 
 void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods)
@@ -61,7 +61,7 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
-	CCamera* pCamera = pInteractor->m_pRenderer->getCamera();
+	std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();
 
 	if (!pInteractor->m_IsMoving) return;
 
@@ -73,7 +73,7 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 {
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
-	const CCamera* pCamera = pInteractor->m_pRenderer->getCamera();
+	std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();
 
 	if (vButton == GLFW_MOUSE_BUTTON_LEFT)
 	{
@@ -93,8 +93,10 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 	}
 }
 
-void CInteractor::update(float vDeltaTime)
+void CInteractor::update()
 {
+	float DeltaTime = __getDeltaTime();
+
 	float Boost = 1.0;
 	float MoveForward = 0.0, MoveLeft = 0.0;
 	if (m_MoveState == EMoveState::STOP) return;
@@ -105,10 +107,23 @@ void CInteractor::update(float vDeltaTime)
 	if (m_MoveState & EMoveState::LEFT) MoveLeft += 1;
 	if (m_MoveState & EMoveState::RIGHT) MoveLeft -= 1;
 
-	CCamera* pCamera = m_pRenderer->getCamera();
-	glm::vec3 Front = pCamera->getFront();
-	glm::vec3 Left = pCamera->getLeft();
-	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft) * Boost * m_Speed * vDeltaTime;
-	pCamera->setPos(pCamera->getPos() + Move);
+	glm::vec3 Front = m_pCamera->getFront();
+	glm::vec3 Left = m_pCamera->getLeft();
+	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft) * Boost * m_Speed * DeltaTime;
+	m_pCamera->setPos(m_pCamera->getPos() + Move);
 }
 
+void CInteractor::reset()
+{
+	m_pCamera->reset();
+	m_Speed = 3.0f;
+}
+
+float CInteractor::__getDeltaTime()
+{
+	static std::chrono::milliseconds LastTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+	std::chrono::milliseconds CurrentTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+	float DeltaTime = static_cast<float>((CurrentTimeStamp - LastTimeStamp).count()) / 1000.0f;
+	LastTimeStamp = CurrentTimeStamp;
+	return DeltaTime;
+}

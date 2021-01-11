@@ -1,11 +1,11 @@
-#include "ImguiVullkan.h"
+﻿#include "ImguiVullkan.h"
 #include "Common.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
-CImguiVullkan::CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
+CImguiVullkan::CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews, std::shared_ptr<CInteractor> pInteractor)
 {
     m_Instance = vInstance;
     m_PhysicalDevice = vPhysicalDevice;
@@ -15,6 +15,7 @@ CImguiVullkan::CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDev
     m_pWindow = vpWindow;
     m_ImageFormat = vImageFormat;
     m_Extent = vExtent;
+    m_pInteractor = pInteractor;
     __createDescriptorPool();
 
     uint32_t NumImage = static_cast<uint32_t>(vImageViews.size());
@@ -22,6 +23,8 @@ CImguiVullkan::CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDev
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& IO = ImGui::GetIO();
+    IO.Fonts->AddFontFromFileTTF("C:/windows/fonts/simhei.ttf", 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForVulkan(vpWindow, true);
 
@@ -102,7 +105,7 @@ CImguiVullkan::CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDev
     updateFramebuffers(m_Extent, vImageViews);
 }
 
-CImguiVullkan::~CImguiVullkan()
+void CImguiVullkan::destroy()
 {
     for (auto Framebuffer : m_FrameBuffers)
         vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
@@ -174,7 +177,27 @@ void CImguiVullkan::render()
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
+
+    ImGui::Begin(u8"设置", nullptr, ImGuiWindowFlags_MenuBar);
+    if (ImGui::CollapsingHeader(u8"相机"))
+    {
+        static float CameraSpeed = m_pInteractor->getSpeed();
+        ImGui::SliderFloat(u8"速度", &CameraSpeed, 0.1f, 10.0f, "%.1f");
+        m_pInteractor->setSpeed(CameraSpeed);
+        ImGui::SameLine();
+        if (ImGui::Button(u8"重置"))
+        {
+            CameraSpeed = 3.0f;
+            m_pInteractor->setSpeed(CameraSpeed);
+        }
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        if (ImGui::Button(u8"重置相机位置"))
+        {
+            m_pInteractor->reset();
+            CameraSpeed = m_pInteractor->getSpeed();
+        }
+    }
+    ImGui::End();
     ImGui::Render();
 }
 

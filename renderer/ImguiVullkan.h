@@ -1,21 +1,22 @@
 #pragma once
 
+#include "Interactor.h"
+
 #include <vulkan/vulkan.h>
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <vector>
+#include <memory>
 
 class CImguiVullkan
 {
 public:
-    CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
-    ~CImguiVullkan();
-
+    CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice,uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews,std::shared_ptr<CInteractor> pInteractor);
+    
     void render();
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
-    void updateFramebuffers(VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
+    void updateFramebuffers(VkExtent2D vExtent, const std::vector<VkImageView>&vImageViews);
+    void destroy();
 
 private:
     void __createDescriptorPool();
@@ -33,5 +34,6 @@ private:
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> m_CommandBuffers;
     std::vector<VkFramebuffer> m_FrameBuffers;
-};
 
+    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+};

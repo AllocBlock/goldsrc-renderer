@@ -11,13 +11,14 @@
 
 CVulkanRenderer::CVulkanRenderer(GLFWwindow* vpWindow)
     : m_pWindow(vpWindow),
-    m_pCamera(new CCamera)
+    m_pInteractor(std::make_shared<CInteractor>(vpWindow))
 {
+    m_pInteractor->bindEvent();
 }
 
 CVulkanRenderer::~CVulkanRenderer()
 {
-    delete m_pImgui;
+    m_pImgui->destroy();
     __cleanupSwapChain();
     vkDestroySampler(m_Device, m_TextureSampler, nullptr);
     for (size_t i = 0; i < m_TextureImages.size(); ++i)
@@ -72,11 +73,12 @@ void CVulkanRenderer::init()
     __createSemaphores();
 
     SQueueFamilyIndices QueueIndex = __findQueueFamilies(m_PhysicalDevice);
-    m_pImgui = new CImguiVullkan(m_Instance, m_PhysicalDevice, m_Device, QueueIndex.GraphicsFamilyIndex.value(), m_GraphicsQueue, m_pWindow, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
+    m_pImgui = std::make_shared<CImguiVullkan>(m_Instance, m_PhysicalDevice, m_Device, QueueIndex.GraphicsFamilyIndex.value(), m_GraphicsQueue, m_pWindow, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews, m_pInteractor);
 }
 
 void CVulkanRenderer::render()
 {
+    m_pInteractor->update();
     m_pImgui->render();
 
     ck(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()));
@@ -151,14 +153,14 @@ void CVulkanRenderer::waitDevice()
     ck(vkDeviceWaitIdle(m_Device));
 }
 
-CCamera* CVulkanRenderer::getCamera()
-{
-    return m_pCamera;
-}
-
 GLFWwindow* CVulkanRenderer::getWindow()
 {
     return m_pWindow;
+}
+
+std::shared_ptr<CInteractor> CVulkanRenderer::getInteractor()
+{
+    return m_pInteractor;
 }
 
 void CVulkanRenderer::__createInstance()
@@ -181,7 +183,8 @@ void CVulkanRenderer::__createInstance()
         InstanceInfo.enabledLayerCount = static_cast<uint32_t>(m_ValidationLayers.size());
         InstanceInfo.ppEnabledLayerNames = m_ValidationLayers.data();
     }
-    else {
+    else
+    {
         InstanceInfo.enabledLayerCount = 0;
     }
 
@@ -205,15 +208,17 @@ void CVulkanRenderer::__choosePhysicalDevice()
     PhysicalDevices.resize(NumPhysicalDevice);
     ck(vkEnumeratePhysicalDevices(m_Instance, &NumPhysicalDevice, PhysicalDevices.data()));
 
-    for (const auto& PhysicalDevice : PhysicalDevices) {
-
-        if (__isDeviceSuitable(PhysicalDevice)) {
+    for (const auto& PhysicalDevice : PhysicalDevices)
+    {
+        if (__isDeviceSuitable(PhysicalDevice))
+        {
             m_PhysicalDevice = PhysicalDevice;
             break;
         }
     }
 
-    if (m_PhysicalDevice == VK_NULL_HANDLE) {
+    if (m_PhysicalDevice == VK_NULL_HANDLE)
+    {
         throw "failed to find a suitable GPU";
     }
 }
@@ -1503,12 +1508,14 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     float Aspect = 1.0;
     if (m_SwapchainExtent.height > 0 && m_SwapchainExtent.width > 0)
         Aspect = static_cast<float>(m_SwapchainExtent.width) / m_SwapchainExtent.height;
-    m_pCamera->setAspect(Aspect);
+
+    auto pCamera = m_pInteractor->getCamera();
+    pCamera->setAspect(Aspect);
     SUniformBufferObjectVert UBO = {};
     //UBO.Model = glm::rotate(glm::mat4(1.0), DeltaTime * glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     UBO.Model = glm::mat4(1.0f);
-    UBO.View = m_pCamera->getViewMat();
-    UBO.Proj = m_pCamera->getProjMat();
+    UBO.View = pCamera->getViewMat();
+    UBO.Proj = pCamera->getProjMat();
 
     void* pData;
     ck(vkMapMemory(m_Device, m_VertUniformBufferMemories[vImageIndex], 0, sizeof(UBO), 0, &pData));
@@ -1516,7 +1523,7 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     vkUnmapMemory(m_Device, m_VertUniformBufferMemories[vImageIndex]);
 
     SUniformBufferObjectFrag UBOFrag = {};
-    UBOFrag.Eye = m_pCamera->getPos();
+    UBOFrag.Eye = pCamera->getPos();
 
     ck(vkMapMemory(m_Device, m_FragUniformBufferMemories[vImageIndex], 0, sizeof(UBOFrag), 0, &pData));
     memcpy(pData, &UBOFrag, sizeof(UBOFrag));

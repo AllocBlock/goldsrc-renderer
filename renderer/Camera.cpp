@@ -3,6 +3,18 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 
+void CCamera::reset()
+{
+    m_Pos = glm::vec3();
+    m_Up = glm::vec3(0.0f, 0.0f, 1.0f);
+    m_Phi = 180.0;
+    m_Theta = 90.0;
+    m_Fov = 120.0f;
+    m_Aspect = 1.0f;
+    m_Near = 0.01f;
+    m_Far = 2000.0f;
+}
+
 glm::vec3 CCamera::getFront() const
 {
     double X = glm::sin(glm::radians(m_Theta)) * glm::sin(glm::radians(m_Phi));

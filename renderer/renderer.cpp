@@ -24,21 +24,15 @@ int main()
     SScene Scene = readMap("../data/cy_roating_grenade.map");
      //SScene Scene = readObj("../data/textured-cube.obj");
     Renderer.setScene(Scene);
-	Renderer.getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
     Renderer.init(); 
 
-	CInteractor Interactor(&Renderer);
-	Interactor.bindEvent();
+    std::shared_ptr<CInteractor> pInteractor = Renderer.getInteractor();
+    pInteractor->getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
 
-	std::chrono::milliseconds LastTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 	while (!glfwWindowShouldClose(pWindow))
 	{
 		glfwPollEvents();
-		std::chrono::milliseconds CurrentTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-		float DeltaTime = static_cast<float>((CurrentTimeStamp - LastTimeStamp).count()) / 1000.0f;
-		Interactor.update(DeltaTime);
 		Renderer.render();
-		LastTimeStamp = CurrentTimeStamp;
 	}
 	Renderer.waitDevice();
 	glfwDestroyWindow(pWindow);
