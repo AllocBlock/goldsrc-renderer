@@ -9,10 +9,10 @@ void CCamera::reset()
     m_Up = glm::vec3(0.0f, 0.0f, 1.0f);
     m_Phi = 180.0;
     m_Theta = 90.0;
-    m_Fov = 120.0f;
     m_Aspect = 1.0f;
     m_Near = 0.01f;
     m_Far = 2000.0f;
+    m_Fov = 120.0f;
 }
 
 glm::vec3 CCamera::getFront() const
@@ -25,7 +25,7 @@ glm::vec3 CCamera::getFront() const
 
 glm::mat4 CCamera::getProjMat() const
 {
-    glm::mat4 Proj = glm::perspective(m_Fov, m_Aspect, m_Near, m_Far);
+    glm::mat4 Proj = glm::perspective(glm::radians(m_Fov), m_Aspect, m_Near, m_Far);
     Proj[1][1] *= -1;
     return Proj;
 }

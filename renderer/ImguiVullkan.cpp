@@ -177,25 +177,36 @@ void CImguiVullkan::render()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin(u8"设置", nullptr, ImGuiWindowFlags_MenuBar);
-    if (ImGui::CollapsingHeader(u8"相机"))
+    ImGui::Begin(u8"设置");
+
+    // 帮助
+    ImGui::Text(u8"操作方法");
+    ImGui::BulletText(u8"WASD前后左右移动");
+    ImGui::BulletText(u8"按住shift键加速，按住ctrl键减速");
+    ImGui::BulletText(u8"鼠标左键拖动以转动视角");
+    ImGui::Separator();
+
+    // 相机设置
+    if (ImGui::CollapsingHeader(u8"相机", ImGuiTreeNodeFlags_DefaultOpen))
     {
         static float CameraSpeed = m_pInteractor->getSpeed();
-        ImGui::SliderFloat(u8"速度", &CameraSpeed, 0.1f, 10.0f, "%.1f");
+        ImGui::SliderFloat(u8"速度", &CameraSpeed, 0.1f, 10.0f, "%.1f"); ImGui::SameLine();
+        if (ImGui::Button(u8"重置")) CameraSpeed = 3.0f;
         m_pInteractor->setSpeed(CameraSpeed);
-        ImGui::SameLine();
-        if (ImGui::Button(u8"重置"))
-        {
-            CameraSpeed = 3.0f;
-            m_pInteractor->setSpeed(CameraSpeed);
-        }
-        ImGui::SetNextItemWidth(-FLT_MIN);
+        
+        static float Fov = m_pInteractor->getCamera()->getFov();
+        ImGui::SliderFloat(u8"视野范围", &Fov, 10.0f, 170.0f, "%.1f"); ImGui::SameLine();
+        if (ImGui::Button(u8"重置")) Fov = 120.0f;
+        m_pInteractor->getCamera()->setFov(Fov);
+
         if (ImGui::Button(u8"重置相机位置"))
         {
             m_pInteractor->reset();
             CameraSpeed = m_pInteractor->getSpeed();
+            Fov = m_pInteractor->getCamera()->getFov();
         }
     }
+
     ImGui::End();
     ImGui::Render();
 }
