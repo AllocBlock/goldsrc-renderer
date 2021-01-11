@@ -5,7 +5,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
-CImguiVullkan::CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews, std::shared_ptr<CInteractor> pInteractor)
+void CImguiVullkan::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
 {
     m_Instance = vInstance;
     m_PhysicalDevice = vPhysicalDevice;
@@ -15,7 +15,6 @@ CImguiVullkan::CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDev
     m_pWindow = vpWindow;
     m_ImageFormat = vImageFormat;
     m_Extent = vExtent;
-    m_pInteractor = pInteractor;
     __createDescriptorPool();
 
     uint32_t NumImage = static_cast<uint32_t>(vImageViews.size());

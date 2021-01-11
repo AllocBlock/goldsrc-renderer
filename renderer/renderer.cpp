@@ -24,19 +24,27 @@ int main()
     SScene Scene = readMap("../data/cy_roating_grenade.map");
      //SScene Scene = readObj("../data/textured-cube.obj");
     Renderer.setScene(Scene);
-    Renderer.init(); 
+    Renderer.init();
 
-    std::shared_ptr<CInteractor> pInteractor = Renderer.getInteractor();
+    std::shared_ptr<CInteractor> pInteractor = std::make_shared<CInteractor>(pWindow, Renderer.getCamera());
+    pInteractor->bindEvent();
     pInteractor->getCamera()->setPos(glm::vec3(0.0f, 0.0f, 3.0f));
 
+    CImguiVullkan Imgui(pInteractor);
+    Renderer.initImgui(Imgui);
+    
 	while (!glfwWindowShouldClose(pWindow))
 	{
 		glfwPollEvents();
-		Renderer.render();
+        pInteractor->update();
+		Renderer.render(Imgui);
 	}
 	Renderer.waitDevice();
 	glfwDestroyWindow(pWindow);
 	glfwTerminate();
+
+    Imgui.destroy();
+    Renderer.destroy();
 	return 0;
 }
 

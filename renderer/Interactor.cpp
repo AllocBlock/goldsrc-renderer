@@ -2,8 +2,9 @@
 #include "imgui.h"
 #include <chrono>
 
-CInteractor::CInteractor(GLFWwindow* vpWindow)
-	:m_pWindow(vpWindow)
+CInteractor::CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CCamera> vpCamera)
+	:m_pWindow(vpWindow),
+	m_pCamera(vpCamera)
 {
 }
 
@@ -14,8 +15,6 @@ void CInteractor::bindEvent()
 	glfwSetKeyCallback(m_pWindow, CInteractor::onKeyboard);
 	glfwSetCursorPosCallback(m_pWindow, CInteractor::onMouseMove);
 	glfwSetMouseButtonCallback(m_pWindow, CInteractor::onMouseClick);
-
-	m_pCamera = std::make_shared<CCamera>();
 }
 
 void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods)

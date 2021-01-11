@@ -11,8 +11,10 @@
 class CImguiVullkan
 {
 public:
-    CImguiVullkan(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice,uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews,std::shared_ptr<CInteractor> pInteractor);
-    
+    CImguiVullkan() = delete;
+    CImguiVullkan(std::shared_ptr<CInteractor> vpInteractor) : m_pInteractor(vpInteractor) {}
+
+    void init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice,uint32_t vGraphicQueueFamily, VkQueue vGraphicQueue, GLFWwindow* vpWindow, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
     void render();
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     void updateFramebuffers(VkExtent2D vExtent, const std::vector<VkImageView>&vImageViews);

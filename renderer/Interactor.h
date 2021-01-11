@@ -19,7 +19,8 @@ enum EMoveState
 class CInteractor
 {
 public:
-	CInteractor(GLFWwindow* vpWindow);
+	CInteractor() = delete;
+	CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CCamera> vpCamera);
 
 	void bindEvent();
 	void enable() { m_Enabled = true; }
@@ -40,8 +41,8 @@ private:
 	float __getDeltaTime();
 
 	GLFWwindow* m_pWindow = nullptr;
-
 	std::shared_ptr<CCamera> m_pCamera = nullptr;
+
 	float m_Speed = 3.0;
 	const float m_BoostScale = 3.0;
 	const float m_CrawlScale = 0.5;

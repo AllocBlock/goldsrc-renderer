@@ -139,14 +139,16 @@ class CVulkanRenderer
 {
 public:
     CVulkanRenderer(GLFWwindow* vpWindow);
-    ~CVulkanRenderer();
-
+    
     void init();
+    void destroy();
     void setScene(const SScene& vScene) { m_Scene = vScene; }
-    void render();
+    void render(CImguiVullkan& vpGUI);
     void waitDevice();
     GLFWwindow* getWindow();
-    std::shared_ptr<CInteractor> getInteractor();
+    std::shared_ptr<CCamera> getCamera();
+
+    void initImgui(CImguiVullkan& vImgui);
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
 
@@ -239,7 +241,6 @@ private:
     std::vector<VkDeviceMemory> m_TextureImageMemories;
     std::vector<VkImageView> m_TextureImageViews;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::shared_ptr<CImguiVullkan> m_pImgui = nullptr;
 
     std::vector<VkImage> m_SwapchainImages;
     VkFormat m_SwapchainImageFormat = VK_FORMAT_UNDEFINED;
@@ -268,5 +269,5 @@ private:
     int m_CurrentFrameIndex = 0;
     bool m_FramebufferResized = false;
 
-    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+    std::shared_ptr<CCamera> m_pCamera = nullptr;
 };

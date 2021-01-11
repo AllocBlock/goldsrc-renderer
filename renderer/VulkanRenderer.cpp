@@ -11,39 +11,8 @@
 
 CVulkanRenderer::CVulkanRenderer(GLFWwindow* vpWindow)
     : m_pWindow(vpWindow),
-    m_pInteractor(std::make_shared<CInteractor>(vpWindow))
+    m_pCamera(std::make_shared<CCamera>())
 {
-    m_pInteractor->bindEvent();
-}
-
-CVulkanRenderer::~CVulkanRenderer()
-{
-    m_pImgui->destroy();
-    __cleanupSwapChain();
-    vkDestroySampler(m_Device, m_TextureSampler, nullptr);
-    for (size_t i = 0; i < m_TextureImages.size(); ++i)
-    {
-        vkDestroyImageView(m_Device, m_TextureImageViews[i], nullptr);
-        vkDestroyImage(m_Device, m_TextureImages[i], nullptr);
-        vkFreeMemory(m_Device, m_TextureImageMemories[i], nullptr);
-    }
-    
-    vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
-    vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
-    vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
-    vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
-    vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
-    for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
-    {
-        vkDestroySemaphore(m_Device, m_RenderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(m_Device, m_ImageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
-    }
-    vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
-    vkDestroyDevice(m_Device, nullptr);
-    vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-    if (ENABLE_VALIDATION_LAYERS) __destroyDebugMessenger();
-    vkDestroyInstance(m_Instance, nullptr);
 }
 
 void CVulkanRenderer::init()
@@ -71,15 +40,40 @@ void CVulkanRenderer::init()
     __createDescriptorSets();
     __createCommandBuffers();
     __createSemaphores();
-
-    SQueueFamilyIndices QueueIndex = __findQueueFamilies(m_PhysicalDevice);
-    m_pImgui = std::make_shared<CImguiVullkan>(m_Instance, m_PhysicalDevice, m_Device, QueueIndex.GraphicsFamilyIndex.value(), m_GraphicsQueue, m_pWindow, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews, m_pInteractor);
 }
 
-void CVulkanRenderer::render()
+void CVulkanRenderer::destroy()
 {
-    m_pInteractor->update();
-    m_pImgui->render();
+    __cleanupSwapChain();
+    vkDestroySampler(m_Device, m_TextureSampler, nullptr);
+    for (size_t i = 0; i < m_TextureImages.size(); ++i)
+    {
+        vkDestroyImageView(m_Device, m_TextureImageViews[i], nullptr);
+        vkDestroyImage(m_Device, m_TextureImages[i], nullptr);
+        vkFreeMemory(m_Device, m_TextureImageMemories[i], nullptr);
+    }
+
+    vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
+    vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
+    vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
+    vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
+    vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
+    for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
+    {
+        vkDestroySemaphore(m_Device, m_RenderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(m_Device, m_ImageAvailableSemaphores[i], nullptr);
+        vkDestroyFence(m_Device, m_InFlightFences[i], nullptr);
+    }
+    vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+    vkDestroyDevice(m_Device, nullptr);
+    vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+    if (ENABLE_VALIDATION_LAYERS) __destroyDebugMessenger();
+    vkDestroyInstance(m_Instance, nullptr);
+}
+
+void CVulkanRenderer::render(CImguiVullkan& vpGUI)
+{
+    vpGUI.render();
 
     ck(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()));
     ck(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex]));
@@ -90,7 +84,7 @@ void CVulkanRenderer::render()
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         __recreateSwapChain();
-        m_pImgui->updateFramebuffers(m_SwapchainExtent, m_SwapchainImageViews);
+        vpGUI.updateFramebuffers(m_SwapchainExtent, m_SwapchainImageViews);
         return;
     }
     else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
@@ -99,7 +93,7 @@ void CVulkanRenderer::render()
     }
 
     __updateUniformBuffer(ImageIndex);
-    VkCommandBuffer ImguiCommandBuffer = m_pImgui->requestCommandBuffer(ImageIndex);
+    VkCommandBuffer ImguiCommandBuffer = vpGUI.requestCommandBuffer(ImageIndex);
 
     VkSemaphore WaitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrameIndex] };
     VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -138,7 +132,7 @@ void CVulkanRenderer::render()
     {
         m_FramebufferResized = false;
         __recreateSwapChain();
-        m_pImgui->updateFramebuffers(m_SwapchainExtent, m_SwapchainImageViews);
+        vpGUI.updateFramebuffers(m_SwapchainExtent, m_SwapchainImageViews);
     }
     else if (Result != VK_SUCCESS)
     {
@@ -158,9 +152,15 @@ GLFWwindow* CVulkanRenderer::getWindow()
     return m_pWindow;
 }
 
-std::shared_ptr<CInteractor> CVulkanRenderer::getInteractor()
+std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
 {
-    return m_pInteractor;
+    return m_pCamera;
+}
+
+void CVulkanRenderer::initImgui(CImguiVullkan &vImgui)
+{
+    SQueueFamilyIndices QueueIndex = __findQueueFamilies(m_PhysicalDevice);
+    vImgui.init(m_Instance, m_PhysicalDevice, m_Device, QueueIndex.GraphicsFamilyIndex.value(), m_GraphicsQueue, m_pWindow, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
 }
 
 void CVulkanRenderer::__createInstance()
@@ -1509,13 +1509,12 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     if (m_SwapchainExtent.height > 0 && m_SwapchainExtent.width > 0)
         Aspect = static_cast<float>(m_SwapchainExtent.width) / m_SwapchainExtent.height;
 
-    auto pCamera = m_pInteractor->getCamera();
-    pCamera->setAspect(Aspect);
+    m_pCamera->setAspect(Aspect);
     SUniformBufferObjectVert UBO = {};
     //UBO.Model = glm::rotate(glm::mat4(1.0), DeltaTime * glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     UBO.Model = glm::mat4(1.0f);
-    UBO.View = pCamera->getViewMat();
-    UBO.Proj = pCamera->getProjMat();
+    UBO.View = m_pCamera->getViewMat();
+    UBO.Proj = m_pCamera->getProjMat();
 
     void* pData;
     ck(vkMapMemory(m_Device, m_VertUniformBufferMemories[vImageIndex], 0, sizeof(UBO), 0, &pData));
@@ -1523,7 +1522,7 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     vkUnmapMemory(m_Device, m_VertUniformBufferMemories[vImageIndex]);
 
     SUniformBufferObjectFrag UBOFrag = {};
-    UBOFrag.Eye = pCamera->getPos();
+    UBOFrag.Eye = m_pCamera->getPos();
 
     ck(vkMapMemory(m_Device, m_FragUniformBufferMemories[vImageIndex], 0, sizeof(UBOFrag), 0, &pData));
     memcpy(pData, &UBOFrag, sizeof(UBOFrag));
