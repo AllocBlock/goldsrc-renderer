@@ -21,43 +21,39 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 {
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
-	if (ImGui::GetIO().WantCaptureKeyboard) return;
+	if (ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse) return;
 
-	int& MoveState = pInteractor->m_MoveState;
-	if (vKey == GLFW_KEY_W)
+	switch (vKey)
 	{
-		if (vAction == GLFW_PRESS) MoveState |= EMoveState::FRONT;
-		else if (vAction == GLFW_RELEASE) MoveState &= ~EMoveState::FRONT;
-	}
-	else if (vKey == GLFW_KEY_S)
-	{
-		if (vAction == GLFW_PRESS) MoveState |= EMoveState::BEHIND;
-		else if (vAction == GLFW_RELEASE) MoveState &= ~EMoveState::BEHIND;
-	}
-	else if (vKey == GLFW_KEY_A)
-	{
-		if (vAction == GLFW_PRESS) MoveState |= EMoveState::LEFT;
-		else if (vAction == GLFW_RELEASE) MoveState &= ~EMoveState::LEFT;
-	}
-	else  if (vKey == GLFW_KEY_D)
-	{
-		if (vAction == GLFW_PRESS) MoveState |= EMoveState::RIGHT;
-		else if (vAction == GLFW_RELEASE) MoveState &= ~EMoveState::RIGHT;
-	}
-	else  if (vKey == GLFW_KEY_LEFT_SHIFT)
-	{
-		if (vAction == GLFW_PRESS) MoveState |= EMoveState::BOOST;
-		else if (vAction == GLFW_RELEASE) MoveState &= ~EMoveState::BOOST;
-	}
-	else  if (vKey == GLFW_KEY_LEFT_CONTROL)
-	{
-		if (vAction == GLFW_PRESS) MoveState |= EMoveState::SLOW;
-		else if (vAction == GLFW_RELEASE) MoveState &= ~EMoveState::SLOW;
+		case GLFW_KEY_SPACE:
+		{
+			if (vAction == GLFW_PRESS)
+			{
+				pInteractor->m_IsMoving = true;
+				glfwSetInputMode(vpWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+				glfwGetCursorPos(vpWindow, &pInteractor->m_LastMousePosX, &pInteractor->m_LastMousePosY);
+
+				std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();
+				pInteractor->m_LastPhi = pCamera->getPhi();
+				pInteractor->m_LastTheta = pCamera->getTheta();
+			}
+			else if (vAction == GLFW_RELEASE)
+			{
+				pInteractor->m_IsMoving = false;
+				glfwSetInputMode(vpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			}
+			break;
+		}
+		default:
+			break;
 	}
 }
 
 void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
+	if (ImGui::GetIO().WantCaptureMouse) return;
+
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
 	std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();
@@ -70,26 +66,11 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 
 void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods)
 {
-	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
-	if (!pInteractor->m_Enabled) return;
-	std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();
+	if (ImGui::GetIO().WantCaptureMouse) return;
 
-	if (vButton == GLFW_MOUSE_BUTTON_LEFT)
-	{
-		if (vAction == GLFW_PRESS)
-		{
-			if (ImGui::GetIO().WantCaptureMouse) return;
-			pInteractor->m_IsMoving = true;
-			glfwGetCursorPos(vpWindow, &pInteractor->m_LastMousePosX, &pInteractor->m_LastMousePosY);
-			
-			pInteractor->m_LastPhi = pCamera->getPhi();
-			pInteractor->m_LastTheta = pCamera->getTheta();
-		}
-		else if (vAction == GLFW_RELEASE)
-		{
-			pInteractor->m_IsMoving = false;
-		}
-	}
+	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
+	
+	if (!pInteractor->m_Enabled) return;
 }
 
 void CInteractor::update()
@@ -98,13 +79,15 @@ void CInteractor::update()
 
 	float Boost = 1.0;
 	float MoveForward = 0.0, MoveLeft = 0.0;
-	if (m_MoveState == EMoveState::STOP) return;
-	if (m_MoveState & EMoveState::BOOST) Boost *= m_BoostScale;
-	if (m_MoveState & EMoveState::SLOW) Boost *= m_CrawlScale;
-	if (m_MoveState & EMoveState::FRONT) MoveForward += 1;
-	if (m_MoveState & EMoveState::BEHIND) MoveForward -= 1;
-	if (m_MoveState & EMoveState::LEFT) MoveLeft += 1;
-	if (m_MoveState & EMoveState::RIGHT) MoveLeft -= 1;
+
+	int MoveState = __getCurrentMoveState();
+	if (MoveState == EMoveState::STOP) return;
+	if (MoveState & EMoveState::BOOST) Boost *= m_BoostScale;
+	if (MoveState & EMoveState::CRAWL) Boost *= m_CrawlScale;
+	if (MoveState & EMoveState::FRONT) MoveForward += 1;
+	if (MoveState & EMoveState::BEHIND) MoveForward -= 1;
+	if (MoveState & EMoveState::LEFT) MoveLeft += 1;
+	if (MoveState & EMoveState::RIGHT) MoveLeft -= 1;
 
 	glm::vec3 Front = m_pCamera->getFront();
 	glm::vec3 Left = m_pCamera->getLeft();
@@ -125,4 +108,31 @@ float CInteractor::__getDeltaTime()
 	float DeltaTime = static_cast<float>((CurrentTimeStamp - LastTimeStamp).count()) / 1000.0f;
 	LastTimeStamp = CurrentTimeStamp;
 	return DeltaTime;
+}
+
+int CInteractor::__getCurrentMoveState()
+{
+	int MoveState = static_cast<int>(EMoveState::STOP);
+	if (!m_IsMoving)
+		return MoveState;
+
+	bool KeyW = glfwGetKey(m_pWindow, GLFW_KEY_W) == GLFW_PRESS;
+	if (KeyW) MoveState |= EMoveState::FRONT;
+
+	bool KeyS = glfwGetKey(m_pWindow, GLFW_KEY_S) == GLFW_PRESS;
+	if (KeyS) MoveState |= EMoveState::BEHIND;
+
+	bool KeyA = glfwGetKey(m_pWindow, GLFW_KEY_A) == GLFW_PRESS;
+	if (KeyA) MoveState |= EMoveState::LEFT;
+
+	bool KeyD = glfwGetKey(m_pWindow, GLFW_KEY_D) == GLFW_PRESS;
+	if (KeyD) MoveState |= EMoveState::RIGHT;
+
+	bool KeyLeftShift = glfwGetKey(m_pWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+	if (KeyLeftShift) MoveState |= EMoveState::BOOST;
+
+	bool KeyLeftCtrl = glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+	if (KeyLeftCtrl) MoveState |= EMoveState::CRAWL;
+	
+	return MoveState;
 }

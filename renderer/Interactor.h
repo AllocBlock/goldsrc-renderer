@@ -13,7 +13,7 @@ enum EMoveState
 	LEFT = 0x0004,
 	RIGHT = 0x0008,
 	BOOST = 0x0010,
-	SLOW = 0x0020,
+	CRAWL = 0x0020,
 };
 
 class CInteractor
@@ -39,6 +39,7 @@ public:
 	
 private:
 	float __getDeltaTime();
+	int __getCurrentMoveState();
 
 	GLFWwindow* m_pWindow = nullptr;
 	std::shared_ptr<CCamera> m_pCamera = nullptr;
@@ -50,7 +51,6 @@ private:
 	const float m_VerticalSensetivity = 0.1;
 
 	bool m_Enabled = true;
-	int m_MoveState = EMoveState::STOP;
 	double m_LastMousePosX = 0.0;
 	double m_LastMousePosY = 0.0;
 	bool m_IsMoving = false;
