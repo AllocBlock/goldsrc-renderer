@@ -1,5 +1,6 @@
 ﻿#include "ImguiVullkan.h"
 #include "Common.h"
+#include "IOLog.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -22,7 +23,7 @@ void CImguiVullkan::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice,
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& IO = ImGui::GetIO();
-    IO.Fonts->AddFontFromFileTTF("C:/windows/fonts/simhei.ttf", 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+    IO.Fonts->AddFontFromFileTTF("C:/windows/fonts/simhei.ttf", 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseFull());
 
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForVulkan(vpWindow, true);
@@ -118,6 +119,13 @@ void CImguiVullkan::destroy()
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+}
+
+void CImguiVullkan::showAlert(std::string vText)
+{
+    if (!m_IgnoreAllAlert)
+        m_AlertTexts.push(vText);
+    GlobalLogger::logStream() << u8"警告: " << vText;
 }
 
 void CImguiVullkan::__createDescriptorPool()
@@ -227,7 +235,7 @@ void CImguiVullkan::render()
         if (ImGui::Button(u8"重置")) Fov = 120.0f;
         m_pInteractor->getCamera()->setFov(Fov);
 
-        if (ImGui::Button(u8"重置相机位置"))
+        if (ImGui::Button(u8"重置相机"))
         {
             m_pInteractor->reset();
             CameraSpeed = m_pInteractor->getSpeed();
@@ -235,6 +243,47 @@ void CImguiVullkan::render()
         }
     }
 
+    if (ImGui::CollapsingHeader(u8"其他", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Checkbox(u8"屏蔽所有警告", &m_IgnoreAllAlert);
+    }
+
     ImGui::End();
+
+    if (!m_IgnoreAllAlert && !m_AlertTexts.empty())
+    {
+        if (!m_AlertTexts.empty()) ImGui::OpenPopup(u8"警告");
+        ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+        ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        ImGui::BeginPopupModal(u8"警告", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    
+        ImGui::Text(m_AlertTexts.front().c_str());
+        static bool IgnoreAllAlert = false;
+        ImGui::Checkbox(u8"屏蔽所有警告", &IgnoreAllAlert);
+
+        if (ImGui::Button(u8"确认"))
+        {
+            if (!IgnoreAllAlert)
+            {
+                m_AlertTexts.pop();
+            }
+            if (IgnoreAllAlert)
+            {
+                m_IgnoreAllAlert = true;
+                while (!m_AlertTexts.empty()) m_AlertTexts.pop();
+            }
+        }
+        else if (!IgnoreAllAlert)
+        {
+            ImGui::SameLine();
+            if (ImGui::Button(u8"确认全部"))
+            {
+                while(!m_AlertTexts.empty()) m_AlertTexts.pop();
+            }
+        }
+        ImGui::EndPopup();
+        if (m_AlertTexts.empty()) ImGui::CloseCurrentPopup();
+    }
+
     ImGui::Render();
 }

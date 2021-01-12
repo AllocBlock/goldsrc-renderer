@@ -1,4 +1,6 @@
 #include "IOLog.h"
+#include <chrono>
+#include <iomanip>
 
 CIOLog* CIOLog::GlobalLogger = nullptr;
 
@@ -55,13 +57,18 @@ namespace GlobalLogger {
     template <typename T>
     bool log(T vData)
     {
-        if (!CIOLog::GlobalLogger) CIOLog::GlobalLogger = new CIOLog();
-        return CIOLog::GlobalLogger->log(vData);
+        logStream() << vData;
     }
 
     std::ostream& logStream()
     {
         if (!CIOLog::GlobalLogger) CIOLog::GlobalLogger = new CIOLog();
-        return CIOLog::GlobalLogger->logStream();
+
+        std::ostream& Stream = CIOLog::GlobalLogger->logStream();
+        auto Time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        tm LocalTime;
+        localtime_s(&LocalTime, &Time);
+        Stream << std::endl << std::put_time(&LocalTime, u8"%Y年%m月%d日 %H时%M分%S秒：") << std::endl;
+        return Stream;
     }
 }

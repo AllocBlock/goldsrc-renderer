@@ -21,7 +21,9 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 {
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
-	if (ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse) return;
+	if (vAction == GLFW_PRESS && 
+		(ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)) 
+		return;
 
 	switch (vKey)
 	{

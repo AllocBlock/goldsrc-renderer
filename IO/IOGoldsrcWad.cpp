@@ -10,7 +10,7 @@ bool CIOGoldsrcWad::_readV(std::string vFileName)
     File.open(vFileName.data(), std::ios::in | std::ios::binary);
     if (!File.is_open())
     {
-        GlobalLogger::logStream() << "read file " << vFileName << " failed" << std::endl;
+        GlobalLogger::logStream() << u8"¶ÁÈ¡ÎÄ¼þ " << vFileName << u8" Ê§°Ü";
         return false;
     }
 

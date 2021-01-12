@@ -73,7 +73,7 @@ std::vector<CMapPolygon> CMapBrush::getPolygons()
                 else
                 {
                     // TODO:: judge if two plane is the same, which cause illegal brush
-                    // GlobalLogger::logStream() << "some planes in brush " << this << "are the same" << std::endl;
+                    // GlobalLogger::logStream() << "some planes in brush " << this << "are the same";
                 }
             }
         }
@@ -161,7 +161,7 @@ bool CIOGoldSrcMap::_readV(std::string vFileName)
     File.open(vFileName, std::ios::in);
     if (!File.is_open())
     {
-        GlobalLogger::logStream() << "read file " << vFileName << " failed" << std::endl;
+        GlobalLogger::logStream() << u8"¶ÁÈ¡ÎÄ¼þ " << vFileName << u8" Ê§°Ü";
         return false;
     }
 

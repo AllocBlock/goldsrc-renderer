@@ -5,8 +5,10 @@
 #include <vulkan/vulkan.h>
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <string>
 #include <vector>
 #include <memory>
+#include <queue>
 
 class CImguiVullkan
 {
@@ -19,6 +21,7 @@ public:
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     void updateFramebuffers(VkExtent2D vExtent, const std::vector<VkImageView>&vImageViews);
     void destroy();
+    void showAlert(std::string vText);
 
 private:
     void __createDescriptorPool();
@@ -38,4 +41,7 @@ private:
     std::vector<VkFramebuffer> m_FrameBuffers;
 
     std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+
+    bool m_IgnoreAllAlert = false;
+    std::queue<std::string> m_AlertTexts;
 };

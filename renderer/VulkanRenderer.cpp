@@ -739,7 +739,7 @@ void CVulkanRenderer::__createIndexBuffer()
 
     if (NumIndex == 0)
     {
-        GlobalLogger::logStream() << "No indexed data required. Skip index buffer creation.";
+        GlobalLogger::logStream() << u8"没有索引数据，跳过索引缓存创建";
         return;
     }
 
@@ -1449,7 +1449,7 @@ size_t CVulkanRenderer::__getActualTextureNum()
     size_t NumTexture = m_Scene.TexImages.size();
     if (NumTexture > m_MaxTextureNum)
     {
-        GlobalLogger::logStream() << "Warning: Texture Num = (" << std::to_string(NumTexture) << ") is greater than limit (" << std::to_string(m_MaxTextureNum) << "), overflow textures are ignored" << std::endl;
+        GlobalLogger::logStream() << u8"警告: 纹理数量 = (" << std::to_string(NumTexture) << u8") 大于限制数量 (" << std::to_string(m_MaxTextureNum) << u8"), 多出的纹理将被忽略";
         NumTexture = m_MaxTextureNum;
     }
     return NumTexture;
