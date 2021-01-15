@@ -54,8 +54,6 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 
 void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
-	if (ImGui::GetIO().WantCaptureMouse) return;
-
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
 	std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();

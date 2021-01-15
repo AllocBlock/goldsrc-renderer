@@ -1,36 +1,11 @@
 #pragma once
-#include "IOObj.h"
-#include "IOImage.h"
-#include "ImguiVullkan.h"
+#include "Scene.h"
+#include "Camera.h"
 
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 #include <array>
 #include <optional>
-
-#ifdef _DEBUG
-const bool ENABLE_VALIDATION_LAYERS = true;
-#else
-const bool ENABLE_VALIDATION_LAYERS = false;
-#endif
-
-struct SQueueFamilyIndices
-{
-    std::optional<uint32_t> GraphicsFamilyIndex;
-    std::optional<uint32_t> PresentFamilyIndex;
-
-    bool isComplete()
-    {
-        return GraphicsFamilyIndex.has_value() && PresentFamilyIndex.has_value();
-    }
-};
-
-struct SSwapChainSupportDetails
-{
-    VkSurfaceCapabilitiesKHR Capabilities;
-    std::vector<VkSurfaceFormatKHR> Formats;
-    std::vector<VkPresentModeKHR> PresentModes;
-};
 
 struct SPointData
 {
@@ -77,47 +52,6 @@ struct SPointData
     }
 };
 
-enum class E3DObjectType
-{
-    TRIAGNLES_LIST,
-    INDEXED_TRIAGNLES_LIST
-};
-
-struct S3DObject
-{
-    E3DObjectType Type = E3DObjectType::TRIAGNLES_LIST;
-    std::vector<glm::vec3> Vertices;
-    std::vector<glm::vec3> Colors;
-    std::vector<glm::vec3> Normals;
-    std::vector<glm::vec2> TexCoords;
-    std::vector<uint32_t> Indices;
-    uint32_t TexIndex;
-
-    std::vector<SPointData> getPointData() const
-    {
-        size_t NumPoint = Vertices.size();
-        _ASSERTE(NumPoint == Colors.size());
-        _ASSERTE(NumPoint == Normals.size());
-        _ASSERTE(NumPoint == TexCoords.size());
-
-        std::vector<SPointData> PointData(NumPoint);
-        for (size_t i = 0; i < NumPoint; ++i)
-        {
-            PointData[i].Pos = Vertices[i];
-            PointData[i].Color = Colors[i];
-            PointData[i].Normal = Normals[i];
-            PointData[i].TexCoord = TexCoords[i];
-        }
-        return PointData;
-    }
-};
-
-struct SScene
-{
-    std::vector<S3DObject> Objects;
-    std::vector<CIOImage> TexImages;
-};
-
 struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Model;
@@ -138,27 +72,17 @@ struct SPushConstant
 class CVulkanRenderer
 {
 public:
-    CVulkanRenderer(GLFWwindow* vpWindow);
+    CVulkanRenderer();
     
-    void init();
+    void init(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicsFamilyIndex, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
+    void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
+    void update(uint32_t vImageIndex);
     void destroy();
-    void setScene(const SScene& vScene) { m_Scene = vScene; }
-    void render(CImguiVullkan& vpGUI);
-    void waitDevice();
-    GLFWwindow* getWindow();
+    void setScene(const SScene& vScene);
+    VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     std::shared_ptr<CCamera> getCamera();
 
-    void initImgui(CImguiVullkan& vImgui);
-
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
-
 private:
-    void __createInstance();
-    void __createSurface();
-    void __choosePhysicalDevice();
-    void __createDevice();
-    void __createSwapChain();
-    void __createImageViews();
     void __createRenderPass();
     void __createDescriptorSetLayout();
     void __createGraphicsPipeline();
@@ -174,22 +98,12 @@ private:
     void __createDescriptorPool();
     void __createDescriptorSets();
     void __createCommandBuffers();
-    void __createSemaphores();
 
-    void __cleanupSwapChain();
-    void __recreateSwapChain();
+    void __createRecreateResources();
+    void __destroyRecreateResources();
+
     void __updateUniformBuffer(uint32_t vImageIndex);
     
-    bool __checkValidationLayerSupport();
-    std::vector<const char*> __getRequiredExtensions();
-    bool __isDeviceSuitable(const VkPhysicalDevice& vPhysicalDevice);
-    SQueueFamilyIndices __findQueueFamilies(const VkPhysicalDevice& vPhysicalDevice);
-    bool __checkDeviceExtensionSupport(const VkPhysicalDevice& vPhysicalDevice);
-    SSwapChainSupportDetails __getSwapChainSupport(const VkPhysicalDevice& vPhysicalDevice);
-    VkSurfaceFormatKHR __chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats);
-    VkPresentModeKHR __chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& vAvailablePresentModes);
-    VkExtent2D __chooseSwapExtent(const VkSurfaceCapabilitiesKHR& vCapabilities);
-    VkImageView __createImageView(VkImage vImage, VkFormat vFormat, VkImageAspectFlags vAspectFlags);
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
     void __createImage(uint32_t vWidth, uint32_t vHeight, VkFormat vFormat, VkImageTiling vTiling, VkImageUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory);
@@ -203,18 +117,14 @@ private:
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
 
-    void __setupDebugMessenger();
-    void __destroyDebugMessenger();
     std::vector<char> __readFile(std::string vFileName);
+    std::vector<SPointData> __readPointData(S3DObject vObject) const;
 
-    GLFWwindow* m_pWindow = nullptr;
-    VkInstance m_Instance = VK_NULL_HANDLE;
-    VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;
+    uint32_t m_GraphicsQueueIndex = 0;
     VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
-    VkQueue m_PresentQueue = VK_NULL_HANDLE;
-    VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
+
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
@@ -234,39 +144,25 @@ private:
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_DescriptorSets;
     std::vector<VkCommandBuffer> m_CommandBuffers;
-    std::vector<VkSemaphore> m_ImageAvailableSemaphores;
-    std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-    std::vector<VkFence> m_InFlightFences;
     std::vector<VkImage> m_TextureImages;
     std::vector<VkDeviceMemory> m_TextureImageMemories;
     std::vector<VkImageView> m_TextureImageViews;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
 
-    std::vector<VkImage> m_SwapchainImages;
-    VkFormat m_SwapchainImageFormat = VK_FORMAT_UNDEFINED;
-    VkExtent2D m_SwapchainExtent = { 0, 0 };
-    std::vector<VkImageView> m_SwapchainImageViews;
-    std::vector<VkFramebuffer> m_SwapchainFramebuffers;
-    VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
+    VkFormat m_ImageFormat = VK_FORMAT_UNDEFINED;
+    VkExtent2D m_Extent = { 0, 0 };
+    std::vector<VkImageView> m_ImageViews;
+    std::vector<VkFramebuffer> m_Framebuffers;
+
+    std::string m_VertShaderPath = "shader/vert.spv";
+    std::string m_FragShaderPath = "shader/frag.spv";
 
     SScene m_Scene;
 
-    const std::vector<const char*> m_ValidationLayers = 
-    {
-        "VK_LAYER_KHRONOS_validation"
-    };
-
-    const std::vector<const char*> m_DeviceExtensions = 
-    {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
-
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;
-    const int m_MaxFrameInFlight = 2;
     const size_t m_MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
 
-    int m_CurrentFrameIndex = 0;
     bool m_FramebufferResized = false;
 
     std::shared_ptr<CCamera> m_pCamera = nullptr;

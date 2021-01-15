@@ -62,5 +62,8 @@
     <ClInclude Include="imgui_impl_vulkan.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="imfilebrowser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
