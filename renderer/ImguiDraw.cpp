@@ -3,7 +3,33 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
-#include "imfilebrowser.h"
+#include "ImGuiFileDialogConfig.h"
+#include "ImGuiFileDialog.h"
+
+SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath)
+{
+    SResultReadScene Result;
+    Result.Succeed = false;
+    if (!std::filesystem::exists(vFilePath))
+    {
+        Result.Message = u8"文件不存在（" + vFilePath.u8string() + u8"）";
+    }
+    else if (vFilePath.extension() == ".map")
+    {
+        Result.Succeed = true;
+        Result.Scene = SceneReader::readMapFile(vFilePath.string());
+    }
+    else if (vFilePath.extension() == ".obj")
+    {
+        Result.Succeed = true;
+        Result.Scene = SceneReader::readObjFile(vFilePath.string());
+    }
+    else
+    {
+        Result.Message = u8"不支持的文件格式（" + vFilePath.extension().u8string() + u8"）";
+    }
+    return Result;
+}
 
 void CImguiVullkan::__drawGUI()
 {
@@ -11,31 +37,76 @@ void CImguiVullkan::__drawGUI()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
-
     // 弹出框
-    static ImGui::FileBrowser FileDialog;
-    FileDialog.Display();
-
-    if (FileDialog.HasSelected())
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
     {
-        std::filesystem::path FilePath = FileDialog.GetSelected(); FileDialog.ClearSelected();
-        SScene Scene;
-        if (FilePath.extension() == ".map")
+        if (ImGuiFileDialog::Instance()->IsOk())
         {
-            Scene = SceneReader::readMapFile(FilePath.string());
+            m_LoadingFilePath = ImGuiFileDialog::Instance()->GetFilePathName();
+            ImGuiFileDialog::Instance()->Close();
+            ImGui::OpenPopup(u8"文件加载提示");
+            m_FileReadingPromise = std::async(readScene, m_LoadingFilePath);
         }
-        else if (FilePath.extension() == ".obj")
-        {
-            Scene = SceneReader::readMapFile(FilePath.string());
-        }
-        else
-        {
-            showAlert(u8"不支持的文件格式（" + FilePath.extension().u8string() + u8"）");;
-        }
-        m_pRenderer->loadScene(Scene);
     }
 
+    // 文件加载框
+    ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+    ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal(u8"文件加载提示", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text(u8"加载文件中...");
+        ImGui::Text((u8"[" + m_LoadingFilePath.u8string() + u8"]").c_str());
+        
+        if (m_FileReadingPromise.valid() &&
+            m_FileReadingPromise.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+        {
+            ImGui::CloseCurrentPopup();
+            m_LoadingFilePath = "";
+            const SResultReadScene& ResultScene = m_FileReadingPromise.get();
+            if (ResultScene.Succeed)
+                m_pRenderer->loadScene(ResultScene.Scene);
+            else
+                showAlert(ResultScene.Message);
+        }
+        ImGui::EndPopup();
+    }
+
+    // 警告框
+    if (!m_IgnoreAllAlert && !m_AlertTexts.empty())
+    {
+        ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+        ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        ImGui::BeginPopupModal(u8"警告", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+
+        ImGui::Text(m_AlertTexts.front().c_str());
+        static bool IgnoreAllAlert = false;
+        ImGui::Checkbox(u8"屏蔽所有警告", &IgnoreAllAlert);
+
+        if (ImGui::Button(u8"确认"))
+        {
+            if (!IgnoreAllAlert)
+            {
+                m_AlertTexts.pop();
+            }
+            if (IgnoreAllAlert)
+            {
+                m_IgnoreAllAlert = true;
+                while (!m_AlertTexts.empty()) m_AlertTexts.pop();
+            }
+        }
+        else if (!IgnoreAllAlert)
+        {
+            ImGui::SameLine();
+            if (ImGui::Button(u8"确认全部"))
+            {
+                while (!m_AlertTexts.empty()) m_AlertTexts.pop();
+            }
+        }
+        if (m_AlertTexts.empty()) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
     // 菜单栏
     if (ImGui::BeginMenuBar())
     {
@@ -43,9 +114,7 @@ void CImguiVullkan::__drawGUI()
         {
             if (ImGui::MenuItem(u8"打开"))
             {
-                FileDialog.SetTitle(u8"打开");
-                FileDialog.SetTypeFilters({ "*.map", ".*" });
-                FileDialog.Open();
+                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", u8"打开", ".map,.obj,.*", ".");
             }
             if (ImGui::MenuItem(u8"退出"))
             {
@@ -91,41 +160,6 @@ void CImguiVullkan::__drawGUI()
     }
 
     ImGui::End();
-
-    if (!m_IgnoreAllAlert && !m_AlertTexts.empty())
-    {
-        if (!m_AlertTexts.empty()) ImGui::OpenPopup(u8"警告");
-        ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
-        ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        ImGui::BeginPopupModal(u8"警告", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-
-        ImGui::Text(m_AlertTexts.front().c_str());
-        static bool IgnoreAllAlert = false;
-        ImGui::Checkbox(u8"屏蔽所有警告", &IgnoreAllAlert);
-
-        if (ImGui::Button(u8"确认"))
-        {
-            if (!IgnoreAllAlert)
-            {
-                m_AlertTexts.pop();
-            }
-            if (IgnoreAllAlert)
-            {
-                m_IgnoreAllAlert = true;
-                while (!m_AlertTexts.empty()) m_AlertTexts.pop();
-            }
-        }
-        else if (!IgnoreAllAlert)
-        {
-            ImGui::SameLine();
-            if (ImGui::Button(u8"确认全部"))
-            {
-                while (!m_AlertTexts.empty()) m_AlertTexts.pop();
-            }
-        }
-        ImGui::EndPopup();
-        if (m_AlertTexts.empty()) ImGui::CloseCurrentPopup();
-    }
 
     ImGui::Render();
 }

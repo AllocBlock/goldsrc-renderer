@@ -36,6 +36,9 @@
     <ClCompile Include="imgui_impl_glfw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ImGuiFileDialog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imstb_rectpack.h">
@@ -62,7 +65,13 @@
     <ClInclude Include="imgui_impl_vulkan.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="imfilebrowser.h">
+    <ClInclude Include="ImGuiFileDialogConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="dirent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiFileDialog.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

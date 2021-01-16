@@ -10,12 +10,21 @@
 #include <vector>
 #include <memory>
 #include <queue>
+#include <filesystem>
+#include <future>
 
 #ifdef _DEBUG
 const bool ENABLE_VALIDATION_LAYERS = true;
 #else
 const bool ENABLE_VALIDATION_LAYERS = false;
 #endif
+
+struct SResultReadScene
+{
+    bool Succeed = false;;
+    SScene Scene;
+    std::string Message;
+};
 
 class CImguiVullkan
 {
@@ -29,6 +38,8 @@ public:
     void waitDevice();
     void destroy();
     void showAlert(std::string vText);
+
+    static SResultReadScene readScene(std::filesystem::path vFilePath);
 
     std::shared_ptr<CVulkanRenderer> getRenderer() { return m_pRenderer; }
 
@@ -91,6 +102,8 @@ private:
 
     bool m_IgnoreAllAlert = false;
     std::queue<std::string> m_AlertTexts;
+    std::filesystem::path m_LoadingFilePath = "";
+    std::future<SResultReadScene> m_FileReadingPromise;
 
     const std::vector<const char*> m_ValidationLayers =
     {
