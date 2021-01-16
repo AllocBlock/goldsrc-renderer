@@ -421,10 +421,10 @@ void CVulkanRenderer::__createTextureImages()
     m_TextureImageMemories.resize(NumTextures);
     for (size_t i = 0; i < NumTextures; ++i)
     {
-        const CIOImage& Image = m_Scene.TexImages[i];
-        int TexWidth = Image.getImageWidth();
-        int TexHeight = Image.getImageHeight();
-        const void* pPixelData = Image.getData();
+        std::shared_ptr<CIOImage> pImage = m_Scene.TexImages[i];
+        int TexWidth = pImage->getImageWidth();
+        int TexHeight = pImage->getImageHeight();
+        const void* pPixelData = pImage->getData();
 
         VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
         VkBuffer StagingBuffer;
@@ -483,8 +483,8 @@ void CVulkanRenderer::__createTextureSampler()
 void CVulkanRenderer::__createVertexBuffer()
 {
     size_t NumVertex = 0;
-    for (const S3DObject& Object : m_Scene.Objects)
-        NumVertex += Object.Vertices.size();
+    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
+        NumVertex += pObject->Vertices.size();
     if (NumVertex == 0)
     {
         GlobalLogger::logStream() << u8"没有顶点数据，跳过索引缓存创建";
@@ -500,10 +500,10 @@ void CVulkanRenderer::__createVertexBuffer()
     void* pData;
     ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
     size_t Offset = 0;
-    for (const S3DObject& Object : m_Scene.Objects)
+    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
     {
-        std::vector<SPointData> PointData = __readPointData(Object);
-        size_t SubBufferSize = sizeof(SPointData) * Object.Vertices.size();
+        std::vector<SPointData> PointData = __readPointData(pObject);
+        size_t SubBufferSize = sizeof(SPointData) * pObject->Vertices.size();
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
@@ -520,8 +520,8 @@ void CVulkanRenderer::__createVertexBuffer()
 void CVulkanRenderer::__createIndexBuffer()
 {
     size_t NumIndex = 0;
-    for (const S3DObject& Object : m_Scene.Objects)
-        NumIndex += Object.Indices.size();
+    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
+        NumIndex += pObject->Indices.size();
 
     if (NumIndex == 0)
     {
@@ -538,10 +538,10 @@ void CVulkanRenderer::__createIndexBuffer()
     void* pData;
     ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
     size_t Offset = 0;
-    for (const S3DObject& Object : m_Scene.Objects)
+    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
     {
         size_t IndexOffset = Offset / sizeof(uint32_t);
-        std::vector<uint32_t> Indices = Object.Indices;
+        std::vector<uint32_t> Indices = pObject->Indices;
         for (uint32_t& Index : Indices)
             Index += IndexOffset;
         size_t SubBufferSize = sizeof(uint32_t) * Indices.size();
@@ -746,17 +746,17 @@ void CVulkanRenderer::__createCommandBuffers()
             size_t VertexOffset = 0;
             for (size_t k = 0; k < m_Scene.Objects.size(); ++k)
             {
-                const S3DObject& Object = m_Scene.Objects[k];
-                size_t NumVertex = Object.Vertices.size();
-                size_t NumIndex = Object.Indices.size();
+                std::shared_ptr<S3DObject> pObject = m_Scene.Objects[k];
+                size_t NumVertex = pObject->Vertices.size();
+                size_t NumIndex = pObject->Indices.size();
                 if (NumVertex == 0) continue;
                 SPushConstant PushConstant = {};
-                PushConstant.TexIndex = Object.TexIndex;
+                PushConstant.TexIndex = pObject->TexIndex;
                 vkCmdSetDepthBias(m_CommandBuffers[i], k, 0, 0);
                 vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
-                if (Object.Type == E3DObjectType::INDEXED_TRIAGNLES_LIST)
+                if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLES_LIST)
                     vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);
-                else if (Object.Type == E3DObjectType::TRIAGNLES_LIST)
+                else if (pObject->Type == E3DObjectType::TRIAGNLES_LIST)
                     vkCmdDraw(m_CommandBuffers[i], NumVertex, 1, VertexOffset, 0);
                 else
                     throw "wrong object type";
@@ -786,20 +786,20 @@ std::vector<char> CVulkanRenderer::__readFile(std::string vFileName)
     return Buffer;
 }
 
-std::vector<SPointData> CVulkanRenderer::__readPointData(S3DObject vObject) const
+std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const
 {
-    size_t NumPoint = vObject.Vertices.size();
-    _ASSERTE(NumPoint == vObject.Colors.size());
-    _ASSERTE(NumPoint == vObject.Normals.size());
-    _ASSERTE(NumPoint == vObject.TexCoords.size());
+    size_t NumPoint = vpObject->Vertices.size();
+    _ASSERTE(NumPoint == vpObject->Colors.size());
+    _ASSERTE(NumPoint == vpObject->Normals.size());
+    _ASSERTE(NumPoint == vpObject->TexCoords.size());
 
     std::vector<SPointData> PointData(NumPoint);
     for (size_t i = 0; i < NumPoint; ++i)
     {
-        PointData[i].Pos = vObject.Vertices[i];
-        PointData[i].Color = vObject.Colors[i];
-        PointData[i].Normal = vObject.Normals[i];
-        PointData[i].TexCoord = vObject.TexCoords[i];
+        PointData[i].Pos = vpObject->Vertices[i];
+        PointData[i].Color = vpObject->Colors[i];
+        PointData[i].Normal = vpObject->Normals[i];
+        PointData[i].TexCoord = vpObject->TexCoords[i];
     }
     return PointData;
 }

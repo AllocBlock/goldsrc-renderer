@@ -5,6 +5,7 @@
 #include "imgui_impl_vulkan.h"
 #include "ImGuiFileDialogConfig.h"
 #include "ImGuiFileDialog.h"
+#include <iostream>
 
 SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath)
 {
@@ -37,6 +38,8 @@ void CImguiVullkan::__drawGUI()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+
     // 弹出框
     if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
     {
@@ -44,18 +47,17 @@ void CImguiVullkan::__drawGUI()
         {
             m_LoadingFilePath = ImGuiFileDialog::Instance()->GetFilePathName();
             ImGuiFileDialog::Instance()->Close();
-            ImGui::OpenPopup(u8"文件加载提示");
+            ImGui::OpenPopup(u8"提示");
             m_FileReadingPromise = std::async(readScene, m_LoadingFilePath);
         }
     }
 
     // 文件加载框
-    ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
     ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal(u8"文件加载提示", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal(u8"提示", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Text(u8"加载文件中...");
-        ImGui::Text((u8"[" + m_LoadingFilePath.u8string() + u8"]").c_str());
+        ImGui::Text((u8"[ " + m_LoadingFilePath.u8string() + u8" ]").c_str());
         
         if (m_FileReadingPromise.valid() &&
             m_FileReadingPromise.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
@@ -72,40 +74,8 @@ void CImguiVullkan::__drawGUI()
     }
 
     // 警告框
-    if (!m_IgnoreAllAlert && !m_AlertTexts.empty())
-    {
-        ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
-        ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-        ImGui::BeginPopupModal(u8"警告", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-
-        ImGui::Text(m_AlertTexts.front().c_str());
-        static bool IgnoreAllAlert = false;
-        ImGui::Checkbox(u8"屏蔽所有警告", &IgnoreAllAlert);
-
-        if (ImGui::Button(u8"确认"))
-        {
-            if (!IgnoreAllAlert)
-            {
-                m_AlertTexts.pop();
-            }
-            if (IgnoreAllAlert)
-            {
-                m_IgnoreAllAlert = true;
-                while (!m_AlertTexts.empty()) m_AlertTexts.pop();
-            }
-        }
-        else if (!IgnoreAllAlert)
-        {
-            ImGui::SameLine();
-            if (ImGui::Button(u8"确认全部"))
-            {
-                while (!m_AlertTexts.empty()) m_AlertTexts.pop();
-            }
-        }
-        if (m_AlertTexts.empty()) ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
-
+    GUIAlert.draw();
+    
     ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
     // 菜单栏
     if (ImGui::BeginMenuBar())
@@ -156,10 +126,20 @@ void CImguiVullkan::__drawGUI()
 
     if (ImGui::CollapsingHeader(u8"其他", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::Checkbox(u8"屏蔽所有警告", &m_IgnoreAllAlert);
+        bool IgnoreAllAlert = GUIAlert.getIgnoreAll();
+        ImGui::Checkbox(u8"屏蔽所有警告", &IgnoreAllAlert);
+        GUIAlert.setIgnoreAll(IgnoreAllAlert);
     }
 
     ImGui::End();
+
+    // DEBUG
+    if (ImGui::Button("test alert"))
+    {
+        showAlert("alert1");
+        showAlert("alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2");
+        showAlert("alert3");
+    }
 
     ImGui::Render();
 }

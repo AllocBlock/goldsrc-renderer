@@ -24,8 +24,8 @@ struct S3DObject
 
 struct SScene
 {
-    std::vector<S3DObject> Objects;
-    std::vector<CIOImage> TexImages;
+    std::vector<std::shared_ptr<S3DObject>> Objects;
+    std::vector<std::shared_ptr<CIOImage>> TexImages;
 };
 
 namespace SceneReader

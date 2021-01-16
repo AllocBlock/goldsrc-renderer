@@ -120,7 +120,7 @@ private:
     void __updateDescriptorSets();
 
     std::vector<char> __readFile(std::string vFileName);
-    std::vector<SPointData> __readPointData(S3DObject vObject) const;
+    std::vector<SPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
 
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;

@@ -2,7 +2,7 @@
 
 #include <filesystem>
 
-CIOImage generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
+std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
 {
     unsigned char BaseColor1[3] = { 0, 0, 0 };
     unsigned char BaseColor2[3] = { 255, 0, 255 };
@@ -33,15 +33,14 @@ CIOImage generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSiz
         }
         std::cout << std::endl;
     }*/
+    std::shared_ptr<CIOImage> pGrid = std::make_shared<CIOImage>();
+    pGrid->setImageSize(vNumCol * vCellSize, vNumRow * vCellSize);
+    pGrid->setData(pData);
 
-    CIOImage Grid;
-    Grid.setImageSize(vNumCol * vCellSize, vNumRow * vCellSize);
-    Grid.setData(pData);
-
-    return Grid;
+    return pGrid;
 }
 
-CIOImage generatePureColorTexture(unsigned char vBaseColor[3], size_t vSize)
+std::shared_ptr<CIOImage> generatePureColorTexture(unsigned char vBaseColor[3], size_t vSize)
 {
     size_t DataSize = vSize * vSize * 4;
     unsigned char* pData = new unsigned char[DataSize];
@@ -53,11 +52,11 @@ CIOImage generatePureColorTexture(unsigned char vBaseColor[3], size_t vSize)
         pData[i * 4 + 3] = static_cast<unsigned char>(255);
     }
 
-    CIOImage Grid;
-    Grid.setImageSize(vSize, vSize);
-    Grid.setData(pData);
+    std::shared_ptr<CIOImage> pGrid = std::make_shared<CIOImage>();
+    pGrid->setImageSize(vSize, vSize);
+    pGrid->setData(pData);
 
-    return Grid;
+    return pGrid;
 }
 
 bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFilePath)
@@ -123,14 +122,14 @@ SScene SceneReader::readMapFile(std::string vFileName)
                 uint32_t Width = 0, Height = 0;
                 Wad.getTextureSize(Index.value(), Width, Height);
 
-                CIOImage TexImage;
-                TexImage.setImageSize(static_cast<int>(Width), static_cast<int>(Height));
+                std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+                pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
                 void* pData = new unsigned char[static_cast<size_t>(4) * Width * Height];
                 Wad.getRawRGBAPixels(Index.value(), pData);
-                TexImage.setData(pData);
+                pTexImage->setData(pData);
                 delete[] pData;
                 TexIndexMap[TexName] = Scene.TexImages.size();
-                Scene.TexImages.emplace_back(TexImage);
+                Scene.TexImages.emplace_back(std::move(pTexImage));
                 break;
             }
         }
@@ -141,21 +140,25 @@ SScene SceneReader::readMapFile(std::string vFileName)
     // group polygon by texture, one object per texture 
     Scene.Objects.resize(UsedTextureNames.size());
     for (size_t i = 0; i < Scene.Objects.size(); ++i)
-        Scene.Objects[i].TexIndex = i;
+    {
+        Scene.Objects[i] = std::make_shared<S3DObject>();
+        Scene.Objects[i]->TexIndex = i;
+    }
 
     std::vector<CMapPolygon> Polygons = Map.getAllPolygons();
 
     for (CMapPolygon& Polygon : Polygons)
     {
         size_t TexIndex = TexIndexMap[Polygon.pPlane->TextureName];
-        size_t TexWidth = Scene.TexImages[TexIndex].getImageWidth();
-        size_t TexHeight = Scene.TexImages[TexIndex].getImageHeight();
-        S3DObject& Object = Scene.Objects[TexIndex];
-        uint32_t IndexStart = Object.Vertices.size();
+        size_t TexWidth = Scene.TexImages[TexIndex]->getImageWidth();
+        size_t TexHeight = Scene.TexImages[TexIndex]->getImageHeight();
+        std::shared_ptr<S3DObject> pObject = Scene.Objects[TexIndex];
+        uint32_t IndexStart = pObject->Vertices.size();
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
 
+        // indexed data
         /*Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
         Object.TexCoords.insert(Object.TexCoords.end(), TexCoords.begin(), TexCoords.end());
         for (size_t i = 0; i < Polygon.Vertices.size(); ++i)
@@ -172,20 +175,21 @@ SScene SceneReader::readMapFile(std::string vFileName)
         }
         IndexStart += static_cast<uint32_t>(Polygon.Vertices.size());*/
 
+        // non-indexed data
         for (size_t k = 2; k < Polygon.Vertices.size(); ++k)
         {
-            Object.Vertices.emplace_back(Polygon.Vertices[0]);
-            Object.Vertices.emplace_back(Polygon.Vertices[k - 1]);
-            Object.Vertices.emplace_back(Polygon.Vertices[k]);
-            Object.Normals.emplace_back(Normal);
-            Object.Normals.emplace_back(Normal);
-            Object.Normals.emplace_back(Normal);
-            Object.TexCoords.emplace_back(TexCoords[0]);
-            Object.TexCoords.emplace_back(TexCoords[k - 1]);
-            Object.TexCoords.emplace_back(TexCoords[k]);
-            Object.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            Object.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            Object.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pObject->Vertices.emplace_back(Polygon.Vertices[0]);
+            pObject->Vertices.emplace_back(Polygon.Vertices[k - 1]);
+            pObject->Vertices.emplace_back(Polygon.Vertices[k]);
+            pObject->Normals.emplace_back(Normal);
+            pObject->Normals.emplace_back(Normal);
+            pObject->Normals.emplace_back(Normal);
+            pObject->TexCoords.emplace_back(TexCoords[0]);
+            pObject->TexCoords.emplace_back(TexCoords[k - 1]);
+            pObject->TexCoords.emplace_back(TexCoords[k]);
+            pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
         }
     }
 
@@ -198,8 +202,8 @@ SScene SceneReader::readObjFile(std::string vFileName)
     CIOObj Obj = CIOObj();
     Obj.read(vFileName);
 
-    S3DObject ObjObject;
-    ObjObject.TexIndex = 0;
+    std::shared_ptr<S3DObject> pObjObject = std::make_shared<S3DObject>();
+    pObjObject->TexIndex = 0;
 
     const std::vector<SObjFace>& Faces = Obj.getFaces();
     for (size_t i = 0; i < Faces.size(); ++i)
@@ -207,33 +211,28 @@ SScene SceneReader::readObjFile(std::string vFileName)
         const SObjFace& Face = Faces[i];
         for (size_t k = 2; k < Face.Nodes.size(); ++k)
         {
-            ObjObject.Vertices.emplace_back(Obj.getVertex(i, 0));
-            ObjObject.Vertices.emplace_back(Obj.getVertex(i, k - 1));
-            ObjObject.Vertices.emplace_back(Obj.getVertex(i, k));
-            ObjObject.Normals.emplace_back(Obj.getNormal(i, 0));
-            ObjObject.Normals.emplace_back(Obj.getNormal(i, k - 1));
-            ObjObject.Normals.emplace_back(Obj.getNormal(i, k));
-            ObjObject.TexCoords.emplace_back(Obj.getTexCoord(i, 0));
-            ObjObject.TexCoords.emplace_back(Obj.getTexCoord(i, k - 1));
-            ObjObject.TexCoords.emplace_back(Obj.getTexCoord(i, k));
+            pObjObject->Vertices.emplace_back(Obj.getVertex(i, 0));
+            pObjObject->Vertices.emplace_back(Obj.getVertex(i, k - 1));
+            pObjObject->Vertices.emplace_back(Obj.getVertex(i, k));
+            pObjObject->Normals.emplace_back(Obj.getNormal(i, 0));
+            pObjObject->Normals.emplace_back(Obj.getNormal(i, k - 1));
+            pObjObject->Normals.emplace_back(Obj.getNormal(i, k));
+            pObjObject->TexCoords.emplace_back(Obj.getTexCoord(i, 0));
+            pObjObject->TexCoords.emplace_back(Obj.getTexCoord(i, k - 1));
+            pObjObject->TexCoords.emplace_back(Obj.getTexCoord(i, k));
         }
     }
-    for (size_t i = 0; i < ObjObject.Vertices.size(); ++i)
+    for (size_t i = 0; i < pObjObject->Vertices.size(); ++i)
     {
-        ObjObject.Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+        pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
     }
 
-    std::vector<S3DObject> SceneObjects;
-    SceneObjects.emplace_back(ObjObject);
-
-    std::vector<CIOImage> TexImages;
-    TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    SScene Scene;
+    Scene.Objects.emplace_back(pObjObject);
+    Scene.TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
     //CIOImage Texture("../data/Tex2.png");
     //Texture.read();
     //TexImages.push_back(Texture);
 
-    SScene Scene;
-    Scene.Objects = SceneObjects;
-    Scene.TexImages = TexImages;
     return Scene;
 }

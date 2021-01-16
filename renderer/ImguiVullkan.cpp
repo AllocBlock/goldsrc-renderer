@@ -154,11 +154,7 @@ void CImguiVullkan::destroy()
 
 void CImguiVullkan::showAlert(std::string vText)
 {
-    if (!m_IgnoreAllAlert)
-    {
-        if (m_AlertTexts.empty()) ImGui::OpenPopup(u8"警告");
-        m_AlertTexts.push(vText);
-    }
+    GUIAlert.appendAlert(vText);
     GlobalLogger::logStream() << u8"警告: " << vText;
 }
 

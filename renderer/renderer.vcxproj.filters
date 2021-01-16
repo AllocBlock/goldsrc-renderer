@@ -36,6 +36,9 @@
     <ClCompile Include="ImguiDraw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GUIAlert.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VulkanRenderer.h">
@@ -51,6 +54,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Interactor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GUIAlert.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
