@@ -11,8 +11,6 @@ void CImguiVullkan::__drawGUI()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
-
     ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
 
     // 弹出框
@@ -23,19 +21,19 @@ void CImguiVullkan::__drawGUI()
     {
         std::filesystem::path FilePath = FileDialog.GetSelected(); FileDialog.ClearSelected();
         SScene Scene;
-        if (FilePath.extension() == "map")
+        if (FilePath.extension() == ".map")
         {
-            Scene = SceneReader::readMapFile(FileDialog.GetSelected().string());
+            Scene = SceneReader::readMapFile(FilePath.string());
         }
-        else if (FilePath.extension() == "obj")
+        else if (FilePath.extension() == ".obj")
         {
-            Scene = SceneReader::readMapFile(FileDialog.GetSelected().string());
+            Scene = SceneReader::readMapFile(FilePath.string());
         }
         else
         {
-            showAlert(u8"不支持的文件格式（." + FilePath.extension().u8string() + u8"）");;
+            showAlert(u8"不支持的文件格式（" + FilePath.extension().u8string() + u8"）");;
         }
-        m_pRenderer->setScene(Scene);
+        m_pRenderer->loadScene(Scene);
     }
 
     // 菜单栏
@@ -46,7 +44,7 @@ void CImguiVullkan::__drawGUI()
             if (ImGui::MenuItem(u8"打开"))
             {
                 FileDialog.SetTitle(u8"打开");
-                FileDialog.SetTypeFilters({ ".map", ".*" });
+                FileDialog.SetTypeFilters({ "*.map", ".*" });
                 FileDialog.Open();
             }
             if (ImGui::MenuItem(u8"退出"))

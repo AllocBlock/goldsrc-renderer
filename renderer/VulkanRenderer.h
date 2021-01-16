@@ -78,7 +78,7 @@ public:
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
     void update(uint32_t vImageIndex);
     void destroy();
-    void setScene(const SScene& vScene);
+    void loadScene(const SScene& vScene);
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     std::shared_ptr<CCamera> getCamera();
 
@@ -101,6 +101,8 @@ private:
 
     void __createRecreateResources();
     void __destroyRecreateResources();
+    void __createSceneResources();
+    void __destroySceneResources();
 
     void __updateUniformBuffer(uint32_t vImageIndex);
     

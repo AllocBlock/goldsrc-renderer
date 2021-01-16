@@ -35,19 +35,14 @@ void CVulkanRenderer::__createRecreateResources()
     __createGraphicsPipeline(); // extent
     __createDepthResources(); // extent
     __createFramebuffers(); // imageview, extent
-    __createTextureImages(); // scene
-    __createTextureImageViews(); // scene
-    __createVertexBuffer(); // scene
-    __createIndexBuffer(); // scene
     __createUniformBuffers(); // imageview
     __createDescriptorPool(); // imageview
     __createDescriptorSets(); // imageview
-    __createCommandBuffers(); // imageview
+    __createSceneResources();
 }
 
 void CVulkanRenderer::__destroyRecreateResources()
 {
-    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
     vkDestroyImageView(m_Device, m_DepthImageView, nullptr);
     vkDestroyImage(m_Device, m_DepthImage, nullptr);
     vkFreeMemory(m_Device, m_DepthImageMemory, nullptr);
@@ -65,6 +60,21 @@ void CVulkanRenderer::__destroyRecreateResources()
     }
     vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 
+    __destroySceneResources();
+}
+
+void CVulkanRenderer::__createSceneResources()
+{
+    __createTextureImages(); // scene
+    __createTextureImageViews(); // scene
+    __updateDescriptorSets();
+    __createVertexBuffer(); // scene
+    __createIndexBuffer(); // scene
+    __createCommandBuffers(); // scene
+}
+
+void CVulkanRenderer::__destroySceneResources()
+{
     for (size_t i = 0; i < m_TextureImages.size(); ++i)
     {
         vkDestroyImageView(m_Device, m_TextureImageViews[i], nullptr);
@@ -76,6 +86,8 @@ void CVulkanRenderer::__destroyRecreateResources()
     vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
     vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
     vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
+
+    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
 }
 
 void CVulkanRenderer::destroy()
@@ -88,10 +100,12 @@ void CVulkanRenderer::destroy()
     vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
 }
 
-void CVulkanRenderer::setScene(const SScene& vScene)
+void CVulkanRenderer::loadScene(const SScene& vScene)
 {
      m_Scene = vScene;
-     //recreate();
+     vkDeviceWaitIdle(m_Device);
+     __destroySceneResources();
+     __createSceneResources();
 }
 
 VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
@@ -591,8 +605,6 @@ void CVulkanRenderer::__createDescriptorSets()
 
     m_DescriptorSets.resize(m_ImageViews.size());
     ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSets.data()));
-
-    __updateDescriptorSets();
 }
 
 void CVulkanRenderer::__updateDescriptorSets()
@@ -615,54 +627,70 @@ void CVulkanRenderer::__updateDescriptorSets()
         SamplerInfo.sampler = m_TextureSampler;
 
         const size_t NumTexture = __getActualTextureNum();
-        std::vector<VkDescriptorImageInfo> ImageInfos(m_MaxTextureNum);
-        for (size_t i = 0; i < m_MaxTextureNum; ++i)
+        std::vector<VkDescriptorImageInfo> ImageInfos;
+        if (NumTexture > 0)
         {
-            // for unused element, fill like the first one (weird method but avoid validation warning)
-            if (i >= NumTexture)
+            ImageInfos.resize(m_MaxTextureNum);
+            for (size_t i = 0; i < m_MaxTextureNum; ++i)
             {
-                ImageInfos[i] = ImageInfos[0];
-            }
-            else
-            {
-                ImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                ImageInfos[i].imageView = m_TextureImageViews[i];
-                ImageInfos[i].sampler = VK_NULL_HANDLE;
+                // for unused element, fill like the first one (weird method but avoid validation warning)
+                if (i >= NumTexture)
+                {
+                    ImageInfos[i] = ImageInfos[0];
+                }
+                else
+                {
+                    ImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    ImageInfos[i].imageView = m_TextureImageViews[i];
+                    ImageInfos[i].sampler = VK_NULL_HANDLE;
+                }
             }
         }
         
-        std::array<VkWriteDescriptorSet, 4> DescriptorWrites = {};
-        DescriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        DescriptorWrites[0].dstSet = m_DescriptorSets[i];
-        DescriptorWrites[0].dstBinding = 0;
-        DescriptorWrites[0].dstArrayElement = 0;
-        DescriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        DescriptorWrites[0].descriptorCount = 1;
-        DescriptorWrites[0].pBufferInfo = &VertBufferInfo;
+        std::vector<VkWriteDescriptorSet> DescriptorWrites;
 
-        DescriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        DescriptorWrites[1].dstSet = m_DescriptorSets[i];
-        DescriptorWrites[1].dstBinding = 1;
-        DescriptorWrites[1].dstArrayElement = 0;
-        DescriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        DescriptorWrites[1].descriptorCount = 1;
-        DescriptorWrites[1].pBufferInfo = &FragBufferInfo;
+        VkWriteDescriptorSet VertBufferDescriptorWrite = {};
+        VertBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        VertBufferDescriptorWrite.dstSet = m_DescriptorSets[i];
+        VertBufferDescriptorWrite.dstBinding = 0;
+        VertBufferDescriptorWrite.dstArrayElement = 0;
+        VertBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        VertBufferDescriptorWrite.descriptorCount = 1;
+        VertBufferDescriptorWrite.pBufferInfo = &VertBufferInfo;
+        DescriptorWrites.emplace_back(VertBufferDescriptorWrite);
 
-        DescriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        DescriptorWrites[2].dstSet = m_DescriptorSets[i];
-        DescriptorWrites[2].dstBinding = 2;
-        DescriptorWrites[2].dstArrayElement = 0;
-        DescriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        DescriptorWrites[2].descriptorCount = 1;
-        DescriptorWrites[2].pImageInfo = &SamplerInfo;
+        VkWriteDescriptorSet FragBufferDescriptorWrite = {};
+        FragBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        FragBufferDescriptorWrite.dstSet = m_DescriptorSets[i];
+        FragBufferDescriptorWrite.dstBinding = 1;
+        FragBufferDescriptorWrite.dstArrayElement = 0;
+        FragBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        FragBufferDescriptorWrite.descriptorCount = 1;
+        FragBufferDescriptorWrite.pBufferInfo = &FragBufferInfo;
+        DescriptorWrites.emplace_back(FragBufferDescriptorWrite);
 
-        DescriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        DescriptorWrites[3].dstSet = m_DescriptorSets[i];
-        DescriptorWrites[3].dstBinding = 3;
-        DescriptorWrites[3].dstArrayElement = 0;
-        DescriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        DescriptorWrites[3].descriptorCount = static_cast<uint32_t>(ImageInfos.size());
-        DescriptorWrites[3].pImageInfo = ImageInfos.data();
+        VkWriteDescriptorSet SamplerDescriptorWrite = {};
+        SamplerDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        SamplerDescriptorWrite.dstSet = m_DescriptorSets[i];
+        SamplerDescriptorWrite.dstBinding = 2;
+        SamplerDescriptorWrite.dstArrayElement = 0;
+        SamplerDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        SamplerDescriptorWrite.descriptorCount = 1;
+        SamplerDescriptorWrite.pImageInfo = &SamplerInfo;
+        DescriptorWrites.emplace_back(SamplerDescriptorWrite);
+
+        if (NumTexture)
+        {
+            VkWriteDescriptorSet TexturesDescriptorWrite = {};
+            TexturesDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            TexturesDescriptorWrite.dstSet = m_DescriptorSets[i];
+            TexturesDescriptorWrite.dstBinding = 3;
+            TexturesDescriptorWrite.dstArrayElement = 0;
+            TexturesDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            TexturesDescriptorWrite.descriptorCount = static_cast<uint32_t>(ImageInfos.size());
+            TexturesDescriptorWrite.pImageInfo = ImageInfos.data();
+            DescriptorWrites.emplace_back(TexturesDescriptorWrite);
+        }
 
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
     }

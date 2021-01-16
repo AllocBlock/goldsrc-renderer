@@ -77,13 +77,13 @@ void CInteractor::update()
 {
 	float DeltaTime = __getDeltaTime();
 
-	float Boost = 1.0;
+	float Scale = 1.0;
 	float MoveForward = 0.0, MoveLeft = 0.0;
 
 	int MoveState = __getCurrentMoveState();
 	if (MoveState == EMoveState::STOP) return;
-	if (MoveState & EMoveState::BOOST) Boost *= m_BoostScale;
-	if (MoveState & EMoveState::CRAWL) Boost *= m_CrawlScale;
+	if (MoveState & EMoveState::BOOST) Scale *= m_BoostScale;
+	if (MoveState & EMoveState::CRAWL) Scale *= m_CrawlScale;
 	if (MoveState & EMoveState::FRONT) MoveForward += 1;
 	if (MoveState & EMoveState::BEHIND) MoveForward -= 1;
 	if (MoveState & EMoveState::LEFT) MoveLeft += 1;
@@ -91,7 +91,7 @@ void CInteractor::update()
 
 	glm::vec3 Front = m_pCamera->getFront();
 	glm::vec3 Left = m_pCamera->getLeft();
-	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft) * Boost * m_Speed * DeltaTime;
+	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft) * Scale * m_Speed * DeltaTime;
 	m_pCamera->setPos(m_pCamera->getPos() + Move);
 }
 

@@ -115,8 +115,6 @@ void CImguiVullkan::init()
 
     __createFramebuffers();
 
-    SScene Scene = SceneReader::readMapFile("../data/cy_roating_grenade.map");
-    m_pRenderer->setScene(Scene);
     m_pRenderer->init(m_PhysicalDevice, m_Device, m_GraphicsQueueIndex, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
 }
 
@@ -250,14 +248,12 @@ void CImguiVullkan::render()
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         __recreateSwapchain();
-        __createFramebuffers();
         return;
     }
     else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
         throw "failed to acquire swap chain image!";
     }
-
     
     VkCommandBuffer ImguiCommandBuffer = requestCommandBuffer(ImageIndex);
     VkCommandBuffer RendererCommandBuffer = m_pRenderer->requestCommandBuffer(ImageIndex);
@@ -299,7 +295,6 @@ void CImguiVullkan::render()
     {
         m_FramebufferResized = false;
         __recreateSwapchain();
-        __createFramebuffers();
     }
     else if (Result != VK_SUCCESS)
     {
