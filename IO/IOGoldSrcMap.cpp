@@ -288,33 +288,45 @@ void CMapEntity::__readBrush(std::string vTextBrush)
 CMapPlane CMapEntity::__parsePlane(std::string vTextPlane)
 {
     vTextPlane = CIOBase::trimString(vTextPlane);
-    std::smatch Results;
+    // (x1 y1 z1) (x2 y2 z2) (x3 y3 z3) TexName [ ux uy uz uOffset ] [ vx vy vz vOffset ] rotate uScale vScale
+    CMapPlane Plane = {};
+    std::stringstream PlaneSStream(vTextPlane);
 
-    static const std::regex RePlaneInfo("\\((.*?)\\)\\s*\\((.*?)\\)\\s*\\((.*?)\\)\\s*(.*?)\\s*\\[(.*?)\\]\\s*\\[(.*?)\\]\\s*(\\S*?)\\s*(\\S*?)\\s*(\\S*?)");
-    if (!std::regex_match(vTextPlane, Results, RePlaneInfo))
-        throw "map file parse failed";
-
-    CMapPlane pPlane = {};
     for (int i = 0; i < 3; ++i)
     {
-        const std::vector<float> Vertex = __parseFloatArray(Results[i+1]);
-        _ASSERTE(Vertex.size() == 3);
-        pPlane.Points[i] = glm::vec3(Vertex[0], Vertex[1], Vertex[2]);
+        while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
+        if (PlaneSStream.get() != '(') throw "map file parse error";
+        PlaneSStream >> Plane.Points[i].x;
+        PlaneSStream >> Plane.Points[i].y;
+        PlaneSStream >> Plane.Points[i].z;
+        while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
+        if (PlaneSStream.get() != ')') throw "map file parse error";
     }
-    pPlane.TextureName = Results[4];
-    const std::vector<float> UInfo = __parseFloatArray(Results[5]);
-    _ASSERTE(UInfo.size() == 4);
-    pPlane.TextureDirectionU = glm::vec3(UInfo[0], UInfo[1], UInfo[2]);
-    pPlane.TextureOffsetU = UInfo[3];
-    const std::vector<float> VInfo = __parseFloatArray(Results[6]);
-    _ASSERTE(VInfo.size() == 4);
-    pPlane.TextureDirectionV = glm::vec3(VInfo[0], VInfo[1], VInfo[2]);
-    pPlane.TextureOffsetV = VInfo[3];
-    pPlane.TextureRotation = __parseFloat(Results[7]);
-    pPlane.TextureScaleU = __parseFloat(Results[8]);
-    pPlane.TextureScaleV = __parseFloat(Results[9]);
+    PlaneSStream >> Plane.TextureName;
 
-    return pPlane;
+    while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
+    if (PlaneSStream.get() != '[') throw "map file parse error";
+    PlaneSStream >> Plane.TextureDirectionU.x;
+    PlaneSStream >> Plane.TextureDirectionU.y;
+    PlaneSStream >> Plane.TextureDirectionU.z;
+    PlaneSStream >> Plane.TextureOffsetU;
+    while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
+    if (PlaneSStream.get() != ']') throw "map file parse error";
+
+    while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
+    if (PlaneSStream.get() != '[') throw "map file parse error";
+    PlaneSStream >> Plane.TextureDirectionV.x;
+    PlaneSStream >> Plane.TextureDirectionV.y;
+    PlaneSStream >> Plane.TextureDirectionV.z;
+    PlaneSStream >> Plane.TextureOffsetV;
+    while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
+    if (PlaneSStream.get() != ']') throw "map file parse error";
+
+    PlaneSStream >> Plane.TextureRotation;
+    PlaneSStream >> Plane.TextureScaleU;
+    PlaneSStream >> Plane.TextureScaleV;
+
+    return Plane;
 }
 
 std::vector<float> CMapEntity::__parseFloatArray(std::string vText)
