@@ -46,10 +46,11 @@ void CImguiVullkan::__drawGUI()
         if (ImGuiFileDialog::Instance()->IsOk())
         {
             m_LoadingFilePath = ImGuiFileDialog::Instance()->GetFilePathName();
-            ImGuiFileDialog::Instance()->Close();
+            
             ImGui::OpenPopup(u8"提示");
             m_FileReadingPromise = std::async(readScene, m_LoadingFilePath);
         }
+        ImGuiFileDialog::Instance()->Close();
     }
 
     // 文件加载框
