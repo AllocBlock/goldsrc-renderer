@@ -430,8 +430,6 @@ namespace IGFD
 		m_ShowDialog = false;
 		m_ShowDrives = false;
 		m_CreateDirectoryMode = false;
-		dlg_optionsPane = nullptr;
-		dlg_optionsPaneWidth = 250;
 		dlg_filters = "";
 		dlg_userDatas = 0;
 #ifdef USE_BOOKMARK
@@ -599,8 +597,6 @@ namespace IGFD
 		dlg_path = vPath;
 		dlg_userDatas = vUserDatas;
 		dlg_flags = vFlags;
-		dlg_optionsPane = nullptr;
-		dlg_optionsPaneWidth = 0.0f;
 		dlg_countSelectionMax = vCountSelectionMax;
 		dlg_modal = false;
 		dlg_defaultExt.clear();
@@ -645,8 +641,6 @@ namespace IGFD
 			dlg_defaultExt.clear();
 		}
 
-		dlg_optionsPane = nullptr;
-		dlg_optionsPaneWidth = 0.0f;
 		dlg_userDatas = vUserDatas;
 		dlg_flags = vFlags;
 		dlg_countSelectionMax = vCountSelectionMax; //-V101
@@ -684,8 +678,6 @@ namespace IGFD
 		dlg_path = vPath;
 		dlg_userDatas = vUserDatas;
 		dlg_flags = vFlags;
-		dlg_optionsPane = vSidePane;
-		dlg_optionsPaneWidth = vSidePaneWidth;
 		dlg_countSelectionMax = vCountSelectionMax;
 		dlg_modal = false;
 		dlg_defaultExt.clear();
@@ -733,8 +725,6 @@ namespace IGFD
 			dlg_defaultExt.clear();
 		}
 
-		dlg_optionsPane = vSidePane;
-		dlg_optionsPaneWidth = vSidePaneWidth;
 		dlg_userDatas = vUserDatas;
 		dlg_flags = vFlags;
 		dlg_countSelectionMax = vCountSelectionMax; //-V101
@@ -973,21 +963,7 @@ namespace IGFD
 		}
 #endif
 
-		size.x = ImGui::GetContentRegionAvail().x - dlg_optionsPaneWidth;
-
-		if (dlg_optionsPane)
-		{
-			ImGui::PushID("##splittersidepane");
-			Splitter(true, 4.0f, &size.x, &dlg_optionsPaneWidth, 10.0f, 10.0f, size.y);
-			ImGui::PopID();
-		}
-
 		DrawFileListView(size);
-
-		if (dlg_optionsPane)
-		{
-			DrawSidePane(size.y);
-		}
 	}
 
 	bool IGFD::FileDialog::DrawFooter()
@@ -1412,8 +1388,6 @@ namespace IGFD
 		ImGui::SameLine();
 
 		ImGui::BeginChild("##FileTypes", ImVec2(0, vHeight));
-
-		dlg_optionsPane(m_SelectedFilter.filter.c_str(), dlg_userDatas, &m_CanWeContinue);
 
 		ImGui::EndChild();
 	}

@@ -525,7 +525,7 @@ namespace IGFD
 	};
 
 	typedef void* UserDatas;
-	typedef std::function<void(const char*, UserDatas, bool*)> PaneFun;
+	using PaneFun = std::function<void(const char*, UserDatas, bool*)> ;
 	
 	class FileDialog
 	{
@@ -614,8 +614,6 @@ namespace IGFD
 		std::string dlg_defaultExt;
 		ImGuiFileDialogFlags dlg_flags = ImGuiFileDialogFlags_None;
 		UserDatas dlg_userDatas = nullptr;
-		PaneFun dlg_optionsPane = nullptr;
-		float dlg_optionsPaneWidth = 0.0f;
 		std::string searchTag;
 		size_t dlg_countSelectionMax = 1; // 0 for infinite
 		bool dlg_modal = false;
