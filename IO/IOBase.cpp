@@ -6,15 +6,15 @@ CIOBase::CIOBase()
 {
 }
 
-CIOBase::CIOBase(std::string vFileName)
+CIOBase::CIOBase(std::filesystem::path vFilePath)
 {
-    m_FileName = vFileName;
+    m_FilePath = vFilePath;
 }
 
-bool CIOBase::read(std::string vFileName)
+bool CIOBase::read(std::filesystem::path vFilePath)
 {
-	if (!vFileName.empty()) m_FileName = vFileName;
-    return _readV(m_FileName);
+	if (!vFilePath.empty()) m_FilePath = vFilePath;
+    return _readV(m_FilePath);
 }
 
 bool CIOBase::isWhiteSpace(char vChar)

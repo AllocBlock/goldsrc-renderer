@@ -4,13 +4,13 @@
 #include <fstream>
 #include <algorithm>
 
-bool CIOGoldsrcWad::_readV(std::string vFileName)
+bool CIOGoldsrcWad::_readV(std::filesystem::path vFilePath)
 {
     std::ifstream File;
-    File.open(vFileName.data(), std::ios::in | std::ios::binary);
+    File.open(vFilePath.string(), std::ios::in | std::ios::binary);
     if (!File.is_open())
     {
-        GlobalLogger::logStream() << u8"读取文件 " << vFileName << u8" 失败";
+        GlobalLogger::logStream() << u8"读取文件 " << vFilePath << u8" 失败";
         return false;
     }
 
@@ -120,7 +120,7 @@ void SWadTexture::read(std::ifstream& vFile, uint32_t vOffset)
     uint32_t TexSize = Height * Width;
     for (int i = 0; i < 4; ++i)
     {
-        vFile.seekg(vOffset + ImageOffsets[i], std::ios::beg);
+        vFile.seekg(static_cast<uint64_t>(vOffset) + ImageOffsets[i], std::ios::beg);
         ImageDatas[i].resize(TexSize);
         vFile.read(reinterpret_cast<char*>(ImageDatas[i].data()), TexSize);
         TexSize /= 4;

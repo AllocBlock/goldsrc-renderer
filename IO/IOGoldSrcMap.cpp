@@ -155,13 +155,13 @@ void CMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const
     }
 }
 
-bool CIOGoldSrcMap::_readV(std::string vFileName)
+bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
 {
     std::ifstream File;
-    File.open(vFileName, std::ios::in);
+    File.open(vFilePath, std::ios::in);
     if (!File.is_open())
     {
-        GlobalLogger::logStream() << u8"读取文件 " << vFileName << u8" 失败";
+        GlobalLogger::logStream() << u8"读取文件 " << vFilePath << u8" 失败";
         return false;
     }
 
@@ -403,7 +403,7 @@ std::vector<CMapPolygon> CIOGoldSrcMap::getAllPolygons()
 std::string CIOGoldSrcMap::toString()
 {
     std::ostringstream StringStream;
-    StringStream << m_FileName << " map file info:" << std::endl;
+    StringStream << m_FilePath << " map file info:" << std::endl;
     StringStream << "Entitiy Count: " << m_Entities.size() << std::endl;
     StringStream << "Used texture names: " << std::endl;
     auto TexNames = getUsedTextureNames();

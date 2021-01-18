@@ -40,7 +40,7 @@ public:
     void destroy();
     void showAlert(std::string vText);
 
-    static SResultReadScene readScene(std::filesystem::path vFilePath);
+    static SResultReadScene readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
 
     std::shared_ptr<CVulkanRenderer> getRenderer() { return m_pRenderer; }
 
@@ -103,6 +103,7 @@ private:
 
     CGUIAlert GUIAlert = CGUIAlert();
     std::filesystem::path m_LoadingFilePath = "";
+    std::string m_LoadingProgressReport = "";
     std::future<SResultReadScene> m_FileReadingPromise;
 
     const std::vector<const char*> m_ValidationLayers =

@@ -27,10 +27,10 @@ class CIOMtl : public CIOBase
 {
 public:
     CIOMtl() = default;
-    CIOMtl(std::string vFileName) :CIOBase(vFileName) {}
+    CIOMtl(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
     
 protected:
-    virtual bool _readV(std::string vFileName) override;
+    virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
     std::vector<SMtlMaterial> m_Materials;

@@ -6,16 +6,16 @@
 #include <filesystem>
 #include <random>
 
-bool CIOObj::_readV(std::string vFileName) {
+bool CIOObj::_readV(std::filesystem::path vFilePath) {
     m_pObj = std::make_shared<SObj>();
 
-    if (!vFileName.empty()) m_FileName = vFileName;
-    _ASSERTE(std::filesystem::exists(m_FileName));
+    if (!vFilePath.empty()) m_FilePath = vFilePath;
+    _ASSERTE(std::filesystem::exists(m_FilePath));
 
     std::ifstream File;
-    File.open(m_FileName);
+    File.open(m_FilePath);
     if (!File.is_open()) {
-        GlobalLogger::logStream() << vFileName << u8" 文件打开失败";
+        GlobalLogger::logStream() << vFilePath.u8string() << u8" 文件打开失败";
         return false;
     }
 
@@ -86,12 +86,12 @@ bool CIOObj::_readV(std::string vFileName) {
             Line >> CurrentGroup;
         }
         else if (Cmd == "mtllib") { // 材质
-            std::filesystem::path MtlFileName = vFileName;
-            MtlFileName.replace_extension("mtl");
-            if (std::filesystem::exists(MtlFileName))
+            std::filesystem::path MtlFilePath = vFilePath;
+            MtlFilePath.replace_extension("mtl");
+            if (std::filesystem::exists(MtlFilePath))
             {
                 m_pMtl = std::make_shared<CIOMtl>();
-                m_pMtl->read(MtlFileName.string());
+                m_pMtl->read(MtlFilePath.string());
             }
         }
         else if (Cmd == "usemtl") { // 材质
@@ -101,7 +101,7 @@ bool CIOObj::_readV(std::string vFileName) {
             Line >> CurrentSmoothGroup;
         }
         else {
-            GlobalLogger::logStream() << m_FileName << u8" obj格式有误或不支持的标记：" << Cmd;
+            GlobalLogger::logStream() << m_FilePath.u8string() << u8" obj格式有误或不支持的标记：" << Cmd;
             continue;
         }
     }

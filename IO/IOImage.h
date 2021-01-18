@@ -12,7 +12,7 @@ public:
         m_Channels = vObj.getImageChannels();
         setData(vObj.getData());
     }
-    CIOImage(std::string vFileName) :CIOBase(vFileName) {}
+    CIOImage(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
     virtual ~CIOImage() { __cleanup(); }
 
     int getImageWidth() const { return m_Width; }
@@ -24,7 +24,7 @@ public:
     void setData(const void* vpData);
 
 protected:
-    virtual bool _readV(std::string vFileName) override;
+    virtual bool _readV(std::filesystem::path vFilePath) override;
 private:
     void __cleanup();
 

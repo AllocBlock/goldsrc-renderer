@@ -7,7 +7,7 @@
 #include "ImGuiFileDialog.h"
 #include <iostream>
 
-SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath)
+SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     SResultReadScene Result;
     Result.Succeed = false;
@@ -18,12 +18,12 @@ SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath)
     else if (vFilePath.extension() == ".map")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::readMapFile(vFilePath.string());
+        Result.Scene = SceneReader::readMapFile(vFilePath, vProgressReportFunc);
     }
     else if (vFilePath.extension() == ".obj")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::readObjFile(vFilePath.string());
+        Result.Scene = SceneReader::readObjFile(vFilePath, vProgressReportFunc);
     }
     else
     {
@@ -45,10 +45,14 @@ void CImguiVullkan::__drawGUI()
     {
         if (ImGuiFileDialog::Instance()->IsOk())
         {
+            static std::function<void(std::string)> ProgressReportFunc = [=](std::string vMessage)
+            {
+                m_LoadingProgressReport = vMessage;
+            };
+
             m_LoadingFilePath = ImGuiFileDialog::Instance()->GetFilePathName();
-            
             ImGui::OpenPopup(u8"提示");
-            m_FileReadingPromise = std::async(readScene, m_LoadingFilePath);
+            m_FileReadingPromise = std::async(readScene, m_LoadingFilePath, ProgressReportFunc);
         }
         ImGuiFileDialog::Instance()->Close();
     }
@@ -59,12 +63,14 @@ void CImguiVullkan::__drawGUI()
     {
         ImGui::Text(u8"加载文件中...");
         ImGui::Text((u8"[ " + m_LoadingFilePath.u8string() + u8" ]").c_str());
+        if (!m_LoadingProgressReport.empty()) ImGui::Text((u8"进度：" + m_LoadingProgressReport).c_str());
         
         if (m_FileReadingPromise.valid() &&
             m_FileReadingPromise.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
         {
             ImGui::CloseCurrentPopup();
             m_LoadingFilePath = "";
+            m_LoadingProgressReport = "";
             const SResultReadScene& ResultScene = m_FileReadingPromise.get();
             if (ResultScene.Succeed)
                 m_pRenderer->loadScene(ResultScene.Scene);

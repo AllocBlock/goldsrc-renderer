@@ -34,7 +34,7 @@ class CIOObj : public CIOBase
 {
 public:
     CIOObj() :CIOBase() {}
-    CIOObj(std::string vFileName) :CIOBase(vFileName) {}
+    CIOObj(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
 
     size_t getFaceNum() const;
     size_t getFaceNodeNum(int vFaceIndex) const;
@@ -48,7 +48,7 @@ public:
     const std::vector<SObjFace>& getFaces() { return m_pObj->Faces; }
 
 protected:
-    virtual bool _readV(std::string vFileName) override;
+    virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
     std::shared_ptr<SObj> m_pObj = nullptr;

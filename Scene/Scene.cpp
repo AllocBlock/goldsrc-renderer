@@ -59,7 +59,7 @@ std::shared_ptr<CIOImage> generatePureColorTexture(unsigned char vBaseColor[3], 
     return pGrid;
 }
 
-bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFilePath)
+bool findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir, std::filesystem::path& voFilePath)
 {
     std::filesystem::path CurPath(vFilePath);
 
@@ -71,12 +71,12 @@ bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFile
         std::filesystem::path CombinedSearchPath = std::filesystem::path(vSearchDir) / SearchPath;
         if (std::filesystem::exists(SearchPath))
         {
-            voFilePath = SearchPath.string();
+            voFilePath = SearchPath;
             return true;
         }
         else if (std::filesystem::exists(CombinedSearchPath))
         {
-            voFilePath = CombinedSearchPath.string();
+            voFilePath = CombinedSearchPath;
             return true;
         }
         CurDir = CurDir.parent_path();
@@ -88,9 +88,10 @@ bool findFile(std::string vFilePath, std::string vSearchDir, std::string& voFile
 #include "IOGoldSrcMap.h"
 #include "IOGoldsrcWad.h"
 
-SScene SceneReader::readMapFile(std::string vFileName)
+SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
-    CIOGoldSrcMap Map = CIOGoldSrcMap(vFileName);
+    if (vProgressReportFunc) vProgressReportFunc(u8"[map]读取" + vFilePath.u8string() + u8"文件中");
+    CIOGoldSrcMap Map = CIOGoldSrcMap(vFilePath);
     if (!Map.read())
         throw "file read failed";
     std::vector<std::string> WadPaths = Map.getWadPaths();
@@ -98,14 +99,16 @@ SScene SceneReader::readMapFile(std::string vFileName)
 
     for (size_t i = 0; i < WadPaths.size(); ++i)
     {
-        std::string RealWadPath;
+        std::filesystem::path RealWadPath;
         if (!findFile(WadPaths[i], "../data", RealWadPath))
             throw "can't find wad file " + WadPaths[i];
+        if (vProgressReportFunc) vProgressReportFunc(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
         Wads[i].read(RealWadPath);
     }
 
     SScene Scene;
 
+    if (vProgressReportFunc) vProgressReportFunc(u8"整理纹理中");
     // find used textures, load and index them
     std::map<std::string, uint32_t> TexIndexMap;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
@@ -137,6 +140,7 @@ SScene SceneReader::readMapFile(std::string vFileName)
             TexIndexMap[TexName] = 0;
     }
 
+    if (vProgressReportFunc) vProgressReportFunc(u8"生成场景中");
     // group polygon by texture, one object per texture 
     Scene.Objects.resize(UsedTextureNames.size());
     for (size_t i = 0; i < Scene.Objects.size(); ++i)
@@ -192,16 +196,18 @@ SScene SceneReader::readMapFile(std::string vFileName)
             pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
         }
     }
-
+    if (vProgressReportFunc) vProgressReportFunc(u8"完成");
     return Scene;
 }
 
 #include "IOObj.h"
-SScene SceneReader::readObjFile(std::string vFileName)
+SScene SceneReader::readObjFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
+    if (vProgressReportFunc) vProgressReportFunc(u8"[obj]读取" + vFilePath.u8string() + u8"文件中");
     CIOObj Obj = CIOObj();
-    Obj.read(vFileName);
+    Obj.read(vFilePath);
 
+    if (vProgressReportFunc) vProgressReportFunc(u8"生成场景中");
     std::shared_ptr<S3DObject> pObjObject = std::make_shared<S3DObject>();
     pObjObject->TexIndex = 0;
 

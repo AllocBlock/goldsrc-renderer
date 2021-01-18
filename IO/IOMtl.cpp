@@ -2,11 +2,11 @@
 
 #include <sstream>
 
-bool CIOMtl::_readV(std::string vFileName) {
+bool CIOMtl::_readV(std::filesystem::path vFilePath) {
     std::ifstream File;
-    File.open(vFileName);
+    File.open(vFilePath);
     if (!File.is_open()) {
-        GlobalLogger::logStream() << vFileName << u8" 文件打开失败";
+        GlobalLogger::logStream() << vFilePath << u8" 文件打开失败";
         return false;
     }
 
@@ -63,7 +63,7 @@ bool CIOMtl::_readV(std::string vFileName) {
         else if (Cmd == "map_bump")  Line >> Material.Map_bump;
         else if (Cmd == "bump")  Line >> Material.Bump;
         else {
-            GlobalLogger::logStream() << m_FileName << u8" mtl格式有误或不支持：" << Cmd;
+            GlobalLogger::logStream() << m_FilePath.u8string() << u8" mtl格式有误或不支持：" << Cmd;
             continue;
         }
     }

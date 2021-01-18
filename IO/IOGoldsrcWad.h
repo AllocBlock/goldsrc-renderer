@@ -63,7 +63,7 @@ class CIOGoldsrcWad : public CIOBase
 {
 public:
     CIOGoldsrcWad() :CIOBase() {}
-    CIOGoldsrcWad(std::string vFileName) :CIOBase(vFileName) {}
+    CIOGoldsrcWad(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
 
     size_t getTextureNum() const;
     std::optional<size_t> findTexture(std::string vName) const;
@@ -73,7 +73,7 @@ public:
     void getRawRGBAPixels(size_t vTexIndex, void* vopData) const;
 
 protected:
-    virtual bool _readV(std::string vFileName) override;
+    virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
     SWadHeader m_Header = {};

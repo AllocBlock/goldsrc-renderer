@@ -1,8 +1,8 @@
 #pragma once
-
 #include "IOImage.h"
 
 #include <vector>
+#include <functional>
 #include <glm/glm.hpp>
 
 enum class E3DObjectType
@@ -30,6 +30,6 @@ struct SScene
 
 namespace SceneReader
 {
-    SScene readMapFile(std::string vFileName);
-    SScene readObjFile(std::string vFileName);
+    SScene readMapFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
+    SScene readObjFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
 }

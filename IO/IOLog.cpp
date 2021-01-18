@@ -4,9 +4,9 @@
 
 CIOLog* CIOLog::GlobalLogger = nullptr;
 
-CIOLog::CIOLog(std::string vFileName)
+CIOLog::CIOLog(std::filesystem::path vFilePath)
 {
-    if (!vFileName.empty()) setFile(vFileName);
+    if (!vFilePath.empty()) setFile(vFilePath);
 }
 CIOLog::~CIOLog()
 {
@@ -18,15 +18,15 @@ bool CIOLog::isFileSet()
     return m_OutStream.is_open();
 }
 
-void CIOLog::setFile(std::string vFileName)
+void CIOLog::setFile(std::filesystem::path vFilePath)
 {
     if (m_OutStream && m_OutStream.is_open())
     {
-        if (m_FileName == vFileName) return;
+        if (m_FilePath == vFilePath) return;
         else m_OutStream.close();
     }
-    m_FileName = vFileName;
-    m_OutStream.open(vFileName);
+    m_FilePath = vFilePath;
+    m_OutStream.open(vFilePath);
 }
 
 template <typename T>
@@ -48,10 +48,10 @@ namespace GlobalLogger {
         return CIOLog::GlobalLogger && CIOLog::GlobalLogger->isFileSet();
     }
 
-    void setFile(std::string vFileName)
+    void setFile(std::filesystem::path vFilePath)
     {
-        if (!CIOLog::GlobalLogger) CIOLog::GlobalLogger = new CIOLog(vFileName);
-        else CIOLog::GlobalLogger->setFile(vFileName);
+        if (!CIOLog::GlobalLogger) CIOLog::GlobalLogger = new CIOLog(vFilePath);
+        else CIOLog::GlobalLogger->setFile(vFilePath);
     }
 
     template <typename T>

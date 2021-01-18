@@ -10,10 +10,10 @@ void CIOImage::setData(const void* vpData)
     memcpy_s(m_pData, DataSize, vpData, DataSize);
 }
 
-bool CIOImage::_readV(std::string vFileName)
+bool CIOImage::_readV(std::filesystem::path vFilePath)
 {
     __cleanup();
-    m_pData = static_cast<void*>(stbi_load(vFileName.c_str(), &m_Width, &m_Height, &m_Channels, STBI_rgb_alpha)); // 强制读取为RGBA
+    m_pData = static_cast<void*>(stbi_load(vFilePath.string().c_str(), &m_Width, &m_Height, &m_Channels, STBI_rgb_alpha)); // 强制读取为RGBA
     if (!m_pData)
         throw "image load failed, " + std::string(stbi_failure_reason());
     return true;

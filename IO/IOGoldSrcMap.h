@@ -87,7 +87,7 @@ class CIOGoldSrcMap : public CIOBase
 {
 public:
 	CIOGoldSrcMap() :CIOBase() {}
-	CIOGoldSrcMap(std::string vFileName) :CIOBase(vFileName) {}
+	CIOGoldSrcMap(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
 
 	std::vector<std::string> getWadPaths();
 	const std::vector<CMapEntity>& getEntities() { return m_Entities; }
@@ -96,7 +96,7 @@ public:
 	std::string toString();
 
 protected:
-	virtual bool _readV(std::string vFileName) override;
+	virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
 	std::vector<CMapEntity> m_Entities;

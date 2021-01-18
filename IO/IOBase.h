@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <filesystem>
 
 const size_t MAX_LINE_SIZE = 1024;
 
@@ -12,9 +13,9 @@ class CIOBase
 {
 public:
     CIOBase();
-    CIOBase(std::string vFileName);
+    CIOBase(std::filesystem::path vFilePath);
     virtual ~CIOBase() = default;
-    bool read(std::string vFileName = "");
+    bool read(std::filesystem::path vFilePath = "");
 
     static bool isWhiteSpace(char vChar);
     static std::string trimString(std::string vString);
@@ -22,7 +23,7 @@ public:
     static std::string toUpperCase(std::string vString);
 
 protected:
-    virtual bool _readV(std::string vFileName) = 0;
+    virtual bool _readV(std::filesystem::path vFilePath) = 0;
     
-    std::string m_FileName;
+    std::filesystem::path m_FilePath;
 };
