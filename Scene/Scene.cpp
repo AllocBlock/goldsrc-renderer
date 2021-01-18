@@ -90,7 +90,7 @@ bool findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir,
 
 SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
-    if (vProgressReportFunc) vProgressReportFunc(u8"[map]读取" + vFilePath.u8string() + u8"文件中");
+    if (vProgressReportFunc) vProgressReportFunc(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(vFilePath);
     if (!Map.read())
         throw "file read failed";
@@ -203,7 +203,7 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
 #include "IOObj.h"
 SScene SceneReader::readObjFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
-    if (vProgressReportFunc) vProgressReportFunc(u8"[obj]读取" + vFilePath.u8string() + u8"文件中");
+    if (vProgressReportFunc) vProgressReportFunc(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();
     Obj.read(vFilePath);
 

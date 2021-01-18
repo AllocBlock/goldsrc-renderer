@@ -17,6 +17,7 @@
 ## 库
 - 图形API：vulkan
 - GUI库：glfw+imgui
-  - file dialogwen文件选择框 https://github.com/aiekick/ImGuiFileDialog 
+  - file dialog文件选择框基于 https://github.com/AirGuanZ/imgui-filebrowser
+  	- 进行了重构，删除了不需要的功能
 - 数学库：glm
 - 图片读取：stb_image

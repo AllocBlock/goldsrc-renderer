@@ -3,8 +3,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
-#include "ImGuiFileDialogConfig.h"
-#include "ImGuiFileDialog.h"
+#include "imfilebrowser.h"
 #include <iostream>
 
 SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
@@ -40,21 +39,19 @@ void CImguiVullkan::__drawGUI()
 
     ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
 
-    // 弹出框
-    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    // 文件选择框
+    static ImGui::FileBrowser FileDialog;
+    FileDialog.Display();
+    if (FileDialog.HasSelected())
     {
-        if (ImGuiFileDialog::Instance()->IsOk())
+        static std::function<void(std::string)> ProgressReportFunc = [=](std::string vMessage)
         {
-            static std::function<void(std::string)> ProgressReportFunc = [=](std::string vMessage)
-            {
-                m_LoadingProgressReport = vMessage;
-            };
+            m_LoadingProgressReport = vMessage;
+        };
 
-            m_LoadingFilePath = ImGuiFileDialog::Instance()->GetFilePathName();
-            ImGui::OpenPopup(u8"提示");
-            m_FileReadingPromise = std::async(readScene, m_LoadingFilePath, ProgressReportFunc);
-        }
-        ImGuiFileDialog::Instance()->Close();
+        m_LoadingFilePath = FileDialog.GetSelected(); FileDialog.ClearSelected();
+        ImGui::OpenPopup(u8"提示");
+        m_FileReadingPromise = std::async(readScene, m_LoadingFilePath, ProgressReportFunc);
     }
 
     // 文件加载框
@@ -91,7 +88,9 @@ void CImguiVullkan::__drawGUI()
         {
             if (ImGui::MenuItem(u8"打开"))
             {
-                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", u8"打开", ".map,.obj,.*", ".");
+                FileDialog.SetTitle(u8"打开");
+                FileDialog.SetTypeFilters({ ".map", ".obj", ".*" });
+                FileDialog.Open();
             }
             if (ImGui::MenuItem(u8"退出"))
             {
