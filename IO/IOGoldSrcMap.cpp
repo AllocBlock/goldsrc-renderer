@@ -4,20 +4,20 @@
 #include <regex>
 #include <sstream>
 
-float CMapBrush::GlobalScale = 1.0 / 64.0;
+float SMapBrush::GlobalScale = 1.0 / 64.0;
 
 // vertice are stored at clockwise
-glm::vec3 CMapPlane::getNormal() const
+glm::vec3 SMapPlane::getNormal() const
 {
     return correctNormal(glm::normalize(glm::cross(Points[2] - Points[0], Points[1] - Points[0])));
 }
 
-float CMapPlane::getDistanceToFace(glm::vec3 vPoint) const
+float SMapPlane::getDistanceToFace(glm::vec3 vPoint) const
 {
     return glm::dot(vPoint - Points[0], getNormal());
 }
 
-glm::vec3 CMapPlane::correctNormal(glm::vec3 vN) const
+glm::vec3 SMapPlane::correctNormal(glm::vec3 vN) const
 {
     // solve accuracy problem which causes a negative zero
     float Epsilon = 0.05;
@@ -27,7 +27,7 @@ glm::vec3 CMapPlane::correctNormal(glm::vec3 vN) const
     return vN;
 }
 
-std::vector<glm::vec2> CMapPolygon::getTexCoords(size_t vTexWidth, size_t vTexHeight)
+std::vector<glm::vec2> SMapPolygon::getTexCoords(size_t vTexWidth, size_t vTexHeight)
 {
     if (!m_TexCoords.empty()) return m_TexCoords;
 
@@ -37,20 +37,20 @@ std::vector<glm::vec2> CMapPolygon::getTexCoords(size_t vTexWidth, size_t vTexHe
     return m_TexCoords;
 }
 
-glm::vec2 CMapPolygon::__calcTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight)
+glm::vec2 SMapPolygon::__calcTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight)
 {
     glm::vec2 TexCoord;
-    TexCoord.x = (glm::dot(vVertex / CMapBrush::GlobalScale, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU) / vTexWidth;
-    TexCoord.y = (glm::dot(vVertex / CMapBrush::GlobalScale, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV) / vTexHeight;
+    TexCoord.x = (glm::dot(vVertex / SMapBrush::GlobalScale, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU) / vTexWidth;
+    TexCoord.y = (glm::dot(vVertex / SMapBrush::GlobalScale, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV) / vTexHeight;
     return TexCoord;
 }
 
-std::vector<CMapPolygon> CMapBrush::getPolygons()
+std::vector<SMapPolygon> SMapBrush::getPolygons()
 {
     if (!m_Polygons.empty()) return m_Polygons;
     for (size_t i = 0; i < Planes.size(); ++i)
     {
-        CMapPolygon Polygon;
+        SMapPolygon Polygon;
         Polygon.pPlane = &Planes[i];
         m_Polygons.emplace_back(Polygon);
     }
@@ -65,7 +65,7 @@ std::vector<CMapPolygon> CMapBrush::getPolygons()
                 glm::vec3 IntersectionPoint;
                 if (__getIntersection(IntersectionPoint, i1, i2, i3))
                 {
-                    IntersectionPoint *= CMapBrush::GlobalScale;
+                    IntersectionPoint *= SMapBrush::GlobalScale;
                     m_Polygons[i1].Vertices.emplace_back(IntersectionPoint);
                     m_Polygons[i2].Vertices.emplace_back(IntersectionPoint);
                     m_Polygons[i3].Vertices.emplace_back(IntersectionPoint);
@@ -87,7 +87,7 @@ std::vector<CMapPolygon> CMapBrush::getPolygons()
     return m_Polygons;
 }
 
-bool CMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPlane2, size_t vPlane3)
+bool SMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPlane2, size_t vPlane3)
 {
     glm::vec3 N1 = Planes[vPlane1].getNormal();
     glm::vec3 N2 = Planes[vPlane2].getNormal();
@@ -107,7 +107,7 @@ bool CMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPl
     // we need to check if it is using the property of convex polyhedron: 
     // if a point is on the brush, this point must be on or behind each plane (normal direction is front) 
     const float Epsilon = 1e-3;
-    for (CMapPlane pPlane : Planes)
+    for (SMapPlane pPlane : Planes)
     {
         float D = pPlane.getDistanceToFace(IntersectionPoint);
         if (D > Epsilon)
@@ -118,7 +118,7 @@ bool CMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPl
     return true;
 }
 
-void CMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const glm::vec3 vNormal)
+void SMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const glm::vec3 vNormal)
 {
     if (vVertices.size() < 3) return;
 
@@ -186,7 +186,7 @@ bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
             if (PairingLevel == 0)
             {
                 std::string EntityText = Text.substr(EntityStartIndex, i - EntityStartIndex + 1);
-                CMapEntity Entity;
+                SMapEntity Entity;
                 Entity.read(EntityText);
                 m_Entities.push_back(Entity);
             }
@@ -201,7 +201,7 @@ bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
     return true;
 }
 
-void CMapEntity::read(std::string vTextEntity)
+void SMapEntity::read(std::string vTextEntity)
 {
     vTextEntity = CIOBase::trimString(vTextEntity);
 
@@ -219,7 +219,7 @@ void CMapEntity::read(std::string vTextEntity)
     __readBrushes(TextBrush);
 }
 
-void CMapEntity::__readProperties(std::string vTextProperties)
+void SMapEntity::__readProperties(std::string vTextProperties)
 {
     vTextProperties = CIOBase::trimString(vTextProperties);
 
@@ -228,7 +228,7 @@ void CMapEntity::__readProperties(std::string vTextProperties)
         __readProperty(TextProperty);
 }
 
-void CMapEntity::__readProperty(std::string vTextProperty)
+void SMapEntity::__readProperty(std::string vTextProperty)
 {
     vTextProperty = CIOBase::trimString(vTextProperty);
     std::smatch Results;
@@ -242,7 +242,7 @@ void CMapEntity::__readProperty(std::string vTextProperty)
     Properties[Key] = Value;
 }
 
-void CMapEntity::__readBrushes(std::string vTextBrushes)
+void SMapEntity::__readBrushes(std::string vTextBrushes)
 {
     vTextBrushes = CIOBase::trimString(vTextBrushes);
 
@@ -270,26 +270,26 @@ void CMapEntity::__readBrushes(std::string vTextBrushes)
     if (InBrush) throw "map file parse failed";
 }
 
-void CMapEntity::__readBrush(std::string vTextBrush)
+void SMapEntity::__readBrush(std::string vTextBrush)
 {
     vTextBrush = CIOBase::trimString(vTextBrush);
 
     std::vector<std::string> TextPlanes = CIOBase::splitString(vTextBrush, '\n');
 
-    CMapBrush Brush;
+    SMapBrush Brush;
     for (const std::string& TextPlane : TextPlanes)
     {
-        CMapPlane pPlane = __parsePlane(TextPlane);
+        SMapPlane pPlane = __parsePlane(TextPlane);
         Brush.Planes.emplace_back(pPlane);
     }
     Brushes.emplace_back(Brush);
 }
 
-CMapPlane CMapEntity::__parsePlane(std::string vTextPlane)
+SMapPlane SMapEntity::__parsePlane(std::string vTextPlane)
 {
     vTextPlane = CIOBase::trimString(vTextPlane);
     // (x1 y1 z1) (x2 y2 z2) (x3 y3 z3) TexName [ ux uy uz uOffset ] [ vx vy vz vOffset ] rotate uScale vScale
-    CMapPlane Plane = {};
+    SMapPlane Plane = {};
     std::stringstream PlaneSStream(vTextPlane);
 
     for (int i = 0; i < 3; ++i)
@@ -329,7 +329,7 @@ CMapPlane CMapEntity::__parsePlane(std::string vTextPlane)
     return Plane;
 }
 
-std::vector<float> CMapEntity::__parseFloatArray(std::string vText)
+std::vector<float> SMapEntity::__parseFloatArray(std::string vText)
 {
     vText = CIOBase::trimString(vText);
     std::vector<std::string> TextNums = CIOBase::splitString(vText);
@@ -343,7 +343,7 @@ std::vector<float> CMapEntity::__parseFloatArray(std::string vText)
     return FloatArray;
 }
 
-float CMapEntity::__parseFloat(std::string vText)
+float SMapEntity::__parseFloat(std::string vText)
 {
     return atof(vText.c_str());
 }
@@ -373,11 +373,11 @@ std::vector<std::string> CIOGoldSrcMap::getWadPaths()
 std::set<std::string> CIOGoldSrcMap::getUsedTextureNames()
 {
     std::set<std::string> UsedTextureNames;
-    for (const CMapEntity& Entity : m_Entities)
+    for (const SMapEntity& Entity : m_Entities)
     {
-        for (const CMapBrush& Brush : Entity.Brushes)
+        for (const SMapBrush& Brush : Entity.Brushes)
         {
-            for (const CMapPlane& pPlane : Brush.Planes)
+            for (const SMapPlane& pPlane : Brush.Planes)
             {
                 UsedTextureNames.insert(pPlane.TextureName);
             }
@@ -386,14 +386,14 @@ std::set<std::string> CIOGoldSrcMap::getUsedTextureNames()
     return UsedTextureNames;
 }
 
-std::vector<CMapPolygon> CIOGoldSrcMap::getAllPolygons()
+std::vector<SMapPolygon> CIOGoldSrcMap::getAllPolygons()
 {
-    std::vector<CMapPolygon> Polygons;
-    for (CMapEntity& Entity : m_Entities)
+    std::vector<SMapPolygon> Polygons;
+    for (SMapEntity& Entity : m_Entities)
     {
-        for (CMapBrush& Brush : Entity.Brushes)
+        for (SMapBrush& Brush : Entity.Brushes)
         {
-            std::vector<CMapPolygon> BrushPolygons = Brush.getPolygons();
+            std::vector<SMapPolygon> BrushPolygons = Brush.getPolygons();
             Polygons.insert(Polygons.end(), BrushPolygons.begin(), BrushPolygons.end());
         }
     }

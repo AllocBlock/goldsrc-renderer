@@ -14,6 +14,11 @@ SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath, std::
     {
         Result.Message = u8"文件不存在（" + vFilePath.u8string() + u8"）";
     }
+    else if (vFilePath.extension() == ".bsp")
+    {
+        Result.Succeed = true;
+        Result.Scene = SceneReader::readBspFile(vFilePath, vProgressReportFunc);
+    }
     else if (vFilePath.extension() == ".map")
     {
         Result.Succeed = true;
@@ -89,7 +94,7 @@ void CImguiVullkan::__drawGUI()
             if (ImGui::MenuItem(u8"打开"))
             {
                 FileDialog.SetTitle(u8"打开");
-                FileDialog.SetTypeFilters({ ".map", ".obj", ".*" });
+                FileDialog.SetTypeFilters({ ".bsp", ".map", ".obj", ".*" });
                 FileDialog.Open();
             }
             if (ImGui::MenuItem(u8"退出"))

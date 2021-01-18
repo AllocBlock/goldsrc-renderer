@@ -30,6 +30,7 @@ struct SScene
 
 namespace SceneReader
 {
+    SScene readBspFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
     SScene readMapFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
     SScene readObjFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
 }

@@ -85,6 +85,16 @@ bool findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir,
     return false;
 }
 
+#include "IOGoldSrcBsp.h"
+SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+{
+    if (vProgressReportFunc) vProgressReportFunc(u8"[bsp]读取文件中");
+    CIOGoldSrcBsp Bsp = CIOGoldSrcBsp(vFilePath);
+    if (!Bsp.read())
+        throw "file read failed";
+}
+
+
 #include "IOGoldSrcMap.h"
 #include "IOGoldsrcWad.h"
 
@@ -149,9 +159,9 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
         Scene.Objects[i]->TexIndex = i;
     }
 
-    std::vector<CMapPolygon> Polygons = Map.getAllPolygons();
+    std::vector<SMapPolygon> Polygons = Map.getAllPolygons();
 
-    for (CMapPolygon& Polygon : Polygons)
+    for (SMapPolygon& Polygon : Polygons)
     {
         size_t TexIndex = TexIndexMap[Polygon.pPlane->TextureName];
         size_t TexWidth = Scene.TexImages[TexIndex]->getImageWidth();

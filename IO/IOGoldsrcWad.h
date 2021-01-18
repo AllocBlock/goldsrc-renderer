@@ -6,7 +6,7 @@
 #include <array>
 #include <optional>
 
-struct WadColor
+struct SWadColor
 {
     uint8_t R, G, B;
 };
@@ -40,7 +40,7 @@ struct SWadTexture
     uint32_t Height;
     std::array<uint32_t, 4> ImageOffsets;
     std::array<std::vector<uint8_t>, 4> ImageDatas;
-    std::array<WadColor, 256> Palette;
+    std::array<SWadColor, 256> Palette;
 
     void read(std::ifstream& vFile, uint32_t vOffset);
 

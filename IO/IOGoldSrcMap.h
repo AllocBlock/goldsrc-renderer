@@ -7,7 +7,7 @@
 #include <set>
 #include <glm/glm.hpp>
 
-struct CMapPlane
+struct SMapPlane
 {
 	std::array<glm::vec3, 3> Points;
 	std::string TextureName;
@@ -24,10 +24,10 @@ struct CMapPlane
 	glm::vec3 correctNormal(glm::vec3 vN) const;
 };
 
-struct CMapPolygon
+struct SMapPolygon
 {
 	std::vector<glm::vec3> Vertices;
-	const CMapPlane* pPlane;
+	const SMapPlane* pPlane;
 
 	std::vector<glm::vec2> getTexCoords(size_t vTexWidth, size_t vTexHeight);
 	glm::vec3 getNormal() const { return pPlane->getNormal(); };
@@ -37,11 +37,11 @@ private:
 	std::vector<glm::vec2> m_TexCoords;
 };
 
-struct CMapBrush
+struct SMapBrush
 {
-	std::vector<CMapPlane> Planes;
+	std::vector<SMapPlane> Planes;
 
-	std::vector<CMapPolygon> getPolygons();
+	std::vector<SMapPolygon> getPolygons();
 	
 	static void sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const glm::vec3 vNormal);
 	static float GlobalScale;
@@ -49,13 +49,13 @@ struct CMapBrush
 private:
 	bool __getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPlane2, size_t vPlane3);
 	
-	std::vector<CMapPolygon> m_Polygons;
+	std::vector<SMapPolygon> m_Polygons;
 };
 
-struct CMapEntity
+struct SMapEntity
 {
 	std::map<std::string, std::string> Properties;
-	std::vector<CMapBrush> Brushes;
+	std::vector<SMapBrush> Brushes;
 
 	void read(std::string vTextEntity);
 private:
@@ -63,7 +63,7 @@ private:
 	void __readProperty(std::string vTextProperty);
 	void __readBrushes(std::string vTextBrushes);
 	void __readBrush(std::string vTextBrush);
-	CMapPlane __parsePlane(std::string vTextPlane);
+	SMapPlane __parsePlane(std::string vTextPlane);
 	std::vector<float> __parseFloatArray(std::string vText);
 	float __parseFloat(std::string vText);
 };
@@ -90,14 +90,14 @@ public:
 	CIOGoldSrcMap(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
 
 	std::vector<std::string> getWadPaths();
-	const std::vector<CMapEntity>& getEntities() { return m_Entities; }
+	const std::vector<SMapEntity>& getEntities() { return m_Entities; }
 	std::set<std::string> getUsedTextureNames();
-	std::vector<CMapPolygon> getAllPolygons();
+	std::vector<SMapPolygon> getAllPolygons();
 	std::string toString();
 
 protected:
 	virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
-	std::vector<CMapEntity> m_Entities;
+	std::vector<SMapEntity> m_Entities;
 };
