@@ -12,24 +12,23 @@ bool CIOGoldSrcBsp::_readV(std::filesystem::path vFilePath)
         GlobalLogger::logStream() << u8"¶ÁÈ¡ÎÄ¼þ " << vFilePath << u8" Ê§°Ü";
         return false;
     }
-
     m_Header.read(File);
 
-    m_LumpEntity.read(      File, m_Header.LumpInfos[0].Offset,  m_Header.LumpInfos[0].Size);
-    m_LumpPlane.read(       File, m_Header.LumpInfos[1].Offset,  m_Header.LumpInfos[1].Size);
-    m_LumpTexture.read(     File, m_Header.LumpInfos[2].Offset);
-    m_LumpVertex.read(      File, m_Header.LumpInfos[3].Offset,  m_Header.LumpInfos[3].Size);
-    m_LumpVisibility.read(  File, m_Header.LumpInfos[4].Offset,  m_Header.LumpInfos[4].Size);
-    m_LumpNode.read(        File, m_Header.LumpInfos[5].Offset,  m_Header.LumpInfos[5].Size);
-    m_LumpTexInfo.read(     File, m_Header.LumpInfos[6].Offset,  m_Header.LumpInfos[6].Size);
-    m_LumpFace.read(        File, m_Header.LumpInfos[7].Offset,  m_Header.LumpInfos[7].Size);
-    m_LumpLighting.read(    File, m_Header.LumpInfos[8].Offset,  m_Header.LumpInfos[8].Size);
-    m_LumpClipNode.read(    File, m_Header.LumpInfos[9].Offset,  m_Header.LumpInfos[9].Size);
-    m_LumpLeaf.read(        File, m_Header.LumpInfos[10].Offset, m_Header.LumpInfos[10].Size);
-    m_LumpMarkSurface.read( File, m_Header.LumpInfos[11].Offset, m_Header.LumpInfos[11].Size);
-    m_LumpEdge.read(        File, m_Header.LumpInfos[12].Offset, m_Header.LumpInfos[12].Size);
-    m_LumpSurfedge.read(    File, m_Header.LumpInfos[13].Offset, m_Header.LumpInfos[13].Size);
-    m_LumpModel.read(       File, m_Header.LumpInfos[14].Offset, m_Header.LumpInfos[14].Size);
+    m_Lumps.m_LumpEntity.read(      File, m_Header.LumpInfos[0].Offset,  m_Header.LumpInfos[0].Size);
+    m_Lumps.m_LumpPlane.read(       File, m_Header.LumpInfos[1].Offset,  m_Header.LumpInfos[1].Size);
+    m_Lumps.m_LumpTexture.read(     File, m_Header.LumpInfos[2].Offset);
+    m_Lumps.m_LumpVertex.read(      File, m_Header.LumpInfos[3].Offset,  m_Header.LumpInfos[3].Size);
+    m_Lumps.m_LumpVisibility.read(  File, m_Header.LumpInfos[4].Offset,  m_Header.LumpInfos[4].Size);
+    m_Lumps.m_LumpNode.read(        File, m_Header.LumpInfos[5].Offset,  m_Header.LumpInfos[5].Size);
+    m_Lumps.m_LumpTexInfo.read(     File, m_Header.LumpInfos[6].Offset,  m_Header.LumpInfos[6].Size);
+    m_Lumps.m_LumpFace.read(        File, m_Header.LumpInfos[7].Offset,  m_Header.LumpInfos[7].Size);
+    m_Lumps.m_LumpLighting.read(    File, m_Header.LumpInfos[8].Offset,  m_Header.LumpInfos[8].Size);
+    m_Lumps.m_LumpClipNode.read(    File, m_Header.LumpInfos[9].Offset,  m_Header.LumpInfos[9].Size);
+    m_Lumps.m_LumpLeaf.read(        File, m_Header.LumpInfos[10].Offset, m_Header.LumpInfos[10].Size);
+    m_Lumps.m_LumpMarkSurface.read( File, m_Header.LumpInfos[11].Offset, m_Header.LumpInfos[11].Size);
+    m_Lumps.m_LumpEdge.read(        File, m_Header.LumpInfos[12].Offset, m_Header.LumpInfos[12].Size);
+    m_Lumps.m_LumpSurfedge.read(    File, m_Header.LumpInfos[13].Offset, m_Header.LumpInfos[13].Size);
+    m_Lumps.m_LumpModel.read(       File, m_Header.LumpInfos[14].Offset, m_Header.LumpInfos[14].Size);
 
     return true;
 }
@@ -51,7 +50,7 @@ void SBspHeader::read(std::ifstream& vFile)
 {
     vFile.seekg(0, std::ios_base::beg);
 
-    vFile >> Version;
+    vFile.read(reinterpret_cast<char*>(&Version), sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(LumpInfos), sizeof(LumpInfos));
     _ASSERTE(Version >= 30);
 }
@@ -76,7 +75,8 @@ void SBspTexture::read(std::ifstream& vFile, uint64_t vOffset)
     char TempNameBuffer[g_MaxNameLength];
     vFile.read(TempNameBuffer, g_MaxNameLength);
     Name = TempNameBuffer;
-    vFile >> Width >> Height;
+    vFile.read(reinterpret_cast<char*>(&Width), sizeof(uint32_t));
+    vFile.read(reinterpret_cast<char*>(&Height), sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(Offsets), g_BspMipmapLevel * sizeof(uint32_t));
 
     for (size_t i = 0; i < g_BspMipmapLevel; ++i)
@@ -87,7 +87,7 @@ void SLumpTexture::read(std::ifstream& vFile, uint64_t vOffset)
 {
     vFile.seekg(vOffset, std::ios_base::beg);
 
-    vFile >> NumTexture;
+    vFile.read(reinterpret_cast<char*>(&NumTexture), sizeof(uint32_t));
 
     TexOffsets.resize(NumTexture);
     vFile.read(reinterpret_cast<char*>(TexOffsets.data()), NumTexture * sizeof(int32_t));

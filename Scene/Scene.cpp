@@ -86,12 +86,121 @@ bool findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir,
 }
 
 #include "IOGoldSrcBsp.h"
+//void loadBspLeaf(const SBspLumps& vLumps, std::shared_ptr<S3DObject> vpObject, int16_t vLeafIndex)
+//{
+//    _ASSERTE(vLeafIndex < vLumps.m_LumpLeaf.Leaves.size());
+//    const SBspLeaf& Leaf = vLumps.m_LumpLeaf.Leaves[vLeafIndex];
+//}
+//
+//void traverseNode(const SBspLumps& vLumps, std::shared_ptr<S3DObject> vpObject, int16_t vNodeIndex)
+//{
+//    if (vLumps.m_LumpNode.Nodes.size() == 0) return;
+//
+//    if (vNodeIndex >= 0)
+//    {
+//        _ASSERTE(vNodeIndex < vLumps.m_LumpNode.Nodes.size());
+//        const SBspNode& Node = vLumps.m_LumpNode.Nodes[vNodeIndex];
+//        // TODO:load node data
+//        traverseNode(vLumps, vpObject, Node.ChildrenIndices[0]);
+//        traverseNode(vLumps, vpObject, Node.ChildrenIndices[1]);
+//    }
+//    else
+//    {
+//        int16_t LeafIndex = ~vNodeIndex;
+//        loadBspLeaf(vLumps, vpObject, LeafIndex);
+//    }
+//
+//}
+
 SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
+    const float SceneScale = 1.0f / 64.0f;
     if (vProgressReportFunc) vProgressReportFunc(u8"[bsp]读取文件中");
     CIOGoldSrcBsp Bsp = CIOGoldSrcBsp(vFilePath);
     if (!Bsp.read())
         throw "file read failed";
+
+    const SBspLumps& Lumps = Bsp.getLumps();
+
+    // traverse nodes
+    std::shared_ptr<S3DObject> pBspObject = std::make_shared<S3DObject>();
+    pBspObject->TexIndex = 0;
+    for (const SBspFace& Face : Lumps.m_LumpFace.Faces)
+    {
+        _ASSERTE(Face.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
+        const SBspPlane& Plane = Lumps.m_LumpPlane.Planes[Face.PlaneIndex];
+        bool ReverseNormal = (Face.PlaneIndex != 0);
+        glm::vec3 Normal = glm::vec3(Plane.Normal.X, Plane.Normal.Y, Plane.Normal.Z);
+        if (ReverseNormal) Normal *= -1;
+        _ASSERTE(static_cast<size_t>(Face.FirstSurfedgeIndex) + Face.NumSurfedge <= Lumps.m_LumpSurfedge.Surfedges.size());
+
+        std::vector<uint16_t> FaceVertexIndices;
+        uint16_t LastVertexIndex2 = 0;
+        for (uint16_t i = 0; i < Face.NumSurfedge; ++i)
+        {
+            uint16_t SurfedgeIndex = Face.FirstSurfedgeIndex + i;
+            int16_t RawEdgeIndex = Lumps.m_LumpSurfedge.Surfedges[SurfedgeIndex];
+            uint16_t VertexIndex1 = 0, VertexIndex2 = 0;
+            if (RawEdgeIndex > 0)
+            {
+                uint16_t EdgeIndex = static_cast<uint16_t>(RawEdgeIndex);
+                _ASSERTE(EdgeIndex < Lumps.m_LumpEdge.Edges.size());
+                VertexIndex1 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
+                VertexIndex2 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
+            }
+            else
+            {
+                uint16_t EdgeIndex = static_cast<uint16_t>(-RawEdgeIndex);
+                _ASSERTE(EdgeIndex < Lumps.m_LumpEdge.Edges.size());
+                VertexIndex1 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
+                VertexIndex2 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
+            }
+
+            FaceVertexIndices.emplace_back(VertexIndex1);
+            if ((i > 0 && LastVertexIndex2 != VertexIndex1) ||
+                (i == Face.NumSurfedge - 1 && FaceVertexIndices[0] != VertexIndex2))
+            {
+                throw std::runtime_error(u8"BSP文件中，面的边未组成环");
+            }
+            LastVertexIndex2 = VertexIndex2;
+        }
+
+        std::vector<glm::vec3> FaceVertices;
+        for (uint16_t FaceVertexIndex : FaceVertexIndices)
+        {
+            _ASSERTE(FaceVertexIndex < Lumps.m_LumpVertex.Vertices.size());
+            SVec3 Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
+            FaceVertices.emplace_back(glm::vec3(Vertex.X, Vertex.Y, Vertex.Z) * SceneScale);
+        }
+
+        for (size_t i = 2; i < FaceVertices.size(); ++i)
+        {
+            pBspObject->Vertices.emplace_back(FaceVertices[0]);
+            pBspObject->Vertices.emplace_back(FaceVertices[i-1]);
+            pBspObject->Vertices.emplace_back(FaceVertices[i]);
+            pBspObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pBspObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pBspObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pBspObject->Normals.emplace_back(Normal);
+            pBspObject->Normals.emplace_back(Normal);
+            pBspObject->Normals.emplace_back(Normal);
+            pBspObject->TexCoords.emplace_back(glm::vec2(0.0, 0.0));
+            pBspObject->TexCoords.emplace_back(glm::vec2(1.0, 0.0));
+            pBspObject->TexCoords.emplace_back(glm::vec2(0.0, 1.0));
+        }
+    }
+    //traverseNode(Bsp.getLumps(), pObject, 0);
+
+    std::vector<std::shared_ptr<S3DObject>> Objects;
+    Objects.emplace_back(std::move(pBspObject));
+
+    std::vector<std::shared_ptr<CIOImage>> TexImages;
+    TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
+
+    SScene Scene;
+    Scene.Objects = Objects;
+    Scene.TexImages = TexImages;
+    return Scene;
 }
 
 

@@ -73,11 +73,18 @@ void CImguiVullkan::__drawGUI()
             ImGui::CloseCurrentPopup();
             m_LoadingFilePath = "";
             m_LoadingProgressReport = "";
-            const SResultReadScene& ResultScene = m_FileReadingPromise.get();
-            if (ResultScene.Succeed)
-                m_pRenderer->loadScene(ResultScene.Scene);
-            else
-                showAlert(ResultScene.Message);
+            try
+            {
+                const SResultReadScene& ResultScene = m_FileReadingPromise.get();
+                if (ResultScene.Succeed)
+                    m_pRenderer->loadScene(ResultScene.Scene);
+                else
+                    showAlert(ResultScene.Message);
+            }
+            catch (std::exception& vException)
+            {
+                showAlert(vException.what());
+            }
         }
         ImGui::EndPopup();
     }

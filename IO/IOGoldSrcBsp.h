@@ -179,6 +179,7 @@ struct SLumpVisibility
  * ChildrenIndices is the indices node of children,
  * if > 0, it's node index,
  * if <= 0, it's bitwise inversed value is leave index in leaf lump.
+ * Bounding box is AABB (Axis-Aligned Bounding Box).
  * FirstFaceIndex is the start face index in face lump, and NumFace is number of faces.
  **************************************************************/
 struct SBspNode
@@ -229,7 +230,8 @@ struct SLumpTexInfo
 /***************************************************************
  * SBspFace store a face.
  * PlaneIndex refers to the plane that is parellel to this face, i.e. parellel normal.
- * nPlaneSide is just a bool, used to specify whether front or back is normal.
+ * nPlaneSide is just a bool, used to specify whether front or back is normal. 
+ If 0, same direction, else reverse direction.
  * FirstEdgeIndex and NumEdge refer to edges of this face stored at edge lump.
  * TexInfoIndex referd to used texinfo.
  * LightingStyles? Don't know how to use it.
@@ -239,8 +241,8 @@ struct SBspFace
 {
     uint16_t PlaneIndex;
     uint16_t PlaneSide;
-    uint32_t FirstEdgeIndex;
-    uint16_t NumEdge;
+    uint32_t FirstSurfedgeIndex;
+    uint16_t NumSurfedge;
     uint16_t TexInfoIndex;
     uint8_t LightingStyles[4];
     uint32_t LightmapOffset;
@@ -318,6 +320,7 @@ enum class EBspContent
 /***************************************************************
  * SBspLeaf store a leaf node.
  * VisOffset defines the start of raw PVS data, if -1, no vis data.
+ * Bounding box is AABB (Axis-Aligned Bounding Box).
  * AmbientLevels? Don't know how to use it.
  **************************************************************/
 struct SBspLeaf
@@ -371,8 +374,9 @@ struct SLumpEdge
 
 /***************************************************************
  * SLumpSurfedge store a map from Surfedge index to actual edge index,
- * and tell the face the start vertex?
- * (TODO: Don't know how to use it and where it's used)
+ * and also tell the face the start vertex.
+ * I.e. if index >= 0, it point to edge index and face start from 1st vertex to 2nd vertex,
+ * otherwise, it point to -index and face start from 2nd vertex to 1st vertex.
  **************************************************************/
 struct SLumpSurfedge
 {
@@ -383,7 +387,7 @@ struct SLumpSurfedge
 
 /***************************************************************
  * SBspModel store a model.
- * Use float bounding box.
+ * Use float bounding box. Also AABB (Axis-Aligned Bounding Box).
  * NodeIndices, [0] is the root of mini bsp tree.
  * [1], [2], [3] seems refer to 3 types of collision nodes (stand, big size and crouch).
  * VisLeafs? Don't know what is mean and how to use it.
@@ -413,19 +417,10 @@ struct SLumpModel
 };
 
 /***************************************************************
- * Class for bsp file reading.
+ * SBspLumps Contains all 15 type of lumps in a bsp.
  **************************************************************/
-class CIOGoldSrcBsp : public CIOBase 
+struct SBspLumps
 {
-public:
-    CIOGoldSrcBsp() :CIOBase() {}
-    CIOGoldSrcBsp(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
-
-protected:
-    virtual bool _readV(std::filesystem::path vFilePath) override;
-
-private:
-    SBspHeader m_Header;
     SLumpEntity m_LumpEntity;
     SLumpPlane m_LumpPlane;
     SLumpTexture m_LumpTexture;
@@ -441,4 +436,23 @@ private:
     SLumpEdge m_LumpEdge;
     SLumpSurfedge m_LumpSurfedge;
     SLumpModel m_LumpModel;
+};
+
+/***************************************************************
+ * Class for bsp file reading.
+ **************************************************************/
+class CIOGoldSrcBsp : public CIOBase 
+{
+public:
+    CIOGoldSrcBsp() :CIOBase() {}
+    CIOGoldSrcBsp(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
+
+    const SBspLumps& getLumps() const { return m_Lumps; }
+
+protected:
+    virtual bool _readV(std::filesystem::path vFilePath) override;
+
+private:
+    SBspHeader m_Header;
+    SBspLumps m_Lumps;
 };

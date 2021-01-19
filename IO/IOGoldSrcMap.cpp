@@ -4,7 +4,7 @@
 #include <regex>
 #include <sstream>
 
-float SMapBrush::GlobalScale = 1.0 / 64.0;
+float SMapBrush::GlobalScale = 1.0f / 64.0f;
 
 // vertice are stored at clockwise
 glm::vec3 SMapPlane::getNormal() const
