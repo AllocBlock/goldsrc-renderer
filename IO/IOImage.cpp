@@ -15,7 +15,7 @@ bool CIOImage::_readV(std::filesystem::path vFilePath)
     __cleanup();
     m_pData = static_cast<void*>(stbi_load(vFilePath.string().c_str(), &m_Width, &m_Height, &m_Channels, STBI_rgb_alpha)); // 强制读取为RGBA
     if (!m_pData)
-        throw "image load failed, " + std::string(stbi_failure_reason());
+        throw std::runtime_error(u8"图片读取失败：" + std::string(stbi_failure_reason()));
     return true;
 }
 

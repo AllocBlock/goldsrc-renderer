@@ -5,6 +5,7 @@
 #include <sstream>
 
 float SMapBrush::GlobalScale = 1.0f / 64.0f;
+const std::string g_ParseFailMessage = u8"MAP文件解析失败";
 
 // vertice are stored at clockwise
 glm::vec3 SMapPlane::getNormal() const
@@ -155,6 +156,42 @@ void SMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const
     }
 }
 
+bool CIOGoldSrcMap::readFromString(std::string vText)
+{
+    uint32_t EntityStartIndex = 0;
+    int PairingLevel = 0;
+    for (size_t i = 0; i < vText.length(); ++i)
+    {
+        if (vText[i] == '{')
+        {
+            if (PairingLevel == 0)
+            {
+                EntityStartIndex = i;
+            }
+            if (PairingLevel == 2) continue; // max level is 2, and need to void { appears in texture name
+            PairingLevel++;
+        }
+        else if (vText[i] == '}')
+        {
+            PairingLevel--;
+            if (PairingLevel == 0)
+            {
+                std::string EntityText = vText.substr(EntityStartIndex, i - EntityStartIndex + 1);
+                SMapEntity Entity;
+                Entity.read(EntityText);
+                m_Entities.push_back(Entity);
+            }
+        }
+        else if (PairingLevel == 0 && !isWhiteSpace(vText[i]))
+        {
+            return false;
+        }
+    }
+    if (PairingLevel > 0) return false;
+
+    return true;
+}
+
 bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
 {
     std::ifstream File;
@@ -166,39 +203,7 @@ bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
     }
 
     std::string Text((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
-
-    uint32_t EntityStartIndex = 0;
-    int PairingLevel = 0;
-    for (size_t i = 0; i < Text.length(); ++i)
-    {
-        if (Text[i] == '{')
-        {
-            if (PairingLevel == 0)
-            {
-                EntityStartIndex = i;
-            }
-            if (PairingLevel == 2) continue; // max level is 2, and need to void { appears in texture name
-            PairingLevel++;
-        }
-        else if (Text[i] == '}')
-        {
-            PairingLevel--;
-            if (PairingLevel == 0)
-            {
-                std::string EntityText = Text.substr(EntityStartIndex, i - EntityStartIndex + 1);
-                SMapEntity Entity;
-                Entity.read(EntityText);
-                m_Entities.push_back(Entity);
-            }
-        }
-        else if (PairingLevel == 0 && !isWhiteSpace(Text[i]))
-        {
-            return false;
-        }
-    }
-    if (PairingLevel > 0) return false;
-
-    return true;
+    return readFromString(Text);
 }
 
 void SMapEntity::read(std::string vTextEntity)
@@ -236,7 +241,7 @@ void SMapEntity::__readProperty(std::string vTextProperty)
     static const std::regex ReKeyValue("\"(.*?)\"\\s+\"(.*?)\"");
 
     if (!std::regex_match(vTextProperty, Results, ReKeyValue))
-        throw "map file parse failed";
+        throw std::runtime_error(g_ParseFailMessage);
     std::string Key = Results[1].str();
     std::string Value = Results[2].str();
     Properties[Key] = Value;
@@ -257,17 +262,17 @@ void SMapEntity::__readBrushes(std::string vTextBrushes)
         }
         else if (vTextBrushes[i] == '}')
         {
-            if (!InBrush) throw "map file parse failed";
+            if (!InBrush) throw std::runtime_error(g_ParseFailMessage);
             std::string TextBrush = vTextBrushes.substr(StartBrushIndex, i - StartBrushIndex);
             __readBrush(TextBrush);
             InBrush = false;
         }
         else if (!InBrush && !CIOBase::isWhiteSpace(vTextBrushes[i]))
         {
-            throw "map file parse failed";
+            throw std::runtime_error(g_ParseFailMessage);
         }
     }
-    if (InBrush) throw "map file parse failed";
+    if (InBrush) throw std::runtime_error(g_ParseFailMessage);
 }
 
 void SMapEntity::__readBrush(std::string vTextBrush)
@@ -295,32 +300,32 @@ SMapPlane SMapEntity::__parsePlane(std::string vTextPlane)
     for (int i = 0; i < 3; ++i)
     {
         while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
-        if (PlaneSStream.get() != '(') throw "map file parse error";
+        if (PlaneSStream.get() != '(') throw std::runtime_error(g_ParseFailMessage);
         PlaneSStream >> Plane.Points[i].x;
         PlaneSStream >> Plane.Points[i].y;
         PlaneSStream >> Plane.Points[i].z;
         while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
-        if (PlaneSStream.get() != ')') throw "map file parse error";
+        if (PlaneSStream.get() != ')') throw std::runtime_error(g_ParseFailMessage);
     }
     PlaneSStream >> Plane.TextureName;
 
     while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
-    if (PlaneSStream.get() != '[') throw "map file parse error";
+    if (PlaneSStream.get() != '[') throw std::runtime_error(g_ParseFailMessage);
     PlaneSStream >> Plane.TextureDirectionU.x;
     PlaneSStream >> Plane.TextureDirectionU.y;
     PlaneSStream >> Plane.TextureDirectionU.z;
     PlaneSStream >> Plane.TextureOffsetU;
     while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
-    if (PlaneSStream.get() != ']') throw "map file parse error";
+    if (PlaneSStream.get() != ']') throw std::runtime_error(g_ParseFailMessage);
 
     while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
-    if (PlaneSStream.get() != '[') throw "map file parse error";
+    if (PlaneSStream.get() != '[') throw std::runtime_error(g_ParseFailMessage);
     PlaneSStream >> Plane.TextureDirectionV.x;
     PlaneSStream >> Plane.TextureDirectionV.y;
     PlaneSStream >> Plane.TextureDirectionV.z;
     PlaneSStream >> Plane.TextureOffsetV;
     while (CIOBase::isWhiteSpace(PlaneSStream.peek())) PlaneSStream.get();
-    if (PlaneSStream.get() != ']') throw "map file parse error";
+    if (PlaneSStream.get() != ']') throw std::runtime_error(g_ParseFailMessage);
 
     PlaneSStream >> Plane.TextureRotation;
     PlaneSStream >> Plane.TextureScaleU;
@@ -348,10 +353,8 @@ float SMapEntity::__parseFloat(std::string vText)
     return atof(vText.c_str());
 }
 
-std::vector<std::string> CIOGoldSrcMap::getWadPaths()
+std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
 {
-    std::vector<std::string> WadPaths;
-
     for (int i = 0; i < m_Entities.size(); ++i)
     {
         auto Properties = m_Entities[i].Properties;
@@ -359,15 +362,17 @@ std::vector<std::string> CIOGoldSrcMap::getWadPaths()
         {
             if (Properties.find("wad") == Properties.end())
             {
-                throw "wad property not found in worldspawn entity";
+                throw std::runtime_error(u8"未在worldspawn实体内找到wad文件信息");
             }
             else
             {
-                return CIOBase::splitString(Properties["wad"], ';');
+                std::vector<std::string> WadNames = CIOBase::splitString(Properties["wad"], ';');
+                std::vector<std::filesystem::path> WadPaths(WadNames.begin(), WadNames.end());
+                return WadPaths;
             }
         }
     }
-    throw "worldspawn entity not found";
+    throw std::runtime_error(u8"未找到worldspawn实体，无法找到wad文件信息");
 }
 
 std::set<std::string> CIOGoldSrcMap::getUsedTextureNames()

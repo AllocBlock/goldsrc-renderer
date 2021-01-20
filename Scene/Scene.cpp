@@ -1,5 +1,10 @@
 ﻿#include "Scene.h"
 
+#include "IOGoldSrcMap.h"
+#include "IOGoldsrcWad.h"
+#include "IOGoldSrcBsp.h"
+#include "IOObj.h"
+
 #include <filesystem>
 
 std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
@@ -85,7 +90,6 @@ bool findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir,
     return false;
 }
 
-#include "IOGoldSrcBsp.h"
 //void loadBspLeaf(const SBspLumps& vLumps, std::shared_ptr<S3DObject> vpObject, int16_t vLeafIndex)
 //{
 //    _ASSERTE(vLeafIndex < vLumps.m_LumpLeaf.Leaves.size());
@@ -118,19 +122,88 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     if (vProgressReportFunc) vProgressReportFunc(u8"[bsp]读取文件中");
     CIOGoldSrcBsp Bsp = CIOGoldSrcBsp(vFilePath);
     if (!Bsp.read())
-        throw "file read failed";
+        throw std::runtime_error(u8"文件解析失败");
+    SScene Scene;
 
     const SBspLumps& Lumps = Bsp.getLumps();
 
-    // traverse nodes
+    // read wads
+    const std::vector<std::filesystem::path>& WadPaths = Lumps.m_LumpEntity.WadPaths;
+    std::vector<CIOGoldsrcWad> Wads(WadPaths.size());
+
+    for (size_t i = 0; i < WadPaths.size(); ++i)
+    {
+        std::filesystem::path RealWadPath;
+        if (!findFile(WadPaths[i], "../data", RealWadPath))
+            GlobalLogger::logStream() << u8"未找到或无法打开WAD文件：" << WadPaths[i];
+        if (vProgressReportFunc) vProgressReportFunc(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
+        Wads[i].read(RealWadPath);
+    }
+
+    // load textures
+    // iterate each texture in texture lump
+    // if bsp contains its data, load it, otherwise find it in all wads
+    // if found, load it, otherwise set mapper to 0
+    if (vProgressReportFunc) vProgressReportFunc(u8"整理纹理中");
+    std::map<std::string, uint32_t> TexNameToIndex;
+    std::map<uint32_t, uint32_t> TexIndexToIndex; // texture index is used in texinfo lump
+    Scene.TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    TexNameToIndex["TextureNotFound"] = 0;
+    for (size_t i = 0; i < Lumps.m_LumpTexture.Textures.size(); ++i)
+    {
+        const SBspTexture& BspTexture = Lumps.m_LumpTexture.Textures[i];
+        if (BspTexture.IsDataInBsp)
+        {
+            std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+            void* pData = new unsigned char[static_cast<size_t>(4) * BspTexture.Width * BspTexture.Height];
+            BspTexture.getRawRGBAPixels(pData);
+            pTexImage->setData(pData);
+            delete[] pData;
+            TexNameToIndex[BspTexture.Name] = Scene.TexImages.size();
+            TexIndexToIndex[i] = Scene.TexImages.size();
+        }
+        else
+        {
+            bool Found = false;
+            for (const CIOGoldsrcWad& Wad : Wads)
+            {
+                std::optional<size_t> Index = Wad.findTexture(BspTexture.Name);
+                if (Index.has_value())
+                {
+                    uint32_t Width = 0, Height = 0;
+                    Wad.getTextureSize(Index.value(), Width, Height);
+
+                    std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+                    pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
+                    void* pData = new unsigned char[static_cast<size_t>(4) * Width * Height];
+                    Wad.getRawRGBAPixels(Index.value(), pData);
+                    pTexImage->setData(pData);
+                    delete[] pData;
+                    TexNameToIndex[BspTexture.Name] = Scene.TexImages.size();
+                    TexIndexToIndex[i] = Scene.TexImages.size();
+                    Scene.TexImages.emplace_back(std::move(pTexImage));
+                    Found = true;
+                    break;
+                }
+            }
+            if (!Found)
+            {
+                TexNameToIndex[BspTexture.Name] = 0;
+                TexIndexToIndex[i] = 0;
+            }
+        }
+    }
+
+    // load faces
     std::shared_ptr<S3DObject> pBspObject = std::make_shared<S3DObject>();
     pBspObject->TexIndex = 0;
     for (const SBspFace& Face : Lumps.m_LumpFace.Faces)
     {
+        // get vertices
         _ASSERTE(Face.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
         const SBspPlane& Plane = Lumps.m_LumpPlane.Planes[Face.PlaneIndex];
         bool ReverseNormal = (Face.PlaneIndex != 0);
-        glm::vec3 Normal = glm::vec3(Plane.Normal.X, Plane.Normal.Y, Plane.Normal.Z);
+        glm::vec3 Normal = Plane.Normal.glmVec3();
         if (ReverseNormal) Normal *= -1;
         _ASSERTE(static_cast<size_t>(Face.FirstSurfedgeIndex) + Face.NumSurfedge <= Lumps.m_LumpSurfedge.Surfedges.size());
 
@@ -170,9 +243,18 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         {
             _ASSERTE(FaceVertexIndex < Lumps.m_LumpVertex.Vertices.size());
             SVec3 Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
-            FaceVertices.emplace_back(glm::vec3(Vertex.X, Vertex.Y, Vertex.Z) * SceneScale);
+            FaceVertices.emplace_back(Vertex.glmVec3() * SceneScale);
         }
 
+        // find texcoords
+        uint16_t TexInfoIndex = Face.TexInfoIndex;
+        _ASSERTE(TexInfoIndex < Lumps.m_LumpTexInfo.TexInfos.size());
+        const SBspTexInfo& TexInfo = Lumps.m_LumpTexInfo.TexInfos[TexInfoIndex];
+        const auto& pImage = Scene.TexImages[TexIndexToIndex[TexInfo.TextureIndex]];
+        size_t TexWidth = pImage->getImageWidth();
+        size_t TexHeight= pImage->getImageHeight();
+
+        // save data
         for (size_t i = 2; i < FaceVertices.size(); ++i)
         {
             pBspObject->Vertices.emplace_back(FaceVertices[0]);
@@ -184,43 +266,32 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
             pBspObject->Normals.emplace_back(Normal);
             pBspObject->Normals.emplace_back(Normal);
             pBspObject->Normals.emplace_back(Normal);
-            pBspObject->TexCoords.emplace_back(glm::vec2(0.0, 0.0));
-            pBspObject->TexCoords.emplace_back(glm::vec2(1.0, 0.0));
-            pBspObject->TexCoords.emplace_back(glm::vec2(0.0, 1.0));
+            pBspObject->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[0] / SceneScale, TexWidth, TexHeight));
+            pBspObject->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i-1] / SceneScale, TexWidth, TexHeight));
+            pBspObject->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i] / SceneScale, TexWidth, TexHeight));
         }
     }
     //traverseNode(Bsp.getLumps(), pObject, 0);
 
-    std::vector<std::shared_ptr<S3DObject>> Objects;
-    Objects.emplace_back(std::move(pBspObject));
+    Scene.Objects.emplace_back(std::move(pBspObject));
 
-    std::vector<std::shared_ptr<CIOImage>> TexImages;
-    TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
-
-    SScene Scene;
-    Scene.Objects = Objects;
-    Scene.TexImages = TexImages;
     return Scene;
 }
-
-
-#include "IOGoldSrcMap.h"
-#include "IOGoldsrcWad.h"
 
 SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     if (vProgressReportFunc) vProgressReportFunc(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(vFilePath);
     if (!Map.read())
-        throw "file read failed";
-    std::vector<std::string> WadPaths = Map.getWadPaths();
+        throw std::runtime_error(u8"文件解析失败");
+    std::vector<std::filesystem::path> WadPaths = Map.getWadPaths();
     std::vector<CIOGoldsrcWad> Wads(WadPaths.size());
 
     for (size_t i = 0; i < WadPaths.size(); ++i)
     {
         std::filesystem::path RealWadPath;
         if (!findFile(WadPaths[i], "../data", RealWadPath))
-            throw "can't find wad file " + WadPaths[i];
+            GlobalLogger::logStream() << u8"未找到或无法打开WAD文件：" << WadPaths[i];
         if (vProgressReportFunc) vProgressReportFunc(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
         Wads[i].read(RealWadPath);
     }
@@ -229,13 +300,14 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
 
     if (vProgressReportFunc) vProgressReportFunc(u8"整理纹理中");
     // find used textures, load and index them
-    std::map<std::string, uint32_t> TexIndexMap;
+    std::map<std::string, uint32_t> TexNameToIndex;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
     Scene.TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
-    TexIndexMap["TextureNotFound"] = 0;
+    TexNameToIndex["TextureNotFound"] = 0;
     UsedTextureNames.insert("TextureNotFound");
     for (const std::string& TexName : UsedTextureNames)
     {
+        bool Found = false;
         for (const CIOGoldsrcWad& Wad : Wads)
         {
             std::optional<size_t> Index = Wad.findTexture(TexName);
@@ -250,13 +322,14 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
                 Wad.getRawRGBAPixels(Index.value(), pData);
                 pTexImage->setData(pData);
                 delete[] pData;
-                TexIndexMap[TexName] = Scene.TexImages.size();
+                TexNameToIndex[TexName] = Scene.TexImages.size();
                 Scene.TexImages.emplace_back(std::move(pTexImage));
+                Found = true;
                 break;
             }
         }
-        if (TexIndexMap.find(TexName) == TexIndexMap.end())
-            TexIndexMap[TexName] = 0;
+        if (!Found)
+            TexNameToIndex[TexName] = 0;
     }
 
     if (vProgressReportFunc) vProgressReportFunc(u8"生成场景中");
@@ -272,7 +345,7 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
 
     for (SMapPolygon& Polygon : Polygons)
     {
-        size_t TexIndex = TexIndexMap[Polygon.pPlane->TextureName];
+        size_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
         size_t TexWidth = Scene.TexImages[TexIndex]->getImageWidth();
         size_t TexHeight = Scene.TexImages[TexIndex]->getImageHeight();
         std::shared_ptr<S3DObject> pObject = Scene.Objects[TexIndex];
@@ -319,7 +392,6 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
     return Scene;
 }
 
-#include "IOObj.h"
 SScene SceneReader::readObjFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     if (vProgressReportFunc) vProgressReportFunc(u8"[obj]读取文件中");

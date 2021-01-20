@@ -89,11 +89,13 @@ public:
 	CIOGoldSrcMap() :CIOBase() {}
 	CIOGoldSrcMap(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
 
-	std::vector<std::string> getWadPaths();
+	std::vector<std::filesystem::path> getWadPaths();
 	const std::vector<SMapEntity>& getEntities() { return m_Entities; }
 	std::set<std::string> getUsedTextureNames();
 	std::vector<SMapPolygon> getAllPolygons();
 	std::string toString();
+
+	bool readFromString(std::string vText);
 
 protected:
 	virtual bool _readV(std::filesystem::path vFilePath) override;

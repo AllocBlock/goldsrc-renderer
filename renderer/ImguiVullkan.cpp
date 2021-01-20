@@ -251,7 +251,7 @@ void CImguiVullkan::render()
     }
     else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
-        throw "failed to acquire swap chain image!";
+        throw std::runtime_error(u8"获取交换链图像失败");
     }
     
     VkCommandBuffer ImguiCommandBuffer = requestCommandBuffer(ImageIndex);
@@ -297,7 +297,7 @@ void CImguiVullkan::render()
     }
     else if (Result != VK_SUCCESS)
     {
-        throw "failed to acquire swap chain image!";
+        throw std::runtime_error(u8"获取交换链图像失败");
     }
 
     m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
@@ -316,7 +316,7 @@ void CImguiVullkan::__createInstance()
     InstanceInfo.pApplicationInfo = &AppInfo;
 
     if (ENABLE_VALIDATION_LAYERS && !Common::checkValidationLayerSupport(m_ValidationLayers))
-        throw "required validation layers not available";
+        throw std::runtime_error(u8"不支持所需的验证层");
 
     if (ENABLE_VALIDATION_LAYERS)
     {
@@ -347,7 +347,7 @@ void CImguiVullkan::__setupDebugMessenger()
 
     auto pCreateDebugFunc = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT"));
     if (pCreateDebugFunc == nullptr)
-        throw "debug function not supported";
+        throw std::runtime_error(u8"不支持调试函数");
     else
         ck(pCreateDebugFunc(m_Instance, &DebugMessengerInfo, nullptr, &m_DebugMessenger));
 }
@@ -377,7 +377,7 @@ void CImguiVullkan::__choosePhysicalDevice()
 
     if (m_PhysicalDevice == VK_NULL_HANDLE)
     {
-        throw "failed to find a suitable GPU";
+        throw std::runtime_error(u8"未找到可用的GPU设备");
     }
 }
 
@@ -630,7 +630,7 @@ void CImguiVullkan::__destroyDebugMessenger()
 {
     auto pDestroyDebugFunc = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT"));
     if (pDestroyDebugFunc == nullptr)
-        throw "debug function not supported";
+        throw std::runtime_error(u8"不支持调试函数");
     else
         pDestroyDebugFunc(m_Instance, m_DebugMessenger, nullptr);
 }

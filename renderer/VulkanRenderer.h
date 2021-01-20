@@ -119,7 +119,7 @@ private:
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
 
-    std::vector<char> __readFile(std::string vFileName);
+    std::vector<char> __readFile(std::filesystem::path vFilePath);
     std::vector<SPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
 
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;

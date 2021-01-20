@@ -759,7 +759,7 @@ void CVulkanRenderer::__createCommandBuffers()
                 else if (pObject->Type == E3DObjectType::TRIAGNLES_LIST)
                     vkCmdDraw(m_CommandBuffers[i], NumVertex, 1, VertexOffset, 0);
                 else
-                    throw "wrong object type";
+                    throw std::runtime_error(u8"物体类型错误");
                 IndexOffset += NumIndex;
                 VertexOffset += NumVertex;
             }
@@ -770,13 +770,13 @@ void CVulkanRenderer::__createCommandBuffers()
     }
 }
 
-std::vector<char> CVulkanRenderer::__readFile(std::string vFileName)
+std::vector<char> CVulkanRenderer::__readFile(std::filesystem::path vFilePath)
 {
-    std::ifstream File(vFileName, std::ios::ate | std::ios::binary);
+    std::ifstream File(vFilePath, std::ios::ate | std::ios::binary);
 
-    if (!File.is_open()) {
-        throw "failed to open file " + vFileName;
-    }
+    if (!File.is_open()) 
+        throw std::runtime_error(u8"读取文件失败：" + vFilePath.u8string());
+
     size_t FileSize = static_cast<size_t>(File.tellg());
     std::vector<char> Buffer(FileSize);
     File.seekg(0);
@@ -832,7 +832,7 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
         }
     }
 
-    throw "failed to find supported format";
+    throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
 VkShaderModule CVulkanRenderer::__createShaderModule(const std::vector<char>& vShaderCode)
@@ -892,7 +892,7 @@ uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropert
         }
     }
 
-    throw "failed to find suitable memory type!";
+    throw std::runtime_error(u8"未找到合适的存储类别");
 }
 
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout) {
@@ -957,7 +957,7 @@ void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, 
     }
     else
     {
-        throw "unsupported layout transition!";
+        throw std::runtime_error(u8"不支持该布局转换");
     }
 
     vkCmdPipelineBarrier(

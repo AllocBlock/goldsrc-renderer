@@ -3,8 +3,9 @@
 #include <vulkan/vulkan.h>
 #include <optional>
 #include <vector>
+#include <stdexcept>
 
-#define ck(E) do{if (E) throw "vulkan error happened";} while(0)
+#define ck(E) do{if (E) throw std::runtime_error(u8"vulkan·µ»Ø´íÎó");} while(0)
 
 namespace Common
 {

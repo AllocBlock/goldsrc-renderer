@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IOBase.h"
+#include "IOGoldSrcMap.h"
 #include <vector>
 
 const size_t g_MaxNameLength = 16;
@@ -10,6 +11,8 @@ const size_t g_MaxHull = 4;
 struct SVec3
 {
     float X, Y, Z;
+
+    glm::vec3 glmVec3() const;
 };
 
 enum class ELumpType
@@ -78,6 +81,9 @@ struct SLumpEntity
 {
     std::string Data;
 
+    std::vector<SMapEntity> Entities; // memory-only
+    std::vector<std::filesystem::path> WadPaths; // memory-only
+
     void read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize);
 };
 
@@ -123,6 +129,7 @@ struct SLumpPlane
  * Name is needed for texture finding.
  * Offsets can be all zero, meaning this texture should be loaded from wad.
  * Else, Offsets store data offset related to the beginning of SBspTexture.
+ * TODO: is width and height set when data is in wad?
  **************************************************************/
 struct SBspTexture
 {
@@ -130,9 +137,11 @@ struct SBspTexture
     uint32_t Width, Height;
     uint32_t Offsets[g_BspMipmapLevel];
 
-    uint32_t AbsoluteOffsets[g_BspMipmapLevel]; // memory-only
+    bool IsDataInBsp = false; // memory-only
+    void* pData = nullptr; // memory-only
 
     void read(std::ifstream& vFile, uint64_t vOffset);
+    bool getRawRGBAPixels(void* vopData) const;
 };
 
 /***************************************************************
@@ -215,6 +224,8 @@ struct SBspTexInfo
     float TextureOffsetV;
     uint32_t TextureIndex;
     uint32_t Flags;
+
+    glm::vec2 getTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight) const;
 };
 
 /***************************************************************

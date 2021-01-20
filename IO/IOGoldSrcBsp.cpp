@@ -61,6 +61,11 @@ void SLumpEntity::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 
     Data.resize(vSize);
     vFile.read(Data.data(), vSize);
+
+    CIOGoldSrcMap Map;
+    Map.readFromString(Data);
+    Entities = Map.getEntities();
+    WadPaths = Map.getWadPaths();
 }
 
 void SLumpPlane::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
@@ -79,8 +84,14 @@ void SBspTexture::read(std::ifstream& vFile, uint64_t vOffset)
     vFile.read(reinterpret_cast<char*>(&Height), sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(Offsets), g_BspMipmapLevel * sizeof(uint32_t));
 
-    for (size_t i = 0; i < g_BspMipmapLevel; ++i)
-        AbsoluteOffsets[i] = vOffset + Offsets[i];
+    if (pData) delete[] pData;
+    IsDataInBsp = (Offsets[0] > 0);
+    if (IsDataInBsp)
+    {
+        size_t DataSize = static_cast<size_t>(Width) * Height * 4;
+        pData = new char[DataSize];
+        vFile.read(static_cast<char*>(pData), vOffset + Offsets[0]);
+    }
 }
 
 void SLumpTexture::read(std::ifstream& vFile, uint64_t vOffset)
@@ -157,4 +168,26 @@ void SLumpSurfedge::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 void SLumpModel::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
     Models = readArray<SBspModel>(vFile, vOffset, vSize);
+}
+
+glm::vec3 SVec3::glmVec3() const
+{
+    return glm::vec3(X, Y, Z);
+}
+
+bool SBspTexture::getRawRGBAPixels(void* vopData) const
+{
+    if (!IsDataInBsp) return false;
+    size_t DataSize = static_cast<size_t>(Width) * Height * 4;
+    char* pIter = static_cast<char*>(pData);
+    std::copy(pIter, pIter + DataSize, static_cast<char*>(vopData));
+    return true;
+}
+
+glm::vec2 SBspTexInfo::getTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight) const
+{
+    glm::vec2 TexCoord;
+    TexCoord.x = (glm::dot(vVertex, TextureDirectionU.glmVec3()) + TextureOffsetU) / vTexWidth;
+    TexCoord.y = (glm::dot(vVertex, TextureDirectionV.glmVec3()) + TextureOffsetV) / vTexHeight;
+    return TexCoord;
 }
