@@ -90,32 +90,6 @@ bool findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir,
     return false;
 }
 
-//void loadBspLeaf(const SBspLumps& vLumps, std::shared_ptr<S3DObject> vpObject, int16_t vLeafIndex)
-//{
-//    _ASSERTE(vLeafIndex < vLumps.m_LumpLeaf.Leaves.size());
-//    const SBspLeaf& Leaf = vLumps.m_LumpLeaf.Leaves[vLeafIndex];
-//}
-//
-//void traverseNode(const SBspLumps& vLumps, std::shared_ptr<S3DObject> vpObject, int16_t vNodeIndex)
-//{
-//    if (vLumps.m_LumpNode.Nodes.size() == 0) return;
-//
-//    if (vNodeIndex >= 0)
-//    {
-//        _ASSERTE(vNodeIndex < vLumps.m_LumpNode.Nodes.size());
-//        const SBspNode& Node = vLumps.m_LumpNode.Nodes[vNodeIndex];
-//        // TODO:load node data
-//        traverseNode(vLumps, vpObject, Node.ChildrenIndices[0]);
-//        traverseNode(vLumps, vpObject, Node.ChildrenIndices[1]);
-//    }
-//    else
-//    {
-//        int16_t LeafIndex = ~vNodeIndex;
-//        loadBspLeaf(vLumps, vpObject, LeafIndex);
-//    }
-//
-//}
-
 SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     const float SceneScale = 1.0f / 64.0f;
@@ -146,7 +120,6 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     // if found, load it, otherwise set mapper to 0
     if (vProgressReportFunc) vProgressReportFunc(u8"整理纹理中");
     std::map<std::string, uint32_t> TexNameToIndex;
-    std::map<uint32_t, uint32_t> TexIndexToIndex; // texture index is used in texinfo lump
     Scene.TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
     TexNameToIndex["TextureNotFound"] = 0;
     for (size_t i = 0; i < Lumps.m_LumpTexture.Textures.size(); ++i)
@@ -160,7 +133,6 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
             pTexImage->setData(pData);
             delete[] pData;
             TexNameToIndex[BspTexture.Name] = Scene.TexImages.size();
-            TexIndexToIndex[i] = Scene.TexImages.size();
         }
         else
         {
@@ -180,23 +152,25 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
                     pTexImage->setData(pData);
                     delete[] pData;
                     TexNameToIndex[BspTexture.Name] = Scene.TexImages.size();
-                    TexIndexToIndex[i] = Scene.TexImages.size();
                     Scene.TexImages.emplace_back(std::move(pTexImage));
                     Found = true;
                     break;
                 }
             }
             if (!Found)
-            {
                 TexNameToIndex[BspTexture.Name] = 0;
-                TexIndexToIndex[i] = 0;
-            }
         }
     }
 
     // load faces
-    std::shared_ptr<S3DObject> pBspObject = std::make_shared<S3DObject>();
-    pBspObject->TexIndex = 0;
+    size_t NumTexture = Scene.TexImages.size();
+    Scene.Objects.resize(NumTexture);
+    for (size_t i = 0; i < NumTexture; i++)
+    {
+        Scene.Objects[i] = std::make_shared<S3DObject>();
+        Scene.Objects[i]->TexIndex = i;
+    }
+    
     for (const SBspFace& Face : Lumps.m_LumpFace.Faces)
     {
         // get vertices
@@ -250,30 +224,30 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         uint16_t TexInfoIndex = Face.TexInfoIndex;
         _ASSERTE(TexInfoIndex < Lumps.m_LumpTexInfo.TexInfos.size());
         const SBspTexInfo& TexInfo = Lumps.m_LumpTexInfo.TexInfos[TexInfoIndex];
-        const auto& pImage = Scene.TexImages[TexIndexToIndex[TexInfo.TextureIndex]];
-        size_t TexWidth = pImage->getImageWidth();
-        size_t TexHeight= pImage->getImageHeight();
+        _ASSERTE(TexInfo.TextureIndex < Lumps.m_LumpTexture.Textures.size());
+        const SBspTexture& BspTexture = Lumps.m_LumpTexture.Textures[TexInfo.TextureIndex];
+        // original texture size
+        size_t TexWidth = BspTexture.Width; 
+        size_t TexHeight = BspTexture.Height;
 
+        size_t TexIndex = TexNameToIndex[BspTexture.Name];
         // save data
         for (size_t i = 2; i < FaceVertices.size(); ++i)
         {
-            pBspObject->Vertices.emplace_back(FaceVertices[0]);
-            pBspObject->Vertices.emplace_back(FaceVertices[i-1]);
-            pBspObject->Vertices.emplace_back(FaceVertices[i]);
-            pBspObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pBspObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pBspObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pBspObject->Normals.emplace_back(Normal);
-            pBspObject->Normals.emplace_back(Normal);
-            pBspObject->Normals.emplace_back(Normal);
-            pBspObject->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[0] / SceneScale, TexWidth, TexHeight));
-            pBspObject->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i-1] / SceneScale, TexWidth, TexHeight));
-            pBspObject->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i] / SceneScale, TexWidth, TexHeight));
+            Scene.Objects[TexIndex]->Vertices.emplace_back(FaceVertices[0]);
+            Scene.Objects[TexIndex]->Vertices.emplace_back(FaceVertices[i-1]);
+            Scene.Objects[TexIndex]->Vertices.emplace_back(FaceVertices[i]);
+            Scene.Objects[TexIndex]->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            Scene.Objects[TexIndex]->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            Scene.Objects[TexIndex]->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            Scene.Objects[TexIndex]->Normals.emplace_back(Normal);
+            Scene.Objects[TexIndex]->Normals.emplace_back(Normal);
+            Scene.Objects[TexIndex]->Normals.emplace_back(Normal);
+            Scene.Objects[TexIndex]->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[0] / SceneScale, TexWidth, TexHeight));
+            Scene.Objects[TexIndex]->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i-1] / SceneScale, TexWidth, TexHeight));
+            Scene.Objects[TexIndex]->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i] / SceneScale, TexWidth, TexHeight));
         }
     }
-    //traverseNode(Bsp.getLumps(), pObject, 0);
-
-    Scene.Objects.emplace_back(std::move(pBspObject));
 
     return Scene;
 }
