@@ -138,7 +138,7 @@ struct SBspTexture
     uint32_t Offsets[g_BspMipmapLevel];
 
     bool IsDataInBsp = false; // memory-only
-    void* pData = nullptr; // memory-only
+    uint8_t* pData = nullptr; // memory-only
 
     void read(std::ifstream& vFile, uint64_t vOffset);
     bool getRawRGBAPixels(void* vopData) const;
@@ -270,21 +270,28 @@ struct SLumpFace
 };
 
 /***************************************************************
- * SLightmap store a lightmap, which contain 8bit 3 channel color.
+ * SBspLightmap store a lightmap, which contain 8bit 3 channel color.
  **************************************************************/
-struct SLightmap
+struct SBspLightmap
 {
     uint8_t R, G, B;
 };
 
 /***************************************************************
  * SLumpLighting store all lightmaps.
+ * Each face use a lightmap, which is a subset of this array.
+ * Lightmap acts like a texture, it's size cover a whole face (size is the same to bounding box).
+ * Becareful that in GoldSrc, 16 pixels of texture use 1 luxel in lightmap.
+ * And one face can contain limited number of lightmap, and compiler will cut face if a face is too large.
+ * You will find more at this link: http://jheriko-rtw.blogspot.com/2010/11/dissecting-quake-2-bsp-format.html.
+ * Update: I encountered that faceindex is -1 in uint32_t, seems to represent for no lightmap?
  **************************************************************/
 struct SLumpLighting
 {
-    std::vector<SLightmap> Lightmaps;
+    std::vector<SBspLightmap> Lightmaps;
 
     void read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize);
+    void getRawRGBAPixels(size_t vOffsetInBytes, size_t vSizeInBytes, void* vopData) const;
 };
 
 /***************************************************************

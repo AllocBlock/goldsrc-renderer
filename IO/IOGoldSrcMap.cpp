@@ -362,7 +362,8 @@ std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
         {
             if (Properties.find("wad") == Properties.end())
             {
-                throw std::runtime_error(u8"未在worldspawn实体内找到wad文件信息");
+                GlobalLogger::logStream() << "未在worldspawn实体内找到wad文件信息";
+                return {};
             }
             else
             {

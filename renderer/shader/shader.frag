@@ -26,32 +26,34 @@ layout(push_constant) uniform SPushConstant
 
 void main()
 {
-    vec3 Light = vec3(1.0, 1.0, 1.0);
-
-	//vec3 L = normalize(Light - inFragPosition); // point light
-	vec3 L = normalize(Light); // parallel light
-	vec3 N = normalize(inFragNormal);
-	vec3 V = normalize(ubo.uEye - inFragPosition);
-	vec3 H = normalize(L + V);
-
-	float ambient = 1.0;
-	float diffuse = dot(L, N);
-	float specular = pow(dot(N, H), 40.0);
-	if (diffuse <= 0.0)
-	{
-		diffuse = 0.0;
-		specular = 0.0;
-	}
-
-	float fShadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
-
 	uint TexIndex = uPushConstant.TexIndex;
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
 	vec3 TexColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord).xyz;
-    //if (uPushConstant.LightmapIndex < uint(0xffffffff))
-	//	TexColor *= texture(sampler2D(uLightmaps[uPushConstant.LightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
-    
-	if (uPushConstant.LightmapIndex < uint(0xffffffff))
-		TexColor = texture(sampler2D(uLightmaps[uPushConstant.LightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
-	outColor = vec4(TexColor, 1.0);
+    if (uPushConstant.LightmapIndex < uint(0xffffffff))
+	{
+		vec3 LightmapColor = texture(sampler2D(uLightmaps[uPushConstant.LightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
+		outColor = vec4(TexColor * LightmapColor, 1.0);
+	}
+	else
+	{
+		vec3 Light = vec3(1.0, 1.0, 1.0);
+
+		//vec3 L = normalize(Light - inFragPosition); // point light
+		vec3 L = normalize(Light); // parallel light
+		vec3 N = normalize(inFragNormal);
+		vec3 V = normalize(ubo.uEye - inFragPosition);
+		vec3 H = normalize(L + V);
+
+		float ambient = 1.0;
+		float diffuse = dot(L, N);
+		float specular = pow(dot(N, H), 40.0);
+		if (diffuse <= 0.0)
+		{
+			diffuse = 0.0;
+			specular = 0.0;
+		}
+
+		float shadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
+		outColor = vec4(TexColor * shadow, 1.0);
+	}
 }

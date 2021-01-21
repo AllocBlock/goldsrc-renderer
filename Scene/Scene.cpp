@@ -9,16 +9,16 @@
 
 std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
 {
-    unsigned char BaseColor1[3] = { 0, 0, 0 };
-    unsigned char BaseColor2[3] = { 255, 0, 255 };
+    uint8_t BaseColor1[3] = { 0, 0, 0 };
+    uint8_t BaseColor2[3] = { 255, 0, 255 };
     size_t DataSize = vNumRow * vNumCol * vCellSize * vCellSize * 4;
-    unsigned char* pData = new unsigned char[DataSize];
+    uint8_t* pData = new uint8_t[DataSize];
     for (size_t i = 0; i < DataSize / 4; i++)
     {
         size_t GridRowIndex = (i / (vNumCol * vCellSize)) / vCellSize;
         size_t GridColIndex = (i % (vNumCol * vCellSize)) / vCellSize;
 
-        unsigned char* pColor;
+        uint8_t* pColor;
         if ((GridRowIndex + GridColIndex) % 2 == 0)
             pColor = BaseColor1;
         else
@@ -26,7 +26,7 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
         pData[i * 4] = pColor[0];
         pData[i * 4 + 1] = pColor[1];
         pData[i * 4 + 2] = pColor[2];
-        pData[i * 4 + 3] = static_cast<unsigned char>(255);
+        pData[i * 4 + 3] = static_cast<uint8_t>(255);
     }
 
     // cout 
@@ -45,16 +45,16 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
     return pGrid;
 }
 
-std::shared_ptr<CIOImage> generatePureColorTexture(unsigned char vBaseColor[3], size_t vSize)
+std::shared_ptr<CIOImage> generatePureColorTexture(uint8_t vBaseColor[3], size_t vSize)
 {
     size_t DataSize = vSize * vSize * 4;
-    unsigned char* pData = new unsigned char[DataSize];
+    uint8_t* pData = new uint8_t[DataSize];
     for (size_t i = 0; i < DataSize / 4; i++)
     {
         pData[i * 4] = vBaseColor[0];
         pData[i * 4 + 1] = vBaseColor[1];
         pData[i * 4 + 2] = vBaseColor[2];
-        pData[i * 4 + 3] = static_cast<unsigned char>(255);
+        pData[i * 4 + 3] = static_cast<uint8_t>(255);
     }
 
     std::shared_ptr<CIOImage> pGrid = std::make_shared<CIOImage>();
@@ -129,7 +129,7 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         if (BspTexture.IsDataInBsp)
         {
             std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
-            void* pData = new unsigned char[static_cast<size_t>(4) * BspTexture.Width * BspTexture.Height];
+            uint8_t* pData = new uint8_t[static_cast<size_t>(4) * BspTexture.Width * BspTexture.Height];
             BspTexture.getRawRGBAPixels(pData);
             pTexImage->setData(pData);
             delete[] pData;
@@ -148,7 +148,7 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
 
                     std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
                     pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
-                    void* pData = new unsigned char[static_cast<size_t>(4) * Width * Height];
+                    void* pData = new uint8_t[static_cast<size_t>(4) * Width * Height];
                     Wad.getRawRGBAPixels(Index.value(), pData);
                     pTexImage->setData(pData);
                     delete[] pData;
@@ -167,7 +167,10 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     size_t NumFace = Lumps.m_LumpFace.Faces.size();
     Scene.Objects.resize(NumFace);
     for (size_t i = 0; i < NumFace; ++i)
+    {
         Scene.Objects[i] = std::make_shared<S3DObject>();
+        Scene.Objects[i]->UseShadow = false;
+    }
     
     for (size_t i = 0; i < NumFace; ++i)
     {
@@ -236,45 +239,73 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         pCurObject->TexIndex = TexNameToIndex[BspTexture.Name];
 
         // read lightmap
-        const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems be able to change this.
-
-        glm::vec2 LightmapBoundMin = { INFINITY, INFINITY };
-        glm::vec2 LightmapBoundMax = { -INFINITY, -INFINITY };
-        for (const glm::vec2& TexCoord : TexCoords)
-        {
-            LightmapBoundMin.x = std::min<float>(LightmapBoundMin.x, TexCoord.x * TexWidth);
-            LightmapBoundMin.y = std::min<float>(LightmapBoundMin.y, TexCoord.y * TexHeight);
-            LightmapBoundMax.x = std::max<float>(LightmapBoundMax.x, TexCoord.x * TexWidth);
-            LightmapBoundMax.y = std::max<float>(LightmapBoundMax.y, TexCoord.y * TexHeight);
-        }
-
-        size_t LightmapWidth = (static_cast<size_t>(std::floor(LightmapBoundMax.x) - std::ceil(LightmapBoundMin.x)) - 1) / LightmapScale + 1;
-        size_t LightmapHeight = (static_cast<size_t>(std::floor(LightmapBoundMax.y) - std::ceil(LightmapBoundMin.y)) - 1) / LightmapScale + 1;
-         
-        size_t LightmapStructOffset = Face.LightmapOffset / 3;
-        _ASSERTE(LightmapStructOffset + (LightmapWidth) * (LightmapHeight) <= Lumps.m_LumpLighting.Lightmaps.size());
-        const SLightmap* pDataStart = Lumps.m_LumpLighting.Lightmaps.data() + static_cast<size_t>(LightmapStructOffset);
-        std::shared_ptr<CIOImage> pLightmapImage = std::make_shared<CIOImage>();
-        pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
-        pLightmapImage->setData(pDataStart);
-        pCurObject->LightmapIndex = Scene.LightmapImages.size();
-        Scene.LightmapImages.emplace_back(pLightmapImage);
-
         std::vector<glm::vec2> LightmapCoords;
-        for (const glm::vec2& TexCoord : TexCoords)
+        const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems be able to change this.
+        // TODO: handle lighting style like sky, no-draw, etc.
+        if (Lumps.m_LumpLighting.Lightmaps.size() > 0 && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
         {
-            glm::vec2 LightmapCoord = TexCoord;
-            LightmapCoord.x *= TexWidth;
-            LightmapCoord.x -= std::floor(LightmapBoundMin.x / 16.0f) * 16.0f;
-            LightmapCoord.x += 8.0f;
-            LightmapCoord.x /= LightmapWidth * 16.0f;
+            pCurObject->LightmapIndex = Scene.LightmapImages.size();
 
-            LightmapCoord.y *= TexHeight;
-            LightmapCoord.y -= std::floor(LightmapBoundMin.y / 16.0f) * 16.0f;
-            LightmapCoord.y += 8.0f;
-            LightmapCoord.y /= LightmapHeight * 16.0f;
+            glm::vec2 LightmapBoundMin = { INFINITY, INFINITY };
+            glm::vec2 LightmapBoundMax = { -INFINITY, -INFINITY };
+            for (const glm::vec2& TexCoord : TexCoords)
+            {
+                LightmapBoundMin.x = std::min<float>(LightmapBoundMin.x, TexCoord.x * TexWidth);
+                LightmapBoundMin.y = std::min<float>(LightmapBoundMin.y, TexCoord.y * TexHeight);
+                LightmapBoundMax.x = std::max<float>(LightmapBoundMax.x, TexCoord.x * TexWidth);
+                LightmapBoundMax.y = std::max<float>(LightmapBoundMax.y, TexCoord.y * TexHeight);
+            }
 
-            LightmapCoords.emplace_back(LightmapCoord);
+            glm::vec2 ScaledLightmapBoundMin = LightmapBoundMin / LightmapScale;
+            glm::vec2 ScaledLightmapBoundMax = LightmapBoundMax / LightmapScale;
+            // TODO: how to handle tiny object that width is smaller than 1?
+            // (0.3-0.5) -> (1-0), min > max
+            // Here I simply make max at least 1 greater than min
+            int MinX = static_cast<int>(std::ceil(ScaledLightmapBoundMin.x));
+            int MinY = static_cast<int>(std::ceil(ScaledLightmapBoundMin.y));
+            int MaxX = std::max<int>(static_cast<int>(std::floor(ScaledLightmapBoundMax.x)), MinX) + 1;
+            int MaxY = std::max<int>(static_cast<int>(std::floor(ScaledLightmapBoundMax.y)), MinY) + 1;
+
+            // TODO: there is no official method about how to do floor and ceiling.
+            // I use the modified method from compiler (zhlt/hlrad/lightmap.cpp/CalcFaceExtents)
+            size_t LightmapWidth = static_cast<size_t>(MaxX - MinX);
+            size_t LightmapHeight = static_cast<size_t>(MaxY - MinY);
+
+            size_t LightmapImageSize = static_cast<size_t>(4) * LightmapWidth * LightmapHeight;
+            if (LightmapImageSize > 5000000)
+            {
+                auto x = 1123123123;
+            }
+            uint8_t* pData = new uint8_t[LightmapImageSize];
+            Lumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3, LightmapImageSize / 4, pData);
+            std::shared_ptr<CIOImage> pLightmapImage = std::make_shared<CIOImage>();
+            pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
+            pLightmapImage->setData(pData);
+            delete[] pData;
+            Scene.LightmapImages.emplace_back(pLightmapImage);
+
+            for (const glm::vec2& TexCoord : TexCoords)
+            {
+                glm::vec2 LightmapCoord = TexCoord;
+                LightmapCoord.x *= TexWidth;
+                LightmapCoord.x -= std::floor(LightmapBoundMin.x / 16.0f) * 16.0f;
+                LightmapCoord.x += 8.0f;
+                LightmapCoord.x /= LightmapWidth * 16.0f;
+
+                LightmapCoord.y *= TexHeight;
+                LightmapCoord.y -= std::floor(LightmapBoundMin.y / 16.0f) * 16.0f;
+                LightmapCoord.y += 8.0f;
+                LightmapCoord.y /= LightmapHeight * 16.0f;
+
+                LightmapCoords.emplace_back(LightmapCoord);
+            }
+        }
+        else
+        {
+            pCurObject->LightmapIndex = std::numeric_limits<uint32_t>::max();
+
+            for (const glm::vec2& TexCoord : TexCoords)
+                LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
         }
         
         // save scaled data
@@ -341,7 +372,7 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
 
                 std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
                 pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
-                void* pData = new unsigned char[static_cast<size_t>(4) * Width * Height];
+                uint8_t* pData = new uint8_t[static_cast<size_t>(4) * Width * Height];
                 Wad.getRawRGBAPixels(Index.value(), pData);
                 pTexImage->setData(pData);
                 delete[] pData;

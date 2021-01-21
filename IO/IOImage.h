@@ -23,6 +23,8 @@ public:
     void setImageSize(int vWidth, int vHeight) { m_Width = vWidth; m_Height = vHeight; }
     void setData(const void* vpData);
 
+    void writePPM(std::filesystem::path vFilePath);
+
 protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
 private:

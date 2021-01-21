@@ -88,9 +88,9 @@ void SBspTexture::read(std::ifstream& vFile, uint64_t vOffset)
     IsDataInBsp = (Offsets[0] > 0);
     if (IsDataInBsp)
     {
-        size_t DataSize = static_cast<size_t>(Width) * Height * 4;
-        pData = new char[DataSize];
-        vFile.read(static_cast<char*>(pData), vOffset + Offsets[0]);
+        size_t DataSize = static_cast<size_t>(3) * Width * Height ;
+        pData = new uint8_t[DataSize];
+        vFile.read(reinterpret_cast<char*>(pData), Offsets[0]); // ignore high level mipmap
     }
 }
 
@@ -137,7 +137,7 @@ void SLumpFace::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 
 void SLumpLighting::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Lightmaps = readArray<SLightmap>(vFile, vOffset, vSize);
+    Lightmaps = readArray<SBspLightmap>(vFile, vOffset, vSize);
 }
 
 void SLumpClipNode::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
@@ -178,9 +178,15 @@ glm::vec3 SVec3::glmVec3() const
 bool SBspTexture::getRawRGBAPixels(void* vopData) const
 {
     if (!IsDataInBsp) return false;
-    size_t DataSize = static_cast<size_t>(Width) * Height * 4;
-    char* pIter = static_cast<char*>(pData);
-    std::copy(pIter, pIter + DataSize, static_cast<char*>(vopData));
+    size_t Resolution = Width * Height;
+    char* pIter = reinterpret_cast<char*>(vopData);
+    for (size_t i = 0; i < Resolution; ++i)
+    {
+        pIter[i * 4] = pData[i * 3];
+        pIter[i * 4 + 1] = pData[i * 3 + 1];
+        pIter[i * 4 + 2] = pData[i * 3 + 2];
+        pIter[i * 4 + 3] = static_cast<uint8_t>(255);
+    }
     return true;
 }
 
@@ -190,4 +196,17 @@ glm::vec2 SBspTexInfo::getTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t v
     TexCoord.x = (glm::dot(vVertex, TextureDirectionU.glmVec3()) + TextureOffsetU) / vTexWidth;
     TexCoord.y = (glm::dot(vVertex, TextureDirectionV.glmVec3()) + TextureOffsetV) / vTexHeight;
     return TexCoord;
+}
+
+void SLumpLighting::getRawRGBAPixels(size_t vLightmapOffset, size_t vLightmapLength, void* vopData) const
+{
+    _ASSERTE(vLightmapOffset + vLightmapLength <= Lightmaps.size());
+    uint8_t* pIter = reinterpret_cast<uint8_t*>(vopData);
+    for (size_t i = 0; i < vLightmapLength; ++i)
+    {
+        pIter[i * 4] = Lightmaps[vLightmapOffset + i].R;
+        pIter[i * 4 + 1] = Lightmaps[vLightmapOffset + i].G;
+        pIter[i * 4 + 2] = Lightmaps[vLightmapOffset + i].B;
+        pIter[i * 4 + 3] = static_cast<uint8_t>(255);
+    }
 }

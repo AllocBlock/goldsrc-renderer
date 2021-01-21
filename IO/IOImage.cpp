@@ -10,6 +10,27 @@ void CIOImage::setData(const void* vpData)
     memcpy_s(m_pData, DataSize, vpData, DataSize);
 }
 
+void CIOImage::writePPM(std::filesystem::path vFilePath)
+{
+    uint8_t* pIter = reinterpret_cast<uint8_t*>(m_pData);
+
+    std::ofstream File(vFilePath, std::ios::out);
+    File << "P3" << std::endl;
+    File << m_Width << " " << m_Height << std::endl;
+    File << 255 << std::endl;
+    for (int i = 0; i < m_Height; ++i)
+    {
+        for (int k = 0; k < m_Width; ++k)
+        {
+            File << std::to_string(pIter[(i * m_Width + k) * 4]) << ' ';
+            File << std::to_string(pIter[(i * m_Width + k) * 4 + 1]) << ' ';
+            File << std::to_string(pIter[(i * m_Width + k) * 4 + 2]) << ' ';
+        }
+        File << std::endl;
+    }
+    File.close();
+}
+
 bool CIOImage::_readV(std::filesystem::path vFilePath)
 {
     __cleanup();

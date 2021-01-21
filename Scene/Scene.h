@@ -14,6 +14,9 @@ enum class E3DObjectType
 
 struct S3DObject
 {
+    bool UseShadow = true;
+    bool UseLightmap = false;
+
     E3DObjectType Type = E3DObjectType::TRIAGNLE_LIST;
     std::vector<glm::vec3> Vertices;
     std::vector<glm::vec3> Colors;

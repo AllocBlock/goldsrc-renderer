@@ -8,10 +8,10 @@ int main()
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	GLFWwindow* pWindow = glfwCreateWindow(800, 600, "Vulkan Simple Render", nullptr, nullptr);
+	GLFWwindow* pWindow = glfwCreateWindow(1280, 800, "Vulkan Simple Render", nullptr, nullptr);
 	std::shared_ptr<CImguiVullkan> pImgui = std::make_shared<CImguiVullkan>(pWindow);
 	pImgui->init();
-
+	
 	while (!glfwWindowShouldClose(pWindow))
 	{
 		glfwPollEvents();

@@ -72,8 +72,8 @@ struct SUniformBufferObjectFrag
 
 struct SPushConstant
 {
-    alignas(16) unsigned int TexIndex;
-    alignas(16) unsigned int LightmapIndex;
+    unsigned int TexIndex;
+    unsigned int LightmapIndex;
 };
 
 class CVulkanRenderer
