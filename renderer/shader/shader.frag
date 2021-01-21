@@ -5,19 +5,23 @@ layout(location = 0) in vec3 inFragColor;
 layout(location = 1) in vec3 inFragPosition;
 layout(location = 2) in vec3 inFragNormal;
 layout(location = 3) in vec2 inFragTexCoord;
+layout(location = 4) in vec2 inFragLightmapCoord;
 
 layout(location = 0) out vec4 outColor;
 
 #define MAX_TEXTURE_NUM 2048 // if need change, you should change this in renderer config as well
+#define MAX_LIGHTMAP_NUM 0x20000 // if need change, you should change this in renderer config as well
 layout(binding = 1) uniform SUniformBufferObject
 {
     vec3 uEye;
 } ubo;
 layout(binding = 2) uniform sampler uTexSampler;
 layout(binding = 3) uniform texture2D uTextures[MAX_TEXTURE_NUM];
+layout(binding = 4) uniform texture2D uLightmaps[MAX_LIGHTMAP_NUM];
 layout(push_constant) uniform SPushConstant 
 {
 	uint TexIndex;
+	uint LightmapIndex;
 } uPushConstant;
 
 void main()
@@ -44,6 +48,10 @@ void main()
 	uint TexIndex = uPushConstant.TexIndex;
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
 	vec3 TexColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord).xyz;
+    //if (uPushConstant.LightmapIndex < uint(0xffffffff))
+	//	TexColor *= texture(sampler2D(uLightmaps[uPushConstant.LightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
     
-    outColor = vec4(TexColor * fShadow, 1.0);
+	if (uPushConstant.LightmapIndex < uint(0xffffffff))
+		TexColor = texture(sampler2D(uLightmaps[uPushConstant.LightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
+	outColor = vec4(TexColor, 1.0);
 }

@@ -98,6 +98,7 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     if (!Bsp.read())
         throw std::runtime_error(u8"文件解析失败");
     SScene Scene;
+    Scene.UseLightmap = true;
 
     const SBspLumps& Lumps = Bsp.getLumps();
 
@@ -162,17 +163,16 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         }
     }
 
-    // load faces
-    size_t NumTexture = Scene.TexImages.size();
-    Scene.Objects.resize(NumTexture);
-    for (size_t i = 0; i < NumTexture; i++)
-    {
+    // load faces, one face one object as each face have diffrent lightmap
+    size_t NumFace = Lumps.m_LumpFace.Faces.size();
+    Scene.Objects.resize(NumFace);
+    for (size_t i = 0; i < NumFace; ++i)
         Scene.Objects[i] = std::make_shared<S3DObject>();
-        Scene.Objects[i]->TexIndex = i;
-    }
     
-    for (const SBspFace& Face : Lumps.m_LumpFace.Faces)
+    for (size_t i = 0; i < NumFace; ++i)
     {
+        const SBspFace& Face = Lumps.m_LumpFace.Faces[i];
+        std::shared_ptr<S3DObject>& pCurObject = Scene.Objects[i];
         // get vertices
         _ASSERTE(Face.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
         const SBspPlane& Plane = Lumps.m_LumpPlane.Planes[Face.PlaneIndex];
@@ -217,7 +217,7 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         {
             _ASSERTE(FaceVertexIndex < Lumps.m_LumpVertex.Vertices.size());
             SVec3 Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
-            FaceVertices.emplace_back(Vertex.glmVec3() * SceneScale);
+            FaceVertices.emplace_back(Vertex.glmVec3());
         }
 
         // find texcoords
@@ -229,23 +229,72 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         // original texture size
         size_t TexWidth = BspTexture.Width; 
         size_t TexHeight = BspTexture.Height;
+        std::vector<glm::vec2> TexCoords;
+        for(const glm::vec3& Vertex : FaceVertices)
+            TexCoords.emplace_back(TexInfo.getTexCoord(Vertex, TexWidth, TexHeight));
 
-        size_t TexIndex = TexNameToIndex[BspTexture.Name];
-        // save data
+        pCurObject->TexIndex = TexNameToIndex[BspTexture.Name];
+
+        // read lightmap
+        const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems be able to change this.
+
+        glm::vec2 LightmapBoundMin = { INFINITY, INFINITY };
+        glm::vec2 LightmapBoundMax = { -INFINITY, -INFINITY };
+        for (const glm::vec2& TexCoord : TexCoords)
+        {
+            LightmapBoundMin.x = std::min<float>(LightmapBoundMin.x, TexCoord.x * TexWidth);
+            LightmapBoundMin.y = std::min<float>(LightmapBoundMin.y, TexCoord.y * TexHeight);
+            LightmapBoundMax.x = std::max<float>(LightmapBoundMax.x, TexCoord.x * TexWidth);
+            LightmapBoundMax.y = std::max<float>(LightmapBoundMax.y, TexCoord.y * TexHeight);
+        }
+
+        size_t LightmapWidth = (static_cast<size_t>(std::floor(LightmapBoundMax.x) - std::ceil(LightmapBoundMin.x)) - 1) / LightmapScale + 1;
+        size_t LightmapHeight = (static_cast<size_t>(std::floor(LightmapBoundMax.y) - std::ceil(LightmapBoundMin.y)) - 1) / LightmapScale + 1;
+         
+        size_t LightmapStructOffset = Face.LightmapOffset / 3;
+        _ASSERTE(LightmapStructOffset + (LightmapWidth) * (LightmapHeight) <= Lumps.m_LumpLighting.Lightmaps.size());
+        const SLightmap* pDataStart = Lumps.m_LumpLighting.Lightmaps.data() + static_cast<size_t>(LightmapStructOffset);
+        std::shared_ptr<CIOImage> pLightmapImage = std::make_shared<CIOImage>();
+        pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
+        pLightmapImage->setData(pDataStart);
+        pCurObject->LightmapIndex = Scene.LightmapImages.size();
+        Scene.LightmapImages.emplace_back(pLightmapImage);
+
+        std::vector<glm::vec2> LightmapCoords;
+        for (const glm::vec2& TexCoord : TexCoords)
+        {
+            glm::vec2 LightmapCoord = TexCoord;
+            LightmapCoord.x *= TexWidth;
+            LightmapCoord.x -= std::floor(LightmapBoundMin.x / 16.0f) * 16.0f;
+            LightmapCoord.x += 8.0f;
+            LightmapCoord.x /= LightmapWidth * 16.0f;
+
+            LightmapCoord.y *= TexHeight;
+            LightmapCoord.y -= std::floor(LightmapBoundMin.y / 16.0f) * 16.0f;
+            LightmapCoord.y += 8.0f;
+            LightmapCoord.y /= LightmapHeight * 16.0f;
+
+            LightmapCoords.emplace_back(LightmapCoord);
+        }
+        
+        // save scaled data
         for (size_t i = 2; i < FaceVertices.size(); ++i)
         {
-            Scene.Objects[TexIndex]->Vertices.emplace_back(FaceVertices[0]);
-            Scene.Objects[TexIndex]->Vertices.emplace_back(FaceVertices[i-1]);
-            Scene.Objects[TexIndex]->Vertices.emplace_back(FaceVertices[i]);
-            Scene.Objects[TexIndex]->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            Scene.Objects[TexIndex]->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            Scene.Objects[TexIndex]->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            Scene.Objects[TexIndex]->Normals.emplace_back(Normal);
-            Scene.Objects[TexIndex]->Normals.emplace_back(Normal);
-            Scene.Objects[TexIndex]->Normals.emplace_back(Normal);
-            Scene.Objects[TexIndex]->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[0] / SceneScale, TexWidth, TexHeight));
-            Scene.Objects[TexIndex]->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i-1] / SceneScale, TexWidth, TexHeight));
-            Scene.Objects[TexIndex]->TexCoords.emplace_back(TexInfo.getTexCoord(FaceVertices[i] / SceneScale, TexWidth, TexHeight));
+            pCurObject->Vertices.emplace_back(FaceVertices[0] * SceneScale);
+            pCurObject->Vertices.emplace_back(FaceVertices[i-1] * SceneScale);
+            pCurObject->Vertices.emplace_back(FaceVertices[i] * SceneScale);
+            pCurObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pCurObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pCurObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pCurObject->Normals.emplace_back(Normal);
+            pCurObject->Normals.emplace_back(Normal);
+            pCurObject->Normals.emplace_back(Normal);
+            pCurObject->TexCoords.emplace_back(TexCoords[0]);
+            pCurObject->TexCoords.emplace_back(TexCoords[i-1]);
+            pCurObject->TexCoords.emplace_back(TexCoords[i]);
+            pCurObject->LightmapCoords.emplace_back(LightmapCoords[0]);
+            pCurObject->LightmapCoords.emplace_back(LightmapCoords[i-1]);
+            pCurObject->LightmapCoords.emplace_back(LightmapCoords[i]);
         }
     }
 
@@ -360,6 +409,9 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
             pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
             pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
             pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+            pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+            pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
         }
     }
     if (vProgressReportFunc) vProgressReportFunc(u8"完成");
@@ -385,17 +437,19 @@ SScene SceneReader::readObjFile(std::filesystem::path vFilePath, std::function<v
             pObjObject->Vertices.emplace_back(Obj.getVertex(i, 0));
             pObjObject->Vertices.emplace_back(Obj.getVertex(i, k - 1));
             pObjObject->Vertices.emplace_back(Obj.getVertex(i, k));
+            pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+            pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
             pObjObject->Normals.emplace_back(Obj.getNormal(i, 0));
             pObjObject->Normals.emplace_back(Obj.getNormal(i, k - 1));
             pObjObject->Normals.emplace_back(Obj.getNormal(i, k));
             pObjObject->TexCoords.emplace_back(Obj.getTexCoord(i, 0));
             pObjObject->TexCoords.emplace_back(Obj.getTexCoord(i, k - 1));
             pObjObject->TexCoords.emplace_back(Obj.getTexCoord(i, k));
+            pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+            pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+            pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
         }
-    }
-    for (size_t i = 0; i < pObjObject->Vertices.size(); ++i)
-    {
-        pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
     }
 
     SScene Scene;

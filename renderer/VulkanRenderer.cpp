@@ -67,6 +67,8 @@ void CVulkanRenderer::__createSceneResources()
 {
     __createTextureImages(); // scene
     __createTextureImageViews(); // scene
+    __createLightmapImages(); // scene
+    __createLightmapImageViews(); // scene
     __updateDescriptorSets();
     __createVertexBuffer(); // scene
     __createIndexBuffer(); // scene
@@ -80,6 +82,13 @@ void CVulkanRenderer::__destroySceneResources()
         vkDestroyImageView(m_Device, m_TextureImageViews[i], nullptr);
         vkDestroyImage(m_Device, m_TextureImages[i], nullptr);
         vkFreeMemory(m_Device, m_TextureImageMemories[i], nullptr);
+    }
+
+    for (size_t i = 0; i < m_LightmapImages.size(); ++i)
+    {
+        vkDestroyImageView(m_Device, m_LightmapImageViews[i], nullptr);
+        vkDestroyImage(m_Device, m_LightmapImages[i], nullptr);
+        vkFreeMemory(m_Device, m_LightmapImageMemories[i], nullptr);
     }
 
     vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
@@ -205,12 +214,20 @@ void CVulkanRenderer::__createDescriptorSetLayout()
     TextureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     TextureBinding.pImmutableSamplers = nullptr;
 
+    VkDescriptorSetLayoutBinding LightmapBinding = {};
+    LightmapBinding.binding = 4;
+    LightmapBinding.descriptorCount = m_MaxLightmapNum;
+    LightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    LightmapBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    LightmapBinding.pImmutableSamplers = nullptr;
+
     std::vector<VkDescriptorSetLayoutBinding> Bindings = 
     {
         UboVertBinding,
         UboFragBinding,
         SamplerBinding,
-        TextureBinding
+        TextureBinding,
+        LightmapBinding
     };
     VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
     LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -416,42 +433,54 @@ void CVulkanRenderer::__createFramebuffers()
 
 void CVulkanRenderer::__createTextureImages()
 {
-    size_t NumTextures = __getActualTextureNum();
-    m_TextureImages.resize(NumTextures);
-    m_TextureImageMemories.resize(NumTextures);
-    for (size_t i = 0; i < NumTextures; ++i)
+    size_t NumTexture = __getActualTextureNum();
+    if (NumTexture > 0)
     {
-        std::shared_ptr<CIOImage> pImage = m_Scene.TexImages[i];
-        int TexWidth = pImage->getImageWidth();
-        int TexHeight = pImage->getImageHeight();
-        const void* pPixelData = pImage->getData();
-
-        VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
-        VkBuffer StagingBuffer;
-        VkDeviceMemory StagingBufferMemory;
-        __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-        void* pDevData;
-        ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pDevData));
-        memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
-        vkUnmapMemory(m_Device, StagingBufferMemory);
-
-        __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImages[i], m_TextureImageMemories[i]);
-        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        __copyBufferToImage(StagingBuffer, m_TextureImages[i], TexWidth, TexHeight);
-        __transitionImageLayout(m_TextureImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-        vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-        vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+        m_TextureImages.resize(NumTexture);
+        m_TextureImageMemories.resize(NumTexture);
+        for (size_t i = 0; i < NumTexture; ++i)
+        {
+            std::shared_ptr<CIOImage> pImage = m_Scene.TexImages[i];
+            __createImageFromIOImage(pImage, m_TextureImages[i], m_TextureImageMemories[i]);
+        }
     }
 }
 
 void CVulkanRenderer::__createTextureImageViews()
 {
-    size_t NumTextures = __getActualTextureNum();
-    m_TextureImageViews.resize(NumTextures);
-    for (size_t i = 0; i < NumTextures; ++i)
-        m_TextureImageViews[i] = Common::createImageView(m_Device, m_TextureImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    size_t NumTexture = __getActualTextureNum();
+    if (NumTexture > 0)
+    {
+        m_TextureImageViews.resize(NumTexture);
+        for (size_t i = 0; i < NumTexture; ++i)
+            m_TextureImageViews[i] = Common::createImageView(m_Device, m_TextureImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
+}
+
+void CVulkanRenderer::__createLightmapImages()
+{
+    size_t NumLightmap = __getActualLightmapNum();
+    if (NumLightmap > 0)
+    {
+        m_LightmapImages.resize(NumLightmap);
+        m_LightmapImageMemories.resize(NumLightmap);
+        for (size_t i = 0; i < NumLightmap; ++i)
+        {
+            std::shared_ptr<CIOImage> pImage = m_Scene.LightmapImages[i];
+            __createImageFromIOImage(pImage, m_LightmapImages[i], m_LightmapImageMemories[i]);
+        }
+    }
+}
+
+void CVulkanRenderer::__createLightmapImageViews()
+{
+    size_t NumLightmap = __getActualLightmapNum();
+    if (NumLightmap > 0)
+    {
+        m_LightmapImageViews.resize(NumLightmap);
+        for (size_t i = 0; i < NumLightmap; ++i)
+            m_LightmapImageViews[i] = Common::createImageView(m_Device, m_LightmapImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    }
 }
 
 void CVulkanRenderer::__createTextureSampler()
@@ -581,7 +610,8 @@ void CVulkanRenderer::__createDescriptorPool()
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) },
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) },
         { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_ImageViews.size()) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size() * m_MaxTextureNum) }
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size() * m_MaxTextureNum) },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size() * m_MaxLightmapNum) }
     };
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -626,27 +656,6 @@ void CVulkanRenderer::__updateDescriptorSets()
         SamplerInfo.imageView = VK_NULL_HANDLE;
         SamplerInfo.sampler = m_TextureSampler;
 
-        const size_t NumTexture = __getActualTextureNum();
-        std::vector<VkDescriptorImageInfo> ImageInfos;
-        if (NumTexture > 0)
-        {
-            ImageInfos.resize(m_MaxTextureNum);
-            for (size_t i = 0; i < m_MaxTextureNum; ++i)
-            {
-                // for unused element, fill like the first one (weird method but avoid validation warning)
-                if (i >= NumTexture)
-                {
-                    ImageInfos[i] = ImageInfos[0];
-                }
-                else
-                {
-                    ImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    ImageInfos[i].imageView = m_TextureImageViews[i];
-                    ImageInfos[i].sampler = VK_NULL_HANDLE;
-                }
-            }
-        }
-        
         std::vector<VkWriteDescriptorSet> DescriptorWrites;
 
         VkWriteDescriptorSet VertBufferDescriptorWrite = {};
@@ -679,17 +688,66 @@ void CVulkanRenderer::__updateDescriptorSets()
         SamplerDescriptorWrite.pImageInfo = &SamplerInfo;
         DescriptorWrites.emplace_back(SamplerDescriptorWrite);
 
-        if (NumTexture)
+        const size_t NumTexture = __getActualTextureNum();
+        std::vector<VkDescriptorImageInfo> TexImageInfos;
+        if (NumTexture > 0)
         {
+            TexImageInfos.resize(m_MaxTextureNum);
+            for (size_t i = 0; i < m_MaxTextureNum; ++i)
+            {
+                // for unused element, fill like the first one (weird method but avoid validationwarning)
+                if (i >= NumTexture)
+                {
+                    TexImageInfos[i] = TexImageInfos[0];
+                }
+                else
+                {
+                    TexImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    TexImageInfos[i].imageView = m_TextureImageViews[i];
+                    TexImageInfos[i].sampler = VK_NULL_HANDLE;
+                }
+            }
+
             VkWriteDescriptorSet TexturesDescriptorWrite = {};
             TexturesDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             TexturesDescriptorWrite.dstSet = m_DescriptorSets[i];
             TexturesDescriptorWrite.dstBinding = 3;
             TexturesDescriptorWrite.dstArrayElement = 0;
             TexturesDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            TexturesDescriptorWrite.descriptorCount = static_cast<uint32_t>(ImageInfos.size());
-            TexturesDescriptorWrite.pImageInfo = ImageInfos.data();
+            TexturesDescriptorWrite.descriptorCount = static_cast<uint32_t>(TexImageInfos.size());
+            TexturesDescriptorWrite.pImageInfo = TexImageInfos.data();
             DescriptorWrites.emplace_back(TexturesDescriptorWrite);
+        }
+        
+        const size_t NumLightmap = __getActualLightmapNum();
+        std::vector<VkDescriptorImageInfo> LightmapImageInfos;
+        if (NumLightmap > 0)
+        {
+            LightmapImageInfos.resize(m_MaxLightmapNum);
+            for (size_t i = 0; i < m_MaxLightmapNum; ++i)
+            {
+                // for unused element, fill like the first one (weird method but avoid validationwarning)
+                if (i >= NumLightmap)
+                {
+                    LightmapImageInfos[i] = LightmapImageInfos[0];
+                }
+                else
+                {
+                    LightmapImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    LightmapImageInfos[i].imageView = m_LightmapImageViews[i];
+                    LightmapImageInfos[i].sampler = VK_NULL_HANDLE;
+                }
+            }
+
+            VkWriteDescriptorSet LightmapsDescriptorWrite = {};
+            LightmapsDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            LightmapsDescriptorWrite.dstSet = m_DescriptorSets[i];
+            LightmapsDescriptorWrite.dstBinding = 4;
+            LightmapsDescriptorWrite.dstArrayElement = 0;
+            LightmapsDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            LightmapsDescriptorWrite.descriptorCount = static_cast<uint32_t>(LightmapImageInfos.size());
+            LightmapsDescriptorWrite.pImageInfo = LightmapImageInfos.data();
+            DescriptorWrites.emplace_back(LightmapsDescriptorWrite);
         }
 
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
@@ -752,11 +810,20 @@ void CVulkanRenderer::__createCommandBuffers()
                 if (NumVertex == 0) continue;
                 SPushConstant PushConstant = {};
                 PushConstant.TexIndex = pObject->TexIndex;
+                if (m_Scene.UseLightmap)
+                {
+                    PushConstant.LightmapIndex = pObject->LightmapIndex;
+                }
+                else
+                {
+                    PushConstant.LightmapIndex = std::numeric_limits<uint32_t>::max();
+                }
+                
                 vkCmdSetDepthBias(m_CommandBuffers[i], k, 0, 0);
                 vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
-                if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLES_LIST)
+                if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
                     vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);
-                else if (pObject->Type == E3DObjectType::TRIAGNLES_LIST)
+                else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
                     vkCmdDraw(m_CommandBuffers[i], NumVertex, 1, VertexOffset, 0);
                 else
                     throw std::runtime_error(u8"物体类型错误");
@@ -792,6 +859,7 @@ std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObje
     _ASSERTE(NumPoint == vpObject->Colors.size());
     _ASSERTE(NumPoint == vpObject->Normals.size());
     _ASSERTE(NumPoint == vpObject->TexCoords.size());
+    _ASSERTE(NumPoint == vpObject->LightmapCoords.size());
 
     std::vector<SPointData> PointData(NumPoint);
     for (size_t i = 0; i < NumPoint; ++i)
@@ -800,6 +868,7 @@ std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObje
         PointData[i].Color = vpObject->Colors[i];
         PointData[i].Normal = vpObject->Normals[i];
         PointData[i].TexCoord = vpObject->TexCoords[i];
+        PointData[i].LightmapCoord = vpObject->LightmapCoords[i];
     }
     return PointData;
 }
@@ -1041,6 +1110,43 @@ size_t CVulkanRenderer::__getActualTextureNum()
         NumTexture = m_MaxTextureNum;
     }
     return NumTexture;
+}
+
+size_t CVulkanRenderer::__getActualLightmapNum()
+{
+    if (!m_Scene.UseLightmap) return 0;
+    size_t NumLightmap = m_Scene.LightmapImages.size();
+    if (NumLightmap > m_MaxLightmapNum)
+    {
+        GlobalLogger::logStream() << u8"警告: Lightmap数量 = (" << std::to_string(NumLightmap) << u8") 大于限制数量 (" << std::to_string(m_MaxLightmapNum) << u8"), 多出的Lightmap将被忽略";
+        NumLightmap = m_MaxLightmapNum;
+    }
+    return NumLightmap;
+}
+
+void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory)
+{
+    int TexWidth = vpImage->getImageWidth();
+    int TexHeight = vpImage->getImageHeight();
+    const void* pPixelData = vpImage->getData();
+
+    VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
+    VkBuffer StagingBuffer;
+    VkDeviceMemory StagingBufferMemory;
+    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
+
+    void* pDevData;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pDevData));
+    memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
+    vkUnmapMemory(m_Device, StagingBufferMemory);
+
+    __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voImage, voImageMemory);
+    __transitionImageLayout(voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    __copyBufferToImage(StagingBuffer, voImage, TexWidth, TexHeight);
+    __transitionImageLayout(voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
 }
 
 void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
