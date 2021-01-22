@@ -188,19 +188,19 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         uint16_t LastVertexIndex2 = 0;
         for (uint16_t i = 0; i < Face.NumSurfedge; ++i)
         {
-            uint16_t SurfedgeIndex = Face.FirstSurfedgeIndex + i;
-            int16_t RawEdgeIndex = Lumps.m_LumpSurfedge.Surfedges[SurfedgeIndex];
+            size_t SurfedgeIndex = static_cast<size_t>(Face.FirstSurfedgeIndex) + i;
+            int32_t RawEdgeIndex = Lumps.m_LumpSurfedge.Surfedges[SurfedgeIndex];
             uint16_t VertexIndex1 = 0, VertexIndex2 = 0;
             if (RawEdgeIndex > 0)
             {
-                uint16_t EdgeIndex = static_cast<uint16_t>(RawEdgeIndex);
+                uint32_t EdgeIndex = static_cast<uint32_t>(RawEdgeIndex);
                 _ASSERTE(EdgeIndex < Lumps.m_LumpEdge.Edges.size());
                 VertexIndex1 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
                 VertexIndex2 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
             }
             else
             {
-                uint16_t EdgeIndex = static_cast<uint16_t>(-RawEdgeIndex);
+                uint32_t EdgeIndex = static_cast<uint32_t>(-static_cast<int64_t>(RawEdgeIndex));
                 _ASSERTE(EdgeIndex < Lumps.m_LumpEdge.Edges.size());
                 VertexIndex1 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
                 VertexIndex2 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
@@ -272,10 +272,13 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
             size_t LightmapHeight = static_cast<size_t>(MaxY - MinY);
 
             size_t LightmapImageSize = static_cast<size_t>(4) * LightmapWidth * LightmapHeight;
-            if (LightmapImageSize > 5000000)
+            static size_t NextOffset = 0;
+            GlobalLogger::logStream() << "from offset " << Face.LightmapOffset / 3 << ", size = " << LightmapImageSize / 4;
+            if (NextOffset != Face.LightmapOffset / 3)
             {
-                auto x = 1123123123;
+                auto x = 1;
             }
+            NextOffset = Face.LightmapOffset / 3 + LightmapImageSize / 4;
             uint8_t* pData = new uint8_t[LightmapImageSize];
             Lumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3, LightmapImageSize / 4, pData);
             std::shared_ptr<CIOImage> pLightmapImage = std::make_shared<CIOImage>();
