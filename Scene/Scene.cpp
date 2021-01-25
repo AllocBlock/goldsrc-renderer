@@ -273,11 +273,6 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
 
             size_t LightmapImageSize = static_cast<size_t>(4) * LightmapWidth * LightmapHeight;
             static size_t NextOffset = 0;
-            GlobalLogger::logStream() << "from offset " << Face.LightmapOffset / 3 << ", size = " << LightmapImageSize / 4;
-            if (NextOffset != Face.LightmapOffset / 3)
-            {
-                auto x = 1;
-            }
             NextOffset = Face.LightmapOffset / 3 + LightmapImageSize / 4;
             uint8_t* pData = new uint8_t[LightmapImageSize];
             Lumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3, LightmapImageSize / 4, pData);

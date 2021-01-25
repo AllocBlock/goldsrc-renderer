@@ -154,7 +154,7 @@ void CImguiVullkan::destroy()
 
 void CImguiVullkan::showAlert(std::string vText)
 {
-    GUIAlert.appendAlert(vText);
+    m_GUIAlert.appendAlert(vText);
     GlobalLogger::logStream() << u8"警告: " << vText;
 }
 

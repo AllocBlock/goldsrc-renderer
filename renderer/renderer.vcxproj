@@ -154,6 +154,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="GUIAlert.cpp" />
+    <ClCompile Include="GUIFrameRate.cpp" />
     <ClCompile Include="ImguiDraw.cpp" />
     <ClCompile Include="ImguiVullkan.cpp" />
     <ClCompile Include="Interactor.cpp" />
@@ -164,6 +165,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="GUIAlert.h" />
+    <ClInclude Include="GUIFrameRate.h" />
     <ClInclude Include="ImguiVullkan.h" />
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="VulkanRenderer.h" />

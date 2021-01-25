@@ -3,6 +3,7 @@
 #include "Interactor.h"
 #include "VulkanRenderer.h"
 #include "GUIAlert.h"
+#include "GUIFrameRate.h"
 
 #include <vulkan/vulkan.h>
 #define GLM_FORCE_RADIANS
@@ -101,7 +102,9 @@ private:
     std::shared_ptr<CVulkanRenderer> m_pRenderer = nullptr;
     std::shared_ptr<CInteractor> m_pInteractor = nullptr;
 
-    CGUIAlert GUIAlert = CGUIAlert();
+    CGUIAlert m_GUIAlert = CGUIAlert();
+    CGUIFrameRate m_GUIFrameRate = CGUIFrameRate();
+
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";
     std::future<SResultReadScene> m_FileReadingPromise;

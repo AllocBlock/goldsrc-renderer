@@ -44,6 +44,7 @@ void CImguiVullkan::__drawGUI()
 
     ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
 
+    ImGui::ShowDemoWindow();
     // 文件选择框
     static ImGui::FileBrowser FileDialog;
     FileDialog.Display();
@@ -90,7 +91,7 @@ void CImguiVullkan::__drawGUI()
     }
 
     // 警告框
-    GUIAlert.draw();
+    m_GUIAlert.draw();
     
     ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
     // 菜单栏
@@ -144,12 +145,15 @@ void CImguiVullkan::__drawGUI()
 
     if (ImGui::CollapsingHeader(u8"其他", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        bool IgnoreAllAlert = GUIAlert.getIgnoreAll();
+        bool IgnoreAllAlert = m_GUIAlert.getIgnoreAll();
         ImGui::Checkbox(u8"屏蔽所有警告", &IgnoreAllAlert);
-        GUIAlert.setIgnoreAll(IgnoreAllAlert);
+        m_GUIAlert.setIgnoreAll(IgnoreAllAlert);
     }
 
     ImGui::End();
+
+    // 帧率
+    m_GUIFrameRate.draw();
 
     // DEBUG
     if (ImGui::Button("test alert"))
