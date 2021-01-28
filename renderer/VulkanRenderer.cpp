@@ -819,7 +819,7 @@ void CVulkanRenderer::__createCommandBuffers()
                     PushConstant.LightmapIndex = std::numeric_limits<uint32_t>::max();
                 }
                 
-                vkCmdSetDepthBias(m_CommandBuffers[i], k, 0, 0);
+                vkCmdSetDepthBias(m_CommandBuffers[i], static_cast<float>(k) / m_CommandBuffers.size(), 0, 0);
                 vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
                 if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
                     vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);

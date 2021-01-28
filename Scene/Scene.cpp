@@ -240,9 +240,9 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
 
         // read lightmap
         std::vector<glm::vec2> LightmapCoords;
-        const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems be able to change this.
+        const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems to be able to change this.
         // TODO: handle lighting style like sky, no-draw, etc.
-        if (Lumps.m_LumpLighting.Lightmaps.size() > 0 && Face.LightingStyles[0] != 0xff && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
+        if (Lumps.m_LumpLighting.Lightmaps.size() > 0 && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
         {
             pCurObject->LightmapIndex = Scene.LightmapImages.size();
 
@@ -260,7 +260,6 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
             ScaledLightmapBoundMax.x = ScaledLightmapBoundMax.x * TexWidth / LightmapScale;
             ScaledLightmapBoundMax.y = ScaledLightmapBoundMax.y * TexHeight / LightmapScale;
 
-            // TODO: how to handle tiny object that width is smaller than 1?
             // From https://github.com/Sergey-KoRJiK/GldSrcBSPditor says:
             // Lightmap samples stored in corner of samples, instead center of samples
             // so lightmap size need increment by one
@@ -274,10 +273,20 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
 
             size_t LightmapImageSize = static_cast<size_t>(4) * LightmapWidth * LightmapHeight;
             uint8_t* pData = new uint8_t[LightmapImageSize];
-            Lumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3, LightmapImageSize / 4, pData);
+            std::memset(pData, 0, LightmapImageSize);
+            uint8_t* pTempData = new uint8_t[LightmapImageSize];
+            // blend all lightmap, use the brightest value
+            for (int i = 0; i < 4; ++i)
+            {
+                if (Face.LightingStyles[i] == 0xff) continue;
+                Lumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3 + LightmapImageSize / 4 * i, LightmapImageSize / 4, pTempData);
+                for (size_t k = 0; k < LightmapImageSize; ++k)
+                    pData[k] = std::max<uint8_t>(pData[k], pTempData[k]);
+            }
             std::shared_ptr<CIOImage> pLightmapImage = std::make_shared<CIOImage>();
             pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
             pLightmapImage->setData(pData);
+            delete[] pTempData;
             delete[] pData;
             Scene.LightmapImages.emplace_back(pLightmapImage);
 
