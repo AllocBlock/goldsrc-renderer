@@ -190,7 +190,15 @@ bool SBspTexture::getRawRGBAPixels(void* vopData) const
     return true;
 }
 
-glm::vec2 SBspTexInfo::getTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight) const
+glm::vec2 SBspTexInfo::getTexCoord(glm::vec3 vVertex) const
+{
+    glm::vec2 TexCoord;
+    TexCoord.x = (glm::dot(vVertex, TextureDirectionU.glmVec3()) + TextureOffsetU);
+    TexCoord.y = (glm::dot(vVertex, TextureDirectionV.glmVec3()) + TextureOffsetV);
+    return TexCoord;
+}
+
+glm::vec2 SBspTexInfo::getNormalizedTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight) const
 {
     glm::vec2 TexCoord;
     TexCoord.x = (glm::dot(vVertex, TextureDirectionU.glmVec3()) + TextureOffsetU) / vTexWidth;

@@ -225,7 +225,8 @@ struct SBspTexInfo
     uint32_t TextureIndex;
     uint32_t Flags;
 
-    glm::vec2 getTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight) const;
+    glm::vec2 getTexCoord(glm::vec3 vVertex) const;
+    glm::vec2 getNormalizedTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight) const;
 };
 
 /***************************************************************
