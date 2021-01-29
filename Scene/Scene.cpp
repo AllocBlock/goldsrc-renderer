@@ -7,6 +7,25 @@
 
 #include <filesystem>
 
+S3DBoundingBox S3DObject::getBoundingBox()
+{
+    if (m_BoundingBox.has_value()) return m_BoundingBox.value();
+    S3DBoundingBox BoundingBox;
+    BoundingBox.Min = glm::vec3(INFINITY, INFINITY, INFINITY);
+    BoundingBox.Max = glm::vec3(-INFINITY, -INFINITY, -INFINITY);
+    for (size_t i = 0; i < Vertices.size(); ++i)
+    {
+        BoundingBox.Min.x = std::min<float>(BoundingBox.Min.x, Vertices[i].x);
+        BoundingBox.Min.y = std::min<float>(BoundingBox.Min.y, Vertices[i].y);
+        BoundingBox.Min.z = std::min<float>(BoundingBox.Min.z, Vertices[i].z);
+        BoundingBox.Max.x = std::max<float>(BoundingBox.Max.x, Vertices[i].x);
+        BoundingBox.Max.y = std::max<float>(BoundingBox.Max.y, Vertices[i].y);
+        BoundingBox.Max.z = std::max<float>(BoundingBox.Max.z, Vertices[i].z);
+    }
+    m_BoundingBox = BoundingBox;
+    return BoundingBox;
+}
+
 std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
 {
     uint8_t BaseColor1[3] = { 0, 0, 0 };
@@ -240,15 +259,17 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         for(const glm::vec3& Vertex : FaceVertices)
             TexCoords.emplace_back(TexInfo.getNormalizedTexCoord(Vertex, TexWidth, TexHeight));
 
-        pCurObject->TexIndex = TexNameToIndex[BspTexture.Name];
+        // insert texture index
+        uint32_t TexIndex = TexNameToIndex[BspTexture.Name];
 
         // read lightmap
+        uint32_t LightmapIndex;
         std::vector<glm::vec2> LightmapCoords;
         const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems to be able to change this.
         // TODO: handle lighting style like sky, no-draw, etc.
         if (Lumps.m_LumpLighting.Lightmaps.size() > 0 && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
         {
-            pCurObject->LightmapIndex = Scene.LightmapImages.size();
+            LightmapIndex = Scene.LightmapImages.size();
 
             glm::vec2 ScaledLightmapBoundMin = { INFINITY, INFINITY };
             glm::vec2 ScaledLightmapBoundMax = { -INFINITY, -INFINITY };
@@ -314,8 +335,7 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         }
         else
         {
-            pCurObject->LightmapIndex = std::numeric_limits<uint32_t>::max();
-
+            LightmapIndex = std::numeric_limits<uint32_t>::max();
             for (const glm::vec2& TexCoord : TexCoords)
                 LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
         }
@@ -338,6 +358,12 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
             pCurObject->LightmapCoords.emplace_back(LightmapCoords[0]);
             pCurObject->LightmapCoords.emplace_back(LightmapCoords[i-1]);
             pCurObject->LightmapCoords.emplace_back(LightmapCoords[i]);
+            pCurObject->TexIndices.emplace_back(TexIndex);
+            pCurObject->TexIndices.emplace_back(TexIndex);
+            pCurObject->TexIndices.emplace_back(TexIndex);
+            pCurObject->LightmapIndices.emplace_back(LightmapIndex);
+            pCurObject->LightmapIndices.emplace_back(LightmapIndex);
+            pCurObject->LightmapIndices.emplace_back(LightmapIndex);
         }
     }
 
@@ -404,7 +430,6 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
     for (size_t i = 0; i < Scene.Objects.size(); ++i)
     {
         Scene.Objects[i] = std::make_shared<S3DObject>();
-        Scene.Objects[i]->TexIndex = i;
     }
 
     std::vector<SMapPolygon> Polygons = Map.getAllPolygons();
@@ -419,6 +444,7 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
+        const uint32_t LightmapIndex = std::numeric_limits<uint32_t>::max();
 
         // indexed data
         /*Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
@@ -455,6 +481,12 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
             pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
             pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
             pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+            pObject->TexIndices.emplace_back(TexIndex);
+            pObject->TexIndices.emplace_back(TexIndex);
+            pObject->TexIndices.emplace_back(TexIndex);
+            pObject->LightmapIndices.emplace_back(LightmapIndex);
+            pObject->LightmapIndices.emplace_back(LightmapIndex);
+            pObject->LightmapIndices.emplace_back(LightmapIndex);
         }
     }
     if (vProgressReportFunc) vProgressReportFunc(u8"完成");
@@ -469,7 +501,8 @@ SScene SceneReader::readObjFile(std::filesystem::path vFilePath, std::function<v
 
     if (vProgressReportFunc) vProgressReportFunc(u8"生成场景中");
     std::shared_ptr<S3DObject> pObjObject = std::make_shared<S3DObject>();
-    pObjObject->TexIndex = 0;
+    const uint32_t TexIndex = 0;
+    const uint32_t LightmapIndex = std::numeric_limits<uint32_t>::max();
 
     const std::vector<SObjFace>& Faces = Obj.getFaces();
     for (size_t i = 0; i < Faces.size(); ++i)
@@ -492,6 +525,12 @@ SScene SceneReader::readObjFile(std::filesystem::path vFilePath, std::function<v
             pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
             pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
             pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+            pObjObject->TexIndices.emplace_back(TexIndex);
+            pObjObject->TexIndices.emplace_back(TexIndex);
+            pObjObject->TexIndices.emplace_back(TexIndex);
+            pObjObject->LightmapIndices.emplace_back(LightmapIndex);
+            pObjObject->LightmapIndices.emplace_back(LightmapIndex);
+            pObjObject->LightmapIndices.emplace_back(LightmapIndex);
         }
     }
 

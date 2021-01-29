@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <functional>
+#include <optional>
 #include <glm/glm.hpp>
 
 enum class E3DObjectType
@@ -10,6 +11,13 @@ enum class E3DObjectType
     TRIAGNLE_LIST,
     TRIAGNLE_STRIP_LIST,
     INDEXED_TRIAGNLE_LIST,
+};
+
+// AABB
+struct S3DBoundingBox
+{
+    glm::vec3 Min;
+    glm::vec3 Max;
 };
 
 struct S3DObject
@@ -23,9 +31,13 @@ struct S3DObject
     std::vector<glm::vec3> Normals;
     std::vector<glm::vec2> TexCoords;
     std::vector<glm::vec2> LightmapCoords;
+    std::vector<uint32_t> TexIndices;
+    std::vector<uint32_t> LightmapIndices;
     std::vector<uint32_t> Indices;
-    uint32_t TexIndex;
-    uint32_t LightmapIndex;
+
+    S3DBoundingBox getBoundingBox();
+private:
+    std::optional<S3DBoundingBox> m_BoundingBox = std::nullopt;
 };
 
 struct SScene

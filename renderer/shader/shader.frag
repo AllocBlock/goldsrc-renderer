@@ -6,6 +6,8 @@ layout(location = 1) in vec3 inFragPosition;
 layout(location = 2) in vec3 inFragNormal;
 layout(location = 3) in vec2 inFragTexCoord;
 layout(location = 4) in vec2 inFragLightmapCoord;
+layout(location = 5) flat in uint inFragTexIndex;
+layout(location = 6) flat in uint inFragLightmapIndex;
 
 layout(location = 0) out vec4 outColor;
 
@@ -20,18 +22,17 @@ layout(binding = 3) uniform texture2D uTextures[MAX_TEXTURE_NUM];
 layout(binding = 4) uniform texture2D uLightmaps[MAX_LIGHTMAP_NUM];
 layout(push_constant) uniform SPushConstant 
 {
-	uint TexIndex;
-	uint LightmapIndex;
+	uint NotUsedForNow;
 } uPushConstant;
 
 void main()
 {
-	uint TexIndex = uPushConstant.TexIndex;
+	uint TexIndex = inFragTexIndex;
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
-	vec3 TexColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord).xyz;
-    if (uPushConstant.LightmapIndex < uint(0xffffffff))
+	vec3 TexColor = texture(sampler2D(uTextures[inFragTexIndex], uTexSampler), inFragTexCoord).xyz;
+    if (inFragLightmapIndex < uint(0xffffffff))
 	{
-		vec3 LightmapColor = texture(sampler2D(uLightmaps[uPushConstant.LightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
+		vec3 LightmapColor = texture(sampler2D(uLightmaps[inFragLightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
 		outColor = vec4(TexColor * LightmapColor, 1.0);
 	}
 	else

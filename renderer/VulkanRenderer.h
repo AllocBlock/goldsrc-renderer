@@ -14,6 +14,8 @@ struct SPointData
     glm::vec3 Normal;
     glm::vec2 TexCoord;
     glm::vec2 LightmapCoord;
+    uint32_t TexIndex;
+    uint32_t LightmapIndex;
 
     static VkVertexInputBindingDescription getBindingDescription()
     {
@@ -25,9 +27,9 @@ struct SPointData
         return BindingDescription;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 5> getAttributeDescriptions()
+    static std::array<VkVertexInputAttributeDescription, 7> getAttributeDescriptions()
     {
-        std::array<VkVertexInputAttributeDescription, 5> AttributeDescriptions = {};
+        std::array<VkVertexInputAttributeDescription, 7> AttributeDescriptions = {};
 
         AttributeDescriptions[0].binding = 0;
         AttributeDescriptions[0].location = 0;
@@ -54,6 +56,16 @@ struct SPointData
         AttributeDescriptions[4].format = VK_FORMAT_R32G32_SFLOAT;
         AttributeDescriptions[4].offset = offsetof(SPointData, LightmapCoord);
 
+        AttributeDescriptions[5].binding = 0;
+        AttributeDescriptions[5].location = 5;
+        AttributeDescriptions[5].format = VK_FORMAT_R32_UINT;
+        AttributeDescriptions[5].offset = offsetof(SPointData, TexIndex);
+
+        AttributeDescriptions[6].binding = 0;
+        AttributeDescriptions[6].location = 6;
+        AttributeDescriptions[6].format = VK_FORMAT_R32_UINT;
+        AttributeDescriptions[6].offset = offsetof(SPointData, LightmapIndex);
+
         return AttributeDescriptions;
     }
 };
@@ -72,8 +84,7 @@ struct SUniformBufferObjectFrag
 
 struct SPushConstant
 {
-    unsigned int TexIndex;
-    unsigned int LightmapIndex;
+    unsigned int NotUsedForNow;
 };
 
 class CVulkanRenderer

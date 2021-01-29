@@ -808,19 +808,9 @@ void CVulkanRenderer::__createCommandBuffers()
                 size_t NumVertex = pObject->Vertices.size();
                 size_t NumIndex = pObject->Indices.size();
                 if (NumVertex == 0) continue;
-                SPushConstant PushConstant = {};
-                PushConstant.TexIndex = pObject->TexIndex;
-                if (m_Scene.UseLightmap)
-                {
-                    PushConstant.LightmapIndex = pObject->LightmapIndex;
-                }
-                else
-                {
-                    PushConstant.LightmapIndex = std::numeric_limits<uint32_t>::max();
-                }
-                
+                //SPushConstant PushConstant = {};
                 vkCmdSetDepthBias(m_CommandBuffers[i], static_cast<float>(k) / m_CommandBuffers.size(), 0, 0);
-                vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+                //vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
                 if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
                     vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);
                 else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
@@ -860,6 +850,8 @@ std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObje
     _ASSERTE(NumPoint == vpObject->Normals.size());
     _ASSERTE(NumPoint == vpObject->TexCoords.size());
     _ASSERTE(NumPoint == vpObject->LightmapCoords.size());
+    _ASSERTE(NumPoint == vpObject->TexIndices.size());
+    _ASSERTE(NumPoint == vpObject->LightmapIndices.size());
 
     std::vector<SPointData> PointData(NumPoint);
     for (size_t i = 0; i < NumPoint; ++i)
@@ -869,6 +861,8 @@ std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObje
         PointData[i].Normal = vpObject->Normals[i];
         PointData[i].TexCoord = vpObject->TexCoords[i];
         PointData[i].LightmapCoord = vpObject->LightmapCoords[i];
+        PointData[i].TexIndex = vpObject->TexIndices[i];
+        PointData[i].LightmapIndex = vpObject->LightmapIndices[i];
     }
     return PointData;
 }
