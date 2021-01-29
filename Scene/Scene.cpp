@@ -7,9 +7,10 @@
 
 #include <filesystem>
 
-S3DBoundingBox S3DObject::getBoundingBox()
+S3DBoundingBox S3DObject::getBoundingBox() const
 {
-    if (m_BoundingBox.has_value()) return m_BoundingBox.value();
+    std::optional<S3DBoundingBox> CachedBoundingBox = std::nullopt;
+    if (CachedBoundingBox.has_value()) return CachedBoundingBox.value();
     S3DBoundingBox BoundingBox;
     BoundingBox.Min = glm::vec3(INFINITY, INFINITY, INFINITY);
     BoundingBox.Max = glm::vec3(-INFINITY, -INFINITY, -INFINITY);
@@ -22,7 +23,7 @@ S3DBoundingBox S3DObject::getBoundingBox()
         BoundingBox.Max.y = std::max<float>(BoundingBox.Max.y, Vertices[i].y);
         BoundingBox.Max.z = std::max<float>(BoundingBox.Max.z, Vertices[i].z);
     }
-    m_BoundingBox = BoundingBox;
+    CachedBoundingBox = BoundingBox;
     return BoundingBox;
 }
 
@@ -187,6 +188,7 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     }
 
     // load faces, one face one object as each face have diffrent lightmap
+    if (vProgressReportFunc) vProgressReportFunc(u8"载入场景数据");
     size_t NumFace = Lumps.m_LumpFace.Faces.size();
     Scene.Objects.resize(NumFace);
     for (size_t i = 0; i < NumFace; ++i)

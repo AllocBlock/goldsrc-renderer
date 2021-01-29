@@ -35,9 +35,7 @@ struct S3DObject
     std::vector<uint32_t> LightmapIndices;
     std::vector<uint32_t> Indices;
 
-    S3DBoundingBox getBoundingBox();
-private:
-    std::optional<S3DBoundingBox> m_BoundingBox = std::nullopt;
+    S3DBoundingBox getBoundingBox() const;
 };
 
 struct SScene

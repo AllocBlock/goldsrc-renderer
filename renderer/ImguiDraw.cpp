@@ -143,6 +143,16 @@ void CImguiVullkan::__drawGUI()
         }
     }
 
+    // 渲染设置
+    if (ImGui::CollapsingHeader(u8"相机", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        size_t VisableObjectNum = m_pRenderer->getRenderedObjectNum();
+        ImGui::Text((u8"渲染物体数：" + std::to_string(VisableObjectNum)).c_str());
+        static bool FrustumCulling = m_pRenderer->getFrustumCullingState();
+        ImGui::Checkbox(u8"CPU视锥剔除", &FrustumCulling);
+        m_pRenderer->setFrustumCullingState(FrustumCulling);
+    }
+
     if (ImGui::CollapsingHeader(u8"其他", ImGuiTreeNodeFlags_DefaultOpen))
     {
         bool IgnoreAllAlert = m_GUIAlert.getIgnoreAll();

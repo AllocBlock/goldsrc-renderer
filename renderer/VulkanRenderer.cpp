@@ -112,6 +112,27 @@ void CVulkanRenderer::destroy()
 void CVulkanRenderer::loadScene(const SScene& vScene)
 {
      m_Scene = vScene;
+     m_ObjectDataPositions.resize(m_Scene.Objects.size());
+     size_t IndexOffset = 0;
+     size_t VertexOffset = 0;
+     for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+     {
+         std::shared_ptr<S3DObject> pObject = m_Scene.Objects[i];
+         if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
+         { 
+             m_ObjectDataPositions[i].Offset = IndexOffset;
+             m_ObjectDataPositions[i].Size = pObject->Indices.size();
+             IndexOffset += m_ObjectDataPositions[i].Size;
+         }
+         else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
+         {
+             m_ObjectDataPositions[i].Offset = VertexOffset;
+             m_ObjectDataPositions[i].Size = pObject->Vertices.size();
+             VertexOffset += m_ObjectDataPositions[i].Size;
+         }
+         else
+             throw std::runtime_error(u8"物体类型错误");
+     }
      vkDeviceWaitIdle(m_Device);
      __destroySceneResources();
      __createSceneResources();
@@ -120,12 +141,84 @@ void CVulkanRenderer::loadScene(const SScene& vScene)
 VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 {
     _ASSERTE(vImageIndex >= 0 && vImageIndex < m_CommandBuffers.size());
+    // TODO: not finished, and to to consider dynamic, multiple command buffer, which should not be handled using static vector
+    bool RerecordCommand = false;
+    if (m_FrustumCulling || m_FrustumCulling != m_LastFrustumCulling[vImageIndex])
+    {
+        RerecordCommand = true;
+    }
+    m_LastFrustumCulling[vImageIndex] = m_FrustumCulling;
+    if (RerecordCommand)
+    {
+        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
+        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+        ck(vkBeginCommandBuffer(m_CommandBuffers[vImageIndex], &CommandBufferBeginInfo));
+
+        std::array<VkClearValue, 2> ClearValues = {};
+        ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+        ClearValues[1].depthStencil = { 1.0f, 0 };
+
+        VkRenderPassBeginInfo RenderPassBeginInfo = {};
+        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        RenderPassBeginInfo.renderPass = m_RenderPass;
+        RenderPassBeginInfo.framebuffer = m_Framebuffers[vImageIndex];
+        RenderPassBeginInfo.renderArea.offset = { 0, 0 };
+        RenderPassBeginInfo.renderArea.extent = m_Extent;
+        RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
+        RenderPassBeginInfo.pClearValues = ClearValues.data();
+
+        vkCmdBeginRenderPass(m_CommandBuffers[vImageIndex], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+
+        VkBuffer VertexBuffers[] = { m_VertexBuffer };
+        VkDeviceSize Offsets[] = { 0 };
+        if (m_VertexBuffer != VK_NULL_HANDLE)
+            vkCmdBindVertexBuffers(m_CommandBuffers[vImageIndex], 0, 1, VertexBuffers, Offsets);
+        if (m_IndexBuffer != VK_NULL_HANDLE)
+            vkCmdBindIndexBuffer(m_CommandBuffers[vImageIndex], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
+
+        if (m_VertexBuffer != VK_NULL_HANDLE || m_IndexBuffer != VK_NULL_HANDLE)
+        {
+            if (m_FrustumCulling)
+            {
+                __calculateVisiableObjects();
+                for (size_t i = 0; i < m_VisableObjectIndices.size(); ++i)
+                    __recordObjectRenderCommand(vImageIndex, m_VisableObjectIndices[i]);
+            }
+            else
+            {
+                for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+                    __recordObjectRenderCommand(vImageIndex, i);
+            }
+        }
+
+        vkCmdEndRenderPass(m_CommandBuffers[vImageIndex]);
+        ck(vkEndCommandBuffer(m_CommandBuffers[vImageIndex]));
+    }
     return m_CommandBuffers[vImageIndex];
 }
 
 std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
 {
     return m_pCamera;
+}
+
+void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
+{
+    std::shared_ptr<S3DObject> pObject = m_Scene.Objects[vObjectIndex];
+    SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
+    //SPushConstant PushConstant = {};
+    vkCmdSetDepthBias(m_CommandBuffers[vImageIndex], static_cast<float>(vObjectIndex) / m_Scene.Objects.size(), 0, 0);
+    //vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineLayout,VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+    if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
+        vkCmdDrawIndexed(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0, 0);
+    else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
+        vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
+    else
+        throw std::runtime_error(u8"物体类型错误");
 }
 
 void CVulkanRenderer::__createRenderPass()
@@ -394,6 +487,7 @@ void CVulkanRenderer::__createCommandPool()
 {
     VkCommandPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     PoolInfo.queueFamilyIndex = m_GraphicsQueueIndex;
 
     ck(vkCreateCommandPool(m_Device, &PoolInfo, nullptr, &m_CommandPool));
@@ -766,65 +860,8 @@ void CVulkanRenderer::__createCommandBuffers()
 
     ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_CommandBuffers.data()));
 
-    for (size_t i = 0; i < m_CommandBuffers.size(); ++i)
-    {
-        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-        ck(vkBeginCommandBuffer(m_CommandBuffers[i], &CommandBufferBeginInfo));
-
-        std::array<VkClearValue, 2> ClearValues = {};
-        ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-        ClearValues[1].depthStencil = { 1.0f, 0 };
-
-        VkRenderPassBeginInfo RenderPassBeginInfo = {};
-        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        RenderPassBeginInfo.renderPass = m_RenderPass;
-        RenderPassBeginInfo.framebuffer = m_Framebuffers[i];
-        RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-        RenderPassBeginInfo.renderArea.extent = m_Extent;
-        RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
-        RenderPassBeginInfo.pClearValues = ClearValues.data();
-
-        vkCmdBeginRenderPass(m_CommandBuffers[i], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-
-        VkBuffer VertexBuffers[] = { m_VertexBuffer };
-        VkDeviceSize Offsets[] = { 0 };
-        if (m_VertexBuffer != VK_NULL_HANDLE)
-            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, VertexBuffers, Offsets);
-        if (m_IndexBuffer != VK_NULL_HANDLE)
-            vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-
-        if (m_VertexBuffer != VK_NULL_HANDLE)
-        {
-            size_t IndexOffset = 0;
-            size_t VertexOffset = 0;
-            for (size_t k = 0; k < m_Scene.Objects.size(); ++k)
-            {
-                std::shared_ptr<S3DObject> pObject = m_Scene.Objects[k];
-                size_t NumVertex = pObject->Vertices.size();
-                size_t NumIndex = pObject->Indices.size();
-                if (NumVertex == 0) continue;
-                //SPushConstant PushConstant = {};
-                vkCmdSetDepthBias(m_CommandBuffers[i], static_cast<float>(k) / m_CommandBuffers.size(), 0, 0);
-                //vkCmdPushConstants(m_CommandBuffers[i], m_PipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
-                if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
-                    vkCmdDrawIndexed(m_CommandBuffers[i], NumIndex, 1, IndexOffset, 0, 0);
-                else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
-                    vkCmdDraw(m_CommandBuffers[i], NumVertex, 1, VertexOffset, 0);
-                else
-                    throw std::runtime_error(u8"物体类型错误");
-                IndexOffset += NumIndex;
-                VertexOffset += NumVertex;
-            }
-        }
-
-        vkCmdEndRenderPass(m_CommandBuffers[i]);
-        ck(vkEndCommandBuffer(m_CommandBuffers[i]));
-    }
+    m_LastFrustumCulling.clear();
+    m_LastFrustumCulling.resize(m_Framebuffers.size(), true);
 }
 
 std::vector<char> CVulkanRenderer::__readFile(std::filesystem::path vFilePath)
@@ -1142,6 +1179,19 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
 
     vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
     vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+}
+
+void CVulkanRenderer::__calculateVisiableObjects()
+{
+    m_VisableObjectIndices.clear();
+
+    for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+    {
+        // frustum culling: don't draw object outside of view (judge by bounding box)
+        if (!m_pCamera->isObjectInSight(m_Scene.Objects[i]))
+            continue;
+        m_VisableObjectIndices.emplace_back(i);
+    }
 }
 
 void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
