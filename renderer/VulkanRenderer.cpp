@@ -1047,6 +1047,7 @@ bool CVulkanRenderer::__hasStencilComponent(VkFormat vFormat) {
 
 void CVulkanRenderer::__createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory)
 {
+    _ASSERTE(vSize > 0);
     VkBufferCreateInfo BufferInfo = {};
     BufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferInfo.size = vSize;

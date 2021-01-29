@@ -126,14 +126,18 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     for (size_t i = 0; i < Lumps.m_LumpTexture.Textures.size(); ++i)
     {
         const SBspTexture& BspTexture = Lumps.m_LumpTexture.Textures[i];
+        if (vProgressReportFunc) vProgressReportFunc(u8"读取纹理（" + std::to_string(i + 1) + "/" + std::to_string(Lumps.m_LumpTexture.Textures.size()) + " " + BspTexture.Name + u8"）");
         if (BspTexture.IsDataInBsp)
         {
-            std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+            
             uint8_t* pData = new uint8_t[static_cast<size_t>(4) * BspTexture.Width * BspTexture.Height];
             BspTexture.getRawRGBAPixels(pData);
+            std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+            pTexImage->setImageSize(BspTexture.Width, BspTexture.Height);
             pTexImage->setData(pData);
             delete[] pData;
             TexNameToIndex[BspTexture.Name] = Scene.TexImages.size();
+            Scene.TexImages.emplace_back(std::move(pTexImage));
         }
         else
         {
