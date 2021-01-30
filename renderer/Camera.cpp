@@ -36,98 +36,61 @@ glm::mat4 CCamera::getViewMat() const
     return glm::lookAt(m_Pos, At, m_Up);
 }
 
-bool CCamera::isObjectInSight(std::shared_ptr<S3DObject> vpObject) const
-{
-    // AABB frustum culling
-    std::array<glm::vec4, 6> FrustumPlanes = __getFrustumPlanes();
-    S3DBoundingBox BoundingBox = vpObject->getBoundingBox();
-    std::array<glm::vec3, 8> BoundPoints;
-    for (int i = 0; i < 8; ++i)
-    {
-        int SignX = ((i & 1) ? 1 : -1);
-        int SignY = ((i & 2) ? 1 : -1);
-        int SignZ = ((i & 4) ? 1 : -1);
-        float X = ((i & 1) ? BoundingBox.Min.x : BoundingBox.Max.x);
-        float Y = ((i & 2) ? BoundingBox.Min.y : BoundingBox.Max.y);
-        float Z = ((i & 4) ? BoundingBox.Min.z : BoundingBox.Max.z);
-        BoundPoints[i] = glm::vec3(X, Y, Z);
-    }
-
-    // for each frustum plane
-    for (int i = 0; i < 6; ++i)
-    {
-        glm::vec3 Normal = glm::vec3(FrustumPlanes[i].x, FrustumPlanes[i].y, FrustumPlanes[i].z);
-        float D = FrustumPlanes[i].w;
-        // if all of the vertices in bounding is behind this plane, the object should not be drawn
-        bool NoDraw = true;
-        for (int k = 0; k < 8; ++k)
-        {
-            if (glm::dot(Normal, BoundPoints[k]) + D > 0)
-            {
-                NoDraw = false;
-                break;
-            }
-        }
-        if (NoDraw) return false;
-    }
-    return true;
-}
-
-std::array<glm::vec4, 6> CCamera::__getFrustumPlanes() const
+SFrustum CCamera::getFrustum() const
 {
     // get frustum planes for frustum culling
     // more at: https://www.braynzarsoft.net/viewtutorial/q16390-34-aabb-cpu-side-frustum-culling
     // x,y,z,w -> A,B,C,D, Ax+By+Cz+D=0, (A,B,C) is the normal of plane
 
     glm::mat4 VP = getProjMat() * getViewMat();
-    std::array<glm::vec4, 6> FrustumPlanes;
+    SFrustum Frustum;
     // Left Frustum Plane
     // Add first column of the matrix to the fourth column
-    FrustumPlanes[0].x = VP[0][3] + VP[0][0];
-    FrustumPlanes[0].y = VP[1][3] + VP[1][0];
-    FrustumPlanes[0].z = VP[2][3] + VP[2][0];
-    FrustumPlanes[0].w = VP[3][3] + VP[3][0];
+    Frustum.Planes[0].x = VP[0][3] + VP[0][0];
+    Frustum.Planes[0].y = VP[1][3] + VP[1][0];
+    Frustum.Planes[0].z = VP[2][3] + VP[2][0];
+    Frustum.Planes[0].w = VP[3][3] + VP[3][0];
 
     // Right Frustum Plane
     // Subtract first column of matrix from the fourth column
-    FrustumPlanes[1].x = VP[0][3] - VP[0][0];
-    FrustumPlanes[1].y = VP[1][3] - VP[1][0];
-    FrustumPlanes[1].z = VP[2][3] - VP[2][0];
-    FrustumPlanes[1].w = VP[3][3] - VP[3][0];
+    Frustum.Planes[1].x = VP[0][3] - VP[0][0];
+    Frustum.Planes[1].y = VP[1][3] - VP[1][0];
+    Frustum.Planes[1].z = VP[2][3] - VP[2][0];
+    Frustum.Planes[1].w = VP[3][3] - VP[3][0];
 
     // Top Frustum Plane
     // Subtract second column of matrix from the fourth column
-    FrustumPlanes[2].x = VP[0][3] - VP[0][1];
-    FrustumPlanes[2].y = VP[1][3] - VP[1][1];
-    FrustumPlanes[2].z = VP[2][3] - VP[2][1];
-    FrustumPlanes[2].w = VP[3][3] - VP[3][1];
+    Frustum.Planes[2].x = VP[0][3] - VP[0][1];
+    Frustum.Planes[2].y = VP[1][3] - VP[1][1];
+    Frustum.Planes[2].z = VP[2][3] - VP[2][1];
+    Frustum.Planes[2].w = VP[3][3] - VP[3][1];
 
     // Bottom Frustum Plane
     // Add second column of the matrix to the fourth column
-    FrustumPlanes[3].x = VP[0][3] + VP[0][1];
-    FrustumPlanes[3].y = VP[1][3] + VP[1][1];
-    FrustumPlanes[3].z = VP[2][3] + VP[2][1];
-    FrustumPlanes[3].w = VP[3][3] + VP[3][1];
+    Frustum.Planes[3].x = VP[0][3] + VP[0][1];
+    Frustum.Planes[3].y = VP[1][3] + VP[1][1];
+    Frustum.Planes[3].z = VP[2][3] + VP[2][1];
+    Frustum.Planes[3].w = VP[3][3] + VP[3][1];
 
     // Near Frustum Plane
     // We could add the third column to the fourth column to get the near plane,
     // but we don't have to do this because the third column IS the near plane
-    FrustumPlanes[4].x = VP[0][3];
-    FrustumPlanes[4].y = VP[1][3];
-    FrustumPlanes[4].z = VP[2][3];
-    FrustumPlanes[4].w = VP[3][3];
+    Frustum.Planes[4].x = VP[0][3];
+    Frustum.Planes[4].y = VP[1][3];
+    Frustum.Planes[4].z = VP[2][3];
+    Frustum.Planes[4].w = VP[3][3];
 
     // Far Frustum Plane
     // Subtract third column of matrix from the fourth column
-    FrustumPlanes[5].x = VP[0][3] - VP[0][2];
-    FrustumPlanes[5].y = VP[1][3] - VP[1][2];
-    FrustumPlanes[5].z = VP[2][3] - VP[2][2];
-    FrustumPlanes[5].w = VP[3][3] - VP[3][2];
+    Frustum.Planes[5].x = VP[0][3] - VP[0][2];
+    Frustum.Planes[5].y = VP[1][3] - VP[1][2];
+    Frustum.Planes[5].z = VP[2][3] - VP[2][2];
+    Frustum.Planes[5].w = VP[3][3] - VP[3][2];
 
     for (int i = 0; i < 6; ++i)
     {
-        float Length = glm::vec3(FrustumPlanes[i].x, FrustumPlanes[i].y, FrustumPlanes[i].z).length();
-        FrustumPlanes[i] /= Length;
+        float Length = glm::vec3(Frustum.Planes[i].x, Frustum.Planes[i].y, Frustum.Planes[i].z).length();
+        Frustum.Planes[i] /= Length;
     }
-    return FrustumPlanes;
+    return Frustum;
 }

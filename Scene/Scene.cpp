@@ -110,6 +110,204 @@ bool findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir,
     return false;
 }
 
+std::vector<CIOGoldsrcWad> readWads(const std::vector<std::filesystem::path>& vWadPaths, std::function<void(std::string)> vProgressReportFunc)
+{
+    std::vector<CIOGoldsrcWad> Wads(vWadPaths.size());
+
+    for (size_t i = 0; i < vWadPaths.size(); ++i)
+    {
+        std::filesystem::path RealWadPath;
+        if (!findFile(vWadPaths[i], "../data", RealWadPath))
+            GlobalLogger::logStream() << u8"未找到或无法打开WAD文件：" << vWadPaths[i];
+        if (vProgressReportFunc) vProgressReportFunc(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
+        Wads[i].read(RealWadPath);
+    }
+    return Wads;
+}
+
+std::shared_ptr<CIOImage> getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex)
+{
+    uint32_t Width = 0, Height = 0;
+    vWad.getTextureSize(vIndex, Width, Height);
+
+    std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+    pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
+    void* pData = new uint8_t[static_cast<size_t>(4) * Width * Height];
+    vWad.getRawRGBAPixels(vIndex, pData);
+    pTexImage->setData(pData);
+    delete[] pData;
+    return pTexImage;
+}
+
+std::vector<glm::vec3> getBspFaceVertices(const SBspLumps& vLumps, size_t vFaceIndex)
+{
+    _ASSERTE(vFaceIndex >= 0 && vFaceIndex < vLumps.m_LumpFace.Faces.size());
+    const SBspFace& Face = vLumps.m_LumpFace.Faces[vFaceIndex];
+    _ASSERTE(static_cast<size_t>(Face.FirstSurfedgeIndex) + Face.NumSurfedge <= vLumps.m_LumpSurfedge.Surfedges.size());
+
+    // extract face vertex index from edges
+    std::vector<uint16_t> FaceVertexIndices;
+    uint16_t LastVertexIndex2 = 0;
+    for (uint16_t i = 0; i < Face.NumSurfedge; ++i)
+    {
+        size_t SurfedgeIndex = static_cast<size_t>(Face.FirstSurfedgeIndex) + i;
+        int32_t RawEdgeIndex = vLumps.m_LumpSurfedge.Surfedges[SurfedgeIndex];
+        uint16_t VertexIndex1 = 0, VertexIndex2 = 0;
+        if (RawEdgeIndex > 0)
+        {
+            uint32_t EdgeIndex = static_cast<uint32_t>(RawEdgeIndex);
+            _ASSERTE(EdgeIndex < vLumps.m_LumpEdge.Edges.size());
+            VertexIndex1 = vLumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
+            VertexIndex2 = vLumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
+        }
+        else
+        {
+            uint32_t EdgeIndex = static_cast<uint32_t>(-static_cast<int64_t>(RawEdgeIndex));
+            _ASSERTE(EdgeIndex < vLumps.m_LumpEdge.Edges.size());
+            VertexIndex1 = vLumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
+            VertexIndex2 = vLumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
+        }
+
+        FaceVertexIndices.emplace_back(VertexIndex1);
+        if ((i > 0 && LastVertexIndex2 != VertexIndex1) ||
+            (i == Face.NumSurfedge - 1 && FaceVertexIndices[0] != VertexIndex2))
+        {
+            throw std::runtime_error(u8"BSP文件中，面的边未组成环");
+        }
+        LastVertexIndex2 = VertexIndex2;
+    }
+
+    // get face vertices from indices
+    std::vector<glm::vec3> FaceVertices;
+    for (uint16_t FaceVertexIndex : FaceVertexIndices)
+    {
+        _ASSERTE(FaceVertexIndex < vLumps.m_LumpVertex.Vertices.size());
+        SVec3 Vertex = vLumps.m_LumpVertex.Vertices[FaceVertexIndex];
+        FaceVertices.emplace_back(Vertex.glmVec3());
+    }
+
+    return FaceVertices;
+}
+
+glm::vec3 getBspFaceNormal(const SBspLumps& vLumps, size_t vFaceIndex)
+{
+    _ASSERTE(vFaceIndex >= 0 && vFaceIndex < vLumps.m_LumpFace.Faces.size());
+    const SBspFace& Face = vLumps.m_LumpFace.Faces[vFaceIndex];
+    // get plane
+    _ASSERTE(Face.PlaneIndex < vLumps.m_LumpPlane.Planes.size());
+    const SBspPlane& Plane = vLumps.m_LumpPlane.Planes[Face.PlaneIndex];
+    bool ReverseNormal = (Face.PlaneSide != 0);
+    glm::vec3 Normal = Plane.Normal.glmVec3();
+    if (ReverseNormal) Normal *= -1;
+    return Normal;
+}
+
+std::vector<glm::vec2> getBspFaceUnnormalizedTexCoords(const SBspLumps& vLumps, size_t vFaceIndex, std::vector<glm::vec3> vVertices)
+{
+    _ASSERTE(vFaceIndex >= 0 && vFaceIndex < vLumps.m_LumpFace.Faces.size());
+    const SBspFace& Face = vLumps.m_LumpFace.Faces[vFaceIndex];
+
+    // find texture size
+    uint16_t TexInfoIndex = Face.TexInfoIndex;
+    _ASSERTE(TexInfoIndex < vLumps.m_LumpTexInfo.TexInfos.size());
+    const SBspTexInfo& TexInfo = vLumps.m_LumpTexInfo.TexInfos[TexInfoIndex];
+
+    std::vector<glm::vec2> TexCoords;
+    for (const glm::vec3& Vertex : vVertices)
+        TexCoords.emplace_back(TexInfo.getTexCoord(Vertex));
+    return TexCoords;
+}
+
+// vTexCoords should contain unnormalized texcoords to avoid known of texture width and height
+void getBspFaceLightmap(const SBspLumps& vLumps, size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords, std::vector<glm::vec2>& voLightmapCoords, std::shared_ptr<CIOImage>& vopLightmapImage)
+{
+    voLightmapCoords.clear();
+    vopLightmapImage = nullptr;
+
+    _ASSERTE(vFaceIndex >= 0 && vFaceIndex < vLumps.m_LumpFace.Faces.size());
+    const SBspFace& Face = vLumps.m_LumpFace.Faces[vFaceIndex];
+
+    const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems to be able to change this.
+    // TODO: handle lighting style like sky, no-draw, etc.
+    if (vLumps.m_LumpLighting.Lightmaps.size() > 0 && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
+    {
+        glm::vec2 ScaledLightmapBoundMin = { INFINITY, INFINITY };
+        glm::vec2 ScaledLightmapBoundMax = { -INFINITY, -INFINITY };
+        for (const glm::vec2& TexCoord : vTexCoords)
+        {
+            ScaledLightmapBoundMin.x = std::min<float>(ScaledLightmapBoundMin.x, TexCoord.x);
+            ScaledLightmapBoundMin.y = std::min<float>(ScaledLightmapBoundMin.y, TexCoord.y);
+            ScaledLightmapBoundMax.x = std::max<float>(ScaledLightmapBoundMax.x, TexCoord.x);
+            ScaledLightmapBoundMax.y = std::max<float>(ScaledLightmapBoundMax.y, TexCoord.y);
+        }
+        ScaledLightmapBoundMin.x = ScaledLightmapBoundMin.x / LightmapScale;
+        ScaledLightmapBoundMin.y = ScaledLightmapBoundMin.y / LightmapScale;
+        ScaledLightmapBoundMax.x = ScaledLightmapBoundMax.x / LightmapScale;
+        ScaledLightmapBoundMax.y = ScaledLightmapBoundMax.y / LightmapScale;
+
+        // From https://github.com/Sergey-KoRJiK/GldSrcBSPditor says:
+        // Lightmap samples stored in corner of samples, instead center of samples
+        // so lightmap size need increment by one
+        int MinX = static_cast<int>(std::floor(ScaledLightmapBoundMin.x));
+        int MinY = static_cast<int>(std::floor(ScaledLightmapBoundMin.y));
+        int MaxX = std::max<int>(static_cast<int>(std::ceil(ScaledLightmapBoundMax.x)), MinX);
+        int MaxY = std::max<int>(static_cast<int>(std::ceil(ScaledLightmapBoundMax.y)), MinY);
+
+        size_t LightmapWidth = static_cast<size_t>(MaxX - MinX) + 1;
+        size_t LightmapHeight = static_cast<size_t>(MaxY - MinY) + 1;
+
+        size_t LightmapImageSize = static_cast<size_t>(4) * LightmapWidth * LightmapHeight;
+        uint8_t* pData = new uint8_t[LightmapImageSize];
+        std::memset(pData, 0, LightmapImageSize);
+        uint8_t* pTempData = new uint8_t[LightmapImageSize];
+        // blend all lightmap, use the brightest value
+        for (int i = 0; i < 4; ++i)
+        {
+            if (Face.LightingStyles[i] == 0xff) continue;
+            vLumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3 + LightmapImageSize / 4 * i, LightmapImageSize / 4, pTempData);
+            for (size_t k = 0; k < LightmapImageSize; ++k)
+                pData[k] = std::max<uint8_t>(pData[k], pTempData[k]);
+        }
+        vopLightmapImage = std::make_shared<CIOImage>();
+        vopLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
+        vopLightmapImage->setData(pData);
+        delete[] pTempData;
+        delete[] pData;
+
+        for (const glm::vec2& TexCoord : vTexCoords)
+        {
+            glm::vec2 LightmapCoord = TexCoord;
+            LightmapCoord.x /= LightmapScale;
+            LightmapCoord.x -= MinX;
+            LightmapCoord.x += 0.5f;
+            LightmapCoord.x /= LightmapWidth;
+
+            LightmapCoord.y /= LightmapScale;
+            LightmapCoord.y -= MinY;
+            LightmapCoord.y += 0.5f;
+            LightmapCoord.y /= LightmapHeight;
+
+            voLightmapCoords.emplace_back(LightmapCoord);
+        }
+    }
+}
+
+void getBspFaceTextureSizeAndName(const SBspLumps& vLumps, size_t vFaceIndex, size_t& voWidth, size_t& voHeight, std::string& voName)
+{
+    _ASSERTE(vFaceIndex >= 0 && vFaceIndex < vLumps.m_LumpFace.Faces.size());
+    const SBspFace& Face = vLumps.m_LumpFace.Faces[vFaceIndex];
+
+    uint16_t TexInfoIndex = Face.TexInfoIndex;
+    _ASSERTE(TexInfoIndex < vLumps.m_LumpTexInfo.TexInfos.size());
+    const SBspTexInfo& TexInfo = vLumps.m_LumpTexInfo.TexInfos[TexInfoIndex];
+    _ASSERTE(TexInfo.TextureIndex < vLumps.m_LumpTexture.Textures.size());
+    const SBspTexture& BspTexture = vLumps.m_LumpTexture.Textures[TexInfo.TextureIndex];
+
+    voWidth = BspTexture.Width;
+    voHeight = BspTexture.Height;
+    voName = BspTexture.Name;
+}
+
 SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     const float SceneScale = 1.0f / 64.0f;
@@ -124,16 +322,7 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
 
     // read wads
     const std::vector<std::filesystem::path>& WadPaths = Lumps.m_LumpEntity.WadPaths;
-    std::vector<CIOGoldsrcWad> Wads(WadPaths.size());
-
-    for (size_t i = 0; i < WadPaths.size(); ++i)
-    {
-        std::filesystem::path RealWadPath;
-        if (!findFile(WadPaths[i], "../data", RealWadPath))
-            GlobalLogger::logStream() << u8"未找到或无法打开WAD文件：" << WadPaths[i];
-        if (vProgressReportFunc) vProgressReportFunc(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
-        Wads[i].read(RealWadPath);
-    }
+    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths, vProgressReportFunc);
 
     // load textures
     // iterate each texture in texture lump
@@ -149,7 +338,6 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         if (vProgressReportFunc) vProgressReportFunc(u8"读取纹理（" + std::to_string(i + 1) + "/" + std::to_string(Lumps.m_LumpTexture.Textures.size()) + " " + BspTexture.Name + u8"）");
         if (BspTexture.IsDataInBsp)
         {
-            
             uint8_t* pData = new uint8_t[static_cast<size_t>(4) * BspTexture.Width * BspTexture.Height];
             BspTexture.getRawRGBAPixels(pData);
             std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
@@ -167,18 +355,11 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
                 std::optional<size_t> Index = Wad.findTexture(BspTexture.Name);
                 if (Index.has_value())
                 {
-                    uint32_t Width = 0, Height = 0;
-                    Wad.getTextureSize(Index.value(), Width, Height);
-
-                    std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
-                    pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
-                    void* pData = new uint8_t[static_cast<size_t>(4) * Width * Height];
-                    Wad.getRawRGBAPixels(Index.value(), pData);
-                    pTexImage->setData(pData);
-                    delete[] pData;
-                    TexNameToIndex[BspTexture.Name] = Scene.TexImages.size();
-                    Scene.TexImages.emplace_back(std::move(pTexImage));
                     Found = true;
+                    TexNameToIndex[BspTexture.Name] = Scene.TexImages.size();
+
+                    std::shared_ptr<CIOImage> pTexImage = getIOImageFromWad(Wad, Index.value());
+                    Scene.TexImages.emplace_back(std::move(pTexImage));
                     break;
                 }
             }
@@ -189,186 +370,110 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
 
     // load faces, one face one object as each face have diffrent lightmap
     if (vProgressReportFunc) vProgressReportFunc(u8"载入场景数据");
-    size_t NumFace = Lumps.m_LumpFace.Faces.size();
-    Scene.Objects.resize(NumFace);
-    for (size_t i = 0; i < NumFace; ++i)
+    size_t NumNode = Lumps.m_LumpNode.Nodes.size();
+    for (const SBspNode& Node : Lumps.m_LumpNode.Nodes)
     {
-        Scene.Objects[i] = std::make_shared<S3DObject>();
-        Scene.Objects[i]->UseShadow = false;
-    }
-
-    for (size_t i = 0; i < NumFace; ++i)
-    {
-        const SBspFace& Face = Lumps.m_LumpFace.Faces[i];
-        std::shared_ptr<S3DObject>& pCurObject = Scene.Objects[i];
-        // get vertices
-        _ASSERTE(Face.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
-        const SBspPlane& Plane = Lumps.m_LumpPlane.Planes[Face.PlaneIndex];
-        bool ReverseNormal = (Face.PlaneIndex != 0);
-        glm::vec3 Normal = Plane.Normal.glmVec3();
-        if (ReverseNormal) Normal *= -1;
-        _ASSERTE(static_cast<size_t>(Face.FirstSurfedgeIndex) + Face.NumSurfedge <= Lumps.m_LumpSurfedge.Surfedges.size());
-
-        std::vector<uint16_t> FaceVertexIndices;
-        uint16_t LastVertexIndex2 = 0;
-        for (uint16_t i = 0; i < Face.NumSurfedge; ++i)
-        {
-            size_t SurfedgeIndex = static_cast<size_t>(Face.FirstSurfedgeIndex) + i;
-            int32_t RawEdgeIndex = Lumps.m_LumpSurfedge.Surfedges[SurfedgeIndex];
-            uint16_t VertexIndex1 = 0, VertexIndex2 = 0;
-            if (RawEdgeIndex > 0)
-            {
-                uint32_t EdgeIndex = static_cast<uint32_t>(RawEdgeIndex);
-                _ASSERTE(EdgeIndex < Lumps.m_LumpEdge.Edges.size());
-                VertexIndex1 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
-                VertexIndex2 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
-            }
-            else
-            {
-                uint32_t EdgeIndex = static_cast<uint32_t>(-static_cast<int64_t>(RawEdgeIndex));
-                _ASSERTE(EdgeIndex < Lumps.m_LumpEdge.Edges.size());
-                VertexIndex1 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[1];
-                VertexIndex2 = Lumps.m_LumpEdge.Edges[EdgeIndex].VertexIndices[0];
-            }
-
-            FaceVertexIndices.emplace_back(VertexIndex1);
-            if ((i > 0 && LastVertexIndex2 != VertexIndex1) ||
-                (i == Face.NumSurfedge - 1 && FaceVertexIndices[0] != VertexIndex2))
-            {
-                throw std::runtime_error(u8"BSP文件中，面的边未组成环");
-            }
-            LastVertexIndex2 = VertexIndex2;
-        }
-
-        std::vector<glm::vec3> FaceVertices;
-        for (uint16_t FaceVertexIndex : FaceVertexIndices)
-        {
-            _ASSERTE(FaceVertexIndex < Lumps.m_LumpVertex.Vertices.size());
-            SVec3 Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
-            FaceVertices.emplace_back(Vertex.glmVec3());
-        }
-
-        // find texcoords
-        uint16_t TexInfoIndex = Face.TexInfoIndex;
-        _ASSERTE(TexInfoIndex < Lumps.m_LumpTexInfo.TexInfos.size());
-        const SBspTexInfo& TexInfo = Lumps.m_LumpTexInfo.TexInfos[TexInfoIndex];
-        _ASSERTE(TexInfo.TextureIndex < Lumps.m_LumpTexture.Textures.size());
-        const SBspTexture& BspTexture = Lumps.m_LumpTexture.Textures[TexInfo.TextureIndex];
-        // original texture size
-        size_t TexWidth = BspTexture.Width; 
-        size_t TexHeight = BspTexture.Height;
-        std::vector<glm::vec2> TexCoords;
-        for(const glm::vec3& Vertex : FaceVertices)
-            TexCoords.emplace_back(TexInfo.getNormalizedTexCoord(Vertex, TexWidth, TexHeight));
-
-        // insert texture index
-        uint32_t TexIndex = TexNameToIndex[BspTexture.Name];
-
-        // read lightmap
-        uint32_t LightmapIndex;
-        std::vector<glm::vec2> LightmapCoords;
-        const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems to be able to change this.
-        // TODO: handle lighting style like sky, no-draw, etc.
-        if (Lumps.m_LumpLighting.Lightmaps.size() > 0 && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
-        {
-            LightmapIndex = Scene.LightmapImages.size();
-
-            glm::vec2 ScaledLightmapBoundMin = { INFINITY, INFINITY };
-            glm::vec2 ScaledLightmapBoundMax = { -INFINITY, -INFINITY };
-            for (const glm::vec2& TexCoord : TexCoords)
-            {
-                ScaledLightmapBoundMin.x = std::min<float>(ScaledLightmapBoundMin.x, TexCoord.x);
-                ScaledLightmapBoundMin.y = std::min<float>(ScaledLightmapBoundMin.y, TexCoord.y);
-                ScaledLightmapBoundMax.x = std::max<float>(ScaledLightmapBoundMax.x, TexCoord.x);
-                ScaledLightmapBoundMax.y = std::max<float>(ScaledLightmapBoundMax.y, TexCoord.y);
-            }
-            ScaledLightmapBoundMin.x = ScaledLightmapBoundMin.x * TexWidth / LightmapScale;
-            ScaledLightmapBoundMin.y = ScaledLightmapBoundMin.y * TexHeight / LightmapScale;
-            ScaledLightmapBoundMax.x = ScaledLightmapBoundMax.x * TexWidth / LightmapScale;
-            ScaledLightmapBoundMax.y = ScaledLightmapBoundMax.y * TexHeight / LightmapScale;
-
-            // From https://github.com/Sergey-KoRJiK/GldSrcBSPditor says:
-            // Lightmap samples stored in corner of samples, instead center of samples
-            // so lightmap size need increment by one
-            int MinX = static_cast<int>(std::floor(ScaledLightmapBoundMin.x));
-            int MinY = static_cast<int>(std::floor(ScaledLightmapBoundMin.y));
-            int MaxX = std::max<int>(static_cast<int>(std::ceil(ScaledLightmapBoundMax.x)), MinX);
-            int MaxY = std::max<int>(static_cast<int>(std::ceil(ScaledLightmapBoundMax.y)), MinY);
-
-            size_t LightmapWidth = static_cast<size_t>(MaxX - MinX) + 1;
-            size_t LightmapHeight = static_cast<size_t>(MaxY - MinY) + 1;
-
-            size_t LightmapImageSize = static_cast<size_t>(4) * LightmapWidth * LightmapHeight;
-            uint8_t* pData = new uint8_t[LightmapImageSize];
-            std::memset(pData, 0, LightmapImageSize);
-            uint8_t* pTempData = new uint8_t[LightmapImageSize];
-            // blend all lightmap, use the brightest value
-            for (int i = 0; i < 4; ++i)
-            {
-                if (Face.LightingStyles[i] == 0xff) continue;
-                Lumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3 + LightmapImageSize / 4 * i, LightmapImageSize / 4, pTempData);
-                for (size_t k = 0; k < LightmapImageSize; ++k)
-                    pData[k] = std::max<uint8_t>(pData[k], pTempData[k]);
-            }
-            std::shared_ptr<CIOImage> pLightmapImage = std::make_shared<CIOImage>();
-            pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
-            pLightmapImage->setData(pData);
-            delete[] pTempData;
-            delete[] pData;
-            Scene.LightmapImages.emplace_back(pLightmapImage);
-
-            for (const glm::vec2& TexCoord : TexCoords)
-            {
-                glm::vec2 LightmapCoord = TexCoord;
-                LightmapCoord.x *= TexWidth;
-                LightmapCoord.x /= LightmapScale;
-                LightmapCoord.x -= MinX;
-                LightmapCoord.x += 0.5f;
-                LightmapCoord.x /= LightmapWidth;
-
-                LightmapCoord.y *= TexHeight;
-                LightmapCoord.y /= LightmapScale;
-                LightmapCoord.y -= MinY;
-                LightmapCoord.y += 0.5f;
-                LightmapCoord.y /= LightmapHeight;
-
-                LightmapCoords.emplace_back(LightmapCoord);
-            }
-        }
-        else
-        {
-            LightmapIndex = std::numeric_limits<uint32_t>::max();
-            for (const glm::vec2& TexCoord : TexCoords)
-                LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-        }
+        auto pObject = std::make_shared<S3DObject>();
+        pObject->UseShadow = false;
         
-        // save scaled data
-        for (size_t i = 2; i < FaceVertices.size(); ++i)
+        for (uint16_t i = 0; i < Node.NumFace; ++i)
         {
-            pCurObject->Vertices.emplace_back(FaceVertices[0] * SceneScale);
-            pCurObject->Vertices.emplace_back(FaceVertices[i-1] * SceneScale);
-            pCurObject->Vertices.emplace_back(FaceVertices[i] * SceneScale);
-            pCurObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pCurObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pCurObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pCurObject->Normals.emplace_back(Normal);
-            pCurObject->Normals.emplace_back(Normal);
-            pCurObject->Normals.emplace_back(Normal);
-            pCurObject->TexCoords.emplace_back(TexCoords[0]);
-            pCurObject->TexCoords.emplace_back(TexCoords[i-1]);
-            pCurObject->TexCoords.emplace_back(TexCoords[i]);
-            pCurObject->LightmapCoords.emplace_back(LightmapCoords[0]);
-            pCurObject->LightmapCoords.emplace_back(LightmapCoords[i-1]);
-            pCurObject->LightmapCoords.emplace_back(LightmapCoords[i]);
-            pCurObject->TexIndices.emplace_back(TexIndex);
-            pCurObject->TexIndices.emplace_back(TexIndex);
-            pCurObject->TexIndices.emplace_back(TexIndex);
-            pCurObject->LightmapIndices.emplace_back(LightmapIndex);
-            pCurObject->LightmapIndices.emplace_back(LightmapIndex);
-            pCurObject->LightmapIndices.emplace_back(LightmapIndex);
+            uint16_t FaceIndex = Node.FirstFaceIndex + i;
+
+            size_t TexWidth, TexHeight;
+            std::string TexName;
+            getBspFaceTextureSizeAndName(Lumps, FaceIndex, TexWidth, TexHeight, TexName);
+            std::vector<glm::vec3> Vertices = getBspFaceVertices(Lumps, FaceIndex);
+            glm::vec3 Normal = getBspFaceNormal(Lumps, FaceIndex);
+            std::vector<glm::vec2> TexCoords = getBspFaceUnnormalizedTexCoords(Lumps, FaceIndex, Vertices);
+            std::vector<glm::vec2> LightmapCoords;
+            std::shared_ptr<CIOImage> pLightmapImage = nullptr;
+            getBspFaceLightmap(Lumps, FaceIndex, TexCoords, LightmapCoords, pLightmapImage);
+
+            uint32_t TexIndex = TexNameToIndex[TexName];
+            uint32_t LightmapIndex = std::numeric_limits<uint32_t>::max();
+            if (pLightmapImage)
+            {
+                LightmapIndex = Scene.LightmapImages.size();
+                Scene.LightmapImages.emplace_back(pLightmapImage);
+            }
+
+            // scale texture coordinates
+            for (glm::vec2& TexCoord : TexCoords)
+            {
+                TexCoord.x /= TexWidth;
+                TexCoord.y /= TexHeight;
+            }
+
+            // save scaled datas
+            for (size_t k = 2; k < Vertices.size(); ++k)
+            {
+                pObject->Vertices.emplace_back(Vertices[0] * SceneScale);
+                pObject->Vertices.emplace_back(Vertices[k - 1] * SceneScale);
+                pObject->Vertices.emplace_back(Vertices[k] * SceneScale);
+                pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+                pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+                pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
+                pObject->Normals.emplace_back(Normal);
+                pObject->Normals.emplace_back(Normal);
+                pObject->Normals.emplace_back(Normal);
+                pObject->TexCoords.emplace_back(TexCoords[0]);
+                pObject->TexCoords.emplace_back(TexCoords[k - 1]);
+                pObject->TexCoords.emplace_back(TexCoords[k]);
+                if (LightmapIndex != std::numeric_limits<uint32_t>::max())
+                {
+                    pObject->LightmapCoords.emplace_back(LightmapCoords[0]);
+                    pObject->LightmapCoords.emplace_back(LightmapCoords[k - 1]);
+                    pObject->LightmapCoords.emplace_back(LightmapCoords[k]);
+                }
+                else
+                {
+                    pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+                    pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+                    pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
+                }
+
+                pObject->TexIndices.emplace_back(TexIndex);
+                pObject->TexIndices.emplace_back(TexIndex);
+                pObject->TexIndices.emplace_back(TexIndex);
+                pObject->LightmapIndices.emplace_back(LightmapIndex);
+                pObject->LightmapIndices.emplace_back(LightmapIndex);
+                pObject->LightmapIndices.emplace_back(LightmapIndex);
+            }
         }
+
+        Scene.Objects.emplace_back(std::move(pObject));
     }
 
+    // read node and PVS data
+    if (vProgressReportFunc) vProgressReportFunc(u8"载入BSP与VIS数据");
+    Scene.UsePVS = true;
+    size_t NodeNum = Lumps.m_LumpNode.Nodes.size();
+    size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
+
+    Scene.BspTree.Nodes.resize(NodeNum + LeafNum);
+    for (size_t i = 0; i < NodeNum; ++i)
+    {
+        const SBspNode& OriginNode = Lumps.m_LumpNode.Nodes[i];
+        SBspTreeNode& Node = Scene.BspTree.Nodes[i];
+        if (OriginNode.ChildrenIndices[0] > 0)
+            Node.Left = OriginNode.ChildrenIndices[0];
+        else
+            Node.Left = ~OriginNode.ChildrenIndices[0] + NodeNum;
+        if (OriginNode.ChildrenIndices[1] > 0)
+            Node.Right = OriginNode.ChildrenIndices[1];
+        else
+            Node.Right = ~OriginNode.ChildrenIndices[1] + NodeNum;
+    }
+    for (size_t i = 0; i < LeafNum; ++i)
+    {
+        const SBspLeaf& OriginLeaf = Lumps.m_LumpLeaf.Leaves[i];
+        SBspTreeNode& Node = Scene.BspTree.Nodes[NodeNum + i];
+        if (OriginLeaf.VisOffset > 0)
+            Node.PvsOffset = OriginLeaf.VisOffset;
+    }
+    Scene.BspPvs.Data = Lumps.m_LumpVisibility.Vis;
+    
     return Scene;
 }
 
@@ -379,16 +484,7 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
     if (!Map.read())
         throw std::runtime_error(u8"文件解析失败");
     std::vector<std::filesystem::path> WadPaths = Map.getWadPaths();
-    std::vector<CIOGoldsrcWad> Wads(WadPaths.size());
-
-    for (size_t i = 0; i < WadPaths.size(); ++i)
-    {
-        std::filesystem::path RealWadPath;
-        if (!findFile(WadPaths[i], "../data", RealWadPath))
-            GlobalLogger::logStream() << u8"未找到或无法打开WAD文件：" << WadPaths[i];
-        if (vProgressReportFunc) vProgressReportFunc(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
-        Wads[i].read(RealWadPath);
-    }
+    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths, vProgressReportFunc);
 
     SScene Scene;
 
@@ -407,18 +503,11 @@ SScene SceneReader::readMapFile(std::filesystem::path vFilePath, std::function<v
             std::optional<size_t> Index = Wad.findTexture(TexName);
             if (Index.has_value())
             {
-                uint32_t Width = 0, Height = 0;
-                Wad.getTextureSize(Index.value(), Width, Height);
-
-                std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
-                pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
-                uint8_t* pData = new uint8_t[static_cast<size_t>(4) * Width * Height];
-                Wad.getRawRGBAPixels(Index.value(), pData);
-                pTexImage->setData(pData);
-                delete[] pData;
-                TexNameToIndex[TexName] = Scene.TexImages.size();
-                Scene.TexImages.emplace_back(std::move(pTexImage));
                 Found = true;
+                TexNameToIndex[TexName] = Scene.TexImages.size();
+
+                std::shared_ptr<CIOImage> pTexImage = getIOImageFromWad(Wad, Index.value());
+                Scene.TexImages.emplace_back(std::move(pTexImage));
                 break;
             }
         }

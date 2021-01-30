@@ -144,7 +144,7 @@ void CImguiVullkan::__drawGUI()
     }
 
     // 渲染设置
-    if (ImGui::CollapsingHeader(u8"相机", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader(u8"渲染", ImGuiTreeNodeFlags_DefaultOpen))
     {
         size_t VisableObjectNum = m_pRenderer->getRenderedObjectNum();
         ImGui::Text((u8"渲染物体数：" + std::to_string(VisableObjectNum)).c_str());

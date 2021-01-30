@@ -105,9 +105,9 @@ public:
     void loadScene(const SScene& vScene);
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     std::shared_ptr<CCamera> getCamera();
-    size_t getRenderedObjectNum() const { return m_FrustumCulling ? m_VisableObjectIndices.size() : m_Scene.Objects.size(); }
-    bool getFrustumCullingState() const { return m_FrustumCulling; }
-    void setFrustumCullingState(bool vFrustumCullingState) { m_FrustumCulling = vFrustumCullingState; }
+    size_t getRenderedObjectNum() const { return m_EnableFrustumCulling ? m_VisableObjectIndices.size() : m_Scene.Objects.size(); }
+    bool getFrustumCullingState() const { return m_EnableFrustumCulling; }
+    void setFrustumCullingState(bool vFrustumCullingState) { m_EnableFrustumCulling = vFrustumCullingState; }
 
 private:
     void __createRenderPass();
@@ -136,6 +136,7 @@ private:
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
+    bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
     
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
@@ -199,8 +200,9 @@ private:
     std::vector<size_t> m_VisableObjectIndices;
     std::vector<SObjectDataPosition> m_ObjectDataPositions;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
-    bool m_FrustumCulling = false;
-    std::vector<bool> m_LastFrustumCulling;
+    bool m_EnableFrustumCulling = false;
+    std::vector<bool> m_LastEnableFrustumCullings;
+    bool m_EnablePVS = false;
 
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;

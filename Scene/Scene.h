@@ -38,6 +38,23 @@ struct S3DObject
     S3DBoundingBox getBoundingBox() const;
 };
 
+struct SBspTreeNode
+{
+    std::optional<uint32_t> PvsOffset = std::nullopt;
+    std::optional<int32_t> Left = std::nullopt;
+    std::optional<int32_t> Right = std::nullopt;
+};
+
+struct SBspTree
+{
+    std::vector<SBspTreeNode> Nodes;
+};
+
+struct SBspPvs
+{
+    std::vector<uint8_t> Data;
+};
+
 struct SScene
 {
     bool UseLightmap = false;
@@ -45,6 +62,10 @@ struct SScene
     std::vector<std::shared_ptr<S3DObject>> Objects;
     std::vector<std::shared_ptr<CIOImage>> TexImages;
     std::vector<std::shared_ptr<CIOImage>> LightmapImages;
+
+    bool UsePVS = false;
+    SBspTree BspTree;
+    SBspPvs BspPvs;
 };
 
 namespace SceneReader

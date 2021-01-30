@@ -1,8 +1,12 @@
 #pragma once
-#include "Scene.h"
 
 #include <glm/glm.hpp>
 #include <array>
+
+struct SFrustum
+{
+	std::array<glm::vec4, 6> Planes;
+};
 
 class CCamera
 {
@@ -34,9 +38,9 @@ public:
 	void setNear(float vNear) { m_Near = vNear; };
 	void setFar(float vFar) { m_Far = vFar; };
 
-	bool isObjectInSight(std::shared_ptr<S3DObject> vpObject) const;
+	SFrustum getFrustum() const;
 private:
-	std::array<glm::vec4, 6> __getFrustumPlanes() const;
+	
 
 	glm::vec3 m_Pos;
 	glm::vec3 m_Up;

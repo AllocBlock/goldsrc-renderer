@@ -143,11 +143,11 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
     _ASSERTE(vImageIndex >= 0 && vImageIndex < m_CommandBuffers.size());
     // TODO: not finished, and to to consider dynamic, multiple command buffer, which should not be handled using static vector
     bool RerecordCommand = false;
-    if (m_FrustumCulling || m_FrustumCulling != m_LastFrustumCulling[vImageIndex])
+    if (m_EnableFrustumCulling || m_EnableFrustumCulling != m_LastEnableFrustumCullings[vImageIndex])
     {
         RerecordCommand = true;
     }
-    m_LastFrustumCulling[vImageIndex] = m_FrustumCulling;
+    m_LastEnableFrustumCullings[vImageIndex] = m_EnableFrustumCulling;
     if (RerecordCommand)
     {
         VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
@@ -182,7 +182,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 
         if (m_VertexBuffer != VK_NULL_HANDLE || m_IndexBuffer != VK_NULL_HANDLE)
         {
-            if (m_FrustumCulling)
+            if (m_EnableFrustumCulling)
             {
                 __calculateVisiableObjects();
                 for (size_t i = 0; i < m_VisableObjectIndices.size(); ++i)
@@ -860,8 +860,8 @@ void CVulkanRenderer::__createCommandBuffers()
 
     ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_CommandBuffers.data()));
 
-    m_LastFrustumCulling.clear();
-    m_LastFrustumCulling.resize(m_Framebuffers.size(), true);
+    m_LastEnableFrustumCullings.clear();
+    m_LastEnableFrustumCullings.resize(m_Framebuffers.size(), true);
 }
 
 std::vector<char> CVulkanRenderer::__readFile(std::filesystem::path vFilePath)
@@ -1183,15 +1183,50 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
 
 void CVulkanRenderer::__calculateVisiableObjects()
 {
+    SFrustum Frustum = m_pCamera->getFrustum();
     m_VisableObjectIndices.clear();
 
     for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
     {
         // frustum culling: don't draw object outside of view (judge by bounding box)
-        if (!m_pCamera->isObjectInSight(m_Scene.Objects[i]))
+        if (!__isObjectInSight(m_Scene.Objects[i], Frustum))
             continue;
         m_VisableObjectIndices.emplace_back(i);
     }
+}
+
+bool CVulkanRenderer::__isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const
+{
+    // AABB frustum culling
+    const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;
+    S3DBoundingBox BoundingBox = vpObject->getBoundingBox();
+    std::array<glm::vec3, 8> BoundPoints;
+    for (int i = 0; i < 8; ++i)
+    {
+        float X = ((i & 1) ? BoundingBox.Min.x : BoundingBox.Max.x);
+        float Y = ((i & 2) ? BoundingBox.Min.y : BoundingBox.Max.y);
+        float Z = ((i & 4) ? BoundingBox.Min.z : BoundingBox.Max.z);
+        BoundPoints[i] = glm::vec3(X, Y, Z);
+    }
+
+    // for each frustum plane
+    for (int i = 0; i < 6; ++i)
+    {
+        glm::vec3 Normal = glm::vec3(FrustumPlanes[i].x, FrustumPlanes[i].y, FrustumPlanes[i].z);
+        float D = FrustumPlanes[i].w;
+        // if all of the vertices in bounding is behind this plane, the object should not be drawn
+        bool NoDraw = true;
+        for (int k = 0; k < 8; ++k)
+        {
+            if (glm::dot(Normal, BoundPoints[k]) + D > 0)
+            {
+                NoDraw = false;
+                break;
+            }
+        }
+        if (NoDraw) return false;
+    }
+    return true;
 }
 
 void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
