@@ -146,11 +146,34 @@ void CImguiVullkan::__drawGUI()
     // 渲染设置
     if (ImGui::CollapsingHeader(u8"渲染", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        glm::vec3 CameraPos = m_pRenderer->getCamera()->getPos();
+        ImGui::Text((u8"相机位置：(" + std::to_string(CameraPos.x) + ", " + std::to_string(CameraPos.y) + ", " + std::to_string(CameraPos.z) + ")").c_str());
+        std::optional<uint32_t> CameraNodeIndex = m_pRenderer->getCameraNodeIndex();
+        if (CameraNodeIndex == std::nullopt)
+            ImGui::Text(u8"相机所处节点：-");
+        else
+            ImGui::Text((u8"相机所处节点：" + std::to_string(CameraNodeIndex.value())).c_str());
+
         size_t VisableObjectNum = m_pRenderer->getRenderedObjectNum();
         ImGui::Text((u8"渲染物体数：" + std::to_string(VisableObjectNum)).c_str());
-        static bool FrustumCulling = m_pRenderer->getFrustumCullingState();
-        ImGui::Checkbox(u8"CPU视锥剔除", &FrustumCulling);
-        m_pRenderer->setFrustumCullingState(FrustumCulling);
+
+        static bool Culling = m_pRenderer->getCullingState();
+        ImGui::Checkbox(u8"开启剔除", &Culling);
+        m_pRenderer->setCullingState(Culling);
+
+        if (Culling)
+        {
+            ImGui::BeginGroup();
+            static bool FrustumCulling = m_pRenderer->getFrustumCullingState();
+            ImGui::Checkbox(u8"CPU视锥剔除", &FrustumCulling);
+            if (FrustumCulling != m_pRenderer->getFrustumCullingState()) m_pRenderer->rerecordCommand();
+            m_pRenderer->setFrustumCullingState(FrustumCulling);
+
+            static bool PVS = m_pRenderer->getPVSState();
+            ImGui::Checkbox(u8"PVS剔除", &PVS);
+            m_pRenderer->setPVSState(PVS);
+            ImGui::EndGroup();
+        }
     }
 
     if (ImGui::CollapsingHeader(u8"其他", ImGuiTreeNodeFlags_DefaultOpen))

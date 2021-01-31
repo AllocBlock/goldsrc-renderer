@@ -40,19 +40,32 @@ struct S3DObject
 
 struct SBspTreeNode
 {
+    uint32_t Index;
+    glm::vec3 PlaneNormal;
+    float PlaneDistance;
     std::optional<uint32_t> PvsOffset = std::nullopt;
-    std::optional<int32_t> Left = std::nullopt;
-    std::optional<int32_t> Right = std::nullopt;
+    std::optional<int32_t> Front = std::nullopt;
+    std::optional<int32_t> Back = std::nullopt;
 };
 
 struct SBspTree
 {
+    size_t NodeNum, LeafNum;
     std::vector<SBspTreeNode> Nodes;
+
+    uint32_t getPointLeaf(glm::vec3 vPoint);
 };
 
 struct SBspPvs
 {
-    std::vector<uint8_t> Data;
+    uint32_t LeafNum;
+    std::vector<uint8_t> RawData;
+    std::vector<std::vector<bool>> MapList;
+
+    void decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree);
+    bool isVisiableLeafVisiable(uint32_t vStartLeafIndex, uint32_t vLeafIndex) const;
+private:
+    std::vector<uint8_t> __decompressFrom(size_t vStartIndex);
 };
 
 struct SScene

@@ -27,6 +27,102 @@ S3DBoundingBox S3DObject::getBoundingBox() const
     return BoundingBox;
 }
 
+uint32_t SBspTree::getPointLeaf(glm::vec3 vPoint)
+{
+    uint32_t NodeIndex = 0;
+    while (Nodes[NodeIndex].Front != std::nullopt || Nodes[NodeIndex].Back != std::nullopt)
+    {
+        if (glm::dot(Nodes[NodeIndex].PlaneNormal, vPoint) - Nodes[NodeIndex].PlaneDistance > 0)
+        {
+            NodeIndex = Nodes[NodeIndex].Front.value();
+        }
+        else
+        {
+            NodeIndex = Nodes[NodeIndex].Back.value();
+        }
+    }
+    uint32_t LeafIndex = Nodes[NodeIndex].Index;
+
+    return LeafIndex;
+}
+
+void SBspPvs::decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree)
+{
+    RawData = vRawData;
+    LeafNum = vBspTree.LeafNum;
+
+    MapList.resize(LeafNum);
+    for (size_t i = 0; i < LeafNum; ++i)
+    {
+        std::optional<uint32_t> VisOffset = vBspTree.Nodes[vBspTree.NodeNum + i].PvsOffset;
+        std::vector<uint8_t> DecompressedData;
+        if (VisOffset.has_value())
+            DecompressedData = __decompressFrom(VisOffset.value());
+
+        for (size_t k = 0; k < LeafNum; ++k)
+        {
+            if (VisOffset.has_value())
+            {
+                uint8_t Byte = DecompressedData[k / 8];
+                bool Visiable = (Byte & (1 << k % 8));
+                MapList[i].emplace_back(Visiable);
+            }
+            else
+                MapList[i].emplace_back(true);
+        }
+    }
+}
+
+bool SBspPvs::isVisiableLeafVisiable(uint32_t vStartLeafIndex, uint32_t vLeafIndex) const
+{
+    if (MapList.empty())
+        return true;
+    _ASSERTE(vStartLeafIndex < MapList.size());
+    if (MapList[vStartLeafIndex].empty())
+        return true;
+    _ASSERTE(vLeafIndex < MapList[vStartLeafIndex].size());
+    return MapList[vStartLeafIndex][vLeafIndex];
+}
+
+std::vector<uint8_t> SBspPvs::__decompressFrom(size_t vStartIndex)
+{
+    std::vector<uint8_t> DecompressedData;
+    size_t RowLength = (LeafNum + 7) / 8;
+
+    size_t Iter = vStartIndex;
+    while (DecompressedData.size() < RowLength)
+    {
+        // TODO: seems the RawData length is shorter than espected
+        // when encounter end of RawData and the decompress is not finished, fill zero?
+        if (Iter >= RawData.size())
+        {
+            GlobalLogger::logStream() << u8"vis数据解码遇到末尾，已自动补零";
+            while(DecompressedData.size() < RowLength)
+                DecompressedData.emplace_back(0);
+        }
+        else if (RawData[Iter] > 0) // non-zero, just copy it
+        {
+            DecompressedData.emplace_back(RawData[Iter]);
+            ++Iter;
+        }
+        else // zero, meaning the next byte tell how many zeros there are
+        {
+            ++Iter;
+            _ASSERTE(Iter < RawData.size());
+            uint8_t ZeroNum = RawData[Iter];
+            while (ZeroNum > 0 && DecompressedData.size() < RowLength)
+            {
+                DecompressedData.emplace_back(0);
+                ZeroNum--;
+            }
+            ++Iter;
+        }
+    }
+
+    _ASSERTE(DecompressedData.size() == RowLength);
+    return DecompressedData;
+}
+
 std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
 {
     uint8_t BaseColor1[3] = { 0, 0, 0 };
@@ -368,17 +464,18 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
         }
     }
 
-    // load faces, one face one object as each face have diffrent lightmap
+    // load leaves, one object for each leaf
     if (vProgressReportFunc) vProgressReportFunc(u8"载入场景数据");
-    size_t NumNode = Lumps.m_LumpNode.Nodes.size();
-    for (const SBspNode& Node : Lumps.m_LumpNode.Nodes)
+    for (const SBspLeaf& Leaf : Lumps.m_LumpLeaf.Leaves)
     {
         auto pObject = std::make_shared<S3DObject>();
         pObject->UseShadow = false;
         
-        for (uint16_t i = 0; i < Node.NumFace; ++i)
+        for (uint16_t i = 0; i < Leaf.NumMarkSurface; ++i)
         {
-            uint16_t FaceIndex = Node.FirstFaceIndex + i;
+            uint16_t MarkSurfaceIndex = Leaf.FirstMarkSurfaceIndex + i;
+            _ASSERTE(MarkSurfaceIndex < Lumps.m_LumpMarkSurface.FaceIndices.size());
+            uint16_t FaceIndex = Lumps.m_LumpMarkSurface.FaceIndices[MarkSurfaceIndex];
 
             size_t TexWidth, TexHeight;
             std::string TexName;
@@ -451,28 +548,39 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     size_t NodeNum = Lumps.m_LumpNode.Nodes.size();
     size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
 
+    Scene.BspTree.NodeNum = NodeNum;
+    Scene.BspTree.LeafNum = LeafNum;
     Scene.BspTree.Nodes.resize(NodeNum + LeafNum);
     for (size_t i = 0; i < NodeNum; ++i)
     {
         const SBspNode& OriginNode = Lumps.m_LumpNode.Nodes[i];
+        _ASSERTE(OriginNode.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
+        const SBspPlane& OriginPlane = Lumps.m_LumpPlane.Planes[OriginNode.PlaneIndex];
         SBspTreeNode& Node = Scene.BspTree.Nodes[i];
+
+        Node.Index = i;
+        Node.PlaneNormal = OriginPlane.Normal.glmVec3();
+        Node.PlaneDistance = OriginPlane.DistanceToOrigin * SceneScale;
+
         if (OriginNode.ChildrenIndices[0] > 0)
-            Node.Left = OriginNode.ChildrenIndices[0];
+            Node.Front = OriginNode.ChildrenIndices[0];
         else
-            Node.Left = ~OriginNode.ChildrenIndices[0] + NodeNum;
+            Node.Front = ~OriginNode.ChildrenIndices[0] + NodeNum;
         if (OriginNode.ChildrenIndices[1] > 0)
-            Node.Right = OriginNode.ChildrenIndices[1];
+            Node.Back = OriginNode.ChildrenIndices[1];
         else
-            Node.Right = ~OriginNode.ChildrenIndices[1] + NodeNum;
+            Node.Back = ~OriginNode.ChildrenIndices[1] + NodeNum;
     }
     for (size_t i = 0; i < LeafNum; ++i)
     {
         const SBspLeaf& OriginLeaf = Lumps.m_LumpLeaf.Leaves[i];
         SBspTreeNode& Node = Scene.BspTree.Nodes[NodeNum + i];
-        if (OriginLeaf.VisOffset > 0)
+
+        Node.Index = i;
+        if (OriginLeaf.VisOffset >= 0)
             Node.PvsOffset = OriginLeaf.VisOffset;
     }
-    Scene.BspPvs.Data = Lumps.m_LumpVisibility.Vis;
+    Scene.BspPvs.decompress(Lumps.m_LumpVisibility.Vis, Scene.BspTree);
     
     return Scene;
 }

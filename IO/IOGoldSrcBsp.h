@@ -173,6 +173,12 @@ struct SLumpVertex
  * Vis can boost up rendering, and it's optional in a bsp.
  * Vis data is a sequences of bitfields which are run-length encoded.
  * run-length encoded: simple compressing method, e.g. AAAABBBBBCCC => 4A5B3C
+ * Particularlly in goldsrc, run-length encoding only perform on ZERO, as a lot of zeros in vis data.
+ * And other data is simply non-encoded.
+ * For example, 00110000 00000000 00000000 000000000 10000000 00000000 00000000
+ * -> hex byte form: 0x30 0x00 0x00 0x00 0x00 0x80 0x00 0x00 0x00
+ * -> run-length encode: 0x30 (no change) 0x00 (mark for run-length) 0x03 (3 zeros)
+ * 0x80 (no change) 0x00 (mark for run-length) 0x02 (2 zeros)
  **************************************************************/
 struct SLumpVisibility
 {

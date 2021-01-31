@@ -143,11 +143,11 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
     _ASSERTE(vImageIndex >= 0 && vImageIndex < m_CommandBuffers.size());
     // TODO: not finished, and to to consider dynamic, multiple command buffer, which should not be handled using static vector
     bool RerecordCommand = false;
-    if (m_EnableFrustumCulling || m_EnableFrustumCulling != m_LastEnableFrustumCullings[vImageIndex])
+    if (m_EnableCulling || m_RerecordCommand > 0)
     {
         RerecordCommand = true;
+        if (m_RerecordCommand > 0) --m_RerecordCommand;
     }
-    m_LastEnableFrustumCullings[vImageIndex] = m_EnableFrustumCulling;
     if (RerecordCommand)
     {
         VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
@@ -182,23 +182,20 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 
         if (m_VertexBuffer != VK_NULL_HANDLE || m_IndexBuffer != VK_NULL_HANDLE)
         {
-            if (m_EnableFrustumCulling)
-            {
-                __calculateVisiableObjects();
-                for (size_t i = 0; i < m_VisableObjectIndices.size(); ++i)
-                    __recordObjectRenderCommand(vImageIndex, m_VisableObjectIndices[i]);
-            }
-            else
-            {
-                for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
-                    __recordObjectRenderCommand(vImageIndex, i);
-            }
+            __calculateVisiableObjects();
+            for (size_t i = 0; i < m_VisableObjectIndices.size(); ++i)
+                __recordObjectRenderCommand(vImageIndex, m_VisableObjectIndices[i]);
         }
 
         vkCmdEndRenderPass(m_CommandBuffers[vImageIndex]);
         ck(vkEndCommandBuffer(m_CommandBuffers[vImageIndex]));
     }
     return m_CommandBuffers[vImageIndex];
+}
+
+void CVulkanRenderer::rerecordCommand()
+{
+    m_RerecordCommand += m_CommandBuffers.size();
 }
 
 std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
@@ -860,8 +857,7 @@ void CVulkanRenderer::__createCommandBuffers()
 
     ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_CommandBuffers.data()));
 
-    m_LastEnableFrustumCullings.clear();
-    m_LastEnableFrustumCullings.resize(m_Framebuffers.size(), true);
+    rerecordCommand();
 }
 
 std::vector<char> CVulkanRenderer::__readFile(std::filesystem::path vFilePath)
@@ -1186,11 +1182,26 @@ void CVulkanRenderer::__calculateVisiableObjects()
     SFrustum Frustum = m_pCamera->getFrustum();
     m_VisableObjectIndices.clear();
 
+    if (m_EnableCulling && m_EnablePVS)
+        m_CameraNodeIndex = m_Scene.BspTree.getPointLeaf(m_pCamera->getPos());
+    else
+        m_CameraNodeIndex = std::nullopt;
+
     for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
     {
-        // frustum culling: don't draw object outside of view (judge by bounding box)
-        if (!__isObjectInSight(m_Scene.Objects[i], Frustum))
-            continue;
+        if (m_EnableCulling)
+        {
+            // frustum culling: don't draw object outside of view (judge by bounding box)
+            if (m_EnableFrustumCulling)
+                if (!__isObjectInSight(m_Scene.Objects[i], Frustum))
+                    continue;
+
+            // PVS culling
+            if (m_EnablePVS)
+                if (!m_Scene.BspPvs.isVisiableLeafVisiable(m_CameraNodeIndex.value(), i))
+                    continue;
+        }
+
         m_VisableObjectIndices.emplace_back(i);
     }
 }

@@ -104,10 +104,17 @@ public:
     void destroy();
     void loadScene(const SScene& vScene);
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
+    void rerecordCommand();
     std::shared_ptr<CCamera> getCamera();
-    size_t getRenderedObjectNum() const { return m_EnableFrustumCulling ? m_VisableObjectIndices.size() : m_Scene.Objects.size(); }
+    size_t getRenderedObjectNum() const { return m_VisableObjectIndices.size(); }
+
+    bool getCullingState() const { return m_EnableCulling; }
+    void setCullingState(bool vCullingState) { m_EnableCulling = vCullingState; }
     bool getFrustumCullingState() const { return m_EnableFrustumCulling; }
     void setFrustumCullingState(bool vFrustumCullingState) { m_EnableFrustumCulling = vFrustumCullingState; }
+    bool getPVSState() const { return m_EnablePVS; }
+    void setPVSState(bool vPVS) { m_EnablePVS = vPVS; }
+    std::optional<uint32_t> getCameraNodeIndex() const { return m_CameraNodeIndex; }
 
 private:
     void __createRenderPass();
@@ -197,12 +204,14 @@ private:
     std::string m_FragShaderPath = "shader/frag.spv";
 
     SScene m_Scene;
+    size_t m_RerecordCommand = 0;
     std::vector<size_t> m_VisableObjectIndices;
     std::vector<SObjectDataPosition> m_ObjectDataPositions;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
+    bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;
-    std::vector<bool> m_LastEnableFrustumCullings;
     bool m_EnablePVS = false;
+    std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
 
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;
