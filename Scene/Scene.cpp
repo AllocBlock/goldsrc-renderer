@@ -52,19 +52,22 @@ void SBspPvs::decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree
     LeafNum = vBspTree.LeafNum;
 
     MapList.resize(LeafNum);
-    for (size_t i = 0; i < LeafNum; ++i)
+    MapList[0].resize(LeafNum, true); // leaf 0 can see all
+    for (size_t i = 1; i < LeafNum; ++i)
     {
         std::optional<uint32_t> VisOffset = vBspTree.Nodes[vBspTree.NodeNum + i].PvsOffset;
         std::vector<uint8_t> DecompressedData;
         if (VisOffset.has_value())
             DecompressedData = __decompressFrom(VisOffset.value());
 
-        for (size_t k = 0; k < LeafNum; ++k)
+        MapList[i].emplace_back(false); // leaf 0 contains no data, and is always invisible
+        for (size_t k = 1; k < LeafNum; ++k)
         {
+            size_t ShiftIndex = k - 1; // vis data start at leaf 1, so need to shift index
             if (VisOffset.has_value())
             {
-                uint8_t Byte = DecompressedData[k / 8];
-                bool Visiable = (Byte & (1 << k % 8));
+                uint8_t Byte = DecompressedData[ShiftIndex / 8];
+                bool Visiable = (Byte & (1 << (ShiftIndex % 8)));
                 MapList[i].emplace_back(Visiable);
             }
             else
@@ -87,7 +90,7 @@ bool SBspPvs::isVisiableLeafVisiable(uint32_t vStartLeafIndex, uint32_t vLeafInd
 std::vector<uint8_t> SBspPvs::__decompressFrom(size_t vStartIndex)
 {
     std::vector<uint8_t> DecompressedData;
-    size_t RowLength = (LeafNum + 7) / 8;
+    size_t RowLength = (LeafNum - 1 + 7) / 8;
 
     size_t Iter = vStartIndex;
     while (DecompressedData.size() < RowLength)

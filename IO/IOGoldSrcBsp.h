@@ -178,7 +178,8 @@ struct SLumpVertex
  * For example, 00110000 00000000 00000000 000000000 10000000 00000000 00000000
  * -> hex byte form: 0x30 0x00 0x00 0x00 0x00 0x80 0x00 0x00 0x00
  * -> run-length encode: 0x30 (no change) 0x00 (mark for run-length) 0x03 (3 zeros)
- * 0x80 (no change) 0x00 (mark for run-length) 0x02 (2 zeros)
+ * 0x80 (no change) 0x00 (mark for run-length) 0x02 (2 zeros).
+ * Furthermore, leaf 0 contain no data and is outside of any room in map, and vis data start from leaf 1
  **************************************************************/
 struct SLumpVisibility
 {
