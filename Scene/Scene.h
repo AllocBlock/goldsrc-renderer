@@ -46,6 +46,8 @@ struct SBspTreeNode
     std::optional<uint32_t> PvsOffset = std::nullopt;
     std::optional<int32_t> Front = std::nullopt;
     std::optional<int32_t> Back = std::nullopt;
+
+    bool isPointFrontOfPlane(glm::vec3 vPoint) const;
 };
 
 struct SBspTree

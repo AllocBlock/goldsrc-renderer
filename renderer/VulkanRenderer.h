@@ -98,7 +98,7 @@ class CVulkanRenderer
 public:
     CVulkanRenderer();
     
-    void init(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicsFamilyIndex, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
+    void init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicsFamilyIndex, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
     void update(uint32_t vImageIndex);
     void destroy();
@@ -106,7 +106,7 @@ public:
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     void rerecordCommand();
     std::shared_ptr<CCamera> getCamera();
-    size_t getRenderedObjectNum() const { return m_VisableObjectIndices.size(); }
+    size_t getRenderedObjectNum() const { return m_VisableObjectNum; }
 
     bool getCullingState() const { return m_EnableCulling; }
     void setCullingState(bool vCullingState) { m_EnableCulling = vCullingState; }
@@ -135,11 +135,15 @@ private:
     void __createDescriptorSets();
     void __createCommandBuffers();
 
+    void __fetchDepthTestFunc();
+
     void __createRecreateResources();
     void __destroyRecreateResources();
     void __createSceneResources();
     void __destroySceneResources();
 
+    void __renderByBspTree(uint32_t vImageIndex);
+    void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
@@ -163,6 +167,7 @@ private:
     std::vector<char> __readFile(std::filesystem::path vFilePath);
     std::vector<SPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
 
+    VkInstance m_Instance = VK_NULL_HANDLE;
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;
     uint32_t m_GraphicsQueueIndex = 0;
@@ -205,7 +210,8 @@ private:
 
     SScene m_Scene;
     size_t m_RerecordCommand = 0;
-    std::vector<size_t> m_VisableObjectIndices;
+    std::vector<bool> m_AreObjectsVisable;
+    size_t m_VisableObjectNum;
     std::vector<SObjectDataPosition> m_ObjectDataPositions;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
     bool m_EnableCulling = false;
@@ -219,4 +225,6 @@ private:
     const size_t m_MaxLightmapNum = 0x20000; // limitation from goldsrc. If need change, you should change this in frag shader as well
 
     bool m_FramebufferResized = false;
+
+    PFN_vkCmdSetDepthTestEnableEXT m_pVkSetDepthTestEnable = nullptr;
 };

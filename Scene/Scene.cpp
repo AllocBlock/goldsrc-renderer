@@ -27,6 +27,11 @@ S3DBoundingBox S3DObject::getBoundingBox() const
     return BoundingBox;
 }
 
+bool SBspTreeNode::isPointFrontOfPlane(glm::vec3 vPoint) const
+{
+    return glm::dot(PlaneNormal, vPoint) - PlaneDistance > 0;
+}
+
 uint32_t SBspTree::getPointLeaf(glm::vec3 vPoint)
 {
     uint32_t NodeIndex = 0;

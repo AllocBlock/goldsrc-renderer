@@ -14,8 +14,9 @@ CVulkanRenderer::CVulkanRenderer()
 {
 }
 
-void CVulkanRenderer::init(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicsFamilyIndex, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
+void CVulkanRenderer::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicsFamilyIndex, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
 {
+    m_Instance = vInstance;
     m_PhysicalDevice = vPhysicalDevice;
     m_Device = vDevice;
     m_GraphicsQueueIndex = vGraphicsFamilyIndex;
@@ -28,6 +29,8 @@ void CVulkanRenderer::init(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, u
     __createCommandPool();
     __createTextureSampler();
     __createRecreateResources();
+
+    __fetchDepthTestFunc();
 }
 
 void CVulkanRenderer::__createRecreateResources()
@@ -133,6 +136,11 @@ void CVulkanRenderer::loadScene(const SScene& vScene)
          else
              throw std::runtime_error(u8"物体类型错误");
      }
+
+     m_AreObjectsVisable.clear();
+     m_AreObjectsVisable.resize(m_Scene.Objects.size(), false);
+     m_VisableObjectNum = 0;
+
      vkDeviceWaitIdle(m_Device);
      __destroySceneResources();
      __createSceneResources();
@@ -179,18 +187,62 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         if (m_IndexBuffer != VK_NULL_HANDLE)
             vkCmdBindIndexBuffer(m_CommandBuffers[vImageIndex], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
-
+        
         if (m_VertexBuffer != VK_NULL_HANDLE || m_IndexBuffer != VK_NULL_HANDLE)
         {
             __calculateVisiableObjects();
-            for (size_t i = 0; i < m_VisableObjectIndices.size(); ++i)
-                __recordObjectRenderCommand(vImageIndex, m_VisableObjectIndices[i]);
+            if (m_Scene.UsePVS)
+            {
+                _ASSERTE(m_pVkSetDepthTestEnable);
+                m_pVkSetDepthTestEnable(m_CommandBuffers[vImageIndex], VK_FALSE);
+                __renderByBspTree(vImageIndex);
+                m_pVkSetDepthTestEnable(m_CommandBuffers[vImageIndex], VK_TRUE);
+            }
+            else
+            {
+                for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+                {
+                    if (m_AreObjectsVisable[i])
+                        __recordObjectRenderCommand(vImageIndex, i);
+                }
+            }
         }
 
         vkCmdEndRenderPass(m_CommandBuffers[vImageIndex]);
         ck(vkEndCommandBuffer(m_CommandBuffers[vImageIndex]));
     }
     return m_CommandBuffers[vImageIndex];
+}
+
+void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
+{
+    __renderTreeNode(vImageIndex, 0);
+}
+
+void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
+{
+    
+    if (vNodeIndex >= m_Scene.BspTree.NodeNum) // if is leaf, render it
+    {
+        uint32_t ObjectIndex = vNodeIndex - m_Scene.BspTree.NodeNum;
+        if (m_AreObjectsVisable[ObjectIndex])
+            __recordObjectRenderCommand(vImageIndex, ObjectIndex);
+    }
+    else
+    {
+        const SBspTreeNode& Node = m_Scene.BspTree.Nodes[vNodeIndex];
+        glm::vec3 CameraPos = m_pCamera->getPos();
+        if (Node.isPointFrontOfPlane(CameraPos))
+        {
+            __renderTreeNode(vImageIndex, Node.Front.value());
+            __renderTreeNode(vImageIndex, Node.Back.value());
+        }
+        else
+        {
+            __renderTreeNode(vImageIndex, Node.Back.value());
+            __renderTreeNode(vImageIndex, Node.Front.value());
+        }
+    }
 }
 
 void CVulkanRenderer::rerecordCommand()
@@ -436,6 +488,7 @@ void CVulkanRenderer::__createGraphicsPipeline()
 
     std::vector<VkDynamicState> EnabledDynamicStates = 
     {
+        VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE_EXT,
         VK_DYNAMIC_STATE_DEPTH_BIAS
     };
 
@@ -860,6 +913,11 @@ void CVulkanRenderer::__createCommandBuffers()
     rerecordCommand();
 }
 
+void CVulkanRenderer::__fetchDepthTestFunc()
+{
+    m_pVkSetDepthTestEnable = reinterpret_cast<PFN_vkCmdSetDepthTestEnableEXT>(vkGetInstanceProcAddr(m_Instance, "vkCmdSetDepthTestEnableEXT"));
+}
+
 std::vector<char> CVulkanRenderer::__readFile(std::filesystem::path vFilePath)
 {
     std::ifstream File(vFilePath, std::ios::ate | std::ios::binary);
@@ -1180,15 +1238,16 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
 void CVulkanRenderer::__calculateVisiableObjects()
 {
     SFrustum Frustum = m_pCamera->getFrustum();
-    m_VisableObjectIndices.clear();
 
     if (m_EnableCulling && m_EnablePVS)
         m_CameraNodeIndex = m_Scene.BspTree.getPointLeaf(m_pCamera->getPos());
     else
         m_CameraNodeIndex = std::nullopt;
 
+    m_VisableObjectNum = 0;
     for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
     {
+        m_AreObjectsVisable[i] = false;
         if (m_EnableCulling)
         {
             // frustum culling: don't draw object outside of view (judge by bounding box)
@@ -1202,7 +1261,8 @@ void CVulkanRenderer::__calculateVisiableObjects()
                     continue;
         }
 
-        m_VisableObjectIndices.emplace_back(i);
+        m_AreObjectsVisable[i] = true;
+        ++m_VisableObjectNum;
     }
 }
 

@@ -115,7 +115,7 @@ void CImguiVullkan::init()
 
     __createFramebuffers();
 
-    m_pRenderer->init(m_PhysicalDevice, m_Device, m_GraphicsQueueIndex, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
+    m_pRenderer->init(m_Instance, m_PhysicalDevice, m_Device, m_GraphicsQueueIndex, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
 }
 
 void CImguiVullkan::waitDevice()
@@ -378,6 +378,17 @@ void CImguiVullkan::__choosePhysicalDevice()
     if (m_PhysicalDevice == VK_NULL_HANDLE)
     {
         throw std::runtime_error(u8"未找到可用的GPU设备");
+    }
+
+    uint32_t ExtensionNum = 0;
+    std::vector<VkExtensionProperties> ExtensionProperties;
+    vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &ExtensionNum, nullptr);
+    ExtensionProperties.resize(ExtensionNum);
+    vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &ExtensionNum, ExtensionProperties.data());
+
+    for (const VkExtensionProperties& Extension : ExtensionProperties)
+    {
+        std::cout << "[扩展] " << Extension.extensionName << ", " << Extension.specVersion << std::endl;
     }
 }
 
