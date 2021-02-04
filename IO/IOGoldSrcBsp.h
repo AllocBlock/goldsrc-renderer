@@ -434,6 +434,7 @@ struct SBspModel
  * SLumpModel store all models.
  * A model is like a mini BSP tree.
  * It use local coordinate for vertex related to origin.
+ * Seems to be used for brushes belong to entities.
  **************************************************************/
 struct SLumpModel
 {

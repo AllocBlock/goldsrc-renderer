@@ -7,6 +7,12 @@
 #include <array>
 #include <optional>
 
+enum class ERenderMethod
+{
+    BSP,
+    DEPTH_TEST
+};
+
 struct SPointData
 {
     glm::vec3 Pos;
@@ -115,6 +121,7 @@ public:
     bool getPVSState() const { return m_EnablePVS; }
     void setPVSState(bool vPVS) { m_EnablePVS = vPVS; }
     std::optional<uint32_t> getCameraNodeIndex() const { return m_CameraNodeIndex; }
+    std::vector<uint32_t> getRenderNodeList() const { return m_RenderNodeList; }
 
 private:
     void __createRenderPass();
@@ -134,8 +141,6 @@ private:
     void __createDescriptorPool();
     void __createDescriptorSets();
     void __createCommandBuffers();
-
-    void __fetchDepthTestFunc();
 
     void __createRecreateResources();
     void __destroyRecreateResources();
@@ -207,6 +212,7 @@ private:
 
     std::string m_VertShaderPath = "shader/vert.spv";
     std::string m_FragShaderPath = "shader/frag.spv";
+    VkPrimitiveTopology m_DefaultPrimitiveToplogy = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     SScene m_Scene;
     size_t m_RerecordCommand = 0;
@@ -218,6 +224,8 @@ private:
     bool m_EnableFrustumCulling = false;
     bool m_EnablePVS = false;
     std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
+    std::vector<uint32_t> m_RenderNodeList;
+    ERenderMethod m_RenderMethod = ERenderMethod::BSP;
 
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;
@@ -225,6 +233,4 @@ private:
     const size_t m_MaxLightmapNum = 0x20000; // limitation from goldsrc. If need change, you should change this in frag shader as well
 
     bool m_FramebufferResized = false;
-
-    PFN_vkCmdSetDepthTestEnableEXT m_pVkSetDepthTestEnable = nullptr;
 };

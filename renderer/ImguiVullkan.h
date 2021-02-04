@@ -116,8 +116,6 @@ private:
 
     const std::vector<const char*> m_DeviceExtensions =
     {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, // required by extented dynamic state
-        VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME // for depth test enable cmd
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 };

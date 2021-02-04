@@ -157,6 +157,17 @@ void CImguiVullkan::__drawGUI()
         size_t VisableObjectNum = m_pRenderer->getRenderedObjectNum();
         ImGui::Text((u8"渲染物体数：" + std::to_string(VisableObjectNum)).c_str());
 
+        std::vector<uint32_t> RenderNodeList = m_pRenderer->getRenderNodeList();
+        if (!RenderNodeList.empty())
+        {
+            std::string RenderNodeListStr = "";
+            for (uint32_t NodeIndex : RenderNodeList)
+            {
+                RenderNodeListStr += std::to_string(NodeIndex) + ", ";
+            }
+            ImGui::TextWrapped((u8"渲染节点：" + RenderNodeListStr).c_str());
+        }
+
         static bool Culling = m_pRenderer->getCullingState();
         ImGui::Checkbox(u8"开启剔除", &Culling);
         m_pRenderer->setCullingState(Culling);

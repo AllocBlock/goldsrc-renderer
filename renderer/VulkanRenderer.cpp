@@ -29,8 +29,6 @@ void CVulkanRenderer::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevic
     __createCommandPool();
     __createTextureSampler();
     __createRecreateResources();
-
-    __fetchDepthTestFunc();
 }
 
 void CVulkanRenderer::__createRecreateResources()
@@ -151,7 +149,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
     _ASSERTE(vImageIndex >= 0 && vImageIndex < m_CommandBuffers.size());
     // TODO: not finished, and to to consider dynamic, multiple command buffer, which should not be handled using static vector
     bool RerecordCommand = false;
-    if (m_EnableCulling || m_RerecordCommand > 0)
+    if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling || m_RerecordCommand > 0)
     {
         RerecordCommand = true;
         if (m_RerecordCommand > 0) --m_RerecordCommand;
@@ -191,13 +189,8 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         if (m_VertexBuffer != VK_NULL_HANDLE || m_IndexBuffer != VK_NULL_HANDLE)
         {
             __calculateVisiableObjects();
-            if (m_Scene.UsePVS)
-            {
-                _ASSERTE(m_pVkSetDepthTestEnable);
-                m_pVkSetDepthTestEnable(m_CommandBuffers[vImageIndex], VK_FALSE);
+            if (m_RenderMethod == ERenderMethod::BSP)
                 __renderByBspTree(vImageIndex);
-                m_pVkSetDepthTestEnable(m_CommandBuffers[vImageIndex], VK_TRUE);
-            }
             else
             {
                 for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
@@ -216,17 +209,20 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
 {
+    m_RenderNodeList.clear();
     __renderTreeNode(vImageIndex, 0);
 }
 
 void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
 {
-    
     if (vNodeIndex >= m_Scene.BspTree.NodeNum) // if is leaf, render it
     {
         uint32_t ObjectIndex = vNodeIndex - m_Scene.BspTree.NodeNum;
-        if (m_AreObjectsVisable[ObjectIndex])
+        if (ObjectIndex > 0 && m_AreObjectsVisable[ObjectIndex])
+        {
+            m_RenderNodeList.emplace_back(ObjectIndex);
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
+        }
     }
     else
     {
@@ -234,13 +230,13 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
         glm::vec3 CameraPos = m_pCamera->getPos();
         if (Node.isPointFrontOfPlane(CameraPos))
         {
-            __renderTreeNode(vImageIndex, Node.Front.value());
             __renderTreeNode(vImageIndex, Node.Back.value());
+            __renderTreeNode(vImageIndex, Node.Front.value());
         }
         else
         {
-            __renderTreeNode(vImageIndex, Node.Back.value());
             __renderTreeNode(vImageIndex, Node.Front.value());
+            __renderTreeNode(vImageIndex, Node.Back.value());
         }
     }
 }
@@ -265,6 +261,8 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
     if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
         vkCmdDrawIndexed(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0, 0);
     else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
+        vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
+    else if (pObject->Type == E3DObjectType::TRIAGNLE_STRIP_LIST)
         vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
     else
         throw std::runtime_error(u8"物体类型错误");
@@ -413,7 +411,7 @@ void CVulkanRenderer::__createGraphicsPipeline()
 
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
     InputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    InputAssemblyInfo.topology = m_DefaultPrimitiveToplogy;
     InputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
     VkViewport Viewport = {};
@@ -459,7 +457,7 @@ void CVulkanRenderer::__createGraphicsPipeline()
 
     VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
     DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_TRUE;
+    DepthStencilInfo.depthTestEnable = m_RenderMethod == ERenderMethod::DEPTH_TEST ? VK_TRUE : VK_FALSE;
     DepthStencilInfo.depthWriteEnable = VK_TRUE;
     DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
     DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
@@ -488,7 +486,6 @@ void CVulkanRenderer::__createGraphicsPipeline()
 
     std::vector<VkDynamicState> EnabledDynamicStates = 
     {
-        VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE_EXT,
         VK_DYNAMIC_STATE_DEPTH_BIAS
     };
 
@@ -913,11 +910,6 @@ void CVulkanRenderer::__createCommandBuffers()
     rerecordCommand();
 }
 
-void CVulkanRenderer::__fetchDepthTestFunc()
-{
-    m_pVkSetDepthTestEnable = reinterpret_cast<PFN_vkCmdSetDepthTestEnableEXT>(vkGetInstanceProcAddr(m_Instance, "vkCmdSetDepthTestEnableEXT"));
-}
-
 std::vector<char> CVulkanRenderer::__readFile(std::filesystem::path vFilePath)
 {
     std::ifstream File(vFilePath, std::ios::ate | std::ios::binary);
@@ -1239,7 +1231,7 @@ void CVulkanRenderer::__calculateVisiableObjects()
 {
     SFrustum Frustum = m_pCamera->getFrustum();
 
-    if (m_EnableCulling && m_EnablePVS)
+    if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling && m_EnablePVS)
         m_CameraNodeIndex = m_Scene.BspTree.getPointLeaf(m_pCamera->getPos());
     else
         m_CameraNodeIndex = std::nullopt;

@@ -35,9 +35,9 @@ bool SBspTreeNode::isPointFrontOfPlane(glm::vec3 vPoint) const
 uint32_t SBspTree::getPointLeaf(glm::vec3 vPoint)
 {
     uint32_t NodeIndex = 0;
-    while (Nodes[NodeIndex].Front != std::nullopt || Nodes[NodeIndex].Back != std::nullopt)
+    while (NodeIndex < NodeNum)
     {
-        if (glm::dot(Nodes[NodeIndex].PlaneNormal, vPoint) - Nodes[NodeIndex].PlaneDistance > 0)
+        if (Nodes[NodeIndex].isPointFrontOfPlane(vPoint))
         {
             NodeIndex = Nodes[NodeIndex].Front.value();
         }
@@ -65,7 +65,8 @@ void SBspPvs::decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree
         if (VisOffset.has_value())
             DecompressedData = __decompressFrom(VisOffset.value());
 
-        MapList[i].emplace_back(false); // leaf 0 contains no data, and is always invisible
+        MapList[i].resize(LeafNum);
+        MapList[i][0] = false; // leaf 0 contains no data, and is always invisible
         for (size_t k = 1; k < LeafNum; ++k)
         {
             size_t ShiftIndex = k - 1; // vis data start at leaf 1, so need to shift index
@@ -73,10 +74,10 @@ void SBspPvs::decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree
             {
                 uint8_t Byte = DecompressedData[ShiftIndex / 8];
                 bool Visiable = (Byte & (1 << (ShiftIndex % 8)));
-                MapList[i].emplace_back(Visiable);
+                MapList[i][k] = Visiable;
             }
             else
-                MapList[i].emplace_back(true);
+                MapList[i][k] = true;
         }
     }
 }
@@ -478,13 +479,11 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
     {
         auto pObject = std::make_shared<S3DObject>();
         pObject->UseShadow = false;
-        
         for (uint16_t i = 0; i < Leaf.NumMarkSurface; ++i)
         {
             uint16_t MarkSurfaceIndex = Leaf.FirstMarkSurfaceIndex + i;
             _ASSERTE(MarkSurfaceIndex < Lumps.m_LumpMarkSurface.FaceIndices.size());
             uint16_t FaceIndex = Lumps.m_LumpMarkSurface.FaceIndices[MarkSurfaceIndex];
-
             size_t TexWidth, TexHeight;
             std::string TexName;
             getBspFaceTextureSizeAndName(Lumps, FaceIndex, TexWidth, TexHeight, TexName);
@@ -546,7 +545,6 @@ SScene SceneReader::readBspFile(std::filesystem::path vFilePath, std::function<v
                 pObject->LightmapIndices.emplace_back(LightmapIndex);
             }
         }
-
         Scene.Objects.emplace_back(std::move(pObject));
     }
 
