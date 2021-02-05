@@ -18,9 +18,51 @@
     <ClCompile Include="Scene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SceneReaderBsp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneGoldsrcCommon.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneCommon.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderObj.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneInterface.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderBsp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneInterface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneGoldsrcCommon.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneCommon.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderObj.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

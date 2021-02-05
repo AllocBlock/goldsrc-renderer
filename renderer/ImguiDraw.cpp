@@ -1,4 +1,5 @@
 #include "ImguiVullkan.h"
+#include "SceneInterface.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -17,17 +18,17 @@ SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath, std::
     else if (vFilePath.extension() == ".bsp")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::readBspFile(vFilePath, vProgressReportFunc);
+        Result.Scene = SceneReader::read("bsp", vFilePath, vProgressReportFunc);
     }
     else if (vFilePath.extension() == ".map")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::readMapFile(vFilePath, vProgressReportFunc);
+        Result.Scene = SceneReader::read("map", vFilePath, vProgressReportFunc);
     }
     else if (vFilePath.extension() == ".obj")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::readObjFile(vFilePath, vProgressReportFunc);
+        Result.Scene = SceneReader::read("obj", vFilePath, vProgressReportFunc);
     }
     else
     {
@@ -146,6 +147,21 @@ void CImguiVullkan::__drawGUI()
     // ‰÷»æ…Ë÷√
     if (ImGui::CollapsingHeader(u8"‰÷»æ", ImGuiTreeNodeFlags_DefaultOpen))
     {
+        static const std::vector<ERenderMethod> RenderMethods =
+        {
+            ERenderMethod::DEFAULT,
+            ERenderMethod::BSP
+        };
+
+        static const std::vector<const char*> RenderMethodNames =
+        {
+            u8"ƒ¨»œ",
+            u8"BSP ˜‰÷»æ"
+        };
+        int RenderMethodIndex = std::find(RenderMethods.begin(), RenderMethods.end(), m_pRenderer->getRenderMethod()) - RenderMethods.begin();
+        ImGui::Combo(u8"‰÷»æƒ£ Ω", &RenderMethodIndex, RenderMethodNames.data(), RenderMethods.size());
+        m_pRenderer->setRenderMethod(RenderMethods[RenderMethodIndex]);
+
         glm::vec3 CameraPos = m_pRenderer->getCamera()->getPos();
         ImGui::Text((u8"œ‡ª˙Œª÷√£∫(" + std::to_string(CameraPos.x) + ", " + std::to_string(CameraPos.y) + ", " + std::to_string(CameraPos.z) + ")").c_str());
         std::optional<uint32_t> CameraNodeIndex = m_pRenderer->getCameraNodeIndex();

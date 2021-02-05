@@ -9,8 +9,8 @@
 
 enum class ERenderMethod
 {
-    BSP,
-    DEPTH_TEST
+    DEFAULT,
+    BSP
 };
 
 struct SPointData
@@ -122,6 +122,8 @@ public:
     void setPVSState(bool vPVS) { m_EnablePVS = vPVS; }
     std::optional<uint32_t> getCameraNodeIndex() const { return m_CameraNodeIndex; }
     std::vector<uint32_t> getRenderNodeList() const { return m_RenderNodeList; }
+    ERenderMethod getRenderMethod() const { return m_RenderMethod; }
+    void setRenderMethod(ERenderMethod vRenderMethod) { m_RenderMethod = vRenderMethod; }
 
 private:
     void __createRenderPass();

@@ -114,6 +114,9 @@ void CVulkanRenderer::loadScene(const SScene& vScene)
 {
      m_Scene = vScene;
      m_ObjectDataPositions.resize(m_Scene.Objects.size());
+     if (m_Scene.BspTree.Nodes.empty())
+         m_RenderMethod = ERenderMethod::DEFAULT;
+
      size_t IndexOffset = 0;
      size_t VertexOffset = 0;
      for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
@@ -210,6 +213,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
 {
     m_RenderNodeList.clear();
+    if (m_Scene.BspTree.Nodes.empty()) throw "场景不含BSP数据";
     __renderTreeNode(vImageIndex, 0);
 }
 
@@ -457,7 +461,7 @@ void CVulkanRenderer::__createGraphicsPipeline()
 
     VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
     DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = m_RenderMethod == ERenderMethod::DEPTH_TEST ? VK_TRUE : VK_FALSE;
+    DepthStencilInfo.depthTestEnable = VK_TRUE;
     DepthStencilInfo.depthWriteEnable = VK_TRUE;
     DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
     DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
@@ -1231,7 +1235,7 @@ void CVulkanRenderer::__calculateVisiableObjects()
 {
     SFrustum Frustum = m_pCamera->getFrustum();
 
-    if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling && m_EnablePVS)
+    if ((m_RenderMethod == ERenderMethod::BSP || m_EnableCulling) && m_EnablePVS)
         m_CameraNodeIndex = m_Scene.BspTree.getPointLeaf(m_pCamera->getPos());
     else
         m_CameraNodeIndex = std::nullopt;

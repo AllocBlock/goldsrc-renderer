@@ -161,10 +161,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="SceneInterface.cpp" />
+    <ClCompile Include="SceneReaderMap.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneCommon.cpp" />
+    <ClCompile Include="SceneGoldsrcCommon.cpp" />
+    <ClCompile Include="SceneReaderBase.cpp" />
+    <ClCompile Include="SceneReaderBsp.cpp" />
+    <ClCompile Include="SceneReaderObj.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="SceneReaderMap.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneCommon.h" />
+    <ClInclude Include="SceneGoldsrcCommon.h" />
+    <ClInclude Include="SceneInterface.h" />
+    <ClInclude Include="SceneReaderBase.h" />
+    <ClInclude Include="SceneReaderBsp.h" />
+    <ClInclude Include="SceneReaderObj.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IO\IO.vcxproj">
