@@ -151,6 +151,7 @@ private:
 
     void __renderByBspTree(uint32_t vImageIndex);
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
+    void __renderModels(uint32_t vImageIndex);
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);

@@ -215,6 +215,7 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeList.clear();
     if (m_Scene.BspTree.Nodes.empty()) throw "场景不含BSP数据";
     __renderTreeNode(vImageIndex, 0);
+    __renderModels(vImageIndex);
 }
 
 void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
@@ -245,6 +246,15 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
     }
 }
 
+void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
+{
+    for(size_t i = 0; i < m_Scene.BspTree.ModelNum; i++)
+    {
+        size_t ObjectIndex = m_Scene.BspTree.LeafNum + i;
+        __recordObjectRenderCommand(vImageIndex, ObjectIndex);
+    }
+}
+
 void CVulkanRenderer::rerecordCommand()
 {
     m_RerecordCommand += m_CommandBuffers.size();
@@ -257,6 +267,7 @@ std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
 
 void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
+    _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_Scene.Objects.size());
     std::shared_ptr<S3DObject> pObject = m_Scene.Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
     //SPushConstant PushConstant = {};
@@ -1244,8 +1255,16 @@ void CVulkanRenderer::__calculateVisiableObjects()
     for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
     {
         m_AreObjectsVisable[i] = false;
+        
         if (m_EnableCulling)
         {
+            if (i >= m_Scene.BspTree.NodeNum + m_Scene.BspTree.LeafNum) // ignore culling for model for now
+            {
+                m_AreObjectsVisable[i] = true;
+                ++m_VisableObjectNum;
+                continue;
+            }
+
             // frustum culling: don't draw object outside of view (judge by bounding box)
             if (m_EnableFrustumCulling)
                 if (!__isObjectInSight(m_Scene.Objects[i], Frustum))

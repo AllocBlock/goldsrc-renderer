@@ -158,7 +158,15 @@ void CImguiVullkan::__drawGUI()
             u8"Ä¬ÈÏ",
             u8"BSPÊ÷äÖÈ¾"
         };
+
+
+        static ERenderMethod LastMethod = m_pRenderer->getRenderMethod();
         int RenderMethodIndex = std::find(RenderMethods.begin(), RenderMethods.end(), m_pRenderer->getRenderMethod()) - RenderMethods.begin();
+        if (LastMethod != RenderMethods[RenderMethodIndex])
+        {
+            LastMethod = RenderMethods[RenderMethodIndex];
+            m_pRenderer->rerecordCommand();
+        }
         ImGui::Combo(u8"äÖÈ¾Ä£Ê½", &RenderMethodIndex, RenderMethodNames.data(), RenderMethods.size());
         m_pRenderer->setRenderMethod(RenderMethods[RenderMethodIndex]);
 

@@ -22,9 +22,6 @@ struct S3DBoundingBox
 
 struct S3DObject
 {
-    bool UseShadow = true;
-    bool UseLightmap = false;
-
     E3DObjectType Type = E3DObjectType::TRIAGNLE_LIST;
     std::vector<glm::vec3> Vertices;
     std::vector<glm::vec3> Colors;
@@ -52,7 +49,7 @@ struct SBspTreeNode
 
 struct SBspTree
 {
-    size_t NodeNum, LeafNum;
+    size_t NodeNum, LeafNum, ModelNum;
     std::vector<SBspTreeNode> Nodes;
 
     uint32_t getPointLeaf(glm::vec3 vPoint);
@@ -72,10 +69,10 @@ private:
 
 struct SScene
 {
-    bool UseLightmap = false;
-
     std::vector<std::shared_ptr<S3DObject>> Objects;
     std::vector<std::shared_ptr<CIOImage>> TexImages;
+
+    bool UseLightmap = false;
     std::vector<std::shared_ptr<CIOImage>> LightmapImages;
 
     bool UsePVS = false;

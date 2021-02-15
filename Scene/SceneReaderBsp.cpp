@@ -78,11 +78,10 @@ void CSceneReaderBsp::__loadLeaves()
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     // load leaves, one object for each leaf
-    __reportProgress(u8"载入场景数据");
+    __reportProgress(u8"载入固体数据");
     for (const SBspLeaf& Leaf : Lumps.m_LumpLeaf.Leaves)
     {
         auto pObject = std::make_shared<S3DObject>();
-        pObject->UseShadow = false;
         for (uint16_t i = 0; i < Leaf.NumMarkSurface; ++i)
         {
             uint16_t MarkSurfaceIndex = Leaf.FirstMarkSurfaceIndex + i;
@@ -96,7 +95,19 @@ void CSceneReaderBsp::__loadLeaves()
 
 void CSceneReaderBsp::__loadEntities()
 {
-    
+    const SBspLumps& Lumps = m_Bsp.getLumps();
+
+    // load leaves, one object for each leaf
+    __reportProgress(u8"载入实体数据");
+    for (const SBspModel& Model : Lumps.m_LumpModel.Models)
+    {
+        auto pObject = std::make_shared<S3DObject>();
+        for (uint16_t i = 0; i < Model.NumFaces; ++i)
+        {
+            __appendBspFaceToObject(pObject, Model.FirstFaceIndex + i);
+        }
+        m_Scene.Objects.emplace_back(std::move(pObject));
+    }
 }
 
 void CSceneReaderBsp::__loadBspTreeAndPvs()
@@ -108,9 +119,11 @@ void CSceneReaderBsp::__loadBspTreeAndPvs()
     m_Scene.UsePVS = true;
     size_t NodeNum = Lumps.m_LumpNode.Nodes.size();
     size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
+    size_t ModelNum = Lumps.m_LumpModel.Models.size();
 
     m_Scene.BspTree.NodeNum = NodeNum;
     m_Scene.BspTree.LeafNum = LeafNum;
+    m_Scene.BspTree.ModelNum = ModelNum;
     m_Scene.BspTree.Nodes.resize(NodeNum + LeafNum);
     for (size_t i = 0; i < NodeNum; ++i)
     {
