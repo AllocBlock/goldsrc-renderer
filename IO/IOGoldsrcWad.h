@@ -62,8 +62,8 @@ struct SWadTexture
 class CIOGoldsrcWad : public CIOBase 
 {
 public:
-    CIOGoldsrcWad() :CIOBase() {}
-    CIOGoldsrcWad(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
+    CIOGoldsrcWad() : CIOBase() {}
+    CIOGoldsrcWad(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
 
     size_t getTextureNum() const;
     std::optional<size_t> findTexture(std::string vName) const;

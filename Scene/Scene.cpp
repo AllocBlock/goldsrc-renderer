@@ -106,7 +106,7 @@ std::vector<uint8_t> SBspPvs::__decompressFrom(size_t vStartIndex)
         // when encounter end of RawData and the decompress is not finished, fill zero?
         if (Iter >= RawData.size())
         {
-            GlobalLogger::logStream() << u8"vis数据解码遇到末尾，已自动补零";
+            globalLog(u8"vis数据解码遇到末尾，已自动补零");
             while(DecompressedData.size() < RowLength)
                 DecompressedData.emplace_back(0);
         }

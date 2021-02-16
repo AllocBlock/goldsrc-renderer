@@ -1,5 +1,4 @@
 #include "VulkanRenderer.h"
-#include "IOLog.h"
 #include "Common.h"
 
 #include <iostream>
@@ -672,7 +671,7 @@ void CVulkanRenderer::__createVertexBuffer()
         NumVertex += pObject->Vertices.size();
     if (NumVertex == 0)
     {
-        GlobalLogger::logStream() << u8"没有顶点数据，跳过索引缓存创建";
+        globalLog(u8"没有顶点数据，跳过索引缓存创建");
         return;
     }
 
@@ -710,7 +709,7 @@ void CVulkanRenderer::__createIndexBuffer()
 
     if (NumIndex == 0)
     {
-        GlobalLogger::logStream() << u8"没有索引数据，跳过索引缓存创建";
+        globalLog(u8"没有索引数据，跳过索引缓存创建");
         return;
     }
 
@@ -1199,7 +1198,7 @@ size_t CVulkanRenderer::__getActualTextureNum()
     size_t NumTexture = m_Scene.TexImages.size();
     if (NumTexture > m_MaxTextureNum)
     {
-        GlobalLogger::logStream() << u8"警告: 纹理数量 = (" << std::to_string(NumTexture) << u8") 大于限制数量 (" << std::to_string(m_MaxTextureNum) << u8"), 多出的纹理将被忽略";
+        globalLog(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(m_MaxTextureNum) + u8"), 多出的纹理将被忽略");
         NumTexture = m_MaxTextureNum;
     }
     return NumTexture;
@@ -1211,7 +1210,7 @@ size_t CVulkanRenderer::__getActualLightmapNum()
     size_t NumLightmap = m_Scene.LightmapImages.size();
     if (NumLightmap > m_MaxLightmapNum)
     {
-        GlobalLogger::logStream() << u8"警告: Lightmap数量 = (" << std::to_string(NumLightmap) << u8") 大于限制数量 (" << std::to_string(m_MaxLightmapNum) << u8"), 多出的Lightmap将被忽略";
+        globalLog(u8"警告: Lightmap数量 = (" + std::to_string(NumLightmap) + u8") 大于限制数量 (" + std::to_string(m_MaxLightmapNum) + u8"), 多出的Lightmap将被忽略");
         NumLightmap = m_MaxLightmapNum;
     }
     return NumLightmap;

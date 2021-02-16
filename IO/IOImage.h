@@ -4,7 +4,8 @@
 class CIOImage : public CIOBase
 {
 public:
-    CIOImage() :CIOBase() {}
+    CIOImage() : CIOBase() {}
+    CIOImage(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
     CIOImage(const CIOImage& vObj)
     {
         m_Width = vObj.getImageWidth();
@@ -12,7 +13,6 @@ public:
         m_Channels = vObj.getImageChannels();
         setData(vObj.getData());
     }
-    CIOImage(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
     virtual ~CIOImage() { __cleanup(); }
 
     int getImageWidth() const { return m_Width; }
@@ -27,6 +27,7 @@ public:
 
 protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
+
 private:
     void __cleanup();
 

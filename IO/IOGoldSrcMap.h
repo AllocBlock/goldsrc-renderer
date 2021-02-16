@@ -86,8 +86,8 @@ private:
 class CIOGoldSrcMap : public CIOBase
 {
 public:
-	CIOGoldSrcMap() :CIOBase() {}
-	CIOGoldSrcMap(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
+	CIOGoldSrcMap() : CIOBase() {}
+	CIOGoldSrcMap(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
 
 	std::vector<std::filesystem::path> getWadPaths();
 	const std::vector<SMapEntity>& getEntities() { return m_Entities; }

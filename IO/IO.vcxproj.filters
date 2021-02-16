@@ -24,9 +24,6 @@
     <ClCompile Include="IOBase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="IOLog.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="IOImage.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -39,12 +36,12 @@
     <ClCompile Include="IOGoldSrcBsp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CommonLog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IOObj.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="IOLog.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="IOMtl.h">
@@ -63,6 +60,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="IOGoldSrcBsp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonLog.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

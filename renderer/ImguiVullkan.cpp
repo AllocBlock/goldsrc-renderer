@@ -1,6 +1,5 @@
 ﻿#include "ImguiVullkan.h"
 #include "Common.h"
-#include "IOLog.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -15,6 +14,11 @@ CImguiVullkan::CImguiVullkan(GLFWwindow* vpWindow)
     m_pRenderer = std::make_shared<CVulkanRenderer>();
     m_pInteractor = std::make_shared<CInteractor>(vpWindow, m_pRenderer->getCamera());
     m_pInteractor->bindEvent();
+
+    setGlobalLogFunc([=](std::string vText)
+    {
+        m_GUILog.log(vText);
+    });
 }
 
 void CImguiVullkan::init()
@@ -155,7 +159,12 @@ void CImguiVullkan::destroy()
 void CImguiVullkan::showAlert(std::string vText)
 {
     m_GUIAlert.appendAlert(vText);
-    GlobalLogger::logStream() << u8"警告: " << vText;
+    globalLog(u8"警告: " + vText);
+}
+
+void CImguiVullkan::log(std::string vText)
+{
+    m_GUILog.log(vText);
 }
 
 void CImguiVullkan::__createDescriptorPool()
@@ -631,7 +640,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL CImguiVullkan::debugCallback(VkDebugUtilsMessageS
     if (LastMessage != vpCallbackData->pMessage)
     {
         LastMessage = vpCallbackData->pMessage;
-        std::cerr << "[Validation Layer] " << vpCallbackData->pMessage << std::endl;
+        std::cerr << "[验证层] " << LastMessage << std::endl;
+        globalLog(u8"[验证层] " + LastMessage);
     }
 
     return VK_FALSE;

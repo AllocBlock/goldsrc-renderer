@@ -26,8 +26,8 @@ struct SMtlMaterial {
 class CIOMtl : public CIOBase
 {
 public:
-    CIOMtl() = default;
-    CIOMtl(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
+    CIOMtl() : CIOBase() {}
+    CIOMtl(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
     
 protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;

@@ -6,14 +6,22 @@ CIOBase::CIOBase()
 {
 }
 
-CIOBase::CIOBase(std::filesystem::path vFilePath)
+CIOBase::CIOBase(std::filesystem::path vFilePath) : m_FilePath(vFilePath)
 {
-    m_FilePath = vFilePath;
+}
+
+bool CIOBase::read()
+{
+    if (m_FilePath.empty())
+    {
+        throw std::runtime_error(u8"未指定要读取的文件");
+    }
+    return _readV(m_FilePath);
 }
 
 bool CIOBase::read(std::filesystem::path vFilePath)
 {
-	if (!vFilePath.empty()) m_FilePath = vFilePath;
+	m_FilePath = vFilePath;
     return _readV(m_FilePath);
 }
 

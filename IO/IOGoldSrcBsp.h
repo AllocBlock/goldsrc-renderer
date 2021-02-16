@@ -471,8 +471,8 @@ struct SBspLumps
 class CIOGoldSrcBsp : public CIOBase 
 {
 public:
-    CIOGoldSrcBsp() :CIOBase() {}
-    CIOGoldSrcBsp(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
+    CIOGoldSrcBsp() : CIOBase() {}
+    CIOGoldSrcBsp(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
 
     const SBspLumps& getLumps() const { return m_Lumps; }
 

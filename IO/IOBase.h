@@ -1,13 +1,15 @@
 #pragma once
-
-#include "IOLog.h"
+#include "CommonLog.h"
 
 #include <string>
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include <functional>
 
 const size_t MAX_LINE_SIZE = 1024;
+
+using LogFunc = std::function<void(std::string)>;
 
 class CIOBase
 {
@@ -15,7 +17,8 @@ public:
     CIOBase();
     CIOBase(std::filesystem::path vFilePath);
     virtual ~CIOBase() = default;
-    bool read(std::filesystem::path vFilePath = "");
+    bool read();
+    bool read(std::filesystem::path vFilePath);
 
     static bool isWhiteSpace(char vChar);
     static std::string trimString(std::string vString);

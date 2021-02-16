@@ -4,6 +4,7 @@
 #include "VulkanRenderer.h"
 #include "GUIAlert.h"
 #include "GUIFrameRate.h"
+#include "GUILog.h"
 
 #include <vulkan/vulkan.h>
 #define GLM_FORCE_RADIANS
@@ -40,6 +41,7 @@ public:
     void waitDevice();
     void destroy();
     void showAlert(std::string vText);
+    void log(std::string vText);
 
     static SResultReadScene readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
 
@@ -104,6 +106,7 @@ private:
 
     CGUIAlert m_GUIAlert = CGUIAlert();
     CGUIFrameRate m_GUIFrameRate = CGUIFrameRate();
+    CGUILog m_GUILog = CGUILog();
 
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";

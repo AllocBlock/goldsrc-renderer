@@ -198,7 +198,7 @@ bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
     File.open(vFilePath, std::ios::in);
     if (!File.is_open())
     {
-        GlobalLogger::logStream() << u8"读取文件 " << vFilePath << u8" 失败";
+        globalLog(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
         return false;
     }
 
@@ -362,7 +362,7 @@ std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
         {
             if (Properties.find("wad") == Properties.end())
             {
-                GlobalLogger::logStream() << "未在worldspawn实体内找到wad文件信息";
+                globalLog(u8"未在worldspawn实体内找到wad文件信息");
                 return {};
             }
             else

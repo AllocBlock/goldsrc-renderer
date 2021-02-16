@@ -33,8 +33,8 @@ struct SObj
 class CIOObj : public CIOBase
 {
 public:
-    CIOObj() :CIOBase() {}
-    CIOObj(std::filesystem::path vFilePath) :CIOBase(vFilePath) {}
+    CIOObj() : CIOBase() {}
+    CIOObj(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
 
     size_t getFaceNum() const;
     size_t getFaceNodeNum(int vFaceIndex) const;

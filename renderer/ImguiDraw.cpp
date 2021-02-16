@@ -223,12 +223,21 @@ void CImguiVullkan::__drawGUI()
     // ÷°¬ 
     m_GUIFrameRate.draw();
 
+    // »’÷æ
+    m_GUILog.draw();
+
     // DEBUG
     if (ImGui::Button("test alert"))
     {
         showAlert("alert1");
         showAlert("alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2alert2");
         showAlert("alert3");
+    }
+    if (ImGui::Button("test log"))
+    {
+        log("log1");
+        log("log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2");
+        log("log3");
     }
 
     ImGui::Render();
