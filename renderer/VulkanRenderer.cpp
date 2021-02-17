@@ -479,14 +479,14 @@ void CVulkanRenderer::__createGraphicsPipeline()
 
     VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
     ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    ColorBlendAttachment.blendEnable = VK_FALSE;
+    ColorBlendAttachment.blendEnable = VK_FALSE; 
     ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
     ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
     ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
     ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
     ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
     ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
-
+     
     VkPipelineColorBlendStateCreateInfo ColorBlending = {};
     ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     ColorBlending.logicOpEnable = VK_FALSE;

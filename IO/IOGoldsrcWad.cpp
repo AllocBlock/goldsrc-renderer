@@ -74,14 +74,30 @@ void CIOGoldsrcWad::getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t
 void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void* vopData) const
 {
     _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TexturesList.size());
+    bool HasAlphaIndex = false;
+    if (m_TexturesList[vTexIndex].NameOrigin[0] == '{')
+    {
+        HasAlphaIndex = true;
+    }
+
     unsigned char* pIter = static_cast<unsigned char*>(vopData);
     for (uint8_t PalatteIndex : m_TexturesList[vTexIndex].ImageDatas[0])
     {
-        SWadColor PixelColor = m_TexturesList[vTexIndex].Palette[PalatteIndex];
-        *pIter++ = static_cast<unsigned char>(PixelColor.R);
-        *pIter++ = static_cast<unsigned char>(PixelColor.G);
-        *pIter++ = static_cast<unsigned char>(PixelColor.B);
-        *pIter++ = static_cast<unsigned char>(0xff);
+        if (HasAlphaIndex && PalatteIndex == 0xff) // transparent color
+        {
+            *pIter++ = static_cast<unsigned char>(0x00);
+            *pIter++ = static_cast<unsigned char>(0x00);
+            *pIter++ = static_cast<unsigned char>(0x00);
+            *pIter++ = static_cast<unsigned char>(0x00);
+        }
+        else
+        {
+            SWadColor PixelColor = m_TexturesList[vTexIndex].Palette[PalatteIndex];
+            *pIter++ = static_cast<unsigned char>(PixelColor.R);
+            *pIter++ = static_cast<unsigned char>(PixelColor.G);
+            *pIter++ = static_cast<unsigned char>(PixelColor.B);
+            *pIter++ = static_cast<unsigned char>(0xff);
+        }
     }
 }
 

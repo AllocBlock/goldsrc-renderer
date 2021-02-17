@@ -177,14 +177,28 @@ glm::vec3 SVec3::glmVec3() const
 bool SBspTexture::getRawRGBAPixels(void* vopData) const
 {
     if (!IsDataInBsp) return false;
+    bool HasAlphaIndex = false;
+    if (Name[0] == '{')
+    { 
+        HasAlphaIndex = true;
+    }
+
     size_t Resolution = Width * Height;
     char* pIter = reinterpret_cast<char*>(vopData);
     for (size_t i = 0; i < Resolution; ++i)
     {
-        pIter[i * 4] = pData[i * 3];
-        pIter[i * 4 + 1] = pData[i * 3 + 1];
-        pIter[i * 4 + 2] = pData[i * 3 + 2];
-        pIter[i * 4 + 3] = static_cast<uint8_t>(255);
+        // todo: how does { texture save in bsp?
+        if (HasAlphaIndex && false)
+        {
+
+        }
+        else
+        {
+            pIter[i * 4] = pData[i * 3];
+            pIter[i * 4 + 1] = pData[i * 3 + 1];
+            pIter[i * 4 + 2] = pData[i * 3 + 2];
+            pIter[i * 4 + 3] = static_cast<uint8_t>(255);
+        }
     }
     return true;
 }
