@@ -99,9 +99,34 @@ void CSceneReaderBsp::__loadEntities()
 
     // load leaves, one object for each leaf
     __reportProgress(u8"载入实体数据");
-    for (const SBspModel& Model : Lumps.m_LumpModel.Models)
+    const std::vector<SMapEntity>& Entities = Lumps.m_LumpEntity.Entities;
+    for (size_t i = 0; i < Lumps.m_LumpModel.Models.size(); ++i)
     {
+        const SBspModel& Model = Lumps.m_LumpModel.Models[i];
+
+        int RenderMode = 0;
+        float Opacity = 1.0f;
+        for (const SMapEntity& Entity : Entities)
+        {
+            if (Entity.Properties.find("model") != Entity.Properties.end()
+                && Entity.Properties.at("model") == "*" + std::to_string(i))
+            {
+                RenderMode = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
+                Opacity = Entity.Properties.find("renderamt") != Entity.Properties.end() ? std::stof(Entity.Properties.at("renderamt")) / 255.0f : 1.0f;
+            }
+        }
+
         auto pObject = std::make_shared<S3DObject>();
+        if (RenderMode != 0)
+        {
+            pObject->IsTransparent = true;
+            pObject->Opacity = Opacity;
+        }
+        else
+        {
+            pObject->IsTransparent = false;
+            pObject->Opacity = 1.0f;
+        }
         for (uint16_t i = 0; i < Model.NumFaces; ++i)
         {
             __appendBspFaceToObject(pObject, Model.FirstFaceIndex + i);

@@ -32,6 +32,9 @@ struct S3DObject
     std::vector<uint32_t> LightmapIndices;
     std::vector<uint32_t> Indices;
 
+    bool IsTransparent = false;
+    float Opacity = 1.0;
+
     S3DBoundingBox getBoundingBox() const;
 };
 

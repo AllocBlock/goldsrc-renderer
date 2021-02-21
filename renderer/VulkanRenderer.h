@@ -90,13 +90,27 @@ struct SUniformBufferObjectFrag
 
 struct SPushConstant
 {
-    unsigned int NotUsedForNow;
+    float Opacity;
 };
 
 struct SObjectDataPosition
 {
     VkDeviceSize Offset;
     VkDeviceSize Size;
+};
+
+struct SPipeline
+{
+    VkPipeline Pipeline = VK_NULL_HANDLE;
+    VkPipelineLayout Layout = VK_NULL_HANDLE;
+    std::filesystem::path VertShaderPath;
+    std::filesystem::path FragShaderPath;
+};
+
+struct SPipelineSet
+{
+    SPipeline TrianglesWithDepthTest;
+    SPipeline TrianglesWithBlend;
 };
 
 class CVulkanRenderer
@@ -128,7 +142,7 @@ public:
 private:
     void __createRenderPass();
     void __createDescriptorSetLayout();
-    void __createGraphicsPipeline();
+    void __createGraphicsPipelines();
     void __createCommandPool();
     void __createDepthResources();
     void __createFramebuffers();
@@ -156,6 +170,7 @@ private:
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
+    std::pair< std::vector<size_t>, std::vector<size_t>> __sortModelRenderSequence();
     
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
@@ -183,8 +198,11 @@ private:
 
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
-    VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
-    VkPipeline m_Pipeline = VK_NULL_HANDLE;
+    SPipelineSet m_PipelineSet = 
+    {
+        {VK_NULL_HANDLE, VK_NULL_HANDLE, "shader/vert.spv", "shader/frag.spv"},
+        {VK_NULL_HANDLE, VK_NULL_HANDLE, "shader/vert.spv", "shader/frag.spv"},
+    };
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     VkImage m_DepthImage = VK_NULL_HANDLE;
     VkImageView m_DepthImageView = VK_NULL_HANDLE;
@@ -213,8 +231,6 @@ private:
     std::vector<VkImageView> m_ImageViews;
     std::vector<VkFramebuffer> m_Framebuffers;
 
-    std::string m_VertShaderPath = "shader/vert.spv";
-    std::string m_FragShaderPath = "shader/frag.spv";
     VkPrimitiveTopology m_DefaultPrimitiveToplogy = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     SScene m_Scene;

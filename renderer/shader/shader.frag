@@ -22,18 +22,18 @@ layout(binding = 3) uniform texture2D uTextures[MAX_TEXTURE_NUM];
 layout(binding = 4) uniform texture2D uLightmaps[MAX_LIGHTMAP_NUM];
 layout(push_constant) uniform SPushConstant 
 {
-	uint NotUsedForNow;
+	float Opacity;
 } uPushConstant;
 
 void main()
 {
 	uint TexIndex = inFragTexIndex;
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
-	vec3 TexColor = texture(sampler2D(uTextures[inFragTexIndex], uTexSampler), inFragTexCoord).xyz;
+	vec4 TexColor = texture(sampler2D(uTextures[inFragTexIndex], uTexSampler), inFragTexCoord);
     if (inFragLightmapIndex < uint(0xffffffff))
 	{
 		vec3 LightmapColor = texture(sampler2D(uLightmaps[inFragLightmapIndex], uTexSampler), inFragLightmapCoord).xyz;
-		outColor = vec4(TexColor * LightmapColor, 1.0);
+		outColor = vec4(TexColor.rgb * LightmapColor, TexColor.a * uPushConstant.Opacity);
 	}
 	else
 	{
@@ -55,6 +55,6 @@ void main()
 		}
 
 		float shadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
-		outColor = vec4(TexColor * shadow, 1.0);
+		outColor = vec4(TexColor.rgb * shadow, TexColor.a * uPushConstant.Opacity);
 	}
 }
