@@ -70,13 +70,32 @@ private:
     std::vector<uint8_t> __decompressFrom(size_t vStartIndex);
 };
 
+struct SExtent
+{
+    size_t Offset, Size;
+};
+
+class CLightmap
+{
+public:
+    void clear();
+    size_t appendLightmap(std::shared_ptr<CIOImage> vpImage);
+    std::pair<size_t, size_t> getLightmapSize();
+    glm::vec2 getAcutalTexCoord(size_t vIndex, glm::vec2 vOriginTexCoord);
+    std::shared_ptr<CIOImage> getCombinedLightmap();
+private:
+    std::vector<std::shared_ptr<CIOImage>> m_LightmapImages;
+    size_t m_TotalWidth = 0, m_TotalHeight = 0;
+    static const size_t m_Channel = 4; // RGBA 4 channels
+};
+
 struct SScene
 {
     std::vector<std::shared_ptr<S3DObject>> Objects;
     std::vector<std::shared_ptr<CIOImage>> TexImages;
 
     bool UseLightmap = false;
-    std::vector<std::shared_ptr<CIOImage>> LightmapImages;
+    CLightmap Lightmap;
 
     bool UsePVS = false;
     SBspTree BspTree;

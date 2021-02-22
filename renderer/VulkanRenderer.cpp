@@ -1472,7 +1472,6 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
 
     m_pCamera->setAspect(Aspect);
     SUniformBufferObjectVert UBO = {};
-    //UBO.Model = glm::rotate(glm::mat4(1.0), DeltaTime * glm::radians(30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     UBO.Model = glm::mat4(1.0f);
     UBO.View = m_pCamera->getViewMat();
     UBO.Proj = m_pCamera->getProjMat();
