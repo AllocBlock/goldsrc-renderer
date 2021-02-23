@@ -7,15 +7,23 @@ SScene CSceneReaderBsp::read(std::filesystem::path vFilePath, std::function<void
 {
     m_ProgressReportFunc = vProgressReportFunc;
     m_Scene = SScene();
-    m_Scene.UseLightmap = true;
-    m_Scene.pLightmap = std::make_shared<CLightmap>();
-
+    
     __readBsp(vFilePath);
+    if (!m_Bsp.getLumps().m_LumpLighting.Lightmaps.empty())
+    {
+        m_Scene.UseLightmap = true;
+        m_Scene.pLightmap = std::make_shared<CLightmap>();
+        m_HasLightmapData = true;
+    }
+    if (!m_Bsp.getLumps().m_LumpVisibility.Vis.empty())
+        m_HasVisData = true;
+
     __readTextures();
     __loadLeaves();
     __loadEntities();
     __loadBspTreeAndPvs();
-    __correntLightmapCoords();
+    if (m_HasLightmapData)
+        __correntLightmapCoords();
 
     return m_Scene;
 }
@@ -143,7 +151,6 @@ void CSceneReaderBsp::__loadBspTreeAndPvs()
 
     // read node and PVS data
     __reportProgress(u8"载入BSP与VIS数据");
-    m_Scene.UsePVS = true;
     size_t NodeNum = Lumps.m_LumpNode.Nodes.size();
     size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
     size_t ModelNum = Lumps.m_LumpModel.Models.size();
@@ -181,7 +188,12 @@ void CSceneReaderBsp::__loadBspTreeAndPvs()
         if (OriginLeaf.VisOffset >= 0)
             Node.PvsOffset = OriginLeaf.VisOffset;
     }
-    m_Scene.BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_Scene.BspTree);
+
+    if (m_HasVisData)
+    {
+        m_Scene.UsePVS = true;
+        m_Scene.BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_Scene.BspTree);
+    }
 }
 
 std::vector<glm::vec3> CSceneReaderBsp::__getBspFaceVertices(size_t vFaceIndex)
@@ -278,8 +290,8 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
     const SBspFace& Face = Lumps.m_LumpFace.Faces[vFaceIndex];
 
     const float LightmapScale = 16.0f; // It should be 16.0 in GoldSrc. BTW, Source engine VHE seems to be able to change this.
-    // TODO: handle lighting style like sky, no-draw, etc.
-    if (Lumps.m_LumpLighting.Lightmaps.size() > 0 && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
+
+    if (m_HasLightmapData && Face.LightmapOffset < std::numeric_limits<uint32_t>::max())
     {
         glm::vec2 ScaledLightmapBoundMin = { INFINITY, INFINITY };
         glm::vec2 ScaledLightmapBoundMax = { -INFINITY, -INFINITY };
@@ -374,10 +386,17 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
     size_t TexWidth, TexHeight;
     std::string TexName;
     __getBspFaceTextureSizeAndName(vFaceIndex, TexWidth, TexHeight, TexName);
+
+    if (TexName == "sky") // if one face of this leaf is sky, then all faces of this leaf should be sky
+    { 
+        pObject->RenderType = E3DObjectRenderType::SKY;
+    }
+
     std::vector<glm::vec3> Vertices = __getBspFaceVertices(vFaceIndex);
     glm::vec3 Normal = __getBspFaceNormal(vFaceIndex);
     std::vector<glm::vec2> TexCoords = __getBspFaceUnnormalizedTexCoords(vFaceIndex, Vertices);
 
+    
     auto [LightmapIndex, LightmapCoords] = __getAndAppendBspFaceLightmap(vFaceIndex, TexCoords);
     uint32_t TexIndex = m_TexNameToIndex[TexName];
     if (LightmapIndex == std::nullopt)

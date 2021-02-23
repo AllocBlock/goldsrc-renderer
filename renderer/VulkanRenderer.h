@@ -84,7 +84,7 @@ struct SUniformBufferObjectFrag
 
 struct SPushConstant
 {
-    bool UseLightmap = false;
+    VkBool32 UseLightmap = VK_FALSE;
     float Opacity = 1.0;
 };
 
@@ -106,6 +106,7 @@ struct SPipelineSet
 {
     SPipeline TrianglesWithDepthTest;
     SPipeline TrianglesWithBlend;
+    SPipeline TrianglesSky;
 };
 
 class CVulkanRenderer

@@ -29,5 +29,6 @@ private:
     CIOGoldSrcBsp m_Bsp;
     SScene m_Scene;
     std::map<std::string, uint32_t> m_TexNameToIndex;
+    bool m_HasLightmapData = false, m_HasVisData = false;
 };
 

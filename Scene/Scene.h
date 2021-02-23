@@ -6,7 +6,7 @@
 #include <optional>
 #include <glm/glm.hpp>
 
-enum class E3DObjectType
+enum class E3DObjectDataType
 {
     TRIAGNLE_LIST,
     TRIAGNLE_STRIP_LIST,
@@ -20,9 +20,16 @@ struct S3DBoundingBox
     glm::vec3 Max;
 };
 
+enum class E3DObjectRenderType
+{
+    NORMAL,
+    SKY
+};
+
 struct S3DObject
 {
-    E3DObjectType Type = E3DObjectType::TRIAGNLE_LIST;
+    E3DObjectDataType DataType = E3DObjectDataType::TRIAGNLE_LIST;
+    E3DObjectRenderType RenderType = E3DObjectRenderType::NORMAL;
     std::vector<glm::vec3> Vertices;
     std::vector<glm::vec3> Colors;
     std::vector<glm::vec3> Normals;

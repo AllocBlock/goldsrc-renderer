@@ -46,13 +46,24 @@ void CVulkanRenderer::__destroyRecreateResources()
     vkDestroyImageView(m_Device, m_DepthImageView, nullptr);
     vkDestroyImage(m_Device, m_DepthImage, nullptr);
     vkFreeMemory(m_Device, m_DepthImageMemory, nullptr);
+    m_DepthImageView = VK_NULL_HANDLE;
+    m_DepthImage = VK_NULL_HANDLE;
+    m_DepthImageMemory = VK_NULL_HANDLE;
+
     for (auto& Framebuffer : m_Framebuffers)
         vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
+    m_Framebuffers.clear();
 
     vkDestroyPipeline(m_Device, m_PipelineSet.TrianglesWithDepthTest.Pipeline, nullptr);
     vkDestroyPipelineLayout(m_Device, m_PipelineSet.TrianglesWithDepthTest.Layout, nullptr);
     vkDestroyPipeline(m_Device, m_PipelineSet.TrianglesWithBlend.Pipeline, nullptr);
     vkDestroyPipelineLayout(m_Device, m_PipelineSet.TrianglesWithBlend.Layout, nullptr);
+    vkDestroyPipeline(m_Device, m_PipelineSet.TrianglesSky.Pipeline, nullptr);
+    vkDestroyPipelineLayout(m_Device, m_PipelineSet.TrianglesSky.Layout, nullptr);
+    vkDestroyPipeline(m_Device, m_PipelineSet.TrianglesSky.Pipeline, nullptr);
+    vkDestroyPipelineLayout(m_Device, m_PipelineSet.TrianglesSky.Layout, nullptr);
+    m_PipelineSet = SPipelineSet();
+
     for (size_t i = 0; i < m_ImageViews.size(); ++i)
     {
         vkDestroyBuffer(m_Device, m_VertUniformBuffers[i], nullptr);
@@ -60,7 +71,13 @@ void CVulkanRenderer::__destroyRecreateResources()
         vkDestroyBuffer(m_Device, m_FragUniformBuffers[i], nullptr);
         vkFreeMemory(m_Device, m_FragUniformBufferMemories[i], nullptr);
     }
+    m_VertUniformBuffers.clear();
+    m_VertUniformBufferMemories.clear();
+    m_FragUniformBuffers.clear();
+    m_FragUniformBufferMemories.clear();
+
     vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
+    m_DescriptorPool = VK_NULL_HANDLE;
 
     __destroySceneResources();
 }
@@ -85,17 +102,28 @@ void CVulkanRenderer::__destroySceneResources()
         vkDestroyImage(m_Device, m_TextureImages[i], nullptr);
         vkFreeMemory(m_Device, m_TextureImageMemories[i], nullptr);
     }
+    m_TextureImageViews.clear();
+    m_TextureImages.clear();
+    m_TextureImageMemories.clear();
 
     vkDestroyImageView(m_Device, m_LightmapImageView, nullptr);
     vkDestroyImage(m_Device, m_LightmapImage, nullptr);
     vkFreeMemory(m_Device, m_LightmapImageMemory, nullptr);
+    m_LightmapImageView = VK_NULL_HANDLE;
+    m_LightmapImage = VK_NULL_HANDLE;
+    m_LightmapImageMemory = VK_NULL_HANDLE;
 
     vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
     vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
     vkDestroyBuffer(m_Device, m_VertexBuffer, nullptr);
     vkFreeMemory(m_Device, m_VertexBufferMemory, nullptr);
+    m_IndexBuffer = VK_NULL_HANDLE;
+    m_IndexBufferMemory = VK_NULL_HANDLE;
+    m_VertexBuffer = VK_NULL_HANDLE;
+    m_VertexBufferMemory = VK_NULL_HANDLE;
 
     vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+    m_CommandBuffers.clear();
 }
 
 void CVulkanRenderer::destroy()
@@ -106,6 +134,10 @@ void CVulkanRenderer::destroy()
     vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
     vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+    m_TextureSampler = VK_NULL_HANDLE;
+    m_DescriptorSetLayout = VK_NULL_HANDLE;
+    m_RenderPass = VK_NULL_HANDLE;
+    m_CommandPool = VK_NULL_HANDLE;
 }
 
 void CVulkanRenderer::loadScene(const SScene& vScene)
@@ -120,13 +152,13 @@ void CVulkanRenderer::loadScene(const SScene& vScene)
      for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
      {
          std::shared_ptr<S3DObject> pObject = m_Scene.Objects[i];
-         if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
+         if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
          { 
              m_ObjectDataPositions[i].Offset = IndexOffset;
              m_ObjectDataPositions[i].Size = pObject->Indices.size();
              IndexOffset += m_ObjectDataPositions[i].Size;
          }
-         else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
+         else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
          {
              m_ObjectDataPositions[i].Offset = VertexOffset;
              m_ObjectDataPositions[i].Size = pObject->Vertices.size();
@@ -298,11 +330,11 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
     std::shared_ptr<S3DObject> pObject = m_Scene.Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
     vkCmdSetDepthBias(m_CommandBuffers[vImageIndex], static_cast<float>(vObjectIndex) / m_Scene.Objects.size(), 0, 0);
-    if (pObject->Type == E3DObjectType::INDEXED_TRIAGNLE_LIST)
+    if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
         vkCmdDrawIndexed(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0, 0);
-    else if (pObject->Type == E3DObjectType::TRIAGNLE_LIST)
+    else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
         vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
-    else if (pObject->Type == E3DObjectType::TRIAGNLE_STRIP_LIST)
+    else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_STRIP_LIST)
         vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
     else
         throw std::runtime_error(u8"物体类型错误");
@@ -460,6 +492,27 @@ void CVulkanRenderer::__createGraphicsPipelines()
 
     VkPipelineShaderStageCreateInfo ShaderStagesBlend[] = { VertShaderStageInfoBlend, FragShaderStageInfoBlend };
 
+    // TODO: how to simplify these codes? the shader module need to be destroyed later...
+    /*auto VertShaderCodeSky = __readFile(m_PipelineSet.TrianglesSky.VertShaderPath);
+    auto FragShaderCodeSky = __readFile(m_PipelineSet.TrianglesSky.FragShaderPath);
+
+    VkShaderModule VertShaderModuleSky = __createShaderModule(VertShaderCodeSky);
+    VkShaderModule FragShaderModuleSky = __createShaderModule(FragShaderCodeSky);
+
+    VkPipelineShaderStageCreateInfo VertShaderStageInfoSky = {};
+    VertShaderStageInfoSky.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    VertShaderStageInfoSky.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    VertShaderStageInfoSky.module = VertShaderModuleSky;
+    VertShaderStageInfoSky.pName = "main";
+
+    VkPipelineShaderStageCreateInfo FragShaderStageInfoSky = {};
+    FragShaderStageInfoSky.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    FragShaderStageInfoSky.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    FragShaderStageInfoSky.module = FragShaderModuleSky;
+    FragShaderStageInfoSky.pName = "main";
+
+    VkPipelineShaderStageCreateInfo ShaderStagesSky[] = { VertShaderStageInfoSky, FragShaderStageInfoSky };*/
+
     auto BindingDescription = SPointData::getBindingDescription();
     auto AttributeDescriptions = SPointData::getAttributeDescriptions();
 
@@ -531,6 +584,14 @@ void CVulkanRenderer::__createGraphicsPipelines()
     DepthStencilInfoBlend.depthCompareOp = VK_COMPARE_OP_LESS;
     DepthStencilInfoBlend.depthBoundsTestEnable = VK_FALSE;
     DepthStencilInfoBlend.stencilTestEnable = VK_FALSE;
+
+    VkPipelineDepthStencilStateCreateInfo DepthStencilInfoSky = {};
+    DepthStencilInfoSky.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    DepthStencilInfoSky.depthTestEnable = VK_TRUE;
+    DepthStencilInfoSky.depthWriteEnable = VK_FALSE;
+    DepthStencilInfoSky.depthCompareOp = VK_COMPARE_OP_LESS;
+    DepthStencilInfoSky.depthBoundsTestEnable = VK_FALSE;
+    DepthStencilInfoSky.stencilTestEnable = VK_FALSE;
 
     VkPipelineColorBlendAttachmentState ColorBlendAttachmentDepthTest = {};
     ColorBlendAttachmentDepthTest.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -959,7 +1020,7 @@ void CVulkanRenderer::__updateDescriptorSets()
         
         if (m_Scene.UseLightmap)
         {
-            VkDescriptorImageInfo LightmapImageInfo;
+            VkDescriptorImageInfo LightmapImageInfo = {};
             LightmapImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             LightmapImageInfo.imageView = m_LightmapImageView;
             LightmapImageInfo.sampler = VK_NULL_HANDLE;
@@ -1341,7 +1402,7 @@ bool CVulkanRenderer::__isObjectInSight(std::shared_ptr<S3DObject> vpObject, con
     // AABB frustum culling
     const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;
     S3DBoundingBox BoundingBox = vpObject->getBoundingBox();
-    std::array<glm::vec3, 8> BoundPoints;
+    std::array<glm::vec3, 8> BoundPoints = {};
     for (int i = 0; i < 8; ++i)
     {
         float X = ((i & 1) ? BoundingBox.Min.x : BoundingBox.Max.x);
