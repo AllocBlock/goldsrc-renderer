@@ -197,7 +197,6 @@ std::shared_ptr<CIOImage> CLightmap::getCombinedLightmap()
     pCombinedLightmapImage->setImageChannels(m_Channel);
     pCombinedLightmapImage->setData(pCombinedData);
     delete[] pCombinedData;
-    pCombinedLightmapImage->writePPM("combined-lightmap-test.ppm");
 
     return pCombinedLightmapImage;
 }

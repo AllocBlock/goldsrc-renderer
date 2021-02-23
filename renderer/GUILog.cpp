@@ -19,6 +19,7 @@ void CGUILog::log(std::string vText)
 {
     std::string Time = __getCurrentTime();
     m_Logs.emplace_back(Time + vText);
+    m_HasNewLog = true;
 }
 
 void CGUILog::draw()
@@ -29,6 +30,11 @@ void CGUILog::draw()
         for (const std::string& Log : m_Logs)
         {
             ImGui::TextWrapped(Log.c_str());
+        }
+        if (m_HasNewLog)
+        {
+            ImGui::SetScrollHereY(1.0f);
+            m_HasNewLog = false;
         }
         ImGui::End();
     }

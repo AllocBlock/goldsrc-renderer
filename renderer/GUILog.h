@@ -13,6 +13,7 @@ private:
     std::string __getCurrentTime();
 
     bool m_Open = true;
+    bool m_HasNewLog = false;
     std::vector<std::string> m_Logs;
 };
 
