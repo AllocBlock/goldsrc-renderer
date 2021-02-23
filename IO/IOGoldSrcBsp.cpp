@@ -65,6 +65,7 @@ void SLumpEntity::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
     Map.readFromString(Data);
     Entities = Map.getEntities();
     WadPaths = Map.getWadPaths();
+    SkyBoxPrefix = Map.getSkyBoxPrefix();
 }
 
 void SLumpPlane::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)

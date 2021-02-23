@@ -90,6 +90,7 @@ public:
 	CIOGoldSrcMap(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
 
 	std::vector<std::filesystem::path> getWadPaths();
+	std::string getSkyBoxPrefix();
 	const std::vector<SMapEntity>& getEntities() { return m_Entities; }
 	std::set<std::string> getUsedTextureNames();
 	std::vector<SMapPolygon> getAllPolygons();

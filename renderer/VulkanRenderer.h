@@ -13,6 +13,47 @@ enum class ERenderMethod
     BSP
 };
 
+struct SVkImagePack
+{
+    VkImage Image = VK_NULL_HANDLE;
+    VkDeviceMemory Memory = VK_NULL_HANDLE;
+    VkImageView ImageView = VK_NULL_HANDLE;
+
+    bool isValid()
+    {
+        return Image != VK_NULL_HANDLE && Memory != VK_NULL_HANDLE && ImageView != VK_NULL_HANDLE;
+    }
+
+    void destory(VkDevice vDevice)
+    {
+        vkDestroyImage(vDevice, Image, nullptr);
+        vkFreeMemory(vDevice, Memory, nullptr);
+        vkDestroyImageView(vDevice, ImageView, nullptr);
+        Image = VK_NULL_HANDLE;
+        Memory = VK_NULL_HANDLE;
+        ImageView = VK_NULL_HANDLE;
+    }
+};
+
+struct SVkBufferPack
+{
+    VkBuffer Buffer = VK_NULL_HANDLE;
+    VkDeviceMemory Memory = VK_NULL_HANDLE;
+
+    bool isValid()
+    {
+        return Buffer != VK_NULL_HANDLE && Memory != VK_NULL_HANDLE;
+    }
+
+    void destory(VkDevice vDevice)
+    {
+        vkDestroyBuffer(vDevice, Buffer, nullptr);
+        vkFreeMemory(vDevice, Memory, nullptr);
+        Buffer = VK_NULL_HANDLE;
+        Memory = VK_NULL_HANDLE;
+    }
+};
+
 struct SPointData
 {
     glm::vec3 Pos;
@@ -70,6 +111,34 @@ struct SPointData
     }
 };
 
+struct SSkyPointData
+{
+    glm::vec3 Pos;
+
+    static VkVertexInputBindingDescription getBindingDescription()
+    {
+        VkVertexInputBindingDescription BindingDescription = {};
+        BindingDescription.binding = 0;
+        BindingDescription.stride = sizeof(SSkyPointData);
+        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        return BindingDescription;
+    }
+
+    static std::array<VkVertexInputAttributeDescription, 1> getAttributeDescriptions()
+    {
+        std::array<VkVertexInputAttributeDescription, 1> AttributeDescriptions = {};
+
+        AttributeDescriptions[0].binding = 0;
+        AttributeDescriptions[0].location = 0;
+        AttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDescriptions[0].offset = offsetof(SSkyPointData, Pos);
+
+        return AttributeDescriptions;
+    }
+};
+
+
 struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Model;
@@ -80,6 +149,11 @@ struct SUniformBufferObjectVert
 struct SUniformBufferObjectFrag
 {
     alignas(16) glm::vec3 Eye;
+};
+
+struct SSkyUniformBufferObjectFrag
+{
+    alignas(16) glm::vec3 EyeDirection;
 };
 
 struct SPushConstant
@@ -96,10 +170,19 @@ struct SObjectDataPosition
 
 struct SPipeline
 {
+    VkPrimitiveTopology PrimitiveToplogy = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     VkPipeline Pipeline = VK_NULL_HANDLE;
     VkPipelineLayout Layout = VK_NULL_HANDLE;
     std::filesystem::path VertShaderPath;
     std::filesystem::path FragShaderPath;
+
+    void destory(VkDevice vDevice)
+    {
+        vkDestroyPipeline(vDevice, Pipeline, nullptr);
+        vkDestroyPipelineLayout(vDevice, Layout, nullptr);
+        Pipeline = VK_NULL_HANDLE;
+        Layout = VK_NULL_HANDLE;
+    }
 };
 
 struct SPipelineSet
@@ -107,6 +190,21 @@ struct SPipelineSet
     SPipeline TrianglesWithDepthTest;
     SPipeline TrianglesWithBlend;
     SPipeline TrianglesSky;
+
+    void destory(VkDevice vDevice)
+    {
+        TrianglesWithDepthTest.destory(vDevice);
+        TrianglesWithBlend.destory(vDevice);
+        TrianglesSky.destory(vDevice);
+    }
+};
+
+struct SSkyBox
+{
+    bool IsInited = false;
+    std::array<SVkImagePack, 6> SkyBoxImages; // Left, Right, Front, Back, Up, Down
+    SVkBufferPack Vertices;
+    VkDeviceSize BufferSize;
 };
 
 class CVulkanRenderer
@@ -124,6 +222,8 @@ public:
     std::shared_ptr<CCamera> getCamera();
     size_t getRenderedObjectNum() const { return m_VisableObjectNum; }
 
+    bool getSkyState() const { return m_EnableSky; }
+    void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_Scene.UseSkyBox; }
     bool getCullingState() const { return m_EnableCulling; }
     void setCullingState(bool vCullingState) { m_EnableCulling = vCullingState; }
     bool getFrustumCullingState() const { return m_EnableFrustumCulling; }
@@ -138,6 +238,7 @@ public:
 private:
     void __createRenderPass();
     void __createDescriptorSetLayout();
+    void __createSkyDescriptorSetLayout();
     void __createGraphicsPipelines();
     void __createCommandPool();
     void __createDepthResources();
@@ -152,12 +253,19 @@ private:
     void __createUniformBuffers();
     void __createDescriptorPool();
     void __createDescriptorSets();
+    void __createSkyDescriptorSets();
     void __createCommandBuffers();
 
+    void __createSkyPipeline();
+    void __createDepthTestPipeline();
+    void __createBlendPipeline();
+    
     void __createRecreateResources();
     void __destroyRecreateResources();
     void __createSceneResources();
     void __destroySceneResources();
+    void __createSkyBoxResources();
+    void __destroySkyBoxResources();
 
     void __renderByBspTree(uint32_t vImageIndex);
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
@@ -167,6 +275,8 @@ private:
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
     std::pair< std::vector<size_t>, std::vector<size_t>> __sortModelRenderSequence();
+
+    void __recordSkyRenderCommand(uint32_t vImageIndex);
     
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
@@ -181,6 +291,7 @@ private:
     size_t __getActualTextureNum();
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory);
     void __updateDescriptorSets();
+    void __updateSkyDescriptorSets();
 
     std::vector<char> __readFile(std::filesystem::path vFilePath);
     std::vector<SPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
@@ -193,47 +304,43 @@ private:
 
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_SkyDescriptorSetLayout = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = 
     {
-        {VK_NULL_HANDLE, VK_NULL_HANDLE, "shader/vert.spv", "shader/frag.spv"},
-        {VK_NULL_HANDLE, VK_NULL_HANDLE, "shader/vert.spv", "shader/frag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_NULL_HANDLE, VK_NULL_HANDLE, "shader/vert.spv", "shader/frag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_NULL_HANDLE, VK_NULL_HANDLE, "shader/vert.spv", "shader/frag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_NULL_HANDLE, VK_NULL_HANDLE, "shader/skyVert.spv", "shader/skyFrag.spv"},
     };
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
-    VkImage m_DepthImage = VK_NULL_HANDLE;
-    VkImageView m_DepthImageView = VK_NULL_HANDLE;
-    VkDeviceMemory m_DepthImageMemory = VK_NULL_HANDLE;
-    VkBuffer m_VertexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory m_VertexBufferMemory = VK_NULL_HANDLE;
-    VkBuffer m_IndexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory m_IndexBufferMemory = VK_NULL_HANDLE;
-    std::vector<VkBuffer> m_VertUniformBuffers;
-    std::vector<VkDeviceMemory> m_VertUniformBufferMemories;
-    std::vector<VkBuffer> m_FragUniformBuffers;
-    std::vector<VkDeviceMemory> m_FragUniformBufferMemories;
+    
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_DescriptorSets;
+    std::vector<VkDescriptorSet> m_SkyDescriptorSets;
     std::vector<VkCommandBuffer> m_CommandBuffers;
-    std::vector<VkImage> m_TextureImages;
-    std::vector<VkDeviceMemory> m_TextureImageMemories;
-    std::vector<VkImageView> m_TextureImageViews;
-    VkImage m_LightmapImage = VK_NULL_HANDLE;
-    VkDeviceMemory m_LightmapImageMemory = VK_NULL_HANDLE;
-    VkImageView m_LightmapImageView = VK_NULL_HANDLE;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
+
+    SVkBufferPack m_VertexBufferPack;
+    SVkBufferPack m_IndexBufferPack;
+    std::vector<SVkBufferPack> m_VertUniformBufferPacks;
+    std::vector<SVkBufferPack> m_FragUniformBufferPacks;
+    
+    std::vector<SVkImagePack> m_TextureImagePacks;
+    SVkImagePack m_DepthImagePack;
+    SVkImagePack m_LightmapImagePack;
 
     VkFormat m_ImageFormat = VK_FORMAT_UNDEFINED;
     VkExtent2D m_Extent = { 0, 0 };
     std::vector<VkImageView> m_ImageViews;
     std::vector<VkFramebuffer> m_Framebuffers;
 
-    VkPrimitiveTopology m_DefaultPrimitiveToplogy = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
     SScene m_Scene;
+    SSkyBox m_SkyBox;
     size_t m_RerecordCommand = 0;
     std::vector<bool> m_AreObjectsVisable;
     size_t m_VisableObjectNum;
     std::vector<SObjectDataPosition> m_ObjectDataPositions;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
+    bool m_EnableSky = true;
     bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;
     bool m_EnablePVS = false;

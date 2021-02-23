@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <optional>
+#include <array>
 #include <glm/glm.hpp>
 
 enum class E3DObjectDataType
@@ -107,4 +108,7 @@ struct SScene
     bool UsePVS = false;
     SBspTree BspTree;
     SBspPvs BspPvs;
+
+    bool UseSkyBox = false;
+    std::array<std::shared_ptr<CIOImage>, 6> SkyBoxImages;
 };

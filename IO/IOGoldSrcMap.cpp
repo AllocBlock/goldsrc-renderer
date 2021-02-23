@@ -376,6 +376,27 @@ std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
     throw std::runtime_error(u8"未找到worldspawn实体，无法找到wad文件信息");
 }
 
+std::string CIOGoldSrcMap::getSkyBoxPrefix()
+{
+    for (int i = 0; i < m_Entities.size(); ++i)
+    {
+        auto Properties = m_Entities[i].Properties;
+        if (Properties.find("classname") != Properties.end() && Properties["classname"] == "worldspawn")
+        {
+            if (Properties.find("skyname") == Properties.end())
+            {
+                globalLog(u8"未在worldspawn实体内找到wad文件信息");
+                return "";
+            }
+            else
+            {
+                return Properties["skyname"];
+            }
+        }
+    }
+    throw std::runtime_error(u8"未找到worldspawn实体，无法找到wad文件信息");
+}
+
 std::set<std::string> CIOGoldSrcMap::getUsedTextureNames()
 {
     std::set<std::string> UsedTextureNames;

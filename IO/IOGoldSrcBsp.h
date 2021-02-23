@@ -83,6 +83,7 @@ struct SLumpEntity
 
     std::vector<SMapEntity> Entities; // memory-only
     std::vector<std::filesystem::path> WadPaths; // memory-only
+    std::string SkyBoxPrefix;
 
     void read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize);
 };

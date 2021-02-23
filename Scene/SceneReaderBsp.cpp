@@ -25,6 +25,8 @@ SScene CSceneReaderBsp::read(std::filesystem::path vFilePath, std::function<void
     if (m_HasLightmapData)
         __correntLightmapCoords();
 
+    __loadSkyBox(vFilePath.parent_path());
+
     return m_Scene;
 }
 
@@ -456,4 +458,30 @@ void CSceneReaderBsp::__correntLightmapCoords()
             pObject->LightmapCoords[i] = m_Scene.pLightmap->getAcutalLightmapCoord(LightmapIndex, pObject->LightmapCoords[i]);
         }
     }
+}
+
+void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
+{
+    const SBspLumps& Lumps = m_Bsp.getLumps();
+
+    std::string SkyFilePrefix = Lumps.m_LumpEntity.SkyBoxPrefix;
+    std::array<std::string, 6> SkyBoxPostfixes = { "lf", "rt", "ft", "bk", "up", "dn" };
+    std::string Extension = ".bmp"; // TODO: implement multiple extension later
+
+    for (size_t i = 0; i < SkyBoxPostfixes.size(); ++i)
+    {
+        std::filesystem::path ImagePath;
+        if (findFile(SkyFilePrefix + SkyBoxPostfixes[i] + Extension, vCurrentDir, ImagePath))
+        {
+            m_Scene.SkyBoxImages[i] = std::make_shared<CIOImage>();
+            m_Scene.SkyBoxImages[i]->read(ImagePath);
+        }
+        else
+        {
+            m_Scene.SkyBoxImages = {};
+            return;
+        }
+        
+    }
+    m_Scene.UseSkyBox = true;
 }

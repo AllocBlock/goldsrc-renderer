@@ -17,6 +17,7 @@ private:
     void __loadEntities();
     void __loadBspTreeAndPvs();
     void __correntLightmapCoords();
+    void __loadSkyBox(std::filesystem::path vCurrentDir);
 
     std::vector<glm::vec3> __getBspFaceVertices(size_t vFaceIndex);
     glm::vec3 __getBspFaceNormal(size_t vFaceIndex);

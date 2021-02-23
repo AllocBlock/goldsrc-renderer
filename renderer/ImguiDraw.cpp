@@ -192,6 +192,10 @@ void CImguiVullkan::__drawGUI()
             ImGui::TextWrapped((u8"äÖÈ¾½Úµã£º" + RenderNodeListStr).c_str());
         }
 
+        bool SkyRendering = m_pRenderer->getSkyState();
+        ImGui::Checkbox(u8"¿ªÆôÌì¿ÕäÖÈ¾", &SkyRendering);
+        m_pRenderer->setSkyState(SkyRendering);
+
         static bool Culling = m_pRenderer->getCullingState();
         ImGui::Checkbox(u8"¿ªÆôÌÞ³ý", &Culling);
         m_pRenderer->setCullingState(Culling);
