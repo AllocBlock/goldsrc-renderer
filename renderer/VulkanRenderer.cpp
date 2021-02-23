@@ -69,8 +69,8 @@ void CVulkanRenderer::__createSceneResources()
 {
     __createTextureImages(); // scene
     __createTextureImageViews(); // scene
-    __createLightmapImages(); // scene
-    __createLightmapImageViews(); // scene
+    __createLightmapImage(); // scene
+    __createLightmapImageView(); // scene
     __updateDescriptorSets();
     __createVertexBuffer(); // scene
     __createIndexBuffer(); // scene
@@ -86,12 +86,9 @@ void CVulkanRenderer::__destroySceneResources()
         vkFreeMemory(m_Device, m_TextureImageMemories[i], nullptr);
     }
 
-    for (size_t i = 0; i < m_LightmapImages.size(); ++i)
-    {
-        vkDestroyImageView(m_Device, m_LightmapImageViews[i], nullptr);
-        vkDestroyImage(m_Device, m_LightmapImages[i], nullptr);
-        vkFreeMemory(m_Device, m_LightmapImageMemories[i], nullptr);
-    }
+    vkDestroyImageView(m_Device, m_LightmapImageView, nullptr);
+    vkDestroyImage(m_Device, m_LightmapImage, nullptr);
+    vkFreeMemory(m_Device, m_LightmapImageMemory, nullptr);
 
     vkDestroyBuffer(m_Device, m_IndexBuffer, nullptr);
     vkFreeMemory(m_Device, m_IndexBufferMemory, nullptr);
@@ -196,11 +193,13 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
             {
                 vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Pipeline);
                 vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
-                SPushConstant PushConstant = {};
+                SPushConstant PushConstant;
                 PushConstant.Opacity = 1.0f;
-                vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+                
                 for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
                 {
+                    PushConstant.UseLightmap = m_Scene.Objects[i]->HasLightmap;
+                    vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
                     if (m_AreObjectsVisable[i])
                         __recordObjectRenderCommand(vImageIndex, i);
                 }
@@ -228,7 +227,6 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
     vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
     SPushConstant PushConstant = {};
     PushConstant.Opacity = 1.0f;
-    vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
 
     if (vNodeIndex >= m_Scene.BspTree.NodeNum) // if is leaf, render it
     {
@@ -236,6 +234,9 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
         if (ObjectIndex > 0 && m_AreObjectsVisable[ObjectIndex])
         {
             m_RenderNodeList.emplace_back(ObjectIndex);
+
+            PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
+            vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
     }
@@ -262,10 +263,11 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
     vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Pipeline);
     vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
     SPushConstant PushConstant = {};
-    PushConstant.Opacity = 0.5f;
-    vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithBlend.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+    PushConstant.Opacity = 1.0f;
     for(size_t ObjectIndex : OpaqueSequence)
     {
+        PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
+        vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
 
@@ -274,6 +276,7 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
     for (size_t ObjectIndex : TranparentSequence)
     {
         PushConstant.Opacity = m_Scene.Objects[ObjectIndex]->Opacity;
+        PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
         vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithBlend.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
@@ -393,7 +396,7 @@ void CVulkanRenderer::__createDescriptorSetLayout()
 
     VkDescriptorSetLayoutBinding LightmapBinding = {};
     LightmapBinding.binding = 4;
-    LightmapBinding.descriptorCount = m_MaxLightmapNum;
+    LightmapBinding.descriptorCount = 1;
     LightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     LightmapBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     LightmapBinding.pImmutableSamplers = nullptr;
@@ -701,29 +704,20 @@ void CVulkanRenderer::__createTextureImageViews()
     }
 }
 
-void CVulkanRenderer::__createLightmapImages()
+void CVulkanRenderer::__createLightmapImage()
 {
-    size_t NumLightmap = __getActualLightmapNum();
-    if (NumLightmap > 0)
+    if (m_Scene.UseLightmap)
     {
-        m_LightmapImages.resize(NumLightmap);
-        m_LightmapImageMemories.resize(NumLightmap);
-        for (size_t i = 0; i < NumLightmap; ++i)
-        {
-            std::shared_ptr<CIOImage> pImage = m_Scene.LightmapImages[i];
-            __createImageFromIOImage(pImage, m_LightmapImages[i], m_LightmapImageMemories[i]);
-        }
+        std::shared_ptr<CIOImage> pCombinedLightmapImage = m_Scene.pLightmap->getCombinedLightmap();
+        __createImageFromIOImage(pCombinedLightmapImage, m_LightmapImage, m_LightmapImageMemory);
     }
 }
 
-void CVulkanRenderer::__createLightmapImageViews()
+void CVulkanRenderer::__createLightmapImageView()
 {
-    size_t NumLightmap = __getActualLightmapNum();
-    if (NumLightmap > 0)
+    if (m_Scene.UseLightmap)
     {
-        m_LightmapImageViews.resize(NumLightmap);
-        for (size_t i = 0; i < NumLightmap; ++i)
-            m_LightmapImageViews[i] = Common::createImageView(m_Device, m_LightmapImages[i], VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+        m_LightmapImageView = Common::createImageView(m_Device, m_LightmapImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 }
 
@@ -855,7 +849,7 @@ void CVulkanRenderer::__createDescriptorPool()
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) },
         { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_ImageViews.size()) },
         { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size() * m_MaxTextureNum) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size() * m_MaxLightmapNum) }
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size()) }
     };
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -963,25 +957,12 @@ void CVulkanRenderer::__updateDescriptorSets()
             DescriptorWrites.emplace_back(TexturesDescriptorWrite);
         }
         
-        const size_t NumLightmap = __getActualLightmapNum();
-        std::vector<VkDescriptorImageInfo> LightmapImageInfos;
-        if (NumLightmap > 0)
+        if (m_Scene.UseLightmap)
         {
-            LightmapImageInfos.resize(m_MaxLightmapNum);
-            for (size_t i = 0; i < m_MaxLightmapNum; ++i)
-            {
-                // for unused element, fill like the first one (weird method but avoid validationwarning)
-                if (i >= NumLightmap)
-                {
-                    LightmapImageInfos[i] = LightmapImageInfos[0];
-                }
-                else
-                {
-                    LightmapImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    LightmapImageInfos[i].imageView = m_LightmapImageViews[i];
-                    LightmapImageInfos[i].sampler = VK_NULL_HANDLE;
-                }
-            }
+            VkDescriptorImageInfo LightmapImageInfo;
+            LightmapImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            LightmapImageInfo.imageView = m_LightmapImageView;
+            LightmapImageInfo.sampler = VK_NULL_HANDLE;
 
             VkWriteDescriptorSet LightmapsDescriptorWrite = {};
             LightmapsDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -989,8 +970,8 @@ void CVulkanRenderer::__updateDescriptorSets()
             LightmapsDescriptorWrite.dstBinding = 4;
             LightmapsDescriptorWrite.dstArrayElement = 0;
             LightmapsDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            LightmapsDescriptorWrite.descriptorCount = static_cast<uint32_t>(LightmapImageInfos.size());
-            LightmapsDescriptorWrite.pImageInfo = LightmapImageInfos.data();
+            LightmapsDescriptorWrite.descriptorCount = 1;
+            LightmapsDescriptorWrite.pImageInfo = &LightmapImageInfo;
             DescriptorWrites.emplace_back(LightmapsDescriptorWrite);
         }
 
@@ -1037,7 +1018,6 @@ std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObje
     _ASSERTE(NumPoint == vpObject->TexCoords.size());
     _ASSERTE(NumPoint == vpObject->LightmapCoords.size());
     _ASSERTE(NumPoint == vpObject->TexIndices.size());
-    _ASSERTE(NumPoint == vpObject->LightmapIndices.size());
 
     std::vector<SPointData> PointData(NumPoint);
     for (size_t i = 0; i < NumPoint; ++i)
@@ -1048,7 +1028,6 @@ std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObje
         PointData[i].TexCoord = vpObject->TexCoords[i];
         PointData[i].LightmapCoord = vpObject->LightmapCoords[i];
         PointData[i].TexIndex = vpObject->TexIndices[i];
-        PointData[i].LightmapIndex = vpObject->LightmapIndices[i];
     }
     return PointData;
 }
@@ -1293,18 +1272,6 @@ size_t CVulkanRenderer::__getActualTextureNum()
     return NumTexture;
 }
 
-size_t CVulkanRenderer::__getActualLightmapNum()
-{
-    if (!m_Scene.UseLightmap) return 0;
-    size_t NumLightmap = m_Scene.LightmapImages.size();
-    if (NumLightmap > m_MaxLightmapNum)
-    {
-        globalLog(u8"警告: Lightmap数量 = (" + std::to_string(NumLightmap) + u8") 大于限制数量 (" + std::to_string(m_MaxLightmapNum) + u8"), 多出的Lightmap将被忽略");
-        NumLightmap = m_MaxLightmapNum;
-    }
-    return NumLightmap;
-}
-
 void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory)
 {
     int TexWidth = vpImage->getImageWidth();
@@ -1359,8 +1326,8 @@ void CVulkanRenderer::__calculateVisiableObjects()
                     continue;
 
             // PVS culling
-            if (m_EnablePVS)
-                if (!m_Scene.BspPvs.isVisiableLeafVisiable(m_CameraNodeIndex.value(), i))
+            if (m_EnablePVS && i < m_Scene.BspTree.LeafNum)
+                if (!m_Scene.BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), i))
                     continue;
         }
 

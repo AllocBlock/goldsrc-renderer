@@ -62,7 +62,6 @@ SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
-        const uint32_t LightmapIndex = std::numeric_limits<uint32_t>::max();
 
         // indexed data
         /*Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
@@ -102,9 +101,6 @@ SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void
             pObject->TexIndices.emplace_back(TexIndex);
             pObject->TexIndices.emplace_back(TexIndex);
             pObject->TexIndices.emplace_back(TexIndex);
-            pObject->LightmapIndices.emplace_back(LightmapIndex);
-            pObject->LightmapIndices.emplace_back(LightmapIndex);
-            pObject->LightmapIndices.emplace_back(LightmapIndex);
         }
     }
     __reportProgress(u8"Íê³É");

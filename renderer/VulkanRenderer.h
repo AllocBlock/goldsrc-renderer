@@ -21,7 +21,6 @@ struct SPointData
     glm::vec2 TexCoord;
     glm::vec2 LightmapCoord;
     uint32_t TexIndex;
-    uint32_t LightmapIndex;
 
     static VkVertexInputBindingDescription getBindingDescription()
     {
@@ -33,9 +32,9 @@ struct SPointData
         return BindingDescription;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 7> getAttributeDescriptions()
+    static std::array<VkVertexInputAttributeDescription, 6> getAttributeDescriptions()
     {
-        std::array<VkVertexInputAttributeDescription, 7> AttributeDescriptions = {};
+        std::array<VkVertexInputAttributeDescription, 6> AttributeDescriptions = {};
 
         AttributeDescriptions[0].binding = 0;
         AttributeDescriptions[0].location = 0;
@@ -67,11 +66,6 @@ struct SPointData
         AttributeDescriptions[5].format = VK_FORMAT_R32_UINT;
         AttributeDescriptions[5].offset = offsetof(SPointData, TexIndex);
 
-        AttributeDescriptions[6].binding = 0;
-        AttributeDescriptions[6].location = 6;
-        AttributeDescriptions[6].format = VK_FORMAT_R32_UINT;
-        AttributeDescriptions[6].offset = offsetof(SPointData, LightmapIndex);
-
         return AttributeDescriptions;
     }
 };
@@ -90,7 +84,8 @@ struct SUniformBufferObjectFrag
 
 struct SPushConstant
 {
-    float Opacity;
+    bool UseLightmap = false;
+    float Opacity = 1.0;
 };
 
 struct SObjectDataPosition
@@ -148,8 +143,8 @@ private:
     void __createFramebuffers();
     void __createTextureImages();
     void __createTextureImageViews();
-    void __createLightmapImages();
-    void __createLightmapImageViews();
+    void __createLightmapImage();
+    void __createLightmapImageView();
     void __createTextureSampler();
     void __createVertexBuffer();
     void __createIndexBuffer();
@@ -183,7 +178,6 @@ private:
     VkShaderModule __createShaderModule(const std::vector<char>& vShaderCode);
     void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight);
     size_t __getActualTextureNum();
-    size_t __getActualLightmapNum();
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory);
     void __updateDescriptorSets();
 
@@ -221,9 +215,9 @@ private:
     std::vector<VkImage> m_TextureImages;
     std::vector<VkDeviceMemory> m_TextureImageMemories;
     std::vector<VkImageView> m_TextureImageViews;
-    std::vector<VkImage> m_LightmapImages;
-    std::vector<VkDeviceMemory> m_LightmapImageMemories;
-    std::vector<VkImageView> m_LightmapImageViews;
+    VkImage m_LightmapImage = VK_NULL_HANDLE;
+    VkDeviceMemory m_LightmapImageMemory = VK_NULL_HANDLE;
+    VkImageView m_LightmapImageView = VK_NULL_HANDLE;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
 
     VkFormat m_ImageFormat = VK_FORMAT_UNDEFINED;
@@ -249,7 +243,6 @@ private:
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;
     const size_t m_MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
-    const size_t m_MaxLightmapNum = 0x20000; // limitation from goldsrc. If need change, you should change this in frag shader as well
 
     bool m_FramebufferResized = false;
 };

@@ -29,8 +29,10 @@ struct S3DObject
     std::vector<glm::vec2> TexCoords;
     std::vector<glm::vec2> LightmapCoords;
     std::vector<uint32_t> TexIndices;
-    std::vector<uint32_t> LightmapIndices;
     std::vector<uint32_t> Indices;
+
+    bool HasLightmap = false;
+    std::vector<std::optional<size_t>> LightmapIndices;
 
     bool IsTransparent = false;
     float Opacity = 1.0;
@@ -65,14 +67,9 @@ struct SBspPvs
     std::vector<std::vector<bool>> MapList;
 
     void decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree);
-    bool isVisiableLeafVisiable(uint32_t vStartLeafIndex, uint32_t vLeafIndex) const;
+    bool isLeafVisiable(uint32_t vStartLeafIndex, uint32_t vLeafIndex) const;
 private:
     std::vector<uint8_t> __decompressFrom(size_t vStartIndex);
-};
-
-struct SExtent
-{
-    size_t Offset, Size;
 };
 
 class CLightmap
@@ -81,11 +78,14 @@ public:
     void clear();
     size_t appendLightmap(std::shared_ptr<CIOImage> vpImage);
     std::pair<size_t, size_t> getLightmapSize();
-    glm::vec2 getAcutalTexCoord(size_t vIndex, glm::vec2 vOriginTexCoord);
+    glm::vec2 getAcutalLightmapCoord(size_t vIndex, glm::vec2 vOriginTexCoord);
     std::shared_ptr<CIOImage> getCombinedLightmap();
 private:
+    const size_t m_MaxWidth = 0x4000;
     std::vector<std::shared_ptr<CIOImage>> m_LightmapImages;
     size_t m_TotalWidth = 0, m_TotalHeight = 0;
+    size_t m_StartHeight = 0, m_StartWidth = 0, m_CurrentRowHeight = 0;
+    std::vector<std::pair<size_t, size_t>> m_Offsets;
     static const size_t m_Channel = 4; // RGBA 4 channels
 };
 
@@ -95,7 +95,7 @@ struct SScene
     std::vector<std::shared_ptr<CIOImage>> TexImages;
 
     bool UseLightmap = false;
-    CLightmap Lightmap;
+    std::shared_ptr<CLightmap> pLightmap = nullptr;
 
     bool UsePVS = false;
     SBspTree BspTree;

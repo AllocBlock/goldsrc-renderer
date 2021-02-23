@@ -11,6 +11,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "imgui\imgui.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scene", "Scene\Scene.vcxproj", "{EB9BA7FD-F347-4886-83BD-D119A929AA39}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unit Tests", "Unit Tests", "{6AC53CF0-C9ED-43BC-B139-C78119CC740C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lightmap", "Unit-tests\Lightmap\Lightmap.vcxproj", "{DF58233A-DF16-474B-B40C-5BF691768A13}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,9 +55,20 @@ Global
 		{EB9BA7FD-F347-4886-83BD-D119A929AA39}.Release|x64.Build.0 = Release|x64
 		{EB9BA7FD-F347-4886-83BD-D119A929AA39}.Release|x86.ActiveCfg = Release|Win32
 		{EB9BA7FD-F347-4886-83BD-D119A929AA39}.Release|x86.Build.0 = Release|Win32
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Debug|x64.ActiveCfg = Debug|x64
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Debug|x64.Build.0 = Debug|x64
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Debug|x86.ActiveCfg = Debug|Win32
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Debug|x86.Build.0 = Debug|Win32
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Release|x64.ActiveCfg = Release|x64
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Release|x64.Build.0 = Release|x64
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Release|x86.ActiveCfg = Release|Win32
+		{DF58233A-DF16-474B-B40C-5BF691768A13}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DF58233A-DF16-474B-B40C-5BF691768A13} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8B46BA88-79F5-429F-9E71-8FF7423CA028}

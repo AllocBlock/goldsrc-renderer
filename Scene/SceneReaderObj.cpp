@@ -14,7 +14,6 @@ SScene CSceneReaderObj::read(std::filesystem::path vFilePath, std::function<void
     __reportProgress(u8"¶ÁÈ¡³¡¾°ÖÐ");
     std::shared_ptr<S3DObject> pObjObject = std::make_shared<S3DObject>();
     const uint32_t TexIndex = 0;
-    const uint32_t LightmapIndex = std::numeric_limits<uint32_t>::max();
 
     const std::vector<SObjFace>& Faces = Obj.getFaces();
     for (size_t i = 0; i < Faces.size(); ++i)
@@ -55,9 +54,6 @@ SScene CSceneReaderObj::read(std::filesystem::path vFilePath, std::function<void
             pObjObject->TexIndices.emplace_back(TexIndex);
             pObjObject->TexIndices.emplace_back(TexIndex);
             pObjObject->TexIndices.emplace_back(TexIndex);
-            pObjObject->LightmapIndices.emplace_back(LightmapIndex);
-            pObjObject->LightmapIndices.emplace_back(LightmapIndex);
-            pObjObject->LightmapIndices.emplace_back(LightmapIndex);
         }
     }
 

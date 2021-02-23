@@ -16,11 +16,12 @@ private:
     void __loadLeaves();
     void __loadEntities();
     void __loadBspTreeAndPvs();
+    void __correntLightmapCoords();
 
     std::vector<glm::vec3> __getBspFaceVertices(size_t vFaceIndex);
     glm::vec3 __getBspFaceNormal(size_t vFaceIndex);
     std::vector<glm::vec2> __getBspFaceUnnormalizedTexCoords(size_t vFaceIndex, std::vector<glm::vec3> vVertices);
-    uint32_t __getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords, std::vector<glm::vec2>& voLightmapCoords);
+    std::pair<std::optional<size_t>, std::vector<glm::vec2>> __getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords);
     void __getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& voWidth, size_t& voHeight, std::string& voName);
     void __appendBspFaceToObject(std::shared_ptr<S3DObject> pObject, uint32_t vFaceIndex);
 

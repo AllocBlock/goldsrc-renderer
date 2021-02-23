@@ -8,12 +8,14 @@ SScene CSceneReaderBsp::read(std::filesystem::path vFilePath, std::function<void
     m_ProgressReportFunc = vProgressReportFunc;
     m_Scene = SScene();
     m_Scene.UseLightmap = true;
+    m_Scene.pLightmap = std::make_shared<CLightmap>();
 
     __readBsp(vFilePath);
     __readTextures();
     __loadLeaves();
     __loadEntities();
     __loadBspTreeAndPvs();
+    __correntLightmapCoords();
 
     return m_Scene;
 }
@@ -268,11 +270,9 @@ std::vector<glm::vec2> CSceneReaderBsp::__getBspFaceUnnormalizedTexCoords(size_t
 }
 
 // vTexCoords should contain unnormalized texcoords to avoid known of texture width and height
-uint32_t CSceneReaderBsp::__getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords, std::vector<glm::vec2>& voLightmapCoords)
+std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
-
-    voLightmapCoords.clear();
 
     _ASSERTE(vFaceIndex >= 0 && vFaceIndex < Lumps.m_LumpFace.Faces.size());
     const SBspFace& Face = Lumps.m_LumpFace.Faces[vFaceIndex];
@@ -320,12 +320,13 @@ uint32_t CSceneReaderBsp::__getAndAppendBspFaceLightmap(size_t vFaceIndex, const
         }
         auto pLightmapImage = std::make_shared<CIOImage>();
         pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
+        pLightmapImage->setImageChannels(4);
         pLightmapImage->setData(pData);
         delete[] pTempData;
         delete[] pData;
-        uint32_t LightmapIndex = m_Scene.LightmapImages.size();
-        m_Scene.LightmapImages.emplace_back(pLightmapImage);
+        uint32_t LightmapIndex = static_cast<uint32_t>(m_Scene.pLightmap->appendLightmap(pLightmapImage));
 
+        std::vector<glm::vec2> LightmapCoords;
         for (const glm::vec2& TexCoord : vTexCoords)
         {
             glm::vec2 LightmapCoord = TexCoord;
@@ -339,14 +340,14 @@ uint32_t CSceneReaderBsp::__getAndAppendBspFaceLightmap(size_t vFaceIndex, const
             LightmapCoord.y += 0.5f;
             LightmapCoord.y /= LightmapHeight;
 
-            voLightmapCoords.emplace_back(LightmapCoord);
+            LightmapCoords.emplace_back(LightmapCoord);
         }
 
-        return LightmapIndex;
+        return std::make_pair(LightmapIndex, LightmapCoords);
     }
     else
     {
-        return std::numeric_limits<uint32_t>::max();
+        return std::make_pair(std::nullopt, std::vector<glm::vec2>{});
     }
 }
 
@@ -377,11 +378,16 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
     glm::vec3 Normal = __getBspFaceNormal(vFaceIndex);
     std::vector<glm::vec2> TexCoords = __getBspFaceUnnormalizedTexCoords(vFaceIndex, Vertices);
 
-    std::vector<glm::vec2> LightmapCoords;
-    uint32_t LightmapIndex = __getAndAppendBspFaceLightmap(vFaceIndex, TexCoords, LightmapCoords);
+    auto [LightmapIndex, LightmapCoords] = __getAndAppendBspFaceLightmap(vFaceIndex, TexCoords);
     uint32_t TexIndex = m_TexNameToIndex[TexName];
-    if (LightmapIndex == std::numeric_limits<uint32_t>::max())
+    if (LightmapIndex == std::nullopt)
+    {
         LightmapCoords.resize(TexCoords.size(), glm::vec2(0.0, 0.0));
+    }
+    else
+    {
+        pObject->HasLightmap = true;
+    }
     
     // scale texture coordinates
     for (glm::vec2& TexCoord : TexCoords)
@@ -414,5 +420,21 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
         pObject->LightmapIndices.emplace_back(LightmapIndex);
         pObject->LightmapIndices.emplace_back(LightmapIndex);
         pObject->LightmapIndices.emplace_back(LightmapIndex);
+    }
+}
+
+void CSceneReaderBsp::__correntLightmapCoords()
+{
+    for (auto& pObject : m_Scene.Objects)
+    {
+        if (!pObject->HasLightmap) continue;
+
+        for (size_t i = 0; i < pObject->LightmapCoords.size(); ++i)
+        {
+            if (pObject->LightmapIndices[i] == std::nullopt) continue;
+
+            size_t LightmapIndex = pObject->LightmapIndices[i].value();
+            pObject->LightmapCoords[i] = m_Scene.pLightmap->getAcutalLightmapCoord(LightmapIndex, pObject->LightmapCoords[i]);
+        }
     }
 }

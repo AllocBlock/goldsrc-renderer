@@ -21,6 +21,7 @@ public:
     const void* getData() const { return m_pData; }
 
     void setImageSize(int vWidth, int vHeight) { m_Width = vWidth; m_Height = vHeight; }
+    void setImageChannels(int vChannels) { m_Channels = vChannels; }
     void setData(const void* vpData);
 
     void writePPM(std::filesystem::path vFilePath);

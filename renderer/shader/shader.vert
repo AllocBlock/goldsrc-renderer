@@ -7,7 +7,6 @@ layout(location = 2) in vec3 inNormal;
 layout(location = 3) in vec2 inTexCoord;
 layout(location = 4) in vec2 inLightmapCoord;
 layout(location = 5) in uint inTexIndex;
-layout(location = 6) in uint inLightmapIndex;
 
 layout(binding = 0) uniform UniformBufferObject
 {
@@ -22,7 +21,6 @@ layout(location = 2) out vec3 outFragNormal;
 layout(location = 3) out vec2 outFragTexCoord;
 layout(location = 4) out vec2 outFragLightmapCoord;
 layout(location = 5) out uint outTexIndex;
-layout(location = 6) out uint outLightmapIndex;
 
 void main()
 {
@@ -34,5 +32,4 @@ void main()
     outFragTexCoord = inTexCoord;
     outFragLightmapCoord = inLightmapCoord;
     outTexIndex = inTexIndex;
-    outLightmapIndex = inLightmapIndex;
 }
