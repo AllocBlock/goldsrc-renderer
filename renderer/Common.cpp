@@ -152,18 +152,18 @@ Common::SSwapChainSupportDetails Common::getSwapChainSupport(const VkPhysicalDev
     return Details;
 }
 
-VkImageView Common::createImageView(VkDevice vDevice, VkImage vImage, VkFormat vFormat, VkImageAspectFlags vAspectFlags)
+VkImageView Common::createImageView(VkDevice vDevice, VkImage vImage, VkFormat vFormat, VkImageAspectFlags vAspectFlags, VkImageViewType vViewType, uint32_t vLayerCount)
 {
     VkImageViewCreateInfo ImageViewInfo = {};
     ImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ImageViewInfo.image = vImage;
-    ImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    ImageViewInfo.viewType = vViewType;
     ImageViewInfo.format = vFormat;
     ImageViewInfo.subresourceRange.aspectMask = vAspectFlags;
     ImageViewInfo.subresourceRange.baseMipLevel = 0;
     ImageViewInfo.subresourceRange.levelCount = 1;
     ImageViewInfo.subresourceRange.baseArrayLayer = 0;
-    ImageViewInfo.subresourceRange.layerCount = 1;
+    ImageViewInfo.subresourceRange.layerCount = vLayerCount;
 
     VkImageView ImageView;
     ck(vkCreateImageView(vDevice, &ImageViewInfo, nullptr, &ImageView));

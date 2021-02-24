@@ -107,24 +107,106 @@ void CVulkanRenderer::__destroySceneResources()
 
 void CVulkanRenderer::__createSkyBoxResources()
 {
+    _ASSERTE(m_Scene.UseSkyBox);
     m_SkyBox.IsInited = true;
 
-    for (size_t i = 0; i < m_SkyBox.SkyBoxImages.size(); ++i)
+    /*
+    // format 6 image into one cubemap image
+    int TexWidth = m_Scene.SkyBoxImages[0]->getImageWidth();
+    int TexHeight = m_Scene.SkyBoxImages[0]->getImageHeight();
+    size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
+    size_t TotalImageSize = SingleFaceImageSize * 6;
+    uint8_t* pPixelData = new uint8_t[TotalImageSize];
+
+    for (size_t i = 0; i < m_Scene.SkyBoxImages.size(); ++i)
     {
-        __createImageFromIOImage(m_Scene.SkyBoxImages[0], m_SkyBox.SkyBoxImages[i].Image, m_SkyBox.SkyBoxImages[i].Memory);
-        m_SkyBox.SkyBoxImages[i].ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImages[i].Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+        _ASSERTE(TexWidth == m_Scene.SkyBoxImages[i]->getImageWidth() && TexHeight == m_Scene.SkyBoxImages[i]->getImageHeight());
+        const void* pData = m_Scene.SkyBoxImages[i]->getData();
+        memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
     }
-    
+
+    VkBuffer StagingBuffer;
+    VkDeviceMemory StagingBufferMemory;
+    __createBuffer(TotalImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
+
+    void* pDevData;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, TotalImageSize, 0, &pDevData));
+    memcpy(pDevData, pPixelData, TotalImageSize);
+    vkUnmapMemory(m_Device, StagingBufferMemory);
+
+    VkImageCreateInfo ImageInfo = {};
+    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+    ImageInfo.extent.width = TexWidth;
+    ImageInfo.extent.height = TexHeight;
+    ImageInfo.extent.depth = 1;
+    ImageInfo.mipLevels = 1;
+    ImageInfo.arrayLayers = 6;
+    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
+
+    __createImage(ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.SkyBoxImagePack.Image, m_SkyBox.SkyBoxImagePack.Memory);
+    __transitionImageLayout(m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 6);
+    __copyBufferToImage(StagingBuffer, m_SkyBox.SkyBoxImagePack.Image, TexWidth, TexHeight, 6);
+    __transitionImageLayout(m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 6);
+
+    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+
+    m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
+    */
+
+    __createImageFromIOImage(m_Scene.SkyBoxImages[0], m_SkyBox.SkyBoxImagePack.Image, m_SkyBox.SkyBoxImagePack.Memory);
+    m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+
     // create plane
+    const std::vector<glm::vec3> Vertices =
+    {
+        { 1.0,  1.0,  1.0}, // 0
+        {-1.0,  1.0,  1.0}, // 1
+        {-1.0,  1.0, -1.0}, // 2
+        { 1.0,  1.0, -1.0}, // 3
+        { 1.0, -1.0,  1.0}, // 4
+        {-1.0, -1.0,  1.0}, // 5
+        {-1.0, -1.0, -1.0}, // 6
+        { 1.0, -1.0, -1.0}, // 7
+    };
+
+    //const std::vector<SSkyPointData> PointData =
+    //{
+    //    {Vertices[0]}, {Vertices[3]}, {Vertices[2]}, {Vertices[0]}, {Vertices[2]}, {Vertices[1]}, // +y
+    //    {Vertices[4]}, {Vertices[7]}, {Vertices[6]}, {Vertices[4]}, {Vertices[6]}, {Vertices[5]}, // -y
+    //    {Vertices[4]}, {Vertices[7]}, {Vertices[3]}, {Vertices[4]}, {Vertices[3]}, {Vertices[0]}, // +x
+    //    {Vertices[1]}, {Vertices[2]}, {Vertices[6]}, {Vertices[1]}, {Vertices[6]}, {Vertices[5]}, // -x
+    //    {Vertices[4]}, {Vertices[0]}, {Vertices[1]}, {Vertices[4]}, {Vertices[1]}, {Vertices[5]}, // +z
+    //    {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
+    //};
+
     const std::vector<SSkyPointData> PointData =
     {
-        {{-1.0, -1.0, 0.0}},
-        {{ 1.0, -1.0, 0.0}},
-        {{-1.0,  1.0, 0.0}},
-        {{ 1.0, -1.0, 0.0}},
-        {{ 1.0,  1.0, 0.0}},
-        {{-1.0,  1.0, 0.0}}
+        //{Vertices[5]}, {Vertices[4]}, {Vertices[1]}, {Vertices[4]}, {Vertices[0]}, {Vertices[1]},
+        {Vertices[4]}, {Vertices[0]}, {Vertices[1]}, {Vertices[4]}, {Vertices[1]}, {Vertices[5]}, // +z
+        {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
+        {Vertices[0]}, {Vertices[3]}, {Vertices[2]}, {Vertices[0]}, {Vertices[2]}, {Vertices[1]}, // +y
+        {Vertices[5]}, {Vertices[6]}, {Vertices[7]}, {Vertices[5]}, {Vertices[7]}, {Vertices[4]}, // -y
+        {Vertices[4]}, {Vertices[7]}, {Vertices[3]}, {Vertices[4]}, {Vertices[3]}, {Vertices[0]}, // +x
+        {Vertices[1]}, {Vertices[2]}, {Vertices[6]}, {Vertices[1]}, {Vertices[6]}, {Vertices[5]}, // -x
     };
+    // 6 7 2 7 3 2
+    //const std::vector<SSkyPointData> PointData =
+    //{
+    //    {{-1.0, -1.0, 0.0}},
+    //    {{ 1.0, -1.0, 0.0}},
+    //    {{-1.0,  1.0, 0.0}},
+    //    {{ 1.0, -1.0, 0.0}},
+    //    {{ 1.0,  1.0, 0.0}},
+    //    {{-1.0,  1.0, 0.0}}
+    //};
 
     VkDeviceSize DataSize = sizeof(SSkyPointData) * PointData.size();
     m_SkyBox.DataSize = DataSize;
@@ -145,37 +227,30 @@ void CVulkanRenderer::__createSkyBoxResources()
     vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
     vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
 
-    // test
-    const std::vector<SPointData> PointData2 =
-    {
-        {{-1.0, -1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
-        {{ 1.0, -1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
-        {{-1.0,  1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
-        {{ 1.0, -1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
-        {{ 1.0,  1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
-        {{-1.0,  1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}}
-    };
-
     // uniform buffer
-    VkDeviceSize BufferSize = sizeof(SSkyUniformBufferObjectFrag);
+    VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
+    VkDeviceSize FragBufferSize = sizeof(SSkyUniformBufferObjectFrag);
     size_t NumSwapchainImage = m_ImageViews.size();
+    m_SkyBox.VertUniformBufferPacks.resize(NumSwapchainImage);
     m_SkyBox.FragUniformBufferPacks.resize(NumSwapchainImage);
 
     for (size_t i = 0; i < m_ImageViews.size(); ++i)
     {
-        __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.FragUniformBufferPacks[i].Buffer, m_SkyBox.FragUniformBufferPacks[i].Memory);
+        __createBuffer(VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.VertUniformBufferPacks[i].Buffer, m_SkyBox.VertUniformBufferPacks[i].Memory);
+        __createBuffer(FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.FragUniformBufferPacks[i].Buffer, m_SkyBox.FragUniformBufferPacks[i].Memory);
     }
 }
 
 void CVulkanRenderer::__destroySkyBoxResources()
 {
-    for (size_t i = 0; i < m_SkyBox.SkyBoxImages.size(); ++i)
-        m_SkyBox.SkyBoxImages[i].destory(m_Device);
+    m_SkyBox.SkyBoxImagePack.destory(m_Device);
     m_SkyBox.VertexData.destory(m_Device);
-    for (SVkBufferPack& BufferPack : m_SkyBox.FragUniformBufferPacks)
+    for (size_t i = 0; i < m_SkyBox.VertUniformBufferPacks.size(); ++i)
     {
-        BufferPack.destory(m_Device);
+        m_SkyBox.VertUniformBufferPacks[i].destory(m_Device);
+        m_SkyBox.FragUniformBufferPacks[i].destory(m_Device);
     }
+    m_SkyBox.VertUniformBufferPacks.clear();
     m_SkyBox.FragUniformBufferPacks.clear();
 }
 
@@ -511,31 +586,30 @@ void CVulkanRenderer::__createDescriptorSetLayout()
 
 void CVulkanRenderer::__createSkyDescriptorSetLayout()
 {
+    VkDescriptorSetLayoutBinding UboVertBinding = {};
+    UboVertBinding.binding = 0;
+    UboVertBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    UboVertBinding.descriptorCount = 1;
+    UboVertBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
     VkDescriptorSetLayoutBinding UboFragBinding = {};
-    UboFragBinding.binding = 0;
+    UboFragBinding.binding = 1;
     UboFragBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     UboFragBinding.descriptorCount = 1;
     UboFragBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    VkDescriptorSetLayoutBinding SamplerBinding = {};
-    SamplerBinding.binding = 1;
-    SamplerBinding.descriptorCount = 1;
-    SamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    SamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    SamplerBinding.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding SkyBoxTextureBinding = {};
-    SkyBoxTextureBinding.binding = 2;
-    SkyBoxTextureBinding.descriptorCount = m_Scene.SkyBoxImages.size();
-    SkyBoxTextureBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    SkyBoxTextureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    SkyBoxTextureBinding.pImmutableSamplers = nullptr;
+    VkDescriptorSetLayoutBinding CombinedSamplerBinding = {};
+    CombinedSamplerBinding.binding = 2;
+    CombinedSamplerBinding.descriptorCount = 1;
+    CombinedSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    CombinedSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    CombinedSamplerBinding.pImmutableSamplers = nullptr;
 
     std::vector<VkDescriptorSetLayoutBinding> Bindings =
     {
+        UboVertBinding,
         UboFragBinding,
-        SamplerBinding,
-        SkyBoxTextureBinding,
+        CombinedSamplerBinding,
     };
     VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
     LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -975,7 +1049,23 @@ void CVulkanRenderer::__createCommandPool()
 void CVulkanRenderer::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
-    __createImage(m_Extent.width, m_Extent.height, DepthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
+
+    VkImageCreateInfo ImageInfo = {};
+    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+    ImageInfo.extent.width = m_Extent.width;
+    ImageInfo.extent.height = m_Extent.height;
+    ImageInfo.extent.depth = 1;
+    ImageInfo.mipLevels = 1;
+    ImageInfo.arrayLayers = 1;
+    ImageInfo.format = DepthFormat;
+    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    __createImage(ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
     m_DepthImagePack.ImageView = Common::createImageView(m_Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
     __transitionImageLayout(m_DepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
@@ -1175,9 +1265,9 @@ void CVulkanRenderer::__createDescriptorPool()
         { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size()) },
 
         // sky box
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) },
-        { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_ImageViews.size()) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size() * 6) },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) }, // vert
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) }, // frag
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(m_ImageViews.size()) }, // combined sampler
     };
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
@@ -1327,6 +1417,21 @@ void CVulkanRenderer::__updateSkyDescriptorSets()
     {
         std::vector<VkWriteDescriptorSet> DescriptorWrites;
 
+        VkDescriptorBufferInfo VertBufferInfo = {};
+        VertBufferInfo.buffer = m_SkyBox.VertUniformBufferPacks[i].Buffer;
+        VertBufferInfo.offset = 0;
+        VertBufferInfo.range = sizeof(SSkyUniformBufferObjectVert);
+
+        VkWriteDescriptorSet VertBufferDescriptorWrite = {};
+        VertBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        VertBufferDescriptorWrite.dstSet = m_SkyDescriptorSets[i];
+        VertBufferDescriptorWrite.dstBinding = 0;
+        VertBufferDescriptorWrite.dstArrayElement = 0;
+        VertBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        VertBufferDescriptorWrite.descriptorCount = 1;
+        VertBufferDescriptorWrite.pBufferInfo = &VertBufferInfo;
+        DescriptorWrites.emplace_back(VertBufferDescriptorWrite);
+
         VkDescriptorBufferInfo FragBufferInfo = {};
         FragBufferInfo.buffer = m_SkyBox.FragUniformBufferPacks[i].Buffer;
         FragBufferInfo.offset = 0;
@@ -1335,46 +1440,28 @@ void CVulkanRenderer::__updateSkyDescriptorSets()
         VkWriteDescriptorSet FragBufferDescriptorWrite = {};
         FragBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         FragBufferDescriptorWrite.dstSet = m_SkyDescriptorSets[i];
-        FragBufferDescriptorWrite.dstBinding = 0;
+        FragBufferDescriptorWrite.dstBinding = 1;
         FragBufferDescriptorWrite.dstArrayElement = 0;
         FragBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         FragBufferDescriptorWrite.descriptorCount = 1;
         FragBufferDescriptorWrite.pBufferInfo = &FragBufferInfo;
         DescriptorWrites.emplace_back(FragBufferDescriptorWrite);
 
-        VkDescriptorImageInfo SamplerInfo = {};
-        SamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        SamplerInfo.imageView = VK_NULL_HANDLE;
-        SamplerInfo.sampler = m_TextureSampler;
+        VkDescriptorImageInfo CombinedSamplerInfo = {};
+        CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        CombinedSamplerInfo.imageView = m_SkyBox.SkyBoxImagePack.ImageView;
+        CombinedSamplerInfo.sampler = m_TextureSampler;
 
         VkWriteDescriptorSet SamplerDescriptorWrite = {};
         SamplerDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         SamplerDescriptorWrite.dstSet = m_SkyDescriptorSets[i];
-        SamplerDescriptorWrite.dstBinding = 1;
+        SamplerDescriptorWrite.dstBinding = 2;
         SamplerDescriptorWrite.dstArrayElement = 0;
-        SamplerDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        SamplerDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         SamplerDescriptorWrite.descriptorCount = 1;
-        SamplerDescriptorWrite.pImageInfo = &SamplerInfo;
+        SamplerDescriptorWrite.pImageInfo = &CombinedSamplerInfo;
         DescriptorWrites.emplace_back(SamplerDescriptorWrite);
 
-        std::array<VkDescriptorImageInfo, 6> SkyBoxImageInfos = {};
-        for (size_t i = 0; i < m_Scene.SkyBoxImages.size(); ++i)
-        {
-            SkyBoxImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            SkyBoxImageInfos[i].imageView = m_SkyBox.SkyBoxImages[i].ImageView;
-            SkyBoxImageInfos[i].sampler = VK_NULL_HANDLE;
-        }
-
-        VkWriteDescriptorSet SkyBoxTexturesDescriptorWrite = {};
-        SkyBoxTexturesDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        SkyBoxTexturesDescriptorWrite.dstSet = m_SkyDescriptorSets[i];
-        SkyBoxTexturesDescriptorWrite.dstBinding = 2;
-        SkyBoxTexturesDescriptorWrite.dstArrayElement = 0;
-        SkyBoxTexturesDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        SkyBoxTexturesDescriptorWrite.descriptorCount = static_cast<uint32_t>(SkyBoxImageInfos.size());
-        SkyBoxTexturesDescriptorWrite.pImageInfo = SkyBoxImageInfos.data();
-        DescriptorWrites.emplace_back(SkyBoxTexturesDescriptorWrite);
-        
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
     }
 }
@@ -1475,24 +1562,9 @@ VkShaderModule CVulkanRenderer::__createShaderModule(const std::vector<char>& vS
     return ShaderModule;
 }
 
-void CVulkanRenderer::__createImage(uint32_t vWidth, uint32_t vHeight, VkFormat vFormat, VkImageTiling vTiling, VkImageUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory)
+void CVulkanRenderer::__createImage(VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory)
 {
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = vWidth;
-    ImageInfo.extent.height = vHeight;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = vFormat;
-    ImageInfo.tiling = vTiling;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = vUsage;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    ck(vkCreateImage(m_Device, &ImageInfo, nullptr, &voImage));
+    ck(vkCreateImage(m_Device, &vImageInfo, nullptr, &voImage));
 
     VkMemoryRequirements MemRequirements;
     vkGetImageMemoryRequirements(m_Device, voImage, &MemRequirements);
@@ -1523,7 +1595,7 @@ uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropert
     throw std::runtime_error(u8"未找到合适的存储类别");
 }
 
-void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout) {
+void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
     VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
 
     VkImageMemoryBarrier Barrier = {};
@@ -1551,7 +1623,7 @@ void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, 
     Barrier.subresourceRange.baseMipLevel = 0;
     Barrier.subresourceRange.levelCount = 1;
     Barrier.subresourceRange.baseArrayLayer = 0;
-    Barrier.subresourceRange.layerCount = 1;
+    Barrier.subresourceRange.layerCount = vLayerCount;
 
     VkPipelineStageFlags SrcStage;
     VkPipelineStageFlags DestStage;
@@ -1639,7 +1711,7 @@ void CVulkanRenderer::__copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkD
     Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
 }
 
-void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight)
+void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount)
 {
     VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
 
@@ -1651,7 +1723,7 @@ void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size
     Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     Region.imageSubresource.mipLevel = 0;
     Region.imageSubresource.baseArrayLayer = 0;
-    Region.imageSubresource.layerCount = 1;
+    Region.imageSubresource.layerCount = vLayerCount;
 
     Region.imageOffset = { 0, 0, 0 };
     Region.imageExtent = { static_cast<uint32_t>(vWidth), static_cast<uint32_t>(vHeight), 1 };
@@ -1688,7 +1760,22 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
     memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
     vkUnmapMemory(m_Device, StagingBufferMemory);
 
-    __createImage(TexWidth, TexHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voImage, voImageMemory);
+    VkImageCreateInfo ImageInfo = {};
+    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+    ImageInfo.extent.width = TexWidth;
+    ImageInfo.extent.height = TexHeight;
+    ImageInfo.extent.depth = 1;
+    ImageInfo.mipLevels = 1;
+    ImageInfo.arrayLayers = 1;
+    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    __createImage(ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voImage, voImageMemory);
     __transitionImageLayout(voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     __copyBufferToImage(StagingBuffer, voImage, TexWidth, TexHeight);
     __transitionImageLayout(voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -1827,28 +1914,25 @@ void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const 
 void CVulkanRenderer::update(uint32_t vImageIndex)
 {
     __updateUniformBuffer(vImageIndex);
+    if (m_EnableSky)
+        __updateSkyUniformBuffer(vImageIndex);
 }
 
 void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    static auto StartTime = std::chrono::high_resolution_clock::now();
-
-    auto CurrentTime = std::chrono::high_resolution_clock::now();
-    float DeltaTime = std::chrono::duration<float, std::chrono::seconds::period>(CurrentTime - StartTime).count();
-
     float Aspect = 1.0;
     if (m_Extent.height > 0 && m_Extent.width > 0)
         Aspect = static_cast<float>(m_Extent.width) / m_Extent.height;
 
     m_pCamera->setAspect(Aspect);
-    SUniformBufferObjectVert UBO = {};
-    UBO.Model = glm::mat4(1.0f);
-    UBO.View = m_pCamera->getViewMat();
-    UBO.Proj = m_pCamera->getProjMat();
+    SUniformBufferObjectVert UBOVert = {};
+    UBOVert.Model = glm::mat4(1.0f);
+    UBOVert.View = m_pCamera->getViewMat();
+    UBOVert.Proj = m_pCamera->getProjMat();
 
     void* pData;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBO), 0, &pData));
-    memcpy(pData, &UBO, sizeof(UBO));
+    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    memcpy(pData, &UBOVert, sizeof(UBOVert));
     vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
 
     SUniformBufferObjectFrag UBOFrag = {};
@@ -1857,6 +1941,26 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
     memcpy(pData, &UBOFrag, sizeof(UBOFrag));
     vkUnmapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory);
+}
+
+void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
+{
+    SSkyUniformBufferObjectVert UBOVert = {};
+    UBOVert.Proj = m_pCamera->getProjMat();
+    UBOVert.View = m_pCamera->getViewMat();
+    UBOVert.EyePosition = m_pCamera->getPos();
+
+    void* pData;
+    ck(vkMapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    memcpy(pData, &UBOVert, sizeof(UBOVert));
+    vkUnmapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory);
+
+    SSkyUniformBufferObjectFrag UBOFrag = {};
+    UBOFrag.EyeDirection = m_pCamera->getFront();
+
+    ck(vkMapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
+    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
+    vkUnmapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory);
 }
 
 void CVulkanRenderer::__recordSkyRenderCommand(uint32_t vImageIndex)

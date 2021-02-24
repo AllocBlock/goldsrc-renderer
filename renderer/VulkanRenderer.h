@@ -140,14 +140,21 @@ struct SSkyPointData
 
 struct SUniformBufferObjectVert
 {
-    alignas(16) glm::mat4 Model;
-    alignas(16) glm::mat4 View;
     alignas(16) glm::mat4 Proj;
+    alignas(16) glm::mat4 View;
+    alignas(16) glm::mat4 Model;
 };
 
 struct SUniformBufferObjectFrag
 {
     alignas(16) glm::vec3 Eye;
+};
+
+struct SSkyUniformBufferObjectVert
+{
+    alignas(16) glm::mat4 Proj;
+    alignas(16) glm::mat4 View;
+    alignas(16) glm::vec3 EyePosition;
 };
 
 struct SSkyUniformBufferObjectFrag
@@ -201,9 +208,10 @@ struct SPipelineSet
 struct SSkyBox
 {
     bool IsInited = false;
-    std::array<SVkImagePack, 6> SkyBoxImages; // Left, Right, Front, Back, Up, Down
+    SVkImagePack SkyBoxImagePack; // cube
     SVkBufferPack VertexData;
     VkDeviceSize DataSize;
+    std::vector<SVkBufferPack> VertUniformBufferPacks;
     std::vector<SVkBufferPack> FragUniformBufferPacks;
 };
 
@@ -271,6 +279,7 @@ private:
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
     void __renderModels(uint32_t vImageIndex);
     void __updateUniformBuffer(uint32_t vImageIndex);
+    void __updateSkyUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
@@ -280,14 +289,14 @@ private:
     
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
-    void __createImage(uint32_t vWidth, uint32_t vHeight, VkFormat vFormat, VkImageTiling vTiling, VkImageUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory);
+    void __createImage(VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory);
     uint32_t __findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
-    void __transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout);
+    void __transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount = 1);
     bool __hasStencilComponent(VkFormat vFormat);
     void __createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
     void __copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
     VkShaderModule __createShaderModule(const std::vector<char>& vShaderCode);
-    void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight);
+    void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount = 1);
     size_t __getActualTextureNum();
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory);
     void __updateDescriptorSets();
