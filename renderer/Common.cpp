@@ -3,6 +3,35 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <fstream>
+
+std::vector<char> Common::readFile(std::filesystem::path vFilePath)
+{
+    std::ifstream File(vFilePath, std::ios::ate | std::ios::binary);
+
+    if (!File.is_open())
+        throw std::runtime_error(u8"¶ÁÈ¡ÎÄ¼þÊ§°Ü£º" + vFilePath.u8string());
+
+    size_t FileSize = static_cast<size_t>(File.tellg());
+    std::vector<char> Buffer(FileSize);
+    File.seekg(0);
+    File.read(Buffer.data(), FileSize);
+    File.close();
+
+    return Buffer;
+}
+
+VkShaderModule Common::createShaderModule(VkDevice vDevice, const std::vector<char>& vShaderCode)
+{
+    VkShaderModuleCreateInfo ShaderModuleInfo = {};
+    ShaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    ShaderModuleInfo.codeSize = vShaderCode.size();
+    ShaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(vShaderCode.data());
+
+    VkShaderModule ShaderModule;
+    ck(vkCreateShaderModule(vDevice, &ShaderModuleInfo, nullptr, &ShaderModule));
+    return ShaderModule;
+}
 
 VkCommandBuffer Common::beginSingleTimeCommands(VkDevice vDevice, VkCommandPool vCommandPool)
 {

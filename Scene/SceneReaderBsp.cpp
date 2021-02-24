@@ -470,7 +470,9 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
         globalLog(u8"地图未指定天空文件，已使用默认天空neb6");
         SkyFilePrefix = "neb6";
     }
-    std::array<std::string, 6> SkyBoxPostfixes = { "lf", "rt", "ft", "bk", "up", "dn" };
+    //std::array<std::string, 6> SkyBoxPostfixes = { "lf", "rt", "ft", "bk", "up", "dn" };
+    // front back up down right left
+    std::array<std::string, 6> SkyBoxPostfixes = { "ft", "bk", "up", "dn", "rt", "lf" };
     std::string Extension = ".bmp"; // TODO: implement multiple extension later
 
     for (size_t i = 0; i < SkyBoxPostfixes.size(); ++i)

@@ -50,7 +50,7 @@ void CVulkanRenderer::__destroyRecreateResources()
         vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
     m_Framebuffers.clear();
 
-    m_PipelineSet.destory(m_Device);
+    m_PipelineSet.destory();
 
     for (size_t i = 0; i < m_ImageViews.size(); ++i)
     {
@@ -110,13 +110,36 @@ void CVulkanRenderer::__createSkyBoxResources()
     _ASSERTE(m_Scene.UseSkyBox);
     m_SkyBox.IsInited = true;
 
-    /*
     // format 6 image into one cubemap image
     int TexWidth = m_Scene.SkyBoxImages[0]->getImageWidth();
     int TexHeight = m_Scene.SkyBoxImages[0]->getImageHeight();
     size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
     size_t TotalImageSize = SingleFaceImageSize * 6;
     uint8_t* pPixelData = new uint8_t[TotalImageSize];
+
+    // a cubemap image in vulkan:
+    // has 6 array, and in sequence they are
+    // +x with -y up
+    // -x with -y up
+    // -y with -z up
+    // +y with +z up
+    // +z with +x up
+    // -z with -x up
+
+    /* in vulkan:
+    * +y
+    * +z +x -z -x
+    * -y
+    * 
+    * cubemap face to outside, so flip y to make inside out
+    * in gold src:
+    * up
+    * right front left back
+    * down
+    * in sequence: front back down up right left
+    * flip y: front back up down right left
+     */
+    
 
     for (size_t i = 0; i < m_Scene.SkyBoxImages.size(); ++i)
     {
@@ -159,10 +182,10 @@ void CVulkanRenderer::__createSkyBoxResources()
     vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
 
     m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
-    */
+    
 
-    __createImageFromIOImage(m_Scene.SkyBoxImages[0], m_SkyBox.SkyBoxImagePack.Image, m_SkyBox.SkyBoxImagePack.Memory);
-    m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    /*__createImageFromIOImage(m_Scene.SkyBoxImages[0], m_SkyBox.SkyBoxImagePack.Image, m_SkyBox.SkyBoxImagePack.Memory);
+    m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);*/
 
     // create plane
     const std::vector<glm::vec3> Vertices =
@@ -189,7 +212,6 @@ void CVulkanRenderer::__createSkyBoxResources()
 
     const std::vector<SSkyPointData> PointData =
     {
-        //{Vertices[5]}, {Vertices[4]}, {Vertices[1]}, {Vertices[4]}, {Vertices[0]}, {Vertices[1]},
         {Vertices[4]}, {Vertices[0]}, {Vertices[1]}, {Vertices[4]}, {Vertices[1]}, {Vertices[5]}, // +z
         {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
         {Vertices[0]}, {Vertices[3]}, {Vertices[2]}, {Vertices[0]}, {Vertices[2]}, {Vertices[1]}, // +y
@@ -197,22 +219,12 @@ void CVulkanRenderer::__createSkyBoxResources()
         {Vertices[4]}, {Vertices[7]}, {Vertices[3]}, {Vertices[4]}, {Vertices[3]}, {Vertices[0]}, // +x
         {Vertices[1]}, {Vertices[2]}, {Vertices[6]}, {Vertices[1]}, {Vertices[6]}, {Vertices[5]}, // -x
     };
-    // 6 7 2 7 3 2
-    //const std::vector<SSkyPointData> PointData =
-    //{
-    //    {{-1.0, -1.0, 0.0}},
-    //    {{ 1.0, -1.0, 0.0}},
-    //    {{-1.0,  1.0, 0.0}},
-    //    {{ 1.0, -1.0, 0.0}},
-    //    {{ 1.0,  1.0, 0.0}},
-    //    {{-1.0,  1.0, 0.0}}
-    //};
 
     VkDeviceSize DataSize = sizeof(SSkyPointData) * PointData.size();
-    m_SkyBox.DataSize = DataSize;
+    m_SkyBox.VertexNum = PointData.size();
 
-    VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;
+   /* VkBuffer StagingBuffer;
+    VkDeviceMemory StagingBufferMemory;*/
     __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
     void* pData;
@@ -354,15 +366,15 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
                 __renderByBspTree(vImageIndex);
             else
             {
-                vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Pipeline);
-                vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
+                m_PipelineSet.TrianglesWithDepthTest.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+                
                 SPushConstant PushConstant;
                 PushConstant.Opacity = 1.0f;
                 
                 for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
                 {
                     PushConstant.UseLightmap = m_Scene.Objects[i]->HasLightmap;
-                    vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+                    m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
                     if (m_AreObjectsVisable[i])
                         __recordObjectRenderCommand(vImageIndex, i);
                 }
@@ -380,8 +392,8 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeList.clear();
     if (m_Scene.BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
-    vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Pipeline);
-    vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
+    m_PipelineSet.TrianglesWithDepthTest.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+
     __renderTreeNode(vImageIndex, 0);
     __renderModels(vImageIndex);
 }
@@ -397,9 +409,8 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
         if (ObjectIndex > 0 && m_AreObjectsVisable[ObjectIndex])
         {
             m_RenderNodeList.emplace_back(ObjectIndex);
-
             PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
-            vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+            m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
     }
@@ -423,8 +434,8 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
 void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
 {
     auto [OpaqueSequence, TranparentSequence] = __sortModelRenderSequence();
-    vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Pipeline);
-    vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithDepthTest.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
+
+    m_PipelineSet.TrianglesWithDepthTest.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
     SPushConstant PushConstant = {};
     PushConstant.Opacity = 1.0f;
     for(size_t ObjectIndex : OpaqueSequence)
@@ -432,19 +443,18 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
-        vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+        m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
 
-    vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithBlend.Pipeline);
-    vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithBlend.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
+    m_PipelineSet.TrianglesWithBlend.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
     for (size_t ObjectIndex : TranparentSequence)
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         PushConstant.Opacity = m_Scene.Objects[ObjectIndex]->Opacity;
         PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
-        vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithBlend.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
+        m_PipelineSet.TrianglesWithBlend.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
 }
@@ -628,75 +638,6 @@ void CVulkanRenderer::__createGraphicsPipelines()
 
 void CVulkanRenderer::__createSkyPipeline()
 {
-    auto VertShaderCode = __readFile(m_PipelineSet.TrianglesSky.VertShaderPath);
-    auto FragShaderCode = __readFile(m_PipelineSet.TrianglesSky.FragShaderPath);
-
-    VkShaderModule VertShaderModule = __createShaderModule(VertShaderCode);
-    VkShaderModule FragShaderModule = __createShaderModule(FragShaderCode);
-
-    VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
-    VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    VertShaderStageInfo.module = VertShaderModule;
-    VertShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo FragShaderStageInfo = {};
-    FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    FragShaderStageInfo.module = FragShaderModule;
-    FragShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo, FragShaderStageInfo };
-
-    auto BindingDescription = SSkyPointData::getBindingDescription();
-    auto AttributeDescriptions = SSkyPointData::getAttributeDescriptions();
-
-    VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
-    VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    VertexInputInfo.vertexBindingDescriptionCount = 1;
-    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(AttributeDescriptions.size());
-    VertexInputInfo.pVertexBindingDescriptions = &BindingDescription;
-    VertexInputInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
-
-    VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
-    InputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyInfo.topology = m_PipelineSet.TrianglesSky.PrimitiveToplogy;
-    InputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-
-    VkViewport Viewport = {};
-    Viewport.width = static_cast<float>(m_Extent.width);
-    Viewport.height = static_cast<float>(m_Extent.height);
-    Viewport.minDepth = 0.0f;
-    Viewport.maxDepth = 1.0f;
-
-    VkRect2D Scissor = {};
-    Scissor.offset = { 0, 0 };
-    Scissor.extent = m_Extent;
-
-    VkPipelineViewportStateCreateInfo ViewportStateInfo = {};
-    ViewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    ViewportStateInfo.viewportCount = 1;
-    ViewportStateInfo.pViewports = &Viewport;
-    ViewportStateInfo.scissorCount = 1;
-    ViewportStateInfo.pScissors = &Scissor;
-
-    VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
-    RasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    RasterizerInfo.depthClampEnable = VK_FALSE;
-    RasterizerInfo.depthBiasEnable = VK_TRUE;
-    RasterizerInfo.depthBiasConstantFactor = 0.0;
-    RasterizerInfo.depthBiasSlopeFactor = 1.0;
-    RasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
-    RasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
-    RasterizerInfo.lineWidth = 1.0f;
-    RasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    RasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-
-    VkPipelineMultisampleStateCreateInfo Multisampling = {};
-    Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    Multisampling.sampleShadingEnable = VK_FALSE;
-    Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
     VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
     DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     DepthStencilInfo.depthTestEnable = VK_FALSE;
@@ -708,123 +649,26 @@ void CVulkanRenderer::__createSkyPipeline()
     ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     ColorBlendAttachment.blendEnable = VK_FALSE;
 
-    VkPipelineColorBlendStateCreateInfo ColorBlending = {};
-    ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    ColorBlending.logicOpEnable = VK_FALSE;
-    ColorBlending.attachmentCount = 1;
-    ColorBlending.pAttachments = &ColorBlendAttachment;
+    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
+    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    ColorBlendInfo.logicOpEnable = VK_FALSE;
+    ColorBlendInfo.attachmentCount = 1;
+    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
 
-    VkPipelineDynamicStateCreateInfo DynamicState = {};
-    DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicState.dynamicStateCount = 0;
-    DynamicState.pDynamicStates = nullptr;
-
-    VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
-    PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    PipelineLayoutInfo.setLayoutCount = 1;
-    PipelineLayoutInfo.pSetLayouts = &m_SkyDescriptorSetLayout;
-    PipelineLayoutInfo.pushConstantRangeCount = 0;
-    PipelineLayoutInfo.pPushConstantRanges = nullptr;
-
-    ck(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineSet.TrianglesSky.Layout));
-
-    VkGraphicsPipelineCreateInfo PipelineInfoSky = {};
-    PipelineInfoSky.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    PipelineInfoSky.stageCount = 2;
-    PipelineInfoSky.pStages = ShaderStages;
-    PipelineInfoSky.pVertexInputState = &VertexInputInfo;
-    PipelineInfoSky.pInputAssemblyState = &InputAssemblyInfo;
-    PipelineInfoSky.pViewportState = &ViewportStateInfo;
-    PipelineInfoSky.pRasterizationState = &RasterizerInfo;
-    PipelineInfoSky.pMultisampleState = &Multisampling;
-    PipelineInfoSky.pDepthStencilState = &DepthStencilInfo;
-    PipelineInfoSky.pColorBlendState = &ColorBlending;
-    PipelineInfoSky.pDynamicState = nullptr;
-    PipelineInfoSky.layout = m_PipelineSet.TrianglesSky.Layout;
-    PipelineInfoSky.renderPass = m_RenderPass;
-    PipelineInfoSky.subpass = 0;
-
-    ck(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfoSky, nullptr, &m_PipelineSet.TrianglesSky.Pipeline));
-
-    vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
-    vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
+    m_PipelineSet.TrianglesSky.create(
+        m_Device,
+        m_RenderPass,
+        SSkyPointData::getBindingDescription(),
+        SSkyPointData::getAttributeDescriptions(),
+        m_Extent,
+        m_SkyDescriptorSetLayout,
+        DepthStencilInfo,
+        ColorBlendInfo
+    );
 }
 
 void CVulkanRenderer::__createDepthTestPipeline()
 {
-    auto VertShaderCode = __readFile(m_PipelineSet.TrianglesWithDepthTest.VertShaderPath);
-    auto FragShaderCode = __readFile(m_PipelineSet.TrianglesWithDepthTest.FragShaderPath);
-
-    VkShaderModule VertShaderModule = __createShaderModule(VertShaderCode);
-    VkShaderModule FragShaderModule = __createShaderModule(FragShaderCode);
-
-    VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
-    VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    VertShaderStageInfo.module = VertShaderModule;
-    VertShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo FragShaderStageInfo = {};
-    FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    FragShaderStageInfo.module = FragShaderModule;
-    FragShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo, FragShaderStageInfo };
-
-    auto BindingDescription = SPointData::getBindingDescription();
-    auto AttributeDescriptions = SPointData::getAttributeDescriptions();
-
-    VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
-    VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    VertexInputInfo.vertexBindingDescriptionCount = 1;
-    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(AttributeDescriptions.size());
-    VertexInputInfo.pVertexBindingDescriptions = &BindingDescription;
-    VertexInputInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
-
-    VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
-    InputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyInfo.topology = m_PipelineSet.TrianglesWithDepthTest.PrimitiveToplogy;
-    InputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-
-    VkViewport Viewport = {};
-    Viewport.width = static_cast<float>(m_Extent.width);
-    Viewport.height = static_cast<float>(m_Extent.height);
-    Viewport.minDepth = 0.0f;
-    Viewport.maxDepth = 1.0f;
-
-    VkRect2D Scissor = {};
-    Scissor.offset = { 0, 0 };
-    Scissor.extent = m_Extent;
-
-    VkPipelineViewportStateCreateInfo ViewportStateInfo = {};
-    ViewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    ViewportStateInfo.viewportCount = 1;
-    ViewportStateInfo.pViewports = &Viewport;
-    ViewportStateInfo.scissorCount = 1;
-    ViewportStateInfo.pScissors = &Scissor;
-
-    VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
-    RasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    RasterizerInfo.depthClampEnable = VK_FALSE;
-    RasterizerInfo.depthBiasEnable = VK_TRUE;
-    RasterizerInfo.depthBiasConstantFactor = 0.0;
-    RasterizerInfo.depthBiasSlopeFactor = 1.0;
-    RasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
-    RasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
-    RasterizerInfo.lineWidth = 1.0f;
-    RasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    RasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-
-    VkPipelineMultisampleStateCreateInfo Multisampling = {};
-    Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    Multisampling.sampleShadingEnable = VK_FALSE;
-    Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    Multisampling.minSampleShading = 1.0f; // Optional
-    Multisampling.pSampleMask = nullptr; // Optional
-    Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-    Multisampling.alphaToOneEnable = VK_FALSE; // Optional
-
     VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
     DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     DepthStencilInfo.depthTestEnable = VK_TRUE;
@@ -837,133 +681,43 @@ void CVulkanRenderer::__createDepthTestPipeline()
     ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     ColorBlendAttachment.blendEnable = VK_FALSE;
 
-    VkPipelineColorBlendStateCreateInfo ColorBlending = {};
-    ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    ColorBlending.logicOpEnable = VK_FALSE;
-    ColorBlending.attachmentCount = 1;
-    ColorBlending.pAttachments = &ColorBlendAttachment;
+    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
+    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    ColorBlendInfo.logicOpEnable = VK_FALSE;
+    ColorBlendInfo.attachmentCount = 1;
+    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
 
     std::vector<VkDynamicState> EnabledDynamicStates =
     {
         VK_DYNAMIC_STATE_DEPTH_BIAS
     };
 
-    VkPipelineDynamicStateCreateInfo DynamicState = {};
-    DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicState.dynamicStateCount = static_cast<uint32_t>(EnabledDynamicStates.size());
-    DynamicState.pDynamicStates = EnabledDynamicStates.data();
+    VkPipelineDynamicStateCreateInfo DynamicStateInfo = {};
+    DynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    DynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(EnabledDynamicStates.size());
+    DynamicStateInfo.pDynamicStates = EnabledDynamicStates.data();
 
     VkPushConstantRange PushConstantInfo = {};
     PushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     PushConstantInfo.offset = 0;
     PushConstantInfo.size = sizeof(SPushConstant);
 
-    VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
-    PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    PipelineLayoutInfo.setLayoutCount = 1;
-    PipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-    PipelineLayoutInfo.pushConstantRangeCount = 1;
-    PipelineLayoutInfo.pPushConstantRanges = &PushConstantInfo;
-
-    ck(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineSet.TrianglesWithDepthTest.Layout));
-
-    VkGraphicsPipelineCreateInfo PipelineInfo = {};
-    PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    PipelineInfo.stageCount = 2;
-    PipelineInfo.pStages = ShaderStages;
-    PipelineInfo.pVertexInputState = &VertexInputInfo;
-    PipelineInfo.pInputAssemblyState = &InputAssemblyInfo;
-    PipelineInfo.pViewportState = &ViewportStateInfo;
-    PipelineInfo.pRasterizationState = &RasterizerInfo;
-    PipelineInfo.pMultisampleState = &Multisampling;
-    PipelineInfo.pDepthStencilState = &DepthStencilInfo;
-    PipelineInfo.pColorBlendState = &ColorBlending;
-    PipelineInfo.pDynamicState = &DynamicState;
-    PipelineInfo.layout = m_PipelineSet.TrianglesWithDepthTest.Layout;
-    PipelineInfo.renderPass = m_RenderPass;
-    PipelineInfo.subpass = 0;
-
-    ck(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_PipelineSet.TrianglesWithDepthTest.Pipeline));
-
-    vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
-    vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
+    m_PipelineSet.TrianglesWithDepthTest.create(
+        m_Device,
+        m_RenderPass,
+        SPointData::getBindingDescription(),
+        SPointData::getAttributeDescriptions(),
+        m_Extent,
+        m_DescriptorSetLayout,
+        DepthStencilInfo,
+        ColorBlendInfo,
+        DynamicStateInfo,
+        PushConstantInfo
+    );
 }
 
 void CVulkanRenderer::__createBlendPipeline()
 {
-    auto VertShaderCode = __readFile(m_PipelineSet.TrianglesWithBlend.VertShaderPath);
-    auto FragShaderCode = __readFile(m_PipelineSet.TrianglesWithBlend.FragShaderPath);
-
-    VkShaderModule VertShaderModule = __createShaderModule(VertShaderCode);
-    VkShaderModule FragShaderModule = __createShaderModule(FragShaderCode);
-
-    VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
-    VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    VertShaderStageInfo.module = VertShaderModule;
-    VertShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo FragShaderStageInfo = {};
-    FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    FragShaderStageInfo.module = FragShaderModule;
-    FragShaderStageInfo.pName = "main";
-
-    VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo, FragShaderStageInfo };
-
-    auto BindingDescription = SPointData::getBindingDescription();
-    auto AttributeDescriptions = SPointData::getAttributeDescriptions();
-
-    VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
-    VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    VertexInputInfo.vertexBindingDescriptionCount = 1;
-    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(AttributeDescriptions.size());
-    VertexInputInfo.pVertexBindingDescriptions = &BindingDescription;
-    VertexInputInfo.pVertexAttributeDescriptions = AttributeDescriptions.data();
-
-    VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
-    InputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyInfo.topology = m_PipelineSet.TrianglesWithBlend.PrimitiveToplogy;
-    InputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-
-    VkViewport Viewport = {};
-    Viewport.width = static_cast<float>(m_Extent.width);
-    Viewport.height = static_cast<float>(m_Extent.height);
-    Viewport.minDepth = 0.0f;
-    Viewport.maxDepth = 1.0f;
-
-    VkRect2D Scissor = {};
-    Scissor.offset = { 0, 0 };
-    Scissor.extent = m_Extent;
-
-    VkPipelineViewportStateCreateInfo ViewportStateInfo = {};
-    ViewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    ViewportStateInfo.viewportCount = 1;
-    ViewportStateInfo.pViewports = &Viewport;
-    ViewportStateInfo.scissorCount = 1;
-    ViewportStateInfo.pScissors = &Scissor;
-
-    VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
-    RasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    RasterizerInfo.depthClampEnable = VK_FALSE;
-    RasterizerInfo.depthBiasEnable = VK_TRUE;
-    RasterizerInfo.depthBiasConstantFactor = 0.0;
-    RasterizerInfo.depthBiasSlopeFactor = 1.0;
-    RasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
-    RasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
-    RasterizerInfo.lineWidth = 1.0f;
-    RasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    RasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-
-    VkPipelineMultisampleStateCreateInfo Multisampling = {};
-    Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    Multisampling.sampleShadingEnable = VK_FALSE;
-    Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    Multisampling.minSampleShading = 1.0f; // Optional
-    Multisampling.pSampleMask = nullptr; // Optional
-    Multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
-    Multisampling.alphaToOneEnable = VK_FALSE; // Optional
-
     VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
     DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     DepthStencilInfo.depthTestEnable = VK_TRUE;
@@ -984,56 +738,39 @@ void CVulkanRenderer::__createBlendPipeline()
     ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    VkPipelineColorBlendStateCreateInfo ColorBlending = {};
-    ColorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    ColorBlending.logicOpEnable = VK_FALSE;
-    ColorBlending.attachmentCount = 1;
-    ColorBlending.pAttachments = &ColorBlendAttachment;
+    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
+    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    ColorBlendInfo.logicOpEnable = VK_FALSE;
+    ColorBlendInfo.attachmentCount = 1;
+    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
 
     std::vector<VkDynamicState> EnabledDynamicStates =
     {
         VK_DYNAMIC_STATE_DEPTH_BIAS
     };
 
-    VkPipelineDynamicStateCreateInfo DynamicState = {};
-    DynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicState.dynamicStateCount = static_cast<uint32_t>(EnabledDynamicStates.size());
-    DynamicState.pDynamicStates = EnabledDynamicStates.data();
+    VkPipelineDynamicStateCreateInfo DynamicStateInfo = {};
+    DynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    DynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(EnabledDynamicStates.size());
+    DynamicStateInfo.pDynamicStates = EnabledDynamicStates.data();
 
     VkPushConstantRange PushConstantInfo = {};
     PushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     PushConstantInfo.offset = 0;
     PushConstantInfo.size = sizeof(SPushConstant);
 
-    VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
-    PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    PipelineLayoutInfo.setLayoutCount = 1;
-    PipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-    PipelineLayoutInfo.pushConstantRangeCount = 1;
-    PipelineLayoutInfo.pPushConstantRanges = &PushConstantInfo;
-
-    ck(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineSet.TrianglesWithBlend.Layout));
-
-    VkGraphicsPipelineCreateInfo PipelineInfo = {};
-    PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    PipelineInfo.stageCount = 2;
-    PipelineInfo.pStages = ShaderStages;
-    PipelineInfo.pVertexInputState = &VertexInputInfo;
-    PipelineInfo.pInputAssemblyState = &InputAssemblyInfo;
-    PipelineInfo.pViewportState = &ViewportStateInfo;
-    PipelineInfo.pRasterizationState = &RasterizerInfo;
-    PipelineInfo.pMultisampleState = &Multisampling;
-    PipelineInfo.pDepthStencilState = &DepthStencilInfo;
-    PipelineInfo.pColorBlendState = &ColorBlending;
-    PipelineInfo.pDynamicState = &DynamicState;
-    PipelineInfo.layout = m_PipelineSet.TrianglesWithBlend.Layout;
-    PipelineInfo.renderPass = m_RenderPass;
-    PipelineInfo.subpass = 0;
-
-    ck(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_PipelineSet.TrianglesWithBlend.Pipeline));
-
-    vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
-    vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
+    m_PipelineSet.TrianglesWithBlend.create(
+        m_Device,
+        m_RenderPass,
+        SPointData::getBindingDescription(),
+        SPointData::getAttributeDescriptions(),
+        m_Extent,
+        m_DescriptorSetLayout,
+        DepthStencilInfo,
+        ColorBlendInfo,
+        DynamicStateInfo,
+        PushConstantInfo
+    );
 }
 
 void CVulkanRenderer::__createCommandPool()
@@ -1481,22 +1218,6 @@ void CVulkanRenderer::__createCommandBuffers()
     rerecordCommand();
 }
 
-std::vector<char> CVulkanRenderer::__readFile(std::filesystem::path vFilePath)
-{
-    std::ifstream File(vFilePath, std::ios::ate | std::ios::binary);
-
-    if (!File.is_open()) 
-        throw std::runtime_error(u8"读取文件失败：" + vFilePath.u8string());
-
-    size_t FileSize = static_cast<size_t>(File.tellg());
-    std::vector<char> Buffer(FileSize);
-    File.seekg(0);
-    File.read(Buffer.data(), FileSize);
-    File.close();
-
-    return Buffer;
-}
-
 std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const
 {
     size_t NumPoint = vpObject->Vertices.size();
@@ -1548,18 +1269,6 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
     }
 
     throw std::runtime_error(u8"未找到适配的vulkan格式");
-}
-
-VkShaderModule CVulkanRenderer::__createShaderModule(const std::vector<char>& vShaderCode)
-{
-    VkShaderModuleCreateInfo ShaderModuleInfo = {};
-    ShaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    ShaderModuleInfo.codeSize = vShaderCode.size();
-    ShaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(vShaderCode.data());
-
-    VkShaderModule ShaderModule;
-    ck(vkCreateShaderModule(m_Device, &ShaderModuleInfo, nullptr, &ShaderModule));
-    return ShaderModule;
 }
 
 void CVulkanRenderer::__createImage(VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory)
@@ -1956,7 +1665,26 @@ void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
     vkUnmapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory);
 
     SSkyUniformBufferObjectFrag UBOFrag = {};
-    UBOFrag.EyeDirection = m_pCamera->getFront();
+    glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
+    glm::vec3 Up = glm::normalize(m_pCamera->getUp());
+
+    glm::vec3 RotationAxe = glm::cross(Up, FixUp);
+
+    if (RotationAxe.length() == 0)
+    {
+            UBOFrag.UpCorrection = glm::mat4(1.0);
+            if (glm::dot(FixUp, Up) < 0)
+            {
+                UBOFrag.UpCorrection[0][0] = -1.0;
+                UBOFrag.UpCorrection[1][1] = -1.0;
+                UBOFrag.UpCorrection[2][2] = -1.0;
+            }
+    }
+    else
+    {
+        float RotationRad = glm::acos(glm::dot(FixUp, Up));
+        UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
+    }
 
     ck(vkMapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
     memcpy(pData, &UBOFrag, sizeof(UBOFrag));
@@ -1966,8 +1694,7 @@ void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
 void CVulkanRenderer::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     const VkDeviceSize Offsets[] = { 0 };
-    vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesSky.Pipeline);
-    vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesSky.Layout, 0, 1, &m_SkyDescriptorSets[vImageIndex], 0, nullptr);
+    m_PipelineSet.TrianglesSky.bind(m_CommandBuffers[vImageIndex], m_SkyDescriptorSets[vImageIndex]);
     vkCmdBindVertexBuffers(m_CommandBuffers[vImageIndex], 0, 1, &m_SkyBox.VertexData.Buffer, Offsets);
-    vkCmdDraw(m_CommandBuffers[vImageIndex], m_SkyBox.DataSize, 1, 0, 0);
+    vkCmdDraw(m_CommandBuffers[vImageIndex], m_SkyBox.VertexNum, 1, 0, 0);
 }

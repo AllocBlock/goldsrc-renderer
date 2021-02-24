@@ -1,6 +1,7 @@
 {
 "classname" "worldspawn"
-"skyname" "neb6"
+"skyname" "testskybox"
+"classname" "worldspawn"
 "MaxRange" "32768"
 "mapversion" "220"
 "wad" "\steamlibrary\steamapps\common\half-life\valve\halflife.wad"
