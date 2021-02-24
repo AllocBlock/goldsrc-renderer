@@ -138,7 +138,6 @@ struct SSkyPointData
     }
 };
 
-
 struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Model;
@@ -203,8 +202,9 @@ struct SSkyBox
 {
     bool IsInited = false;
     std::array<SVkImagePack, 6> SkyBoxImages; // Left, Right, Front, Back, Up, Down
-    SVkBufferPack Vertices;
-    VkDeviceSize BufferSize;
+    SVkBufferPack VertexData;
+    VkDeviceSize DataSize;
+    std::vector<SVkBufferPack> FragUniformBufferPacks;
 };
 
 class CVulkanRenderer

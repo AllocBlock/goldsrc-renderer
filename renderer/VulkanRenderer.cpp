@@ -126,28 +126,57 @@ void CVulkanRenderer::__createSkyBoxResources()
         {{-1.0,  1.0, 0.0}}
     };
 
-    VkDeviceSize BufferSize = sizeof(SPointData) * PointData.size();
-    m_SkyBox.BufferSize = BufferSize;
+    VkDeviceSize DataSize = sizeof(SSkyPointData) * PointData.size();
+    m_SkyBox.DataSize = DataSize;
 
     VkBuffer StagingBuffer;
     VkDeviceMemory StagingBufferMemory;
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
+    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
     void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
-    memcpy(reinterpret_cast<char*>(pData), PointData.data(), BufferSize);
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pData));
+    memcpy(reinterpret_cast<char*>(pData), PointData.data(), DataSize);
     vkUnmapMemory(m_Device, StagingBufferMemory);
 
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.Vertices.Buffer, m_SkyBox.Vertices.Memory);
+    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.VertexData.Buffer, m_SkyBox.VertexData.Memory);
 
-    __copyBuffer(StagingBuffer, m_SkyBox.Vertices.Buffer, BufferSize);
+    __copyBuffer(StagingBuffer, m_SkyBox.VertexData.Buffer, DataSize);
+
+    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+
+    // test
+    const std::vector<SPointData> PointData2 =
+    {
+        {{-1.0, -1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
+        {{ 1.0, -1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
+        {{-1.0,  1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
+        {{ 1.0, -1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
+        {{ 1.0,  1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}},
+        {{-1.0,  1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}}
+    };
+
+    // uniform buffer
+    VkDeviceSize BufferSize = sizeof(SSkyUniformBufferObjectFrag);
+    size_t NumSwapchainImage = m_ImageViews.size();
+    m_SkyBox.FragUniformBufferPacks.resize(NumSwapchainImage);
+
+    for (size_t i = 0; i < m_ImageViews.size(); ++i)
+    {
+        __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.FragUniformBufferPacks[i].Buffer, m_SkyBox.FragUniformBufferPacks[i].Memory);
+    }
 }
 
 void CVulkanRenderer::__destroySkyBoxResources()
 {
     for (size_t i = 0; i < m_SkyBox.SkyBoxImages.size(); ++i)
         m_SkyBox.SkyBoxImages[i].destory(m_Device);
-    m_SkyBox.Vertices.destory(m_Device);
+    m_SkyBox.VertexData.destory(m_Device);
+    for (SVkBufferPack& BufferPack : m_SkyBox.FragUniformBufferPacks)
+    {
+        BufferPack.destory(m_Device);
+    }
+    m_SkyBox.FragUniformBufferPacks.clear();
 }
 
 void CVulkanRenderer::destroy()
@@ -325,6 +354,8 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
     PushConstant.Opacity = 1.0f;
     for(size_t ObjectIndex : OpaqueSequence)
     {
+        if (!m_AreObjectsVisable[ObjectIndex]) continue;
+
         PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
         vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithDepthTest.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
@@ -334,6 +365,8 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
     vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesWithBlend.Layout, 0, 1, &m_DescriptorSets[vImageIndex], 0, nullptr);
     for (size_t ObjectIndex : TranparentSequence)
     {
+        if (!m_AreObjectsVisable[ObjectIndex]) continue;
+
         PushConstant.Opacity = m_Scene.Objects[ObjectIndex]->Opacity;
         PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
         vkCmdPushConstants(m_CommandBuffers[vImageIndex], m_PipelineSet.TrianglesWithBlend.Layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SPushConstant), &PushConstant);
@@ -615,7 +648,7 @@ void CVulkanRenderer::__createSkyPipeline()
     VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
     PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutInfo.setLayoutCount = 1;
-    PipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
+    PipelineLayoutInfo.pSetLayouts = &m_SkyDescriptorSetLayout;
     PipelineLayoutInfo.pushConstantRangeCount = 0;
     PipelineLayoutInfo.pPushConstantRanges = nullptr;
 
@@ -1295,7 +1328,7 @@ void CVulkanRenderer::__updateSkyDescriptorSets()
         std::vector<VkWriteDescriptorSet> DescriptorWrites;
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferPacks[i].Buffer;
+        FragBufferInfo.buffer = m_SkyBox.FragUniformBufferPacks[i].Buffer;
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SSkyUniformBufferObjectFrag);
 
@@ -1828,8 +1861,9 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
 
 void CVulkanRenderer::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
+    const VkDeviceSize Offsets[] = { 0 };
     vkCmdBindPipeline(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesSky.Pipeline);
     vkCmdBindDescriptorSets(m_CommandBuffers[vImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineSet.TrianglesSky.Layout, 0, 1, &m_SkyDescriptorSets[vImageIndex], 0, nullptr);
-
-    vkCmdDraw(m_CommandBuffers[vImageIndex], m_SkyBox.BufferSize, 1, 0, 0);
+    vkCmdBindVertexBuffers(m_CommandBuffers[vImageIndex], 0, 1, &m_SkyBox.VertexData.Buffer, Offsets);
+    vkCmdDraw(m_CommandBuffers[vImageIndex], m_SkyBox.DataSize, 1, 0, 0);
 }

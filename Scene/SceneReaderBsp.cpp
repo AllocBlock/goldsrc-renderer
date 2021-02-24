@@ -465,6 +465,11 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     std::string SkyFilePrefix = Lumps.m_LumpEntity.SkyBoxPrefix;
+    if (SkyFilePrefix.empty())
+    {
+        globalLog(u8"地图未指定天空文件，已使用默认天空neb6");
+        SkyFilePrefix = "neb6";
+    }
     std::array<std::string, 6> SkyBoxPostfixes = { "lf", "rt", "ft", "bk", "up", "dn" };
     std::string Extension = ".bmp"; // TODO: implement multiple extension later
 
@@ -478,6 +483,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
         }
         else
         {
+            globalLog(u8"未找到天空图片文件，将不会渲染天空盒");
             m_Scene.SkyBoxImages = {};
             return;
         }
