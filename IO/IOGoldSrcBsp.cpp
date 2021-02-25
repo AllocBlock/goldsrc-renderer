@@ -35,6 +35,7 @@ bool CIOGoldSrcBsp::_readV(std::filesystem::path vFilePath)
 template <typename T>
 std::vector<T> readArray(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
+    _ASSERTE(!vFile.eof() && !vFile.fail());
     vFile.seekg(vOffset, std::ios_base::beg);
 
     _ASSERTE(vSize % sizeof(T) == 0);
@@ -84,13 +85,22 @@ void SBspTexture::read(std::ifstream& vFile, uint64_t vOffset)
     vFile.read(reinterpret_cast<char*>(&Height), sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(Offsets), g_BspMipmapLevel * sizeof(uint32_t));
 
-    if (pData) delete[] pData;
+    if (pIndices) delete[] pIndices;
     IsDataInBsp = (Offsets[0] > 0);
     if (IsDataInBsp)
     {
-        size_t DataSize = static_cast<size_t>(3) * Width * Height ;
-        pData = new uint8_t[DataSize];
-        vFile.read(reinterpret_cast<char*>(pData), Offsets[0]); // ignore high level mipmap
+        size_t DataSize = static_cast<size_t>(Width) * Height;
+        size_t PalleteOffset = Offsets[3] + DataSize / 64;
+        uint16_t PalleteSize = 0; // should be 256 in file
+        uint16_t PalletePadding = 0; // should be 0
+        vFile.seekg(vOffset + PalleteOffset, std::ios_base::beg);
+        vFile.read(reinterpret_cast<char*>(&PalleteSize), sizeof(uint16_t));
+        vFile.read(reinterpret_cast<char*>(Palette), sizeof(Palette));
+        vFile.read(reinterpret_cast<char*>(&PalletePadding), sizeof(uint16_t));
+
+        pIndices = new uint8_t[DataSize];
+        vFile.seekg(vOffset + Offsets[0], std::ios_base::beg);
+        vFile.read(reinterpret_cast<char*>(pIndices), DataSize); // ignore high level mipmap
     }
 }
 
@@ -191,13 +201,17 @@ bool SBspTexture::getRawRGBAPixels(void* vopData) const
         // todo: how does { texture save in bsp?
         if (HasAlphaIndex && false)
         {
-
+            pIter[i * 4] = 0x00;
+            pIter[i * 4 + 1] = 0x00;
+            pIter[i * 4 + 2] = 0x00;
+            pIter[i * 4 + 3] = 0x00;
         }
         else
         {
-            pIter[i * 4] = pData[i * 3];
-            pIter[i * 4 + 1] = pData[i * 3 + 1];
-            pIter[i * 4 + 2] = pData[i * 3 + 2];
+            const SGoldSrcColor& Color = Palette[pIndices[i]];
+            pIter[i * 4] = Color.R;
+            pIter[i * 4 + 1] = Color.G;
+            pIter[i * 4 + 2] = Color.B;
             pIter[i * 4 + 3] = static_cast<uint8_t>(255);
         }
     }

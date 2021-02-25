@@ -35,17 +35,17 @@ int main()
 
     // print result
     std::shared_ptr<CIOImage> pCombinedImage = Lightmap.getCombinedLightmap();
-    const uint8_t* pData = reinterpret_cast<const uint8_t*>(pCombinedImage->getData());
+    const uint8_t* pIndices = reinterpret_cast<const uint8_t*>(pCombinedImage->getData());
     size_t ImageWidth = pCombinedImage->getImageWidth();
     std::cout << "lightmap result:" << std::endl;
     for (size_t i = 0; i < pCombinedImage->getImageHeight(); ++i)
     {
         for (size_t k = 0; k < pCombinedImage->getImageWidth(); ++k)
         {
-            std::cout << static_cast<int>(pData[i * ImageWidth * 4 + k * 4]) << " ";
-            std::cout << static_cast<int>(pData[i * ImageWidth * 4 + k * 4 + 1]) << " ";
-            std::cout << static_cast<int>(pData[i * ImageWidth * 4 + k * 4 + 2]) << " ";
-            std::cout << static_cast<int>(pData[i * ImageWidth * 4 + k * 4 + 3]) << ", ";
+            std::cout << static_cast<int>(pIndices[i * ImageWidth * 4 + k * 4]) << " ";
+            std::cout << static_cast<int>(pIndices[i * ImageWidth * 4 + k * 4 + 1]) << " ";
+            std::cout << static_cast<int>(pIndices[i * ImageWidth * 4 + k * 4 + 2]) << " ";
+            std::cout << static_cast<int>(pIndices[i * ImageWidth * 4 + k * 4 + 3]) << ", ";
         }
         std::cout << std::endl;
     }

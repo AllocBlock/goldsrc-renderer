@@ -62,7 +62,7 @@ struct SBspTreeNode
 
 struct SBspTree
 {
-    size_t NodeNum, LeafNum, ModelNum;
+    size_t NodeNum = 0, LeafNum = 0, ModelNum = 0;
     std::vector<SBspTreeNode> Nodes;
 
     uint32_t getPointLeaf(glm::vec3 vPoint);
@@ -70,7 +70,7 @@ struct SBspTree
 
 struct SBspPvs
 {
-    uint32_t LeafNum;
+    uint32_t LeafNum = 0;
     std::vector<uint8_t> RawData;
     std::vector<std::vector<bool>> MapList;
 

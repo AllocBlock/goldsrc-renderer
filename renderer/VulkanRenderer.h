@@ -402,7 +402,6 @@ private:
     VkDevice m_Device = VK_NULL_HANDLE;
     uint32_t m_GraphicsQueueIndex = 0;
     VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
-
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_SkyDescriptorSetLayout = VK_NULL_HANDLE;
@@ -413,34 +412,33 @@ private:
         {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "shader/skyVert.spv", "shader/skyFrag.spv"},
     };
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
-    
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_DescriptorSets;
     std::vector<VkDescriptorSet> m_SkyDescriptorSets;
     std::vector<VkCommandBuffer> m_CommandBuffers;
-    VkSampler m_TextureSampler = VK_NULL_HANDLE;
+    VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
+    VkExtent2D m_Extent = { 0, 0 };
+    std::vector<VkImageView> m_ImageViews;
+    std::vector<VkFramebuffer> m_Framebuffers;
 
     Common::SVkBufferPack m_VertexBufferPack;
     Common::SVkBufferPack m_IndexBufferPack;
     std::vector<Common::SVkBufferPack> m_VertUniformBufferPacks;
     std::vector<Common::SVkBufferPack> m_FragUniformBufferPacks;
-    
+    VkSampler m_TextureSampler = VK_NULL_HANDLE;
     std::vector<Common::SVkImagePack> m_TextureImagePacks;
     Common::SVkImagePack m_DepthImagePack;
     Common::SVkImagePack m_LightmapImagePack;
 
-    VkFormat m_ImageFormat = VK_FORMAT_UNDEFINED;
-    VkExtent2D m_Extent = { 0, 0 };
-    std::vector<VkImageView> m_ImageViews;
-    std::vector<VkFramebuffer> m_Framebuffers;
-
     SScene m_Scene;
     SSkyBox m_SkyBox;
+    std::shared_ptr<CCamera> m_pCamera = nullptr;
+
+    bool m_FramebufferResized = false;
     size_t m_RerecordCommand = 0;
     std::vector<bool> m_AreObjectsVisable;
-    size_t m_VisableObjectNum;
+    size_t m_VisableObjectNum = 0;
     std::vector<SObjectDataPosition> m_ObjectDataPositions;
-    std::shared_ptr<CCamera> m_pCamera = nullptr;
     bool m_EnableSky = true;
     bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;
@@ -452,6 +450,4 @@ private:
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;
     const size_t m_MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
-
-    bool m_FramebufferResized = false;
 };

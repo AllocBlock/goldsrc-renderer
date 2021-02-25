@@ -5,7 +5,7 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
     uint8_t BaseColor1[3] = { 0, 0, 0 };
     uint8_t BaseColor2[3] = { 255, 0, 255 };
     size_t DataSize = vNumRow * vNumCol * vCellSize * vCellSize * 4;
-    uint8_t* pData = new uint8_t[DataSize];
+    uint8_t* pIndices = new uint8_t[DataSize];
     for (size_t i = 0; i < DataSize / 4; i++)
     {
         size_t GridRowIndex = (i / (vNumCol * vCellSize)) / vCellSize;
@@ -16,10 +16,10 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
             pColor = BaseColor1;
         else
             pColor = BaseColor2;
-        pData[i * 4] = pColor[0];
-        pData[i * 4 + 1] = pColor[1];
-        pData[i * 4 + 2] = pColor[2];
-        pData[i * 4 + 3] = static_cast<uint8_t>(255);
+        pIndices[i * 4] = pColor[0];
+        pIndices[i * 4 + 1] = pColor[1];
+        pIndices[i * 4 + 2] = pColor[2];
+        pIndices[i * 4 + 3] = static_cast<uint8_t>(255);
     }
 
     // cout 
@@ -33,7 +33,7 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
     }*/
     std::shared_ptr<CIOImage> pGrid = std::make_shared<CIOImage>();
     pGrid->setImageSize(vNumCol * vCellSize, vNumRow * vCellSize);
-    pGrid->setData(pData);
+    pGrid->setData(pIndices);
 
     return pGrid;
 }
@@ -41,18 +41,18 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
 std::shared_ptr<CIOImage> generatePureColorTexture(uint8_t vBaseColor[3], size_t vSize)
 {
     size_t DataSize = vSize * vSize * 4;
-    uint8_t* pData = new uint8_t[DataSize];
+    uint8_t* pIndices = new uint8_t[DataSize];
     for (size_t i = 0; i < DataSize / 4; i++)
     {
-        pData[i * 4] = vBaseColor[0];
-        pData[i * 4 + 1] = vBaseColor[1];
-        pData[i * 4 + 2] = vBaseColor[2];
-        pData[i * 4 + 3] = static_cast<uint8_t>(255);
+        pIndices[i * 4] = vBaseColor[0];
+        pIndices[i * 4 + 1] = vBaseColor[1];
+        pIndices[i * 4 + 2] = vBaseColor[2];
+        pIndices[i * 4 + 3] = static_cast<uint8_t>(255);
     }
 
     std::shared_ptr<CIOImage> pPure = std::make_shared<CIOImage>();
     pPure->setImageSize(vSize, vSize);
-    pPure->setData(pData);
+    pPure->setData(pIndices);
 
     return pPure;
 }
@@ -62,7 +62,7 @@ std::shared_ptr<CIOImage> generateDiagonalGradientGrid(size_t vWidth, size_t vHe
     uint8_t BaseColor1[3] = { vR1, vG1, vB1 };
     uint8_t BaseColor2[3] = { vR2, vG2, vB2 };
     size_t DataSize = vWidth * vHeight * 4;
-    uint8_t* pData = new uint8_t[DataSize];
+    uint8_t* pIndices = new uint8_t[DataSize];
 
     size_t RowSize = vWidth * 4;
     for (size_t i = 0; i < vHeight; ++i)
@@ -72,16 +72,16 @@ std::shared_ptr<CIOImage> generateDiagonalGradientGrid(size_t vWidth, size_t vHe
         {
             float FactorY = 1 - static_cast<float>(k) / (vWidth - 1);
             float Factor = (FactorX + FactorY) / 2;
-            pData[i * RowSize + k * 4] = BaseColor1[0] * Factor + BaseColor2[0] * (1 - Factor);
-            pData[i * RowSize + k * 4 + 1] = BaseColor1[1] * Factor + BaseColor2[1] * (1 - Factor);
-            pData[i * RowSize + k * 4 + 2] = BaseColor1[2] * Factor + BaseColor2[2] * (1 - Factor);
-            pData[i * RowSize + k * 4 + 3] = static_cast<uint8_t>(255);
+            pIndices[i * RowSize + k * 4] = BaseColor1[0] * Factor + BaseColor2[0] * (1 - Factor);
+            pIndices[i * RowSize + k * 4 + 1] = BaseColor1[1] * Factor + BaseColor2[1] * (1 - Factor);
+            pIndices[i * RowSize + k * 4 + 2] = BaseColor1[2] * Factor + BaseColor2[2] * (1 - Factor);
+            pIndices[i * RowSize + k * 4 + 3] = static_cast<uint8_t>(255);
         }
     }
 
     std::shared_ptr<CIOImage> pGradient = std::make_shared<CIOImage>();
     pGradient->setImageSize(vWidth, vHeight);
-    pGradient->setData(pData);
+    pGradient->setData(pIndices);
 
     return pGradient;
 }
@@ -119,20 +119,20 @@ std::shared_ptr<CIOImage> getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vI
 
     std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
     pTexImage->setImageSize(static_cast<int>(Width), static_cast<int>(Height));
-    void* pData = new uint8_t[static_cast<size_t>(4) * Width * Height];
-    vWad.getRawRGBAPixels(vIndex, pData);
-    pTexImage->setData(pData);
-    delete[] pData;
+    void* pIndices = new uint8_t[static_cast<size_t>(4) * Width * Height];
+    vWad.getRawRGBAPixels(vIndex, pIndices);
+    pTexImage->setData(pIndices);
+    delete[] pIndices;
     return pTexImage;
 }
 
 std::shared_ptr<CIOImage> getIOImageFromBspTexture(const SBspTexture& vBspTexture)
 {
-    uint8_t* pData = new uint8_t[static_cast<size_t>(4) * vBspTexture.Width * vBspTexture.Height];
-    vBspTexture.getRawRGBAPixels(pData);
+    uint8_t* pIndices = new uint8_t[static_cast<size_t>(4) * vBspTexture.Width * vBspTexture.Height];
+    vBspTexture.getRawRGBAPixels(pIndices);
     std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
     pTexImage->setImageSize(vBspTexture.Width, vBspTexture.Height);
-    pTexImage->setData(pData);
-    delete[] pData;
+    pTexImage->setData(pIndices);
+    delete[] pIndices;
     return pTexImage;
 }

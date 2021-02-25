@@ -116,36 +116,29 @@ void CVulkanRenderer::__createSkyBoxResources()
     size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
     size_t TotalImageSize = SingleFaceImageSize * 6;
     uint8_t* pPixelData = new uint8_t[TotalImageSize];
-
-    // a cubemap image in vulkan:
-    // has 6 array, and in sequence they are
-    // +x with -y up
-    // -x with -y up
-    // -y with -z up
-    // +y with +z up
-    // +z with +x up
-    // -z with -x up
-
-    /* in vulkan:
-    * +y
-    * +z +x -z -x
-    * -y
-    * 
-    * cubemap face to outside, so flip y to make inside out
-    * in gold src:
-    * up
-    * right front left back
-    * down
-    * in sequence: front back down up right left
-    * flip y: front back up down right left
+    memset(pPixelData, 0, TotalImageSize);
+    /*
+     * a cubemap image in vulkan has 6 faces(layers), and in sequence they are
+     * +x, -x, +y, -y, +z, -z
+     * 
+     * in vulkan:
+     * +y
+     * +z +x -z -x
+     * -y
+     * 
+     * cubemap face to outside(fold +y and -y behind)
+     * in GoldSrc:
+     * up
+     * right front left back
+     * down
+     * in sequence: front back up down right left
      */
     
-
     for (size_t i = 0; i < m_Scene.SkyBoxImages.size(); ++i)
     {
         _ASSERTE(TexWidth == m_Scene.SkyBoxImages[i]->getImageWidth() && TexHeight == m_Scene.SkyBoxImages[i]->getImageHeight());
-        const void* pData = m_Scene.SkyBoxImages[i]->getData();
-        memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
+        const void* pIndices = m_Scene.SkyBoxImages[i]->getData();
+        memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pIndices, SingleFaceImageSize);
     }
 
     VkBuffer StagingBuffer;
@@ -156,6 +149,7 @@ void CVulkanRenderer::__createSkyBoxResources()
     ck(vkMapMemory(m_Device, StagingBufferMemory, 0, TotalImageSize, 0, &pDevData));
     memcpy(pDevData, pPixelData, TotalImageSize);
     vkUnmapMemory(m_Device, StagingBufferMemory);
+    delete[] pPixelData;
 
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -182,10 +176,6 @@ void CVulkanRenderer::__createSkyBoxResources()
     vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
 
     m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
-    
-
-    /*__createImageFromIOImage(m_Scene.SkyBoxImages[0], m_SkyBox.SkyBoxImagePack.Image, m_SkyBox.SkyBoxImagePack.Memory);
-    m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);*/
 
     // create plane
     const std::vector<glm::vec3> Vertices =
@@ -227,9 +217,9 @@ void CVulkanRenderer::__createSkyBoxResources()
     VkDeviceMemory StagingBufferMemory;*/
     __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
-    void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pData));
-    memcpy(reinterpret_cast<char*>(pData), PointData.data(), DataSize);
+    void* pIndices;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pIndices));
+    memcpy(reinterpret_cast<char*>(pIndices), PointData.data(), DataSize);
     vkUnmapMemory(m_Device, StagingBufferMemory);
 
     __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.VertexData.Buffer, m_SkyBox.VertexData.Memory);
@@ -916,14 +906,14 @@ void CVulkanRenderer::__createVertexBuffer()
     VkDeviceMemory StagingBufferMemory;
     __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
-    void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
+    void* pIndices;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pIndices));
     size_t Offset = 0;
     for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
     {
         std::vector<SPointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SPointData) * pObject->Vertices.size();
-        memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
+        memcpy(reinterpret_cast<char*>(pIndices)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
     vkUnmapMemory(m_Device, StagingBufferMemory);
@@ -954,8 +944,8 @@ void CVulkanRenderer::__createIndexBuffer()
     VkDeviceMemory StagingBufferMemory;
     __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
-    void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
+    void* pIndices;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pIndices));
     size_t Offset = 0;
     for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
     {
@@ -964,7 +954,7 @@ void CVulkanRenderer::__createIndexBuffer()
         for (uint32_t& Index : Indices)
             Index += IndexOffset;
         size_t SubBufferSize = sizeof(uint32_t) * Indices.size();
-        memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
+        memcpy(reinterpret_cast<char*>(pIndices) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
     vkUnmapMemory(m_Device, StagingBufferMemory);
@@ -1639,16 +1629,16 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     UBOVert.View = m_pCamera->getViewMat();
     UBOVert.Proj = m_pCamera->getProjMat();
 
-    void* pData;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
+    void* pIndices;
+    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pIndices));
+    memcpy(pIndices, &UBOVert, sizeof(UBOVert));
     vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
 
     SUniformBufferObjectFrag UBOFrag = {};
     UBOFrag.Eye = m_pCamera->getPos();
 
-    ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
+    ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pIndices));
+    memcpy(pIndices, &UBOFrag, sizeof(UBOFrag));
     vkUnmapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory);
 }
 
@@ -1659,9 +1649,9 @@ void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
     UBOVert.View = m_pCamera->getViewMat();
     UBOVert.EyePosition = m_pCamera->getPos();
 
-    void* pData;
-    ck(vkMapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
+    void* pIndices;
+    ck(vkMapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pIndices));
+    memcpy(pIndices, &UBOVert, sizeof(UBOVert));
     vkUnmapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory);
 
     SSkyUniformBufferObjectFrag UBOFrag = {};
@@ -1686,8 +1676,8 @@ void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
         UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
     }
 
-    ck(vkMapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
+    ck(vkMapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pIndices));
+    memcpy(pIndices, &UBOFrag, sizeof(UBOFrag));
     vkUnmapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory);
 }
 

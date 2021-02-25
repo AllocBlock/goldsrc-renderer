@@ -321,8 +321,8 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
         size_t LightmapHeight = static_cast<size_t>(MaxY - MinY) + 1;
 
         size_t LightmapImageSize = static_cast<size_t>(4) * LightmapWidth * LightmapHeight;
-        uint8_t* pData = new uint8_t[LightmapImageSize];
-        std::memset(pData, 0, LightmapImageSize);
+        uint8_t* pIndices = new uint8_t[LightmapImageSize];
+        std::memset(pIndices, 0, LightmapImageSize);
         uint8_t* pTempData = new uint8_t[LightmapImageSize];
         // blend all lightmap, use the brightest value
         for (int i = 0; i < 4; ++i)
@@ -330,14 +330,14 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
             if (Face.LightingStyles[i] == 0xff) continue;
             Lumps.m_LumpLighting.getRawRGBAPixels(Face.LightmapOffset / 3 + LightmapImageSize / 4 * i, LightmapImageSize / 4, pTempData);
             for (size_t k = 0; k < LightmapImageSize; ++k)
-                pData[k] = std::max<uint8_t>(pData[k], pTempData[k]);
+                pIndices[k] = std::max<uint8_t>(pIndices[k], pTempData[k]);
         }
         auto pLightmapImage = std::make_shared<CIOImage>();
         pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
         pLightmapImage->setImageChannels(4);
-        pLightmapImage->setData(pData);
+        pLightmapImage->setData(pIndices);
         delete[] pTempData;
-        delete[] pData;
+        delete[] pIndices;
         uint32_t LightmapIndex = static_cast<uint32_t>(m_Scene.pLightmap->appendLightmap(pLightmapImage));
 
         std::vector<glm::vec2> LightmapCoords;
@@ -398,7 +398,6 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
     glm::vec3 Normal = __getBspFaceNormal(vFaceIndex);
     std::vector<glm::vec2> TexCoords = __getBspFaceUnnormalizedTexCoords(vFaceIndex, Vertices);
 
-    
     auto [LightmapIndex, LightmapCoords] = __getAndAppendBspFaceLightmap(vFaceIndex, TexCoords);
     uint32_t TexIndex = m_TexNameToIndex[TexName];
     if (LightmapIndex == std::nullopt)
@@ -470,26 +469,42 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
         globalLog(u8"地图未指定天空文件，已使用默认天空neb6");
         SkyFilePrefix = "neb6";
     }
-    //std::array<std::string, 6> SkyBoxPostfixes = { "lf", "rt", "ft", "bk", "up", "dn" };
+    
+    std::vector<std::string> Extensions = { ".tga", ".bmp", ".png", ".jpg" };
+
+    bool FoundSkyImage = false;
+    for (const std::string& Extension : Extensions)
+    {
+        if (__readSkyboxImages(SkyFilePrefix, Extension, vCurrentDir))
+        {
+            m_Scene.UseSkyBox = true;
+            FoundSkyImage = true;
+            break;
+        }
+    }
+    if (!FoundSkyImage)
+    {
+        globalLog(u8"未找到天空图片文件[" + SkyFilePrefix + u8"]，将不会渲染天空盒");
+        m_Scene.SkyBoxImages = {};
+    }
+}
+
+bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension, std::filesystem::path vCurrentDir)
+{
     // front back up down right left
     std::array<std::string, 6> SkyBoxPostfixes = { "ft", "bk", "up", "dn", "rt", "lf" };
-    std::string Extension = ".bmp"; // TODO: implement multiple extension later
-
     for (size_t i = 0; i < SkyBoxPostfixes.size(); ++i)
     {
         std::filesystem::path ImagePath;
-        if (findFile(SkyFilePrefix + SkyBoxPostfixes[i] + Extension, vCurrentDir, ImagePath))
+        if (findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, ImagePath))
         {
             m_Scene.SkyBoxImages[i] = std::make_shared<CIOImage>();
             m_Scene.SkyBoxImages[i]->read(ImagePath);
         }
         else
         {
-            globalLog(u8"未找到天空图片文件，将不会渲染天空盒");
-            m_Scene.SkyBoxImages = {};
-            return;
+            return false;
         }
-        
     }
-    m_Scene.UseSkyBox = true;
+    return true;
 }

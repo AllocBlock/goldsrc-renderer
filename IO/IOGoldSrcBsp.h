@@ -15,6 +15,11 @@ struct SVec3
     glm::vec3 glmVec3() const;
 };
 
+struct SGoldSrcColor
+{
+    uint8_t R, G, B;
+};
+
 enum class ELumpType
 {
     ENTITIES = 0,
@@ -130,7 +135,9 @@ struct SLumpPlane
  * Name is needed for texture finding.
  * Offsets can be all zero, meaning this texture should be loaded from wad.
  * Else, Offsets store data offset related to the beginning of SBspTexture.
- * TODO: is width and height set when data is in wad?
+ * Width and Height are set no matter data is in wad or bsp.
+ * The texture data is right behind this structure, with 4-level indexed mipmap data, 
+ * a palette size number(uint16_t and always equal to 256), a 256 * 24bit palette data and a 2 byte padding.
  **************************************************************/
 struct SBspTexture
 {
@@ -139,7 +146,8 @@ struct SBspTexture
     uint32_t Offsets[g_BspMipmapLevel];
 
     bool IsDataInBsp = false; // memory-only
-    uint8_t* pData = nullptr; // memory-only
+    uint8_t* pIndices = nullptr; // memory-only
+    SGoldSrcColor Palette[256];
 
     void read(std::ifstream& vFile, uint64_t vOffset);
     bool getRawRGBAPixels(void* vopData) const;

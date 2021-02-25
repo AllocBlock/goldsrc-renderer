@@ -11,11 +11,9 @@ layout(binding = 1) uniform SUniformBufferObject
 } ubo;
 
 layout(binding = 2) uniform samplerCube uSkyCubeSampler;
-//layout(binding = 2) uniform sampler2D uSkyCubeSampler;
 
 void main()
 {
 	vec3 TexCoord = (ubo.UpCorrection * vec4(inFragPosition, 1.0)).xyz;
 	outColor = texture(uSkyCubeSampler, TexCoord);
-	//outColor = vec4(TexCoord, 1.0);
 }
