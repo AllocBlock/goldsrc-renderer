@@ -194,11 +194,10 @@ bool SBspTexture::getRawRGBAPixels(void* vopData) const
         HasAlphaIndex = true;
     }
 
-    size_t Resolution = Width * Height;
+    size_t Resolution = static_cast<size_t>(Width * Height);
     char* pIter = reinterpret_cast<char*>(vopData);
     for (size_t i = 0; i < Resolution; ++i)
     {
-        // todo: how does { texture save in bsp?
         if (HasAlphaIndex && false)
         {
             pIter[i * 4] = 0x00;

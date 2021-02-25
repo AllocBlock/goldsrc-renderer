@@ -73,8 +73,7 @@ std::vector<SMapPolygon> SMapBrush::getPolygons()
                 }
                 else
                 {
-                    // TODO:: judge if two plane is the same, which cause illegal brush
-                    // GlobalLogger::logStream() << "some planes in brush " << this << "are the same";
+                    globalLog(u8"map文件中存在疑似非法固体（同一个固体中存在相同的平面），可能导致渲染效果出错");
                 }
             }
         }

@@ -629,8 +629,6 @@ std::vector<const char*> CImguiVullkan::__getRequiredExtensions()
         Extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 
-    // TODO: 检查是否是指所有的扩展（extension）
-
     return Extensions;
 }
 
