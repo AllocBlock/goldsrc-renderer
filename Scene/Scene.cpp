@@ -47,7 +47,7 @@ uint32_t SBspTree::getPointLeaf(glm::vec3 vPoint)
             NodeIndex = Nodes[NodeIndex].Back.value();
         }
     }
-    uint32_t LeafIndex = Nodes[NodeIndex].Index;
+    uint32_t LeafIndex = NodeIndex - NodeNum;;
 
     return LeafIndex;
 }

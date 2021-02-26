@@ -261,6 +261,7 @@ void CVulkanRenderer::destroy()
 {
     __destroyRecreateResources();
 
+    m_PlaceholderImagePack.destory(m_Device);
     vkDestroySampler(m_Device, m_TextureSampler, nullptr);
     vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
@@ -396,9 +397,11 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
 
     if (vNodeIndex >= m_Scene.BspTree.NodeNum) // if is leaf, render it
     {
-        uint32_t ObjectIndex = vNodeIndex - m_Scene.BspTree.NodeNum;
-        if (ObjectIndex > 0 && m_AreObjectsVisable[ObjectIndex])
+        uint32_t LeafIndex = vNodeIndex - m_Scene.BspTree.NodeNum;
+        for (size_t ObjectIndex : m_Scene.BspTree.LeafIndexToObjectIndices.at(LeafIndex))
         {
+            if (!m_AreObjectsVisable[ObjectIndex]) continue;
+
             m_RenderNodeList.emplace_back(ObjectIndex);
             PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
             m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
@@ -429,8 +432,9 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
     m_PipelineSet.TrianglesWithDepthTest.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
     SPushConstant PushConstant = {};
     PushConstant.Opacity = 1.0f;
-    for(size_t ObjectIndex : OpaqueSequence)
+    for(size_t ModelIndex : OpaqueSequence)
     {
+        size_t ObjectIndex = m_Scene.BspTree.ModelIndexToObjectIndex[ModelIndex];
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
@@ -439,8 +443,9 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
     }
 
     m_PipelineSet.TrianglesWithBlend.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
-    for (size_t ObjectIndex : TranparentSequence)
+    for (size_t ModelIndex : TranparentSequence)
     {
+        size_t ObjectIndex = m_Scene.BspTree.ModelIndexToObjectIndex[ModelIndex];
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         PushConstant.Opacity = m_Scene.Objects[ObjectIndex]->Opacity;
@@ -1214,7 +1219,7 @@ void CVulkanRenderer::__createPlaceholderImage()
     pMinorImage->setImageSize(1, 1);
     pMinorImage->setData(&Pixel);
     __createImageFromIOImage(pMinorImage, m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
-    Common::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    m_PlaceholderImagePack.ImageView = Common::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const
@@ -1501,6 +1506,22 @@ void CVulkanRenderer::__calculateVisiableObjects()
     else
         m_CameraNodeIndex = std::nullopt;
 
+    // calculate PVS
+    std::vector<bool> PVS;
+    if (m_EnablePVS)
+    {
+        PVS.resize(m_Scene.Objects.size(), false);
+        for (size_t i = 0; i < m_Scene.BspTree.LeafNum; ++i)
+        {
+            if (m_Scene.BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), i))
+            {
+                std::vector<size_t> LeafObjectIndices = m_Scene.BspTree.LeafIndexToObjectIndices[i];
+                for (size_t LeafObjectIndex : LeafObjectIndices)
+                    PVS[LeafObjectIndex] = true;
+            }
+        }
+    }
+
     m_VisableObjectNum = 0;
     for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
     {
@@ -1525,8 +1546,9 @@ void CVulkanRenderer::__calculateVisiableObjects()
 
             // PVS culling
             if (m_EnablePVS && i < m_Scene.BspTree.LeafNum)
-                if (!m_Scene.BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), i))
+                if (!PVS[i])
                     continue;
+            
         }
 
         m_AreObjectsVisable[i] = true;
@@ -1575,7 +1597,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> CVulkanRenderer::__sortModel
     glm::vec3 CameraPos = m_pCamera->getPos();
     for (size_t i = 0; i < m_Scene.BspTree.ModelNum; ++i)
     {
-        size_t ObjectIndex = m_Scene.BspTree.LeafNum + i;
+        size_t ObjectIndex = m_Scene.BspTree.ModelIndexToObjectIndex[i];
         std::shared_ptr<S3DObject> pObject = m_Scene.Objects[ObjectIndex];
         if (pObject->IsTransparent)
         {
@@ -1583,11 +1605,11 @@ std::pair<std::vector<size_t>, std::vector<size_t>> CVulkanRenderer::__sortModel
             S3DBoundingBox BoundingBox = pObject->getBoundingBox();
             glm::vec3 Center = (BoundingBox.Min + BoundingBox.Max) * 0.5f;
             float Distance = glm::distance(Center, CameraPos);
-            TranparentInfoForSort.emplace_back(std::make_pair(ObjectIndex, Distance));
+            TranparentInfoForSort.emplace_back(std::make_pair(i, Distance));
         }
         else
         {
-            OpaqueSequence.emplace_back(ObjectIndex);
+            OpaqueSequence.emplace_back(i);
         }
     }
 

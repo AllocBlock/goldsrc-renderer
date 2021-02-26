@@ -5,6 +5,7 @@
 #include <functional>
 #include <optional>
 #include <array>
+#include <map>
 #include <glm/glm.hpp>
 
 enum class E3DObjectDataType
@@ -50,9 +51,8 @@ struct S3DObject
 
 struct SBspTreeNode
 {
-    uint32_t Index;
     glm::vec3 PlaneNormal;
-    float PlaneDistance;
+    float PlaneDistance = 0.0f;
     std::optional<uint32_t> PvsOffset = std::nullopt;
     std::optional<int32_t> Front = std::nullopt;
     std::optional<int32_t> Back = std::nullopt;
@@ -64,6 +64,8 @@ struct SBspTree
 {
     size_t NodeNum = 0, LeafNum = 0, ModelNum = 0;
     std::vector<SBspTreeNode> Nodes;
+    std::map<size_t, std::vector<size_t>> LeafIndexToObjectIndices;
+    std::map<size_t, size_t> ModelIndexToObjectIndex;
 
     uint32_t getPointLeaf(glm::vec3 vPoint);
 };

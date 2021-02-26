@@ -15,13 +15,10 @@ SScene CSceneReaderBsp::read(std::filesystem::path vFilePath, std::function<void
         m_Scene.pLightmap = std::make_shared<CLightmap>();
         m_HasLightmapData = true;
     }
-    if (!m_Bsp.getLumps().m_LumpVisibility.Vis.empty())
-        m_HasVisData = true;
 
     __readTextures();
-    __loadLeaves();
-    __loadEntities();
-    __loadBspTreeAndPvs();
+    __loadBspTree();
+    __loadBspPvs();
     if (m_HasLightmapData)
         __correntLightmapCoords();
 
@@ -40,9 +37,11 @@ void CSceneReaderBsp::__readBsp(std::filesystem::path vFilePath)
 
 void CSceneReaderBsp::__readTextures()
 {
-    m_TexNameToIndex.clear();
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
+    std::vector<std::shared_ptr<CIOImage>> TexImages;
+
+    m_TexNameToIndex.clear();
     // read wads
     const std::vector<std::filesystem::path>& WadPaths = Lumps.m_LumpEntity.WadPaths;
     std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths, m_ProgressReportFunc);
@@ -52,7 +51,7 @@ void CSceneReaderBsp::__readTextures()
     // if bsp contains its data, load it, otherwise find it in all wads
     // if found, load it, otherwise set mapper to 0
     __reportProgress(u8"整理纹理中");
-    m_Scene.TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
     m_TexNameToIndex["TextureNotFound"] = 0;
     for (size_t i = 0; i < Lumps.m_LumpTexture.Textures.size(); ++i)
     {
@@ -61,8 +60,8 @@ void CSceneReaderBsp::__readTextures()
         if (BspTexture.IsDataInBsp)
         {
             std::shared_ptr<CIOImage> pTexImage = getIOImageFromBspTexture(BspTexture);
-            m_TexNameToIndex[BspTexture.Name] = m_Scene.TexImages.size();
-            m_Scene.TexImages.emplace_back(std::move(pTexImage));
+            m_TexNameToIndex[BspTexture.Name] = TexImages.size();
+            TexImages.emplace_back(std::move(pTexImage));
         }
         else
         {
@@ -74,8 +73,8 @@ void CSceneReaderBsp::__readTextures()
                 {
                     Found = true;
                     std::shared_ptr<CIOImage> pTexImage = getIOImageFromWad(Wad, Index.value());
-                    m_TexNameToIndex[BspTexture.Name] = m_Scene.TexImages.size();
-                    m_Scene.TexImages.emplace_back(std::move(pTexImage));
+                    m_TexNameToIndex[BspTexture.Name] = TexImages.size();
+                    TexImages.emplace_back(std::move(pTexImage));
                     break;
                 }
             }
@@ -83,73 +82,89 @@ void CSceneReaderBsp::__readTextures()
                 m_TexNameToIndex[BspTexture.Name] = 0;
         }
     }
+
+    m_Scene.TexImages = std::move(TexImages);
 }
 
-void CSceneReaderBsp::__loadLeaves()
+std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    // load leaves, one object for each leaf
-    __reportProgress(u8"载入固体数据");
-    for (const SBspLeaf& Leaf : Lumps.m_LumpLeaf.Leaves)
+    _ASSERTE(vLeafIndex < Lumps.m_LumpLeaf.Leaves.size());
+    const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
+
+    auto pObjectNormalPart = std::make_shared<S3DObject>();
+    pObjectNormalPart->RenderType = E3DObjectRenderType::NORMAL;
+    auto pObjectSkyPart = std::make_shared<S3DObject>();
+    pObjectSkyPart->RenderType = E3DObjectRenderType::SKY;
+
+    size_t TexWidth, TexHeight;
+    std::string TexName;
+    
+    for (uint16_t i = 0; i < Leaf.NumMarkSurface; ++i)
     {
-        auto pObject = std::make_shared<S3DObject>();
-        for (uint16_t i = 0; i < Leaf.NumMarkSurface; ++i)
+        uint16_t MarkSurfaceIndex = Leaf.FirstMarkSurfaceIndex + i;
+        _ASSERTE(MarkSurfaceIndex < Lumps.m_LumpMarkSurface.FaceIndices.size());
+        uint16_t FaceIndex = Lumps.m_LumpMarkSurface.FaceIndices[MarkSurfaceIndex];
+        __getBspFaceTextureSizeAndName(FaceIndex, TexWidth, TexHeight, TexName);
+        if (TexName == "sky")
         {
-            uint16_t MarkSurfaceIndex = Leaf.FirstMarkSurfaceIndex + i;
-            _ASSERTE(MarkSurfaceIndex < Lumps.m_LumpMarkSurface.FaceIndices.size());
-            uint16_t FaceIndex = Lumps.m_LumpMarkSurface.FaceIndices[MarkSurfaceIndex];
-            __appendBspFaceToObject(pObject, FaceIndex);
-        }
-        m_Scene.Objects.emplace_back(std::move(pObject));
-    }
-}
-
-void CSceneReaderBsp::__loadEntities()
-{
-    const SBspLumps& Lumps = m_Bsp.getLumps();
-
-    // load leaves, one object for each leaf
-    __reportProgress(u8"载入实体数据");
-    const std::vector<SMapEntity>& Entities = Lumps.m_LumpEntity.Entities;
-    for (size_t i = 0; i < Lumps.m_LumpModel.Models.size(); ++i)
-    {
-        const SBspModel& Model = Lumps.m_LumpModel.Models[i];
-
-        int RenderMode = 0;
-        float Opacity = 1.0f;
-        for (const SMapEntity& Entity : Entities)
-        {
-            if (Entity.Properties.find("model") != Entity.Properties.end()
-                && Entity.Properties.at("model") == "*" + std::to_string(i))
-            {
-                RenderMode = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
-                Opacity = Entity.Properties.find("renderamt") != Entity.Properties.end() ? std::stof(Entity.Properties.at("renderamt")) / 255.0f : 1.0f;
-            }
-        }
-
-        auto pObject = std::make_shared<S3DObject>();
-        if (RenderMode != 0)
-        {
-            pObject->IsTransparent = true;
-            pObject->Opacity = Opacity;
+            __appendBspFaceToObject(pObjectSkyPart, FaceIndex);
         }
         else
         {
-            pObject->IsTransparent = false;
-            pObject->Opacity = 1.0f;
+            __appendBspFaceToObject(pObjectNormalPart, FaceIndex);
         }
-        for (uint16_t i = 0; i < Model.NumFaces; ++i)
-        {
-            __appendBspFaceToObject(pObject, Model.FirstFaceIndex + i);
-        }
-        m_Scene.Objects.emplace_back(std::move(pObject));
     }
+
+    std::vector<std::shared_ptr<S3DObject>> Objects;
+    Objects.emplace_back(std::move(pObjectNormalPart));
+    Objects.emplace_back(std::move(pObjectSkyPart));
+
+    return Objects;
 }
 
-void CSceneReaderBsp::__loadBspTreeAndPvs()
+std::shared_ptr<S3DObject> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
+
+    std::optional<SMapEntity> EntityOpt = __findEntity(vModelIndex);
+    int RenderMode = 0;
+    float Opacity = 1.0f;
+    if (EntityOpt.has_value())
+    {
+        const SMapEntity& Entity = EntityOpt.value();
+        RenderMode = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
+        Opacity = Entity.Properties.find("renderamt") != Entity.Properties.end() ? std::stof(Entity.Properties.at("renderamt")) / 255.0f : 1.0f;
+    }
+
+    auto pObject = std::make_shared<S3DObject>();
+    if (RenderMode != 0)
+    {
+        pObject->IsTransparent = true;
+        pObject->Opacity = Opacity;
+    }
+    else
+    {
+        pObject->IsTransparent = false;
+        pObject->Opacity = 1.0f;
+    }
+
+    const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
+    for (uint16_t i = 0; i < Model.NumFaces; ++i)
+    {
+        __appendBspFaceToObject(pObject, Model.FirstFaceIndex + i);
+    }
+
+    return std::move(pObject);
+}
+
+void CSceneReaderBsp::__loadBspTree()
+{
+    const SBspLumps& Lumps = m_Bsp.getLumps();
+
+    SBspTree BspTree;
+    std::vector<std::shared_ptr<S3DObject>> Objects;
 
     // read node and PVS data
     __reportProgress(u8"载入BSP与VIS数据");
@@ -157,41 +172,81 @@ void CSceneReaderBsp::__loadBspTreeAndPvs()
     size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
     size_t ModelNum = Lumps.m_LumpModel.Models.size();
 
-    m_Scene.BspTree.NodeNum = NodeNum;
-    m_Scene.BspTree.LeafNum = LeafNum;
-    m_Scene.BspTree.ModelNum = ModelNum;
-    m_Scene.BspTree.Nodes.resize(NodeNum + LeafNum);
+    BspTree.NodeNum = NodeNum;
+    BspTree.LeafNum = LeafNum;
+    BspTree.ModelNum = ModelNum;
+    BspTree.Nodes.resize(NodeNum + LeafNum);
+
+    // read leaves
     for (size_t i = 0; i < NodeNum; ++i)
     {
         const SBspNode& OriginNode = Lumps.m_LumpNode.Nodes[i];
         _ASSERTE(OriginNode.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
         const SBspPlane& OriginPlane = Lumps.m_LumpPlane.Planes[OriginNode.PlaneIndex];
-        SBspTreeNode& Node = m_Scene.BspTree.Nodes[i];
+        SBspTreeNode& Node = BspTree.Nodes[i];
 
-        Node.Index = i;
         Node.PlaneNormal = OriginPlane.Normal.glmVec3();
         Node.PlaneDistance = OriginPlane.DistanceToOrigin * m_SceneScale;
 
         if (OriginNode.ChildrenIndices[0] > 0)
             Node.Front = OriginNode.ChildrenIndices[0];
         else
-            Node.Front = ~OriginNode.ChildrenIndices[0] + NodeNum;
+        {
+            size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[0]);
+            Node.Front = NodeNum + LeafIndex;
+            std::vector<std::shared_ptr<S3DObject>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<size_t> ObjectIndices;
+            for (std::shared_ptr<S3DObject> LeafObject : LeafObjects)
+            {
+                ObjectIndices.emplace_back(Objects.size());
+                Objects.emplace_back(LeafObject);
+            }
+            BspTree.LeafIndexToObjectIndices[LeafIndex] = ObjectIndices;
+        }
         if (OriginNode.ChildrenIndices[1] > 0)
             Node.Back = OriginNode.ChildrenIndices[1];
         else
-            Node.Back = ~OriginNode.ChildrenIndices[1] + NodeNum;
+        {
+            size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[1]);
+            Node.Back = NodeNum + LeafIndex;
+            std::vector<std::shared_ptr<S3DObject>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<size_t> ObjectIndices;
+            for (std::shared_ptr<S3DObject> LeafObject : LeafObjects)
+            {
+                ObjectIndices.emplace_back(Objects.size());
+                Objects.emplace_back(LeafObject);
+            }
+            BspTree.LeafIndexToObjectIndices[LeafIndex] = ObjectIndices;
+        }
     }
+
+    // read models
+    for (size_t i = 0; i < ModelNum; ++i)
+    {
+        std::shared_ptr<S3DObject> ModelObject = __loadEntity(i);
+        BspTree.ModelIndexToObjectIndex[i] = Objects.size();
+        Objects.emplace_back(ModelObject);
+    }
+
+    // load pvs data to leaves
     for (size_t i = 0; i < LeafNum; ++i)
     {
         const SBspLeaf& OriginLeaf = Lumps.m_LumpLeaf.Leaves[i];
-        SBspTreeNode& Node = m_Scene.BspTree.Nodes[NodeNum + i];
+        SBspTreeNode& Node = BspTree.Nodes[NodeNum + i];
 
-        Node.Index = i;
         if (OriginLeaf.VisOffset >= 0)
             Node.PvsOffset = OriginLeaf.VisOffset;
     }
 
-    if (m_HasVisData)
+    m_Scene.BspTree = BspTree;
+    m_Scene.Objects = Objects;
+}
+
+void CSceneReaderBsp::__loadBspPvs()
+{
+    const SBspLumps& Lumps = m_Bsp.getLumps();
+
+    if (!Lumps.m_LumpVisibility.Vis.empty())
     {
         m_Scene.UsePVS = true;
         m_Scene.BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_Scene.BspTree);
@@ -389,11 +444,6 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
     std::string TexName;
     __getBspFaceTextureSizeAndName(vFaceIndex, TexWidth, TexHeight, TexName);
 
-    if (TexName == "sky") // if one face of this leaf is sky, then all faces of this leaf should be sky
-    { 
-        pObject->RenderType = E3DObjectRenderType::SKY;
-    }
-
     std::vector<glm::vec3> Vertices = __getBspFaceVertices(vFaceIndex);
     glm::vec3 Normal = __getBspFaceNormal(vFaceIndex);
     std::vector<glm::vec2> TexCoords = __getBspFaceUnnormalizedTexCoords(vFaceIndex, Vertices);
@@ -472,21 +522,17 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
     
     std::vector<std::string> Extensions = { ".tga", ".bmp", ".png", ".jpg" };
 
-    bool FoundSkyImage = false;
+    bool FoundSkyBoxImages = false;
     for (const std::string& Extension : Extensions)
     {
         if (__readSkyboxImages(SkyFilePrefix, Extension, vCurrentDir))
         {
-            m_Scene.UseSkyBox = true;
-            FoundSkyImage = true;
+            FoundSkyBoxImages = true;
             break;
         }
     }
-    if (!FoundSkyImage)
-    {
+    if (!FoundSkyBoxImages)
         globalLog(u8"未找到天空图片文件[" + SkyFilePrefix + u8"]，将不会渲染天空盒");
-        m_Scene.SkyBoxImages = {};
-    }
 }
 
 bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension, std::filesystem::path vCurrentDir)
@@ -503,8 +549,30 @@ bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string
         }
         else
         {
+            m_Scene.UseSkyBox = false;
+            m_Scene.SkyBoxImages = {};
             return false;
         }
     }
+    m_Scene.UseSkyBox = true;
     return true;
+}
+
+std::optional<SMapEntity> CSceneReaderBsp::__findEntity(size_t vModelIndex)
+{
+    const SBspLumps& Lumps = m_Bsp.getLumps();
+
+    const std::vector<SMapEntity>& Entities = Lumps.m_LumpEntity.Entities;
+    _ASSERTE(vModelIndex < Lumps.m_LumpModel.Models.size());
+    const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
+
+    for (const SMapEntity& Entity : Entities)
+    {
+        if (Entity.Properties.find("model") != Entity.Properties.end()
+            && Entity.Properties.at("model") == "*" + std::to_string(vModelIndex))
+        {
+            return Entity;
+        }
+    }
+    return std::nullopt;
 }

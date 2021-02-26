@@ -13,9 +13,10 @@ public:
 private:
     void __readBsp(std::filesystem::path vFilePath);
     void __readTextures();
-    void __loadLeaves();
-    void __loadEntities();
-    void __loadBspTreeAndPvs();
+    std::vector<std::shared_ptr<S3DObject>> __loadLeaf(size_t vLeafIndex);
+    std::shared_ptr<S3DObject> __loadEntity(size_t vModelIndex);
+    void __loadBspTree();
+    void __loadBspPvs();
     void __correntLightmapCoords();
     void __loadSkyBox(std::filesystem::path vCurrentDir);
     bool __readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension, std::filesystem::path vCurrentDir);
@@ -26,11 +27,12 @@ private:
     std::pair<std::optional<size_t>, std::vector<glm::vec2>> __getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords);
     void __getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& voWidth, size_t& voHeight, std::string& voName);
     void __appendBspFaceToObject(std::shared_ptr<S3DObject> pObject, uint32_t vFaceIndex);
+    std::optional<SMapEntity> __findEntity(size_t vModelIndex);
 
+    SScene m_Scene;
     const float m_SceneScale = 1.0f / 64.0f;
     CIOGoldSrcBsp m_Bsp;
-    SScene m_Scene;
     std::map<std::string, uint32_t> m_TexNameToIndex;
-    bool m_HasLightmapData = false, m_HasVisData = false;
+    bool m_HasLightmapData = false;
 };
 
