@@ -373,6 +373,7 @@ private:
     void __renderByBspTree(uint32_t vImageIndex);
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
     void __renderModels(uint32_t vImageIndex);
+    void __renderModel(uint32_t vImageIndex, size_t vModelIndex);
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __updateSkyUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();

@@ -120,43 +120,35 @@ std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadLeaf(size_t vLeaf
     std::vector<std::shared_ptr<S3DObject>> Objects;
     Objects.emplace_back(std::move(pObjectNormalPart));
     Objects.emplace_back(std::move(pObjectSkyPart));
-
     return Objects;
 }
 
-std::shared_ptr<S3DObject> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    std::optional<SMapEntity> EntityOpt = __findEntity(vModelIndex);
-    int RenderMode = 0;
-    float Opacity = 1.0f;
-    if (EntityOpt.has_value())
-    {
-        const SMapEntity& Entity = EntityOpt.value();
-        RenderMode = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
-        Opacity = Entity.Properties.find("renderamt") != Entity.Properties.end() ? std::stof(Entity.Properties.at("renderamt")) / 255.0f : 1.0f;
-    }
-
-    auto pObject = std::make_shared<S3DObject>();
-    if (RenderMode != 0)
-    {
-        pObject->IsTransparent = true;
-        pObject->Opacity = Opacity;
-    }
-    else
-    {
-        pObject->IsTransparent = false;
-        pObject->Opacity = 1.0f;
-    }
-
+    auto pObjectNormalPart = std::make_shared<S3DObject>();
+    pObjectNormalPart->RenderType = E3DObjectRenderType::NORMAL;
+    auto pObjectSkyPart = std::make_shared<S3DObject>();
+    pObjectSkyPart->RenderType = E3DObjectRenderType::SKY;
+    
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
+    size_t TexWidth, TexHeight;
+    std::string TexName;
     for (uint16_t i = 0; i < Model.NumFaces; ++i)
     {
-        __appendBspFaceToObject(pObject, Model.FirstFaceIndex + i);
+        uint16_t FaceIndex = Model.FirstFaceIndex + i;
+        __getBspFaceTextureSizeAndName(FaceIndex, TexWidth, TexHeight, TexName);
+        if (TexName == "sky")
+            __appendBspFaceToObject(pObjectSkyPart, FaceIndex);
+        else
+            __appendBspFaceToObject(pObjectNormalPart, FaceIndex);
     }
 
-    return std::move(pObject);
+    std::vector<std::shared_ptr<S3DObject>> Objects;
+    Objects.emplace_back(std::move(pObjectNormalPart));
+    Objects.emplace_back(std::move(pObjectSkyPart));
+    return std::move(Objects);
 }
 
 void CSceneReaderBsp::__loadBspTree()
@@ -177,7 +169,7 @@ void CSceneReaderBsp::__loadBspTree()
     BspTree.ModelNum = ModelNum;
     BspTree.Nodes.resize(NodeNum + LeafNum);
 
-    // read leaves
+    // read nodes and leaves
     for (size_t i = 0; i < NodeNum; ++i)
     {
         const SBspNode& OriginNode = Lumps.m_LumpNode.Nodes[i];
@@ -211,21 +203,57 @@ void CSceneReaderBsp::__loadBspTree()
             Node.Back = NodeNum + LeafIndex;
             std::vector<std::shared_ptr<S3DObject>> LeafObjects = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (std::shared_ptr<S3DObject> LeafObject : LeafObjects)
+            for (std::shared_ptr<S3DObject> pLeafObject : LeafObjects)
             {
                 ObjectIndices.emplace_back(Objects.size());
-                Objects.emplace_back(LeafObject);
+                Objects.emplace_back(pLeafObject);
             }
             BspTree.LeafIndexToObjectIndices[LeafIndex] = ObjectIndices;
         }
     }
 
     // read models
+    BspTree.ModelInfos.resize(ModelNum);
     for (size_t i = 0; i < ModelNum; ++i)
     {
-        std::shared_ptr<S3DObject> ModelObject = __loadEntity(i);
-        BspTree.ModelIndexToObjectIndex[i] = Objects.size();
-        Objects.emplace_back(ModelObject);
+        // get entity opacity
+        std::optional<SMapEntity> EntityOpt = __findEntity(i);
+        bool IsTransparent = false;
+        float Opacity = 1.0f;
+        if (EntityOpt.has_value())
+        {
+            const SMapEntity& Entity = EntityOpt.value();
+            int RenderMode = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
+            Opacity = Entity.Properties.find("renderamt") != Entity.Properties.end() ? std::stof(Entity.Properties.at("renderamt")) / 255.0f : 1.0f;
+
+            IsTransparent = (RenderMode != 0); // half transparent or indexed transparent
+        }
+
+        // load entities data and calculate bounding box
+        std::vector<std::shared_ptr<S3DObject>> ModelObjects = __loadEntity(i);
+        std::vector<size_t> ObjectIndices;
+        S3DBoundingBox TotalBoundingBox =
+        {
+            {INFINITY, INFINITY, INFINITY},
+            {-INFINITY, -INFINITY, -INFINITY},
+        };
+        for (std::shared_ptr<S3DObject> pModelObject : ModelObjects)
+        {
+            S3DBoundingBox BoundingBox = pModelObject->getBoundingBox();
+            TotalBoundingBox.Min.x = std::min<float>(TotalBoundingBox.Min.x, BoundingBox.Min.x);
+            TotalBoundingBox.Min.y = std::min<float>(TotalBoundingBox.Min.y, BoundingBox.Min.y);
+            TotalBoundingBox.Min.z = std::min<float>(TotalBoundingBox.Min.z, BoundingBox.Min.z);
+            TotalBoundingBox.Max.x = std::max<float>(TotalBoundingBox.Max.x, BoundingBox.Max.x);
+            TotalBoundingBox.Max.y = std::max<float>(TotalBoundingBox.Max.y, BoundingBox.Max.y);
+            TotalBoundingBox.Max.z = std::max<float>(TotalBoundingBox.Max.z, BoundingBox.Max.z);
+            ObjectIndices.emplace_back(Objects.size());
+            Objects.emplace_back(pModelObject);
+        }
+
+        BspTree.ModelIndexToObjectIndex[i] = ObjectIndices;
+        BspTree.ModelInfos[i].BoundingBox = TotalBoundingBox;
+        BspTree.ModelInfos[i].IsTransparent = IsTransparent;
+        BspTree.ModelInfos[i].Opacity = Opacity;
     }
 
     // load pvs data to leaves

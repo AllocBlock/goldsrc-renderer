@@ -43,10 +43,14 @@ struct S3DObject
     bool HasLightmap = false;
     std::vector<std::optional<size_t>> LightmapIndices;
 
-    bool IsTransparent = false;
-    float Opacity = 1.0;
-
     S3DBoundingBox getBoundingBox() const;
+};
+
+struct SModelInfo
+{
+    S3DBoundingBox BoundingBox;
+    bool IsTransparent = false;
+    float Opacity = 1.0f;
 };
 
 struct SBspTreeNode
@@ -65,7 +69,8 @@ struct SBspTree
     size_t NodeNum = 0, LeafNum = 0, ModelNum = 0;
     std::vector<SBspTreeNode> Nodes;
     std::map<size_t, std::vector<size_t>> LeafIndexToObjectIndices;
-    std::map<size_t, size_t> ModelIndexToObjectIndex;
+    std::map<size_t, std::vector<size_t>> ModelIndexToObjectIndex;
+    std::vector<SModelInfo> ModelInfos;
 
     uint32_t getPointLeaf(glm::vec3 vPoint);
 };

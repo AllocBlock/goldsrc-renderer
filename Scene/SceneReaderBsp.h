@@ -14,7 +14,7 @@ private:
     void __readBsp(std::filesystem::path vFilePath);
     void __readTextures();
     std::vector<std::shared_ptr<S3DObject>> __loadLeaf(size_t vLeafIndex);
-    std::shared_ptr<S3DObject> __loadEntity(size_t vModelIndex);
+    std::vector<std::shared_ptr<S3DObject>> __loadEntity(size_t vModelIndex);
     void __loadBspTree();
     void __loadBspPvs();
     void __correntLightmapCoords();
