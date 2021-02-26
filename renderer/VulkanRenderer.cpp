@@ -28,6 +28,7 @@ void CVulkanRenderer::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevic
     __createSkyDescriptorSetLayout();
     __createCommandPool();
     __createTextureSampler();
+    __createPlaceholderImage();
     __createRecreateResources();
 }
 
@@ -1116,23 +1117,20 @@ void CVulkanRenderer::__updateDescriptorSets()
             DescriptorWrites.emplace_back(TexturesDescriptorWrite);
         }
         
-        if (m_Scene.UseLightmap)
-        {
-            VkDescriptorImageInfo LightmapImageInfo = {};
-            LightmapImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            LightmapImageInfo.imageView = m_LightmapImagePack.ImageView;
-            LightmapImageInfo.sampler = VK_NULL_HANDLE;
+        VkDescriptorImageInfo LightmapImageInfo = {};
+        LightmapImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        LightmapImageInfo.imageView = m_Scene.UseLightmap ?m_LightmapImagePack.ImageView :m_PlaceholderImagePack.ImageView;
+        LightmapImageInfo.sampler = VK_NULL_HANDLE;
 
-            VkWriteDescriptorSet LightmapsDescriptorWrite = {};
-            LightmapsDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            LightmapsDescriptorWrite.dstSet = m_DescriptorSets[i];
-            LightmapsDescriptorWrite.dstBinding = 4;
-            LightmapsDescriptorWrite.dstArrayElement = 0;
-            LightmapsDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            LightmapsDescriptorWrite.descriptorCount = 1;
-            LightmapsDescriptorWrite.pImageInfo = &LightmapImageInfo;
-            DescriptorWrites.emplace_back(LightmapsDescriptorWrite);
-        }
+        VkWriteDescriptorSet LightmapsDescriptorWrite = {};
+        LightmapsDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        LightmapsDescriptorWrite.dstSet = m_DescriptorSets[i];
+        LightmapsDescriptorWrite.dstBinding = 4;
+        LightmapsDescriptorWrite.dstArrayElement = 0;
+        LightmapsDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        LightmapsDescriptorWrite.descriptorCount = 1;
+        LightmapsDescriptorWrite.pImageInfo = &LightmapImageInfo;
+        DescriptorWrites.emplace_back(LightmapsDescriptorWrite);
 
         vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
     }
@@ -1206,6 +1204,17 @@ void CVulkanRenderer::__createCommandBuffers()
     ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_CommandBuffers.data()));
 
     rerecordCommand();
+}
+
+void CVulkanRenderer::__createPlaceholderImage()
+{
+    uint8_t Pixel = 0;
+
+    auto pMinorImage = std::make_shared<CIOImage>();
+    pMinorImage->setImageSize(1, 1);
+    pMinorImage->setData(&Pixel);
+    __createImageFromIOImage(pMinorImage, m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
+    Common::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const

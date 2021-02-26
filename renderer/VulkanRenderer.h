@@ -357,6 +357,7 @@ private:
     void __createDescriptorSets();
     void __createSkyDescriptorSets();
     void __createCommandBuffers();
+    void __createPlaceholderImage();
 
     void __createSkyPipeline();
     void __createDepthTestPipeline();
@@ -425,6 +426,7 @@ private:
     Common::SVkBufferPack m_IndexBufferPack;
     std::vector<Common::SVkBufferPack> m_VertUniformBufferPacks;
     std::vector<Common::SVkBufferPack> m_FragUniformBufferPacks;
+    Common::SVkImagePack m_PlaceholderImagePack;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
     std::vector<Common::SVkImagePack> m_TextureImagePacks;
     Common::SVkImagePack m_DepthImagePack;

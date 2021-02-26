@@ -11,7 +11,6 @@ layout(location = 5) flat in uint inFragTexIndex;
 layout(location = 0) out vec4 outColor;
 
 #define MAX_TEXTURE_NUM 2048 // if need change, you should change this in renderer config as well
-#define MAX_LIGHTMAP_NUM 0x20000 // if need change, you should change this in renderer config as well
 layout(binding = 1) uniform SUniformBufferObject
 {
     vec3 uEye;
