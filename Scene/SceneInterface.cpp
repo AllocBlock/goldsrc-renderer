@@ -24,6 +24,7 @@ struct SRegister
 #define REGISTER_FILE(CLASS, TYPE) SRegister<CLASS> g_Register##CLASS##(TYPE);
 
 REGISTER_FILE(CSceneReaderObj, "obj");
+REGISTER_FILE(CSceneReaderRmf, "rmf");
 REGISTER_FILE(CSceneReaderMap, "map");
 REGISTER_FILE(CSceneReaderBsp, "bsp");
 

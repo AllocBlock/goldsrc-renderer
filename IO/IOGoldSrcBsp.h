@@ -1,24 +1,13 @@
 #pragma once
 
+#include "IOCommon.h"
 #include "IOBase.h"
 #include "IOGoldSrcMap.h"
 #include <vector>
 
-const size_t g_MaxNameLength = 16;
-const size_t g_BspMipmapLevel = 4;
-const size_t g_MaxHull = 4;
-
-struct SVec3
-{
-    float X, Y, Z;
-
-    glm::vec3 glmVec3() const;
-};
-
-struct SGoldSrcColor
-{
-    uint8_t R, G, B;
-};
+#define BSP_MAX_NAME_LENGTH 16
+#define BSP_MIPMAP_LEVEL 4
+#define BSP_MAX_HULL 4
 
 enum class ELumpType
 {
@@ -118,7 +107,7 @@ enum class EPlaneType
  **************************************************************/
 struct SBspPlane
 {
-    SVec3 Normal;
+    IOCommon::SGoldSrcVec3 Normal;
     float DistanceToOrigin;
     int32_t Type; // EPlaneType
 };
@@ -143,11 +132,11 @@ struct SBspTexture
 {
     std::string Name;
     uint32_t Width, Height;
-    uint32_t Offsets[g_BspMipmapLevel];
+    uint32_t Offsets[BSP_MIPMAP_LEVEL];
 
     bool IsDataInBsp = false; // memory-only
     uint8_t* pIndices = nullptr; // memory-only
-    SGoldSrcColor Palette[256];
+    IOCommon::SGoldSrcColor Palette[256];
 
     void read(std::ifstream& vFile, uint64_t vOffset);
     bool getRawRGBAPixels(void* vopData) const;
@@ -172,7 +161,7 @@ struct SLumpTexture
  **************************************************************/
 struct SLumpVertex
 {
-    std::vector<SVec3> Vertices;
+    std::vector<IOCommon::SGoldSrcVec3> Vertices;
 
     void read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize);
 };
@@ -234,9 +223,9 @@ struct SLumpNode
  **************************************************************/
 struct SBspTexInfo
 {
-    SVec3 TextureDirectionU;
+    IOCommon::SGoldSrcVec3 TextureDirectionU;
     float TextureOffsetU;
-    SVec3 TextureDirectionV;
+    IOCommon::SGoldSrcVec3 TextureDirectionV;
     float TextureOffsetV;
     uint32_t TextureIndex;
     uint32_t Flags;
@@ -432,8 +421,8 @@ struct SBspModel
 {
     float BoundingBoxMin[3];
     float BoundingBoxMax[3];
-    SVec3 Origin;
-    int32_t NodeIndices[g_MaxHull];
+    IOCommon::SGoldSrcVec3 Origin;
+    int32_t NodeIndices[BSP_MAX_HULL];
     int32_t VisLeafs;
     int32_t FirstFaceIndex;
     int32_t NumFaces;

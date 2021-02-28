@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.h"
 #include "SceneReaderObj.h"
+#include "SceneReaderRmf.h"
 #include "SceneReaderMap.h"
 #include "SceneReaderBsp.h"
 

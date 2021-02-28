@@ -1,3 +1,4 @@
+#include "IOCommon.h"
 #include "IOGoldSrcBsp.h"
 
 #include <fstream>
@@ -32,20 +33,6 @@ bool CIOGoldSrcBsp::_readV(std::filesystem::path vFilePath)
     return true;
 }
 
-template <typename T>
-std::vector<T> readArray(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
-{
-    _ASSERTE(!vFile.eof() && !vFile.fail());
-    vFile.seekg(vOffset, std::ios_base::beg);
-
-    _ASSERTE(vSize % sizeof(T) == 0);
-    size_t NumT = vSize / sizeof(T);
-    std::vector<T> Result;
-    Result.resize(NumT);
-    vFile.read(reinterpret_cast<char*>(Result.data()), vSize);
-    return std::move(Result);
-}
-
 void SBspHeader::read(std::ifstream& vFile)
 {
     vFile.seekg(0, std::ios_base::beg);
@@ -71,19 +58,19 @@ void SLumpEntity::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 
 void SLumpPlane::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Planes = readArray<SBspPlane>(vFile, vOffset, vSize);
+    Planes = IOCommon::readArray<SBspPlane>(vFile, vOffset, vSize);
 }
 
 void SBspTexture::read(std::ifstream& vFile, uint64_t vOffset)
 {
     vFile.seekg(vOffset, std::ios_base::beg);
 
-    char TempNameBuffer[g_MaxNameLength];
-    vFile.read(TempNameBuffer, g_MaxNameLength);
+    char TempNameBuffer[BSP_MAX_NAME_LENGTH];
+    vFile.read(TempNameBuffer, BSP_MAX_NAME_LENGTH);
     Name = TempNameBuffer;
     vFile.read(reinterpret_cast<char*>(&Width), sizeof(uint32_t));
     vFile.read(reinterpret_cast<char*>(&Height), sizeof(uint32_t));
-    vFile.read(reinterpret_cast<char*>(Offsets), g_BspMipmapLevel * sizeof(uint32_t));
+    vFile.read(reinterpret_cast<char*>(Offsets), BSP_MIPMAP_LEVEL * sizeof(uint32_t));
 
     if (pIndices) delete[] pIndices;
     IsDataInBsp = (Offsets[0] > 0);
@@ -122,67 +109,62 @@ void SLumpTexture::read(std::ifstream& vFile, uint64_t vOffset)
 
 void SLumpVertex::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Vertices = readArray<SVec3>(vFile, vOffset, vSize);
+    Vertices = IOCommon::readArray<IOCommon::SGoldSrcVec3>(vFile, vOffset, vSize);
 }
 
 void SLumpVisibility::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Vis = readArray<uint8_t>(vFile, vOffset, vSize);
+    Vis = IOCommon::readArray<uint8_t>(vFile, vOffset, vSize);
 }
 
 void SLumpNode::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Nodes = readArray<SBspNode>(vFile, vOffset, vSize);
+    Nodes = IOCommon::readArray<SBspNode>(vFile, vOffset, vSize);
 }
 
 void SLumpTexInfo::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    TexInfos = readArray<SBspTexInfo>(vFile, vOffset, vSize);
+    TexInfos = IOCommon::readArray<SBspTexInfo>(vFile, vOffset, vSize);
 }
 
 void SLumpFace::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Faces = readArray<SBspFace>(vFile, vOffset, vSize);
+    Faces = IOCommon::readArray<SBspFace>(vFile, vOffset, vSize);
 }
 
 void SLumpLighting::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Lightmaps = readArray<SBspLightmap>(vFile, vOffset, vSize);
+    Lightmaps = IOCommon::readArray<SBspLightmap>(vFile, vOffset, vSize);
 }
 
 void SLumpClipNode::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    ClipNodes = readArray<SBspClipNode>(vFile, vOffset, vSize);
+    ClipNodes = IOCommon::readArray<SBspClipNode>(vFile, vOffset, vSize);
 }
 
 void SLumpLeaf::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Leaves = readArray<SBspLeaf>(vFile, vOffset, vSize);
+    Leaves = IOCommon::readArray<SBspLeaf>(vFile, vOffset, vSize);
 }
 
 void SLumpMarkSurface::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    FaceIndices = readArray<uint16_t>(vFile, vOffset, vSize);
+    FaceIndices = IOCommon::readArray<uint16_t>(vFile, vOffset, vSize);
 }
 
 void SLumpEdge::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Edges = readArray<SBspEdge>(vFile, vOffset, vSize);
+    Edges = IOCommon::readArray<SBspEdge>(vFile, vOffset, vSize);
 }
 
 void SLumpSurfedge::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Surfedges = readArray<int32_t>(vFile, vOffset, vSize);
+    Surfedges = IOCommon::readArray<int32_t>(vFile, vOffset, vSize);
 }
 
 void SLumpModel::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Models = readArray<SBspModel>(vFile, vOffset, vSize);
-}
-
-glm::vec3 SVec3::glmVec3() const
-{
-    return glm::vec3(X, Y, Z);
+    Models = IOCommon::readArray<SBspModel>(vFile, vOffset, vSize);
 }
 
 bool SBspTexture::getRawRGBAPixels(void* vopData) const
@@ -207,7 +189,7 @@ bool SBspTexture::getRawRGBAPixels(void* vopData) const
         }
         else
         {
-            const SGoldSrcColor& Color = Palette[pIndices[i]];
+            const IOCommon::SGoldSrcColor& Color = Palette[pIndices[i]];
             pIter[i * 4] = Color.R;
             pIter[i * 4 + 1] = Color.G;
             pIter[i * 4 + 2] = Color.B;

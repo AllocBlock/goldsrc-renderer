@@ -159,7 +159,7 @@ void CSceneReaderBsp::__loadBspTree()
     std::vector<std::shared_ptr<S3DObject>> Objects;
 
     // read node and PVS data
-    __reportProgress(u8"载入BSP与VIS数据");
+    __reportProgress(u8"载入BSP数据");
     size_t NodeNum = Lumps.m_LumpNode.Nodes.size();
     size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
     size_t ModelNum = Lumps.m_LumpModel.Models.size();
@@ -272,6 +272,8 @@ void CSceneReaderBsp::__loadBspTree()
 
 void CSceneReaderBsp::__loadBspPvs()
 {
+    __reportProgress(u8"载入VIS数据");
+
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     if (!Lumps.m_LumpVisibility.Vis.empty())
@@ -326,7 +328,7 @@ std::vector<glm::vec3> CSceneReaderBsp::__getBspFaceVertices(size_t vFaceIndex)
     for (uint16_t FaceVertexIndex : FaceVertexIndices)
     {
         _ASSERTE(FaceVertexIndex < Lumps.m_LumpVertex.Vertices.size());
-        SVec3 Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
+        const IOCommon::SGoldSrcVec3& Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
         FaceVertices.emplace_back(Vertex.glmVec3());
     }
 
@@ -523,6 +525,8 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
 
 void CSceneReaderBsp::__correntLightmapCoords()
 {
+    __reportProgress(u8"修正Lightmap数据");
+
     for (auto& pObject : m_Scene.Objects)
     {
         if (!pObject->HasLightmap) continue;
@@ -539,6 +543,8 @@ void CSceneReaderBsp::__correntLightmapCoords()
 
 void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
 {
+    __reportProgress(u8"载入天空盒");
+
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     std::string SkyFilePrefix = Lumps.m_LumpEntity.SkyBoxPrefix;

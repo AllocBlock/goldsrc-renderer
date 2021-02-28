@@ -169,6 +169,7 @@
     <ClCompile Include="SceneReaderBase.cpp" />
     <ClCompile Include="SceneReaderBsp.cpp" />
     <ClCompile Include="SceneReaderObj.cpp" />
+    <ClCompile Include="SceneReaderRmf.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SceneReaderMap.h" />
@@ -179,6 +180,7 @@
     <ClInclude Include="SceneReaderBase.h" />
     <ClInclude Include="SceneReaderBsp.h" />
     <ClInclude Include="SceneReaderObj.h" />
+    <ClInclude Include="SceneReaderRmf.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IO\IO.vcxproj">

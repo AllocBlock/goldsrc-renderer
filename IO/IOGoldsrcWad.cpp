@@ -3,7 +3,7 @@
 #include <fstream>
 #include <algorithm>
 
-const size_t g_MaxNameLength = 16;
+const size_t BSP_MAX_NAME_LENGTH = 16;
 
 bool CIOGoldsrcWad::_readV(std::filesystem::path vFilePath)
 {
@@ -92,7 +92,7 @@ void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void* vopData) const
         }
         else
         {
-            SWadColor PixelColor = m_TexturesList[vTexIndex].Palette[PalatteIndex];
+            IOCommon::SGoldSrcColor PixelColor = m_TexturesList[vTexIndex].Palette[PalatteIndex];
             *pIter++ = static_cast<unsigned char>(PixelColor.R);
             *pIter++ = static_cast<unsigned char>(PixelColor.G);
             *pIter++ = static_cast<unsigned char>(PixelColor.B);
@@ -114,17 +114,17 @@ void SWadLump::read(std::ifstream& vFile)
     vFile.read(reinterpret_cast<char*>(&Type),             sizeof(char));
     vFile.read(reinterpret_cast<char*>(&CompressedType),   sizeof(char));
     vFile.get(); vFile.get(); // padding
-    char TextureNameBuffer[g_MaxNameLength];
-    vFile.read(reinterpret_cast<char*>(TextureNameBuffer), sizeof(char[g_MaxNameLength]));
+    char TextureNameBuffer[BSP_MAX_NAME_LENGTH];
+    vFile.read(reinterpret_cast<char*>(TextureNameBuffer), sizeof(char[BSP_MAX_NAME_LENGTH]));
     NameOrigin = TextureNameBuffer;
 }
 
 void SWadTexture::read(std::ifstream& vFile, uint32_t vOffset)
 {
     vFile.seekg(vOffset);
-    char StringBuffer[g_MaxNameLength];
+    char StringBuffer[BSP_MAX_NAME_LENGTH];
 
-    vFile.read(reinterpret_cast<char*>(StringBuffer),     sizeof(char[g_MaxNameLength]));
+    vFile.read(reinterpret_cast<char*>(StringBuffer),     sizeof(char[BSP_MAX_NAME_LENGTH]));
     NameOrigin = StringBuffer;
     NameUpperCase = CIOBase::toUpperCase(NameOrigin);
     vFile.read(reinterpret_cast<char*>(&Width),           sizeof(uint32_t));
@@ -147,7 +147,7 @@ void SWadTexture::read(std::ifstream& vFile, uint32_t vOffset)
 
     for (int i = 0; i < Palette.size(); i++)
     {
-        SWadColor Color;
+        IOCommon::SGoldSrcColor Color;
         Color.R = vFile.get();
         Color.G = vFile.get();
         Color.B = vFile.get();
