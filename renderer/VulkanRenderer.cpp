@@ -298,7 +298,7 @@ void CVulkanRenderer::loadScene(const SScene& vScene)
              VertexOffset += m_ObjectDataPositions[i].Size;
          }
          else
-             throw std::runtime_error("物体类型错误");
+             throw std::runtime_error(u8"物体类型错误");
      }
 
      m_AreObjectsVisable.clear();
@@ -480,7 +480,7 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
     else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_STRIP_LIST)
         vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
     else
-        throw std::runtime_error("物体类型错误");
+        throw std::runtime_error(u8"物体类型错误");
 }
 
 void CVulkanRenderer::__createRenderPass()
@@ -904,7 +904,7 @@ void CVulkanRenderer::__createVertexBuffer()
         NumVertex += pObject->Vertices.size();
     if (NumVertex == 0)
     {
-        globalLog("没有顶点数据，跳过索引缓存创建");
+        globalLog(u8"没有顶点数据，跳过索引缓存创建");
         return;
     }
 
@@ -942,7 +942,7 @@ void CVulkanRenderer::__createIndexBuffer()
 
     if (NumIndex == 0)
     {
-        globalLog("没有索引数据，跳过索引缓存创建");
+        globalLog(u8"没有索引数据，跳过索引缓存创建");
         return;
     }
 
@@ -1274,7 +1274,7 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
         }
     }
 
-    throw std::runtime_error("未找到适配的vulkan格式");
+    throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
 void CVulkanRenderer::__createImage(VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory)
@@ -1307,7 +1307,7 @@ uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropert
         }
     }
 
-    throw std::runtime_error("未找到合适的存储类别");
+    throw std::runtime_error(u8"未找到合适的存储类别");
 }
 
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
@@ -1372,7 +1372,7 @@ void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, 
     }
     else
     {
-        throw std::runtime_error("不支持该布局转换");
+        throw std::runtime_error(u8"不支持该布局转换");
     }
 
     vkCmdPipelineBarrier(
@@ -1453,7 +1453,7 @@ size_t CVulkanRenderer::__getActualTextureNum()
     size_t NumTexture = m_Scene.TexImages.size();
     if (NumTexture > m_MaxTextureNum)
     {
-        globalLog("警告: 纹理数量 = (" + std::to_string(NumTexture) + ") 大于限制数量 (" + std::to_string(m_MaxTextureNum) + "), 多出的纹理将被忽略");
+        globalLog(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(m_MaxTextureNum) + u8"), 多出的纹理将被忽略");
         NumTexture = m_MaxTextureNum;
     }
     return NumTexture;

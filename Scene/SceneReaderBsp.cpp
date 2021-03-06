@@ -550,7 +550,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
     std::string SkyFilePrefix = Lumps.m_LumpEntity.SkyBoxPrefix;
     if (SkyFilePrefix.empty())
     {
-        globalLog("地图未指定天空文件，已使用默认天空neb6");
+        globalLog(u8"地图未指定天空文件，已使用默认天空neb6");
         SkyFilePrefix = "neb6";
     }
     
@@ -566,7 +566,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
         }
     }
     if (!FoundSkyBoxImages)
-        globalLog("未找到天空图片文件[" + SkyFilePrefix + "]，将不会渲染天空盒");
+        globalLog(u8"未找到天空图片文件[" + SkyFilePrefix + u8"]，将不会渲染天空盒");
 }
 
 bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension, std::filesystem::path vCurrentDir)

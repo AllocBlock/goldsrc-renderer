@@ -7,7 +7,7 @@ void setGlobalLogFunc(LogFunc vLogFunc)
     g_LogFunc = vLogFunc;
 }
 
-bool globalLog(std::filesystem::path vText)
+bool globalLog(std::string vText)
 {
     if (g_LogFunc)
     {

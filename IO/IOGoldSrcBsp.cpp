@@ -9,7 +9,7 @@ bool CIOGoldSrcBsp::_readV(std::filesystem::path vFilePath)
     File.open(vFilePath.string(), std::ios::in | std::ios::binary);
     if (!File.is_open())
     {
-        globalLog("打开文件 [" + vFilePath.string() + "] 失败，无权限或文件不存在");
+        globalLog(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
         return false;
     }
     m_Header.read(File);

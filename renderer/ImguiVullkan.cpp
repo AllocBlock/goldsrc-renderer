@@ -15,7 +15,7 @@ CImguiVullkan::CImguiVullkan(GLFWwindow* vpWindow)
     m_pInteractor = std::make_shared<CInteractor>(vpWindow, m_pRenderer->getCamera());
     m_pInteractor->bindEvent();
 
-    setGlobalLogFunc([=](std::filesystem::path vText)
+    setGlobalLogFunc([=](std::string vText)
     {
         m_GUILog.log(vText);
     });
@@ -159,7 +159,7 @@ void CImguiVullkan::destroy()
 void CImguiVullkan::showAlert(std::string vText)
 {
     m_GUIAlert.appendAlert(vText);
-    globalLog("警告: " + vText);
+    globalLog(u8"警告: " + vText);
 }
 
 void CImguiVullkan::log(std::string vText)
@@ -260,7 +260,7 @@ void CImguiVullkan::render()
     }
     else if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
-        throw std::runtime_error("获取交换链图像失败");
+        throw std::runtime_error(u8"获取交换链图像失败");
     }
     
     VkCommandBuffer ImguiCommandBuffer = requestCommandBuffer(ImageIndex);
@@ -306,7 +306,7 @@ void CImguiVullkan::render()
     }
     else if (Result != VK_SUCCESS)
     {
-        throw std::runtime_error("获取交换链图像失败");
+        throw std::runtime_error(u8"获取交换链图像失败");
     }
 
     m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
@@ -325,7 +325,7 @@ void CImguiVullkan::__createInstance()
     InstanceInfo.pApplicationInfo = &AppInfo;
 
     if (ENABLE_VALIDATION_LAYERS && !Common::checkValidationLayerSupport(m_ValidationLayers))
-        throw std::runtime_error("不支持所需的验证层");
+        throw std::runtime_error(u8"不支持所需的验证层");
 
     if (ENABLE_VALIDATION_LAYERS)
     {
@@ -356,7 +356,7 @@ void CImguiVullkan::__setupDebugMessenger()
 
     auto pCreateDebugFunc = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT"));
     if (pCreateDebugFunc == nullptr)
-        throw std::runtime_error("不支持调试函数");
+        throw std::runtime_error(u8"不支持调试函数");
     else
         ck(pCreateDebugFunc(m_Instance, &DebugMessengerInfo, nullptr, &m_DebugMessenger));
 }
@@ -386,7 +386,7 @@ void CImguiVullkan::__choosePhysicalDevice()
 
     if (m_PhysicalDevice == VK_NULL_HANDLE)
     {
-        throw std::runtime_error("未找到可用的GPU设备");
+        throw std::runtime_error(u8"未找到可用的GPU设备");
     }
 
     uint32_t ExtensionNum = 0;
@@ -639,7 +639,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL CImguiVullkan::debugCallback(VkDebugUtilsMessageS
     {
         LastMessage = vpCallbackData->pMessage;
         std::cerr << "[验证层] " << LastMessage << std::endl;
-        globalLog("[验证层] " + LastMessage);
+        globalLog(u8"[验证层] " + LastMessage);
     }
 
     return VK_FALSE;
@@ -649,7 +649,7 @@ void CImguiVullkan::__destroyDebugMessenger()
 {
     auto pDestroyDebugFunc = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT"));
     if (pDestroyDebugFunc == nullptr)
-        throw std::runtime_error("不支持调试函数");
+        throw std::runtime_error(u8"不支持调试函数");
     else
         pDestroyDebugFunc(m_Instance, m_DebugMessenger, nullptr);
 }
