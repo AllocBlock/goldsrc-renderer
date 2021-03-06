@@ -5,6 +5,22 @@
 #include <string>
 #include <fstream>
 
+const float g_ModOffset = 1e-9;
+
+float Common::mod(float vVal, float vMax)
+{
+    if (vVal < 0)
+    {
+        int Times = std::ceil(std::abs(vVal) / vMax - g_ModOffset);
+        return vVal + Times * vMax;
+    }
+    else
+    {
+        int Times = std::floor(vVal / vMax);
+        return vVal - Times * vMax;
+    }
+}
+
 std::vector<char> Common::readFile(std::filesystem::path vFilePath)
 {
     std::ifstream File(vFilePath, std::ios::ate | std::ios::binary);

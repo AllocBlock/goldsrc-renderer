@@ -104,7 +104,7 @@ std::vector<uint8_t> SBspPvs::__decompressFrom(size_t vStartIndex)
     {
         if (Iter >= RawData.size())
         {
-            globalLog(u8"vis数据解码遇到末尾，已自动补零");
+            globalLog("vis数据解码遇到末尾，已自动补零");
             while(DecompressedData.size() < RowLength)
                 DecompressedData.emplace_back(0);
         }

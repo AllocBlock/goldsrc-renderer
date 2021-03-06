@@ -289,7 +289,7 @@ std::vector<glm::vec3> CSceneReaderBsp::__getBspFaceVertices(size_t vFaceIndex)
 
     _ASSERTE(vFaceIndex >= 0 && vFaceIndex < Lumps.m_LumpFace.Faces.size());
     const SBspFace& Face = Lumps.m_LumpFace.Faces[vFaceIndex];
-    _ASSERTE(static_cast<size_t>(Face.FirstSurfedgeIndex) + Face.NumSurfedge <= Lumps.m_LumpSurfedge.Surfedges.size());
+    _ASSERTE(static_cast<size_t>(Face.FirstSurfedgeIndex) + Face.NumSurfedge <= Lumps.m_LumpSurfedge.EdgeIndices.size());
 
     // extract face vertex index from edges
     std::vector<uint16_t> FaceVertexIndices;
@@ -297,7 +297,7 @@ std::vector<glm::vec3> CSceneReaderBsp::__getBspFaceVertices(size_t vFaceIndex)
     for (uint16_t i = 0; i < Face.NumSurfedge; ++i)
     {
         size_t SurfedgeIndex = static_cast<size_t>(Face.FirstSurfedgeIndex) + i;
-        int32_t RawEdgeIndex = Lumps.m_LumpSurfedge.Surfedges[SurfedgeIndex];
+        int32_t RawEdgeIndex = Lumps.m_LumpSurfedge.EdgeIndices[SurfedgeIndex];
         uint16_t VertexIndex1 = 0, VertexIndex2 = 0;
         if (RawEdgeIndex > 0)
         {
@@ -550,7 +550,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
     std::string SkyFilePrefix = Lumps.m_LumpEntity.SkyBoxPrefix;
     if (SkyFilePrefix.empty())
     {
-        globalLog(u8"地图未指定天空文件，已使用默认天空neb6");
+        globalLog("地图未指定天空文件，已使用默认天空neb6");
         SkyFilePrefix = "neb6";
     }
     
@@ -566,7 +566,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
         }
     }
     if (!FoundSkyBoxImages)
-        globalLog(u8"未找到天空图片文件[" + SkyFilePrefix + u8"]，将不会渲染天空盒");
+        globalLog("未找到天空图片文件[" + SkyFilePrefix + "]，将不会渲染天空盒");
 }
 
 bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension, std::filesystem::path vCurrentDir)

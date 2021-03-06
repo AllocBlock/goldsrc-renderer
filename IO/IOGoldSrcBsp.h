@@ -404,7 +404,7 @@ struct SLumpEdge
  **************************************************************/
 struct SLumpSurfedge
 {
-    std::vector<int32_t> Surfedges;
+    std::vector<int32_t> EdgeIndices;
 
     void read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize);
 };

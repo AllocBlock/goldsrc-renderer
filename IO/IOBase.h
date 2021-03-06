@@ -9,8 +9,6 @@
 
 const size_t MAX_LINE_SIZE = 1024;
 
-using LogFunc = std::function<void(std::string)>;
-
 class CIOBase
 {
 public:

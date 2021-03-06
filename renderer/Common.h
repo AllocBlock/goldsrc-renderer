@@ -69,6 +69,8 @@ namespace Common
         std::vector<VkPresentModeKHR> PresentModes;
     };
 
+    float mod(float vVal, float vMax);
+
     std::vector<char> readFile(std::filesystem::path vFilePath);
     VkShaderModule createShaderModule(VkDevice vDevice, const std::vector<char>& vShaderCode);
     VkCommandBuffer beginSingleTimeCommands(VkDevice vDevice, VkCommandPool vCommandPool);
