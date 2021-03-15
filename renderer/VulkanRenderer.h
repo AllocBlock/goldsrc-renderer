@@ -71,7 +71,7 @@ struct SPointData
     }
 };
 
-struct SSkyPointData
+struct SSimplePointData
 {
     glm::vec3 Pos;
 
@@ -79,7 +79,7 @@ struct SSkyPointData
     {
         VkVertexInputBindingDescription BindingDescription = {};
         BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SSkyPointData);
+        BindingDescription.stride = sizeof(SSimplePointData);
         BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         return BindingDescription;
@@ -92,7 +92,7 @@ struct SSkyPointData
         AttributeDescriptions[0].binding = 0;
         AttributeDescriptions[0].location = 0;
         AttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[0].offset = offsetof(SSkyPointData, Pos);
+        AttributeDescriptions[0].offset = offsetof(SSimplePointData, Pos);
 
         return AttributeDescriptions;
     }
@@ -120,6 +120,12 @@ struct SSkyUniformBufferObjectVert
 struct SSkyUniformBufferObjectFrag
 {
     alignas(16) glm::mat4 UpCorrection;
+};
+
+struct SGuiUniformBufferObjectVert
+{
+    alignas(16) glm::mat4 Proj;
+    alignas(16) glm::mat4 View;
 };
 
 struct SPushConstant
@@ -151,7 +157,7 @@ public:
         m_Layout = VK_NULL_HANDLE;
     }
 
-    void create(VkDevice vDevice, VkRenderPass vRenderPass, VkVertexInputBindingDescription vInputBindingDescription, std::vector<VkVertexInputAttributeDescription> vInputAttributeDescriptions, VkExtent2D vExtent, VkDescriptorSetLayout vDescriptorSetLayout, VkPipelineDepthStencilStateCreateInfo vDepthStencilInfo, VkPipelineColorBlendStateCreateInfo vBlendInfo, std::optional<VkPipelineDynamicStateCreateInfo> vDynamicStateInfo = std::nullopt, std::optional<VkPushConstantRange> vPushConstantState = std::nullopt)
+    void create(VkDevice vDevice, VkRenderPass vRenderPass, VkVertexInputBindingDescription vInputBindingDescription, std::vector<VkVertexInputAttributeDescription> vInputAttributeDescriptions, VkExtent2D vExtent, VkDescriptorSetLayout vDescriptorSetLayout, VkPipelineDepthStencilStateCreateInfo vDepthStencilInfo, VkPipelineColorBlendStateCreateInfo vBlendInfo, uint32_t vSubpass = 0, std::optional<VkPipelineDynamicStateCreateInfo> vDynamicStateInfo = std::nullopt, std::optional<VkPushConstantRange> vPushConstantState = std::nullopt)
     {
         m_Device = vDevice;
 
@@ -255,7 +261,7 @@ public:
             PipelineInfo.pDynamicState = nullptr;
         PipelineInfo.layout = m_Layout;
         PipelineInfo.renderPass = vRenderPass;
-        PipelineInfo.subpass = 0;
+        PipelineInfo.subpass = vSubpass;
 
         ck(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr,&m_Pipeline));
 
@@ -290,12 +296,14 @@ struct SPipelineSet
     CPipeline TrianglesWithDepthTest;
     CPipeline TrianglesWithBlend;
     CPipeline TrianglesSky;
+    CPipeline GuiLines;
 
     void destory()
     {
         TrianglesWithDepthTest.destory();
         TrianglesWithBlend.destory();
         TrianglesSky.destory();
+        GuiLines.destory();
     }
 };
 
@@ -303,10 +311,17 @@ struct SSkyBox
 {
     bool IsInited = false;
     Common::SVkImagePack SkyBoxImagePack; // cube
-    Common::SVkBufferPack VertexData;
+    Common::SVkBufferPack VertexDataPack;
     size_t VertexNum = 0;
     std::vector<Common::SVkBufferPack> VertUniformBufferPacks;
     std::vector<Common::SVkBufferPack> FragUniformBufferPacks;
+};
+
+struct SGui
+{
+    Common::SVkBufferPack VertexDataPack;
+    size_t VertexNum = 0;
+    std::vector<Common::SVkBufferPack> VertUniformBufferPacks;
 };
 
 class CVulkanRenderer
@@ -323,6 +338,8 @@ public:
     void rerecordCommand();
     std::shared_ptr<CCamera> getCamera();
     size_t getRenderedObjectNum() const { return m_VisableObjectNum; }
+
+    void setHighlightBoundingBox(S3DBoundingBox vBoundingBox);
 
     bool getSkyState() const { return m_EnableSky; }
     void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_Scene.UseSkyBox; }
@@ -341,6 +358,7 @@ private:
     void __createRenderPass();
     void __createDescriptorSetLayout();
     void __createSkyDescriptorSetLayout();
+    void __createLineDescriptorSetLayout();
     void __createGraphicsPipelines();
     void __createCommandPool();
     void __createDepthResources();
@@ -356,12 +374,15 @@ private:
     void __createDescriptorPool();
     void __createDescriptorSets();
     void __createSkyDescriptorSets();
+    void __createLineDescriptorSets();
     void __createCommandBuffers();
+    void __createGuiCommandBuffers();
     void __createPlaceholderImage();
 
     void __createSkyPipeline();
     void __createDepthTestPipeline();
     void __createBlendPipeline();
+    void __createGuiLinesPipeline();
     
     void __createRecreateResources();
     void __destroyRecreateResources();
@@ -369,6 +390,8 @@ private:
     void __destroySceneResources();
     void __createSkyBoxResources();
     void __destroySkyBoxResources();
+    void __createGuiResources();
+    void __destroyGuiResources();
 
     void __renderByBspTree(uint32_t vImageIndex);
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
@@ -376,6 +399,8 @@ private:
     void __renderModel(uint32_t vImageIndex, size_t vModelIndex);
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __updateSkyUniformBuffer(uint32_t vImageIndex);
+    void __updateGuiUniformBuffer(uint32_t vImageIndex);
+    void __recordGuiCommandBuffers();
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
@@ -396,6 +421,7 @@ private:
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory);
     void __updateDescriptorSets();
     void __updateSkyDescriptorSets();
+    void __updateLineDescriptorSets();
 
     std::vector<SPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
 
@@ -407,17 +433,21 @@ private:
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_SkyDescriptorSetLayout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_LineDescriptorSetLayout = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = 
     {
         {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "shader/vert.spv", "shader/frag.spv"},
         {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "shader/vert.spv", "shader/frag.spv"},
         {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "shader/skyVert.spv", "shader/skyFrag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, "shader/lineVert.spv", "shader/lineFrag.spv"},
     };
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSet> m_DescriptorSets;
     std::vector<VkDescriptorSet> m_SkyDescriptorSets;
-    std::vector<VkCommandBuffer> m_CommandBuffers;
+    std::vector<VkDescriptorSet> m_LineDescriptorSets;
+    std::vector<VkCommandBuffer> m_SceneCommandBuffers;
+    std::vector<VkCommandBuffer> m_GuiCommandBuffers;
     VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
     VkExtent2D m_Extent = { 0, 0 };
     std::vector<VkImageView> m_ImageViews;
@@ -435,6 +465,7 @@ private:
 
     SScene m_Scene;
     SSkyBox m_SkyBox;
+    SGui m_Gui;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
 
     bool m_FramebufferResized = false;
@@ -449,6 +480,8 @@ private:
     std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
     std::vector<uint32_t> m_RenderNodeList;
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;
+
+    size_t m_NumSwapchainImage = 0;
 
     const float m_WindowWidth = 800;
     const float m_WindowHeight = 600;

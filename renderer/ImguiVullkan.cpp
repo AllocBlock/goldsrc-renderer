@@ -263,8 +263,8 @@ void CImguiVullkan::render()
         throw std::runtime_error(u8"获取交换链图像失败");
     }
     
-    VkCommandBuffer ImguiCommandBuffer = requestCommandBuffer(ImageIndex);
     VkCommandBuffer RendererCommandBuffer = m_pRenderer->requestCommandBuffer(ImageIndex);
+    VkCommandBuffer ImguiCommandBuffer = requestCommandBuffer(ImageIndex);
 
     VkSemaphore WaitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrameIndex] };
     VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };

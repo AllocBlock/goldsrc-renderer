@@ -280,5 +280,13 @@ void CImguiVullkan::__drawGUI()
         log("log3");
     }
 
+    if (ImGui::Button("test bounding box (2x2x2 at origin)"))
+    {
+        S3DBoundingBox BB;
+        BB.Min = glm::vec3(-1.0, -1.0, -1.0);
+        BB.Max = glm::vec3(1.0, 1.0, 1.0);
+        m_pRenderer->setHighlightBoundingBox(BB);
+    }
+
     ImGui::Render();
 }

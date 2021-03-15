@@ -22,14 +22,22 @@ void CVulkanRenderer::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevic
     m_ImageFormat = vImageFormat;
     m_Extent = vExtent;
     m_ImageViews = vImageViews;
+    m_NumSwapchainImage = m_ImageViews.size();
+
     vkGetDeviceQueue(m_Device, m_GraphicsQueueIndex, 0, &m_GraphicsQueue);
     __createRenderPass();
     __createDescriptorSetLayout();
     __createSkyDescriptorSetLayout();
+    __createLineDescriptorSetLayout();
     __createCommandPool();
+    __createCommandBuffers();
+    __createGuiCommandBuffers();
     __createTextureSampler();
     __createPlaceholderImage();
     __createRecreateResources();
+
+    __createGuiResources();
+    __recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::__createRecreateResources()
@@ -54,7 +62,7 @@ void CVulkanRenderer::__destroyRecreateResources()
 
     m_PipelineSet.destory();
 
-    for (size_t i = 0; i < m_ImageViews.size(); ++i)
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         m_VertUniformBufferPacks[i].destory(m_Device);
         m_FragUniformBufferPacks[i].destory(m_Device);
@@ -77,7 +85,6 @@ void CVulkanRenderer::__createSceneResources()
     __updateDescriptorSets();
     __createVertexBuffer(); // scene
     __createIndexBuffer(); // scene
-    __createCommandBuffers(); // scene
 
     m_EnableSky = m_EnableSky && m_Scene.UseSkyBox;
 
@@ -101,9 +108,6 @@ void CVulkanRenderer::__destroySceneResources()
     m_LightmapImagePack.destory(m_Device);
     m_IndexBufferPack.destory(m_Device);
     m_VertexBufferPack.destory(m_Device);
-
-    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
-    m_CommandBuffers.clear();
 }
 
 void CVulkanRenderer::__createSkyBoxResources()
@@ -138,8 +142,8 @@ void CVulkanRenderer::__createSkyBoxResources()
     for (size_t i = 0; i < m_Scene.SkyBoxImages.size(); ++i)
     {
         _ASSERTE(TexWidth == m_Scene.SkyBoxImages[i]->getImageWidth() && TexHeight == m_Scene.SkyBoxImages[i]->getImageHeight());
-        const void* pIndices = m_Scene.SkyBoxImages[i]->getData();
-        memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pIndices, SingleFaceImageSize);
+        const void* pData = m_Scene.SkyBoxImages[i]->getData();
+        memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
     }
 
     VkBuffer StagingBuffer;
@@ -191,7 +195,7 @@ void CVulkanRenderer::__createSkyBoxResources()
         { 1.0, -1.0, -1.0}, // 7
     };
 
-    //const std::vector<SSkyPointData> PointData =
+    //const std::vector<SSimplePointData> PointData =
     //{
     //    {Vertices[0]}, {Vertices[3]}, {Vertices[2]}, {Vertices[0]}, {Vertices[2]}, {Vertices[1]}, // +y
     //    {Vertices[4]}, {Vertices[7]}, {Vertices[6]}, {Vertices[4]}, {Vertices[6]}, {Vertices[5]}, // -y
@@ -201,7 +205,7 @@ void CVulkanRenderer::__createSkyBoxResources()
     //    {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
     //};
 
-    const std::vector<SSkyPointData> PointData =
+    const std::vector<SSimplePointData> PointData =
     {
         {Vertices[4]}, {Vertices[0]}, {Vertices[1]}, {Vertices[4]}, {Vertices[1]}, {Vertices[5]}, // +z
         {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
@@ -211,21 +215,21 @@ void CVulkanRenderer::__createSkyBoxResources()
         {Vertices[1]}, {Vertices[2]}, {Vertices[6]}, {Vertices[1]}, {Vertices[6]}, {Vertices[5]}, // -x
     };
 
-    VkDeviceSize DataSize = sizeof(SSkyPointData) * PointData.size();
+    VkDeviceSize DataSize = sizeof(SSimplePointData) * PointData.size();
     m_SkyBox.VertexNum = PointData.size();
 
    /* VkBuffer StagingBuffer;
     VkDeviceMemory StagingBufferMemory;*/
     __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
-    void* pIndices;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pIndices));
-    memcpy(reinterpret_cast<char*>(pIndices), PointData.data(), DataSize);
+    void* pData;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pData));
+    memcpy(reinterpret_cast<char*>(pData), PointData.data(), DataSize);
     vkUnmapMemory(m_Device, StagingBufferMemory);
 
-    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.VertexData.Buffer, m_SkyBox.VertexData.Memory);
+    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.VertexDataPack.Buffer, m_SkyBox.VertexDataPack.Memory);
 
-    __copyBuffer(StagingBuffer, m_SkyBox.VertexData.Buffer, DataSize);
+    __copyBuffer(StagingBuffer, m_SkyBox.VertexDataPack.Buffer, DataSize);
 
     vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
     vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
@@ -233,11 +237,10 @@ void CVulkanRenderer::__createSkyBoxResources()
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
     VkDeviceSize FragBufferSize = sizeof(SSkyUniformBufferObjectFrag);
-    size_t NumSwapchainImage = m_ImageViews.size();
-    m_SkyBox.VertUniformBufferPacks.resize(NumSwapchainImage);
-    m_SkyBox.FragUniformBufferPacks.resize(NumSwapchainImage);
+    m_SkyBox.VertUniformBufferPacks.resize(m_NumSwapchainImage);
+    m_SkyBox.FragUniformBufferPacks.resize(m_NumSwapchainImage);
 
-    for (size_t i = 0; i < m_ImageViews.size(); ++i)
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         __createBuffer(VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.VertUniformBufferPacks[i].Buffer, m_SkyBox.VertUniformBufferPacks[i].Memory);
         __createBuffer(FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.FragUniformBufferPacks[i].Buffer, m_SkyBox.FragUniformBufferPacks[i].Memory);
@@ -247,7 +250,7 @@ void CVulkanRenderer::__createSkyBoxResources()
 void CVulkanRenderer::__destroySkyBoxResources()
 {
     m_SkyBox.SkyBoxImagePack.destory(m_Device);
-    m_SkyBox.VertexData.destory(m_Device);
+    m_SkyBox.VertexDataPack.destory(m_Device);
     for (size_t i = 0; i < m_SkyBox.VertUniformBufferPacks.size(); ++i)
     {
         m_SkyBox.VertUniformBufferPacks[i].destory(m_Device);
@@ -257,12 +260,41 @@ void CVulkanRenderer::__destroySkyBoxResources()
     m_SkyBox.FragUniformBufferPacks.clear();
 }
 
+void CVulkanRenderer::__createGuiResources()
+{
+    // uniform buffer
+    VkDeviceSize VertBufferSize = sizeof(SGuiUniformBufferObjectVert);
+    m_Gui.VertUniformBufferPacks.resize(m_NumSwapchainImage);
+
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
+    {
+        __createBuffer(VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Gui.VertUniformBufferPacks[i].Buffer, m_Gui.VertUniformBufferPacks[i].Memory);
+    }
+
+    __createLineDescriptorSets();
+    __updateLineDescriptorSets();
+}
+
+void CVulkanRenderer::__destroyGuiResources()
+{
+    m_Gui.VertexDataPack.destory(m_Device);
+    for (auto& Buffer : m_Gui.VertUniformBufferPacks)
+        Buffer.destory(m_Device);
+}
+
 void CVulkanRenderer::destroy()
 {
     __destroyRecreateResources();
+    __destroyGuiResources();
+
+    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_SceneCommandBuffers.size()), m_SceneCommandBuffers.data());
+    m_SceneCommandBuffers.clear();
+    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_GuiCommandBuffers.size()), m_GuiCommandBuffers.data());
+    m_GuiCommandBuffers.clear();
 
     m_PlaceholderImagePack.destory(m_Device);
     vkDestroySampler(m_Device, m_TextureSampler, nullptr);
+    vkDestroyDescriptorSetLayout(m_Device, m_LineDescriptorSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_Device, m_SkyDescriptorSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
@@ -312,7 +344,7 @@ void CVulkanRenderer::loadScene(const SScene& vScene)
 
 VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 {
-    _ASSERTE(vImageIndex >= 0 && vImageIndex < m_CommandBuffers.size());
+    _ASSERTE(vImageIndex >= 0 && vImageIndex < m_SceneCommandBuffers.size());
     
     bool RerecordCommand = false;
     if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling || m_RerecordCommand > 0)
@@ -326,7 +358,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        ck(vkBeginCommandBuffer(m_CommandBuffers[vImageIndex], &CommandBufferBeginInfo));
+        ck(vkBeginCommandBuffer(m_SceneCommandBuffers[vImageIndex], &CommandBufferBeginInfo));
 
         std::array<VkClearValue, 2> ClearValues = {};
         ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -341,16 +373,16 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
         RenderPassBeginInfo.pClearValues = ClearValues.data();
 
-        vkCmdBeginRenderPass(m_CommandBuffers[vImageIndex], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(m_SceneCommandBuffers[vImageIndex], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
 
         VkDeviceSize Offsets[] = { 0 };
         if (m_VertexBufferPack.isValid())
-            vkCmdBindVertexBuffers(m_CommandBuffers[vImageIndex], 0, 1, &m_VertexBufferPack.Buffer, Offsets);
+            vkCmdBindVertexBuffers(m_SceneCommandBuffers[vImageIndex], 0, 1, &m_VertexBufferPack.Buffer, Offsets);
         if (m_IndexBufferPack.isValid())
-            vkCmdBindIndexBuffer(m_CommandBuffers[vImageIndex], m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(m_SceneCommandBuffers[vImageIndex], m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
         
         if (m_VertexBufferPack.isValid() || m_IndexBufferPack.isValid())
         {
@@ -359,7 +391,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
                 __renderByBspTree(vImageIndex);
             else
             {
-                m_PipelineSet.TrianglesWithDepthTest.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+                m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
                 
                 SPushConstant PushConstant;
                 PushConstant.Opacity = 1.0f;
@@ -367,17 +399,95 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
                 for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
                 {
                     PushConstant.UseLightmap = m_Scene.Objects[i]->HasLightmap;
-                    m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+                    m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
                     if (m_AreObjectsVisable[i])
                         __recordObjectRenderCommand(vImageIndex, i);
                 }
             }
         }
 
-        vkCmdEndRenderPass(m_CommandBuffers[vImageIndex]);
-        ck(vkEndCommandBuffer(m_CommandBuffers[vImageIndex]));
+        // GUI 
+        vkCmdNextSubpass(m_SceneCommandBuffers[vImageIndex], VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        vkCmdExecuteCommands(m_SceneCommandBuffers[vImageIndex], 1, &m_GuiCommandBuffers[vImageIndex]);
+
+        vkCmdEndRenderPass(m_SceneCommandBuffers[vImageIndex]);
+        ck(vkEndCommandBuffer(m_SceneCommandBuffers[vImageIndex]));
     }
-    return m_CommandBuffers[vImageIndex];
+    return m_SceneCommandBuffers[vImageIndex];
+}
+
+void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
+{
+    vkDeviceWaitIdle(m_Device);
+    m_Gui.VertexDataPack.destory(m_Device);
+    
+    size_t NumVertex = 24; // 12 edges
+    m_Gui.VertexNum = NumVertex;
+    VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
+
+    VkBuffer StagingBuffer;
+    VkDeviceMemory StagingBufferMemory;
+    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
+
+    void* pData;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
+    static const std::array<glm::vec3, 8> Vertices =
+    {
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
+    };
+
+    static const std::array<glm::vec3, 24> Edges =
+    {
+        Vertices[0], Vertices[1],  Vertices[1], Vertices[2],  Vertices[2], Vertices[3],  Vertices[3], Vertices[0],
+        Vertices[4], Vertices[5],  Vertices[5], Vertices[6],  Vertices[6], Vertices[7],  Vertices[7], Vertices[4],
+        Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
+    };
+    memcpy(reinterpret_cast<char*>(pData), Edges.data(), sizeof(glm::vec3) * Edges.size());
+    vkUnmapMemory(m_Device, StagingBufferMemory);
+
+    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Gui.VertexDataPack.Buffer, m_Gui.VertexDataPack.Memory);
+
+    __copyBuffer(StagingBuffer, m_Gui.VertexDataPack.Buffer, BufferSize);
+
+    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+
+    __recordGuiCommandBuffers();
+}
+
+void CVulkanRenderer::__recordGuiCommandBuffers()
+{
+    for (size_t i = 0; i < m_GuiCommandBuffers.size(); ++i)
+    {
+        VkCommandBufferInheritanceInfo InheritanceInfo = {};
+        InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+        InheritanceInfo.renderPass = m_RenderPass;
+        InheritanceInfo.subpass = 1;
+        InheritanceInfo.framebuffer = m_Framebuffers[i];
+
+        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
+        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+        CommandBufferBeginInfo.pInheritanceInfo = &InheritanceInfo;
+
+        ck(vkBeginCommandBuffer(m_GuiCommandBuffers[i], &CommandBufferBeginInfo));
+        m_PipelineSet.GuiLines.bind(m_GuiCommandBuffers[i], m_LineDescriptorSets[i]);
+
+        VkDeviceSize Offsets[] = { 0 };
+        if (m_Gui.VertexNum > 0)
+        {
+            vkCmdBindVertexBuffers(m_GuiCommandBuffers[i], 0, 1, &m_Gui.VertexDataPack.Buffer, Offsets);
+            vkCmdDraw(m_GuiCommandBuffers[i], m_Gui.VertexNum, 1, 0, 0);
+        }
+        ck(vkEndCommandBuffer(m_GuiCommandBuffers[i]));
+    }
 }
 
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
@@ -385,7 +495,7 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeList.clear();
     if (m_Scene.BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
-    m_PipelineSet.TrianglesWithDepthTest.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
 
     __renderTreeNode(vImageIndex, 0);
     __renderModels(vImageIndex);
@@ -405,7 +515,7 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
 
             m_RenderNodeList.emplace_back(ObjectIndex);
             PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
-            m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+            m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
     }
@@ -430,11 +540,11 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
 {
     auto [OpaqueSequence, TranparentSequence] = __sortModelRenderSequence();
 
-    m_PipelineSet.TrianglesWithDepthTest.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
     for(size_t ModelIndex : OpaqueSequence)
         __renderModel(vImageIndex, ModelIndex);
 
-    m_PipelineSet.TrianglesWithBlend.bind(m_CommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+    m_PipelineSet.TrianglesWithBlend.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
     for (size_t ModelIndex : TranparentSequence)
         __renderModel(vImageIndex, ModelIndex);
 }
@@ -452,14 +562,14 @@ void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
-        m_PipelineSet.TrianglesWithBlend.pushConstant<SPushConstant>(m_CommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+        m_PipelineSet.TrianglesWithBlend.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
 }
 
 void CVulkanRenderer::rerecordCommand()
 {
-    m_RerecordCommand += m_CommandBuffers.size();
+    m_RerecordCommand += m_SceneCommandBuffers.size();
 }
 
 std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
@@ -472,13 +582,13 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
     _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_Scene.Objects.size());
     std::shared_ptr<S3DObject> pObject = m_Scene.Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
-    vkCmdSetDepthBias(m_CommandBuffers[vImageIndex], static_cast<float>(vObjectIndex) / m_Scene.Objects.size(), 0, 0);
+    vkCmdSetDepthBias(m_SceneCommandBuffers[vImageIndex], static_cast<float>(vObjectIndex) / m_Scene.Objects.size(), 0, 0);
     if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
-        vkCmdDrawIndexed(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0, 0);
+        vkCmdDrawIndexed(m_SceneCommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0, 0);
     else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
-        vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
+        vkCmdDraw(m_SceneCommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
     else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_STRIP_LIST)
-        vkCmdDraw(m_CommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
+        vkCmdDraw(m_SceneCommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
     else
         throw std::runtime_error(u8"物体类型错误");
 }
@@ -514,13 +624,20 @@ void CVulkanRenderer::__createRenderPass()
     DepthAttachmentRef.attachment = 1;
     DepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    VkSubpassDependency SubpassDependency = {};
-    SubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    SubpassDependency.dstSubpass = 0;
-    SubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependency.srcAccessMask = 0;
-    SubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    std::array<VkSubpassDependency, 2> SubpassDependencies = {};
+    SubpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    SubpassDependencies[0].dstSubpass = 0;
+    SubpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependencies[0].srcAccessMask = 0;
+    SubpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    SubpassDependencies[1].srcSubpass = 0;
+    SubpassDependencies[1].dstSubpass = 1;
+    SubpassDependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependencies[1].srcAccessMask = 0;
+    SubpassDependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
     VkSubpassDescription SubpassDesc = {};
     SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -528,15 +645,17 @@ void CVulkanRenderer::__createRenderPass()
     SubpassDesc.pColorAttachments = &ColorAttachmentRef;
     SubpassDesc.pDepthStencilAttachment = &DepthAttachmentRef;
 
+    std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc, SubpassDesc };
+
     std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttachment };
     VkRenderPassCreateInfo RenderPassInfo = {};
     RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     RenderPassInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
     RenderPassInfo.pAttachments = Attachments.data();
-    RenderPassInfo.subpassCount = 1;
-    RenderPassInfo.pSubpasses = &SubpassDesc;
-    RenderPassInfo.dependencyCount = 1;
-    RenderPassInfo.pDependencies = &SubpassDependency;
+    RenderPassInfo.subpassCount = static_cast<uint32_t>(SubpassDescs.size());
+    RenderPassInfo.pSubpasses = SubpassDescs.data();
+    RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
+    RenderPassInfo.pDependencies = SubpassDependencies.data();
 
     ck(vkCreateRenderPass(m_Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
@@ -627,11 +746,32 @@ void CVulkanRenderer::__createSkyDescriptorSetLayout()
     ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_SkyDescriptorSetLayout));
 }
 
+void CVulkanRenderer::__createLineDescriptorSetLayout()
+{
+    VkDescriptorSetLayoutBinding UboVertBinding = {};
+    UboVertBinding.binding = 0;
+    UboVertBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    UboVertBinding.descriptorCount = 1;
+    UboVertBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    std::vector<VkDescriptorSetLayoutBinding> Bindings =
+    {
+        UboVertBinding
+    };
+    VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
+    LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
+    LayoutInfo.pBindings = Bindings.data();
+
+    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_LineDescriptorSetLayout));
+}
+
 void CVulkanRenderer::__createGraphicsPipelines()
 {
     __createSkyPipeline();
     __createDepthTestPipeline();
     __createBlendPipeline();
+    __createGuiLinesPipeline();
 }
 
 void CVulkanRenderer::__createSkyPipeline()
@@ -656,8 +796,8 @@ void CVulkanRenderer::__createSkyPipeline()
     m_PipelineSet.TrianglesSky.create(
         m_Device,
         m_RenderPass,
-        SSkyPointData::getBindingDescription(),
-        SSkyPointData::getAttributeDescriptions(),
+        SSimplePointData::getBindingDescription(),
+        SSimplePointData::getAttributeDescriptions(),
         m_Extent,
         m_SkyDescriptorSetLayout,
         DepthStencilInfo,
@@ -709,6 +849,7 @@ void CVulkanRenderer::__createDepthTestPipeline()
         m_DescriptorSetLayout,
         DepthStencilInfo,
         ColorBlendInfo,
+        0,
         DynamicStateInfo,
         PushConstantInfo
     );
@@ -766,8 +907,42 @@ void CVulkanRenderer::__createBlendPipeline()
         m_DescriptorSetLayout,
         DepthStencilInfo,
         ColorBlendInfo,
+        0,
         DynamicStateInfo,
         PushConstantInfo
+    );
+}
+
+void CVulkanRenderer::__createGuiLinesPipeline()
+{
+    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
+    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    DepthStencilInfo.depthTestEnable = VK_TRUE;
+    DepthStencilInfo.depthWriteEnable = VK_TRUE;
+    DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+    DepthStencilInfo.stencilTestEnable = VK_FALSE;
+
+    VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
+    ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    ColorBlendAttachment.blendEnable = VK_FALSE;
+
+    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
+    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    ColorBlendInfo.logicOpEnable = VK_FALSE;
+    ColorBlendInfo.attachmentCount = 1;
+    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
+
+    m_PipelineSet.GuiLines.create(
+        m_Device,
+        m_RenderPass,
+        SSimplePointData::getBindingDescription(),
+        SSimplePointData::getAttributeDescriptions(),
+        m_Extent,
+        m_LineDescriptorSetLayout,
+        DepthStencilInfo,
+        ColorBlendInfo,
+        1
     );
 }
 
@@ -807,8 +982,8 @@ void CVulkanRenderer::__createDepthResources()
 
 void CVulkanRenderer::__createFramebuffers()
 {
-    m_Framebuffers.resize(m_ImageViews.size());
-    for (size_t i = 0; i < m_ImageViews.size(); ++i)
+    m_Framebuffers.resize(m_NumSwapchainImage);
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         std::array<VkImageView, 2> Attachments =
         {
@@ -914,14 +1089,14 @@ void CVulkanRenderer::__createVertexBuffer()
     VkDeviceMemory StagingBufferMemory;
     __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
-    void* pIndices;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pIndices));
+    void* pData;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
     size_t Offset = 0;
     for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
     {
         std::vector<SPointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SPointData) * pObject->Vertices.size();
-        memcpy(reinterpret_cast<char*>(pIndices)+ Offset, PointData.data(), SubBufferSize);
+        memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
     vkUnmapMemory(m_Device, StagingBufferMemory);
@@ -952,8 +1127,8 @@ void CVulkanRenderer::__createIndexBuffer()
     VkDeviceMemory StagingBufferMemory;
     __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
-    void* pIndices;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pIndices));
+    void* pData;
+    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
     size_t Offset = 0;
     for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
     {
@@ -962,7 +1137,7 @@ void CVulkanRenderer::__createIndexBuffer()
         for (uint32_t& Index : Indices)
             Index += IndexOffset;
         size_t SubBufferSize = sizeof(uint32_t) * Indices.size();
-        memcpy(reinterpret_cast<char*>(pIndices) + Offset, Indices.data(), SubBufferSize);
+        memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
     vkUnmapMemory(m_Device, StagingBufferMemory);
@@ -978,11 +1153,10 @@ void CVulkanRenderer::__createIndexBuffer()
 void CVulkanRenderer::__createUniformBuffers()
 {
     VkDeviceSize BufferSize = sizeof(SUniformBufferObjectVert);
-    size_t NumSwapchainImage = m_ImageViews.size();
-    m_VertUniformBufferPacks.resize(NumSwapchainImage);
-    m_FragUniformBufferPacks.resize(NumSwapchainImage);
+    m_VertUniformBufferPacks.resize(m_NumSwapchainImage);
+    m_FragUniformBufferPacks.resize(m_NumSwapchainImage);
 
-    for (size_t i = 0; i < m_ImageViews.size(); ++i)
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
         __createBuffer(BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPacks[i].Buffer, m_FragUniformBufferPacks[i].Memory);
@@ -993,53 +1167,70 @@ void CVulkanRenderer::__createDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> PoolSizes =
     {
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) },
-        { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_ImageViews.size()) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size() * m_MaxTextureNum) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_ImageViews.size()) },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) },
+        { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_NumSwapchainImage) },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_NumSwapchainImage * m_MaxTextureNum) },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_NumSwapchainImage) },
 
         // sky box
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) }, // vert
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_ImageViews.size()) }, // frag
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(m_ImageViews.size()) }, // combined sampler
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) }, // vert
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) }, // frag
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(m_NumSwapchainImage) }, // combined sampler
+
+        // GUI lines
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) }, // vert
     };
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSizes.size());
     PoolInfo.pPoolSizes = PoolSizes.data();
-    PoolInfo.maxSets = static_cast<uint32_t>(m_ImageViews.size()) * 2;
+    PoolInfo.maxSets = static_cast<uint32_t>(m_NumSwapchainImage) * 3;
 
     ck(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
 void CVulkanRenderer::__createDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> Layouts(m_ImageViews.size(), m_DescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> Layouts(m_NumSwapchainImage, m_DescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
     DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     DescSetAllocInfo.descriptorPool = m_DescriptorPool;
-    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_ImageViews.size());
+    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_NumSwapchainImage);
     DescSetAllocInfo.pSetLayouts = Layouts.data();
 
-    m_DescriptorSets.resize(m_ImageViews.size());
+    m_DescriptorSets.resize(m_NumSwapchainImage);
     ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSets.data()));
 }
 
 void CVulkanRenderer::__createSkyDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> Layouts(m_ImageViews.size(), m_SkyDescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> Layouts(m_NumSwapchainImage, m_SkyDescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
     DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     DescSetAllocInfo.descriptorPool = m_DescriptorPool;
-    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_ImageViews.size());
+    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_NumSwapchainImage);
     DescSetAllocInfo.pSetLayouts = Layouts.data();
 
-    m_SkyDescriptorSets.resize(m_ImageViews.size());
+    m_SkyDescriptorSets.resize(m_NumSwapchainImage);
     ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_SkyDescriptorSets.data()));
+}
+
+void CVulkanRenderer::__createLineDescriptorSets()
+{
+    std::vector<VkDescriptorSetLayout> Layouts(m_NumSwapchainImage, m_LineDescriptorSetLayout);
+
+    VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
+    DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    DescSetAllocInfo.descriptorPool = m_DescriptorPool;
+    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_NumSwapchainImage);
+    DescSetAllocInfo.pSetLayouts = Layouts.data();
+
+    m_LineDescriptorSets.resize(m_NumSwapchainImage);
+    ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_LineDescriptorSets.data()));
 }
 
 void CVulkanRenderer::__updateDescriptorSets()
@@ -1198,19 +1389,55 @@ void CVulkanRenderer::__updateSkyDescriptorSets()
     }
 }
 
+void CVulkanRenderer::__updateLineDescriptorSets()
+{
+    for (size_t i = 0; i < m_LineDescriptorSets.size(); ++i)
+    {
+        std::vector<VkWriteDescriptorSet> DescriptorWrites;
+
+        VkDescriptorBufferInfo VertBufferInfo = {};
+        VertBufferInfo.buffer = m_Gui.VertUniformBufferPacks[i].Buffer;
+        VertBufferInfo.offset = 0;
+        VertBufferInfo.range = sizeof(SGuiUniformBufferObjectVert);
+
+        VkWriteDescriptorSet VertBufferDescriptorWrite = {};
+        VertBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        VertBufferDescriptorWrite.dstSet = m_LineDescriptorSets[i];
+        VertBufferDescriptorWrite.dstBinding = 0;
+        VertBufferDescriptorWrite.dstArrayElement = 0;
+        VertBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        VertBufferDescriptorWrite.descriptorCount = 1;
+        VertBufferDescriptorWrite.pBufferInfo = &VertBufferInfo;
+        DescriptorWrites.emplace_back(VertBufferDescriptorWrite);
+
+        vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
+    }
+}
+
 void CVulkanRenderer::__createCommandBuffers()
 {
-    m_CommandBuffers.resize(m_Framebuffers.size());
+    m_SceneCommandBuffers.resize(m_NumSwapchainImage);
 
     VkCommandBufferAllocateInfo CommandBufferAllocInfo = {};
     CommandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     CommandBufferAllocInfo.commandPool = m_CommandPool;
     CommandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    CommandBufferAllocInfo.commandBufferCount = static_cast<uint32_t>(m_CommandBuffers.size());
+    CommandBufferAllocInfo.commandBufferCount = m_NumSwapchainImage;
 
-    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_CommandBuffers.data()));
+    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_SceneCommandBuffers.data()));
+}
 
-    rerecordCommand();
+void CVulkanRenderer::__createGuiCommandBuffers()
+{
+    m_GuiCommandBuffers.resize(m_NumSwapchainImage);
+
+    VkCommandBufferAllocateInfo CommandBufferAllocInfo = {};
+    CommandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    CommandBufferAllocInfo.commandPool = m_CommandPool;
+    CommandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+    CommandBufferAllocInfo.commandBufferCount = m_NumSwapchainImage;
+
+    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_GuiCommandBuffers.data()));
 }
 
 void CVulkanRenderer::__createPlaceholderImage()
@@ -1640,6 +1867,7 @@ void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const 
     m_Extent = vExtent;
     m_ImageViews = vImageViews;
     __createRecreateResources();
+    rerecordCommand();
 }
 
 void CVulkanRenderer::update(uint32_t vImageIndex)
@@ -1647,6 +1875,7 @@ void CVulkanRenderer::update(uint32_t vImageIndex)
     __updateUniformBuffer(vImageIndex);
     if (m_EnableSky)
         __updateSkyUniformBuffer(vImageIndex);
+    __updateGuiUniformBuffer(vImageIndex);
 }
 
 void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
@@ -1661,16 +1890,16 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     UBOVert.View = m_pCamera->getViewMat();
     UBOVert.Proj = m_pCamera->getProjMat();
 
-    void* pIndices;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pIndices));
-    memcpy(pIndices, &UBOVert, sizeof(UBOVert));
+    void* pData;
+    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    memcpy(pData, &UBOVert, sizeof(UBOVert));
     vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
 
     SUniformBufferObjectFrag UBOFrag = {};
     UBOFrag.Eye = m_pCamera->getPos();
 
-    ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pIndices));
-    memcpy(pIndices, &UBOFrag, sizeof(UBOFrag));
+    ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
+    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
     vkUnmapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory);
 }
 
@@ -1681,9 +1910,9 @@ void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
     UBOVert.View = m_pCamera->getViewMat();
     UBOVert.EyePosition = m_pCamera->getPos();
 
-    void* pIndices;
-    ck(vkMapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pIndices));
-    memcpy(pIndices, &UBOVert, sizeof(UBOVert));
+    void* pData;
+    ck(vkMapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    memcpy(pData, &UBOVert, sizeof(UBOVert));
     vkUnmapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory);
 
     SSkyUniformBufferObjectFrag UBOFrag = {};
@@ -1708,15 +1937,28 @@ void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
         UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
     }
 
-    ck(vkMapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pIndices));
-    memcpy(pIndices, &UBOFrag, sizeof(UBOFrag));
+    ck(vkMapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
+    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
     vkUnmapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory);
+}
+
+void CVulkanRenderer::__updateGuiUniformBuffer(uint32_t vImageIndex)
+{
+    // line
+    SGuiUniformBufferObjectVert UBOVert = {};
+    UBOVert.Proj = m_pCamera->getProjMat();
+    UBOVert.View = m_pCamera->getViewMat();
+
+    void* pData;
+    ck(vkMapMemory(m_Device, m_Gui.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    memcpy(pData, &UBOVert, sizeof(UBOVert));
+    vkUnmapMemory(m_Device, m_Gui.VertUniformBufferPacks[vImageIndex].Memory);
 }
 
 void CVulkanRenderer::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     const VkDeviceSize Offsets[] = { 0 };
-    m_PipelineSet.TrianglesSky.bind(m_CommandBuffers[vImageIndex], m_SkyDescriptorSets[vImageIndex]);
-    vkCmdBindVertexBuffers(m_CommandBuffers[vImageIndex], 0, 1, &m_SkyBox.VertexData.Buffer, Offsets);
-    vkCmdDraw(m_CommandBuffers[vImageIndex], m_SkyBox.VertexNum, 1, 0, 0);
+    m_PipelineSet.TrianglesSky.bind(m_SceneCommandBuffers[vImageIndex], m_SkyDescriptorSets[vImageIndex]);
+    vkCmdBindVertexBuffers(m_SceneCommandBuffers[vImageIndex], 0, 1, &m_SkyBox.VertexDataPack.Buffer, Offsets);
+    vkCmdDraw(m_SceneCommandBuffers[vImageIndex], m_SkyBox.VertexNum, 1, 0, 0);
 }

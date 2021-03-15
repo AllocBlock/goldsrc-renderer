@@ -86,4 +86,12 @@
       <Filter>资源文件</Filter>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\lineShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shader\lineShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>
