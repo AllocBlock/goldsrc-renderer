@@ -24,9 +24,9 @@ const bool ENABLE_VALIDATION_LAYERS = false;
 
 struct SResultReadScene
 {
-    bool Succeed = false;;
-    SScene Scene;
+    bool Succeed = false;
     std::string Message;
+    std::shared_ptr<SScene> pScene;
 };
 
 class CImguiVullkan

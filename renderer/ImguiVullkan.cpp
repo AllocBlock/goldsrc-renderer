@@ -12,7 +12,7 @@ CImguiVullkan::CImguiVullkan(GLFWwindow* vpWindow)
 {
     m_pWindow = vpWindow;
     m_pRenderer = std::make_shared<CVulkanRenderer>();
-    m_pInteractor = std::make_shared<CInteractor>(vpWindow, m_pRenderer->getCamera());
+    m_pInteractor = std::make_shared<CInteractor>(vpWindow, m_pRenderer);
     m_pInteractor->bindEvent();
 
     setGlobalLogFunc([=](std::string vText)

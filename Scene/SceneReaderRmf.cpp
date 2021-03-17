@@ -2,17 +2,17 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-SScene CSceneReaderRmf::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+std::shared_ptr<SScene> CSceneReaderRmf::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     m_ProgressReportFunc = vProgressReportFunc;
-    m_Scene = SScene();
+    m_pScene = std::make_shared<SScene>();
     
     __readRmf(vFilePath);
     __readWadsAndInitTextures();
     __reportProgress(u8"读取场景中");
     __readObject(m_Rmf.getWorld());
 
-    return m_Scene;
+    return m_pScene;
 }
 
 void CSceneReaderRmf::__readRmf(std::filesystem::path vFilePath)
@@ -29,7 +29,7 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
     __reportProgress(u8"初始化纹理中");
     m_TexNameToIndex.clear();
     m_TexNameToIndex["TextureNotFound"] = 0;
-    m_Scene.TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
+    m_pScene->TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
 
     __reportProgress(u8"rmf不包含wad信息，将来会加入wad手动选择");
     // TODO: provide wads file selection for user
@@ -78,7 +78,7 @@ void CSceneReaderRmf::__readSolid(std::shared_ptr<SRmfSolid> vpSolid)
     for (const SRmfFace& Face : vpSolid->Faces)
         __readSolidFace(Face, pObject);
 
-    m_Scene.Objects.emplace_back(std::move(pObject));
+    m_pScene->Objects.emplace_back(std::move(pObject));
 }
 
 void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, std::shared_ptr<S3DObject> vopObject)
@@ -131,9 +131,9 @@ uint32_t CSceneReaderRmf::__requestTextureIndex(std::string vTextureName)
             if (Index.has_value())
             {
                 std::shared_ptr<CIOImage> pTexImage = getIOImageFromWad(Wad, Index.value());
-                uint32_t TexIndex = m_Scene.TexImages.size();
+                uint32_t TexIndex = m_pScene->TexImages.size();
                 m_TexNameToIndex[vTextureName] = TexIndex;
-                m_Scene.TexImages.emplace_back(std::move(pTexImage));
+                m_pScene->TexImages.emplace_back(std::move(pTexImage));
                 return TexIndex;
             }
         }
@@ -146,7 +146,7 @@ glm::vec2 CSceneReaderRmf::__getTexCoord(SRmfFace vFace, glm::vec3 vVertex)
 {
     _ASSERTE(m_TexNameToIndex.find(vFace.TextureName) != m_TexNameToIndex.end());
     uint32_t TexIndex = m_TexNameToIndex.at(vFace.TextureName);
-    const std::shared_ptr<CIOImage> pImage = m_Scene.TexImages[TexIndex];
+    const std::shared_ptr<CIOImage> pImage = m_pScene->TexImages[TexIndex];
     size_t TexWidth = pImage->getImageWidth();
     size_t TexHeight = pImage->getImageHeight();
 

@@ -3,10 +3,10 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcMap.h"
 
-SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+std::shared_ptr<SScene> CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     m_ProgressReportFunc = vProgressReportFunc;
-    m_Scene = SScene();
+    m_pScene = std::make_shared<SScene>();
 
     __reportProgress(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(vFilePath);
@@ -19,7 +19,7 @@ SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void
     // find used textures, load and index them
     std::map<std::string, uint32_t> TexNameToIndex;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
-    m_Scene.TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    m_pScene->TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
     TexNameToIndex["TextureNotFound"] = 0;
     UsedTextureNames.insert("TextureNotFound");
     for (const std::string& TexName : UsedTextureNames)
@@ -31,10 +31,10 @@ SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void
             if (Index.has_value())
             {
                 Found = true;
-                TexNameToIndex[TexName] = m_Scene.TexImages.size();
+                TexNameToIndex[TexName] = m_pScene->TexImages.size();
 
                 std::shared_ptr<CIOImage> pTexImage = getIOImageFromWad(Wad, Index.value());
-                m_Scene.TexImages.emplace_back(std::move(pTexImage));
+                m_pScene->TexImages.emplace_back(std::move(pTexImage));
                 break;
             }
         }
@@ -44,10 +44,10 @@ SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void
 
     __reportProgress(u8"生成场景中");
     // group polygon by texture, one object per texture 
-    m_Scene.Objects.resize(UsedTextureNames.size());
-    for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+    m_pScene->Objects.resize(UsedTextureNames.size());
+    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
-        m_Scene.Objects[i] = std::make_shared<S3DObject>();
+        m_pScene->Objects[i] = std::make_shared<S3DObject>();
     }
 
     std::vector<SMapPolygon> Polygons = Map.getAllPolygons();
@@ -55,9 +55,9 @@ SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void
     for (SMapPolygon& Polygon : Polygons)
     {
         size_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
-        size_t TexWidth = m_Scene.TexImages[TexIndex]->getImageWidth();
-        size_t TexHeight = m_Scene.TexImages[TexIndex]->getImageHeight();
-        std::shared_ptr<S3DObject> pObject = m_Scene.Objects[TexIndex];
+        size_t TexWidth = m_pScene->TexImages[TexIndex]->getImageWidth();
+        size_t TexHeight = m_pScene->TexImages[TexIndex]->getImageHeight();
+        std::shared_ptr<S3DObject> pObject = m_pScene->Objects[TexIndex];
         uint32_t IndexStart = pObject->Vertices.size();
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
@@ -104,5 +104,5 @@ SScene CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void
         }
     }
     __reportProgress(u8"完成");
-    return m_Scene;
+    return m_pScene;
 }

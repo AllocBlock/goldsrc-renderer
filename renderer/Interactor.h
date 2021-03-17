@@ -1,5 +1,5 @@
 #pragma once
-#include "Camera.h"
+#include "VulkanRenderer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -20,7 +20,7 @@ class CInteractor
 {
 public:
 	CInteractor() = delete;
-	CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CCamera> vpCamera);
+	CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CVulkanRenderer> vpRenderer);
 
 	void bindEvent();
 	void enable() { m_Enabled = true; }
@@ -29,9 +29,11 @@ public:
 	void reset();
 
 	float getSpeed() { return m_Speed; }
-	std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
+	std::shared_ptr<CVulkanRenderer> getRenderer() { return m_pRenderer; }
+	bool getSelectionState() { return m_SelectionEnable; }
 
 	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
+	void setSelectionState(bool vState) { m_SelectionEnable = vState; }
 
 	static void onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods);
 	static void onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY);
@@ -40,9 +42,10 @@ public:
 private:
 	float __getDeltaTime();
 	int __getCurrentMoveState();
+	void __selectByClick(glm::vec2 vPos);
 
 	GLFWwindow* m_pWindow = nullptr;
-	std::shared_ptr<CCamera> m_pCamera = nullptr;
+	std::shared_ptr<CVulkanRenderer> m_pRenderer = nullptr;
 
 	float m_Speed = 3.0;
 	const float m_BoostScale = 3.0;
@@ -56,5 +59,7 @@ private:
 	bool m_IsMoving = false;
 	double m_LastPhi = 0.0; 
 	double m_LastTheta = 0.0;
+
+	bool m_SelectionEnable = true;
 };
 

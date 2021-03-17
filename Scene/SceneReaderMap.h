@@ -5,8 +5,8 @@
 class CSceneReaderMap : public CSceneReaderBase
 {
 public:
-    SScene read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
+    std::shared_ptr<SScene> read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
 private:
-    SScene m_Scene;
+    std::shared_ptr<SScene> m_pScene = nullptr;
 };
 

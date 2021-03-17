@@ -2,9 +2,9 @@
 #include "imgui.h"
 #include <chrono>
 
-CInteractor::CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CCamera> vpCamera)
+CInteractor::CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CVulkanRenderer> vpRenderer)
 	:m_pWindow(vpWindow),
-	m_pCamera(vpCamera)
+	m_pRenderer(vpRenderer)
 {
 }
 
@@ -36,7 +36,7 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 
 				glfwGetCursorPos(vpWindow, &pInteractor->m_LastMousePosX, &pInteractor->m_LastMousePosY);
 
-				std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();
+				std::shared_ptr<CCamera> pCamera = pInteractor->getRenderer()->getCamera();
 				pInteractor->m_LastPhi = pCamera->getPhi();
 				pInteractor->m_LastTheta = pCamera->getTheta();
 			}
@@ -56,7 +56,7 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
-	std::shared_ptr<CCamera> pCamera = pInteractor->getCamera();
+	std::shared_ptr<CCamera> pCamera = pInteractor->getRenderer()->getCamera();
 
 	if (!pInteractor->m_IsMoving) return;
 
@@ -71,6 +71,16 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	
 	if (!pInteractor->m_Enabled) return;
+
+	if (vButton == GLFW_MOUSE_BUTTON_LEFT)
+	{
+		if (pInteractor->m_SelectionEnable)
+		{
+			double XPos = 0.0, YPos = 0.0;
+			glfwGetCursorPos(vpWindow, &XPos, &YPos);
+			pInteractor->__selectByClick(glm::vec2(XPos, YPos));
+		}
+	}
 }
 
 void CInteractor::update()
@@ -89,15 +99,17 @@ void CInteractor::update()
 	if (MoveState & EMoveState::LEFT) MoveLeft += 1;
 	if (MoveState & EMoveState::RIGHT) MoveLeft -= 1;
 
-	glm::vec3 Front = m_pCamera->getFront();
-	glm::vec3 Left = m_pCamera->getLeft();
+	auto& pCamera = m_pRenderer->getCamera();
+	glm::vec3 Front = pCamera->getFront();
+	glm::vec3 Left = pCamera->getLeft();
 	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft) * Scale * m_Speed * DeltaTime;
-	m_pCamera->setPos(m_pCamera->getPos() + Move);
+	pCamera->setPos(pCamera->getPos() + Move);
 }
 
 void CInteractor::reset()
 {
-	m_pCamera->reset();
+	auto& pCamera = m_pRenderer->getCamera();
+	pCamera->reset();
 	m_Speed = 3.0f;
 }
 
@@ -135,4 +147,40 @@ int CInteractor::__getCurrentMoveState()
 	if (KeyLeftCtrl) MoveState |= EMoveState::CRAWL;
 	
 	return MoveState;
+}
+
+void CInteractor::__selectByClick(glm::vec2 vPos)
+{
+	const auto& pCamera = m_pRenderer->getCamera();
+	// normolize screen coordinate
+	int WindowWidth = 0, WindowHeight = 0;
+	glfwGetFramebufferSize(m_pWindow, &WindowWidth, &WindowHeight);
+	glm::vec4 ScreenPos = glm::vec4(vPos.x / WindowWidth * 2 - 1.0, vPos.y / WindowHeight * 2 - 1.0, 1.0f, 1.0f);
+
+	// screen coordinate to world coordinate
+	// use inverse matrix mult
+	glm::mat4 ProjMat = pCamera->getProjMat();
+	glm::mat4 ViewMat = pCamera->getViewMat();
+
+	glm::mat4 InversedVP = glm::inverse(ProjMat * ViewMat);
+	glm::vec3 WorldPos = glm::vec3(InversedVP * ScreenPos);
+
+	// construct the ray
+	glm::vec3 EyePos = pCamera->getPos();
+	glm::vec3 Direction = glm::normalize(WorldPos - EyePos);
+
+	const auto& pScene = m_pRenderer->getScene();
+
+	double NearestDistance = INFINITY;
+	std::optional<S3DBoundingBox> NearestBoundingBox = std::nullopt;
+	for (const auto& pObject : pScene->Objects)
+	{
+		S3DBoundingBox BB = pObject->getBoundingBox();
+		// TODO: get intersection of ray and bounding box
+		// get distance, compare with currert neareset
+		// save nearest bounding box
+	}
+
+	if (NearestBoundingBox.has_value())
+		m_pRenderer->setHighlightBoundingBox(NearestBoundingBox.value());
 }

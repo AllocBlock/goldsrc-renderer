@@ -3,16 +3,16 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcWad.h"
 
-SScene CSceneReaderBsp::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+std::shared_ptr<SScene> CSceneReaderBsp::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     m_ProgressReportFunc = vProgressReportFunc;
-    m_Scene = SScene();
+    m_pScene = std::make_shared<SScene>();
     
     __readBsp(vFilePath);
     if (!m_Bsp.getLumps().m_LumpLighting.Lightmaps.empty())
     {
-        m_Scene.UseLightmap = true;
-        m_Scene.pLightmap = std::make_shared<CLightmap>();
+        m_pScene->UseLightmap = true;
+        m_pScene->pLightmap = std::make_shared<CLightmap>();
         m_HasLightmapData = true;
     }
 
@@ -24,7 +24,7 @@ SScene CSceneReaderBsp::read(std::filesystem::path vFilePath, std::function<void
 
     __loadSkyBox(vFilePath.parent_path());
 
-    return m_Scene;
+    return m_pScene;
 }
 
 void CSceneReaderBsp::__readBsp(std::filesystem::path vFilePath)
@@ -83,7 +83,7 @@ void CSceneReaderBsp::__readTextures()
         }
     }
 
-    m_Scene.TexImages = std::move(TexImages);
+    m_pScene->TexImages = std::move(TexImages);
 }
 
 std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
@@ -266,8 +266,8 @@ void CSceneReaderBsp::__loadBspTree()
             Node.PvsOffset = OriginLeaf.VisOffset;
     }
 
-    m_Scene.BspTree = BspTree;
-    m_Scene.Objects = Objects;
+    m_pScene->BspTree = BspTree;
+    m_pScene->Objects = Objects;
 }
 
 void CSceneReaderBsp::__loadBspPvs()
@@ -278,8 +278,8 @@ void CSceneReaderBsp::__loadBspPvs()
 
     if (!Lumps.m_LumpVisibility.Vis.empty())
     {
-        m_Scene.UsePVS = true;
-        m_Scene.BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_Scene.BspTree);
+        m_pScene->UsePVS = true;
+        m_pScene->BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_pScene->BspTree);
     }
 }
 
@@ -423,7 +423,7 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
         pLightmapImage->setData(pIndices);
         delete[] pTempData;
         delete[] pIndices;
-        uint32_t LightmapIndex = static_cast<uint32_t>(m_Scene.pLightmap->appendLightmap(pLightmapImage));
+        uint32_t LightmapIndex = static_cast<uint32_t>(m_pScene->pLightmap->appendLightmap(pLightmapImage));
 
         std::vector<glm::vec2> LightmapCoords;
         for (const glm::vec2& TexCoord : vTexCoords)
@@ -527,7 +527,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
 {
     __reportProgress(u8"ÐÞÕýLightmapÊý¾Ý");
 
-    for (auto& pObject : m_Scene.Objects)
+    for (auto& pObject : m_pScene->Objects)
     {
         if (!pObject->HasLightmap) continue;
 
@@ -536,7 +536,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
             if (pObject->LightmapIndices[i] == std::nullopt) continue;
 
             size_t LightmapIndex = pObject->LightmapIndices[i].value();
-            pObject->LightmapCoords[i] = m_Scene.pLightmap->getAcutalLightmapCoord(LightmapIndex, pObject->LightmapCoords[i]);
+            pObject->LightmapCoords[i] = m_pScene->pLightmap->getAcutalLightmapCoord(LightmapIndex, pObject->LightmapCoords[i]);
         }
     }
 }
@@ -578,17 +578,17 @@ bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string
         std::filesystem::path ImagePath;
         if (findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, ImagePath))
         {
-            m_Scene.SkyBoxImages[i] = std::make_shared<CIOImage>();
-            m_Scene.SkyBoxImages[i]->read(ImagePath);
+            m_pScene->SkyBoxImages[i] = std::make_shared<CIOImage>();
+            m_pScene->SkyBoxImages[i]->read(ImagePath);
         }
         else
         {
-            m_Scene.UseSkyBox = false;
-            m_Scene.SkyBoxImages = {};
+            m_pScene->UseSkyBox = false;
+            m_pScene->SkyBoxImages = {};
             return false;
         }
     }
-    m_Scene.UseSkyBox = true;
+    m_pScene->UseSkyBox = true;
     return true;
 }
 

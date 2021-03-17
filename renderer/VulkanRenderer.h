@@ -333,7 +333,8 @@ public:
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
     void update(uint32_t vImageIndex);
     void destroy();
-    void loadScene(const SScene& vScene);
+    std::shared_ptr<SScene> getScene() const { return m_pScene; }
+    void loadScene(std::shared_ptr<SScene> vpScene);
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     void rerecordCommand();
     std::shared_ptr<CCamera> getCamera();
@@ -342,7 +343,7 @@ public:
     void setHighlightBoundingBox(S3DBoundingBox vBoundingBox);
 
     bool getSkyState() const { return m_EnableSky; }
-    void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_Scene.UseSkyBox; }
+    void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_pScene->UseSkyBox; }
     bool getCullingState() const { return m_EnableCulling; }
     void setCullingState(bool vCullingState) { m_EnableCulling = vCullingState; }
     bool getFrustumCullingState() const { return m_EnableFrustumCulling; }
@@ -463,7 +464,7 @@ private:
     Common::SVkImagePack m_DepthImagePack;
     Common::SVkImagePack m_LightmapImagePack;
 
-    SScene m_Scene;
+    std::shared_ptr<SScene> m_pScene;
     SSkyBox m_SkyBox;
     SGui m_Gui;
     std::shared_ptr<CCamera> m_pCamera = nullptr;

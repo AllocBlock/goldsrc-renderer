@@ -18,22 +18,22 @@ SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath, std::
     else if (vFilePath.extension() == ".bsp")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::read("bsp", vFilePath, vProgressReportFunc);
+        Result.pScene = SceneReader::read("bsp", vFilePath, vProgressReportFunc);
     }
     else if (vFilePath.extension() == ".rmf")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::read("rmf", vFilePath, vProgressReportFunc);
+        Result.pScene = SceneReader::read("rmf", vFilePath, vProgressReportFunc);
     }
     else if (vFilePath.extension() == ".map")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::read("map", vFilePath, vProgressReportFunc);
+        Result.pScene = SceneReader::read("map", vFilePath, vProgressReportFunc);
     }
     else if (vFilePath.extension() == ".obj")
     {
         Result.Succeed = true;
-        Result.Scene = SceneReader::read("obj", vFilePath, vProgressReportFunc);
+        Result.pScene = SceneReader::read("obj", vFilePath, vProgressReportFunc);
     }
     else
     {
@@ -84,7 +84,7 @@ void CImguiVullkan::__drawGUI()
             {
                 const SResultReadScene& ResultScene = m_FileReadingPromise.get();
                 if (ResultScene.Succeed)
-                    m_pRenderer->loadScene(ResultScene.Scene);
+                    m_pRenderer->loadScene(ResultScene.pScene);
                 else
                     showAlert(ResultScene.Message);
             }
@@ -131,7 +131,7 @@ void CImguiVullkan::__drawGUI()
     // 相机设置
     if (ImGui::CollapsingHeader(u8"相机", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        std::shared_ptr<CCamera> pCamera = m_pInteractor->getCamera();
+        std::shared_ptr<CCamera> pCamera = m_pRenderer->getCamera();
         glm::vec3 Pos = pCamera->getPos();
 
         float FullWidth = ImGui::CalcItemWidth();
@@ -167,16 +167,16 @@ void CImguiVullkan::__drawGUI()
         if (ImGui::Button(u8"重置")) CameraSpeed = 3.0f;
         m_pInteractor->setSpeed(CameraSpeed);
 
-        static float Fov = m_pInteractor->getCamera()->getFov();
+        static float Fov = pCamera->getFov();
         ImGui::SliderFloat(u8"视野范围", &Fov, 10.0f, 170.0f, "%.1f"); ImGui::SameLine();
         if (ImGui::Button(u8"重置")) Fov = 120.0f;
-        m_pInteractor->getCamera()->setFov(Fov);
+        pCamera->setFov(Fov);
 
         if (ImGui::Button(u8"重置相机"))
         {
             m_pInteractor->reset();
             CameraSpeed = m_pInteractor->getSpeed();
-            Fov = m_pInteractor->getCamera()->getFov();
+            Fov = pCamera->getFov();
         }
     }
 

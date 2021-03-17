@@ -86,9 +86,9 @@ void CVulkanRenderer::__createSceneResources()
     __createVertexBuffer(); // scene
     __createIndexBuffer(); // scene
 
-    m_EnableSky = m_EnableSky && m_Scene.UseSkyBox;
+    m_EnableSky = m_EnableSky && m_pScene && m_pScene->UseSkyBox;
 
-    if (m_Scene.UseSkyBox)
+    if (m_pScene && m_pScene->UseSkyBox)
     {
         __createSkyBoxResources();
         __updateSkyDescriptorSets();
@@ -112,12 +112,12 @@ void CVulkanRenderer::__destroySceneResources()
 
 void CVulkanRenderer::__createSkyBoxResources()
 {
-    _ASSERTE(m_Scene.UseSkyBox);
+    _ASSERTE(m_pScene && m_pScene->UseSkyBox);
     m_SkyBox.IsInited = true;
 
     // format 6 image into one cubemap image
-    int TexWidth = m_Scene.SkyBoxImages[0]->getImageWidth();
-    int TexHeight = m_Scene.SkyBoxImages[0]->getImageHeight();
+    int TexWidth = m_pScene->SkyBoxImages[0]->getImageWidth();
+    int TexHeight = m_pScene->SkyBoxImages[0]->getImageHeight();
     size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
     size_t TotalImageSize = SingleFaceImageSize * 6;
     uint8_t* pPixelData = new uint8_t[TotalImageSize];
@@ -139,10 +139,10 @@ void CVulkanRenderer::__createSkyBoxResources()
      * in sequence: front back up down right left
      */
     
-    for (size_t i = 0; i < m_Scene.SkyBoxImages.size(); ++i)
+    for (size_t i = 0; i < m_pScene->SkyBoxImages.size(); ++i)
     {
-        _ASSERTE(TexWidth == m_Scene.SkyBoxImages[i]->getImageWidth() && TexHeight == m_Scene.SkyBoxImages[i]->getImageHeight());
-        const void* pData = m_Scene.SkyBoxImages[i]->getData();
+        _ASSERTE(TexWidth == m_pScene->SkyBoxImages[i]->getImageWidth() && TexHeight == m_pScene->SkyBoxImages[i]->getImageHeight());
+        const void* pData = m_pScene->SkyBoxImages[i]->getData();
         memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
     }
 
@@ -305,18 +305,18 @@ void CVulkanRenderer::destroy()
     m_CommandPool = VK_NULL_HANDLE;
 }
 
-void CVulkanRenderer::loadScene(const SScene& vScene)
+void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
 {
-     m_Scene = vScene;
-     m_ObjectDataPositions.resize(m_Scene.Objects.size());
-     if (m_Scene.BspTree.Nodes.empty())
+     m_pScene = vpScene;
+     m_ObjectDataPositions.resize(m_pScene->Objects.size());
+     if (m_pScene->BspTree.Nodes.empty())
          m_RenderMethod = ERenderMethod::DEFAULT;
 
      size_t IndexOffset = 0;
      size_t VertexOffset = 0;
-     for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
      {
-         std::shared_ptr<S3DObject> pObject = m_Scene.Objects[i];
+         std::shared_ptr<S3DObject> pObject = m_pScene->Objects[i];
          if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
          { 
              m_ObjectDataPositions[i].Offset = IndexOffset;
@@ -334,7 +334,7 @@ void CVulkanRenderer::loadScene(const SScene& vScene)
      }
 
      m_AreObjectsVisable.clear();
-     m_AreObjectsVisable.resize(m_Scene.Objects.size(), false);
+     m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
      m_VisableObjectNum = 0;
 
      vkDeviceWaitIdle(m_Device);
@@ -396,9 +396,9 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
                 SPushConstant PushConstant;
                 PushConstant.Opacity = 1.0f;
                 
-                for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+                for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
                 {
-                    PushConstant.UseLightmap = m_Scene.Objects[i]->HasLightmap;
+                    PushConstant.UseLightmap = m_pScene->Objects[i]->HasLightmap;
                     m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
                     if (m_AreObjectsVisable[i])
                         __recordObjectRenderCommand(vImageIndex, i);
@@ -493,7 +493,7 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
 {
     m_RenderNodeList.clear();
-    if (m_Scene.BspTree.Nodes.empty()) throw "场景不含BSP数据";
+    if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
     m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
 
@@ -506,22 +506,22 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
     SPushConstant PushConstant = {};
     PushConstant.Opacity = 1.0f;
 
-    if (vNodeIndex >= m_Scene.BspTree.NodeNum) // if is leaf, render it
+    if (vNodeIndex >= m_pScene->BspTree.NodeNum) // if is leaf, render it
     {
-        uint32_t LeafIndex = vNodeIndex - m_Scene.BspTree.NodeNum;
-        for (size_t ObjectIndex : m_Scene.BspTree.LeafIndexToObjectIndices.at(LeafIndex))
+        uint32_t LeafIndex = vNodeIndex - m_pScene->BspTree.NodeNum;
+        for (size_t ObjectIndex : m_pScene->BspTree.LeafIndexToObjectIndices.at(LeafIndex))
         {
             if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
             m_RenderNodeList.emplace_back(ObjectIndex);
-            PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
+            PushConstant.UseLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
             m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
     }
     else
     {
-        const SBspTreeNode& Node = m_Scene.BspTree.Nodes[vNodeIndex];
+        const SBspTreeNode& Node = m_pScene->BspTree.Nodes[vNodeIndex];
         glm::vec3 CameraPos = m_pCamera->getPos();
         if (Node.isPointFrontOfPlane(CameraPos))
         {
@@ -551,17 +551,17 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
 
 void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 {
-    _ASSERTE(vModelIndex < m_Scene.BspTree.ModelInfos.size());
+    _ASSERTE(vModelIndex < m_pScene->BspTree.ModelInfos.size());
 
-    const SModelInfo& ModelInfo = m_Scene.BspTree.ModelInfos[vModelIndex];
+    const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[vModelIndex];
     SPushConstant PushConstant = {};
     PushConstant.Opacity = ModelInfo.Opacity;
-    std::vector<size_t> ObjectIndices = m_Scene.BspTree.ModelIndexToObjectIndex[vModelIndex];
+    std::vector<size_t> ObjectIndices = m_pScene->BspTree.ModelIndexToObjectIndex[vModelIndex];
     for (size_t ObjectIndex : ObjectIndices)
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
-        PushConstant.UseLightmap = m_Scene.Objects[ObjectIndex]->HasLightmap;
+        PushConstant.UseLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
         m_PipelineSet.TrianglesWithBlend.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
@@ -579,10 +579,10 @@ std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
 
 void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
-    _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_Scene.Objects.size());
-    std::shared_ptr<S3DObject> pObject = m_Scene.Objects[vObjectIndex];
+    _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
+    std::shared_ptr<S3DObject> pObject = m_pScene->Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
-    vkCmdSetDepthBias(m_SceneCommandBuffers[vImageIndex], static_cast<float>(vObjectIndex) / m_Scene.Objects.size(), 0, 0);
+    vkCmdSetDepthBias(m_SceneCommandBuffers[vImageIndex], static_cast<float>(vObjectIndex) / m_pScene->Objects.size(), 0, 0);
     if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
         vkCmdDrawIndexed(m_SceneCommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0, 0);
     else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
@@ -1012,7 +1012,7 @@ void CVulkanRenderer::__createTextureImages()
         m_TextureImagePacks.resize(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            std::shared_ptr<CIOImage> pImage = m_Scene.TexImages[i];
+            std::shared_ptr<CIOImage> pImage = m_pScene->TexImages[i];
             __createImageFromIOImage(pImage, m_TextureImagePacks[i].Image, m_TextureImagePacks[i].Memory);
         }
     }
@@ -1031,16 +1031,16 @@ void CVulkanRenderer::__createTextureImageViews()
 
 void CVulkanRenderer::__createLightmapImage()
 {
-    if (m_Scene.UseLightmap)
+    if (m_pScene && m_pScene->UseLightmap)
     {
-        std::shared_ptr<CIOImage> pCombinedLightmapImage = m_Scene.pLightmap->getCombinedLightmap();
+        std::shared_ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
         __createImageFromIOImage(pCombinedLightmapImage, m_LightmapImagePack.Image, m_LightmapImagePack.Memory);
     }
 }
 
 void CVulkanRenderer::__createLightmapImageView()
 {
-    if (m_Scene.UseLightmap)
+    if (m_pScene && m_pScene->UseLightmap)
     {
         m_LightmapImagePack.ImageView = Common::createImageView(m_Device, m_LightmapImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
     }
@@ -1075,13 +1075,18 @@ void CVulkanRenderer::__createTextureSampler()
 void CVulkanRenderer::__createVertexBuffer()
 {
     size_t NumVertex = 0;
-    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
-        NumVertex += pObject->Vertices.size();
-    if (NumVertex == 0)
+    if (m_pScene)
     {
-        globalLog(u8"没有顶点数据，跳过索引缓存创建");
-        return;
+        for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
+            NumVertex += pObject->Vertices.size();
+        if (NumVertex == 0)
+        {
+            globalLog(u8"没有顶点数据，跳过索引缓存创建");
+            return;
+        }
     }
+    else
+        return;
 
     VkDeviceSize BufferSize = sizeof(SPointData) * NumVertex;
 
@@ -1092,7 +1097,7 @@ void CVulkanRenderer::__createVertexBuffer()
     void* pData;
     ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
     size_t Offset = 0;
-    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
+    for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
     {
         std::vector<SPointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SPointData) * pObject->Vertices.size();
@@ -1112,14 +1117,19 @@ void CVulkanRenderer::__createVertexBuffer()
 void CVulkanRenderer::__createIndexBuffer()
 {
     size_t NumIndex = 0;
-    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
-        NumIndex += pObject->Indices.size();
-
-    if (NumIndex == 0)
+    if (m_pScene)
     {
-        globalLog(u8"没有索引数据，跳过索引缓存创建");
-        return;
+        for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
+            NumIndex += pObject->Indices.size();
+
+        if (NumIndex == 0)
+        {
+            globalLog(u8"没有索引数据，跳过索引缓存创建");
+            return;
+        }
     }
+    else
+        return;
 
     VkDeviceSize BufferSize = sizeof(uint32_t) * NumIndex;
 
@@ -1130,7 +1140,7 @@ void CVulkanRenderer::__createIndexBuffer()
     void* pData;
     ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
     size_t Offset = 0;
-    for (std::shared_ptr<S3DObject> pObject : m_Scene.Objects)
+    for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
     {
         size_t IndexOffset = Offset / sizeof(uint32_t);
         std::vector<uint32_t> Indices = pObject->Indices;
@@ -1317,7 +1327,7 @@ void CVulkanRenderer::__updateDescriptorSets()
         
         VkDescriptorImageInfo LightmapImageInfo = {};
         LightmapImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        LightmapImageInfo.imageView = m_Scene.UseLightmap ?m_LightmapImagePack.ImageView :m_PlaceholderImagePack.ImageView;
+        LightmapImageInfo.imageView = (m_pScene && m_pScene->UseLightmap) ?m_LightmapImagePack.ImageView : m_PlaceholderImagePack.ImageView;
         LightmapImageInfo.sampler = VK_NULL_HANDLE;
 
         VkWriteDescriptorSet LightmapsDescriptorWrite = {};
@@ -1677,7 +1687,7 @@ void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size
 
 size_t CVulkanRenderer::__getActualTextureNum()
 {
-    size_t NumTexture = m_Scene.TexImages.size();
+    size_t NumTexture = m_pScene ? m_pScene->TexImages.size() : 0;
     if (NumTexture > m_MaxTextureNum)
     {
         globalLog(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(m_MaxTextureNum) + u8"), 多出的纹理将被忽略");
@@ -1728,10 +1738,12 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
 
 void CVulkanRenderer::__calculateVisiableObjects()
 {
+    if (!m_pScene) return;
+
     SFrustum Frustum = m_pCamera->getFrustum();
 
     if ((m_RenderMethod == ERenderMethod::BSP || m_EnableCulling) && m_EnablePVS)
-        m_CameraNodeIndex = m_Scene.BspTree.getPointLeaf(m_pCamera->getPos());
+        m_CameraNodeIndex = m_pScene->BspTree.getPointLeaf(m_pCamera->getPos());
     else
         m_CameraNodeIndex = std::nullopt;
 
@@ -1739,12 +1751,12 @@ void CVulkanRenderer::__calculateVisiableObjects()
     std::vector<bool> PVS;
     if (m_EnablePVS)
     {
-        PVS.resize(m_Scene.Objects.size(), true);
-        for (size_t i = 0; i < m_Scene.BspTree.LeafNum; ++i)
+        PVS.resize(m_pScene->Objects.size(), true);
+        for (size_t i = 0; i < m_pScene->BspTree.LeafNum; ++i)
         {
-            if (!m_Scene.BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), i))
+            if (!m_pScene->BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), i))
             {
-                std::vector<size_t> LeafObjectIndices = m_Scene.BspTree.LeafIndexToObjectIndices[i];
+                std::vector<size_t> LeafObjectIndices = m_pScene->BspTree.LeafIndexToObjectIndices[i];
                 for (size_t LeafObjectIndex : LeafObjectIndices)
                     PVS[LeafObjectIndex] = false;
             }
@@ -1752,16 +1764,16 @@ void CVulkanRenderer::__calculateVisiableObjects()
     }
 
     m_VisableObjectNum = 0;
-    for (size_t i = 0; i < m_Scene.Objects.size(); ++i)
+    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
         m_AreObjectsVisable[i] = false;
 
-        if (m_EnableSky && m_Scene.Objects[i]->RenderType == E3DObjectRenderType::SKY)
+        if (m_EnableSky && m_pScene->Objects[i]->RenderType == E3DObjectRenderType::SKY)
             continue;
         
         if (m_EnableCulling)
         {
-            if (i >= m_Scene.BspTree.NodeNum + m_Scene.BspTree.LeafNum) // ignore culling for model for now
+            if (i >= m_pScene->BspTree.NodeNum + m_pScene->BspTree.LeafNum) // ignore culling for model for now
             {
                 m_AreObjectsVisable[i] = true;
                 ++m_VisableObjectNum;
@@ -1770,7 +1782,7 @@ void CVulkanRenderer::__calculateVisiableObjects()
 
             // frustum culling: don't draw object outside of view (judge by bounding box)
             if (m_EnableFrustumCulling)
-                if (!__isObjectInSight(m_Scene.Objects[i], Frustum))
+                if (!__isObjectInSight(m_pScene->Objects[i], Frustum))
                     continue;
 
             // PVS culling
@@ -1824,9 +1836,9 @@ std::pair<std::vector<size_t>, std::vector<size_t>> CVulkanRenderer::__sortModel
     std::vector<size_t> OpaqueSequence, TranparentSequence;
     std::vector<std::pair<size_t, float>> TranparentInfoForSort;
     glm::vec3 CameraPos = m_pCamera->getPos();
-    for (size_t i = 0; i < m_Scene.BspTree.ModelNum; ++i)
+    for (size_t i = 0; i < m_pScene->BspTree.ModelNum; ++i)
     {
-        const SModelInfo& ModelInfo = m_Scene.BspTree.ModelInfos[i];
+        const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[i];
         if (ModelInfo.IsTransparent)
         {
             // simple sort in distance of camera and object center

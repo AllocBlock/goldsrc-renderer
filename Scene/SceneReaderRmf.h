@@ -10,7 +10,7 @@
 class CSceneReaderRmf : public CSceneReaderBase
 {
 public:
-    SScene read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
+    std::shared_ptr<SScene> read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
 private:
     void __readRmf(std::filesystem::path vFilePath);
     void __readWadsAndInitTextures();
@@ -20,7 +20,7 @@ private:
     uint32_t __requestTextureIndex(std::string vTextureName);
     glm::vec2 __getTexCoord(SRmfFace vFace, glm::vec3 vVertex);
 
-    SScene m_Scene;
+    std::shared_ptr<SScene> m_pScene = nullptr;
     const float m_SceneScale = 1.0f / 64.0f;
     CIOGoldSrcRmf m_Rmf;
     std::vector<CIOGoldsrcWad> m_Wads;

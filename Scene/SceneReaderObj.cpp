@@ -2,11 +2,10 @@
 #include "SceneCommon.h"
 #include "IOObj.h"
 
-SScene CSceneReaderObj::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+std::shared_ptr<SScene> CSceneReaderObj::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     m_ProgressReportFunc = vProgressReportFunc;
-    m_Scene = SScene();
-
+    
     __reportProgress(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();
     Obj.read(vFilePath);
@@ -57,9 +56,9 @@ SScene CSceneReaderObj::read(std::filesystem::path vFilePath, std::function<void
         }
     }
 
-    SScene Scene;
-    Scene.Objects.emplace_back(pObjObject);
-    Scene.TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
+    m_pScene = std::make_shared<SScene>();
+    m_pScene->Objects.emplace_back(pObjObject);
+    m_pScene->TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
 
-    return Scene;
+    return m_pScene;
 }

@@ -9,7 +9,7 @@
 class CSceneReaderBsp : public CSceneReaderBase
 {
 public:
-    SScene read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
+    std::shared_ptr<SScene> read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
 private:
     void __readBsp(std::filesystem::path vFilePath);
     void __readTextures();
@@ -29,7 +29,7 @@ private:
     void __appendBspFaceToObject(std::shared_ptr<S3DObject> pObject, uint32_t vFaceIndex);
     std::optional<SMapEntity> __findEntity(size_t vModelIndex);
 
-    SScene m_Scene;
+    std::shared_ptr<SScene> m_pScene = nullptr;
     const float m_SceneScale = 1.0f / 64.0f;
     CIOGoldSrcBsp m_Bsp;
     std::map<std::string, uint32_t> m_TexNameToIndex;
