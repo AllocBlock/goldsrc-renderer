@@ -43,7 +43,7 @@ struct S3DObject
     bool HasLightmap = false;
     std::vector<std::optional<size_t>> LightmapIndices;
 
-    S3DBoundingBox getBoundingBox() const;
+    std::optional<S3DBoundingBox> getBoundingBox() const;
 };
 
 struct SModelInfo

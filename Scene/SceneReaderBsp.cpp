@@ -239,13 +239,14 @@ void CSceneReaderBsp::__loadBspTree()
         };
         for (std::shared_ptr<S3DObject> pModelObject : ModelObjects)
         {
-            S3DBoundingBox BoundingBox = pModelObject->getBoundingBox();
-            TotalBoundingBox.Min.x = std::min<float>(TotalBoundingBox.Min.x, BoundingBox.Min.x);
-            TotalBoundingBox.Min.y = std::min<float>(TotalBoundingBox.Min.y, BoundingBox.Min.y);
-            TotalBoundingBox.Min.z = std::min<float>(TotalBoundingBox.Min.z, BoundingBox.Min.z);
-            TotalBoundingBox.Max.x = std::max<float>(TotalBoundingBox.Max.x, BoundingBox.Max.x);
-            TotalBoundingBox.Max.y = std::max<float>(TotalBoundingBox.Max.y, BoundingBox.Max.y);
-            TotalBoundingBox.Max.z = std::max<float>(TotalBoundingBox.Max.z, BoundingBox.Max.z);
+            std::optional<S3DBoundingBox> BoundingBox = pModelObject->getBoundingBox();
+            if (BoundingBox == std::nullopt) continue;
+            TotalBoundingBox.Min.x = std::min<float>(TotalBoundingBox.Min.x, BoundingBox.value().Min.x);
+            TotalBoundingBox.Min.y = std::min<float>(TotalBoundingBox.Min.y, BoundingBox.value().Min.y);
+            TotalBoundingBox.Min.z = std::min<float>(TotalBoundingBox.Min.z, BoundingBox.value().Min.z);
+            TotalBoundingBox.Max.x = std::max<float>(TotalBoundingBox.Max.x, BoundingBox.value().Max.x);
+            TotalBoundingBox.Max.y = std::max<float>(TotalBoundingBox.Max.y, BoundingBox.value().Max.y);
+            TotalBoundingBox.Max.z = std::max<float>(TotalBoundingBox.Max.z, BoundingBox.value().Max.z);
             ObjectIndices.emplace_back(Objects.size());
             Objects.emplace_back(pModelObject);
         }

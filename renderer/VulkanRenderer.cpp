@@ -418,20 +418,9 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 
 void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
 {
-    vkDeviceWaitIdle(m_Device);
-    m_Gui.VertexDataPack.destory(m_Device);
-    
-    size_t NumVertex = 24; // 12 edges
-    m_Gui.VertexNum = NumVertex;
-    VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
+    auto pObject = std::make_shared<SGuiObject>();
 
-    VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-    void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
-    static const std::array<glm::vec3, 8> Vertices =
+    std::array<glm::vec3, 8> Vertices =
     {
         glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
         glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
@@ -443,27 +432,71 @@ void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
         glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
     };
 
-    static const std::array<glm::vec3, 24> Edges =
+    pObject->Data =
     {
         Vertices[0], Vertices[1],  Vertices[1], Vertices[2],  Vertices[2], Vertices[3],  Vertices[3], Vertices[0],
         Vertices[4], Vertices[5],  Vertices[5], Vertices[6],  Vertices[6], Vertices[7],  Vertices[7], Vertices[4],
         Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
     };
-    memcpy(reinterpret_cast<char*>(pData), Edges.data(), sizeof(glm::vec3) * Edges.size());
-    vkUnmapMemory(m_Device, StagingBufferMemory);
+   
+    m_Gui.addOrUpdateObject("HighlightBoundingBox", std::move(pObject));
+    __recordGuiCommandBuffers();
+}
 
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Gui.VertexDataPack.Buffer, m_Gui.VertexDataPack.Memory);
+void CVulkanRenderer::removeHighlightBoundingBox()
+{
+    m_Gui.removeObject("HighlightBoundingBox");
+    __recordGuiCommandBuffers();
+}
 
-    __copyBuffer(StagingBuffer, m_Gui.VertexDataPack.Buffer, BufferSize);
-
-    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
-
+void CVulkanRenderer::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
+{
+    auto pObject = std::make_shared<SGuiObject>();
+    pObject->Data = { vStart, vEnd };
+    m_Gui.addOrUpdateObject(vName, std::move(pObject));
     __recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::__recordGuiCommandBuffers()
 {
+    vkDeviceWaitIdle(m_Device);
+    m_Gui.VertexDataPack.destory(m_Device);
+
+    size_t NumVertex = 0; // 12 edges
+    for (const auto& Pair : m_Gui.NameObjectMap)
+    {
+        const auto& pObject = Pair.second;
+        NumVertex += pObject->Data.size();
+    }
+    if (NumVertex > 0)
+    {
+        VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
+
+        VkBuffer StagingBuffer;
+        VkDeviceMemory StagingBufferMemory;
+        __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
+
+        void* pData;
+        ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
+        size_t Offset = 0;
+        for (const auto& Pair : m_Gui.NameObjectMap)
+        {
+            const auto& pObject = Pair.second;
+            size_t DataSize = sizeof(glm::vec3) * pObject->Data.size();
+            memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
+            Offset += DataSize;
+        }
+
+        vkUnmapMemory(m_Device, StagingBufferMemory);
+
+        __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Gui.VertexDataPack.Buffer, m_Gui.VertexDataPack.Memory);
+
+        __copyBuffer(StagingBuffer, m_Gui.VertexDataPack.Buffer, BufferSize);
+
+        vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
+        vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+    }
+
     for (size_t i = 0; i < m_GuiCommandBuffers.size(); ++i)
     {
         VkCommandBufferInheritanceInfo InheritanceInfo = {};
@@ -481,10 +514,10 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
         m_PipelineSet.GuiLines.bind(m_GuiCommandBuffers[i], m_LineDescriptorSets[i]);
 
         VkDeviceSize Offsets[] = { 0 };
-        if (m_Gui.VertexNum > 0)
+        if (NumVertex > 0)
         {
             vkCmdBindVertexBuffers(m_GuiCommandBuffers[i], 0, 1, &m_Gui.VertexDataPack.Buffer, Offsets);
-            vkCmdDraw(m_GuiCommandBuffers[i], m_Gui.VertexNum, 1, 0, 0);
+            vkCmdDraw(m_GuiCommandBuffers[i], NumVertex, 1, 0, 0);
         }
         ck(vkEndCommandBuffer(m_GuiCommandBuffers[i]));
     }
@@ -1801,13 +1834,15 @@ bool CVulkanRenderer::__isObjectInSight(std::shared_ptr<S3DObject> vpObject, con
 {
     // AABB frustum culling
     const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;
-    S3DBoundingBox BoundingBox = vpObject->getBoundingBox();
+    std::optional<S3DBoundingBox> BoundingBox = vpObject->getBoundingBox();
+    if (BoundingBox == std::nullopt) return false;
+
     std::array<glm::vec3, 8> BoundPoints = {};
     for (int i = 0; i < 8; ++i)
     {
-        float X = ((i & 1) ? BoundingBox.Min.x : BoundingBox.Max.x);
-        float Y = ((i & 2) ? BoundingBox.Min.y : BoundingBox.Max.y);
-        float Z = ((i & 4) ? BoundingBox.Min.z : BoundingBox.Max.z);
+        float X = ((i & 1) ? BoundingBox.value().Min.x : BoundingBox.value().Max.x);
+        float Y = ((i & 2) ? BoundingBox.value().Min.y : BoundingBox.value().Max.y);
+        float Z = ((i & 4) ? BoundingBox.value().Min.z : BoundingBox.value().Max.z);
         BoundPoints[i] = glm::vec3(X, Y, Z);
     }
 

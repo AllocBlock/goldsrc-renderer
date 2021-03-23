@@ -317,11 +317,34 @@ struct SSkyBox
     std::vector<Common::SVkBufferPack> FragUniformBufferPacks;
 };
 
+enum class EGuiObjectType
+{
+    LINE
+};
+
+struct SGuiObject
+{
+    EGuiObjectType Type = EGuiObjectType::LINE;
+    std::vector<glm::vec3> Data;
+};
+
 struct SGui
 {
+    std::map<std::string, std::shared_ptr<SGuiObject>> NameObjectMap;
     Common::SVkBufferPack VertexDataPack;
-    size_t VertexNum = 0;
     std::vector<Common::SVkBufferPack> VertUniformBufferPacks;
+
+    void addOrUpdateObject(std::string vName, std::shared_ptr<SGuiObject> vpObject)
+    {
+        NameObjectMap[vName] = std::move(vpObject);
+    }
+
+    void removeObject(std::string vName)
+    {
+        NameObjectMap.erase(vName);
+    }
+
+    bool isEmpty() { return NameObjectMap.empty(); }
 };
 
 class CVulkanRenderer
@@ -341,6 +364,8 @@ public:
     size_t getRenderedObjectNum() const { return m_VisableObjectNum; }
 
     void setHighlightBoundingBox(S3DBoundingBox vBoundingBox);
+    void removeHighlightBoundingBox();
+    void addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd); 
 
     bool getSkyState() const { return m_EnableSky; }
     void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_pScene->UseSkyBox; }

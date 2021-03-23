@@ -43,6 +43,7 @@ private:
 	float __getDeltaTime();
 	int __getCurrentMoveState();
 	void __selectByClick(glm::vec2 vPos);
+	bool __getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT);
 
 	GLFWwindow* m_pWindow = nullptr;
 	std::shared_ptr<CVulkanRenderer> m_pRenderer = nullptr;

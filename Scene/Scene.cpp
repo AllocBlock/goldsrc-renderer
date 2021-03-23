@@ -7,10 +7,12 @@
 
 #include <filesystem>
 
-S3DBoundingBox S3DObject::getBoundingBox() const
+std::optional<S3DBoundingBox> S3DObject::getBoundingBox() const
 {
     std::optional<S3DBoundingBox> CachedBoundingBox = std::nullopt;
     if (CachedBoundingBox.has_value()) return CachedBoundingBox.value();
+    if (Vertices.empty()) return std::nullopt;
+
     S3DBoundingBox BoundingBox;
     BoundingBox.Min = glm::vec3(INFINITY, INFINITY, INFINITY);
     BoundingBox.Max = glm::vec3(-INFINITY, -INFINITY, -INFINITY);
