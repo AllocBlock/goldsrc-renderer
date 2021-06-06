@@ -1,4 +1,4 @@
-﻿#include "Interactor.h"
+#include "Interactor.h"
 #include "ImguiVullkan.h"
 
 #include <GLFW/glfw3.h>
@@ -11,7 +11,7 @@ int main()
 	GLFWwindow* pWindow = glfwCreateWindow(1280, 800, "Vulkan Simple Render", nullptr, nullptr);
 	std::shared_ptr<CImguiVullkan> pImgui = std::make_shared<CImguiVullkan>(pWindow);
 	pImgui->init();
-	
+
 	while (!glfwWindowShouldClose(pWindow))
 	{
 		glfwPollEvents();

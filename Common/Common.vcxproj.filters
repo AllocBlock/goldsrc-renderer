@@ -15,33 +15,25 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="VulkanRenderer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="VulkanRenderer.h">
+    <ClInclude Include="Common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\shader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\skyShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\skyShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\lineShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\lineShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
+    <ClCompile Include="Common.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

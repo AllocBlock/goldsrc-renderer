@@ -13,19 +13,19 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{eb9ba7fd-f347-4886-83bd-d119a929aa39}</ProjectGuid>
-    <RootNamespace>Scene</RootNamespace>
+    <ProjectGuid>{513c4028-20ce-4f65-ab41-1701cfbdb14e}</ProjectGuid>
+    <RootNamespace>GoldSrcRenderer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -53,18 +53,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)IO;$(GLM_PATH)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>
-      </SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(GLFW_PATH)\lib-vc2019;$(VK_SDK_PATH)\Lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -73,48 +71,46 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>
-      </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Common;$(SolutionDir)IO;$(GLM_PATH)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>
-      </SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(GLFW_PATH)\lib-vc2019;$(VK_SDK_PATH)\Lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SceneInterface.cpp" />
-    <ClCompile Include="SceneReaderMap.cpp" />
-    <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="SceneCommon.cpp" />
-    <ClCompile Include="SceneGoldsrcCommon.cpp" />
-    <ClCompile Include="SceneReaderBase.cpp" />
-    <ClCompile Include="SceneReaderBsp.cpp" />
-    <ClCompile Include="SceneReaderObj.cpp" />
-    <ClCompile Include="SceneReaderRmf.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="SceneReaderMap.h" />
-    <ClInclude Include="Scene.h" />
-    <ClInclude Include="SceneCommon.h" />
-    <ClInclude Include="SceneGoldsrcCommon.h" />
-    <ClInclude Include="SceneInterface.h" />
-    <ClInclude Include="SceneReaderBase.h" />
-    <ClInclude Include="SceneReaderBsp.h" />
-    <ClInclude Include="SceneReaderObj.h" />
-    <ClInclude Include="SceneReaderRmf.h" />
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\imgui\imgui.vcxproj">
+      <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\renderer\renderer.vcxproj">
+      <Project>{1fa794f5-b7fb-431f-8221-77f21034d0d9}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GUIAlert.cpp" />
+    <ClCompile Include="GUIFrameRate.cpp" />
+    <ClCompile Include="GUILog.cpp" />
+    <ClCompile Include="ImguiDraw.cpp" />
+    <ClCompile Include="ImguiVullkan.cpp" />
+    <ClCompile Include="Interactor.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GUIAlert.h" />
+    <ClInclude Include="GUIFrameRate.h" />
+    <ClInclude Include="GUILog.h" />
+    <ClInclude Include="ImguiVullkan.h" />
+    <ClInclude Include="Interactor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

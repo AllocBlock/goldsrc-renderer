@@ -1,9 +1,8 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include <optional>
 #include <vector>
-#include <stdexcept>
+#include <optional>
 #include <filesystem>
 
 #define ck(E) do{if (E) throw std::runtime_error(u8"vulkan·µ»Ø´íÎó");} while(0)

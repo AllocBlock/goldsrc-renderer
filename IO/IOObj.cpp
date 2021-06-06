@@ -15,7 +15,7 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
     std::ifstream File;
     File.open(m_FilePath);
     if (!File.is_open()) {
-        globalLog(vFilePath.u8string() + u8" 文件打开失败");
+        Common::Log::log(vFilePath.u8string() + u8" 文件打开失败");
         return false;
     }
 
@@ -66,7 +66,7 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
                 if (FaceNode.empty()) break;
                 if (!std::regex_match(FaceNode, ReResult, ReFaceNode))
                 {
-                    globalLog(u8" 面数据错误" + std::string(LineBuffer));
+                    Common::Log::log(u8" 面数据错误" + std::string(LineBuffer));
                     continue;
                 }
                 SObjFaceNode FaceNodeInfo;
@@ -101,7 +101,7 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
             Line >> CurrentSmoothGroup;
         }
         else {
-            globalLog(m_FilePath.u8string() + u8" obj格式有误或不支持的标记：" + Cmd);
+            Common::Log::log(m_FilePath.u8string() + u8" obj格式有误或不支持的标记：" + Cmd);
             continue;
         }
     }

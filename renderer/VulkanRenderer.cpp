@@ -521,6 +521,8 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
         }
         ck(vkEndCommandBuffer(m_GuiCommandBuffers[i]));
     }
+
+    rerecordCommand();
 }
 
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
@@ -1114,7 +1116,7 @@ void CVulkanRenderer::__createVertexBuffer()
             NumVertex += pObject->Vertices.size();
         if (NumVertex == 0)
         {
-            globalLog(u8"没有顶点数据，跳过索引缓存创建");
+            Common::Log::log(u8"没有顶点数据，跳过索引缓存创建");
             return;
         }
     }
@@ -1157,7 +1159,7 @@ void CVulkanRenderer::__createIndexBuffer()
 
         if (NumIndex == 0)
         {
-            globalLog(u8"没有索引数据，跳过索引缓存创建");
+            Common::Log::log(u8"没有索引数据，跳过索引缓存创建");
             return;
         }
     }
@@ -1723,7 +1725,7 @@ size_t CVulkanRenderer::__getActualTextureNum()
     size_t NumTexture = m_pScene ? m_pScene->TexImages.size() : 0;
     if (NumTexture > m_MaxTextureNum)
     {
-        globalLog(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(m_MaxTextureNum) + u8"), 多出的纹理将被忽略");
+        Common::Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(m_MaxTextureNum) + u8"), 多出的纹理将被忽略");
         NumTexture = m_MaxTextureNum;
     }
     return NumTexture;

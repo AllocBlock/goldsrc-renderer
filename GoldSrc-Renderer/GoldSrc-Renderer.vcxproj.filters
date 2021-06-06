@@ -15,64 +15,43 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="IOObj.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="IOMtl.cpp">
+    <ClCompile Include="GUIAlert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="IOBase.cpp">
+    <ClCompile Include="GUIFrameRate.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="IOImage.cpp">
+    <ClCompile Include="GUILog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="IOGoldsrcWad.cpp">
+    <ClCompile Include="ImguiDraw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="IOGoldSrcMap.cpp">
+    <ClCompile Include="ImguiVullkan.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="IOGoldSrcBsp.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="IOGoldSrcRmf.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="IOCommon.cpp">
+    <ClCompile Include="Interactor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IOObj.h">
+    <ClInclude Include="GUIAlert.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="IOMtl.h">
+    <ClInclude Include="GUIFrameRate.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="IOBase.h">
+    <ClInclude Include="GUILog.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="IOImage.h">
+    <ClInclude Include="ImguiVullkan.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="IOGoldsrcWad.h">
+    <ClInclude Include="Interactor.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="IOGoldSrcMap.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="IOGoldSrcBsp.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="IOGoldSrcRmf.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="IOCommon.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

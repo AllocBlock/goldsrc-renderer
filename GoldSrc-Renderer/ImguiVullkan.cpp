@@ -15,7 +15,7 @@ CImguiVullkan::CImguiVullkan(GLFWwindow* vpWindow)
     m_pInteractor = std::make_shared<CInteractor>(vpWindow, m_pRenderer);
     m_pInteractor->bindEvent();
 
-    setGlobalLogFunc([=](std::string vText)
+    Common::Log::setLogObserverFunc([=](std::string vText)
     {
         m_GUILog.log(vText);
     });
@@ -159,7 +159,7 @@ void CImguiVullkan::destroy()
 void CImguiVullkan::showAlert(std::string vText)
 {
     m_GUIAlert.appendAlert(vText);
-    globalLog(u8"警告: " + vText);
+    Common::Log::log(u8"警告: " + vText);
 }
 
 void CImguiVullkan::log(std::string vText)
@@ -639,7 +639,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL CImguiVullkan::debugCallback(VkDebugUtilsMessageS
     {
         LastMessage = vpCallbackData->pMessage;
         std::cerr << "[验证层] " << LastMessage << std::endl;
-        globalLog(u8"[验证层] " + LastMessage);
+        Common::Log::log(u8"[验证层] " + LastMessage);
     }
 
     return VK_FALSE;

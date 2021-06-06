@@ -1,5 +1,5 @@
 #pragma once
-#include "CommonLog.h"
+#include "Log.h"
 
 #include <string>
 #include <vector>

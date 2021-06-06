@@ -462,10 +462,10 @@ private:
     VkDescriptorSetLayout m_LineDescriptorSetLayout = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = 
     {
-        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "shader/vert.spv", "shader/frag.spv"},
-        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "shader/vert.spv", "shader/frag.spv"},
-        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "shader/skyVert.spv", "shader/skyFrag.spv"},
-        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, "shader/lineVert.spv", "shader/lineFrag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "../Renderer/shader/vert.spv", "../Renderer/shader/frag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "../Renderer/shader/vert.spv", "../Renderer/../Renderer/shader/frag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "../Renderer/shader/skyVert.spv", "../Renderer/shader/skyFrag.spv"},
+        {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, "../Renderer/shader/lineVert.spv", "../Renderer/shader/lineFrag.spv"},
     };
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;

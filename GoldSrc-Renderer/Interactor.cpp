@@ -100,7 +100,7 @@ void CInteractor::update()
 	if (MoveState & EMoveState::LEFT) MoveLeft += 1;
 	if (MoveState & EMoveState::RIGHT) MoveLeft -= 1;
 
-	auto& pCamera = m_pRenderer->getCamera();
+	const auto& pCamera = m_pRenderer->getCamera();
 	glm::vec3 Front = pCamera->getFront();
 	glm::vec3 Left = pCamera->getLeft();
 	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft) * Scale * m_Speed * DeltaTime;
@@ -109,7 +109,7 @@ void CInteractor::update()
 
 void CInteractor::reset()
 {
-	auto& pCamera = m_pRenderer->getCamera();
+	auto pCamera = m_pRenderer->getCamera();
 	pCamera->reset();
 	m_Speed = 3.0f;
 }
@@ -194,9 +194,12 @@ void CInteractor::__selectByClick(glm::vec2 vPos)
 	}
 
 	if (NearestBoundingBox.has_value())
+	{
 		m_pRenderer->setHighlightBoundingBox(NearestBoundingBox.value());
+		m_pRenderer->addGuiLine("EyeRay", EyePos, EyePos + NearestDistance * Direction);
+	}
 	else
-		m_pRenderer->removeHighlightBoundingBox();
+		m_pRenderer->removeHighlightBoundingBox(); 
 }
 
 bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT)

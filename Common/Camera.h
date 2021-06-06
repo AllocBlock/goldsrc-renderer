@@ -6,7 +6,7 @@
 
 struct SFrustum
 {
-	std::array<glm::vec4, 6> Planes;
+	std::array<glm::vec4, 6> Planes = { glm::vec4(), glm::vec4(), glm::vec4(), glm::vec4() };
 };
 
 class CCamera
