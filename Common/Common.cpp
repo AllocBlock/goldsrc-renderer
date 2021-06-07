@@ -20,7 +20,7 @@ float Common::mod(float vVal, float vMax)
     }
 }
 
-std::vector<char> Common::readFile(std::filesystem::path vFilePath)
+std::vector<char> Common::readFileAsChar(std::filesystem::path vFilePath)
 {
     std::ifstream File(vFilePath, std::ios::ate | std::ios::binary);
 

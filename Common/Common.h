@@ -70,7 +70,7 @@ namespace Common
 
     float mod(float vVal, float vMax);
 
-    std::vector<char> readFile(std::filesystem::path vFilePath);
+    std::vector<char> readFileAsChar(std::filesystem::path vFilePath);
     VkShaderModule createShaderModule(VkDevice vDevice, const std::vector<char>& vShaderCode);
     VkCommandBuffer beginSingleTimeCommands(VkDevice vDevice, VkCommandPool vCommandPool);
     void endSingleTimeCommands(VkDevice vDevice, VkCommandPool vCommandPool, VkQueue vGraphicQueue, VkCommandBuffer vCommandBuffer);

@@ -1,5 +1,6 @@
 #include "VulkanRenderer.h"
 #include "Common.h"
+#include "Descriptor.h"
 
 #include <iostream>
 #include <vector>
@@ -47,7 +48,7 @@ void CVulkanRenderer::__createRecreateResources()
     __createFramebuffers(); // imageview, extent
     __createUniformBuffers(); // imageview
     __createDescriptorPool(); // imageview
-    __createDescriptorSets(); // imageview
+    __createDefaultDescriptorSets(); // imageview
     __createSkyDescriptorSets();
     __createSceneResources();
 }
@@ -294,13 +295,12 @@ void CVulkanRenderer::destroy()
 
     m_PlaceholderImagePack.destory(m_Device);
     vkDestroySampler(m_Device, m_TextureSampler, nullptr);
-    vkDestroyDescriptorSetLayout(m_Device, m_LineDescriptorSetLayout, nullptr);
-    vkDestroyDescriptorSetLayout(m_Device, m_SkyDescriptorSetLayout, nullptr);
-    vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
+    m_DefaultDescriptor.clear();
+    m_SkyDescriptor.clear();
+    m_LineDescriptor.clear();
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
     vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
     m_TextureSampler = VK_NULL_HANDLE;
-    m_DescriptorSetLayout = VK_NULL_HANDLE;
     m_RenderPass = VK_NULL_HANDLE;
     m_CommandPool = VK_NULL_HANDLE;
 }
@@ -391,7 +391,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
                 __renderByBspTree(vImageIndex);
             else
             {
-                m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+                m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
                 
                 SPushConstant PushConstant;
                 PushConstant.Opacity = 1.0f;
@@ -406,7 +406,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
             }
         }
 
-        // GUI 
+        // 3D GUI层，放置选择框等3D标志元素
         vkCmdNextSubpass(m_SceneCommandBuffers[vImageIndex], VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
         vkCmdExecuteCommands(m_SceneCommandBuffers[vImageIndex], 1, &m_GuiCommandBuffers[vImageIndex]);
 
@@ -511,7 +511,7 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
         CommandBufferBeginInfo.pInheritanceInfo = &InheritanceInfo;
 
         ck(vkBeginCommandBuffer(m_GuiCommandBuffers[i], &CommandBufferBeginInfo));
-        m_PipelineSet.GuiLines.bind(m_GuiCommandBuffers[i], m_LineDescriptorSets[i]);
+        m_PipelineSet.GuiLines.bind(m_GuiCommandBuffers[i], m_LineDescriptor.getDescriptorSet(i));
 
         VkDeviceSize Offsets[] = { 0 };
         if (NumVertex > 0)
@@ -530,7 +530,7 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeList.clear();
     if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
-    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
 
     __renderTreeNode(vImageIndex, 0);
     __renderModels(vImageIndex);
@@ -575,11 +575,11 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
 {
     auto [OpaqueSequence, TranparentSequence] = __sortModelRenderSequence();
 
-    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
     for(size_t ModelIndex : OpaqueSequence)
         __renderModel(vImageIndex, ModelIndex);
 
-    m_PipelineSet.TrianglesWithBlend.bind(m_SceneCommandBuffers[vImageIndex], m_DescriptorSets[vImageIndex]);
+    m_PipelineSet.TrianglesWithBlend.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
     for (size_t ModelIndex : TranparentSequence)
         __renderModel(vImageIndex, ModelIndex);
 }
@@ -697,108 +697,35 @@ void CVulkanRenderer::__createRenderPass()
 
 void CVulkanRenderer::__createDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding UboVertBinding = {};
-    UboVertBinding.binding = 0;
-    UboVertBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboVertBinding.descriptorCount = 1;
-    UboVertBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    m_DefaultDescriptor.clear();
 
-    VkDescriptorSetLayoutBinding UboFragBinding = {};
-    UboFragBinding.binding = 1;
-    UboFragBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboFragBinding.descriptorCount = 1;
-    UboFragBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    m_DefaultDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_DefaultDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_DefaultDescriptor.add("Sampler", 2, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_DefaultDescriptor.add("Texture", 3, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, m_MaxTextureNum, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_DefaultDescriptor.add("Lightmap", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    VkDescriptorSetLayoutBinding SamplerBinding = {};
-    SamplerBinding.binding = 2;
-    SamplerBinding.descriptorCount = 1;
-    SamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-    SamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    SamplerBinding.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding TextureBinding = {};
-    TextureBinding.binding = 3;
-    TextureBinding.descriptorCount = m_MaxTextureNum;
-    TextureBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    TextureBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    TextureBinding.pImmutableSamplers = nullptr;
-
-    VkDescriptorSetLayoutBinding LightmapBinding = {};
-    LightmapBinding.binding = 4;
-    LightmapBinding.descriptorCount = 1;
-    LightmapBinding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    LightmapBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    LightmapBinding.pImmutableSamplers = nullptr;
-
-    std::vector<VkDescriptorSetLayoutBinding> Bindings = 
-    {
-        UboVertBinding,
-        UboFragBinding,
-        SamplerBinding,
-        TextureBinding,
-        LightmapBinding
-    };
-    VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
-    LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
-    LayoutInfo.pBindings = Bindings.data();
-
-    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorSetLayout));
+    m_DefaultDescriptor.createLayout(m_Device);
 }
 
 void CVulkanRenderer::__createSkyDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding UboVertBinding = {};
-    UboVertBinding.binding = 0;
-    UboVertBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboVertBinding.descriptorCount = 1;
-    UboVertBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    m_SkyDescriptor.clear();
 
-    VkDescriptorSetLayoutBinding UboFragBinding = {};
-    UboFragBinding.binding = 1;
-    UboFragBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboFragBinding.descriptorCount = 1;
-    UboFragBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    m_SkyDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_SkyDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_SkyDescriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    VkDescriptorSetLayoutBinding CombinedSamplerBinding = {};
-    CombinedSamplerBinding.binding = 2;
-    CombinedSamplerBinding.descriptorCount = 1;
-    CombinedSamplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    CombinedSamplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    CombinedSamplerBinding.pImmutableSamplers = nullptr;
-
-    std::vector<VkDescriptorSetLayoutBinding> Bindings =
-    {
-        UboVertBinding,
-        UboFragBinding,
-        CombinedSamplerBinding,
-    };
-    VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
-    LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
-    LayoutInfo.pBindings = Bindings.data();
-
-    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_SkyDescriptorSetLayout));
+    m_SkyDescriptor.createLayout(m_Device);
 }
 
 void CVulkanRenderer::__createLineDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding UboVertBinding = {};
-    UboVertBinding.binding = 0;
-    UboVertBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    UboVertBinding.descriptorCount = 1;
-    UboVertBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    m_LineDescriptor.clear();
 
-    std::vector<VkDescriptorSetLayoutBinding> Bindings =
-    {
-        UboVertBinding
-    };
-    VkDescriptorSetLayoutCreateInfo LayoutInfo = {};
-    LayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
-    LayoutInfo.pBindings = Bindings.data();
+    m_LineDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
 
-    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_LineDescriptorSetLayout));
+    m_LineDescriptor.createLayout(m_Device);
 }
 
 void CVulkanRenderer::__createGraphicsPipelines()
@@ -834,7 +761,7 @@ void CVulkanRenderer::__createSkyPipeline()
         SSimplePointData::getBindingDescription(),
         SSimplePointData::getAttributeDescriptions(),
         m_Extent,
-        m_SkyDescriptorSetLayout,
+        m_SkyDescriptor.getLayout(),
         DepthStencilInfo,
         ColorBlendInfo
     );
@@ -881,7 +808,7 @@ void CVulkanRenderer::__createDepthTestPipeline()
         SPointData::getBindingDescription(),
         SPointData::getAttributeDescriptions(),
         m_Extent,
-        m_DescriptorSetLayout,
+        m_DefaultDescriptor.getLayout(),
         DepthStencilInfo,
         ColorBlendInfo,
         0,
@@ -939,7 +866,7 @@ void CVulkanRenderer::__createBlendPipeline()
         SPointData::getBindingDescription(),
         SPointData::getAttributeDescriptions(),
         m_Extent,
-        m_DescriptorSetLayout,
+        m_DefaultDescriptor.getLayout(),
         DepthStencilInfo,
         ColorBlendInfo,
         0,
@@ -974,7 +901,7 @@ void CVulkanRenderer::__createGuiLinesPipeline()
         SSimplePointData::getBindingDescription(),
         SSimplePointData::getAttributeDescriptions(),
         m_Extent,
-        m_LineDescriptorSetLayout,
+        m_LineDescriptor.getLayout(),
         DepthStencilInfo,
         ColorBlendInfo,
         1
@@ -1210,22 +1137,15 @@ void CVulkanRenderer::__createUniformBuffers()
 
 void CVulkanRenderer::__createDescriptorPool()
 {
-    std::vector<VkDescriptorPoolSize> PoolSizes =
-    {
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) },
-        { VK_DESCRIPTOR_TYPE_SAMPLER, static_cast<uint32_t>(m_NumSwapchainImage) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_NumSwapchainImage * m_MaxTextureNum) },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(m_NumSwapchainImage) },
-
-        // sky box
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) }, // vert
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) }, // frag
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(m_NumSwapchainImage) }, // combined sampler
-
-        // GUI lines
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, static_cast<uint32_t>(m_NumSwapchainImage) }, // vert
-    };
+    auto DefaultPoolSizes = m_DefaultDescriptor.getPoolSizeSet();
+    auto SkyPoolSizes = m_SkyDescriptor.getPoolSizeSet();
+    auto LinePoolSizes = m_LineDescriptor.getPoolSizeSet();
+    std::vector<VkDescriptorPoolSize> PoolSizes;
+    PoolSizes.insert(PoolSizes.end(), DefaultPoolSizes.begin(), DefaultPoolSizes.end());
+    PoolSizes.insert(PoolSizes.end(), SkyPoolSizes.begin(), SkyPoolSizes.end());
+    PoolSizes.insert(PoolSizes.end(), LinePoolSizes.begin(), LinePoolSizes.end());
+    for (auto& PoolSize : PoolSizes)
+        PoolSize.descriptorCount *= m_NumSwapchainImage;
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1236,226 +1156,124 @@ void CVulkanRenderer::__createDescriptorPool()
     ck(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
-void CVulkanRenderer::__createDescriptorSets()
+void CVulkanRenderer::__createDefaultDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> Layouts(m_NumSwapchainImage, m_DescriptorSetLayout);
-
-    VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
-    DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    DescSetAllocInfo.descriptorPool = m_DescriptorPool;
-    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_NumSwapchainImage);
-    DescSetAllocInfo.pSetLayouts = Layouts.data();
-
-    m_DescriptorSets.resize(m_NumSwapchainImage);
-    ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSets.data()));
+    m_DefaultDescriptor.createDescriptorSetSet(m_DescriptorPool, m_NumSwapchainImage);
 }
 
 void CVulkanRenderer::__createSkyDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> Layouts(m_NumSwapchainImage, m_SkyDescriptorSetLayout);
-
-    VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
-    DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    DescSetAllocInfo.descriptorPool = m_DescriptorPool;
-    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_NumSwapchainImage);
-    DescSetAllocInfo.pSetLayouts = Layouts.data();
-
-    m_SkyDescriptorSets.resize(m_NumSwapchainImage);
-    ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_SkyDescriptorSets.data()));
+    m_SkyDescriptor.createDescriptorSetSet(m_DescriptorPool, m_NumSwapchainImage);
 }
 
 void CVulkanRenderer::__createLineDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> Layouts(m_NumSwapchainImage, m_LineDescriptorSetLayout);
-
-    VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
-    DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    DescSetAllocInfo.descriptorPool = m_DescriptorPool;
-    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(m_NumSwapchainImage);
-    DescSetAllocInfo.pSetLayouts = Layouts.data();
-
-    m_LineDescriptorSets.resize(m_NumSwapchainImage);
-    ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_LineDescriptorSets.data()));
+    m_LineDescriptor.createDescriptorSetSet(m_DescriptorPool, m_NumSwapchainImage);
 }
 
 void CVulkanRenderer::__updateDescriptorSets()
 {
-    for (size_t i = 0; i < m_DescriptorSets.size(); ++i)
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
+        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
+
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_VertUniformBufferPacks[i].Buffer;
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo}, {} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
         FragBufferInfo.buffer = m_FragUniformBufferPacks[i].Buffer;
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo}, {} }));
 
         VkDescriptorImageInfo SamplerInfo = {};
         SamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         SamplerInfo.imageView = VK_NULL_HANDLE;
         SamplerInfo.sampler = m_TextureSampler;
-
-        std::vector<VkWriteDescriptorSet> DescriptorWrites;
-
-        VkWriteDescriptorSet VertBufferDescriptorWrite = {};
-        VertBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        VertBufferDescriptorWrite.dstSet = m_DescriptorSets[i];
-        VertBufferDescriptorWrite.dstBinding = 0;
-        VertBufferDescriptorWrite.dstArrayElement = 0;
-        VertBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        VertBufferDescriptorWrite.descriptorCount = 1;
-        VertBufferDescriptorWrite.pBufferInfo = &VertBufferInfo;
-        DescriptorWrites.emplace_back(VertBufferDescriptorWrite);
-
-        VkWriteDescriptorSet FragBufferDescriptorWrite = {};
-        FragBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        FragBufferDescriptorWrite.dstSet = m_DescriptorSets[i];
-        FragBufferDescriptorWrite.dstBinding = 1;
-        FragBufferDescriptorWrite.dstArrayElement = 0;
-        FragBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        FragBufferDescriptorWrite.descriptorCount = 1;
-        FragBufferDescriptorWrite.pBufferInfo = &FragBufferInfo;
-        DescriptorWrites.emplace_back(FragBufferDescriptorWrite);
-
-        VkWriteDescriptorSet SamplerDescriptorWrite = {};
-        SamplerDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        SamplerDescriptorWrite.dstSet = m_DescriptorSets[i];
-        SamplerDescriptorWrite.dstBinding = 2;
-        SamplerDescriptorWrite.dstArrayElement = 0;
-        SamplerDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-        SamplerDescriptorWrite.descriptorCount = 1;
-        SamplerDescriptorWrite.pImageInfo = &SamplerInfo;
-        DescriptorWrites.emplace_back(SamplerDescriptorWrite);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {SamplerInfo} }));
 
         const size_t NumTexture = __getActualTextureNum();
-        std::vector<VkDescriptorImageInfo> TexImageInfos;
-        if (NumTexture > 0)
+        
+        std::vector<VkDescriptorImageInfo> TexImageInfoSet(m_MaxTextureNum);
+        for (size_t i = 0; i < m_MaxTextureNum; ++i)
         {
-            TexImageInfos.resize(m_MaxTextureNum);
-            for (size_t i = 0; i < m_MaxTextureNum; ++i)
+            // for unused element, fill like the first one (weird method but avoid validation warning)
+            if (i >= NumTexture)
             {
-                // for unused element, fill like the first one (weird method but avoid validationwarning)
-                if (i >= NumTexture)
+                if (i == 0) // no texture, use default placeholder texture
                 {
-                    TexImageInfos[i] = TexImageInfos[0];
+                    TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                    TexImageInfoSet[i].imageView = m_PlaceholderImagePack.ImageView;
+                    TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
                 }
                 else
                 {
-                    TexImageInfos[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    TexImageInfos[i].imageView = m_TextureImagePacks[i].ImageView;
-                    TexImageInfos[i].sampler = VK_NULL_HANDLE;
+                    TexImageInfoSet[i] = TexImageInfoSet[0];
                 }
             }
-
-            VkWriteDescriptorSet TexturesDescriptorWrite = {};
-            TexturesDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            TexturesDescriptorWrite.dstSet = m_DescriptorSets[i];
-            TexturesDescriptorWrite.dstBinding = 3;
-            TexturesDescriptorWrite.dstArrayElement = 0;
-            TexturesDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            TexturesDescriptorWrite.descriptorCount = static_cast<uint32_t>(TexImageInfos.size());
-            TexturesDescriptorWrite.pImageInfo = TexImageInfos.data();
-            DescriptorWrites.emplace_back(TexturesDescriptorWrite);
+            else
+            {
+                TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                TexImageInfoSet[i].imageView = m_TextureImagePacks[i].ImageView;
+                TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
+            }
         }
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageInfoSet }));
         
         VkDescriptorImageInfo LightmapImageInfo = {};
         LightmapImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         LightmapImageInfo.imageView = (m_pScene && m_pScene->UseLightmap) ?m_LightmapImagePack.ImageView : m_PlaceholderImagePack.ImageView;
         LightmapImageInfo.sampler = VK_NULL_HANDLE;
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {LightmapImageInfo} }));
 
-        VkWriteDescriptorSet LightmapsDescriptorWrite = {};
-        LightmapsDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        LightmapsDescriptorWrite.dstSet = m_DescriptorSets[i];
-        LightmapsDescriptorWrite.dstBinding = 4;
-        LightmapsDescriptorWrite.dstArrayElement = 0;
-        LightmapsDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        LightmapsDescriptorWrite.descriptorCount = 1;
-        LightmapsDescriptorWrite.pImageInfo = &LightmapImageInfo;
-        DescriptorWrites.emplace_back(LightmapsDescriptorWrite);
-
-        vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
+        m_DefaultDescriptor.update(i, DescriptorWriteInfoSet);
     }
 }
 
 void CVulkanRenderer::__updateSkyDescriptorSets()
 {
-    for (size_t i = 0; i < m_SkyDescriptorSets.size(); ++i)
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
-        std::vector<VkWriteDescriptorSet> DescriptorWrites;
+        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_SkyBox.VertUniformBufferPacks[i].Buffer;
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SSkyUniformBufferObjectVert);
-
-        VkWriteDescriptorSet VertBufferDescriptorWrite = {};
-        VertBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        VertBufferDescriptorWrite.dstSet = m_SkyDescriptorSets[i];
-        VertBufferDescriptorWrite.dstBinding = 0;
-        VertBufferDescriptorWrite.dstArrayElement = 0;
-        VertBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        VertBufferDescriptorWrite.descriptorCount = 1;
-        VertBufferDescriptorWrite.pBufferInfo = &VertBufferInfo;
-        DescriptorWrites.emplace_back(VertBufferDescriptorWrite);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
         FragBufferInfo.buffer = m_SkyBox.FragUniformBufferPacks[i].Buffer;
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SSkyUniformBufferObjectFrag);
-
-        VkWriteDescriptorSet FragBufferDescriptorWrite = {};
-        FragBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        FragBufferDescriptorWrite.dstSet = m_SkyDescriptorSets[i];
-        FragBufferDescriptorWrite.dstBinding = 1;
-        FragBufferDescriptorWrite.dstArrayElement = 0;
-        FragBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        FragBufferDescriptorWrite.descriptorCount = 1;
-        FragBufferDescriptorWrite.pBufferInfo = &FragBufferInfo;
-        DescriptorWrites.emplace_back(FragBufferDescriptorWrite);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         CombinedSamplerInfo.imageView = m_SkyBox.SkyBoxImagePack.ImageView;
         CombinedSamplerInfo.sampler = m_TextureSampler;
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 
-        VkWriteDescriptorSet SamplerDescriptorWrite = {};
-        SamplerDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        SamplerDescriptorWrite.dstSet = m_SkyDescriptorSets[i];
-        SamplerDescriptorWrite.dstBinding = 2;
-        SamplerDescriptorWrite.dstArrayElement = 0;
-        SamplerDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        SamplerDescriptorWrite.descriptorCount = 1;
-        SamplerDescriptorWrite.pImageInfo = &CombinedSamplerInfo;
-        DescriptorWrites.emplace_back(SamplerDescriptorWrite);
-
-        vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
+        m_SkyDescriptor.update(i, DescriptorWriteInfoSet);
     }
 }
 
 void CVulkanRenderer::__updateLineDescriptorSets()
 {
-    for (size_t i = 0; i < m_LineDescriptorSets.size(); ++i)
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
-        std::vector<VkWriteDescriptorSet> DescriptorWrites;
+        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_Gui.VertUniformBufferPacks[i].Buffer;
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SGuiUniformBufferObjectVert);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} , {} }));
 
-        VkWriteDescriptorSet VertBufferDescriptorWrite = {};
-        VertBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        VertBufferDescriptorWrite.dstSet = m_LineDescriptorSets[i];
-        VertBufferDescriptorWrite.dstBinding = 0;
-        VertBufferDescriptorWrite.dstArrayElement = 0;
-        VertBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        VertBufferDescriptorWrite.descriptorCount = 1;
-        VertBufferDescriptorWrite.pBufferInfo = &VertBufferInfo;
-        DescriptorWrites.emplace_back(VertBufferDescriptorWrite);
-
-        vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
+        m_LineDescriptor.update(i, DescriptorWriteInfoSet);
     }
 }
 
@@ -2007,7 +1825,7 @@ void CVulkanRenderer::__updateGuiUniformBuffer(uint32_t vImageIndex)
 void CVulkanRenderer::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     const VkDeviceSize Offsets[] = { 0 };
-    m_PipelineSet.TrianglesSky.bind(m_SceneCommandBuffers[vImageIndex], m_SkyDescriptorSets[vImageIndex]);
+    m_PipelineSet.TrianglesSky.bind(m_SceneCommandBuffers[vImageIndex], m_SkyDescriptor.getDescriptorSet(vImageIndex));
     vkCmdBindVertexBuffers(m_SceneCommandBuffers[vImageIndex], 0, 1, &m_SkyBox.VertexDataPack.Buffer, Offsets);
     vkCmdDraw(m_SceneCommandBuffers[vImageIndex], m_SkyBox.VertexNum, 1, 0, 0);
 }

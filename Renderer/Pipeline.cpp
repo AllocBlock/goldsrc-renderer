@@ -1,0 +1,130 @@
+#include "Pipeline.h"
+
+void CPipeline::create(VkDevice vDevice, VkRenderPass vRenderPass, VkVertexInputBindingDescription vInputBindingDescription, std::vector<VkVertexInputAttributeDescription> vInputAttributeDescriptions, VkExtent2D vExtent, VkDescriptorSetLayout vDescriptorSetLayout, VkPipelineDepthStencilStateCreateInfo vDepthStencilInfo, VkPipelineColorBlendStateCreateInfo vBlendInfo, uint32_t vSubpass, std::optional<VkPipelineDynamicStateCreateInfo> vDynamicStateInfo, std::optional<VkPushConstantRange> vPushConstantState)
+{
+    m_Device = vDevice;
+
+    auto VertShaderCode = Common::readFileAsChar(m_VertShaderPath);
+    auto FragShaderCode = Common::readFileAsChar(m_FragShaderPath);
+
+    VkShaderModule VertShaderModule = Common::createShaderModule(m_Device, VertShaderCode);
+    VkShaderModule FragShaderModule = Common::createShaderModule(m_Device, FragShaderCode);
+
+    VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
+    VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    VertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    VertShaderStageInfo.module = VertShaderModule;
+    VertShaderStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo FragShaderStageInfo = {};
+    FragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    FragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    FragShaderStageInfo.module = FragShaderModule;
+    FragShaderStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo,FragShaderStageInfo };
+
+    VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
+    VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    VertexInputInfo.vertexBindingDescriptionCount = 1;
+    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vInputAttributeDescriptions.size());
+    VertexInputInfo.pVertexBindingDescriptions = &vInputBindingDescription;
+    VertexInputInfo.pVertexAttributeDescriptions = vInputAttributeDescriptions.data();
+
+    VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
+    InputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    InputAssemblyInfo.topology = m_PrimitiveToplogy;
+    InputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
+
+    VkViewport Viewport = {};
+    Viewport.width = static_cast<float>(vExtent.width);
+    Viewport.height = static_cast<float>(vExtent.height);
+    Viewport.minDepth = 0.0f;
+    Viewport.maxDepth = 1.0f;
+
+    VkRect2D Scissor = {};
+    Scissor.offset = { 0, 0 };
+    Scissor.extent = vExtent;
+
+    VkPipelineViewportStateCreateInfo ViewportStateInfo = {};
+    ViewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    ViewportStateInfo.viewportCount = 1;
+    ViewportStateInfo.pViewports = &Viewport;
+    ViewportStateInfo.scissorCount = 1;
+    ViewportStateInfo.pScissors = &Scissor;
+
+    VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
+    RasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    RasterizerInfo.depthClampEnable = VK_FALSE;
+    RasterizerInfo.depthBiasEnable = VK_TRUE;
+    RasterizerInfo.depthBiasConstantFactor = 0.0;
+    RasterizerInfo.depthBiasSlopeFactor = 1.0;
+    RasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
+    RasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
+    RasterizerInfo.lineWidth = 1.0f;
+    RasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    RasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+
+    VkPipelineMultisampleStateCreateInfo Multisampling = {};
+    Multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    Multisampling.sampleShadingEnable = VK_FALSE;
+    Multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
+    PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    PipelineLayoutInfo.setLayoutCount = 1;
+    PipelineLayoutInfo.pSetLayouts = &vDescriptorSetLayout;
+    if (vPushConstantState.has_value())
+    {
+        PipelineLayoutInfo.pushConstantRangeCount = 1;
+        PipelineLayoutInfo.pPushConstantRanges = &vPushConstantState.value();
+    }
+    else
+    {
+        PipelineLayoutInfo.pushConstantRangeCount = 0;
+        PipelineLayoutInfo.pPushConstantRanges = nullptr;
+    }
+
+    ck(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_Layout));
+
+    VkGraphicsPipelineCreateInfo PipelineInfo = {};
+    PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    PipelineInfo.stageCount = 2;
+    PipelineInfo.pStages = ShaderStages;
+    PipelineInfo.pVertexInputState = &VertexInputInfo;
+    PipelineInfo.pInputAssemblyState = &InputAssemblyInfo;
+    PipelineInfo.pViewportState = &ViewportStateInfo;
+    PipelineInfo.pRasterizationState = &RasterizerInfo;
+    PipelineInfo.pMultisampleState = &Multisampling;
+    PipelineInfo.pDepthStencilState = &vDepthStencilInfo;
+    PipelineInfo.pColorBlendState = &vBlendInfo;
+    if (vDynamicStateInfo.has_value())
+        PipelineInfo.pDynamicState = &vDynamicStateInfo.value();
+    else
+        PipelineInfo.pDynamicState = nullptr;
+    PipelineInfo.layout = m_Layout;
+    PipelineInfo.renderPass = vRenderPass;
+    PipelineInfo.subpass = vSubpass;
+
+    ck(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_Pipeline));
+
+    vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
+    vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
+}
+
+void CPipeline::destory()
+{
+    if (m_Device == VK_NULL_HANDLE) return;
+
+    vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
+    vkDestroyPipelineLayout(m_Device, m_Layout, nullptr);
+    m_Device = VK_NULL_HANDLE;
+    m_Pipeline = VK_NULL_HANDLE;
+    m_Layout = VK_NULL_HANDLE;
+}
+
+void CPipeline::bind(VkCommandBuffer vCommandBuffer, VkDescriptorSet vDescSet)
+{
+    vkCmdBindPipeline(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+    vkCmdBindDescriptorSets(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Layout, 0, 1, &vDescSet, 0, nullptr);
+}
