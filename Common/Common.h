@@ -9,7 +9,7 @@
 
 namespace Common
 {
-    struct SVkImagePack
+    struct SImagePack
     {
         VkImage Image = VK_NULL_HANDLE;
         VkDeviceMemory Memory = VK_NULL_HANDLE;
@@ -31,7 +31,7 @@ namespace Common
         }
     };
 
-    struct SVkBufferPack
+    struct SBufferPack
     {
         VkBuffer Buffer = VK_NULL_HANDLE;
         VkDeviceMemory Memory = VK_NULL_HANDLE;

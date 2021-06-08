@@ -146,16 +146,6 @@ void CVulkanRenderer::__createSkyBoxResources()
         memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
     }
 
-    VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;
-    __createBuffer(TotalImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-    void* pDevData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, TotalImageSize, 0, &pDevData));
-    memcpy(pDevData, pPixelData, TotalImageSize);
-    vkUnmapMemory(m_Device, StagingBufferMemory);
-    delete[] pPixelData;
-
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -172,17 +162,12 @@ void CVulkanRenderer::__createSkyBoxResources()
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
 
-    __createImage(ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.SkyBoxImagePack.Image, m_SkyBox.SkyBoxImagePack.Memory);
-    __transitionImageLayout(m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 6);
-    __copyBufferToImage(StagingBuffer, m_SkyBox.SkyBoxImagePack.Image, TexWidth, TexHeight, 6);
-    __transitionImageLayout(m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 6);
-
-    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+    stageFillImage(pPixelData, TotalImageSize, ImageInfo, m_SkyBox.SkyBoxImagePack);
+    delete[] pPixelData;
 
     m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
 
-    // create plane
+    // create plane and vertex buffer
     const std::vector<glm::vec3> Vertices =
     {
         { 1.0,  1.0,  1.0}, // 0
@@ -218,22 +203,8 @@ void CVulkanRenderer::__createSkyBoxResources()
     VkDeviceSize DataSize = sizeof(SSimplePointData) * PointData.size();
     m_SkyBox.VertexNum = PointData.size();
 
-   /* VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;*/
-    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-    void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pData));
-    memcpy(reinterpret_cast<char*>(pData), PointData.data(), DataSize);
-    vkUnmapMemory(m_Device, StagingBufferMemory);
-
-    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_SkyBox.VertexDataPack.Buffer, m_SkyBox.VertexDataPack.Memory);
-
-    __copyBuffer(StagingBuffer, m_SkyBox.VertexDataPack.Buffer, DataSize);
-
-    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
-
+    stageFillBuffer(PointData.data(), DataSize, m_SkyBox.VertexDataPack);
+  
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
     VkDeviceSize FragBufferSize = sizeof(SSkyUniformBufferObjectFrag);
@@ -466,12 +437,8 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
     {
         VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
 
-        VkBuffer StagingBuffer;
-        VkDeviceMemory StagingBufferMemory;
-        __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-        void* pData;
-        ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
+        // TODO: addtional copy is made. Is there better way?
+        void* pData = new char[BufferSize];
         size_t Offset = 0;
         for (const auto& Pair : m_Gui.NameObjectMap)
         {
@@ -480,15 +447,7 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
             memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
             Offset += DataSize;
         }
-
-        vkUnmapMemory(m_Device, StagingBufferMemory);
-
-        __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_Gui.VertexDataPack.Buffer, m_Gui.VertexDataPack.Memory);
-
-        __copyBuffer(StagingBuffer, m_Gui.VertexDataPack.Buffer, BufferSize);
-
-        vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-        vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+        stageFillBuffer(pData, BufferSize, m_Gui.VertexDataPack);
     }
 
     for (size_t i = 0; i < m_NumSwapchainImage; ++i)
@@ -975,7 +934,7 @@ void CVulkanRenderer::__createTextureImages()
         for (size_t i = 0; i < NumTexture; ++i)
         {
             std::shared_ptr<CIOImage> pImage = m_pScene->TexImages[i];
-            __createImageFromIOImage(pImage, m_TextureImagePacks[i].Image, m_TextureImagePacks[i].Memory);
+            __createImageFromIOImage(pImage, m_TextureImagePacks[i]);
         }
     }
 }
@@ -996,7 +955,7 @@ void CVulkanRenderer::__createLightmapImage()
     if (m_pScene && m_pScene->UseLightmap)
     {
         std::shared_ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
-        __createImageFromIOImage(pCombinedLightmapImage, m_LightmapImagePack.Image, m_LightmapImagePack.Memory);
+        __createImageFromIOImage(pCombinedLightmapImage, m_LightmapImagePack);
     }
 }
 
@@ -1054,6 +1013,7 @@ void CVulkanRenderer::__createVertexBuffer()
 
     VkBuffer StagingBuffer;
     VkDeviceMemory StagingBufferMemory;
+   
     __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
 
     void* pData;
@@ -1284,7 +1244,7 @@ void CVulkanRenderer::__createPlaceholderImage()
     auto pMinorImage = std::make_shared<CIOImage>();
     pMinorImage->setImageSize(1, 1);
     pMinorImage->setData(&Pixel);
-    __createImageFromIOImage(pMinorImage, m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
+    __createImageFromIOImage(pMinorImage, m_PlaceholderImagePack);
     m_PlaceholderImagePack.ImageView = Common::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
@@ -1512,6 +1472,45 @@ void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size
     m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
+void CVulkanRenderer::stageFillBuffer(const void* vData, VkDeviceSize vSize, Common::SBufferPack& voTargetBufferPack)
+{
+    Common::SBufferPack StageBufferPack;
+    __createBuffer(vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
+
+    void* pDevData;
+    ck(vkMapMemory(m_Device, StageBufferPack.Memory, 0, vSize, 0, &pDevData));
+    memcpy(reinterpret_cast<char*>(pDevData), vData, vSize);
+    vkUnmapMemory(m_Device, StageBufferPack.Memory);
+
+    __createBuffer(vSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voTargetBufferPack.Buffer, voTargetBufferPack.Memory);
+
+    __copyBuffer(StageBufferPack.Buffer, voTargetBufferPack.Buffer, vSize);
+
+    StageBufferPack.destory(m_Device);
+}
+
+void CVulkanRenderer::stageFillImage(const void* vData, VkDeviceSize vSize, VkImageCreateInfo vImageInfo, Common::SImagePack& voTargetImagePack)
+{
+    uint32_t Width = vImageInfo.extent.width;
+    uint32_t Height = vImageInfo.extent.height;
+    uint32_t LayerCount = vImageInfo.arrayLayers;
+
+    Common::SBufferPack StageBufferPack;
+    __createBuffer(vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
+
+    void* pDevData;
+    ck(vkMapMemory(m_Device, StageBufferPack.Memory, 0, vSize, 0, &pDevData));
+    memcpy(pDevData, vData, vSize);
+    vkUnmapMemory(m_Device, StageBufferPack.Memory);
+
+    __createImage(vImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voTargetImagePack.Image, voTargetImagePack.Memory);
+    __transitionImageLayout(voTargetImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, LayerCount);
+    __copyBufferToImage(StageBufferPack.Buffer, voTargetImagePack.Image, Width, Height, LayerCount);
+    __transitionImageLayout(voTargetImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, LayerCount);
+
+    StageBufferPack.destory(m_Device);
+}
+
 size_t CVulkanRenderer::__getActualTextureNum()
 {
     size_t NumTexture = m_pScene ? m_pScene->TexImages.size() : 0;
@@ -1523,21 +1522,13 @@ size_t CVulkanRenderer::__getActualTextureNum()
     return NumTexture;
 }
 
-void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory)
+void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Common::SImagePack& voImagePack)
 {
     int TexWidth = vpImage->getImageWidth();
     int TexHeight = vpImage->getImageHeight();
     const void* pPixelData = vpImage->getData();
 
     VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
-    VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;
-    __createBuffer(DataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-    void* pDevData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, DataSize, 0, &pDevData));
-    memcpy(pDevData, pPixelData, static_cast<size_t>(DataSize));
-    vkUnmapMemory(m_Device, StagingBufferMemory);
 
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -1554,13 +1545,7 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    __createImage(ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voImage, voImageMemory);
-    __transitionImageLayout(voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    __copyBufferToImage(StagingBuffer, voImage, TexWidth, TexHeight);
-    __transitionImageLayout(voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+    stageFillImage(pPixelData, DataSize, ImageInfo, voImagePack);
 }
 
 void CVulkanRenderer::__calculateVisiableObjects()

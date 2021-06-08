@@ -162,11 +162,11 @@ struct SPipelineSet
 struct SSkyBox
 {
     bool IsInited = false;
-    Common::SVkImagePack SkyBoxImagePack; // cube
-    Common::SVkBufferPack VertexDataPack;
+    Common::SImagePack SkyBoxImagePack; // cube
+    Common::SBufferPack VertexDataPack;
     size_t VertexNum = 0;
-    std::vector<Common::SVkBufferPack> VertUniformBufferPacks;
-    std::vector<Common::SVkBufferPack> FragUniformBufferPacks;
+    std::vector<Common::SBufferPack> VertUniformBufferPacks;
+    std::vector<Common::SBufferPack> FragUniformBufferPacks;
 };
 
 enum class EGuiObjectType
@@ -183,8 +183,8 @@ struct SGuiObject
 struct SGui
 {
     std::map<std::string, std::shared_ptr<SGuiObject>> NameObjectMap;
-    Common::SVkBufferPack VertexDataPack;
-    std::vector<Common::SVkBufferPack> VertUniformBufferPacks;
+    Common::SBufferPack VertexDataPack;
+    std::vector<Common::SBufferPack> VertUniformBufferPacks;
 
     void addOrUpdateObject(std::string vName, std::shared_ptr<SGuiObject> vpObject)
     {
@@ -293,8 +293,10 @@ private:
     void __createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
     void __copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
     void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount = 1);
+    void stageFillBuffer(const void* vData, VkDeviceSize vSize, Common::SBufferPack& voTargetBufferPack);
+    void stageFillImage(const void* vData, VkDeviceSize vSize, VkImageCreateInfo vImageInfo, Common::SImagePack& voTargetImagePack);
     size_t __getActualTextureNum();
-    void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, VkImage& voImage, VkDeviceMemory& voImageMemory);
+    void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Common::SImagePack& voImagePack);
     void __updateDescriptorSets();
     void __updateSkyDescriptorSets();
     void __updateLineDescriptorSets();
@@ -325,15 +327,15 @@ private:
     std::vector<VkImageView> m_ImageViews;
     std::vector<VkFramebuffer> m_Framebuffers;
 
-    Common::SVkBufferPack m_VertexBufferPack;
-    Common::SVkBufferPack m_IndexBufferPack;
-    std::vector<Common::SVkBufferPack> m_VertUniformBufferPacks;
-    std::vector<Common::SVkBufferPack> m_FragUniformBufferPacks;
-    Common::SVkImagePack m_PlaceholderImagePack;
+    Common::SBufferPack m_VertexBufferPack;
+    Common::SBufferPack m_IndexBufferPack;
+    std::vector<Common::SBufferPack> m_VertUniformBufferPacks;
+    std::vector<Common::SBufferPack> m_FragUniformBufferPacks;
+    Common::SImagePack m_PlaceholderImagePack;
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<Common::SVkImagePack> m_TextureImagePacks;
-    Common::SVkImagePack m_DepthImagePack;
-    Common::SVkImagePack m_LightmapImagePack;
+    std::vector<Common::SImagePack> m_TextureImagePacks;
+    Common::SImagePack m_DepthImagePack;
+    Common::SImagePack m_LightmapImagePack;
 
     std::shared_ptr<SScene> m_pScene;
     SSkyBox m_SkyBox;
