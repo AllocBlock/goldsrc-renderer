@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "Pipeline.h"
 #include "Descriptor.h"
+#include "Command.h"
 
 #include <vulkan/vulkan.h> 
 #include <glm/glm.hpp>
@@ -232,12 +233,12 @@ public:
     void setRenderMethod(ERenderMethod vRenderMethod) { m_RenderMethod = vRenderMethod; }
 
 private:
-    void __createRenderPass();
-    void __createDescriptorSetLayout();
+    void __createRenderPass(bool vPresentLayout);
+    void __createDefaultDescriptorSetLayout();
     void __createSkyDescriptorSetLayout();
     void __createLineDescriptorSetLayout();
     void __createGraphicsPipelines();
-    void __createCommandPool();
+    void __createCommandPoolAndBuffers();
     void __createDepthResources();
     void __createFramebuffers();
     void __createTextureImages();
@@ -252,8 +253,6 @@ private:
     void __createDefaultDescriptorSets();
     void __createSkyDescriptorSets();
     void __createLineDescriptorSets();
-    void __createCommandBuffers();
-    void __createGuiCommandBuffers();
     void __createPlaceholderImage();
 
     void __createSkyPipeline();
@@ -306,11 +305,11 @@ private:
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;
     uint32_t m_GraphicsQueueIndex = 0;
-    VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
-    CDescriptor m_DefaultDescriptor;
-    CDescriptor m_SkyDescriptor;
-    CDescriptor m_LineDescriptor;
+    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+    CDescriptor m_DefaultDescriptor = CDescriptor();
+    CDescriptor m_SkyDescriptor = CDescriptor();
+    CDescriptor m_LineDescriptor = CDescriptor();
     SPipelineSet m_PipelineSet = 
     {
         {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "../Renderer/shader/vert.spv", "../Renderer/shader/frag.spv"},
@@ -318,10 +317,9 @@ private:
         {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, "../Renderer/shader/skyVert.spv", "../Renderer/shader/skyFrag.spv"},
         {VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, "../Renderer/shader/lineVert.spv", "../Renderer/shader/lineFrag.spv"},
     };
-    VkCommandPool m_CommandPool = VK_NULL_HANDLE;
-    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-    std::vector<VkCommandBuffer> m_SceneCommandBuffers;
-    std::vector<VkCommandBuffer> m_GuiCommandBuffers;
+    CCommand m_Command = CCommand();
+    std::string m_SceneCommandName = "Scene";
+    std::string m_GuiCommandName = "Gui";
     VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
     VkExtent2D m_Extent = { 0, 0 };
     std::vector<VkImageView> m_ImageViews;
@@ -343,7 +341,7 @@ private:
     std::shared_ptr<CCamera> m_pCamera = nullptr;
 
     bool m_FramebufferResized = false;
-    size_t m_RerecordCommand = 0;
+    size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;
     size_t m_VisableObjectNum = 0;
     std::vector<SObjectDataPosition> m_ObjectDataPositions;

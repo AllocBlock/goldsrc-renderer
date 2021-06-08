@@ -96,26 +96,14 @@ void CImguiVullkan::init()
     InitInfo.CheckVkResultFn = nullptr;
     ImGui_ImplVulkan_Init(&InitInfo, m_RenderPass);
 
-    // create command pool
-    VkCommandPoolCreateInfo CommandPoolInfo = {};
-    CommandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    CommandPoolInfo.queueFamilyIndex = m_GraphicsQueueIndex;
-    CommandPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    ck(vkCreateCommandPool(m_Device, &CommandPoolInfo, nullptr, &m_CommandPool));
-
-    // create command buffers
-    m_CommandBuffers.resize(NumImage);
-    VkCommandBufferAllocateInfo CommandBufferInfo = {};
-    CommandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    CommandBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    CommandBufferInfo.commandPool = m_CommandPool;
-    CommandBufferInfo.commandBufferCount = NumImage;
-    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferInfo, m_CommandBuffers.data()));
+    // create command pool and buffers
+    m_Command.createPool(m_Device, ECommandType::RESETTABLE, m_GraphicsQueueIndex);
+    m_Command.createBuffers(m_CommandName, NumImage, ECommandBufferLevel::PRIMARY);
 
     // upload font
-    VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
+    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
     ImGui_ImplVulkan_CreateFontsTexture(CommandBuffer);
-    Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
+    m_Command.endSingleTimeBuffer(CommandBuffer);
 
     __createFramebuffers();
 
@@ -143,8 +131,7 @@ void CImguiVullkan::destroy()
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
 
     vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
-    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
-    vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+    m_Command.clear();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -216,13 +203,15 @@ void CImguiVullkan::__createFramebuffers()
 
 VkCommandBuffer CImguiVullkan::requestCommandBuffer(uint32_t vImageIndex)
 {
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
+
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
     VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    vkBeginCommandBuffer(m_CommandBuffers[vImageIndex], &CommandBufferBeginInfo);
+    vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo);
 
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -231,14 +220,14 @@ VkCommandBuffer CImguiVullkan::requestCommandBuffer(uint32_t vImageIndex)
     RenderPassBeginInfo.renderArea.extent = m_SwapchainExtent;
     RenderPassBeginInfo.clearValueCount = 1;
     RenderPassBeginInfo.pClearValues = &ClearValue;
-    vkCmdBeginRenderPass(m_CommandBuffers[vImageIndex], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_CommandBuffers[vImageIndex]);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), CommandBuffer);
 
-    vkCmdEndRenderPass(m_CommandBuffers[vImageIndex]);
-    ck(vkEndCommandBuffer(m_CommandBuffers[vImageIndex]));
+    vkCmdEndRenderPass(CommandBuffer);
+    ck(vkEndCommandBuffer(CommandBuffer));
 
-    return m_CommandBuffers[vImageIndex];
+    return CommandBuffer;
 }
 
 void CImguiVullkan::render()

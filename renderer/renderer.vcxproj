@@ -91,11 +91,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Command.cpp" />
     <ClCompile Include="Descriptor.cpp" />
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Command.h" />
     <ClInclude Include="Descriptor.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="VulkanRenderer.h" />

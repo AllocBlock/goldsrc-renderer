@@ -78,7 +78,8 @@ private:
     VkDevice m_Device = VK_NULL_HANDLE;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
-    VkCommandPool m_CommandPool = VK_NULL_HANDLE;
+    CCommand m_Command = CCommand();
+    std::string m_CommandName = "Main";
     VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
     std::vector<VkImage> m_SwapchainImages;
     std::vector<VkImageView> m_SwapchainImageViews;
@@ -93,7 +94,6 @@ private:
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
     std::vector<VkFence> m_InFlightFences;
-    std::vector<VkCommandBuffer> m_CommandBuffers;
     std::vector<VkFramebuffer> m_FrameBuffers;
     VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
 

@@ -25,14 +25,13 @@ void CVulkanRenderer::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevic
     m_ImageViews = vImageViews;
     m_NumSwapchainImage = m_ImageViews.size();
 
-    vkGetDeviceQueue(m_Device, m_GraphicsQueueIndex, 0, &m_GraphicsQueue);
-    __createRenderPass();
-    __createDescriptorSetLayout();
+    __createRenderPass(false);
+
+    __createDefaultDescriptorSetLayout();
     __createSkyDescriptorSetLayout();
     __createLineDescriptorSetLayout();
-    __createCommandPool();
-    __createCommandBuffers();
-    __createGuiCommandBuffers();
+
+    __createCommandPoolAndBuffers();
     __createTextureSampler();
     __createPlaceholderImage();
     __createRecreateResources();
@@ -288,21 +287,15 @@ void CVulkanRenderer::destroy()
     __destroyRecreateResources();
     __destroyGuiResources();
 
-    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_SceneCommandBuffers.size()), m_SceneCommandBuffers.data());
-    m_SceneCommandBuffers.clear();
-    vkFreeCommandBuffers(m_Device, m_CommandPool, static_cast<uint32_t>(m_GuiCommandBuffers.size()), m_GuiCommandBuffers.data());
-    m_GuiCommandBuffers.clear();
-
     m_PlaceholderImagePack.destory(m_Device);
     vkDestroySampler(m_Device, m_TextureSampler, nullptr);
     m_DefaultDescriptor.clear();
     m_SkyDescriptor.clear();
     m_LineDescriptor.clear();
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
-    vkDestroyCommandPool(m_Device, m_CommandPool, nullptr);
+    m_Command.clear();
     m_TextureSampler = VK_NULL_HANDLE;
     m_RenderPass = VK_NULL_HANDLE;
-    m_CommandPool = VK_NULL_HANDLE;
 }
 
 void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
@@ -344,13 +337,13 @@ void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
 
 VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
 {
-    _ASSERTE(vImageIndex >= 0 && vImageIndex < m_SceneCommandBuffers.size());
-    
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+
     bool RerecordCommand = false;
-    if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling || m_RerecordCommand > 0)
+    if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling || m_RerecordCommandTimes > 0)
     {
         RerecordCommand = true;
-        if (m_RerecordCommand > 0) --m_RerecordCommand;
+        if (m_RerecordCommandTimes > 0) --m_RerecordCommandTimes;
     }
     if (RerecordCommand)
     {
@@ -358,7 +351,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        ck(vkBeginCommandBuffer(m_SceneCommandBuffers[vImageIndex], &CommandBufferBeginInfo));
+        ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
         std::array<VkClearValue, 2> ClearValues = {};
         ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -373,16 +366,16 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
         RenderPassBeginInfo.pClearValues = ClearValues.data();
 
-        vkCmdBeginRenderPass(m_SceneCommandBuffers[vImageIndex], &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
 
         VkDeviceSize Offsets[] = { 0 };
         if (m_VertexBufferPack.isValid())
-            vkCmdBindVertexBuffers(m_SceneCommandBuffers[vImageIndex], 0, 1, &m_VertexBufferPack.Buffer, Offsets);
+            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
         if (m_IndexBufferPack.isValid())
-            vkCmdBindIndexBuffer(m_SceneCommandBuffers[vImageIndex], m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(CommandBuffer, m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
         
         if (m_VertexBufferPack.isValid() || m_IndexBufferPack.isValid())
         {
@@ -391,7 +384,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
                 __renderByBspTree(vImageIndex);
             else
             {
-                m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
+                m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, m_DefaultDescriptor.getDescriptorSet(vImageIndex));
                 
                 SPushConstant PushConstant;
                 PushConstant.Opacity = 1.0f;
@@ -399,7 +392,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
                 for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
                 {
                     PushConstant.UseLightmap = m_pScene->Objects[i]->HasLightmap;
-                    m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+                    m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(CommandBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
                     if (m_AreObjectsVisable[i])
                         __recordObjectRenderCommand(vImageIndex, i);
                 }
@@ -407,13 +400,14 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         }
 
         // 3D GUI层，放置选择框等3D标志元素
-        vkCmdNextSubpass(m_SceneCommandBuffers[vImageIndex], VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-        vkCmdExecuteCommands(m_SceneCommandBuffers[vImageIndex], 1, &m_GuiCommandBuffers[vImageIndex]);
+        vkCmdNextSubpass(CommandBuffer, VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        VkCommandBuffer GuiCommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
+        vkCmdExecuteCommands(CommandBuffer, 1, &GuiCommandBuffer);
 
-        vkCmdEndRenderPass(m_SceneCommandBuffers[vImageIndex]);
-        ck(vkEndCommandBuffer(m_SceneCommandBuffers[vImageIndex]));
+        vkCmdEndRenderPass(CommandBuffer);
+        ck(vkEndCommandBuffer(CommandBuffer));
     }
-    return m_SceneCommandBuffers[vImageIndex];
+    return CommandBuffer;
 }
 
 void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
@@ -497,7 +491,7 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
         vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
     }
 
-    for (size_t i = 0; i < m_GuiCommandBuffers.size(); ++i)
+    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         VkCommandBufferInheritanceInfo InheritanceInfo = {};
         InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
@@ -510,16 +504,17 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
         CommandBufferBeginInfo.pInheritanceInfo = &InheritanceInfo;
 
-        ck(vkBeginCommandBuffer(m_GuiCommandBuffers[i], &CommandBufferBeginInfo));
-        m_PipelineSet.GuiLines.bind(m_GuiCommandBuffers[i], m_LineDescriptor.getDescriptorSet(i));
+        VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, i);
+        ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+        m_PipelineSet.GuiLines.bind(CommandBuffer, m_LineDescriptor.getDescriptorSet(i));
 
         VkDeviceSize Offsets[] = { 0 };
         if (NumVertex > 0)
         {
-            vkCmdBindVertexBuffers(m_GuiCommandBuffers[i], 0, 1, &m_Gui.VertexDataPack.Buffer, Offsets);
-            vkCmdDraw(m_GuiCommandBuffers[i], NumVertex, 1, 0, 0);
+            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_Gui.VertexDataPack.Buffer, Offsets);
+            vkCmdDraw(CommandBuffer, NumVertex, 1, 0, 0);
         }
-        ck(vkEndCommandBuffer(m_GuiCommandBuffers[i]));
+        ck(vkEndCommandBuffer(CommandBuffer));
     }
 
     rerecordCommand();
@@ -530,7 +525,8 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeList.clear();
     if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
-    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, m_DefaultDescriptor.getDescriptorSet(vImageIndex));
 
     __renderTreeNode(vImageIndex, 0);
     __renderModels(vImageIndex);
@@ -538,6 +534,8 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
 
 void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
 {
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+
     SPushConstant PushConstant = {};
     PushConstant.Opacity = 1.0f;
 
@@ -550,7 +548,7 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
 
             m_RenderNodeList.emplace_back(ObjectIndex);
             PushConstant.UseLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
-            m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+            m_PipelineSet.TrianglesWithDepthTest.pushConstant<SPushConstant>(CommandBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
     }
@@ -573,19 +571,23 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
 
 void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
 {
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+
     auto [OpaqueSequence, TranparentSequence] = __sortModelRenderSequence();
 
-    m_PipelineSet.TrianglesWithDepthTest.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
+    m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, m_DefaultDescriptor.getDescriptorSet(vImageIndex));
     for(size_t ModelIndex : OpaqueSequence)
         __renderModel(vImageIndex, ModelIndex);
 
-    m_PipelineSet.TrianglesWithBlend.bind(m_SceneCommandBuffers[vImageIndex], m_DefaultDescriptor.getDescriptorSet(vImageIndex));
+    m_PipelineSet.TrianglesWithBlend.bind(CommandBuffer, m_DefaultDescriptor.getDescriptorSet(vImageIndex));
     for (size_t ModelIndex : TranparentSequence)
         __renderModel(vImageIndex, ModelIndex);
 }
 
 void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 {
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+
     _ASSERTE(vModelIndex < m_pScene->BspTree.ModelInfos.size());
 
     const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[vModelIndex];
@@ -597,14 +599,14 @@ void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         PushConstant.UseLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
-        m_PipelineSet.TrianglesWithBlend.pushConstant<SPushConstant>(m_SceneCommandBuffers[vImageIndex], VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+        m_PipelineSet.TrianglesWithBlend.pushConstant<SPushConstant>(CommandBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
 }
 
 void CVulkanRenderer::rerecordCommand()
 {
-    m_RerecordCommand += m_SceneCommandBuffers.size();
+    m_RerecordCommandTimes += m_NumSwapchainImage;
 }
 
 std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
@@ -614,21 +616,23 @@ std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
 
 void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+
     _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
     std::shared_ptr<S3DObject> pObject = m_pScene->Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
-    vkCmdSetDepthBias(m_SceneCommandBuffers[vImageIndex], static_cast<float>(vObjectIndex) / m_pScene->Objects.size(), 0, 0);
+    vkCmdSetDepthBias(CommandBuffer, static_cast<float>(vObjectIndex) / m_pScene->Objects.size(), 0, 0);
     if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
-        vkCmdDrawIndexed(m_SceneCommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0, 0);
+        vkCmdDrawIndexed(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0, 0);
     else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
-        vkCmdDraw(m_SceneCommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
+        vkCmdDraw(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0);
     else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_STRIP_LIST)
-        vkCmdDraw(m_SceneCommandBuffers[vImageIndex], DataPosition.Size, 1, DataPosition.Offset, 0);
+        vkCmdDraw(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0);
     else
         throw std::runtime_error(u8"物体类型错误");
 }
 
-void CVulkanRenderer::__createRenderPass()
+void CVulkanRenderer::__createRenderPass(bool vPresentLayout)
 {
     VkAttachmentDescription ColorAttachment = {};
     ColorAttachment.format = m_ImageFormat;
@@ -638,8 +642,7 @@ void CVulkanRenderer::__createRenderPass()
     ColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    //ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    ColorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // not present but next render pass
+    ColorAttachment.finalLayout = vPresentLayout ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription DepthAttachment = {};
     DepthAttachment.format = __findDepthFormat();
@@ -695,7 +698,7 @@ void CVulkanRenderer::__createRenderPass()
     ck(vkCreateRenderPass(m_Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
-void CVulkanRenderer::__createDescriptorSetLayout()
+void CVulkanRenderer::__createDefaultDescriptorSetLayout()
 {
     m_DefaultDescriptor.clear();
 
@@ -908,14 +911,11 @@ void CVulkanRenderer::__createGuiLinesPipeline()
     );
 }
 
-void CVulkanRenderer::__createCommandPool()
+void CVulkanRenderer::__createCommandPoolAndBuffers()
 {
-    VkCommandPoolCreateInfo PoolInfo = {};
-    PoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    PoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    PoolInfo.queueFamilyIndex = m_GraphicsQueueIndex;
-
-    ck(vkCreateCommandPool(m_Device, &PoolInfo, nullptr, &m_CommandPool));
+    m_Command.createPool(m_Device, ECommandType::RESETTABLE, m_GraphicsQueueIndex);
+    m_Command.createBuffers(m_SceneCommandName, m_NumSwapchainImage, ECommandBufferLevel::PRIMARY);
+    m_Command.createBuffers(m_GuiCommandName, m_NumSwapchainImage, ECommandBufferLevel::SECONDARY);
 }
 
 void CVulkanRenderer::__createDepthResources()
@@ -1277,32 +1277,6 @@ void CVulkanRenderer::__updateLineDescriptorSets()
     }
 }
 
-void CVulkanRenderer::__createCommandBuffers()
-{
-    m_SceneCommandBuffers.resize(m_NumSwapchainImage);
-
-    VkCommandBufferAllocateInfo CommandBufferAllocInfo = {};
-    CommandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    CommandBufferAllocInfo.commandPool = m_CommandPool;
-    CommandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    CommandBufferAllocInfo.commandBufferCount = m_NumSwapchainImage;
-
-    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_SceneCommandBuffers.data()));
-}
-
-void CVulkanRenderer::__createGuiCommandBuffers()
-{
-    m_GuiCommandBuffers.resize(m_NumSwapchainImage);
-
-    VkCommandBufferAllocateInfo CommandBufferAllocInfo = {};
-    CommandBufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    CommandBufferAllocInfo.commandPool = m_CommandPool;
-    CommandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-    CommandBufferAllocInfo.commandBufferCount = m_NumSwapchainImage;
-
-    ck(vkAllocateCommandBuffers(m_Device, &CommandBufferAllocInfo, m_GuiCommandBuffers.data()));
-}
-
 void CVulkanRenderer::__createPlaceholderImage()
 {
     uint8_t Pixel = 0;
@@ -1401,7 +1375,7 @@ uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropert
 }
 
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
-    VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
+    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
 
     VkImageMemoryBarrier Barrier = {};
     Barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -1474,7 +1448,7 @@ void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, 
         1, &Barrier
     );
 
-    Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
+    m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
 bool CVulkanRenderer::__hasStencilComponent(VkFormat vFormat) {
@@ -1507,18 +1481,18 @@ void CVulkanRenderer::__createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsa
 
 void CVulkanRenderer::__copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize)
 {
-    VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
+    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
 
     VkBufferCopy CopyRegion = {};
     CopyRegion.size = vSize;
     vkCmdCopyBuffer(CommandBuffer, vSrcBuffer, vDstBuffer, 1, &CopyRegion);
 
-    Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
+    m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
 void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount)
 {
-    VkCommandBuffer CommandBuffer = Common::beginSingleTimeCommands(m_Device, m_CommandPool);
+    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
 
     VkBufferImageCopy Region = {};
     Region.bufferOffset = 0;
@@ -1535,7 +1509,7 @@ void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size
 
     vkCmdCopyBufferToImage(CommandBuffer, vBuffer, vImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
     
-    Common::endSingleTimeCommands(m_Device, m_CommandPool, m_GraphicsQueue, CommandBuffer);
+    m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
 size_t CVulkanRenderer::__getActualTextureNum()
@@ -1824,8 +1798,9 @@ void CVulkanRenderer::__updateGuiUniformBuffer(uint32_t vImageIndex)
 
 void CVulkanRenderer::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
     const VkDeviceSize Offsets[] = { 0 };
-    m_PipelineSet.TrianglesSky.bind(m_SceneCommandBuffers[vImageIndex], m_SkyDescriptor.getDescriptorSet(vImageIndex));
-    vkCmdBindVertexBuffers(m_SceneCommandBuffers[vImageIndex], 0, 1, &m_SkyBox.VertexDataPack.Buffer, Offsets);
-    vkCmdDraw(m_SceneCommandBuffers[vImageIndex], m_SkyBox.VertexNum, 1, 0, 0);
+    m_PipelineSet.TrianglesSky.bind(CommandBuffer, m_SkyDescriptor.getDescriptorSet(vImageIndex));
+    vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_SkyBox.VertexDataPack.Buffer, Offsets);
+    vkCmdDraw(CommandBuffer, m_SkyBox.VertexNum, 1, 0, 0);
 }

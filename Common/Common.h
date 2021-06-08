@@ -72,8 +72,6 @@ namespace Common
 
     std::vector<char> readFileAsChar(std::filesystem::path vFilePath);
     VkShaderModule createShaderModule(VkDevice vDevice, const std::vector<char>& vShaderCode);
-    VkCommandBuffer beginSingleTimeCommands(VkDevice vDevice, VkCommandPool vCommandPool);
-    void endSingleTimeCommands(VkDevice vDevice, VkCommandPool vCommandPool, VkQueue vGraphicQueue, VkCommandBuffer vCommandBuffer);
     SQueueFamilyIndices findQueueFamilies(const VkPhysicalDevice& vPhysicalDevice, const VkSurfaceKHR& vSurface);
     SSwapChainSupportDetails getSwapChainSupport(const VkPhysicalDevice& vPhysicalDevice, const VkSurfaceKHR& vSurface);
     bool checkValidationLayerSupport(const std::vector<const char*>& vValidationLayers);
