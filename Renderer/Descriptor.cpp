@@ -29,17 +29,17 @@ VkDescriptorSetLayout CDescriptor::createLayout(VkDevice vDevice)
     LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
     LayoutInfo.pBindings = Bindings.data();
 
-    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_Layout));
+    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_PipelineLayout));
 
-    return m_Layout;
+    return m_PipelineLayout;
 }
 
 const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(VkDescriptorPool vPool, size_t vNum)
 {
     _ASSERTE(m_Device != VK_NULL_HANDLE);
-    _ASSERTE(m_Layout != VK_NULL_HANDLE);
+    _ASSERTE(m_PipelineLayout != VK_NULL_HANDLE);
 
-    std::vector<VkDescriptorSetLayout> Layouts(vNum, m_Layout);
+    std::vector<VkDescriptorSetLayout> Layouts(vNum, m_PipelineLayout);
 
     VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
     DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -85,7 +85,7 @@ void CDescriptor::clear()
 
 VkDescriptorSetLayout CDescriptor::getLayout() const 
 {
-    return m_Layout; 
+    return m_PipelineLayout; 
 }
 
 const std::vector<VkDescriptorPoolSize>& CDescriptor::getPoolSizeSet() const
@@ -101,9 +101,9 @@ VkDescriptorSet CDescriptor::getDescriptorSet(size_t vIndex) const
 
 void CDescriptor::__destoryLayout()
 {
-    if (m_Layout != VK_NULL_HANDLE)
+    if (m_PipelineLayout != VK_NULL_HANDLE)
     {
-        vkDestroyDescriptorSetLayout(m_Device, m_Layout, nullptr);
-        m_Layout = VK_NULL_HANDLE;
+        vkDestroyDescriptorSetLayout(m_Device, m_PipelineLayout, nullptr);
+        m_PipelineLayout = VK_NULL_HANDLE;
     }
 }

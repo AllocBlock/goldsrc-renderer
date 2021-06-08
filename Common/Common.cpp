@@ -179,3 +179,50 @@ VkImageView Common::createImageView(VkDevice vDevice, VkImage vImage, VkFormat v
 
     return ImageView;
 }
+
+uint32_t Common::findMemoryType(VkPhysicalDevice vPhysicalDevice, uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
+{
+    VkPhysicalDeviceMemoryProperties MemProperties;
+    vkGetPhysicalDeviceMemoryProperties(vPhysicalDevice, &MemProperties);
+    for (uint32_t i = 0; i < MemProperties.memoryTypeCount; ++i)
+    {
+        if (vTypeFilter & (1 << i) &&
+            (MemProperties.memoryTypes[i].propertyFlags & vProperties))
+        {
+            return i;
+        }
+    }
+
+    throw std::runtime_error(u8"未找到合适的存储类别");
+}
+
+void Common::createBuffer(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory)
+{
+    _ASSERTE(vSize > 0);
+    VkBufferCreateInfo BufferInfo = {};
+    BufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    BufferInfo.size = vSize;
+    BufferInfo.usage = vUsage;
+    BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    ck(vkCreateBuffer(vDevice, &BufferInfo, nullptr, &voBuffer));
+
+    VkMemoryRequirements MemRequirements;
+    vkGetBufferMemoryRequirements(vDevice, voBuffer, &MemRequirements);
+
+    VkMemoryAllocateInfo AllocInfo = {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    AllocInfo.allocationSize = MemRequirements.size;
+    AllocInfo.memoryTypeIndex = Common::findMemoryType(vPhysicalDevice, MemRequirements.memoryTypeBits, vProperties);
+
+    ck(vkAllocateMemory(vDevice, &AllocInfo, nullptr, &voBufferMemory));
+
+    ck(vkBindBufferMemory(vDevice, voBuffer, voBufferMemory, 0));
+}
+
+void Common::copyBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize)
+{
+    VkBufferCopy CopyRegion = {};
+    CopyRegion.size = vSize;
+    vkCmdCopyBuffer(vCommandBuffer, vSrcBuffer, vDstBuffer, 1, &CopyRegion);
+}

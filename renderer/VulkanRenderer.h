@@ -2,7 +2,7 @@
 #include "Common.h"
 #include "Scene.h"
 #include "Camera.h"
-#include "Pipeline.h"
+#include "PipelineSkybox.h"
 #include "Descriptor.h"
 #include "Command.h"
 
@@ -74,33 +74,6 @@ struct SPointData
     }
 };
 
-struct SSimplePointData
-{
-    glm::vec3 Pos;
-
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SSimplePointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return BindingDescription;
-    }
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions()
-    {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptions(1);
-
-        AttributeDescriptions[0].binding = 0;
-        AttributeDescriptions[0].location = 0;
-        AttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[0].offset = offsetof(SSimplePointData, Pos);
-
-        return AttributeDescriptions;
-    }
-};
-
 struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Proj;
@@ -111,18 +84,6 @@ struct SUniformBufferObjectVert
 struct SUniformBufferObjectFrag
 {
     alignas(16) glm::vec3 Eye;
-};
-
-struct SSkyUniformBufferObjectVert
-{
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::vec3 EyePosition;
-};
-
-struct SSkyUniformBufferObjectFrag
-{
-    alignas(16) glm::mat4 UpCorrection;
 };
 
 struct SGuiUniformBufferObjectVert
@@ -145,10 +106,10 @@ struct SObjectDataPosition
 
 struct SPipelineSet
 {
-    CPipeline TrianglesWithDepthTest;
-    CPipeline TrianglesWithBlend;
-    CPipeline TrianglesSky;
-    CPipeline GuiLines;
+    CPipelineBase TrianglesWithDepthTest;
+    CPipelineBase TrianglesWithBlend;
+    CPipelineBase TrianglesSky;
+    CPipelineBase GuiLines;
 
     void destory()
     {
@@ -157,16 +118,6 @@ struct SPipelineSet
         TrianglesSky.destory();
         GuiLines.destory();
     }
-};
-
-struct SSkyBox
-{
-    bool IsInited = false;
-    Common::SImagePack SkyBoxImagePack; // cube
-    Common::SBufferPack VertexDataPack;
-    size_t VertexNum = 0;
-    std::vector<Common::SBufferPack> VertUniformBufferPacks;
-    std::vector<Common::SBufferPack> FragUniformBufferPacks;
 };
 
 enum class EGuiObjectType
@@ -338,7 +289,6 @@ private:
     Common::SImagePack m_LightmapImagePack;
 
     std::shared_ptr<SScene> m_pScene;
-    SSkyBox m_SkyBox;
     SGui m_Gui;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
 

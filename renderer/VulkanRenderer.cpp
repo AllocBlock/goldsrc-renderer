@@ -110,127 +110,6 @@ void CVulkanRenderer::__destroySceneResources()
     m_VertexBufferPack.destory(m_Device);
 }
 
-void CVulkanRenderer::__createSkyBoxResources()
-{
-    _ASSERTE(m_pScene && m_pScene->UseSkyBox);
-    m_SkyBox.IsInited = true;
-
-    // format 6 image into one cubemap image
-    int TexWidth = m_pScene->SkyBoxImages[0]->getImageWidth();
-    int TexHeight = m_pScene->SkyBoxImages[0]->getImageHeight();
-    size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
-    size_t TotalImageSize = SingleFaceImageSize * 6;
-    uint8_t* pPixelData = new uint8_t[TotalImageSize];
-    memset(pPixelData, 0, TotalImageSize);
-    /*
-     * a cubemap image in vulkan has 6 faces(layers), and in sequence they are
-     * +x, -x, +y, -y, +z, -z
-     * 
-     * in vulkan:
-     * +y
-     * +z +x -z -x
-     * -y
-     * 
-     * cubemap face to outside(fold +y and -y behind)
-     * in GoldSrc:
-     * up
-     * right front left back
-     * down
-     * in sequence: front back up down right left
-     */
-    
-    for (size_t i = 0; i < m_pScene->SkyBoxImages.size(); ++i)
-    {
-        _ASSERTE(TexWidth == m_pScene->SkyBoxImages[i]->getImageWidth() && TexHeight == m_pScene->SkyBoxImages[i]->getImageHeight());
-        const void* pData = m_pScene->SkyBoxImages[i]->getData();
-        memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
-    }
-
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = TexWidth;
-    ImageInfo.extent.height = TexHeight;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 6;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
-
-    stageFillImage(pPixelData, TotalImageSize, ImageInfo, m_SkyBox.SkyBoxImagePack);
-    delete[] pPixelData;
-
-    m_SkyBox.SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBox.SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
-
-    // create plane and vertex buffer
-    const std::vector<glm::vec3> Vertices =
-    {
-        { 1.0,  1.0,  1.0}, // 0
-        {-1.0,  1.0,  1.0}, // 1
-        {-1.0,  1.0, -1.0}, // 2
-        { 1.0,  1.0, -1.0}, // 3
-        { 1.0, -1.0,  1.0}, // 4
-        {-1.0, -1.0,  1.0}, // 5
-        {-1.0, -1.0, -1.0}, // 6
-        { 1.0, -1.0, -1.0}, // 7
-    };
-
-    //const std::vector<SSimplePointData> PointData =
-    //{
-    //    {Vertices[0]}, {Vertices[3]}, {Vertices[2]}, {Vertices[0]}, {Vertices[2]}, {Vertices[1]}, // +y
-    //    {Vertices[4]}, {Vertices[7]}, {Vertices[6]}, {Vertices[4]}, {Vertices[6]}, {Vertices[5]}, // -y
-    //    {Vertices[4]}, {Vertices[7]}, {Vertices[3]}, {Vertices[4]}, {Vertices[3]}, {Vertices[0]}, // +x
-    //    {Vertices[1]}, {Vertices[2]}, {Vertices[6]}, {Vertices[1]}, {Vertices[6]}, {Vertices[5]}, // -x
-    //    {Vertices[4]}, {Vertices[0]}, {Vertices[1]}, {Vertices[4]}, {Vertices[1]}, {Vertices[5]}, // +z
-    //    {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
-    //};
-
-    const std::vector<SSimplePointData> PointData =
-    {
-        {Vertices[4]}, {Vertices[0]}, {Vertices[1]}, {Vertices[4]}, {Vertices[1]}, {Vertices[5]}, // +z
-        {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
-        {Vertices[0]}, {Vertices[3]}, {Vertices[2]}, {Vertices[0]}, {Vertices[2]}, {Vertices[1]}, // +y
-        {Vertices[5]}, {Vertices[6]}, {Vertices[7]}, {Vertices[5]}, {Vertices[7]}, {Vertices[4]}, // -y
-        {Vertices[4]}, {Vertices[7]}, {Vertices[3]}, {Vertices[4]}, {Vertices[3]}, {Vertices[0]}, // +x
-        {Vertices[1]}, {Vertices[2]}, {Vertices[6]}, {Vertices[1]}, {Vertices[6]}, {Vertices[5]}, // -x
-    };
-
-    VkDeviceSize DataSize = sizeof(SSimplePointData) * PointData.size();
-    m_SkyBox.VertexNum = PointData.size();
-
-    stageFillBuffer(PointData.data(), DataSize, m_SkyBox.VertexDataPack);
-  
-    // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
-    VkDeviceSize FragBufferSize = sizeof(SSkyUniformBufferObjectFrag);
-    m_SkyBox.VertUniformBufferPacks.resize(m_NumSwapchainImage);
-    m_SkyBox.FragUniformBufferPacks.resize(m_NumSwapchainImage);
-
-    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
-    {
-        __createBuffer(VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.VertUniformBufferPacks[i].Buffer, m_SkyBox.VertUniformBufferPacks[i].Memory);
-        __createBuffer(FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_SkyBox.FragUniformBufferPacks[i].Buffer, m_SkyBox.FragUniformBufferPacks[i].Memory);
-    }
-}
-
-void CVulkanRenderer::__destroySkyBoxResources()
-{
-    m_SkyBox.SkyBoxImagePack.destory(m_Device);
-    m_SkyBox.VertexDataPack.destory(m_Device);
-    for (size_t i = 0; i < m_SkyBox.VertUniformBufferPacks.size(); ++i)
-    {
-        m_SkyBox.VertUniformBufferPacks[i].destory(m_Device);
-        m_SkyBox.FragUniformBufferPacks[i].destory(m_Device);
-    }
-    m_SkyBox.VertUniformBufferPacks.clear();
-    m_SkyBox.FragUniformBufferPacks.clear();
-}
-
 void CVulkanRenderer::__createGuiResources()
 {
     // uniform buffer
@@ -1320,18 +1199,7 @@ void CVulkanRenderer::__createImage(VkImageCreateInfo vImageInfo, VkMemoryProper
 
 uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
 {
-    VkPhysicalDeviceMemoryProperties MemProperties;
-    vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &MemProperties);
-    for (uint32_t i = 0; i < MemProperties.memoryTypeCount; ++i)
-    {
-        if (vTypeFilter & (1 << i) && 
-            (MemProperties.memoryTypes[i].propertyFlags & vProperties))
-        {
-            return i;
-        }
-    }
-
-    throw std::runtime_error(u8"未找到合适的存储类别");
+    Common::findMemoryType(m_PhysicalDevice, vTypeFilter, vProperties);
 }
 
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
@@ -1417,36 +1285,13 @@ bool CVulkanRenderer::__hasStencilComponent(VkFormat vFormat) {
 
 void CVulkanRenderer::__createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory)
 {
-    _ASSERTE(vSize > 0);
-    VkBufferCreateInfo BufferInfo = {};
-    BufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    BufferInfo.size = vSize;
-    BufferInfo.usage = vUsage;
-    BufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    ck(vkCreateBuffer(m_Device, &BufferInfo, nullptr, &voBuffer));
-
-    VkMemoryRequirements MemRequirements;
-    vkGetBufferMemoryRequirements(m_Device, voBuffer, &MemRequirements);
-
-    VkMemoryAllocateInfo AllocInfo = {};
-    AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    AllocInfo.allocationSize = MemRequirements.size;
-    AllocInfo.memoryTypeIndex = __findMemoryType(MemRequirements.memoryTypeBits, vProperties);
-
-    ck(vkAllocateMemory(m_Device, &AllocInfo, nullptr, &voBufferMemory));
-
-    ck(vkBindBufferMemory(m_Device, voBuffer, voBufferMemory, 0));
+    Common::createBuffer(m_PhysicalDevice, m_Device, vSize, vUsage, vProperties, voBuffer, voBufferMemory);
 }
 
 void CVulkanRenderer::__copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize)
 {
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-
-    VkBufferCopy CopyRegion = {};
-    CopyRegion.size = vSize;
-    vkCmdCopyBuffer(CommandBuffer, vSrcBuffer, vDstBuffer, 1, &CopyRegion);
-
+    Common::copyBuffer(CommandBuffer, vSrcBuffer, vDstBuffer, vSize);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
