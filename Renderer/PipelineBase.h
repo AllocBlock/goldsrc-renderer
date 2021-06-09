@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "Descriptor.h"
 
 #include <filesystem>
 #include <optional>
@@ -11,9 +12,9 @@ public:
     CPipelineBase() = delete;
     CPipelineBase(std::filesystem::path vVertShaderPath, std::filesystem::path vFragShaderPath) : m_VertShaderPath(vVertShaderPath), m_FragShaderPath(vFragShaderPath) {}
 
-    void create(VkDevice vDevice, VkRenderPass vRenderPass, uint32_t vSubpass, VkDescriptorSetLayout vDescriptorSetLayout, VkExtent2D vExtent);
-    void destory();
-    void bind(VkCommandBuffer vCommandBuffer, VkDescriptorSet vDescSet);
+    void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
+    void destroy();
+    void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
 
     template <typename T>
     void pushConstant(VkCommandBuffer vCommandBuffer, VkShaderStageFlags vState, T vPushConstant)
@@ -21,7 +22,10 @@ public:
         vkCmdPushConstants(vCommandBuffer, m_Layout, vState, 0, sizeof(vPushConstant), &vPushConstant);
     }
 
+    const CDescriptor& getDescriptor() const { return m_Descriptor; }
+
 protected:
+    virtual void _createDescriptor(VkDescriptorPool vPool, uint32_t vImageNum) = 0;
     virtual VkPipelineShaderStageCreateInfo _getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule);
     virtual VkPipelineVertexInputStateCreateInfo _getVertexInputStageInfoV();
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV();
@@ -44,9 +48,11 @@ protected:
     static VkPipelineDynamicStateCreateInfo         getDefaultDynamicStateInfo();
     static std::vector<VkPushConstantRange>         getDefaultPushConstantRangeSet();
 
+    CDescriptor m_Descriptor;
     std::filesystem::path m_VertShaderPath;
     std::filesystem::path m_FragShaderPath;
 
+    VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;
     VkPipeline m_Pipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;

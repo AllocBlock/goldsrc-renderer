@@ -93,13 +93,17 @@
   <ItemGroup>
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="Descriptor.cpp" />
-    <ClCompile Include="Pipeline.cpp" />
+    <ClCompile Include="PipelineBase.cpp" />
+    <ClCompile Include="PipelineDepthTest.cpp" />
+    <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command.h" />
     <ClInclude Include="Descriptor.h" />
-    <ClInclude Include="Pipeline.h" />
+    <ClInclude Include="PipelineBase.h" />
+    <ClInclude Include="PipelineDepthTest.h" />
+    <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,7 @@
 #pragma once
 #include "PipelineBase.h"
 #include "Common.h"
+#include "Descriptor.h"
 
 #include <glm/glm.hpp>
 
@@ -38,11 +39,16 @@ public:
     void createResources(size_t vImageNum);
 
 protected:
+    virtual void _createDescriptor(VkDescriptorPool vPool, uint32_t vImageNum) override;
     virtual VkPipelineVertexInputStateCreateInfo _getVertexInputStageInfoV() override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
     virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
 
 private:
+    void __createTextureSampler();
+    void __updateDescriptorSet();
+
+    VkSampler m_TextureSampler = VK_NULL_HANDLE;
     Common::SImagePack m_SkyBoxImagePack; // cubemap
     Common::SBufferPack m_VertexDataPack;
     size_t m_VertexNum = 0;

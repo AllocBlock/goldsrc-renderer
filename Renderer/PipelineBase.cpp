@@ -134,8 +134,11 @@ std::vector<VkPushConstantRange> CPipelineBase::getDefaultPushConstantRangeSet()
     return {};
 }
 
-void CPipelineBase::create(VkDevice vDevice, VkRenderPass vRenderPass, uint32_t vSubpass, VkDescriptorSetLayout vDescriptorSetLayout, VkExtent2D vExtent)
+void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
 {
+    destroy();
+
+    m_PhysicalDevice = vPhysicalDevice;
     m_Device = vDevice;
 
     auto VertShaderCode = Common::readFileAsChar(m_VertShaderPath);
@@ -146,10 +149,11 @@ void CPipelineBase::create(VkDevice vDevice, VkRenderPass vRenderPass, uint32_t 
 
     const auto& PushConstantRangeSet = _getPushConstantRangeSetV();
 
+    const auto& Layout = m_Descriptor.getLayout();
     VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
     PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutInfo.setLayoutCount = 1;
-    PipelineLayoutInfo.pSetLayouts = &vDescriptorSetLayout;
+    PipelineLayoutInfo.pSetLayouts = &Layout;
     PipelineLayoutInfo.pushConstantRangeCount = PushConstantRangeSet.size();
     PipelineLayoutInfo.pPushConstantRanges = PushConstantRangeSet.data();
 
@@ -177,21 +181,24 @@ void CPipelineBase::create(VkDevice vDevice, VkRenderPass vRenderPass, uint32_t 
     vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
 }
 
-void CPipelineBase::destory()
+void CPipelineBase::destroy()
 {
     if (m_Device == VK_NULL_HANDLE) return;
+    m_Descriptor.clear();
 
     vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
     vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
-    m_Device = VK_NULL_HANDLE;
-    m_Pipeline = VK_NULL_HANDLE;
     m_PipelineLayout = VK_NULL_HANDLE;
+    m_Pipeline = VK_NULL_HANDLE;
+    m_Device = VK_NULL_HANDLE;
+    m_PhysicalDevice = VK_NULL_HANDLE;
 }
 
-void CPipelineBase::bind(VkCommandBuffer vCommandBuffer, VkDescriptorSet vDescSet)
+void CPipelineBase::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
 {
+    const auto& DescriptorSet = m_Descriptor.getDescriptorSet(vImageIndex);
     vkCmdBindPipeline(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    vkCmdBindDescriptorSets(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &vDescSet, 0, nullptr);
+    vkCmdBindDescriptorSets(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
 }
 
 VkPipelineShaderStageCreateInfo CPipelineBase::_getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule)

@@ -14,21 +14,24 @@ struct SSkyUniformBufferObjectFrag
 
 void CPipelineSkybox::destroy()
 {
-    m_SkyBoxImagePack.destory(m_Device);
-    m_VertexDataPack.destory(m_Device);
+    if (m_TextureSampler != VK_NULL_HANDLE)
+        vkDestroySampler(m_Device, m_TextureSampler, nullptr);
+    m_SkyBoxImagePack.destroy(m_Device);
+    m_VertexDataPack.destroy(m_Device);
     for (size_t i = 0; i < m_VertUniformBufferPacks.size(); ++i)
     {
-        m_VertUniformBufferPacks[i].destory(m_Device);
-        m_FragUniformBufferPacks[i].destory(m_Device);
+        m_VertUniformBufferPacks[i].destroy(m_Device);
+        m_FragUniformBufferPacks[i].destroy(m_Device);
     }
     m_VertUniformBufferPacks.clear();
     m_FragUniformBufferPacks.clear();
 
-    CPipelineBase::destory();
+    CPipelineBase::destroy();
 }
 
 void CPipelineSkybox::createResources(size_t vImageNum)
 {
+
     _ASSERTE(m_pScene && m_pScene->UseSkyBox);
 
     // format 6 image into one cubemap image
@@ -162,4 +165,72 @@ VkPipelineDepthStencilStateCreateInfo CPipelineSkybox::_getDepthStencilInfoV()
     DepthStencilInfo.stencilTestEnable = VK_FALSE;
 
     return DepthStencilInfo;
+}
+
+void CPipelineSkybox::_createDescriptor(VkDescriptorPool vPool, uint32_t vImageNum)
+{
+    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    m_Descriptor.clear();
+
+    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createDescriptorSetSet(vPool, vImageNum);
+}
+
+void CPipelineSkybox::__createTextureSampler()
+{
+    VkPhysicalDeviceProperties Properties = {};
+    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
+
+    VkSamplerCreateInfo SamplerInfo = {};
+    SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    SamplerInfo.magFilter = VK_FILTER_LINEAR;
+    SamplerInfo.minFilter = VK_FILTER_LINEAR;
+    SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    SamplerInfo.anisotropyEnable = VK_TRUE;
+    SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
+    SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
+    SamplerInfo.compareEnable = VK_FALSE;
+    SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    SamplerInfo.mipLodBias = 0.0f;
+    SamplerInfo.minLod = 0.0f;
+    SamplerInfo.maxLod = 0.0f;
+
+    ck(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
+}
+
+void CPipelineSkybox::__updateDescriptorSet()
+{
+    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    for (size_t i = 0; i < DescriptorNum; ++i)
+    {
+        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
+
+        VkDescriptorBufferInfo VertBufferInfo = {};
+        VertBufferInfo.buffer = m_VertUniformBufferPacks[i].Buffer;
+        VertBufferInfo.offset = 0;
+        VertBufferInfo.range = sizeof(SSkyUniformBufferObjectVert);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
+
+        VkDescriptorBufferInfo FragBufferInfo = {};
+        FragBufferInfo.buffer = m_FragUniformBufferPacks[i].Buffer;
+        FragBufferInfo.offset = 0;
+        FragBufferInfo.range = sizeof(SSkyUniformBufferObjectFrag);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
+
+        VkDescriptorImageInfo CombinedSamplerInfo = {};
+        CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        CombinedSamplerInfo.imageView = m_SkyBoxImagePack.ImageView;
+        CombinedSamplerInfo.sampler = m_TextureSampler;
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
+
+        m_Descriptor.update(i, DescriptorWriteInfoSet);
+    }
 }

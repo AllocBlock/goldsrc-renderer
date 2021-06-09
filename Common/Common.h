@@ -20,7 +20,7 @@ namespace Common
             return Image != VK_NULL_HANDLE && Memory != VK_NULL_HANDLE && ImageView != VK_NULL_HANDLE;
         }
 
-        void destory(VkDevice vDevice)
+        void destroy(VkDevice vDevice)
         {
             vkDestroyImage(vDevice, Image, nullptr);
             vkFreeMemory(vDevice, Memory, nullptr);
@@ -41,7 +41,7 @@ namespace Common
             return Buffer != VK_NULL_HANDLE && Memory != VK_NULL_HANDLE;
         }
 
-        void destory(VkDevice vDevice)
+        void destroy(VkDevice vDevice)
         {
             vkDestroyBuffer(vDevice, Buffer, nullptr);
             vkFreeMemory(vDevice, Memory, nullptr);

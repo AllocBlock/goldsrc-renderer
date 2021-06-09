@@ -18,7 +18,7 @@
     <ClCompile Include="VulkanRenderer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Pipeline.cpp">
+    <ClCompile Include="PipelineBase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Descriptor.cpp">
@@ -27,18 +27,30 @@
     <ClCompile Include="Command.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineSkybox.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineDepthTest.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VulkanRenderer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Pipeline.h">
+    <ClInclude Include="PipelineBase.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Descriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Command.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSkybox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineDepthTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

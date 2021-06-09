@@ -34,6 +34,7 @@ public:
     VkDescriptorSetLayout getLayout() const;
     const std::vector<VkDescriptorPoolSize>& getPoolSizeSet() const;
     VkDescriptorSet getDescriptorSet(size_t vIndex) const;
+    size_t getDescriptorSetNum() const;
 
 private:
     void __destoryLayout();

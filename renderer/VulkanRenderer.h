@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "PipelineSkybox.h"
+#include "PipelineDepthTest.h"
 #include "Descriptor.h"
 #include "Command.h"
 
@@ -17,85 +18,10 @@ enum class ERenderMethod
     BSP
 };
 
-struct SPointData
-{
-    glm::vec3 Pos;
-    glm::vec3 Color;
-    glm::vec3 Normal;
-    glm::vec2 TexCoord;
-    glm::vec2 LightmapCoord;
-    uint32_t TexIndex;
-
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SPointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return BindingDescription;
-    }
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions()
-    {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptions(6);
-
-        AttributeDescriptions[0].binding = 0;
-        AttributeDescriptions[0].location = 0;
-        AttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[0].offset = offsetof(SPointData, Pos);
-
-        AttributeDescriptions[1].binding = 0;
-        AttributeDescriptions[1].location = 1;
-        AttributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[1].offset = offsetof(SPointData, Color);
-
-        AttributeDescriptions[2].binding = 0;
-        AttributeDescriptions[2].location = 2;
-        AttributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[2].offset = offsetof(SPointData, Normal);
-
-        AttributeDescriptions[3].binding = 0;
-        AttributeDescriptions[3].location = 3;
-        AttributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptions[3].offset = offsetof(SPointData, TexCoord);
-
-        AttributeDescriptions[4].binding = 0;
-        AttributeDescriptions[4].location = 4;
-        AttributeDescriptions[4].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptions[4].offset = offsetof(SPointData, LightmapCoord);
-
-        AttributeDescriptions[5].binding = 0;
-        AttributeDescriptions[5].location = 5;
-        AttributeDescriptions[5].format = VK_FORMAT_R32_UINT;
-        AttributeDescriptions[5].offset = offsetof(SPointData, TexIndex);
-
-        return AttributeDescriptions;
-    }
-};
-
-struct SUniformBufferObjectVert
-{
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::mat4 Model;
-};
-
-struct SUniformBufferObjectFrag
-{
-    alignas(16) glm::vec3 Eye;
-};
-
 struct SGuiUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
-};
-
-struct SPushConstant
-{
-    VkBool32 UseLightmap = VK_FALSE;
-    float Opacity = 1.0;
 };
 
 struct SObjectDataPosition
@@ -106,17 +32,17 @@ struct SObjectDataPosition
 
 struct SPipelineSet
 {
-    CPipelineBase TrianglesWithDepthTest;
+    CPipelineDepthTest TrianglesWithDepthTest;
     CPipelineBase TrianglesWithBlend;
-    CPipelineBase TrianglesSky;
+    CPipelineSkybox TrianglesSky;
     CPipelineBase GuiLines;
 
-    void destory()
+    void destroy()
     {
-        TrianglesWithDepthTest.destory();
-        TrianglesWithBlend.destory();
-        TrianglesSky.destory();
-        GuiLines.destory();
+        TrianglesWithDepthTest.destroy();
+        TrianglesWithBlend.destroy();
+        TrianglesSky.destroy();
+        GuiLines.destroy();
     }
 };
 
@@ -186,7 +112,6 @@ public:
 private:
     void __createRenderPass(bool vPresentLayout);
     void __createDefaultDescriptorSetLayout();
-    void __createSkyDescriptorSetLayout();
     void __createLineDescriptorSetLayout();
     void __createGraphicsPipelines();
     void __createCommandPoolAndBuffers();
@@ -202,7 +127,6 @@ private:
     void __createUniformBuffers();
     void __createDescriptorPool();
     void __createDefaultDescriptorSets();
-    void __createSkyDescriptorSets();
     void __createLineDescriptorSets();
     void __createPlaceholderImage();
 
@@ -260,8 +184,6 @@ private:
     uint32_t m_GraphicsQueueIndex = 0;
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-    CDescriptor m_DefaultDescriptor = CDescriptor();
-    CDescriptor m_SkyDescriptor = CDescriptor();
     CDescriptor m_LineDescriptor = CDescriptor();
     SPipelineSet m_PipelineSet = 
     {
@@ -280,10 +202,7 @@ private:
 
     Common::SBufferPack m_VertexBufferPack;
     Common::SBufferPack m_IndexBufferPack;
-    std::vector<Common::SBufferPack> m_VertUniformBufferPacks;
-    std::vector<Common::SBufferPack> m_FragUniformBufferPacks;
     Common::SImagePack m_PlaceholderImagePack;
-    VkSampler m_TextureSampler = VK_NULL_HANDLE;
     std::vector<Common::SImagePack> m_TextureImagePacks;
     Common::SImagePack m_DepthImagePack;
     Common::SImagePack m_LightmapImagePack;
@@ -306,6 +225,4 @@ private:
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;
 
     size_t m_NumSwapchainImage = 0;
-
-    const size_t m_MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
 };

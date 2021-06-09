@@ -99,6 +99,11 @@ VkDescriptorSet CDescriptor::getDescriptorSet(size_t vIndex) const
     return m_DescriptorSetSet[vIndex];
 }
 
+size_t CDescriptor::getDescriptorSetNum() const
+{
+    return m_DescriptorSetSet.size();
+}
+
 void CDescriptor::__destoryLayout()
 {
     if (m_PipelineLayout != VK_NULL_HANDLE)
