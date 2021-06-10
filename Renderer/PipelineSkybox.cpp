@@ -1,5 +1,7 @@
 #include "PipelineSkybox.h"
 
+#include <glm/ext/matrix_transform.hpp>
+
 struct SSkyUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Proj;
@@ -29,14 +31,11 @@ void CPipelineSkybox::destroy()
     CPipelineBase::destroy();
 }
 
-void CPipelineSkybox::createResources(size_t vImageNum)
+void CPipelineSkybox::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
-
-    _ASSERTE(m_pScene && m_pScene->UseSkyBox);
-
     // format 6 image into one cubemap image
-    int TexWidth = m_pScene->SkyBoxImages[0]->getImageWidth();
-    int TexHeight = m_pScene->SkyBoxImages[0]->getImageHeight();
+    int TexWidth = vSkyBoxImageSet[0]->getImageWidth();
+    int TexHeight = vSkyBoxImageSet[0]->getImageHeight();
     size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
     size_t TotalImageSize = SingleFaceImageSize * 6;
     uint8_t* pPixelData = new uint8_t[TotalImageSize];
@@ -58,10 +57,10 @@ void CPipelineSkybox::createResources(size_t vImageNum)
      * in sequence: front back up down right left
      */
 
-    for (size_t i = 0; i < m_pScene->SkyBoxImages.size(); ++i)
+    for (size_t i = 0; i < vSkyBoxImageSet.size(); ++i)
     {
-        _ASSERTE(TexWidth == m_pScene->SkyBoxImages[i]->getImageWidth() && TexHeight == m_pScene->SkyBoxImages[i]->getImageHeight());
-        const void* pData = m_pScene->SkyBoxImages[i]->getData();
+        _ASSERTE(TexWidth == vSkyBoxImageSet[i]->getImageWidth() && TexHeight == vSkyBoxImageSet[i]->getImageHeight());
+        const void* pData = vSkyBoxImageSet[i]->getData();
         memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
     }
 
@@ -81,11 +80,85 @@ void CPipelineSkybox::createResources(size_t vImageNum)
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
 
-    stageFillImage(pPixelData, TotalImageSize, ImageInfo, m_SkyBoxImagePack);
+    VkCommandBuffer CommandBuffer = Common::beginSingleTimeBuffer();
+    Common::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, TotalImageSize, ImageInfo, m_SkyBoxImagePack.Image, m_SkyBoxImagePack.Memory);
+    Common::endSingleTimeBuffer(CommandBuffer);
+    
     delete[] pPixelData;
 
     m_SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
 
+    // the sky image changed, so descriptor need to be updated
+    __updateDescriptorSet();
+}
+
+void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vUp)
+{
+    SSkyUniformBufferObjectVert UBOVert = {};
+    UBOVert.Proj = vProj;
+    UBOVert.View = vView;
+    UBOVert.EyePosition = vEyePos;
+
+    void* pData;
+    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    memcpy(pData, &UBOVert, sizeof(UBOVert));
+    vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
+
+    SSkyUniformBufferObjectFrag UBOFrag = {};
+    glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
+    glm::vec3 Up = glm::normalize(vUp);
+
+    glm::vec3 RotationAxe = glm::cross(Up, FixUp);
+
+    if (RotationAxe.length() == 0)
+    {
+        UBOFrag.UpCorrection = glm::mat4(1.0);
+        if (glm::dot(FixUp, Up) < 0)
+        {
+            UBOFrag.UpCorrection[0][0] = -1.0;
+            UBOFrag.UpCorrection[1][1] = -1.0;
+            UBOFrag.UpCorrection[2][2] = -1.0;
+        }
+    }
+    else
+    {
+        float RotationRad = glm::acos(glm::dot(FixUp, Up));
+        UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
+    }
+
+    ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
+    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
+    vkUnmapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory);
+}
+
+void CPipelineSkybox::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+{
+    voBinding = SSimplePointData::getBindingDescription();
+    voAttributeSet = SSimplePointData::getAttributeDescriptionSet();
+}
+
+VkPipelineInputAssemblyStateCreateInfo CPipelineSkybox::_getInputAssemblyStageInfoV()
+{
+    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+    return Info;
+}
+
+VkPipelineDepthStencilStateCreateInfo CPipelineSkybox::_getDepthStencilInfoV()
+{
+    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
+    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    DepthStencilInfo.depthTestEnable = VK_FALSE;
+    DepthStencilInfo.depthWriteEnable = VK_FALSE;
+    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+    DepthStencilInfo.stencilTestEnable = VK_FALSE;
+
+    return DepthStencilInfo;
+}
+
+void CPipelineSkybox::_createResourceV(size_t vImageNum)
+{
     // create plane and vertex buffer
     const std::vector<glm::vec3> Vertices =
     {
@@ -122,7 +195,9 @@ void CPipelineSkybox::createResources(size_t vImageNum)
     VkDeviceSize DataSize = sizeof(SSimplePointData) * PointData.size();
     m_VertexNum = PointData.size();
 
-    stageFillBuffer(PointData.data(), DataSize, m_VertexDataPack);
+    VkCommandBuffer CommandBuffer = Common::beginSingleTimeBuffer();
+    Common::stageFillBuffer(m_PhysicalDevice, m_Device, PointData.data(), DataSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
+    Common::endSingleTimeBuffer(CommandBuffer);
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
@@ -132,56 +207,10 @@ void CPipelineSkybox::createResources(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        __createBuffer(VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
-        __createBuffer(FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPacks[i].Buffer, m_FragUniformBufferPacks[i].Memory);
+        Common::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
+        Common::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPacks[i].Buffer, m_FragUniformBufferPacks[i].Memory);
     }
-}
 
-VkPipelineVertexInputStateCreateInfo CPipelineSkybox::_getVertexInputStageInfoV()
-{
-    const auto& Binding = SSimplePointData::getBindingDescription();
-    const auto& AttributeSet = SSimplePointData::getAttributeDescriptions();
-
-    VkPipelineVertexInputStateCreateInfo Info = CPipelineBase::getDefaultVertexInputStageInfo();
-    Info.vertexBindingDescriptionCount = 1;
-    Info.pVertexBindingDescriptions = &Binding;
-    Info.vertexAttributeDescriptionCount = static_cast<uint32_t>(AttributeSet.size());
-    Info.pVertexAttributeDescriptions = AttributeSet.data();
-}
-
-VkPipelineInputAssemblyStateCreateInfo CPipelineSkybox::_getInputAssemblyStageInfoV()
-{
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-}
-
-VkPipelineDepthStencilStateCreateInfo CPipelineSkybox::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
-}
-
-void CPipelineSkybox::_createDescriptor(VkDescriptorPool vPool, uint32_t vImageNum)
-{
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
-    m_Descriptor.clear();
-
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    m_Descriptor.createLayout(m_Device);
-    m_Descriptor.createDescriptorSetSet(vPool, vImageNum);
-}
-
-void CPipelineSkybox::__createTextureSampler()
-{
     VkPhysicalDeviceProperties Properties = {};
     vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
 
@@ -204,6 +233,18 @@ void CPipelineSkybox::__createTextureSampler()
     SamplerInfo.maxLod = 0.0f;
 
     ck(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
+}
+
+void CPipelineSkybox::_initDescriptorV()
+{
+    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    m_Descriptor.clear();
+
+    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    m_Descriptor.createLayout(m_Device);
 }
 
 void CPipelineSkybox::__updateDescriptorSet()

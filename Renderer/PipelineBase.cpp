@@ -1,6 +1,6 @@
 #include "PipelineBase.h"
 
-VkPipelineShaderStageCreateInfo CPipelineBase::getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule)
+std::vector<VkPipelineShaderStageCreateInfo> CPipelineBase::getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule)
 {
     VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
     VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -14,18 +14,7 @@ VkPipelineShaderStageCreateInfo CPipelineBase::getDefaultShadeStageInfo(VkShader
     FragShaderStageInfo.module = vFragModule;
     FragShaderStageInfo.pName = "main";
 
-    VkPipelineShaderStageCreateInfo ShaderStages[] = { VertShaderStageInfo,FragShaderStageInfo };
-}
-
-VkPipelineVertexInputStateCreateInfo CPipelineBase::getDefaultVertexInputStageInfo()
-{
-    // default no vertex input
-    VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
-    VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    VertexInputInfo.vertexBindingDescriptionCount = 0;
-    VertexInputInfo.vertexAttributeDescriptionCount = 0;
-
-    return VertexInputInfo;
+    return { VertShaderStageInfo, FragShaderStageInfo };
 }
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineBase::getDefaultInputAssemblyStageInfo()
@@ -39,32 +28,9 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineBase::getDefaultInputAssemblySta
     return InputAssemblyInfo;
 }
 
-VkPipelineViewportStateCreateInfo CPipelineBase::getDefaultViewportStageInfo(VkExtent2D vExtent)
-{
-    // default full screen
-    VkViewport Viewport = {};
-    Viewport.width = static_cast<float>(vExtent.width);
-    Viewport.height = static_cast<float>(vExtent.height);
-    Viewport.minDepth = 0.0f;
-    Viewport.maxDepth = 1.0f;
-
-    VkRect2D Scissor = {};
-    Scissor.offset = { 0, 0 };
-    Scissor.extent = vExtent;
-
-    VkPipelineViewportStateCreateInfo ViewportStateInfo = {};
-    ViewportStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    ViewportStateInfo.viewportCount = 1;
-    ViewportStateInfo.pViewports = &Viewport;
-    ViewportStateInfo.scissorCount = 1;
-    ViewportStateInfo.pScissors = &Scissor;
-
-    return ViewportStateInfo;
-}
-
 VkPipelineRasterizationStateCreateInfo CPipelineBase::getDefaultRasterizationStageInfo()
 {
-    // default counter clockwise, back culling, no depth bias
+    // default clockwise, back culling, no depth bias
     VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
     RasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     RasterizerInfo.depthClampEnable = VK_FALSE;
@@ -73,7 +39,7 @@ VkPipelineRasterizationStateCreateInfo CPipelineBase::getDefaultRasterizationSta
     RasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
     RasterizerInfo.lineWidth = 1.0f;
     RasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    RasterizerInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    RasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 
     return RasterizerInfo;
 }
@@ -96,36 +62,11 @@ VkPipelineDepthStencilStateCreateInfo CPipelineBase::getDefaultDepthStencilInfo(
     DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     DepthStencilInfo.depthTestEnable = VK_TRUE;
     DepthStencilInfo.depthWriteEnable = VK_TRUE;
+    DepthStencilInfo.depthCompareOp = VkCompareOp::VK_COMPARE_OP_LESS;
     DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
     DepthStencilInfo.stencilTestEnable = VK_FALSE;
 
     return DepthStencilInfo;
-}
-
-VkPipelineColorBlendStateCreateInfo CPipelineBase::getDefaultColorBlendInfo()
-{
-    // default disable blending
-    VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
-    ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    ColorBlendAttachment.blendEnable = VK_FALSE;
-
-    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
-    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    ColorBlendInfo.logicOpEnable = VK_FALSE;
-    ColorBlendInfo.attachmentCount = 1;
-    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
-
-    return ColorBlendInfo;
-}
-
-VkPipelineDynamicStateCreateInfo CPipelineBase::getDefaultDynamicStateInfo()
-{
-    // default no dynamic state
-    VkPipelineDynamicStateCreateInfo DynamicStateInfo = {};
-    DynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateInfo.dynamicStateCount = 0;
-
-    return DynamicStateInfo;
 }
 
 std::vector<VkPushConstantRange> CPipelineBase::getDefaultPushConstantRangeSet()
@@ -141,11 +82,55 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
     m_PhysicalDevice = vPhysicalDevice;
     m_Device = vDevice;
 
-    auto VertShaderCode = Common::readFileAsChar(m_VertShaderPath);
-    auto FragShaderCode = Common::readFileAsChar(m_FragShaderPath);
+    _initDescriptorV();
+
+    auto VertShaderCode = Common::readFileAsChar(_getVertShaderPathV());
+    auto FragShaderCode = Common::readFileAsChar(_getFragShaderPathV());
 
     VkShaderModule VertShaderModule = Common::createShaderModule(m_Device, VertShaderCode);
     VkShaderModule FragShaderModule = Common::createShaderModule(m_Device, FragShaderCode);
+
+    const auto& ShadeInfoSet = _getShadeStageInfoV(VertShaderModule, FragShaderModule);
+
+    VkVertexInputBindingDescription Binding;
+    std::vector<VkVertexInputAttributeDescription> AttributeSet;
+    _getVertexInputInfoV(Binding, AttributeSet);
+    VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
+    VertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    VertexInputInfo.vertexBindingDescriptionCount = 1;
+    VertexInputInfo.pVertexBindingDescriptions = &Binding;
+    VertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(AttributeSet.size());
+    VertexInputInfo.pVertexAttributeDescriptions = AttributeSet.data();
+
+    const auto& InputAssemblyInfo = _getInputAssemblyStageInfoV();
+
+    VkPipelineViewportStateCreateInfo ViewportInfo = {};
+    VkViewport Viewport;
+    VkRect2D Scissor;
+    _getViewportStageInfoV(vExtent, Viewport, Scissor);
+    ViewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    ViewportInfo.viewportCount = 1;
+    ViewportInfo.pViewports = &Viewport;
+    ViewportInfo.scissorCount = 1;
+    ViewportInfo.pScissors = &Scissor;
+
+    const auto& RasterizationInfo = _getRasterizationStageInfoV();
+    const auto& MultisampleInfo = _getMultisampleStageInfoV();
+    const auto& DepthStencilInfo = _getDepthStencilInfoV();
+
+    VkPipelineColorBlendAttachmentState BlendAttachement;
+    _getColorBlendInfoV(BlendAttachement);
+    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
+    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    ColorBlendInfo.logicOpEnable = VK_FALSE;
+    ColorBlendInfo.attachmentCount = 1;
+    ColorBlendInfo.pAttachments = &BlendAttachement;
+
+    const auto& EnabledDynamicSet = _getEnabledDynamicSetV();
+    VkPipelineDynamicStateCreateInfo DynamicInfo = {};
+    DynamicInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    DynamicInfo.dynamicStateCount = static_cast<uint32_t>(EnabledDynamicSet.size());
+    DynamicInfo.pDynamicStates = EnabledDynamicSet.data();
 
     const auto& PushConstantRangeSet = _getPushConstantRangeSetV();
 
@@ -161,16 +146,16 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
 
     VkGraphicsPipelineCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    PipelineInfo.stageCount = 2;
-    PipelineInfo.pStages = &_getShadeStageInfoV(VertShaderModule, FragShaderModule);
-    PipelineInfo.pVertexInputState = &_getVertexInputStageInfoV();
-    PipelineInfo.pInputAssemblyState = &_getInputAssemblyStageInfoV();
-    PipelineInfo.pViewportState = &_getViewportStageInfoV(vExtent);
-    PipelineInfo.pRasterizationState = &_getRasterizationStageInfoV();
-    PipelineInfo.pMultisampleState = &_getMultisampleStageInfoV();
-    PipelineInfo.pDepthStencilState = &_getDepthStencilInfoV();
-    PipelineInfo.pColorBlendState = &_getColorBlendInfoV();
-    PipelineInfo.pDynamicState = &_getDynamicStateInfoV();
+    PipelineInfo.stageCount = ShadeInfoSet.size();
+    PipelineInfo.pStages = ShadeInfoSet.data();
+    PipelineInfo.pVertexInputState = &VertexInputInfo;
+    PipelineInfo.pInputAssemblyState = &InputAssemblyInfo;
+    PipelineInfo.pViewportState = &ViewportInfo;
+    PipelineInfo.pRasterizationState = &RasterizationInfo;
+    PipelineInfo.pMultisampleState = &MultisampleInfo;
+    PipelineInfo.pDepthStencilState = &DepthStencilInfo;
+    PipelineInfo.pColorBlendState = &ColorBlendInfo;
+    PipelineInfo.pDynamicState = &DynamicInfo;
     PipelineInfo.layout = m_PipelineLayout;
     PipelineInfo.renderPass = vRenderPass;
     PipelineInfo.subpass = vSubpass;
@@ -179,6 +164,14 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
 
     vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
     vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
+}
+
+void CPipelineBase::setImageNum(size_t vImageNum)
+{
+    if (vImageNum == m_ImageNum) return;
+    m_ImageNum = vImageNum;
+    m_Descriptor.createDescriptorSetSet(vImageNum);
+    _createResourceV(vImageNum);
 }
 
 void CPipelineBase::destroy()
@@ -199,16 +192,16 @@ void CPipelineBase::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
     const auto& DescriptorSet = m_Descriptor.getDescriptorSet(vImageIndex);
     vkCmdBindPipeline(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
     vkCmdBindDescriptorSets(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
+    _initPushConstantV(vCommandBuffer);
 }
 
-VkPipelineShaderStageCreateInfo CPipelineBase::_getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule)
+void CPipelineBase::_initPushConstantV(VkCommandBuffer vCommandBuffer)
+{
+}
+
+std::vector<VkPipelineShaderStageCreateInfo> CPipelineBase::_getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule)
 {
     return CPipelineBase::getDefaultShadeStageInfo(vVertModule, vFragModule);
-}
-
-VkPipelineVertexInputStateCreateInfo CPipelineBase::_getVertexInputStageInfoV()
-{
-    return CPipelineBase::getDefaultVertexInputStageInfo();
 }
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineBase::_getInputAssemblyStageInfoV()
@@ -216,9 +209,17 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineBase::_getInputAssemblyStageInfo
     return CPipelineBase::getDefaultInputAssemblyStageInfo();
 }
 
-VkPipelineViewportStateCreateInfo CPipelineBase::_getViewportStageInfoV(VkExtent2D vExtent)
+void CPipelineBase::_getViewportStageInfoV(VkExtent2D vExtent, VkViewport& voViewport, VkRect2D& voScissor)
 {
-    return CPipelineBase::getDefaultViewportStageInfo(vExtent);
+    voViewport = {};
+    voViewport.width = static_cast<float>(vExtent.width);
+    voViewport.height = static_cast<float>(vExtent.height);
+    voViewport.minDepth = 0.0f;
+    voViewport.maxDepth = 1.0f;
+
+    voScissor = {};
+    voScissor.offset = { 0, 0 };
+    voScissor.extent = vExtent;
 }
 
 VkPipelineRasterizationStateCreateInfo CPipelineBase::_getRasterizationStageInfoV()
@@ -236,14 +237,17 @@ VkPipelineDepthStencilStateCreateInfo CPipelineBase::_getDepthStencilInfoV()
     return CPipelineBase::getDefaultDepthStencilInfo();
 }
 
-VkPipelineColorBlendStateCreateInfo CPipelineBase::_getColorBlendInfoV()
+void CPipelineBase::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
 {
-    return CPipelineBase::getDefaultColorBlendInfo();
+    // default disable blending
+    voBlendAttachment = {};
+    voBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    voBlendAttachment.blendEnable = VK_FALSE;
 }
 
-VkPipelineDynamicStateCreateInfo CPipelineBase::_getDynamicStateInfoV()
+std::vector<VkDynamicState> CPipelineBase::_getEnabledDynamicSetV()
 {
-    return CPipelineBase::getDefaultDynamicStateInfo();
+    return {};
 }
 
 std::vector<VkPushConstantRange> CPipelineBase::_getPushConstantRangeSetV()

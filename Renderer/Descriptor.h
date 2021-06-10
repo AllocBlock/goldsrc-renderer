@@ -27,8 +27,9 @@ public:
     ~CDescriptor();
 
     void add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage);
-    VkDescriptorSetLayout createLayout(VkDevice vDevice);
-    const std::vector<VkDescriptorSet>& createDescriptorSetSet(VkDescriptorPool vPool, size_t vNum);
+    void createLayout(VkDevice vDevice);
+    
+    const std::vector<VkDescriptorSet>& createDescriptorSetSet(size_t vImageNum);
     void update(size_t vSetIndex, const std::vector<SDescriptorWriteInfo>& vWriteInfoSet);
     void clear();
     VkDescriptorSetLayout getLayout() const;
@@ -37,12 +38,16 @@ public:
     size_t getDescriptorSetNum() const;
 
 private:
-    void __destoryLayout();
+    void __createPool(size_t vImageNum);
+    void __destroyPool();
+    void __destroyLayout();
+    void __destroySetSet();
 
     VkDevice m_Device = VK_NULL_HANDLE;
+    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<SDescriptorInfo> m_DescriptorInfoSet;
     std::vector<VkDescriptorPoolSize> m_PoolSizeSet;
     std::vector<VkDescriptorSet> m_DescriptorSetSet;
-    VkDescriptorSetLayout m_Layout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 };
 

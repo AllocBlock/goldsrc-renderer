@@ -1,51 +1,41 @@
 #pragma once
 #include "PipelineBase.h"
 #include "Common.h"
+#include "PointData.h"
 #include "Descriptor.h"
+#include "IOImage.h"
 
 #include <glm/glm.hpp>
-
-struct SSimplePointData
-{
-    glm::vec3 Pos;
-
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SSimplePointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return BindingDescription;
-    }
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions()
-    {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptions(1);
-
-        AttributeDescriptions[0].binding = 0;
-        AttributeDescriptions[0].location = 0;
-        AttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[0].offset = offsetof(SSimplePointData, Pos);
-
-        return AttributeDescriptions;
-    }
-};
+#include <array>
 
 class CPipelineSkybox : public CPipelineBase
 {
 public:
     void destroy();
-    void createResources(size_t vImageNum);
+    void setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet);
+    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vUp);
+    void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+    {
+        if (m_VertexDataPack.isValid())
+        {
+            const VkDeviceSize Offsets[] = { 0 };
+            bind(vCommandBuffer, vImageIndex);
+            vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_VertexDataPack.Buffer, Offsets);
+            vkCmdDraw(vCommandBuffer, m_VertexNum, 1, 0, 0);
+        }
+    }
 
 protected:
-    virtual void _createDescriptor(VkDescriptorPool vPool, uint32_t vImageNum) override;
-    virtual VkPipelineVertexInputStateCreateInfo _getVertexInputStageInfoV() override;
+    virtual std::filesystem::path _getVertShaderPathV() override { return "../Renderer/shader/skyVert.spv"; }
+    virtual std::filesystem::path _getFragShaderPathV() override { return "../Renderer/shader/skyFrag.spv"; }
+
+    virtual void _createResourceV(size_t vImageNum) override;
+    virtual void _initDescriptorV() override;
+    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
     virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
 
 private:
-    void __createTextureSampler();
     void __updateDescriptorSet();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;

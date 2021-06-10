@@ -4,6 +4,7 @@
 #include <vector>
 #include <optional>
 #include <filesystem>
+#include <functional>
 
 #define ck(E) do{if (E) throw std::runtime_error(u8"vulkan·µ»Ø´íÎó");} while(0)
 
@@ -68,6 +69,9 @@ namespace Common
         std::vector<VkPresentModeKHR> PresentModes;
     };
 
+    using beginSingleTimeBufferFunc_t = std::function<VkCommandBuffer()>;
+    using endSingleTimeBufferFunc_t = std::function<void(VkCommandBuffer)>;
+
     float mod(float vVal, float vMax);
 
     std::vector<char> readFileAsChar(std::filesystem::path vFilePath);
@@ -82,4 +86,13 @@ namespace Common
     uint32_t findMemoryType(VkPhysicalDevice vPhysicalDevice, uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
     void createBuffer(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
     void copyBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
+    void createImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory);
+    void transitionImageLayout(VkCommandBuffer vCommandBuffer, VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount);
+    void copyBufferToImage(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount);
+    void stageFillBuffer(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const void* vData, VkDeviceSize vSize, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
+    void stageFillImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const void* vData, VkDeviceSize vSize, VkImageCreateInfo vImageInfo, VkImage& voImage, VkDeviceMemory& voBufferMemory);
+
+    void setSingleTimeBufferFunc(Common::beginSingleTimeBufferFunc_t vBeginFunc, Common::endSingleTimeBufferFunc_t vEndFunc);
+    VkCommandBuffer beginSingleTimeBuffer();
+    void endSingleTimeBuffer(VkCommandBuffer vCommandBuffer);
 }

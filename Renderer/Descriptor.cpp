@@ -2,16 +2,16 @@
 
 CDescriptor::~CDescriptor() { clear(); }
 
-void CDescriptor::add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize,VkShaderStageFlags vStage)
+void CDescriptor::add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage)
 {
     SDescriptorInfo Info = { vName, vIndex, vType, vSize, vStage };
     m_DescriptorInfoSet.emplace_back(std::move(Info));
     m_PoolSizeSet.emplace_back(VkDescriptorPoolSize({ vType, vSize }));
 }
 
-VkDescriptorSetLayout CDescriptor::createLayout(VkDevice vDevice)
+void CDescriptor::createLayout(VkDevice vDevice)
 {
-    __destoryLayout();
+    __destroyLayout();
 
     m_Device = vDevice;
 
@@ -29,25 +29,27 @@ VkDescriptorSetLayout CDescriptor::createLayout(VkDevice vDevice)
     LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
     LayoutInfo.pBindings = Bindings.data();
 
-    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_PipelineLayout));
-
-    return m_PipelineLayout;
+    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorLayout));
 }
 
-const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(VkDescriptorPool vPool, size_t vNum)
+const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t vImageNum)
 {
     _ASSERTE(m_Device != VK_NULL_HANDLE);
-    _ASSERTE(m_PipelineLayout != VK_NULL_HANDLE);
+    _ASSERTE(m_DescriptorLayout != VK_NULL_HANDLE);
 
-    std::vector<VkDescriptorSetLayout> Layouts(vNum, m_PipelineLayout);
+    if (m_DescriptorPool == VK_NULL_HANDLE || m_DescriptorSetSet.size() > vImageNum)
+        __createPool(vImageNum);
+
+    std::vector<VkDescriptorSetLayout> Layouts(vImageNum, m_DescriptorLayout);
 
     VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
     DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    DescSetAllocInfo.descriptorPool = vPool;
-    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(vNum);
+    DescSetAllocInfo.descriptorPool = m_DescriptorPool;
+    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(vImageNum);
     DescSetAllocInfo.pSetLayouts = Layouts.data();
 
-    m_DescriptorSetSet.resize(vNum);
+    __destroySetSet();
+    m_DescriptorSetSet.resize(vImageNum);
     ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSetSet.data()));
     return m_DescriptorSetSet;
 }
@@ -77,15 +79,16 @@ void CDescriptor::clear()
 {
     m_DescriptorInfoSet.clear();
     m_PoolSizeSet.clear();
-    m_DescriptorSetSet.clear();
-    __destoryLayout();
 
+    __destroySetSet();
+    __destroyLayout();
+    __destroyPool();
     m_Device = VK_NULL_HANDLE;
 }
 
 VkDescriptorSetLayout CDescriptor::getLayout() const 
 {
-    return m_PipelineLayout; 
+    return m_DescriptorLayout; 
 }
 
 const std::vector<VkDescriptorPoolSize>& CDescriptor::getPoolSizeSet() const
@@ -104,11 +107,46 @@ size_t CDescriptor::getDescriptorSetNum() const
     return m_DescriptorSetSet.size();
 }
 
-void CDescriptor::__destoryLayout()
+void CDescriptor::__createPool(size_t vImageNum)
 {
-    if (m_PipelineLayout != VK_NULL_HANDLE)
+    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    __destroyPool();
+
+    auto PoolSize = m_PoolSizeSet;
+    for (auto& Size : PoolSize)
+        Size.descriptorCount *= vImageNum;
+
+    VkDescriptorPoolCreateInfo PoolInfo = {};
+    PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSize.size());
+    PoolInfo.pPoolSizes = PoolSize.data();
+    PoolInfo.maxSets = static_cast<uint32_t>(vImageNum);
+
+    ck(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
+}
+
+void CDescriptor::__destroyPool()
+{
+    if (m_DescriptorPool != VK_NULL_HANDLE)
     {
-        vkDestroyDescriptorSetLayout(m_Device, m_PipelineLayout, nullptr);
-        m_PipelineLayout = VK_NULL_HANDLE;
+        vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
+        m_DescriptorPool = VK_NULL_HANDLE;
+    }
+}
+
+void CDescriptor::__destroyLayout()
+{
+    if (m_DescriptorLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorLayout, nullptr);
+        m_DescriptorLayout = VK_NULL_HANDLE;
+    }
+}
+
+void CDescriptor::__destroySetSet()
+{
+    if (!m_DescriptorSetSet.empty())
+    {
+        m_DescriptorSetSet.clear();
     }
 }

@@ -3,6 +3,10 @@
 #include <set>
 #include <string>
 #include <fstream>
+#ifdef _DEBUG
+#include <iostream>
+#include <iomanip>
+#endif
 
 const float g_ModOffset = 1e-9;
 
@@ -177,6 +181,9 @@ VkImageView Common::createImageView(VkDevice vDevice, VkImage vImage, VkFormat v
     VkImageView ImageView;
     ck(vkCreateImageView(vDevice, &ImageViewInfo, nullptr, &ImageView));
 
+#ifdef _DEBUG
+    std::cout << "create image view 0x" << std::setbase(16) << (uint64_t)(ImageView) << std::setbase(10) << std::endl;
+#endif
     return ImageView;
 }
 
@@ -225,4 +232,183 @@ void Common::copyBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vSrcBuffer, VkB
     VkBufferCopy CopyRegion = {};
     CopyRegion.size = vSize;
     vkCmdCopyBuffer(vCommandBuffer, vSrcBuffer, vDstBuffer, 1, &CopyRegion);
+}
+
+void Common::createImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory)
+{
+    ck(vkCreateImage(vDevice, &vImageInfo, nullptr, &voImage));
+
+    VkMemoryRequirements MemRequirements;
+    vkGetImageMemoryRequirements(vDevice, voImage, &MemRequirements);
+
+    VkMemoryAllocateInfo AllocInfo = {};
+    AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    AllocInfo.allocationSize = MemRequirements.size;
+    AllocInfo.memoryTypeIndex = Common::findMemoryType(vPhysicalDevice, MemRequirements.memoryTypeBits, vProperties);
+
+    ck(vkAllocateMemory(vDevice, &AllocInfo, nullptr, &voImageMemory));
+
+    ck(vkBindImageMemory(vDevice, voImage, voImageMemory, 0));
+
+#ifdef _DEBUG
+    std::cout << "create image 0x" << std::setbase(16) << (uint64_t)(voImage) << std::setbase(10) << std::endl;
+    std::cout << "create memory 0x" << std::setbase(16) << (uint64_t)(voImageMemory) << std::setbase(10) << std::endl;
+#endif
+}
+
+void Common::transitionImageLayout(VkCommandBuffer vCommandBuffer, VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
+    VkImageMemoryBarrier Barrier = {};
+    Barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    Barrier.oldLayout = vOldLayout;
+    Barrier.newLayout = vNewLayout;
+    Barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    Barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    Barrier.image = vImage;
+
+    if (vNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        bool hasStencilComponent = (vFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || vFormat == VK_FORMAT_D24_UNORM_S8_UINT);
+        if (hasStencilComponent)
+        {
+            Barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+        }
+    }
+    else
+    {
+        Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+
+    Barrier.subresourceRange.baseMipLevel = 0;
+    Barrier.subresourceRange.levelCount = 1;
+    Barrier.subresourceRange.baseArrayLayer = 0;
+    Barrier.subresourceRange.layerCount = vLayerCount;
+
+    VkPipelineStageFlags SrcStage;
+    VkPipelineStageFlags DestStage;
+
+    if (vOldLayout == VK_IMAGE_LAYOUT_UNDEFINED
+        && vNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+        Barrier.srcAccessMask = 0;
+        Barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        DestStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (vOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+        && vNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        DestStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else if (vOldLayout == VK_IMAGE_LAYOUT_UNDEFINED
+        && vNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    {
+        Barrier.srcAccessMask = 0;
+        Barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        DestStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    }
+    else
+    {
+        throw std::runtime_error(u8"不支持该布局转换");
+    }
+
+    vkCmdPipelineBarrier(
+        vCommandBuffer,
+        SrcStage, DestStage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &Barrier
+    );
+}
+
+void Common::copyBufferToImage(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount)
+{
+    VkBufferImageCopy Region = {};
+    Region.bufferOffset = 0;
+    Region.bufferRowLength = 0;
+    Region.bufferImageHeight = 0;
+
+    Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    Region.imageSubresource.mipLevel = 0;
+    Region.imageSubresource.baseArrayLayer = 0;
+    Region.imageSubresource.layerCount = vLayerCount;
+
+    Region.imageOffset = { 0, 0, 0 };
+    Region.imageExtent = { static_cast<uint32_t>(vWidth), static_cast<uint32_t>(vHeight), 1 };
+
+    vkCmdCopyBufferToImage(vCommandBuffer, vBuffer, vImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
+
+}
+
+void Common::stageFillBuffer(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const void* vData, VkDeviceSize vSize, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory)
+{
+    Common::SBufferPack StageBufferPack;
+    Common::createBuffer(vPhysicalDevice, vDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
+
+    void* pDevData;
+    ck(vkMapMemory(vDevice, StageBufferPack.Memory, 0, vSize, 0, &pDevData));
+    memcpy(reinterpret_cast<char*>(pDevData), vData, vSize);
+    vkUnmapMemory(vDevice, StageBufferPack.Memory);
+
+    Common::createBuffer(vPhysicalDevice, vDevice, vSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voBuffer, voBufferMemory);
+
+    VkCommandBuffer CommandBuffer = beginSingleTimeBuffer();
+    Common::copyBuffer(CommandBuffer, StageBufferPack.Buffer, voBuffer, vSize);
+    endSingleTimeBuffer(CommandBuffer);
+
+    StageBufferPack.destroy(vDevice);
+}
+
+void Common::stageFillImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const void* vData, VkDeviceSize vSize, VkImageCreateInfo vImageInfo, VkImage& voImage, VkDeviceMemory& voBufferMemory)
+{
+    uint32_t Width = vImageInfo.extent.width;
+    uint32_t Height = vImageInfo.extent.height;
+    uint32_t LayerCount = vImageInfo.arrayLayers;
+
+    Common::SBufferPack StageBufferPack;
+    Common::createBuffer(vPhysicalDevice, vDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
+
+    void* pDevData;
+    ck(vkMapMemory(vDevice, StageBufferPack.Memory, 0, vSize, 0, &pDevData));
+    memcpy(pDevData, vData, vSize);
+    vkUnmapMemory(vDevice, StageBufferPack.Memory);
+
+    Common::createImage(vPhysicalDevice, vDevice, vImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voImage, voBufferMemory);
+
+    VkCommandBuffer CommandBuffer = beginSingleTimeBuffer();
+    Common::transitionImageLayout(CommandBuffer, voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, LayerCount);
+    Common::copyBufferToImage(CommandBuffer, StageBufferPack.Buffer, voImage, Width, Height, LayerCount);
+    Common::transitionImageLayout(CommandBuffer, voImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, LayerCount);
+    endSingleTimeBuffer(CommandBuffer);
+
+    StageBufferPack.destroy(vDevice);
+}
+
+Common::beginSingleTimeBufferFunc_t g_BeginFunc = nullptr;
+Common::endSingleTimeBufferFunc_t g_EndFunc = nullptr;
+
+void Common::setSingleTimeBufferFunc(Common::beginSingleTimeBufferFunc_t vBeginFunc, Common::endSingleTimeBufferFunc_t vEndFunc)
+{
+    g_BeginFunc = vBeginFunc;
+    g_EndFunc = vEndFunc;
+}
+
+VkCommandBuffer Common::beginSingleTimeBuffer()
+{
+    _ASSERTE(g_BeginFunc != nullptr);
+    return g_BeginFunc();
+}
+
+void Common::endSingleTimeBuffer(VkCommandBuffer vCommandBuffer)
+{
+    _ASSERTE(g_EndFunc != nullptr);
+    g_EndFunc(vCommandBuffer);
 }

@@ -22,20 +22,15 @@ void CVulkanRenderer::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevic
     m_GraphicsQueueIndex = vGraphicsFamilyIndex;
     m_ImageFormat = vImageFormat;
     m_Extent = vExtent;
-    m_ImageViews = vImageViews;
-    m_NumSwapchainImage = m_ImageViews.size();
+    m_TargetImageViews = vImageViews;
+    m_NumSwapchainImage = m_TargetImageViews.size();
 
     __createRenderPass(false);
 
-    __createDefaultDescriptorSetLayout();
-    __createLineDescriptorSetLayout();
-
     __createCommandPoolAndBuffers();
-    __createTextureSampler();
     __createPlaceholderImage();
     __createRecreateResources();
 
-    __createGuiResources();
     __recordGuiCommandBuffers();
 }
 
@@ -44,9 +39,10 @@ void CVulkanRenderer::__createRecreateResources()
     __createGraphicsPipelines(); // extent
     __createDepthResources(); // extent
     __createFramebuffers(); // imageview, extent
-    __createUniformBuffers(); // imageview
-    __createDescriptorPool(); // imageview
-    __createDefaultDescriptorSets(); // imageview
+    m_PipelineSet.TrianglesWithDepthTest.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.TrianglesWithBlend.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.TrianglesSky.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.GuiLines.setImageNum(m_NumSwapchainImage);
     __createSceneResources();
 }
 
@@ -58,22 +54,14 @@ void CVulkanRenderer::__destroyRecreateResources()
         vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
     m_Framebuffers.clear();
 
-    m_PipelineSet.destroy();
-
-    
-
-    vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
-    m_DescriptorPool = VK_NULL_HANDLE;
-
     __destroySceneResources();
+    m_PipelineSet.destroy();
 }
 
 void CVulkanRenderer::__createSceneResources()
 {
     __createTextureImages(); // scene
-    __createTextureImageViews(); // scene
     __createLightmapImage(); // scene
-    __createLightmapImageView(); // scene
     __updateDescriptorSets();
     __createVertexBuffer(); // scene
     __createIndexBuffer(); // scene
@@ -82,15 +70,12 @@ void CVulkanRenderer::__createSceneResources()
 
     if (m_pScene && m_pScene->UseSkyBox)
     {
-        __createSkyBoxResources();
-        __updateSkyDescriptorSets();
+        m_PipelineSet.TrianglesSky.setSkyBoxImage(m_pScene->SkyBoxImages);
     }
 }
 
 void CVulkanRenderer::__destroySceneResources()
 {
-    __destroySkyBoxResources();
-
     for (size_t i = 0; i < m_TextureImagePacks.size(); ++i)
     {
         m_TextureImagePacks[i].destroy(m_Device);
@@ -102,36 +87,12 @@ void CVulkanRenderer::__destroySceneResources()
     m_VertexBufferPack.destroy(m_Device);
 }
 
-void CVulkanRenderer::__createGuiResources()
-{
-    // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SGuiUniformBufferObjectVert);
-    m_Gui.VertUniformBufferPacks.resize(m_NumSwapchainImage);
-
-    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
-    {
-        __createBuffer(VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_Gui.VertUniformBufferPacks[i].Buffer, m_Gui.VertUniformBufferPacks[i].Memory);
-    }
-
-    __createLineDescriptorSets();
-    __updateLineDescriptorSets();
-}
-
-void CVulkanRenderer::__destroyGuiResources()
-{
-    m_Gui.VertexDataPack.destroy(m_Device);
-    for (auto& Buffer : m_Gui.VertUniformBufferPacks)
-        Buffer.destroy(m_Device);
-}
 
 void CVulkanRenderer::destroy()
 {
     __destroyRecreateResources();
-    __destroyGuiResources();
 
     m_PlaceholderImagePack.destroy(m_Device);
-    
-    m_LineDescriptor.clear();
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
     m_Command.clear();
     m_RenderPass = VK_NULL_HANDLE;
@@ -191,6 +152,8 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
         ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+
+        // init
 
         std::array<VkClearValue, 2> ClearValues = {};
         ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -271,52 +234,26 @@ void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
         Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
     };
    
-    m_Gui.addOrUpdateObject("HighlightBoundingBox", std::move(pObject));
-    __recordGuiCommandBuffers();
+    //m_Gui.addOrUpdateObject("HighlightBoundingBox", std::move(pObject));
+    //__recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::removeHighlightBoundingBox()
 {
-    m_Gui.removeObject("HighlightBoundingBox");
-    __recordGuiCommandBuffers();
+    //m_Gui.removeObject("HighlightBoundingBox");
+    //__recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
 {
-    auto pObject = std::make_shared<SGuiObject>();
+    /*auto pObject = std::make_shared<SGuiObject>();
     pObject->Data = { vStart, vEnd };
     m_Gui.addOrUpdateObject(vName, std::move(pObject));
-    __recordGuiCommandBuffers();
+    __recordGuiCommandBuffers();*/
 }
 
 void CVulkanRenderer::__recordGuiCommandBuffers()
 {
-    vkDeviceWaitIdle(m_Device);
-    m_Gui.VertexDataPack.destroy(m_Device);
-
-    size_t NumVertex = 0; // 12 edges
-    for (const auto& Pair : m_Gui.NameObjectMap)
-    {
-        const auto& pObject = Pair.second;
-        NumVertex += pObject->Data.size();
-    }
-    if (NumVertex > 0)
-    {
-        VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
-
-        // TODO: addtional copy is made. Is there better way?
-        void* pData = new char[BufferSize];
-        size_t Offset = 0;
-        for (const auto& Pair : m_Gui.NameObjectMap)
-        {
-            const auto& pObject = Pair.second;
-            size_t DataSize = sizeof(glm::vec3) * pObject->Data.size();
-            memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
-            Offset += DataSize;
-        }
-        stageFillBuffer(pData, BufferSize, m_Gui.VertexDataPack);
-    }
-
     for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         VkCommandBufferInheritanceInfo InheritanceInfo = {};
@@ -332,14 +269,7 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
 
         VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, i);
         ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
-        m_PipelineSet.GuiLines.bind(CommandBuffer, i);
-
-        VkDeviceSize Offsets[] = { 0 };
-        if (NumVertex > 0)
-        {
-            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_Gui.VertexDataPack.Buffer, Offsets);
-            vkCmdDraw(CommandBuffer, NumVertex, 1, 0, 0);
-        }
+        m_PipelineSet.GuiLines.recordCommand(CommandBuffer, i);
         ck(vkEndCommandBuffer(CommandBuffer));
     }
 
@@ -526,127 +456,13 @@ void CVulkanRenderer::__createRenderPass(bool vPresentLayout)
     ck(vkCreateRenderPass(m_Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
-void CVulkanRenderer::__createLineDescriptorSetLayout()
-{
-    m_LineDescriptor.clear();
-
-    m_LineDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-
-    m_LineDescriptor.createLayout(m_Device);
-}
 
 void CVulkanRenderer::__createGraphicsPipelines()
 {
-    __createSkyPipeline();
-    __createDepthTestPipeline();
-    __createBlendPipeline();
-    __createGuiLinesPipeline();
-}
-
-void CVulkanRenderer::__createSkyPipeline()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
-    ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    ColorBlendAttachment.blendEnable = VK_FALSE;
-
-    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
-    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    ColorBlendInfo.logicOpEnable = VK_FALSE;
-    ColorBlendInfo.attachmentCount = 1;
-    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
-
     m_PipelineSet.TrianglesSky.create(m_PhysicalDevice, m_Device, m_RenderPass, m_Extent);
-}
-
-void CVulkanRenderer::__createDepthTestPipeline()
-{
     m_PipelineSet.TrianglesWithDepthTest.create(m_PhysicalDevice, m_Device, m_RenderPass,  m_Extent);
-}
-
-void CVulkanRenderer::__createBlendPipeline()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_TRUE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    // result color = source color * source alpha + old color * (1 - source color)
-    // result alpha = source alpha
-    VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
-    ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    ColorBlendAttachment.blendEnable = VK_TRUE;
-    ColorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    ColorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    ColorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-    ColorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    ColorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    ColorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
-    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    ColorBlendInfo.logicOpEnable = VK_FALSE;
-    ColorBlendInfo.attachmentCount = 1;
-    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
-
-    std::vector<VkDynamicState> EnabledDynamicStates =
-    {
-        VK_DYNAMIC_STATE_DEPTH_BIAS
-    };
-
-    VkPipelineDynamicStateCreateInfo DynamicStateInfo = {};
-    DynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    DynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(EnabledDynamicStates.size());
-    DynamicStateInfo.pDynamicStates = EnabledDynamicStates.data();
-
-    VkPushConstantRange PushConstantInfo = {};
-    PushConstantInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    PushConstantInfo.offset = 0;
-    PushConstantInfo.size = sizeof(SPushConstant);
-
     m_PipelineSet.TrianglesWithBlend.create(m_PhysicalDevice, m_Device, m_RenderPass, m_Extent);
-}
-
-void CVulkanRenderer::__createGuiLinesPipeline()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_TRUE;
-    DepthStencilInfo.depthWriteEnable = VK_TRUE;
-    DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
-    ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    ColorBlendAttachment.blendEnable = VK_FALSE;
-
-    VkPipelineColorBlendStateCreateInfo ColorBlendInfo = {};
-    ColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    ColorBlendInfo.logicOpEnable = VK_FALSE;
-    ColorBlendInfo.attachmentCount = 1;
-    ColorBlendInfo.pAttachments = &ColorBlendAttachment;
-
-    m_PipelineSet.GuiLines.create(
-        m_Device,
-        m_RenderPass,
-        SSimplePointData::getBindingDescription(),
-        SSimplePointData::getAttributeDescriptions(),
-        m_Extent,
-        m_LineDescriptor.getLayout(),
-        DepthStencilInfo,
-        ColorBlendInfo,
-        1
-    );
+    m_PipelineSet.GuiLines.create(m_PhysicalDevice, m_Device,m_RenderPass,m_Extent, 1);
 }
 
 void CVulkanRenderer::__createCommandPoolAndBuffers()
@@ -654,6 +470,16 @@ void CVulkanRenderer::__createCommandPoolAndBuffers()
     m_Command.createPool(m_Device, ECommandType::RESETTABLE, m_GraphicsQueueIndex);
     m_Command.createBuffers(m_SceneCommandName, m_NumSwapchainImage, ECommandBufferLevel::PRIMARY);
     m_Command.createBuffers(m_GuiCommandName, m_NumSwapchainImage, ECommandBufferLevel::SECONDARY);
+
+    Common::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
+    {
+        return m_Command.beginSingleTimeBuffer();
+    };
+    Common::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
+    {
+        m_Command.endSingleTimeBuffer(vCommandBuffer);
+    };
+    Common::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
 void CVulkanRenderer::__createDepthResources()
@@ -687,7 +513,7 @@ void CVulkanRenderer::__createFramebuffers()
     {
         std::array<VkImageView, 2> Attachments =
         {
-            m_ImageViews[i],
+            m_TargetImageViews[i],
             m_DepthImagePack.ImageView
         };
 
@@ -718,31 +544,12 @@ void CVulkanRenderer::__createTextureImages()
     }
 }
 
-void CVulkanRenderer::__createTextureImageViews()
-{
-    size_t NumTexture = __getActualTextureNum();
-    if (NumTexture > 0)
-    {
-        _ASSERTE(m_TextureImagePacks.size() == NumTexture);
-        for (size_t i = 0; i < NumTexture; ++i)
-            m_TextureImagePacks[i].ImageView = Common::createImageView(m_Device, m_TextureImagePacks[i].Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-    }
-}
-
 void CVulkanRenderer::__createLightmapImage()
 {
     if (m_pScene && m_pScene->UseLightmap)
     {
         std::shared_ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
         __createImageFromIOImage(pCombinedLightmapImage, m_LightmapImagePack);
-    }
-}
-
-void CVulkanRenderer::__createLightmapImageView()
-{
-    if (m_pScene && m_pScene->UseLightmap)
-    {
-        m_LightmapImagePack.ImageView = Common::createImageView(m_Device, m_LightmapImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 }
 
@@ -762,7 +569,7 @@ void CVulkanRenderer::__createVertexBuffer()
     else
         return;
 
-    VkDeviceSize BufferSize = sizeof(SPointData) * NumVertex;
+    VkDeviceSize BufferSize = sizeof(SGoldSrcPointData) * NumVertex;
 
     VkBuffer StagingBuffer;
     VkDeviceMemory StagingBufferMemory;
@@ -774,8 +581,8 @@ void CVulkanRenderer::__createVertexBuffer()
     size_t Offset = 0;
     for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
     {
-        std::vector<SPointData> PointData = __readPointData(pObject);
-        size_t SubBufferSize = sizeof(SPointData) * pObject->Vertices.size();
+        std::vector<SGoldSrcPointData> PointData = __readPointData(pObject);
+        size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->Vertices.size();
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
@@ -835,30 +642,9 @@ void CVulkanRenderer::__createIndexBuffer()
     vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
 }
 
-void CVulkanRenderer::__createDescriptorPool()
-{
-    auto DefaultPoolSizes = m_PipelineSet.TrianglesWithDepthTest.getDescriptor().getPoolSizeSet();
-    auto SkyPoolSizes = m_PipelineSet.TrianglesSky.getDescriptor().getPoolSizeSet();
-    auto LinePoolSizes = m_LineDescriptor.getPoolSizeSet();
-    std::vector<VkDescriptorPoolSize> PoolSizes;
-    PoolSizes.insert(PoolSizes.end(), DefaultPoolSizes.begin(), DefaultPoolSizes.end());
-    PoolSizes.insert(PoolSizes.end(), SkyPoolSizes.begin(), SkyPoolSizes.end());
-    PoolSizes.insert(PoolSizes.end(), LinePoolSizes.begin(), LinePoolSizes.end());
-    for (auto& PoolSize : PoolSizes)
-        PoolSize.descriptorCount *= m_NumSwapchainImage;
-
-    VkDescriptorPoolCreateInfo PoolInfo = {};
-    PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSizes.size());
-    PoolInfo.pPoolSizes = PoolSizes.data();
-    PoolInfo.maxSets = static_cast<uint32_t>(m_NumSwapchainImage) * 3;
-
-    ck(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
-}
-
 void CVulkanRenderer::__createLineDescriptorSets()
 {
-    m_LineDescriptor.createDescriptorSetSet(m_DescriptorPool, m_NumSwapchainImage);
+    m_PipelineSet.GuiLines.setImageNum(m_NumSwapchainImage);
 }
 
 void CVulkanRenderer::__updateDescriptorSets()
@@ -867,28 +653,8 @@ void CVulkanRenderer::__updateDescriptorSets()
     VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_LightmapImagePack.ImageView : m_PlaceholderImagePack.ImageView;
     for (size_t i = 0; i < m_TextureImagePacks.size(); ++i)
         TextureSet[i] = m_TextureImagePacks[i].ImageView;
-    m_PipelineSet.TrianglesWithDepthTest.updateTexture(TextureSet, Lightmap);
-}
-
-void CVulkanRenderer::__updateSkyDescriptorSets()
-{
-    m_PipelineSet.TrianglesSky.
-}
-
-void CVulkanRenderer::__updateLineDescriptorSets()
-{
-    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
-    {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_Gui.VertUniformBufferPacks[i].Buffer;
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SGuiUniformBufferObjectVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} , {} }));
-
-        m_LineDescriptor.update(i, DescriptorWriteInfoSet);
-    }
+    m_PipelineSet.TrianglesWithDepthTest.updateDescriptorSet(TextureSet, Lightmap);
+    m_PipelineSet.TrianglesWithBlend.updateDescriptorSet(TextureSet, Lightmap);
 }
 
 void CVulkanRenderer::__createPlaceholderImage()
@@ -899,10 +665,9 @@ void CVulkanRenderer::__createPlaceholderImage()
     pMinorImage->setImageSize(1, 1);
     pMinorImage->setData(&Pixel);
     __createImageFromIOImage(pMinorImage, m_PlaceholderImagePack);
-    m_PlaceholderImagePack.ImageView = Common::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
-std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const
+std::vector<SGoldSrcPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const
 {
     size_t NumPoint = vpObject->Vertices.size();
     _ASSERTE(NumPoint == vpObject->Colors.size());
@@ -911,7 +676,7 @@ std::vector<SPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObje
     _ASSERTE(NumPoint == vpObject->LightmapCoords.size());
     _ASSERTE(NumPoint == vpObject->TexIndices.size());
 
-    std::vector<SPointData> PointData(NumPoint);
+    std::vector<SGoldSrcPointData> PointData(NumPoint);
     for (size_t i = 0; i < NumPoint; ++i)
     {
         PointData[i].Pos = vpObject->Vertices[i];
@@ -957,105 +722,18 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
 
 void CVulkanRenderer::__createImage(VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory)
 {
-    ck(vkCreateImage(m_Device, &vImageInfo, nullptr, &voImage));
-
-    VkMemoryRequirements MemRequirements;
-    vkGetImageMemoryRequirements(m_Device, voImage, &MemRequirements);
-
-    VkMemoryAllocateInfo AllocInfo = {};
-    AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    AllocInfo.allocationSize = MemRequirements.size;
-    AllocInfo.memoryTypeIndex = __findMemoryType(MemRequirements.memoryTypeBits, vProperties);
-
-    ck(vkAllocateMemory(m_Device, &AllocInfo, nullptr, &voImageMemory));
-
-    ck(vkBindImageMemory(m_Device, voImage, voImageMemory, 0));
+    Common::createImage(m_PhysicalDevice, m_Device, vImageInfo, vProperties, voImage, voImageMemory);
 }
 
 uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
 {
-    Common::findMemoryType(m_PhysicalDevice, vTypeFilter, vProperties);
+    return Common::findMemoryType(m_PhysicalDevice, vTypeFilter, vProperties);
 }
 
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-
-    VkImageMemoryBarrier Barrier = {};
-    Barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    Barrier.oldLayout = vOldLayout;
-    Barrier.newLayout = vNewLayout;
-    Barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    Barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    Barrier.image = vImage;
-
-    if (vNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-    {
-        Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-        if (__hasStencilComponent(vFormat))
-        {
-            Barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-        }
-    }
-    else
-    {
-        Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    }
-
-    Barrier.subresourceRange.baseMipLevel = 0;
-    Barrier.subresourceRange.levelCount = 1;
-    Barrier.subresourceRange.baseArrayLayer = 0;
-    Barrier.subresourceRange.layerCount = vLayerCount;
-
-    VkPipelineStageFlags SrcStage;
-    VkPipelineStageFlags DestStage;
-
-    if (vOldLayout == VK_IMAGE_LAYOUT_UNDEFINED 
-        && vNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-    {
-        Barrier.srcAccessMask = 0;
-        Barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        DestStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    }
-    else if (vOldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL 
-        && vNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-    {
-        Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        DestStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    }
-    else if (vOldLayout == VK_IMAGE_LAYOUT_UNDEFINED 
-        && vNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-    {
-        Barrier.srcAccessMask = 0;
-        Barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        DestStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    }
-    else
-    {
-        throw std::runtime_error(u8"不支持该布局转换");
-    }
-
-    vkCmdPipelineBarrier(
-        CommandBuffer,
-        SrcStage, DestStage,
-        0,
-        0, nullptr,
-        0, nullptr,
-        1, &Barrier
-    );
-
+    Common::transitionImageLayout(CommandBuffer, vImage, vFormat, vOldLayout, vNewLayout, vLayerCount);
     m_Command.endSingleTimeBuffer(CommandBuffer);
-}
-
-bool CVulkanRenderer::__hasStencilComponent(VkFormat vFormat) {
-    return vFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || vFormat == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
 void CVulkanRenderer::__createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory)
@@ -1073,62 +751,8 @@ void CVulkanRenderer::__copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkD
 void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount)
 {
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-
-    VkBufferImageCopy Region = {};
-    Region.bufferOffset = 0;
-    Region.bufferRowLength = 0;
-    Region.bufferImageHeight = 0;
-
-    Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    Region.imageSubresource.mipLevel = 0;
-    Region.imageSubresource.baseArrayLayer = 0;
-    Region.imageSubresource.layerCount = vLayerCount;
-
-    Region.imageOffset = { 0, 0, 0 };
-    Region.imageExtent = { static_cast<uint32_t>(vWidth), static_cast<uint32_t>(vHeight), 1 };
-
-    vkCmdCopyBufferToImage(CommandBuffer, vBuffer, vImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
-    
+    Common::copyBufferToImage(CommandBuffer, vBuffer, vImage, vWidth, vHeight, vLayerCount);
     m_Command.endSingleTimeBuffer(CommandBuffer);
-}
-
-void CVulkanRenderer::stageFillBuffer(const void* vData, VkDeviceSize vSize, Common::SBufferPack& voTargetBufferPack)
-{
-    Common::SBufferPack StageBufferPack;
-    __createBuffer(vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
-
-    void* pDevData;
-    ck(vkMapMemory(m_Device, StageBufferPack.Memory, 0, vSize, 0, &pDevData));
-    memcpy(reinterpret_cast<char*>(pDevData), vData, vSize);
-    vkUnmapMemory(m_Device, StageBufferPack.Memory);
-
-    __createBuffer(vSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voTargetBufferPack.Buffer, voTargetBufferPack.Memory);
-
-    __copyBuffer(StageBufferPack.Buffer, voTargetBufferPack.Buffer, vSize);
-
-    StageBufferPack.destroy(m_Device);
-}
-
-void CVulkanRenderer::stageFillImage(const void* vData, VkDeviceSize vSize, VkImageCreateInfo vImageInfo, Common::SImagePack& voTargetImagePack)
-{
-    uint32_t Width = vImageInfo.extent.width;
-    uint32_t Height = vImageInfo.extent.height;
-    uint32_t LayerCount = vImageInfo.arrayLayers;
-
-    Common::SBufferPack StageBufferPack;
-    __createBuffer(vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
-
-    void* pDevData;
-    ck(vkMapMemory(m_Device, StageBufferPack.Memory, 0, vSize, 0, &pDevData));
-    memcpy(pDevData, vData, vSize);
-    vkUnmapMemory(m_Device, StageBufferPack.Memory);
-
-    __createImage(vImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, voTargetImagePack.Image, voTargetImagePack.Memory);
-    __transitionImageLayout(voTargetImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, LayerCount);
-    __copyBufferToImage(StageBufferPack.Buffer, voTargetImagePack.Image, Width, Height, LayerCount);
-    __transitionImageLayout(voTargetImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, LayerCount);
-
-    StageBufferPack.destroy(m_Device);
 }
 
 size_t CVulkanRenderer::__getActualTextureNum()
@@ -1165,7 +789,11 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    stageFillImage(pPixelData, DataSize, ImageInfo, voImagePack);
+    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
+    Common::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
+    m_Command.endSingleTimeBuffer(CommandBuffer);
+
+    voImagePack.ImageView = Common::createImageView(m_Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CVulkanRenderer::__calculateVisiableObjects()
@@ -1311,7 +939,7 @@ void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const 
     __destroyRecreateResources();
     m_ImageFormat = vImageFormat;
     m_Extent = vExtent;
-    m_ImageViews = vImageViews;
+    m_TargetImageViews = vImageViews;
     __createRecreateResources();
     rerecordCommand();
 }
@@ -1329,83 +957,37 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     float Aspect = 1.0;
     if (m_Extent.height > 0 && m_Extent.width > 0)
         Aspect = static_cast<float>(m_Extent.width) / m_Extent.height;
-
     m_pCamera->setAspect(Aspect);
-    SUniformBufferObjectVert UBOVert = {};
-    UBOVert.Model = glm::mat4(1.0f);
-    UBOVert.View = m_pCamera->getViewMat();
-    UBOVert.Proj = m_pCamera->getProjMat();
 
-    void* pData;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
-    vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
+    glm::mat4 Model = glm::mat4(1.0f);
+    glm::mat4 View = m_pCamera->getViewMat();
+    glm::mat4 Proj = m_pCamera->getProjMat();
+    glm::vec3 EyePos = m_pCamera->getPos();
 
-    SUniformBufferObjectFrag UBOFrag = {};
-    UBOFrag.Eye = m_pCamera->getPos();
-
-    ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
-    vkUnmapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory);
+    m_PipelineSet.TrianglesWithDepthTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.TrianglesWithBlend.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
 }
 
 void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
 {
-    SSkyUniformBufferObjectVert UBOVert = {};
-    UBOVert.Proj = m_pCamera->getProjMat();
-    UBOVert.View = m_pCamera->getViewMat();
-    UBOVert.EyePosition = m_pCamera->getPos();
-
-    void* pData;
-    ck(vkMapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
-    vkUnmapMemory(m_Device, m_SkyBox.VertUniformBufferPacks[vImageIndex].Memory);
-
-    SSkyUniformBufferObjectFrag UBOFrag = {};
-    glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
+    glm::mat4 Proj = m_pCamera->getProjMat();
+    glm::mat4 View = m_pCamera->getViewMat();
+    glm::vec3 EyePos = m_pCamera->getPos();
     glm::vec3 Up = glm::normalize(m_pCamera->getUp());
 
-    glm::vec3 RotationAxe = glm::cross(Up, FixUp);
-
-    if (RotationAxe.length() == 0)
-    {
-            UBOFrag.UpCorrection = glm::mat4(1.0);
-            if (glm::dot(FixUp, Up) < 0)
-            {
-                UBOFrag.UpCorrection[0][0] = -1.0;
-                UBOFrag.UpCorrection[1][1] = -1.0;
-                UBOFrag.UpCorrection[2][2] = -1.0;
-            }
-    }
-    else
-    {
-        float RotationRad = glm::acos(glm::dot(FixUp, Up));
-        UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
-    }
-
-    ck(vkMapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
-    vkUnmapMemory(m_Device, m_SkyBox.FragUniformBufferPacks[vImageIndex].Memory);
+    m_PipelineSet.TrianglesSky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
 }
 
 void CVulkanRenderer::__updateGuiUniformBuffer(uint32_t vImageIndex)
 {
     // line
-    SGuiUniformBufferObjectVert UBOVert = {};
-    UBOVert.Proj = m_pCamera->getProjMat();
-    UBOVert.View = m_pCamera->getViewMat();
-
-    void* pData;
-    ck(vkMapMemory(m_Device, m_Gui.VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
-    vkUnmapMemory(m_Device, m_Gui.VertUniformBufferPacks[vImageIndex].Memory);
+    glm::mat4 Proj = m_pCamera->getProjMat();
+    glm::mat4 View = m_pCamera->getViewMat();
+    m_PipelineSet.GuiLines.updateUniformBuffer(vImageIndex, View, Proj);
 }
 
 void CVulkanRenderer::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
-    const VkDeviceSize Offsets[] = { 0 };
-    m_PipelineSet.TrianglesSky.bind(CommandBuffer, m_SkyDescriptor.getDescriptorSet(vImageIndex));
-    vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_SkyBox.VertexDataPack.Buffer, Offsets);
-    vkCmdDraw(CommandBuffer, m_SkyBox.VertexNum, 1, 0, 0);
+    m_PipelineSet.TrianglesSky.recordCommand(CommandBuffer, vImageIndex);
 }

@@ -9,48 +9,48 @@
 struct CPipelineBase
 {
 public:
-    CPipelineBase() = delete;
-    CPipelineBase(std::filesystem::path vVertShaderPath, std::filesystem::path vFragShaderPath) : m_VertShaderPath(vVertShaderPath), m_FragShaderPath(vFragShaderPath) {}
+    CPipelineBase() = default;
 
     void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
+    void setImageNum(size_t vImageNum);
     void destroy();
     void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
 
     template <typename T>
     void pushConstant(VkCommandBuffer vCommandBuffer, VkShaderStageFlags vState, T vPushConstant)
     {
-        vkCmdPushConstants(vCommandBuffer, m_Layout, vState, 0, sizeof(vPushConstant), &vPushConstant);
+        vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, vState, 0, sizeof(vPushConstant), &vPushConstant);
     }
 
     const CDescriptor& getDescriptor() const { return m_Descriptor; }
 
 protected:
-    virtual void _createDescriptor(VkDescriptorPool vPool, uint32_t vImageNum) = 0;
-    virtual VkPipelineShaderStageCreateInfo _getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule);
-    virtual VkPipelineVertexInputStateCreateInfo _getVertexInputStageInfoV();
+    virtual std::filesystem::path _getVertShaderPathV() = 0;
+    virtual std::filesystem::path _getFragShaderPathV() = 0;
+    virtual void _createResourceV(size_t vImageNum) = 0;
+    virtual void _initDescriptorV() = 0;
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer);
+    virtual std::vector<VkPipelineShaderStageCreateInfo> _getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule);
+    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) = 0;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV();
-    virtual VkPipelineViewportStateCreateInfo _getViewportStageInfoV(VkExtent2D vExtent);
+    virtual void _getViewportStageInfoV(VkExtent2D vExtent, VkViewport& voViewport, VkRect2D& voScissor);
     virtual VkPipelineRasterizationStateCreateInfo _getRasterizationStageInfoV();
     virtual VkPipelineMultisampleStateCreateInfo _getMultisampleStageInfoV();
     virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV();
-    virtual VkPipelineColorBlendStateCreateInfo _getColorBlendInfoV();
-    virtual VkPipelineDynamicStateCreateInfo _getDynamicStateInfoV();
+    virtual void _getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment);
+    virtual std::vector<VkDynamicState> _getEnabledDynamicSetV();
     virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV();
 
-    static VkPipelineShaderStageCreateInfo          getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule);
-    static VkPipelineVertexInputStateCreateInfo     getDefaultVertexInputStageInfo();
+    static std::vector<VkPipelineShaderStageCreateInfo>          getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule);
     static VkPipelineInputAssemblyStateCreateInfo   getDefaultInputAssemblyStageInfo();
-    static VkPipelineViewportStateCreateInfo        getDefaultViewportStageInfo(VkExtent2D vExtent);
     static VkPipelineRasterizationStateCreateInfo   getDefaultRasterizationStageInfo();
     static VkPipelineMultisampleStateCreateInfo     getDefaultMultisampleStageInfo();
     static VkPipelineDepthStencilStateCreateInfo    getDefaultDepthStencilInfo();
-    static VkPipelineColorBlendStateCreateInfo      getDefaultColorBlendInfo();
-    static VkPipelineDynamicStateCreateInfo         getDefaultDynamicStateInfo();
     static std::vector<VkPushConstantRange>         getDefaultPushConstantRangeSet();
 
+    size_t m_ImageNum = 0;
+
     CDescriptor m_Descriptor;
-    std::filesystem::path m_VertShaderPath;
-    std::filesystem::path m_FragShaderPath;
 
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
     VkDevice m_Device = VK_NULL_HANDLE;
