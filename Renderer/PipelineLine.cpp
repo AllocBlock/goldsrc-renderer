@@ -57,6 +57,18 @@ void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
     }
 }
 
+void CPipelineLine::setObject(std::string vName, std::shared_ptr<SGuiObject> vObject)
+{
+    m_NameObjectMap[vName] = std::move(vObject);
+    __updateVertexBuffer();
+}
+
+void CPipelineLine::removeObject(std::string vName)
+{
+    m_NameObjectMap.erase(vName);
+    __updateVertexBuffer();
+}
+
 VkPipelineInputAssemblyStateCreateInfo CPipelineLine::_getInputAssemblyStageInfoV()
 {
     auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
@@ -98,26 +110,26 @@ void CPipelineLine::__updateVertexBuffer()
     vkDeviceWaitIdle(m_Device);
     m_VertexDataPack.destroy(m_Device);
 
-    //size_t NumVertex = 0; // 12 edges
-    //for (const auto& Pair : m_NameObjectMap)
-    //{
-    //    const auto& pObject = Pair.second;
-    //    NumVertex += pObject->Data.size();
-    //}
-    //if (NumVertex > 0)
-    //{
-    //    VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
+    m_VertexNum = 0;
+    for (const auto& Pair : m_NameObjectMap)
+    {
+        const auto& pObject = Pair.second;
+        m_VertexNum += pObject->Data.size();
+    }
+    if (m_VertexNum > 0)
+    {
+        VkDeviceSize BufferSize = sizeof(SSimplePointData) * m_VertexNum;
 
-    //    // TODO: addtional copy is made. Is there better way?
-    //    void* pData = new char[BufferSize];
-    //    size_t Offset = 0;
-    //    for (const auto& Pair : m_NameObjectMap)
-    //    {
-    //        const auto& pObject = Pair.second;
-    //        size_t DataSize = sizeof(glm::vec3) * pObject->Data.size();
-    //        memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
-    //        Offset += DataSize;
-    //    }
-    //    stageFillBuffer(pData, BufferSize, m_VertexDataPack);
-    //}
+        // TODO: addtional copy is made. Is there better way?
+        void* pData = new char[BufferSize];
+        size_t Offset = 0;
+        for (const auto& Pair : m_NameObjectMap)
+        {
+            const auto& pObject = Pair.second;
+            size_t DataSize = sizeof(glm::vec3) * pObject->Data.size();
+            memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
+            Offset += DataSize;
+        }
+        Common::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
+    }
 }

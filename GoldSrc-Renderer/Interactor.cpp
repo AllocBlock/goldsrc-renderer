@@ -177,8 +177,11 @@ void CInteractor::__selectByClick(glm::vec2 vPos)
 
 	float NearestDistance = INFINITY;
 	std::optional<S3DBoundingBox> NearestBoundingBox = std::nullopt;
+
+	int temp = 0;
 	for (const auto& pObject : pScene->Objects)
 	{
+		temp++;
 		std::optional<S3DBoundingBox> BB = pObject->getBoundingBox();
 		if (BB == std::nullopt) continue;
 		// TODO: get intersection of ray and bounding box

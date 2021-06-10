@@ -234,22 +234,22 @@ void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
         Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
     };
    
-    //m_Gui.addOrUpdateObject("HighlightBoundingBox", std::move(pObject));
-    //__recordGuiCommandBuffers();
+    m_PipelineSet.GuiLines.setObject("HighlightBoundingBox", std::move(pObject));
+    __recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::removeHighlightBoundingBox()
 {
-    //m_Gui.removeObject("HighlightBoundingBox");
-    //__recordGuiCommandBuffers();
+    m_PipelineSet.GuiLines.removeObject("HighlightBoundingBox");
+    __recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
 {
-    /*auto pObject = std::make_shared<SGuiObject>();
+    auto pObject = std::make_shared<SGuiObject>();
     pObject->Data = { vStart, vEnd };
-    m_Gui.addOrUpdateObject(vName, std::move(pObject));
-    __recordGuiCommandBuffers();*/
+    m_PipelineSet.GuiLines.setObject(vName, std::move(pObject));
+    __recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::__recordGuiCommandBuffers()
@@ -334,14 +334,14 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
 
     m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, vImageIndex);
     for(size_t ModelIndex : OpaqueSequence)
-        __renderModel(vImageIndex, ModelIndex);
+        __renderModel(vImageIndex, ModelIndex, false);
 
-    m_PipelineSet.TrianglesWithBlend.bind(CommandBuffer, vImageIndex);
+    /*m_PipelineSet.TrianglesWithBlend.bind(CommandBuffer, vImageIndex);
     for (size_t ModelIndex : TranparentSequence)
-        __renderModel(vImageIndex, ModelIndex);
+        __renderModel(vImageIndex, ModelIndex, true);*/
 }
 
-void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
+void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
@@ -349,7 +349,10 @@ void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 
     const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[vModelIndex];
 
-    m_PipelineSet.TrianglesWithBlend.setOpacity(CommandBuffer, ModelInfo.Opacity);
+    if (vBlend)
+        m_PipelineSet.TrianglesWithBlend.setOpacity(CommandBuffer, ModelInfo.Opacity);
+    else
+        m_PipelineSet.TrianglesWithDepthTest.setOpacity(CommandBuffer, ModelInfo.Opacity);
 
     std::vector<size_t> ObjectIndices = m_pScene->BspTree.ModelIndexToObjectIndex[vModelIndex];
     for (size_t ObjectIndex : ObjectIndices)
@@ -357,7 +360,10 @@ void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         bool EnableLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
-        m_PipelineSet.TrianglesWithBlend.setLightmapState(CommandBuffer, EnableLightmap);
+        if (vBlend)
+            m_PipelineSet.TrianglesWithBlend.setLightmapState(CommandBuffer, EnableLightmap);
+        else
+            m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
 }
@@ -655,6 +661,7 @@ void CVulkanRenderer::__updateDescriptorSets()
         TextureSet[i] = m_TextureImagePacks[i].ImageView;
     m_PipelineSet.TrianglesWithDepthTest.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.TrianglesWithBlend.updateDescriptorSet(TextureSet, Lightmap);
+    m_PipelineSet.GuiLines.updateDescriptorSet();
 }
 
 void CVulkanRenderer::__createPlaceholderImage()

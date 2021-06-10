@@ -42,17 +42,6 @@ struct SPipelineSet
     }
 };
 
-enum class EGuiObjectType
-{
-    LINE
-};
-
-struct SGuiObject
-{
-    EGuiObjectType Type = EGuiObjectType::LINE;
-    std::vector<glm::vec3> Data;
-};
-
 //struct SGui
 //{
 //    std::map<std::string, std::shared_ptr<SGuiObject>> NameObjectMap;
@@ -117,11 +106,6 @@ private:
     void __createIndexBuffer();
     void __createLineDescriptorSets();
     void __createPlaceholderImage();
-
-    void __createSkyPipeline();
-    void __createDepthTestPipeline();
-    void __createBlendPipeline();
-    void __createGuiLinesPipeline();
     
     void __createRecreateResources();
     void __destroyRecreateResources();
@@ -131,7 +115,7 @@ private:
     void __renderByBspTree(uint32_t vImageIndex);
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
     void __renderModels(uint32_t vImageIndex);
-    void __renderModel(uint32_t vImageIndex, size_t vModelIndex);
+    void __renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend);
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __updateSkyUniformBuffer(uint32_t vImageIndex);
     void __updateGuiUniformBuffer(uint32_t vImageIndex);
@@ -154,7 +138,6 @@ private:
     size_t __getActualTextureNum();
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Common::SImagePack& voImagePack);
     void __updateDescriptorSets();
-    void __updateLineDescriptorSets();
 
     std::vector<SGoldSrcPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
 

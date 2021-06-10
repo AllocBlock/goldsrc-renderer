@@ -32,7 +32,7 @@ private:
     void __updatePushConstant(VkCommandBuffer vCommandBuffer, bool vEnableLightmap, float vOpacity);
     
     bool m_EnableLightmap = false;
-    bool m_Opacity = 1.0f;
+    float m_Opacity = 1.0f;
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
     std::vector<Common::SBufferPack> m_VertUniformBufferPackSet;
