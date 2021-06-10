@@ -336,9 +336,9 @@ void CVulkanRenderer::__renderModels(uint32_t vImageIndex)
     for(size_t ModelIndex : OpaqueSequence)
         __renderModel(vImageIndex, ModelIndex, false);
 
-    /*m_PipelineSet.TrianglesWithBlend.bind(CommandBuffer, vImageIndex);
+    m_PipelineSet.TrianglesWithBlend.bind(CommandBuffer, vImageIndex);
     for (size_t ModelIndex : TranparentSequence)
-        __renderModel(vImageIndex, ModelIndex, true);*/
+        __renderModel(vImageIndex, ModelIndex, true);
 }
 
 void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend)
@@ -507,7 +507,7 @@ void CVulkanRenderer::__createDepthResources()
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    __createImage(ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
+    Common::createImage(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
     m_DepthImagePack.ImageView = Common::createImageView(m_Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
     __transitionImageLayout(m_DepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
@@ -576,14 +576,7 @@ void CVulkanRenderer::__createVertexBuffer()
         return;
 
     VkDeviceSize BufferSize = sizeof(SGoldSrcPointData) * NumVertex;
-
-    VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;
-   
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-    void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
+    void* pData = new char[BufferSize];
     size_t Offset = 0;
     for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
     {
@@ -592,14 +585,8 @@ void CVulkanRenderer::__createVertexBuffer()
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    vkUnmapMemory(m_Device, StagingBufferMemory);
-
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
-
-    __copyBuffer(StagingBuffer, m_VertexBufferPack.Buffer, BufferSize);
-
-    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
+    Common::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    delete[] pData;
 }
 
 void CVulkanRenderer::__createIndexBuffer()
@@ -620,13 +607,7 @@ void CVulkanRenderer::__createIndexBuffer()
         return;
 
     VkDeviceSize BufferSize = sizeof(uint32_t) * NumIndex;
-
-    VkBuffer StagingBuffer;
-    VkDeviceMemory StagingBufferMemory;
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StagingBuffer, StagingBufferMemory);
-
-    void* pData;
-    ck(vkMapMemory(m_Device, StagingBufferMemory, 0, BufferSize, 0, &pData));
+    void* pData = new char[BufferSize];
     size_t Offset = 0;
     for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
     {
@@ -638,19 +619,8 @@ void CVulkanRenderer::__createIndexBuffer()
         memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    vkUnmapMemory(m_Device, StagingBufferMemory);
-
-    __createBuffer(BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_IndexBufferPack.Buffer, m_IndexBufferPack.Memory);
-
-    __copyBuffer(StagingBuffer, m_IndexBufferPack.Buffer, BufferSize);
-
-    vkDestroyBuffer(m_Device, StagingBuffer, nullptr);
-    vkFreeMemory(m_Device, StagingBufferMemory, nullptr);
-}
-
-void CVulkanRenderer::__createLineDescriptorSets()
-{
-    m_PipelineSet.GuiLines.setImageNum(m_NumSwapchainImage);
+    Common::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    delete[] pData;
 }
 
 void CVulkanRenderer::__updateDescriptorSets()
@@ -727,11 +697,6 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
     throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
-void CVulkanRenderer::__createImage(VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory)
-{
-    Common::createImage(m_PhysicalDevice, m_Device, vImageInfo, vProperties, voImage, voImageMemory);
-}
-
 uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
 {
     return Common::findMemoryType(m_PhysicalDevice, vTypeFilter, vProperties);
@@ -740,25 +705,6 @@ uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropert
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
     Common::transitionImageLayout(CommandBuffer, vImage, vFormat, vOldLayout, vNewLayout, vLayerCount);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
-}
-
-void CVulkanRenderer::__createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory)
-{
-    Common::createBuffer(m_PhysicalDevice, m_Device, vSize, vUsage, vProperties, voBuffer, voBufferMemory);
-}
-
-void CVulkanRenderer::__copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize)
-{
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Common::copyBuffer(CommandBuffer, vSrcBuffer, vDstBuffer, vSize);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
-}
-
-void CVulkanRenderer::__copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount)
-{
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Common::copyBufferToImage(CommandBuffer, vBuffer, vImage, vWidth, vHeight, vLayerCount);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
@@ -953,13 +899,10 @@ void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const 
 
 void CVulkanRenderer::update(uint32_t vImageIndex)
 {
-    __updateUniformBuffer(vImageIndex);
-    if (m_EnableSky)
-        __updateSkyUniformBuffer(vImageIndex);
-    __updateGuiUniformBuffer(vImageIndex);
+    __updateAllUniformBuffer(vImageIndex);
 }
 
-void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
+void CVulkanRenderer::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
     if (m_Extent.height > 0 && m_Extent.width > 0)
@@ -970,26 +913,12 @@ void CVulkanRenderer::__updateUniformBuffer(uint32_t vImageIndex)
     glm::mat4 View = m_pCamera->getViewMat();
     glm::mat4 Proj = m_pCamera->getProjMat();
     glm::vec3 EyePos = m_pCamera->getPos();
+    glm::vec3 Up = glm::normalize(m_pCamera->getUp());
 
     m_PipelineSet.TrianglesWithDepthTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.TrianglesWithBlend.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-}
-
-void CVulkanRenderer::__updateSkyUniformBuffer(uint32_t vImageIndex)
-{
-    glm::mat4 Proj = m_pCamera->getProjMat();
-    glm::mat4 View = m_pCamera->getViewMat();
-    glm::vec3 EyePos = m_pCamera->getPos();
-    glm::vec3 Up = glm::normalize(m_pCamera->getUp());
-
-    m_PipelineSet.TrianglesSky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
-}
-
-void CVulkanRenderer::__updateGuiUniformBuffer(uint32_t vImageIndex)
-{
-    // line
-    glm::mat4 Proj = m_pCamera->getProjMat();
-    glm::mat4 View = m_pCamera->getViewMat();
+    if (m_EnableSky)
+        m_PipelineSet.TrianglesSky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
     m_PipelineSet.GuiLines.updateUniformBuffer(vImageIndex, View, Proj);
 }
 

@@ -18,14 +18,14 @@ struct SSimplePointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptions(1);
+        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(1);
 
-        AttributeDescriptions[0].binding = 0;
-        AttributeDescriptions[0].location = 0;
-        AttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[0].offset = offsetof(SSimplePointData, Pos);
+        AttributeDescriptionSet[0].binding = 0;
+        AttributeDescriptionSet[0].location = 0;
+        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDescriptionSet[0].offset = offsetof(SSimplePointData, Pos);
 
-        return AttributeDescriptions;
+        return AttributeDescriptionSet;
     }
 };
 
@@ -50,38 +50,38 @@ struct SGoldSrcPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptions(6);
+        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(6);
 
-        AttributeDescriptions[0].binding = 0;
-        AttributeDescriptions[0].location = 0;
-        AttributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[0].offset = offsetof(SGoldSrcPointData, Pos);
+        AttributeDescriptionSet[0].binding = 0;
+        AttributeDescriptionSet[0].location = 0;
+        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDescriptionSet[0].offset = offsetof(SGoldSrcPointData, Pos);
 
-        AttributeDescriptions[1].binding = 0;
-        AttributeDescriptions[1].location = 1;
-        AttributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[1].offset = offsetof(SGoldSrcPointData, Color);
+        AttributeDescriptionSet[1].binding = 0;
+        AttributeDescriptionSet[1].location = 1;
+        AttributeDescriptionSet[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDescriptionSet[1].offset = offsetof(SGoldSrcPointData, Color);
 
-        AttributeDescriptions[2].binding = 0;
-        AttributeDescriptions[2].location = 2;
-        AttributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptions[2].offset = offsetof(SGoldSrcPointData, Normal);
+        AttributeDescriptionSet[2].binding = 0;
+        AttributeDescriptionSet[2].location = 2;
+        AttributeDescriptionSet[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDescriptionSet[2].offset = offsetof(SGoldSrcPointData, Normal);
 
-        AttributeDescriptions[3].binding = 0;
-        AttributeDescriptions[3].location = 3;
-        AttributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptions[3].offset = offsetof(SGoldSrcPointData, TexCoord);
+        AttributeDescriptionSet[3].binding = 0;
+        AttributeDescriptionSet[3].location = 3;
+        AttributeDescriptionSet[3].format = VK_FORMAT_R32G32_SFLOAT;
+        AttributeDescriptionSet[3].offset = offsetof(SGoldSrcPointData, TexCoord);
 
-        AttributeDescriptions[4].binding = 0;
-        AttributeDescriptions[4].location = 4;
-        AttributeDescriptions[4].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptions[4].offset = offsetof(SGoldSrcPointData, LightmapCoord);
+        AttributeDescriptionSet[4].binding = 0;
+        AttributeDescriptionSet[4].location = 4;
+        AttributeDescriptionSet[4].format = VK_FORMAT_R32G32_SFLOAT;
+        AttributeDescriptionSet[4].offset = offsetof(SGoldSrcPointData, LightmapCoord);
 
-        AttributeDescriptions[5].binding = 0;
-        AttributeDescriptions[5].location = 5;
-        AttributeDescriptions[5].format = VK_FORMAT_R32_UINT;
-        AttributeDescriptions[5].offset = offsetof(SGoldSrcPointData, TexIndex);
+        AttributeDescriptionSet[5].binding = 0;
+        AttributeDescriptionSet[5].location = 5;
+        AttributeDescriptionSet[5].format = VK_FORMAT_R32_UINT;
+        AttributeDescriptionSet[5].offset = offsetof(SGoldSrcPointData, TexIndex);
 
-        return AttributeDescriptions;
+        return AttributeDescriptionSet;
     }
 };

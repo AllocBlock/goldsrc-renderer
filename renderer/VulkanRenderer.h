@@ -42,25 +42,6 @@ struct SPipelineSet
     }
 };
 
-//struct SGui
-//{
-//    std::map<std::string, std::shared_ptr<SGuiObject>> NameObjectMap;
-//    Common::SBufferPack VertexDataPack;
-//    std::vector<Common::SBufferPack> VertUniformBufferPacks;
-//
-//    void addOrUpdateObject(std::string vName, std::shared_ptr<SGuiObject> vpObject)
-//    {
-//        NameObjectMap[vName] = std::move(vpObject);
-//    }
-//
-//    void removeObject(std::string vName)
-//    {
-//        NameObjectMap.erase(vName);
-//    }
-//
-//    bool isEmpty() { return NameObjectMap.empty(); }
-//};
-
 class CVulkanRenderer
 {
 public:
@@ -104,7 +85,6 @@ private:
     void __createLightmapImage();
     void __createVertexBuffer();
     void __createIndexBuffer();
-    void __createLineDescriptorSets();
     void __createPlaceholderImage();
     
     void __createRecreateResources();
@@ -116,25 +96,19 @@ private:
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
     void __renderModels(uint32_t vImageIndex);
     void __renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend);
-    void __updateUniformBuffer(uint32_t vImageIndex);
-    void __updateSkyUniformBuffer(uint32_t vImageIndex);
-    void __updateGuiUniformBuffer(uint32_t vImageIndex);
+    void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __recordGuiCommandBuffers();
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
-    std::pair< std::vector<size_t>, std::vector<size_t>> __sortModelRenderSequence();
+    std::pair<std::vector<size_t>, std::vector<size_t>> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
     
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
-    void __createImage(VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory);
     uint32_t __findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
     void __transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount = 1);
-    void __createBuffer(VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
-    void __copyBuffer(VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
-    void __copyBufferToImage(VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount = 1);
     size_t __getActualTextureNum();
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Common::SImagePack& voImagePack);
     void __updateDescriptorSets();
