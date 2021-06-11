@@ -1,4 +1,4 @@
-#include "ImguiVullkan.h"
+#include "GUIMain.h"
 #include "SceneInterface.h"
 
 #include "imgui.h"
@@ -7,7 +7,7 @@
 #include "imfilebrowser.h"
 #include <iostream>
 
-SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {
     SResultReadScene Result;
     Result.Succeed = false;
@@ -42,7 +42,7 @@ SResultReadScene CImguiVullkan::readScene(std::filesystem::path vFilePath, std::
     return Result;
 }
 
-void CImguiVullkan::__drawGUI()
+void CGUIMain::__drawGUI()
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();

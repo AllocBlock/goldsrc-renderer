@@ -1,10 +1,10 @@
-#include "GUIAlert.h"
+#include "ImguiAlert.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
-void CGUIAlert::appendAlert(std::string vText)
+void CImguiAlert::appendAlert(std::string vText)
 {
     if (!m_IgnoreAll)
     {
@@ -14,7 +14,7 @@ void CGUIAlert::appendAlert(std::string vText)
     }
 }
 
-void CGUIAlert::draw()
+void CImguiAlert::draw()
 {
     if (m_Open)
     {

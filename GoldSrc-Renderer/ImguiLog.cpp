@@ -1,4 +1,4 @@
-#include "GUILog.h"
+#include "ImguiLog.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -7,7 +7,7 @@
 #include <chrono>
 #include <iomanip>
 
-std::istream& operator >> (std::istream& vIn, CGUILog& vGUILog)
+std::istream& operator >> (std::istream& vIn, CImguiLog& vGUILog)
 {
     std::string Temp;
     vIn >> Temp;
@@ -15,14 +15,14 @@ std::istream& operator >> (std::istream& vIn, CGUILog& vGUILog)
     return vIn;
 }
 
-void CGUILog::log(std::string vText)
+void CImguiLog::log(std::string vText)
 {
     std::string Time = __getCurrentTime();
     m_Logs.emplace_back(Time + vText);
     m_HasNewLog = true;
 }
 
-void CGUILog::draw()
+void CImguiLog::draw()
 {
     if (m_Open)
     {
@@ -40,7 +40,7 @@ void CGUILog::draw()
     }
 }
 
-std::string CGUILog::__getCurrentTime()
+std::string CImguiLog::__getCurrentTime()
 {
     time_t Time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     tm LocalTime;

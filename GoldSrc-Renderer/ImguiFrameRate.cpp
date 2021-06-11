@@ -1,16 +1,16 @@
-#include "GUIFrameRate.h"
+#include "ImguiFrameRate.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 #include <string>
 
-CGUIFrameRate::CGUIFrameRate()
+CImguiFrameRate::CImguiFrameRate()
 {
     m_LastTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 }
 
-void CGUIFrameRate::draw()
+void CImguiFrameRate::draw()
 {
     std::chrono::milliseconds CurTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     float DeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastTimeStamp).count()) / 1000.0f;

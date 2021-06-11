@@ -1,5 +1,6 @@
-﻿#include "ImguiVullkan.h"
+﻿#include "GUIBase.h"
 #include "Common.h"
+#include "Log.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -8,20 +9,11 @@
 #include <iostream>
 #include <set>
 
-CImguiVullkan::CImguiVullkan(GLFWwindow* vpWindow)
+CGUIBase::CGUIBase(GLFWwindow* vpWindow) : m_pWindow(vpWindow)
 {
-    m_pWindow = vpWindow;
-    m_pRenderer = std::make_shared<CVulkanRenderer>();
-    m_pInteractor = std::make_shared<CInteractor>(vpWindow, m_pRenderer);
-    m_pInteractor->bindEvent();
-
-    Common::Log::setLogObserverFunc([=](std::string vText)
-    {
-        m_GUILog.log(vText);
-    });
 }
 
-void CImguiVullkan::init()
+void CGUIBase::init(bool vHasRenderer)
 {
     __createInstance();
     if (ENABLE_VALIDATION_LAYERS) __setupDebugMessenger();
@@ -47,11 +39,11 @@ void CImguiVullkan::init()
     VkAttachmentDescription Attachment = {};
     Attachment.format = m_SwapchainImageFormat;
     Attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    Attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    Attachment.loadOp = (vHasRenderer ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR);
     Attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     Attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     Attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    Attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    Attachment.initialLayout = (vHasRenderer ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED);
     Attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentReference ColorAttachmentRef = {};
@@ -107,18 +99,17 @@ void CImguiVullkan::init()
 
     __createFramebuffers();
 
-    m_pRenderer->init(m_Instance, m_PhysicalDevice, m_Device, m_GraphicsQueueIndex, m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
+    _initV();
 }
 
-void CImguiVullkan::waitDevice()
+void CGUIBase::waitDevice()
 {
     ck(vkDeviceWaitIdle(m_Device));
 }
 
-void CImguiVullkan::destroy()
+void CGUIBase::destroy()
 {
-    m_pRenderer->destroy();
-
+    _destroyOtherResourceV();
     __destroySwapchainResources();
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
@@ -143,18 +134,35 @@ void CImguiVullkan::destroy()
     vkDestroyInstance(m_Instance, nullptr);
 }
 
-void CImguiVullkan::showAlert(std::string vText)
+void CGUIBase::_initV()
 {
-    m_GUIAlert.appendAlert(vText);
-    Common::Log::log(u8"警告: " + vText);
 }
 
-void CImguiVullkan::log(std::string vText)
+void CGUIBase::_renderV(uint32_t vImageIndex)
 {
-    m_GUILog.log(vText);
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::Begin(u8"窗口");
+    ImGui::Text(u8"默认GUI");
+    ImGui::End();
+    ImGui::Render();
 }
 
-void CImguiVullkan::__createDescriptorPool()
+std::vector<VkCommandBuffer> CGUIBase::_getCommandBufferSetV(uint32_t vImageIndex)
+{
+    return {};
+}
+
+void CGUIBase::_createOtherResourceV()
+{
+}
+
+void CGUIBase::_destroyOtherResourceV()
+{
+}
+
+void CGUIBase::__createDescriptorPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE) vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
     std::vector<VkDescriptorPoolSize> PoolSizes =
@@ -181,7 +189,7 @@ void CImguiVullkan::__createDescriptorPool()
     ck(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
-void CImguiVullkan::__createFramebuffers()
+void CGUIBase::__createFramebuffers()
 {
     uint32_t NumImage = static_cast<uint32_t>(m_SwapchainImageViews.size());
     // create framebuffers
@@ -201,7 +209,7 @@ void CImguiVullkan::__createFramebuffers()
     }
 }
 
-VkCommandBuffer CImguiVullkan::requestCommandBuffer(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CGUIBase::requestCommandBufferSet(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
@@ -227,10 +235,13 @@ VkCommandBuffer CImguiVullkan::requestCommandBuffer(uint32_t vImageIndex)
     vkCmdEndRenderPass(CommandBuffer);
     ck(vkEndCommandBuffer(CommandBuffer));
 
-    return CommandBuffer;
+    std::vector<VkCommandBuffer> CommandBufferSet = _getCommandBufferSetV(vImageIndex);
+    CommandBufferSet.emplace_back(CommandBuffer);
+
+    return CommandBufferSet;
 }
 
-void CImguiVullkan::render()
+void CGUIBase::render()
 {
     ck(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()));
     ck(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex]));
@@ -238,9 +249,7 @@ void CImguiVullkan::render()
     uint32_t ImageIndex;
     VkResult Result = vkAcquireNextImageKHR(m_Device, m_Swapchain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
-    m_pInteractor->update();
-    __drawGUI();
-    m_pRenderer->update(ImageIndex);
+    _renderV(ImageIndex);
 
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
     {
@@ -252,24 +261,18 @@ void CImguiVullkan::render()
         throw std::runtime_error(u8"获取交换链图像失败");
     }
     
-    VkCommandBuffer RendererCommandBuffer = m_pRenderer->requestCommandBuffer(ImageIndex);
-    VkCommandBuffer ImguiCommandBuffer = requestCommandBuffer(ImageIndex);
+    std::vector<VkCommandBuffer> CommandBufferSet = requestCommandBufferSet(ImageIndex);
 
     VkSemaphore WaitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrameIndex] };
     VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    std::vector<VkCommandBuffer> CommandBuffers =
-    {
-        RendererCommandBuffer,
-        ImguiCommandBuffer
-    };
 
     VkSubmitInfo SubmitInfo = {};
     SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     SubmitInfo.waitSemaphoreCount = 1;
     SubmitInfo.pWaitSemaphores = WaitSemaphores;
     SubmitInfo.pWaitDstStageMask = WaitStages;
-    SubmitInfo.commandBufferCount = static_cast<uint32_t>(CommandBuffers.size());
-    SubmitInfo.pCommandBuffers = CommandBuffers.data();
+    SubmitInfo.commandBufferCount = static_cast<uint32_t>(CommandBufferSet.size());
+    SubmitInfo.pCommandBuffers = CommandBufferSet.data();
 
     VkSemaphore SignalSemaphores[] = { m_RenderFinishedSemaphores[m_CurrentFrameIndex] };
     SubmitInfo.signalSemaphoreCount = 1;
@@ -301,7 +304,7 @@ void CImguiVullkan::render()
     m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
 }
 
-void CImguiVullkan::__createInstance()
+void CGUIBase::__createInstance()
 {
     VkApplicationInfo AppInfo = {};
     AppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -333,7 +336,7 @@ void CImguiVullkan::__createInstance()
     ck(vkCreateInstance(&InstanceInfo, nullptr, &m_Instance));
 }
 
-void CImguiVullkan::__setupDebugMessenger()
+void CGUIBase::__setupDebugMessenger()
 {
     VkDebugUtilsMessengerCreateInfoEXT DebugMessengerInfo = {};
     DebugMessengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -351,12 +354,12 @@ void CImguiVullkan::__setupDebugMessenger()
 }
 
 
-void CImguiVullkan::__createSurface()
+void CGUIBase::__createSurface()
 {
     ck(glfwCreateWindowSurface(m_Instance, m_pWindow, nullptr, &m_Surface));
 }
 
-void CImguiVullkan::__choosePhysicalDevice()
+void CGUIBase::__choosePhysicalDevice()
 {
     uint32_t NumPhysicalDevice = 0;
     std::vector<VkPhysicalDevice> PhysicalDevices;
@@ -390,7 +393,7 @@ void CImguiVullkan::__choosePhysicalDevice()
     }
 }
 
-void CImguiVullkan::__createDevice()
+void CGUIBase::__createDevice()
 {
     Common::SQueueFamilyIndices QueueIndices = Common::findQueueFamilies(m_PhysicalDevice, m_Surface);
 
@@ -436,7 +439,7 @@ void CImguiVullkan::__createDevice()
     vkGetDeviceQueue(m_Device, QueueIndices.PresentFamilyIndex.value(), 0, &m_PresentQueue);
 }
 
-void CImguiVullkan::__createSwapchain()
+void CGUIBase::__createSwapchain()
 {
     Common::SSwapChainSupportDetails SwapChainSupport = Common::getSwapChainSupport(m_PhysicalDevice, m_Surface);
 
@@ -491,7 +494,7 @@ void CImguiVullkan::__createSwapchain()
     m_SwapchainExtent = Extent;
 }
 
-void CImguiVullkan::__createSwapchainImageViews()
+void CGUIBase::__createSwapchainImageViews()
 {
     m_SwapchainImageViews.resize(m_SwapchainImages.size());
 
@@ -501,7 +504,7 @@ void CImguiVullkan::__createSwapchainImageViews()
     }
 }
 
-void CImguiVullkan::__destroySwapchainResources()
+void CGUIBase::__destroySwapchainResources()
 {
     for (auto Framebuffer : m_FrameBuffers)
         vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
@@ -511,7 +514,7 @@ void CImguiVullkan::__destroySwapchainResources()
     vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
 }
 
-void CImguiVullkan::__createSemaphores()
+void CGUIBase::__createSemaphores()
 {
     m_ImageAvailableSemaphores.resize(m_MaxFrameInFlight);
     m_RenderFinishedSemaphores.resize(m_MaxFrameInFlight);
@@ -532,17 +535,18 @@ void CImguiVullkan::__createSemaphores()
     }
 }
 
-void CImguiVullkan::__recreateSwapchain()
+void CGUIBase::__recreateSwapchain()
 {
     waitDevice();
     __destroySwapchainResources();
     __createSwapchain();
     __createSwapchainImageViews();
     __createFramebuffers();
-    m_pRenderer->recreate(m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViews);
+    _destroyOtherResourceV();
+    _createOtherResourceV();
 }
 
-VkSurfaceFormatKHR CImguiVullkan::__chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats)
+VkSurfaceFormatKHR CGUIBase::__chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats)
 {
     // 最好的情况，surface没有倾向的格式，可以任意选择
     if (vAvailableFormats.size() == 1 && vAvailableFormats[0].format == VK_FORMAT_UNDEFINED)
@@ -563,7 +567,7 @@ VkSurfaceFormatKHR CImguiVullkan::__chooseSwapSurfaceFormat(const std::vector<Vk
     return vAvailableFormats[0];
 }
 
-VkPresentModeKHR CImguiVullkan::__chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& vAvailablePresentModes)
+VkPresentModeKHR CGUIBase::__chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& vAvailablePresentModes)
 {
     VkPresentModeKHR BestMode = VK_PRESENT_MODE_FIFO_KHR; // 一定支持的模式
 
@@ -583,7 +587,7 @@ VkPresentModeKHR CImguiVullkan::__chooseSwapPresentMode(const std::vector<VkPres
     return BestMode;
 }
 
-VkExtent2D CImguiVullkan::__chooseSwapExtent(const VkSurfaceCapabilitiesKHR& vCapabilities) {
+VkExtent2D CGUIBase::__chooseSwapExtent(const VkSurfaceCapabilitiesKHR& vCapabilities) {
     // swap extent相当于绘制区域，大部分情况下和窗口大小相同
 
     // currentExtent是当前suface的长宽，如果是(0xFFFFFFFF, 0xFFFFFFFF)说明长宽会有对应的swapchain的extent决定
@@ -605,7 +609,7 @@ VkExtent2D CImguiVullkan::__chooseSwapExtent(const VkSurfaceCapabilitiesKHR& vCa
     }
 }
 
-std::vector<const char*> CImguiVullkan::__getRequiredExtensions()
+std::vector<const char*> CGUIBase::__getRequiredExtensions()
 {
     // 获取GLFW所需的扩展
     uint32_t GlfwExtensionCount = 0;
@@ -621,7 +625,7 @@ std::vector<const char*> CImguiVullkan::__getRequiredExtensions()
     return Extensions;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL CImguiVullkan::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL CGUIBase::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData)
 {
     static std::string LastMessage = "";
     if (LastMessage != vpCallbackData->pMessage)
@@ -634,7 +638,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL CImguiVullkan::debugCallback(VkDebugUtilsMessageS
     return VK_FALSE;
 }
 
-void CImguiVullkan::__destroyDebugMessenger()
+void CGUIBase::__destroyDebugMessenger()
 {
     auto pDestroyDebugFunc = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT"));
     if (pDestroyDebugFunc == nullptr)

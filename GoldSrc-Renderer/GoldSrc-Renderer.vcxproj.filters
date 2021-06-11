@@ -18,19 +18,19 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GUIAlert.cpp">
+    <ClCompile Include="ImguiAlert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GUIFrameRate.cpp">
+    <ClCompile Include="ImguiFrameRate.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GUILog.cpp">
+    <ClCompile Include="ImguiLog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ImguiDraw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiVullkan.cpp">
+    <ClCompile Include="GUIMain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Interactor.cpp">
@@ -38,16 +38,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GUIAlert.h">
+    <ClInclude Include="ImguiAlert.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GUIFrameRate.h">
+    <ClInclude Include="ImguiFrameRate.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GUILog.h">
+    <ClInclude Include="ImguiLog.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiVullkan.h">
+    <ClInclude Include="GUIMain.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Interactor.h">

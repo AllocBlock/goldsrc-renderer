@@ -63,7 +63,7 @@ public:
     void addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd); 
 
     bool getSkyState() const { return m_EnableSky; }
-    void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_pScene->UseSkyBox; }
+    void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_pScene && m_pScene->UseSkyBox; }
     bool getCullingState() const { return m_EnableCulling; }
     void setCullingState(bool vCullingState) { m_EnableCulling = vCullingState; }
     bool getFrustumCullingState() const { return m_EnableFrustumCulling; }

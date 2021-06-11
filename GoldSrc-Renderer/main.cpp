@@ -1,5 +1,5 @@
 #include "Interactor.h"
-#include "ImguiVullkan.h"
+#include "GUIMain.h"
 
 #include <GLFW/glfw3.h>
 
@@ -9,8 +9,8 @@ int main()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 	GLFWwindow* pWindow = glfwCreateWindow(1280, 800, "Vulkan Simple Render", nullptr, nullptr);
-	std::shared_ptr<CImguiVullkan> pImgui = std::make_shared<CImguiVullkan>(pWindow);
-	pImgui->init();
+	std::shared_ptr<CGUIMain> pImgui = std::make_shared<CGUIMain>(pWindow);
+	pImgui->init(true);
 
 	while (!glfwWindowShouldClose(pWindow))
 	{
