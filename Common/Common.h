@@ -12,14 +12,27 @@ namespace Common
 {
     struct SVulkanAppInfo
     {
-        VkInstance Instance = VK_NULL_HANDLE;
-        VkPhysicalDevice PhysicalDevice = VK_NULL_HANDLE;
-        VkDevice Device = VK_NULL_HANDLE;
-        uint32_t GraphicsQueueIndex = std::numeric_limits<uint32_t>::max();
-        VkQueue GraphicsQueue = VK_NULL_HANDLE;
-        VkExtent2D Extent = { 0, 0 };
-        VkFormat ImageForamt = VkFormat::VK_FORMAT_UNDEFINED;
+        SVulkanAppInfo() { clear(); }
+        VkInstance Instance;
+        VkPhysicalDevice PhysicalDevice;
+        VkDevice Device;
+        uint32_t GraphicsQueueIndex;
+        VkQueue GraphicsQueue;
+        VkExtent2D Extent;
+        VkFormat ImageFormat;
         std::vector<VkImageView> TargetImageViewSet;
+
+        void clear()
+        {
+            Instance = VK_NULL_HANDLE;
+            PhysicalDevice = VK_NULL_HANDLE;
+            Device = VK_NULL_HANDLE;
+            GraphicsQueueIndex = std::numeric_limits<uint32_t>::max();
+            GraphicsQueue = VK_NULL_HANDLE;
+            Extent = { 0, 0 };
+            ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
+            TargetImageViewSet.clear();
+        }
     };
 
     struct SImagePack

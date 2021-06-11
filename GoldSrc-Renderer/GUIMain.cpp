@@ -59,6 +59,8 @@ void CGUIMain::log(std::string vText)
 
 void CGUIMain::_initV()
 {
+    CGUIBase::_initV();
+
     Common::Log::setLogObserverFunc([=](std::string vText)
     {
         m_GUILog.log(vText);

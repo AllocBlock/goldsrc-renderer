@@ -16,14 +16,8 @@ CVulkanRenderer::CVulkanRenderer()
 
 void CVulkanRenderer::init(const Common::SVulkanAppInfo& vAppInfo)
 {
-    m_Instance = vAppInfo.Instance;
-    m_PhysicalDevice = vAppInfo.PhysicalDevice;
-    m_Device = vAppInfo.Device;
-    m_GraphicsQueueIndex = vAppInfo.GraphicsQueueIndex;
-    m_ImageFormat = vAppInfo.ImageForamt;
-    m_Extent = vAppInfo.Extent;
-    m_TargetImageViewSet = vAppInfo.TargetImageViewSet;
-    m_NumSwapchainImage = m_TargetImageViewSet.size();
+    m_AppInfo = vAppInfo;
+    m_NumSwapchainImage = vAppInfo.TargetImageViewSet.size();
 
     __createRenderPass(false);
 
@@ -47,10 +41,10 @@ void CVulkanRenderer::__createRecreateResources()
 
 void CVulkanRenderer::__destroyRecreateResources()
 {
-    m_DepthImagePack.destroy(m_Device);
+    m_DepthImagePack.destroy(m_AppInfo.Device);
 
     for (auto& Framebuffer : m_FramebufferSet)
-        vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
+        vkDestroyFramebuffer(m_AppInfo.Device, Framebuffer, nullptr);
     m_FramebufferSet.clear();
 
     __destroySceneResources();
@@ -77,13 +71,13 @@ void CVulkanRenderer::__destroySceneResources()
 {
     for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
     {
-        m_TextureImagePackSet[i].destroy(m_Device);
+        m_TextureImagePackSet[i].destroy(m_AppInfo.Device);
     }
     m_TextureImagePackSet.clear();
 
-    m_LightmapImagePack.destroy(m_Device);
-    m_IndexBufferPack.destroy(m_Device);
-    m_VertexBufferPack.destroy(m_Device);
+    m_LightmapImagePack.destroy(m_AppInfo.Device);
+    m_IndexBufferPack.destroy(m_AppInfo.Device);
+    m_VertexBufferPack.destroy(m_AppInfo.Device);
 }
 
 
@@ -91,9 +85,11 @@ void CVulkanRenderer::destroy()
 {
     __destroyRecreateResources();
 
-    vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
+    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
     m_RenderPass = VK_NULL_HANDLE;
+
+    m_AppInfo.clear();
 }
 
 void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
@@ -128,7 +124,7 @@ void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
      m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
      m_VisableObjectNum = 0;
 
-     vkDeviceWaitIdle(m_Device);
+     vkDeviceWaitIdle(m_AppInfo.Device);
      __destroySceneResources();
      __createSceneResources();
 }
@@ -162,7 +158,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         RenderPassBeginInfo.renderPass = m_RenderPass;
         RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex];
         RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-        RenderPassBeginInfo.renderArea.extent = m_Extent;
+        RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
         RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
         RenderPassBeginInfo.pClearValues = ClearValues.data();
 
@@ -397,7 +393,7 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
 void CVulkanRenderer::__createRenderPass(bool vPresentLayout)
 {
     VkAttachmentDescription ColorAttachment = {};
-    ColorAttachment.format = m_ImageFormat;
+    ColorAttachment.format = m_AppInfo.ImageFormat;
     ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -457,21 +453,21 @@ void CVulkanRenderer::__createRenderPass(bool vPresentLayout)
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    ck(vkCreateRenderPass(m_Device, &RenderPassInfo, nullptr, &m_RenderPass));
+    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
 
 void CVulkanRenderer::__createGraphicsPipelines()
 {
-    m_PipelineSet.TrianglesSky.create(m_PhysicalDevice, m_Device, m_RenderPass, m_Extent);
-    m_PipelineSet.TrianglesWithDepthTest.create(m_PhysicalDevice, m_Device, m_RenderPass,  m_Extent);
-    m_PipelineSet.TrianglesWithBlend.create(m_PhysicalDevice, m_Device, m_RenderPass, m_Extent);
-    m_PipelineSet.GuiLines.create(m_PhysicalDevice, m_Device,m_RenderPass,m_Extent, 1);
+    m_PipelineSet.TrianglesSky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.TrianglesWithDepthTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.TrianglesWithBlend.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device,m_RenderPass, m_AppInfo.Extent, 1);
 }
 
 void CVulkanRenderer::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_Device, ECommandType::RESETTABLE, m_GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_SceneCommandName, m_NumSwapchainImage, ECommandBufferLevel::PRIMARY);
     m_Command.createBuffers(m_GuiCommandName, m_NumSwapchainImage, ECommandBufferLevel::SECONDARY);
 
@@ -493,8 +489,8 @@ void CVulkanRenderer::__createDepthResources()
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = m_Extent.width;
-    ImageInfo.extent.height = m_Extent.height;
+    ImageInfo.extent.width = m_AppInfo.Extent.width;
+    ImageInfo.extent.height = m_AppInfo.Extent.height;
     ImageInfo.extent.depth = 1;
     ImageInfo.mipLevels = 1;
     ImageInfo.arrayLayers = 1;
@@ -505,8 +501,8 @@ void CVulkanRenderer::__createDepthResources()
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    Common::createImage(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
-    m_DepthImagePack.ImageView = Common::createImageView(m_Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    Common::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
+    m_DepthImagePack.ImageView = Common::createImageView(m_AppInfo.Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
     __transitionImageLayout(m_DepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
@@ -517,7 +513,7 @@ void CVulkanRenderer::__createFramebuffers()
     {
         std::array<VkImageView, 2> Attachments =
         {
-            m_TargetImageViewSet[i],
+            m_AppInfo.TargetImageViewSet[i],
             m_DepthImagePack.ImageView
         };
 
@@ -526,11 +522,11 @@ void CVulkanRenderer::__createFramebuffers()
         FramebufferInfo.renderPass = m_RenderPass;
         FramebufferInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
         FramebufferInfo.pAttachments = Attachments.data();
-        FramebufferInfo.width = m_Extent.width;
-        FramebufferInfo.height = m_Extent.height;
+        FramebufferInfo.width = m_AppInfo.Extent.width;
+        FramebufferInfo.height = m_AppInfo.Extent.height;
         FramebufferInfo.layers = 1;
 
-        ck(vkCreateFramebuffer(m_Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
+        ck(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
     }
 }
 
@@ -583,7 +579,7 @@ void CVulkanRenderer::__createVertexBuffer()
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Common::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    Common::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
     delete[] pData;
 }
 
@@ -617,7 +613,7 @@ void CVulkanRenderer::__createIndexBuffer()
         memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Common::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    Common::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
     delete[] pData;
 }
 
@@ -668,7 +664,7 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
     for (VkFormat Format : vCandidates)
     {
         VkFormatProperties Props;
-        vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, Format, &Props);
+        vkGetPhysicalDeviceFormatProperties(m_AppInfo.PhysicalDevice, Format, &Props);
 
         if (vTiling == VK_IMAGE_TILING_LINEAR && 
             (Props.linearTilingFeatures & vFeatures) == vFeatures)
@@ -687,7 +683,7 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
 
 uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
 {
-    return Common::findMemoryType(m_PhysicalDevice, vTypeFilter, vProperties);
+    return Common::findMemoryType(m_AppInfo.PhysicalDevice, vTypeFilter, vProperties);
 }
 
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
@@ -731,10 +727,10 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Common::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
+    Common::stageFillImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 
-    voImagePack.ImageView = Common::createImageView(m_Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    voImagePack.ImageView = Common::createImageView(m_AppInfo.Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CVulkanRenderer::__calculateVisiableObjects()
@@ -876,11 +872,11 @@ std::pair<std::vector<size_t>, std::vector<size_t>> CVulkanRenderer::__sortModel
 
 void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
 {
-    vkDeviceWaitIdle(m_Device);
+    vkDeviceWaitIdle(m_AppInfo.Device);
     __destroyRecreateResources();
-    m_ImageFormat = vImageFormat;
-    m_Extent = vExtent;
-    m_TargetImageViewSet = vImageViews;
+    m_AppInfo.ImageFormat = vImageFormat;
+    m_AppInfo.Extent = vExtent;
+    m_AppInfo.TargetImageViewSet = vImageViews;
     __createRecreateResources();
     rerecordCommand();
 }
@@ -893,8 +889,8 @@ void CVulkanRenderer::update(uint32_t vImageIndex)
 void CVulkanRenderer::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
-    if (m_Extent.height > 0 && m_Extent.width > 0)
-        Aspect = static_cast<float>(m_Extent.width) / m_Extent.height;
+    if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
+        Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
     m_pCamera->setAspect(Aspect);
 
     glm::mat4 Model = glm::mat4(1.0f);

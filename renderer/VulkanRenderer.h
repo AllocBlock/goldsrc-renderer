@@ -114,18 +114,12 @@ private:
 
     std::vector<SGoldSrcPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
 
-    VkInstance m_Instance = VK_NULL_HANDLE;
-    VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-    VkDevice m_Device = VK_NULL_HANDLE;
-    uint32_t m_GraphicsQueueIndex = 0;
+    Common::SVulkanAppInfo m_AppInfo;
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = SPipelineSet();
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";
     std::string m_GuiCommandName = "Gui";
-    VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
-    VkExtent2D m_Extent = { 0, 0 };
-    std::vector<VkImageView> m_TargetImageViewSet;
     std::vector<VkFramebuffer> m_FramebufferSet;
 
     Common::SBufferPack m_VertexBufferPack;

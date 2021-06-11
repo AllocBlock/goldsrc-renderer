@@ -142,7 +142,7 @@ Common::SVulkanAppInfo CApplicationBase::getAppInfo()
     Info.GraphicsQueueIndex = m_GraphicsQueueIndex;
     Info.GraphicsQueue = m_GraphicsQueue;
     Info.Extent = m_SwapchainExtent;
-    Info.ImageForamt = m_SwapchainImageFormat;
+    Info.ImageFormat = m_SwapchainImageFormat;
     Info.TargetImageViewSet = m_SwapchainImageViewSet;
 
     return Info;

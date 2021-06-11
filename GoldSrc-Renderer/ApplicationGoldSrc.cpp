@@ -9,12 +9,12 @@ void CApplicationGoldSrc::_initV()
     Common::SVulkanAppInfo AppInfo = getAppInfo();
 
     m_pGUI = std::make_shared<CGUIMain>();
-    m_pGUI->init(m_pWindow, AppInfo, true);
+    m_pGUI->init(m_pWindow, AppInfo, ERendererPos::END);
     m_pRenderer = std::make_shared<CVulkanRenderer>();
     m_pRenderer->init(AppInfo);
-    m_pGUI->setRenderer(m_pRenderer);
     m_pInteractor = std::make_shared<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pRenderer);
+    m_pGUI->setRenderer(m_pRenderer);
     m_pGUI->setInteractor(m_pInteractor);
 }
 
