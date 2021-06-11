@@ -47,7 +47,7 @@ class CVulkanRenderer
 public:
     CVulkanRenderer();
     
-    void init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicsFamilyIndex, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
+    void init(const Common::SVulkanAppInfo& vAppInfo);
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
     void update(uint32_t vImageIndex);
     void destroy();
@@ -71,7 +71,7 @@ public:
     bool getPVSState() const { return m_EnablePVS; }
     void setPVSState(bool vPVS) { m_EnablePVS = vPVS; }
     std::optional<uint32_t> getCameraNodeIndex() const { return m_CameraNodeIndex; }
-    std::vector<uint32_t> getRenderNodeList() const { return m_RenderNodeList; }
+    std::vector<uint32_t> getRenderNodeList() const { return m_RenderNodeSet; }
     ERenderMethod getRenderMethod() const { return m_RenderMethod; }
     void setRenderMethod(ERenderMethod vRenderMethod) { m_RenderMethod = vRenderMethod; }
 
@@ -85,7 +85,6 @@ private:
     void __createLightmapImage();
     void __createVertexBuffer();
     void __createIndexBuffer();
-    void __createPlaceholderImage();
     
     void __createRecreateResources();
     void __destroyRecreateResources();
@@ -126,13 +125,12 @@ private:
     std::string m_GuiCommandName = "Gui";
     VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
     VkExtent2D m_Extent = { 0, 0 };
-    std::vector<VkImageView> m_TargetImageViews;
-    std::vector<VkFramebuffer> m_Framebuffers;
+    std::vector<VkImageView> m_TargetImageViewSet;
+    std::vector<VkFramebuffer> m_FramebufferSet;
 
     Common::SBufferPack m_VertexBufferPack;
     Common::SBufferPack m_IndexBufferPack;
-    Common::SImagePack m_PlaceholderImagePack;
-    std::vector<Common::SImagePack> m_TextureImagePacks;
+    std::vector<Common::SImagePack> m_TextureImagePackSet;
     Common::SImagePack m_DepthImagePack;
     Common::SImagePack m_LightmapImagePack;
 
@@ -149,7 +147,7 @@ private:
     bool m_EnableFrustumCulling = false;
     bool m_EnablePVS = false;
     std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
-    std::vector<uint32_t> m_RenderNodeList;
+    std::vector<uint32_t> m_RenderNodeSet;
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;
 
     size_t m_NumSwapchainImage = 0;

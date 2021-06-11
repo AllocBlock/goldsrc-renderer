@@ -19,10 +19,9 @@ enum EMoveState
 class CInteractor
 {
 public:
-	CInteractor() = delete;
-	CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CVulkanRenderer> vpRenderer);
+	CInteractor() = default;
 
-	void bindEvent();
+	void bindEvent(GLFWwindow* vWindow, std::shared_ptr<CVulkanRenderer> vRenderer);
 	void enable() { m_Enabled = true; }
 	void disable() { m_Enabled = false; }
 	void update();

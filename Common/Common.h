@@ -10,6 +10,18 @@
 
 namespace Common
 {
+    struct SVulkanAppInfo
+    {
+        VkInstance Instance = VK_NULL_HANDLE;
+        VkPhysicalDevice PhysicalDevice = VK_NULL_HANDLE;
+        VkDevice Device = VK_NULL_HANDLE;
+        uint32_t GraphicsQueueIndex = std::numeric_limits<uint32_t>::max();
+        VkQueue GraphicsQueue = VK_NULL_HANDLE;
+        VkExtent2D Extent = { 0, 0 };
+        VkFormat ImageForamt = VkFormat::VK_FORMAT_UNDEFINED;
+        std::vector<VkImageView> TargetImageViewSet;
+    };
+
     struct SImagePack
     {
         VkImage Image = VK_NULL_HANDLE;
@@ -23,6 +35,8 @@ namespace Common
 
         void destroy(VkDevice vDevice)
         {
+            if (!isValid()) return;
+
             vkDestroyImage(vDevice, Image, nullptr);
             vkFreeMemory(vDevice, Memory, nullptr);
             vkDestroyImageView(vDevice, ImageView, nullptr);
@@ -44,6 +58,8 @@ namespace Common
 
         void destroy(VkDevice vDevice)
         {
+            if (!isValid()) return;
+
             vkDestroyBuffer(vDevice, Buffer, nullptr);
             vkFreeMemory(vDevice, Memory, nullptr);
             Buffer = VK_NULL_HANDLE;

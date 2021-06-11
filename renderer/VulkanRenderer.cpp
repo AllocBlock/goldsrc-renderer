@@ -14,21 +14,20 @@ CVulkanRenderer::CVulkanRenderer()
 {
 }
 
-void CVulkanRenderer::init(VkInstance vInstance, VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, uint32_t vGraphicsFamilyIndex, VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
+void CVulkanRenderer::init(const Common::SVulkanAppInfo& vAppInfo)
 {
-    m_Instance = vInstance;
-    m_PhysicalDevice = vPhysicalDevice;
-    m_Device = vDevice;
-    m_GraphicsQueueIndex = vGraphicsFamilyIndex;
-    m_ImageFormat = vImageFormat;
-    m_Extent = vExtent;
-    m_TargetImageViews = vImageViews;
-    m_NumSwapchainImage = m_TargetImageViews.size();
+    m_Instance = vAppInfo.Instance;
+    m_PhysicalDevice = vAppInfo.PhysicalDevice;
+    m_Device = vAppInfo.Device;
+    m_GraphicsQueueIndex = vAppInfo.GraphicsQueueIndex;
+    m_ImageFormat = vAppInfo.ImageForamt;
+    m_Extent = vAppInfo.Extent;
+    m_TargetImageViewSet = vAppInfo.TargetImageViewSet;
+    m_NumSwapchainImage = m_TargetImageViewSet.size();
 
     __createRenderPass(false);
 
     __createCommandPoolAndBuffers();
-    __createPlaceholderImage();
     __createRecreateResources();
 
     __recordGuiCommandBuffers();
@@ -50,9 +49,9 @@ void CVulkanRenderer::__destroyRecreateResources()
 {
     m_DepthImagePack.destroy(m_Device);
 
-    for (auto& Framebuffer : m_Framebuffers)
+    for (auto& Framebuffer : m_FramebufferSet)
         vkDestroyFramebuffer(m_Device, Framebuffer, nullptr);
-    m_Framebuffers.clear();
+    m_FramebufferSet.clear();
 
     __destroySceneResources();
     m_PipelineSet.destroy();
@@ -76,11 +75,11 @@ void CVulkanRenderer::__createSceneResources()
 
 void CVulkanRenderer::__destroySceneResources()
 {
-    for (size_t i = 0; i < m_TextureImagePacks.size(); ++i)
+    for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
     {
-        m_TextureImagePacks[i].destroy(m_Device);
+        m_TextureImagePackSet[i].destroy(m_Device);
     }
-    m_TextureImagePacks.clear();
+    m_TextureImagePackSet.clear();
 
     m_LightmapImagePack.destroy(m_Device);
     m_IndexBufferPack.destroy(m_Device);
@@ -92,7 +91,6 @@ void CVulkanRenderer::destroy()
 {
     __destroyRecreateResources();
 
-    m_PlaceholderImagePack.destroy(m_Device);
     vkDestroyRenderPass(m_Device, m_RenderPass, nullptr);
     m_Command.clear();
     m_RenderPass = VK_NULL_HANDLE;
@@ -162,7 +160,7 @@ VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
         VkRenderPassBeginInfo RenderPassBeginInfo = {};
         RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         RenderPassBeginInfo.renderPass = m_RenderPass;
-        RenderPassBeginInfo.framebuffer = m_Framebuffers[vImageIndex];
+        RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex];
         RenderPassBeginInfo.renderArea.offset = { 0, 0 };
         RenderPassBeginInfo.renderArea.extent = m_Extent;
         RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
@@ -260,7 +258,7 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
         InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
         InheritanceInfo.renderPass = m_RenderPass;
         InheritanceInfo.subpass = 1;
-        InheritanceInfo.framebuffer = m_Framebuffers[i];
+        InheritanceInfo.framebuffer = m_FramebufferSet[i];
 
         VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -278,7 +276,7 @@ void CVulkanRenderer::__recordGuiCommandBuffers()
 
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
 {
-    m_RenderNodeList.clear();
+    m_RenderNodeSet.clear();
     if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
@@ -301,7 +299,7 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
         {
             if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
-            m_RenderNodeList.emplace_back(ObjectIndex);
+            m_RenderNodeSet.emplace_back(ObjectIndex);
 
             bool EnableLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
             m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
@@ -514,12 +512,12 @@ void CVulkanRenderer::__createDepthResources()
 
 void CVulkanRenderer::__createFramebuffers()
 {
-    m_Framebuffers.resize(m_NumSwapchainImage);
+    m_FramebufferSet.resize(m_NumSwapchainImage);
     for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         std::array<VkImageView, 2> Attachments =
         {
-            m_TargetImageViews[i],
+            m_TargetImageViewSet[i],
             m_DepthImagePack.ImageView
         };
 
@@ -532,7 +530,7 @@ void CVulkanRenderer::__createFramebuffers()
         FramebufferInfo.height = m_Extent.height;
         FramebufferInfo.layers = 1;
 
-        ck(vkCreateFramebuffer(m_Device, &FramebufferInfo, nullptr, &m_Framebuffers[i]));
+        ck(vkCreateFramebuffer(m_Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
     }
 }
 
@@ -541,11 +539,11 @@ void CVulkanRenderer::__createTextureImages()
     size_t NumTexture = __getActualTextureNum();
     if (NumTexture > 0)
     {
-        m_TextureImagePacks.resize(NumTexture);
+        m_TextureImagePackSet.resize(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
             std::shared_ptr<CIOImage> pImage = m_pScene->TexImages[i];
-            __createImageFromIOImage(pImage, m_TextureImagePacks[i]);
+            __createImageFromIOImage(pImage, m_TextureImagePackSet[i]);
         }
     }
 }
@@ -625,23 +623,13 @@ void CVulkanRenderer::__createIndexBuffer()
 
 void CVulkanRenderer::__updateDescriptorSets()
 {
-    std::vector<VkImageView> TextureSet(m_TextureImagePacks.size());
-    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_LightmapImagePack.ImageView : m_PlaceholderImagePack.ImageView;
-    for (size_t i = 0; i < m_TextureImagePacks.size(); ++i)
-        TextureSet[i] = m_TextureImagePacks[i].ImageView;
+    std::vector<VkImageView> TextureSet(m_TextureImagePackSet.size());
+    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_LightmapImagePack.ImageView : VK_NULL_HANDLE;
+    for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
+        TextureSet[i] = m_TextureImagePackSet[i].ImageView;
     m_PipelineSet.TrianglesWithDepthTest.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.TrianglesWithBlend.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.GuiLines.updateDescriptorSet();
-}
-
-void CVulkanRenderer::__createPlaceholderImage()
-{
-    uint8_t Pixel = 0;
-
-    auto pMinorImage = std::make_shared<CIOImage>();
-    pMinorImage->setImageSize(1, 1);
-    pMinorImage->setData(&Pixel);
-    __createImageFromIOImage(pMinorImage, m_PlaceholderImagePack);
 }
 
 std::vector<SGoldSrcPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const
@@ -892,7 +880,7 @@ void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const 
     __destroyRecreateResources();
     m_ImageFormat = vImageFormat;
     m_Extent = vExtent;
-    m_TargetImageViews = vImageViews;
+    m_TargetImageViewSet = vImageViews;
     __createRecreateResources();
     rerecordCommand();
 }

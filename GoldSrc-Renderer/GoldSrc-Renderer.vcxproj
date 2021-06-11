@@ -106,15 +106,18 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ApplicationBase.cpp" />
+    <ClCompile Include="ApplicationGoldSrc.cpp" />
     <ClCompile Include="ImguiAlert.cpp" />
     <ClCompile Include="ImguiFrameRate.cpp" />
     <ClCompile Include="ImguiLog.cpp" />
-    <ClCompile Include="ImguiDraw.cpp" />
     <ClCompile Include="GUIMain.cpp" />
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ApplicationBase.h" />
+    <ClInclude Include="ApplicationGoldSrc.h" />
     <ClInclude Include="ImguiAlert.h" />
     <ClInclude Include="ImguiFrameRate.h" />
     <ClInclude Include="ImguiLog.h" />

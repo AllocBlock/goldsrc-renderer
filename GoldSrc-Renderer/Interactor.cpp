@@ -3,14 +3,11 @@
 #include <chrono>
 #include <glm/matrix.hpp>
 
-CInteractor::CInteractor(GLFWwindow* vpWindow, std::shared_ptr<CVulkanRenderer> vpRenderer)
-	:m_pWindow(vpWindow),
-	m_pRenderer(vpRenderer)
+void CInteractor::bindEvent(GLFWwindow* vWindow, std::shared_ptr<CVulkanRenderer> vRenderer)
 {
-}
+	m_pWindow = vWindow;
+	m_pRenderer = vRenderer;
 
-void CInteractor::bindEvent()
-{
 	_ASSERTE(m_pWindow);
 	glfwSetWindowUserPointer(m_pWindow, this);
 	glfwSetKeyCallback(m_pWindow, CInteractor::onKeyboard);

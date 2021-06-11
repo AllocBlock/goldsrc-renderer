@@ -27,13 +27,16 @@
     <ClCompile Include="ImguiLog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiDraw.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="GUIMain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Interactor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ApplicationBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ApplicationGoldSrc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -51,6 +54,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Interactor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ApplicationBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ApplicationGoldSrc.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
