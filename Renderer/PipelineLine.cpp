@@ -7,6 +7,18 @@ struct SGuiUniformBufferObjectVert
     alignas(16) glm::mat4 View;
 };
 
+VkPipelineDepthStencilStateCreateInfo CPipelineLine::_getDepthStencilInfoV()
+{
+    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
+    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    DepthStencilInfo.depthTestEnable = VK_FALSE;
+    DepthStencilInfo.depthWriteEnable = VK_FALSE;
+    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+    DepthStencilInfo.stencilTestEnable = VK_FALSE;
+
+    return DepthStencilInfo;
+}
+
 void CPipelineLine::destroy()
 {
     m_VertexDataPack.destroy(m_Device);
