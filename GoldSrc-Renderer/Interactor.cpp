@@ -209,6 +209,7 @@ bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::v
 {
 	vDirection = glm::normalize(vDirection);
 
+
 	size_t NumZero = 0;
 	if (vDirection.x == 0.0) NumZero++;
 	if (vDirection.y == 0.0) NumZero++;
@@ -237,7 +238,7 @@ bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::v
 
 		if (vOrigin[ZeroAxis1] < vBB.Min[ZeroAxis1] || vOrigin[ZeroAxis1] > vBB.Max[ZeroAxis1] || // outside on zero axis 1
 			vOrigin[ZeroAxis2] < vBB.Min[ZeroAxis2] || vOrigin[ZeroAxis2] > vBB.Max[ZeroAxis2] || // outside on zero axis 2
-			vDirection[MainAxis] > 0 ? vOrigin[MainAxis] > vBB.Min[MainAxis] : vOrigin[MainAxis] < vBB.Max[MainAxis])// outside on main axis or the origin is inside bounding box 
+			vDirection[MainAxis] > 0 ? vOrigin[MainAxis] > vBB.Max[MainAxis] : vOrigin[MainAxis] < vBB.Min[MainAxis])// outside on main axis 
 		{
 			return false;
 		}
@@ -245,6 +246,7 @@ bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::v
 		float T2 = (vBB.Max[MainAxis] - vOrigin[MainAxis]) / vDirection[MainAxis];
 		voNearT = std::min<float>(T1, T2);
 		voFarT = std::max<float>(T1, T2);
+		if (voNearT < 0) voNearT = voFarT;
 		return true;
 	}
 	else if (NumZero == 1) // 2D
@@ -265,8 +267,8 @@ bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::v
 		uint8_t MainAxis1 = AxisMap[0], MainAxis2 = AxisMap[1], ZeroAxis = AxisMap[2];
 
 		if (vOrigin[ZeroAxis] < vBB.Min[ZeroAxis] || vOrigin[ZeroAxis] > vBB.Max[ZeroAxis] || // outside on zero axis
-			vDirection[MainAxis1] > 0 ? vOrigin[MainAxis1] > vBB.Min[MainAxis1] : vOrigin[MainAxis1] < vBB.Max[MainAxis1] ||
-			vDirection[MainAxis2] > 0 ? vOrigin[MainAxis2] > vBB.Min[MainAxis2] : vOrigin[MainAxis2] < vBB.Max[MainAxis2])// outside on main axis or the origin is inside bounding box 
+			vDirection[MainAxis1] > 0 ? vOrigin[MainAxis1] > vBB.Max[MainAxis1] : vOrigin[MainAxis1] < vBB.Min[MainAxis1] ||
+			vDirection[MainAxis2] > 0 ? vOrigin[MainAxis2] > vBB.Max[MainAxis2] : vOrigin[MainAxis2] < vBB.Min[MainAxis2])// outside on main axis
 		{
 			return false;
 		}
@@ -287,15 +289,16 @@ bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::v
 		{
 			voNearT = NearT;
 			voFarT = FarT;
+			if (voNearT < 0) voNearT = voFarT;
 			return true;
 		}
 	}
 	else // 3D
 	{
-		if (vDirection.x > 0 ? vOrigin.x > vBB.Min.x : vOrigin.x < vBB.Max.x ||
-			vDirection.y > 0 ? vOrigin.y > vBB.Min.y : vOrigin.y < vBB.Max.y ||
-			vDirection.z > 0 ? vOrigin.z > vBB.Min.z : vOrigin.z < vBB.Max.z)
-			// outside on any axis or the origin is inside bounding box 
+		if (vDirection.x > 0 ? vOrigin.x > vBB.Max.x : vOrigin.x < vBB.Min.x ||
+			vDirection.y > 0 ? vOrigin.y > vBB.Max.y : vOrigin.y < vBB.Min.y ||
+			vDirection.z > 0 ? vOrigin.z > vBB.Max.z : vOrigin.z < vBB.Min.z)
+			// outside on any axis
 		{
 			return false;
 		}
@@ -320,6 +323,7 @@ bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::v
 		{
 			voNearT = NearT;
 			voFarT = FarT;
+			if (voNearT < 0) voNearT = voFarT;
 			return true;
 		}
 	}
