@@ -14,17 +14,203 @@ CVulkanRenderer::CVulkanRenderer()
 {
 }
 
-void CVulkanRenderer::init(const Common::SVulkanAppInfo& vAppInfo)
+void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
 {
-    m_AppInfo = vAppInfo;
-    m_NumSwapchainImage = vAppInfo.TargetImageViewSet.size();
+    m_pScene = vpScene;
+    m_ObjectDataPositions.resize(m_pScene->Objects.size());
+    if (m_pScene->BspTree.Nodes.empty())
+        m_RenderMethod = ERenderMethod::DEFAULT;
 
-    __createRenderPass(false);
+    size_t IndexOffset = 0;
+    size_t VertexOffset = 0;
+    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+    {
+        std::shared_ptr<S3DObject> pObject = m_pScene->Objects[i];
+        if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
+        {
+            m_ObjectDataPositions[i].Offset = IndexOffset;
+            m_ObjectDataPositions[i].Size = pObject->Indices.size();
+            IndexOffset += m_ObjectDataPositions[i].Size;
+        }
+        else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
+        {
+            m_ObjectDataPositions[i].Offset = VertexOffset;
+            m_ObjectDataPositions[i].Size = pObject->Vertices.size();
+            VertexOffset += m_ObjectDataPositions[i].Size;
+        }
+        else
+            throw std::runtime_error(u8"物体类型错误");
+    }
 
+    m_AreObjectsVisable.clear();
+    m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
+    m_VisableObjectNum = 0;
+
+    vkDeviceWaitIdle(m_AppInfo.Device);
+    __destroySceneResources();
+    __createSceneResources();
+}
+
+void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
+{
+    auto pObject = std::make_shared<SGuiObject>();
+
+    std::array<glm::vec3, 8> Vertices =
+    {
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
+        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
+        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
+    };
+
+    pObject->Data =
+    {
+        Vertices[0], Vertices[1],  Vertices[1], Vertices[2],  Vertices[2], Vertices[3],  Vertices[3], Vertices[0],
+        Vertices[4], Vertices[5],  Vertices[5], Vertices[6],  Vertices[6], Vertices[7],  Vertices[7], Vertices[4],
+        Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
+    };
+
+    m_PipelineSet.GuiLines.setObject("HighlightBoundingBox", std::move(pObject));
+    __recordGuiCommandBuffers();
+}
+
+void CVulkanRenderer::removeHighlightBoundingBox()
+{
+    m_PipelineSet.GuiLines.removeObject("HighlightBoundingBox");
+    __recordGuiCommandBuffers();
+}
+
+void CVulkanRenderer::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
+{
+    auto pObject = std::make_shared<SGuiObject>();
+    pObject->Data = { vStart, vEnd };
+    m_PipelineSet.GuiLines.setObject(vName, std::move(pObject));
+    __recordGuiCommandBuffers();
+}
+void CVulkanRenderer::rerecordCommand()
+{
+    m_RerecordCommandTimes += m_NumSwapchainImage;
+}
+
+std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
+{
+    return m_pCamera;
+}
+
+void CVulkanRenderer::_initV()
+{
+    CRenderer::_initV();
+    m_NumSwapchainImage = m_AppInfo.TargetImageViewSet.size();
+
+    __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
 
     __recordGuiCommandBuffers();
+}
+
+void CVulkanRenderer::_recreateV()
+{
+    CRenderer::_recreateV();
+
+    __destroyRecreateResources();
+    __createRecreateResources();
+    rerecordCommand();
+}
+
+void CVulkanRenderer::_updateV(uint32_t vImageIndex)
+{
+    __updateAllUniformBuffer(vImageIndex);
+}
+
+void CVulkanRenderer::_destroyV()
+{
+    __destroyRecreateResources();
+
+    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
+    m_Command.clear();
+
+    CRenderer::_destroyV();
+}
+
+VkCommandBuffer CVulkanRenderer::_requestCommandBufferV(uint32_t vImageIndex)
+{
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+
+    bool RerecordCommand = false;
+    if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling || m_RerecordCommandTimes > 0)
+    {
+        RerecordCommand = true;
+        if (m_RerecordCommandTimes > 0) --m_RerecordCommandTimes;
+    }
+    if (RerecordCommand)
+    {
+        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
+        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+
+        ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+
+        // init
+
+        std::array<VkClearValue, 2> ClearValues = {};
+        ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+        ClearValues[1].depthStencil = { 1.0f, 0 };
+
+        VkRenderPassBeginInfo RenderPassBeginInfo = {};
+        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        RenderPassBeginInfo.renderPass = m_RenderPass;
+        RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex];
+        RenderPassBeginInfo.renderArea.offset = { 0, 0 };
+        RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
+        RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
+        RenderPassBeginInfo.pClearValues = ClearValues.data();
+
+        vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        if (m_EnableSky)
+            __recordSkyRenderCommand(vImageIndex);
+
+        VkDeviceSize Offsets[] = { 0 };
+        if (m_VertexBufferPack.isValid())
+            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
+        if (m_IndexBufferPack.isValid())
+            vkCmdBindIndexBuffer(CommandBuffer, m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
+
+        if (m_VertexBufferPack.isValid() || m_IndexBufferPack.isValid())
+        {
+            __calculateVisiableObjects();
+            if (m_RenderMethod == ERenderMethod::BSP)
+                __renderByBspTree(vImageIndex);
+            else
+            {
+                m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, vImageIndex);
+
+                m_PipelineSet.TrianglesWithDepthTest.setOpacity(CommandBuffer, 1.0f);
+
+                for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+                {
+                    bool EnableLightmap = m_pScene->Objects[i]->HasLightmap;
+                    m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
+                    if (m_AreObjectsVisable[i])
+                        __recordObjectRenderCommand(vImageIndex, i);
+                }
+            }
+        }
+
+        // 3D GUI层，放置选择框等3D标志元素
+        vkCmdNextSubpass(CommandBuffer, VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+        VkCommandBuffer GuiCommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
+        vkCmdExecuteCommands(CommandBuffer, 1, &GuiCommandBuffer);
+
+        vkCmdEndRenderPass(CommandBuffer);
+        ck(vkEndCommandBuffer(CommandBuffer));
+    }
+    return CommandBuffer;
 }
 
 void CVulkanRenderer::__createRecreateResources()
@@ -78,172 +264,6 @@ void CVulkanRenderer::__destroySceneResources()
     m_LightmapImagePack.destroy(m_AppInfo.Device);
     m_IndexBufferPack.destroy(m_AppInfo.Device);
     m_VertexBufferPack.destroy(m_AppInfo.Device);
-}
-
-
-void CVulkanRenderer::destroy()
-{
-    __destroyRecreateResources();
-
-    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
-    m_Command.clear();
-    m_RenderPass = VK_NULL_HANDLE;
-
-    m_AppInfo.clear();
-}
-
-void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
-{
-     m_pScene = vpScene;
-     m_ObjectDataPositions.resize(m_pScene->Objects.size());
-     if (m_pScene->BspTree.Nodes.empty())
-         m_RenderMethod = ERenderMethod::DEFAULT;
-
-     size_t IndexOffset = 0;
-     size_t VertexOffset = 0;
-     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
-     {
-         std::shared_ptr<S3DObject> pObject = m_pScene->Objects[i];
-         if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
-         { 
-             m_ObjectDataPositions[i].Offset = IndexOffset;
-             m_ObjectDataPositions[i].Size = pObject->Indices.size();
-             IndexOffset += m_ObjectDataPositions[i].Size;
-         }
-         else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
-         {
-             m_ObjectDataPositions[i].Offset = VertexOffset;
-             m_ObjectDataPositions[i].Size = pObject->Vertices.size();
-             VertexOffset += m_ObjectDataPositions[i].Size;
-         }
-         else
-             throw std::runtime_error(u8"物体类型错误");
-     }
-
-     m_AreObjectsVisable.clear();
-     m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
-     m_VisableObjectNum = 0;
-
-     vkDeviceWaitIdle(m_AppInfo.Device);
-     __destroySceneResources();
-     __createSceneResources();
-}
-
-VkCommandBuffer CVulkanRenderer::requestCommandBuffer(uint32_t vImageIndex)
-{
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
-
-    bool RerecordCommand = false;
-    if (m_RenderMethod == ERenderMethod::BSP || m_EnableCulling || m_RerecordCommandTimes > 0)
-    {
-        RerecordCommand = true;
-        if (m_RerecordCommandTimes > 0) --m_RerecordCommandTimes;
-    }
-    if (RerecordCommand)
-    {
-        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-        ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
-
-        // init
-
-        std::array<VkClearValue, 2> ClearValues = {};
-        ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-        ClearValues[1].depthStencil = { 1.0f, 0 };
-
-        VkRenderPassBeginInfo RenderPassBeginInfo = {};
-        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        RenderPassBeginInfo.renderPass = m_RenderPass;
-        RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex];
-        RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-        RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
-        RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
-        RenderPassBeginInfo.pClearValues = ClearValues.data();
-
-        vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        if (m_EnableSky)
-            __recordSkyRenderCommand(vImageIndex);
-
-        VkDeviceSize Offsets[] = { 0 };
-        if (m_VertexBufferPack.isValid())
-            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
-        if (m_IndexBufferPack.isValid())
-            vkCmdBindIndexBuffer(CommandBuffer, m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
-        
-        if (m_VertexBufferPack.isValid() || m_IndexBufferPack.isValid())
-        {
-            __calculateVisiableObjects();
-            if (m_RenderMethod == ERenderMethod::BSP)
-                __renderByBspTree(vImageIndex);
-            else
-            {
-                m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, vImageIndex);
-                
-                m_PipelineSet.TrianglesWithDepthTest.setOpacity(CommandBuffer, 1.0f);
-                
-                for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
-                {
-                    bool EnableLightmap = m_pScene->Objects[i]->HasLightmap;
-                    m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
-                    if (m_AreObjectsVisable[i])
-                        __recordObjectRenderCommand(vImageIndex, i);
-                }
-            }
-        }
-
-        // 3D GUI层，放置选择框等3D标志元素
-        vkCmdNextSubpass(CommandBuffer, VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-        VkCommandBuffer GuiCommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
-        vkCmdExecuteCommands(CommandBuffer, 1, &GuiCommandBuffer);
-
-        vkCmdEndRenderPass(CommandBuffer);
-        ck(vkEndCommandBuffer(CommandBuffer));
-    }
-    return CommandBuffer;
-}
-
-void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
-{
-    auto pObject = std::make_shared<SGuiObject>();
-
-    std::array<glm::vec3, 8> Vertices =
-    {
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
-    };
-
-    pObject->Data =
-    {
-        Vertices[0], Vertices[1],  Vertices[1], Vertices[2],  Vertices[2], Vertices[3],  Vertices[3], Vertices[0],
-        Vertices[4], Vertices[5],  Vertices[5], Vertices[6],  Vertices[6], Vertices[7],  Vertices[7], Vertices[4],
-        Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
-    };
-   
-    m_PipelineSet.GuiLines.setObject("HighlightBoundingBox", std::move(pObject));
-    __recordGuiCommandBuffers();
-}
-
-void CVulkanRenderer::removeHighlightBoundingBox()
-{
-    m_PipelineSet.GuiLines.removeObject("HighlightBoundingBox");
-    __recordGuiCommandBuffers();
-}
-
-void CVulkanRenderer::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
-{
-    auto pObject = std::make_shared<SGuiObject>();
-    pObject->Data = { vStart, vEnd };
-    m_PipelineSet.GuiLines.setObject(vName, std::move(pObject));
-    __recordGuiCommandBuffers();
 }
 
 void CVulkanRenderer::__recordGuiCommandBuffers()
@@ -362,16 +382,6 @@ void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex, bo
     }
 }
 
-void CVulkanRenderer::rerecordCommand()
-{
-    m_RerecordCommandTimes += m_NumSwapchainImage;
-}
-
-std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
-{
-    return m_pCamera;
-}
-
 void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
@@ -390,27 +400,10 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
         throw std::runtime_error(u8"物体类型错误");
 }
 
-void CVulkanRenderer::__createRenderPass(bool vPresentLayout)
+void CVulkanRenderer::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = {};
-    ColorAttachment.format = m_AppInfo.ImageFormat;
-    ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    ColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    ColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    ColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    ColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ColorAttachment.finalLayout = vPresentLayout ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentDescription DepthAttachment = {};
-    DepthAttachment.format = __findDepthFormat();
-    DepthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    DepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    DepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    DepthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    DepthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    DepthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    DepthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    VkAttachmentDescription ColorAttachment = CRenderer::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = CRenderer::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -456,6 +449,14 @@ void CVulkanRenderer::__createRenderPass(bool vPresentLayout)
     ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
+void CVulkanRenderer::__destroyRenderPass()
+{
+    if (m_RenderPass != VK_NULL_HANDLE)
+    {
+        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
+        m_RenderPass = VK_NULL_HANDLE;
+    }
+}
 
 void CVulkanRenderer::__createGraphicsPipelines()
 {
@@ -868,22 +869,6 @@ std::pair<std::vector<size_t>, std::vector<size_t>> CVulkanRenderer::__sortModel
     }
 
     return std::make_pair(OpaqueSequence, TranparentSequence);
-}
-
-void CVulkanRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
-{
-    vkDeviceWaitIdle(m_AppInfo.Device);
-    __destroyRecreateResources();
-    m_AppInfo.ImageFormat = vImageFormat;
-    m_AppInfo.Extent = vExtent;
-    m_AppInfo.TargetImageViewSet = vImageViews;
-    __createRecreateResources();
-    rerecordCommand();
-}
-
-void CVulkanRenderer::update(uint32_t vImageIndex)
-{
-    __updateAllUniformBuffer(vImageIndex);
 }
 
 void CVulkanRenderer::__updateAllUniformBuffer(uint32_t vImageIndex)

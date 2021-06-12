@@ -13,8 +13,10 @@ void CGUIBase::_initV()
 {
     CRenderer::_initV();
 
-    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.TargetImageViewSet.size());
+    _ASSERTE(m_pWindow);
 
+    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.TargetImageViewSet.size());
+    __createRenderPass();
     __createDescriptorPool();
 
     // setup context
@@ -72,7 +74,7 @@ void CGUIBase::_updateV(uint32_t vImageIndex)
     ImGui::Render();
 }
 
-void CGUIBase::destroy()
+void CGUIBase::_destroyV()
 {
     if (m_AppInfo.Device == VK_NULL_HANDLE) return;
 
@@ -80,47 +82,17 @@ void CGUIBase::destroy()
         vkDestroyFramebuffer(m_AppInfo.Device, FrameBuffer, nullptr);
     m_FrameBufferSet.clear();
 
-    if (m_DescriptorPool != VK_NULL_HANDLE)
-        vkDestroyDescriptorPool(m_AppInfo.Device, m_DescriptorPool, nullptr);
-    m_Command.clear();
-
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    CRenderer::destroy();
-}
+    m_Command.clear();
+    __destroyDescriptorPool();
+    __destroyRenderPass();
 
-void CGUIBase::__createDescriptorPool()
-{
-    if (m_DescriptorPool != VK_NULL_HANDLE)
-    {
-        vkDestroyDescriptorPool(m_AppInfo.Device, m_DescriptorPool, nullptr);
-        m_DescriptorPool = VK_NULL_HANDLE;
-    }
+    m_pWindow = nullptr;
 
-    std::vector<VkDescriptorPoolSize> PoolSizes =
-    {
-        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
-    };
-
-    VkDescriptorPoolCreateInfo PoolInfo = {};
-    PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSizes.size());
-    PoolInfo.pPoolSizes = PoolSizes.data();
-    PoolInfo.maxSets = static_cast<uint32_t>(PoolSizes.size() * 1000);
-
-    ck(vkCreateDescriptorPool(m_AppInfo.Device, &PoolInfo, nullptr, &m_DescriptorPool));
+    CRenderer::_destroyV();
 }
 
 VkCommandBuffer CGUIBase::_requestCommandBufferV(uint32_t vImageIndex)
@@ -150,6 +122,84 @@ VkCommandBuffer CGUIBase::_requestCommandBufferV(uint32_t vImageIndex)
     ck(vkEndCommandBuffer(CommandBuffer));
 
     return CommandBuffer;
+}
+
+void CGUIBase::__createRenderPass()
+{
+    // create renderpass
+    VkAttachmentDescription Attachment = createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+
+    VkAttachmentReference ColorAttachmentRef = {};
+    ColorAttachmentRef.attachment = 0;
+    ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription Subpass = {};
+    Subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    Subpass.colorAttachmentCount = 1;
+    Subpass.pColorAttachments = &ColorAttachmentRef;
+
+    VkSubpassDependency SubpassDependency = {}; // for render pass sync
+    SubpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    SubpassDependency.dstSubpass = 0;
+    SubpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    SubpassDependency.srcAccessMask = 0;
+    SubpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    VkRenderPassCreateInfo RenderPassInfo = {};
+    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    RenderPassInfo.attachmentCount = 1;
+    RenderPassInfo.pAttachments = &Attachment;
+    RenderPassInfo.subpassCount = 1;
+    RenderPassInfo.pSubpasses = &Subpass;
+    RenderPassInfo.dependencyCount = 1;
+    RenderPassInfo.pDependencies = &SubpassDependency;
+
+    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
+}
+
+void CGUIBase::__destroyRenderPass()
+{
+    if (m_RenderPass != VK_NULL_HANDLE)
+    {
+        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
+        m_RenderPass = VK_NULL_HANDLE;
+    }
+}
+
+void CGUIBase::__createDescriptorPool()
+{
+    std::vector<VkDescriptorPoolSize> PoolSizes =
+    {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    VkDescriptorPoolCreateInfo PoolInfo = {};
+    PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSizes.size());
+    PoolInfo.pPoolSizes = PoolSizes.data();
+    PoolInfo.maxSets = static_cast<uint32_t>(PoolSizes.size() * 1000);
+
+    ck(vkCreateDescriptorPool(m_AppInfo.Device, &PoolInfo, nullptr, &m_DescriptorPool));
+}
+
+void CGUIBase::__destroyDescriptorPool()
+{
+    if (m_DescriptorPool != VK_NULL_HANDLE)
+    {
+        vkDestroyDescriptorPool(m_AppInfo.Device, m_DescriptorPool, nullptr);
+        m_DescriptorPool = VK_NULL_HANDLE;
+    }
 }
 
 void CGUIBase::__createRecreateSources()

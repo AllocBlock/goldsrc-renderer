@@ -98,6 +98,7 @@
     <ClCompile Include="PipelineDepthTest.cpp" />
     <ClCompile Include="PipelineLine.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -109,6 +110,7 @@
     <ClInclude Include="PipelineLine.h" />
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PointData.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>

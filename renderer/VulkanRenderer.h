@@ -1,4 +1,5 @@
 #pragma once
+#include "Renderer.h"
 #include "Common.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -42,18 +43,13 @@ struct SPipelineSet
     }
 };
 
-class CVulkanRenderer
+class CVulkanRenderer : public CRenderer
 {
 public:
     CVulkanRenderer();
     
-    void init(const Common::SVulkanAppInfo& vAppInfo);
-    void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews);
-    void update(uint32_t vImageIndex);
-    void destroy();
     std::shared_ptr<SScene> getScene() const { return m_pScene; }
     void loadScene(std::shared_ptr<SScene> vpScene);
-    VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     void rerecordCommand();
     std::shared_ptr<CCamera> getCamera();
     size_t getRenderedObjectNum() const { return m_VisableObjectNum; }
@@ -75,8 +71,16 @@ public:
     ERenderMethod getRenderMethod() const { return m_RenderMethod; }
     void setRenderMethod(ERenderMethod vRenderMethod) { m_RenderMethod = vRenderMethod; }
 
+protected:
+    virtual void _initV() override;
+    virtual void _recreateV() override;
+    virtual void _updateV(uint32_t vImageIndex) override;
+    virtual VkCommandBuffer _requestCommandBufferV(uint32_t vImageIndex) override;
+    virtual void _destroyV() override;
+
 private:
-    void __createRenderPass(bool vPresentLayout);
+    void __createRenderPass();
+    void __destroyRenderPass();
     void __createGraphicsPipelines();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();
@@ -114,7 +118,6 @@ private:
 
     std::vector<SGoldSrcPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
 
-    Common::SVulkanAppInfo m_AppInfo;
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = SPipelineSet();
     CCommand m_Command = CCommand();
