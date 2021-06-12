@@ -226,7 +226,7 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VkCommandBuffer CommandBuffer = Common::beginSingleTimeBuffer();
-    Common::stageFillImage(m_PhysicalDevice, m_Device, &PixelData, 4, ImageInfo,  m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
+    Common::stageFillImage(m_PhysicalDevice, m_Device, &PixelData, sizeof(uint8_t), ImageInfo,  m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
     Common::endSingleTimeBuffer(CommandBuffer);
 
     m_PlaceholderImagePack.ImageView = Common::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -236,7 +236,6 @@ void CPipelineDepthTest::_initDescriptorV()
 {
     _ASSERTE(m_Device != VK_NULL_HANDLE);
     m_Descriptor.clear();
-
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
     m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);

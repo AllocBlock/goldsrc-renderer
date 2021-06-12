@@ -135,7 +135,6 @@ private:
     std::shared_ptr<SScene> m_pScene;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
 
-    bool m_FramebufferResized = false;
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;
     std::set<size_t> m_RenderedObjectSet;
