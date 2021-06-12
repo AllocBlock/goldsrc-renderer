@@ -244,10 +244,20 @@ void CGUIMain::__drawGUI()
         else
             ImGui::Text((u8"相机所处节点：" + std::to_string(CameraNodeIndex.value())).c_str());
 
-        size_t VisableObjectNum = m_pRenderer->getRenderedObjectNum();
-        ImGui::Text((u8"渲染物体数：" + std::to_string(VisableObjectNum)).c_str());
+        std::set<size_t> RenderObjectList = m_pRenderer->getRenderedObjectSet();
+        ImGui::Text((u8"渲染物体数：" + std::to_string(RenderObjectList.size())).c_str());
+        if (!RenderObjectList.empty())
+        {
+            std::string RenderNodeListStr = "";
+            for (uint32_t ObjectIndex : RenderObjectList)
+            {
+                RenderNodeListStr += std::to_string(ObjectIndex) + ", ";
+            }
+            ImGui::TextWrapped((u8"渲染物体：" + RenderNodeListStr).c_str());
+        }
 
-        std::vector<uint32_t> RenderNodeList = m_pRenderer->getRenderNodeList();
+        std::set<uint32_t> RenderNodeList = m_pRenderer->getRenderedNodeList();
+        ImGui::Text((u8"渲染节点数：" + std::to_string(RenderNodeList.size())).c_str());
         if (!RenderNodeList.empty())
         {
             std::string RenderNodeListStr = "";

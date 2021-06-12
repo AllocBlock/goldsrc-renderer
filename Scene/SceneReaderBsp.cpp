@@ -118,8 +118,10 @@ std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadLeaf(size_t vLeaf
     }
 
     std::vector<std::shared_ptr<S3DObject>> Objects;
-    Objects.emplace_back(std::move(pObjectNormalPart));
-    Objects.emplace_back(std::move(pObjectSkyPart));
+    if (!pObjectNormalPart->Vertices.empty())
+        Objects.emplace_back(std::move(pObjectNormalPart));
+    if (!pObjectSkyPart->Vertices.empty())
+        Objects.emplace_back(std::move(pObjectSkyPart));
     return Objects;
 }
 
@@ -552,6 +554,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
     if (SkyFilePrefix.empty())
     {
         Common::Log::log(u8"地图未指定天空文件，已使用默认天空neb6");
+        vCurrentDir = std::filesystem::current_path().string() + "/../data/";
         SkyFilePrefix = "neb6";
     }
     

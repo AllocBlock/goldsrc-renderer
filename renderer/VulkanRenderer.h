@@ -14,6 +14,7 @@
 #include <glm/glm.hpp>
 #include <array>
 #include <optional>
+#include <set>
 
 enum class ERenderMethod
 {
@@ -52,7 +53,6 @@ public:
     void loadScene(std::shared_ptr<SScene> vpScene);
     void rerecordCommand();
     std::shared_ptr<CCamera> getCamera();
-    size_t getRenderedObjectNum() const { return m_VisableObjectNum; }
 
     void setHighlightBoundingBox(S3DBoundingBox vBoundingBox);
     void removeHighlightBoundingBox();
@@ -67,8 +67,9 @@ public:
     bool getPVSState() const { return m_EnablePVS; }
     void setPVSState(bool vPVS) { m_EnablePVS = vPVS; }
     std::optional<uint32_t> getCameraNodeIndex() const { return m_CameraNodeIndex; }
-    std::vector<uint32_t> getRenderNodeList() const { return m_RenderNodeSet; }
+    std::set<uint32_t> getRenderedNodeList() const { return m_RenderNodeSet; }
     ERenderMethod getRenderMethod() const { return m_RenderMethod; }
+    std::set<size_t> getRenderedObjectSet() const { return m_RenderedObjectSet; }
     void setRenderMethod(ERenderMethod vRenderMethod) { m_RenderMethod = vRenderMethod; }
 
 protected:
@@ -137,14 +138,14 @@ private:
     bool m_FramebufferResized = false;
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;
-    size_t m_VisableObjectNum = 0;
+    std::set<size_t> m_RenderedObjectSet;
     std::vector<SObjectDataPosition> m_ObjectDataPositions;
     bool m_EnableSky = true;
     bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;
     bool m_EnablePVS = false;
     std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
-    std::vector<uint32_t> m_RenderNodeSet;
+    std::set<uint32_t> m_RenderNodeSet;
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;
 
     size_t m_NumSwapchainImage = 0;

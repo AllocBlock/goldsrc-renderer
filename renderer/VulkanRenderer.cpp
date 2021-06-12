@@ -16,6 +16,7 @@ CVulkanRenderer::CVulkanRenderer()
 
 void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
 {
+    vkDeviceWaitIdle(m_AppInfo.Device);
     m_pScene = vpScene;
     m_ObjectDataPositions.resize(m_pScene->Objects.size());
     if (m_pScene->BspTree.Nodes.empty())
@@ -44,7 +45,6 @@ void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
 
     m_AreObjectsVisable.clear();
     m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
-    m_VisableObjectNum = 0;
 
     vkDeviceWaitIdle(m_AppInfo.Device);
     __destroySceneResources();
@@ -197,7 +197,10 @@ VkCommandBuffer CVulkanRenderer::_requestCommandBufferV(uint32_t vImageIndex)
                     bool EnableLightmap = m_pScene->Objects[i]->HasLightmap;
                     m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
+                    {
                         __recordObjectRenderCommand(vImageIndex, i);
+                        m_RenderedObjectSet.insert(i);
+                    }
                 }
             }
         }
@@ -298,6 +301,7 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
     m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, vImageIndex);
 
+    m_RenderedObjectSet.clear();
     __renderTreeNode(vImageIndex, 0);
     __renderModels(vImageIndex);
 }
@@ -311,17 +315,20 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
     if (vNodeIndex >= m_pScene->BspTree.NodeNum) // if is leaf, render it
     {
         uint32_t LeafIndex = vNodeIndex - m_pScene->BspTree.NodeNum;
+        bool isLeafVisable = false;
         for (size_t ObjectIndex : m_pScene->BspTree.LeafIndexToObjectIndices.at(LeafIndex))
         {
             if (!m_AreObjectsVisable[ObjectIndex]) continue;
-
-            m_RenderNodeSet.emplace_back(ObjectIndex);
+            m_RenderedObjectSet.insert(ObjectIndex);
+            isLeafVisable = true;
 
             bool EnableLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
             m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
 
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
+        if (isLeafVisable)
+            m_RenderNodeSet.insert(LeafIndex);
     }
     else
     {
@@ -761,12 +768,11 @@ void CVulkanRenderer::__calculateVisiableObjects()
         }
     }
 
-    m_VisableObjectNum = 0;
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
         m_AreObjectsVisable[i] = false;
 
-        if (m_EnableSky && m_pScene->Objects[i]->RenderType == E3DObjectRenderType::SKY)
+        if (m_pScene->Objects[i]->RenderType == E3DObjectRenderType::SKY || m_pScene->Objects[i]->Vertices.empty())
             continue;
         
         if (m_EnableCulling)
@@ -774,7 +780,6 @@ void CVulkanRenderer::__calculateVisiableObjects()
             if (i >= m_pScene->BspTree.NodeNum + m_pScene->BspTree.LeafNum) // ignore culling for model for now
             {
                 m_AreObjectsVisable[i] = true;
-                ++m_VisableObjectNum;
                 continue;
             }
 
@@ -791,7 +796,6 @@ void CVulkanRenderer::__calculateVisiableObjects()
         }
 
         m_AreObjectsVisable[i] = true;
-        ++m_VisableObjectNum;
     }
 }
 
