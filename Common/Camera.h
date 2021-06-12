@@ -31,7 +31,7 @@ public:
 	float getFar() const { return m_Far; }
 
 	void setPos(glm::vec3 vPos) { m_Pos = vPos; }
-	void setUo(glm::vec3 vUp) { m_Up = vUp; }
+	void setUp(glm::vec3 vUp) { m_Up = vUp; }
 	void setPhi(double vPhi) { m_Phi = Common::mod(vPhi, 360.0f);}
 	void setTheta(double vTheta) { m_Theta = Common::mod(vTheta, 180.0f); }
 	void setFov(float vFov) { m_Fov = vFov; }

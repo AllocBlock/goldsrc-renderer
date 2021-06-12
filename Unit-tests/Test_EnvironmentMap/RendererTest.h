@@ -8,6 +8,8 @@ class CRendererTest : public CRenderer
 public:
     CRendererTest() : m_pCamera(std::make_shared<CCamera>()) {}
 
+    std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
+
 protected:
     virtual void _initV() override;
     virtual void _recreateV() override;
@@ -31,6 +33,7 @@ private:
 
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __generateScene();
+    void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth);
    
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     CPipelineTest m_Pipeline;

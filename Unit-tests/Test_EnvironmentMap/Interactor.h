@@ -29,14 +29,11 @@ public:
 
 	float getSpeed() { return m_Speed; }
 	std::shared_ptr<CRendererTest> getRenderer() { return m_pRenderer; }
-	bool getSelectionState() { return m_SelectionEnable; }
 
 	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
-	void setSelectionState(bool vState) { m_SelectionEnable = vState; }
 
 	static void onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods);
 	static void onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY);
-	static void onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods);
 
 private:
 	float __getDeltaTime();
@@ -57,7 +54,5 @@ private:
 	bool m_IsMoving = false;
 	double m_LastPhi = 0.0;
 	double m_LastTheta = 0.0;
-
-	bool m_SelectionEnable = true;
 };
 

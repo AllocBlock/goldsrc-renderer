@@ -9,15 +9,15 @@ void CApplicationTest::_initV()
     m_pGUI->init(AppInfo, ERendererPos::END);
     m_pRenderer = std::make_shared<CRendererTest>();
     m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
-    //m_pInteractor = std::make_shared<CInteractor>();
-    //m_pInteractor->bindEvent(m_pWindow, m_pRenderer);
-    //m_pGUI->setRenderer(m_pRenderer);
-    //m_pGUI->setInteractor(m_pInteractor);
+    m_pInteractor = std::make_shared<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pRenderer);
+    /*m_pGUI->setRenderer(m_pRenderer);
+    m_pGUI->setInteractor(m_pInteractor);*/
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)
 {
-    //m_pInteractor->update();
+    m_pInteractor->update();
     m_pGUI->update(vImageIndex);
     m_pRenderer->update(vImageIndex);
 }

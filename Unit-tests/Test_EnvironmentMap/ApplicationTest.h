@@ -2,6 +2,7 @@
 #include "ApplicationBase.h"
 #include "GUITest.h"
 #include "RendererTest.h"
+#include "Interactor.h"
 
 class CApplicationTest : public CApplicationBase
 {
@@ -18,6 +19,6 @@ protected:
 private:
     std::shared_ptr<CGUITest> m_pGUI = nullptr;
     std::shared_ptr<CRendererTest> m_pRenderer = nullptr;
-    //std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
 };
 

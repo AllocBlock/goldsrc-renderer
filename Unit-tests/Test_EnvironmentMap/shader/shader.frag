@@ -14,7 +14,11 @@ layout(binding = 2) uniform samplerCube uSkyCubeSampler;
 
 void main()
 {
-	//vec3 TexCoord;
-	//outColor = texture(uSkyCubeSampler, TexCoord);
-	outColor = vec4(1.0, 0.0, 0.0, 1.0);
+	vec3 N = normalize(inFragNormal);
+	vec3 Eye = normalize(ubo.uEye - inFragPosition);
+
+	float P = dot(N, Eye);
+	vec3 Reflect = 2 * P * N - Eye;
+	vec3 TexCoord = Reflect;
+	outColor = texture(uSkyCubeSampler, TexCoord);
 }

@@ -2,6 +2,10 @@
 
 void CRendererTest::_initV()
 {
+    m_pCamera->setFov(90);
+    m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
+    m_pCamera->setPos(glm::vec3(0.0, -1.0, 0.0));
+
     __loadSkyBox();
     __createRenderPass();
     __createCommandPoolAndBuffers();
@@ -54,7 +58,7 @@ VkCommandBuffer CRendererTest::_requestCommandBufferV(uint32_t vImageIndex)
         m_Pipeline.bind(CommandBuffer, vImageIndex);
 
         size_t VertexNum = m_PointDataSet.size();
-        vkCmdDraw(CommandBuffer, VertexNum * sizeof(STestPointData), 1, 0, 0);
+        vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
     }
     
     vkCmdEndRenderPass(CommandBuffer);
@@ -268,21 +272,42 @@ void CRendererTest::__destroyRecreateResources()
 
 void CRendererTest::__generateScene()
 {
-    std::array<glm::vec3, 4> VertexSet = 
+    float Sqrt2 = std::sqrt(2);
+    float Sqrt3 = std::sqrt(3);
+    float Sqrt6 = std::sqrt(6);
+    float OneThrid = 1.0 / 3.0;
+    std::array<glm::vec3, 4> VertexSet =
     {
-        glm::vec3(-1.0, 0.0, -1.0),
-        glm::vec3(1.0, 0.0, -1.0),
-        glm::vec3(-1.0, 0.0, 1.0),
-        glm::vec3(1.0, 0.0, 1.0),
+        glm::vec3(0.0, 0.0, 1.0),
+        glm::vec3(0, 2 * OneThrid * Sqrt2, -OneThrid),
+        glm::vec3(OneThrid * Sqrt6, -OneThrid * Sqrt2, -OneThrid),
+        glm::vec3(-OneThrid * Sqrt6, -OneThrid * Sqrt2, -OneThrid),
     };
 
-    glm::vec3 Normal = glm::vec3(0.0, 1.0, 0.0);
+    __subdivideTriangle({ VertexSet[0], VertexSet[1], VertexSet[2] }, 4);
+    __subdivideTriangle({ VertexSet[0], VertexSet[2], VertexSet[3] }, 4);
+    __subdivideTriangle({ VertexSet[0], VertexSet[3], VertexSet[1] }, 4);
+    __subdivideTriangle({ VertexSet[3], VertexSet[2], VertexSet[1] }, 4);
+}
 
-    m_PointDataSet = 
+void CRendererTest::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth)
+{
+    if (vDepth == 0)
     {
-        {VertexSet[0], Normal}, {VertexSet[2], Normal}, {VertexSet[1], Normal},
-        {VertexSet[0], Normal}, {VertexSet[3], Normal}, {VertexSet[2], Normal},
-    };
+        for (const auto& Vertex : vVertexSet)
+            m_PointDataSet.emplace_back(STestPointData({ Vertex, Vertex }));
+    }
+    else
+    {
+        glm::vec3 Middle01 = glm::normalize(vVertexSet[0] + vVertexSet[1]);
+        glm::vec3 Middle12 = glm::normalize(vVertexSet[1] + vVertexSet[2]);
+        glm::vec3 Middle20 = glm::normalize(vVertexSet[2] + vVertexSet[0]); 
+
+        __subdivideTriangle({ vVertexSet[0], Middle01, Middle20 }, vDepth - 1);
+        __subdivideTriangle({ vVertexSet[1], Middle12, Middle01 }, vDepth - 1);
+        __subdivideTriangle({ vVertexSet[2], Middle20, Middle12 }, vDepth - 1);
+        __subdivideTriangle({ Middle01, Middle12, Middle20 }, vDepth - 1);
+    }
 }
 
 void CRendererTest::__updateUniformBuffer(uint32_t vImageIndex)
