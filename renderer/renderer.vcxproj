@@ -94,24 +94,13 @@
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="Descriptor.cpp" />
     <ClCompile Include="PipelineBase.cpp" />
-    <ClCompile Include="PipelineBlend.cpp" />
-    <ClCompile Include="PipelineDepthTest.cpp" />
-    <ClCompile Include="PipelineLine.cpp" />
-    <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Command.h" />
     <ClInclude Include="Descriptor.h" />
     <ClInclude Include="PipelineBase.h" />
-    <ClInclude Include="PipelineBlend.h" />
-    <ClInclude Include="PipelineDepthTest.h" />
-    <ClInclude Include="PipelineLine.h" />
-    <ClInclude Include="PipelineSkybox.h" />
-    <ClInclude Include="PointData.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

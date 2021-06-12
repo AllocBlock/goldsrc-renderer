@@ -56,7 +56,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -74,7 +74,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -86,6 +86,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Application\Application.vcxproj">
+      <Project>{6da54335-fb5b-4abf-bc32-ee03b73794b5}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
     </ProjectReference>
@@ -106,7 +109,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ApplicationBase.cpp" />
     <ClCompile Include="ApplicationGoldSrc.cpp" />
     <ClCompile Include="ImguiAlert.cpp" />
     <ClCompile Include="ImguiFrameRate.cpp" />
@@ -114,15 +116,25 @@
     <ClCompile Include="GUIMain.cpp" />
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PipelineBlend.cpp" />
+    <ClCompile Include="PipelineDepthTest.cpp" />
+    <ClCompile Include="PipelineLine.cpp" />
+    <ClCompile Include="PipelineSkybox.cpp" />
+    <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationBase.h" />
     <ClInclude Include="ApplicationGoldSrc.h" />
     <ClInclude Include="ImguiAlert.h" />
     <ClInclude Include="ImguiFrameRate.h" />
     <ClInclude Include="ImguiLog.h" />
     <ClInclude Include="GUIMain.h" />
     <ClInclude Include="Interactor.h" />
+    <ClInclude Include="PipelineBlend.h" />
+    <ClInclude Include="PipelineDepthTest.h" />
+    <ClInclude Include="PipelineLine.h" />
+    <ClInclude Include="PipelineSkybox.h" />
+    <ClInclude Include="PointData.h" />
+    <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
