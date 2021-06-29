@@ -21,6 +21,7 @@ VkPipelineDepthStencilStateCreateInfo CPipelineLine::_getDepthStencilInfoV()
 
 void CPipelineLine::destroy()
 {
+    m_VertexNum = 0;
     m_VertexDataPack.destroy(m_Device);
     for (auto& Buffer : m_VertUniformBufferPacks)
         Buffer.destroy(m_Device);

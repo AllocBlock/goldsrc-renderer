@@ -24,7 +24,7 @@ public:
     CRenderer() = default;
 
     void init(const Common::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField);
-    void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>&vImageViews);
+    void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews);
     void update(uint32_t vImageIndex);
     VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
     void destroy();

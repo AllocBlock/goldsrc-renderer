@@ -75,13 +75,13 @@ void CVulkanRenderer::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
     };
 
     m_PipelineSet.GuiLines.setObject("HighlightBoundingBox", std::move(pObject));
-    __recordGuiCommandBuffers();
+    rerecordCommand();
 }
 
 void CVulkanRenderer::removeHighlightBoundingBox()
 {
     m_PipelineSet.GuiLines.removeObject("HighlightBoundingBox");
-    __recordGuiCommandBuffers();
+    rerecordCommand();
 }
 
 void CVulkanRenderer::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
@@ -89,7 +89,7 @@ void CVulkanRenderer::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 
     auto pObject = std::make_shared<SGuiObject>();
     pObject->Data = { vStart, vEnd };
     m_PipelineSet.GuiLines.setObject(vName, std::move(pObject));
-    __recordGuiCommandBuffers();
+    rerecordCommand();
 }
 void CVulkanRenderer::rerecordCommand()
 {
@@ -110,7 +110,7 @@ void CVulkanRenderer::_initV()
     __createCommandPoolAndBuffers();
     __createRecreateResources();
 
-    __recordGuiCommandBuffers();
+    rerecordCommand();
 }
 
 void CVulkanRenderer::_recreateV()
@@ -149,6 +149,8 @@ VkCommandBuffer CVulkanRenderer::_requestCommandBufferV(uint32_t vImageIndex)
     }
     if (RerecordCommand)
     {
+        __recordGuiCommandBuffer(vImageIndex);
+
         VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -269,28 +271,24 @@ void CVulkanRenderer::__destroySceneResources()
     m_VertexBufferPack.destroy(m_AppInfo.Device);
 }
 
-void CVulkanRenderer::__recordGuiCommandBuffers()
+void CVulkanRenderer::__recordGuiCommandBuffer(uint32_t vImageIndex)
 {
-    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
-    {
-        VkCommandBufferInheritanceInfo InheritanceInfo = {};
-        InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-        InheritanceInfo.renderPass = m_RenderPass;
-        InheritanceInfo.subpass = 1;
-        InheritanceInfo.framebuffer = m_FramebufferSet[i];
+    _ASSERTE(vImageIndex < m_NumSwapchainImage);
+    VkCommandBufferInheritanceInfo InheritanceInfo = {};
+    InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+    InheritanceInfo.renderPass = m_RenderPass;
+    InheritanceInfo.subpass = 1;
+    InheritanceInfo.framebuffer = m_FramebufferSet[vImageIndex];
 
-        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-        CommandBufferBeginInfo.pInheritanceInfo = &InheritanceInfo;
+    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
+    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+    CommandBufferBeginInfo.pInheritanceInfo = &InheritanceInfo;
 
-        VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, i);
-        ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
-        m_PipelineSet.GuiLines.recordCommand(CommandBuffer, i);
-        ck(vkEndCommandBuffer(CommandBuffer));
-    }
-
-    rerecordCommand();
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
+    ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    m_PipelineSet.GuiLines.recordCommand(CommandBuffer, vImageIndex);
+    ck(vkEndCommandBuffer(CommandBuffer));
 }
 
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)

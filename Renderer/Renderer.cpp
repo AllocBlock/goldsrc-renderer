@@ -64,8 +64,11 @@ void CRenderer::init(const Common::SVulkanAppInfo& vAppInfo, int vRenderPassPosB
     _initV();
 }
 
-void CRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vImageViews)
+void CRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews)
 {
+    m_AppInfo.ImageFormat = vImageFormat;
+    m_AppInfo.Extent = vExtent;
+    m_AppInfo.TargetImageViewSet = vTargetImageViews;
     _recreateV();
 }
 
@@ -83,5 +86,4 @@ void CRenderer::destroy()
 {
     _destroyV();
     m_RenderPassPosBitField = 0;
-    m_AppInfo.clear();
 }

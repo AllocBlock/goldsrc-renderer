@@ -24,6 +24,8 @@ void CApplicationBase::init(GLFWwindow* vWindow)
     __createSwapchainImageViews();
 
     _initV();
+
+    _createOtherResourceV();
 }
 
 void CApplicationBase::waitDevice()
@@ -162,6 +164,10 @@ std::vector<VkCommandBuffer> CApplicationBase::_getCommandBufferSetV(uint32_t vI
 }
 
 void CApplicationBase::_createOtherResourceV()
+{
+}
+
+void CApplicationBase::_recreateOtherResourceV()
 {
 }
 
@@ -404,8 +410,7 @@ void CApplicationBase::__recreateSwapchain()
     __destroySwapchainResources();
     __createSwapchain();
     __createSwapchainImageViews();
-    _destroyOtherResourceV();
-    _createOtherResourceV();
+    _recreateOtherResourceV();
 }
 
 VkSurfaceFormatKHR CApplicationBase::__chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats)

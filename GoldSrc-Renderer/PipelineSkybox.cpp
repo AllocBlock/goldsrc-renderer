@@ -16,6 +16,8 @@ struct SSkyUniformBufferObjectFrag
 
 void CPipelineSkybox::destroy()
 {
+    if (m_Device == VK_NULL_HANDLE) return;
+
     if (m_TextureSampler != VK_NULL_HANDLE)
         vkDestroySampler(m_Device, m_TextureSampler, nullptr);
     m_SkyBoxImagePack.destroy(m_Device);

@@ -176,6 +176,8 @@ void CPipelineBase::setImageNum(size_t vImageNum)
 
 void CPipelineBase::destroy()
 {
+    m_ImageNum = 0;
+    
     if (m_Device == VK_NULL_HANDLE) return;
     m_Descriptor.clear();
 

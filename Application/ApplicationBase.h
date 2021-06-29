@@ -30,6 +30,7 @@ protected:
     virtual void _updateV(uint32_t vImageIndex);
     virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex);
     virtual void _createOtherResourceV();
+    virtual void _recreateOtherResourceV();
     virtual void _destroyOtherResourceV();
 
     GLFWwindow* m_pWindow = nullptr;

@@ -101,7 +101,7 @@ private:
     void __renderModels(uint32_t vImageIndex);
     void __renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend);
     void __updateAllUniformBuffer(uint32_t vImageIndex);
-    void __recordGuiCommandBuffers();
+    void __recordGuiCommandBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
