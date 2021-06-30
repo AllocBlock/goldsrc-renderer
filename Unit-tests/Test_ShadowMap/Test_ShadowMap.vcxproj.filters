@@ -21,7 +21,7 @@
     <ClCompile Include="ApplicationTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineTest.cpp">
+    <ClCompile Include="PipelineLight.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RendererTest.cpp">
@@ -33,12 +33,15 @@
     <ClCompile Include="Interactor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineShadowMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineTest.h">
+    <ClInclude Include="PipelineLight.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RendererTest.h">
@@ -50,12 +53,21 @@
     <ClInclude Include="Interactor.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineShadowMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shader\shader.vert">
       <Filter>资源文件</Filter>
     </CustomBuild>
     <CustomBuild Include="shader\shader.frag">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\shaderShadowMap.frag">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\shaderShadowMap.vert">
       <Filter>资源文件</Filter>
     </CustomBuild>
   </ItemGroup>

@@ -171,14 +171,15 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
-    VkDeviceSize BufferSize = sizeof(SUniformBufferObjectVert);
+    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
+    VkDeviceSize FragBufferSize = sizeof(SUniformBufferObjectFrag);
     m_VertUniformBufferPackSet.resize(vImageNum);
     m_FragUniformBufferPackSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Common::createBuffer(m_PhysicalDevice, m_Device, BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
-        Common::createBuffer(m_PhysicalDevice, m_Device, BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
+        Common::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
+        Common::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
     }
 
     VkPhysicalDeviceProperties Properties = {};

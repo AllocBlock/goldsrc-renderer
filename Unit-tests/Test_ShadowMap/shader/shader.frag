@@ -3,23 +3,43 @@
 
 layout(location = 0) in vec3 inFragPosition;
 layout(location = 1) in vec3 inFragNormal;
+layout(location = 2) in vec3 inFragPositionFromLight;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 1) uniform SUniformBufferObject
+layout(binding = 1) uniform UniformBufferObject
 {
-    vec3 uEye;
+    float ShadowMapWidth;
+    float ShadowMapHeight;
 } ubo;
-layout(binding = 2) uniform sampler2D uSampler;
+layout(binding = 2) uniform sampler2D uShadowMapSampler;
+
+float getShadowMapDepth()
+{
+	vec2 UV = vec2(inFragPositionFromLight.x / 40+ 0.5, 1 - inFragPositionFromLight.y / 40 + 0.5);
+	return texture(uShadowMapSampler, UV).x;
+}
+
+float getShadowMapVis()
+{
+	float CurrentZ = inFragPositionFromLight.z / 2.0 + 0.5;
+	float ShadowMapZ = getShadowMapDepth();
+	if (CurrentZ < ShadowMapZ + 0.01)
+		return 1.0;
+	else
+		return 0.0;
+}
 
 void main()
 {
-	//vec3 N = normalize(inFragNormal);
-	//vec3 Eye = normalize(ubo.uEye - inFragPosition);
-	//
-	//float P = dot(N, Eye);
-	//vec3 Reflect = 2 * P * N - Eye;
-	//vec3 TexCoord = Reflect;
-	//outColor = texture(uSkyCubeSampler, TexCoord);
-	outColor = vec4(1.0, 0.0, 0.0, 1.0);
+	//float Vis = getShadowMapVis();
+	//outColor = vec4(vec3(1.0, 1.0, 1.0) * Vis, 1.0);
+	//outColor = vec4(1.0, 1.0, 1.0, 1.0);
+	//float Z = getShadowMapDepth();
+	//float Z = texture(uShadowMapSampler, inFragPositionFromLight.xy).x;
+	//Z = (Z - ubo.ShadowMapCameraNear) / (ubo.ShadowMapCameraFar - ubo.ShadowMapCameraNear);
+	//outColor = vec4(Z, Z, Z, 1.0);
+
+	float v = getShadowMapDepth();
+	outColor = vec4(1.0, v, v, 1.0);
 }

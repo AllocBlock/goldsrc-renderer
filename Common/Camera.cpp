@@ -17,9 +17,9 @@ void CCamera::reset()
 
 glm::vec3 CCamera::getFront() const
 {
-    double X = glm::sin(glm::radians(m_Theta)) * glm::sin(glm::radians(m_Phi));
+    double X = glm::sin(glm::radians(m_Theta)) * glm::cos(glm::radians(m_Phi));
+    double Y = glm::sin(glm::radians(m_Theta)) * glm::sin(glm::radians(m_Phi));
     double Z = glm::cos(glm::radians(m_Theta));
-    double Y = glm::sin(glm::radians(m_Theta)) * glm::cos(glm::radians(m_Phi));
     return glm::vec3(X, Y, Z);
 }
 
@@ -34,6 +34,11 @@ glm::mat4 CCamera::getViewMat() const
 {
     glm::vec3 At = m_Pos + getFront();
     return glm::lookAt(m_Pos, At, m_Up);
+}
+
+glm::mat4 CCamera::getViewProjMat() const
+{
+    return getProjMat() * getViewMat();
 }
 
 SFrustum CCamera::getFrustum() const
@@ -93,4 +98,44 @@ SFrustum CCamera::getFrustum() const
         Frustum.Planes[i] /= Length;
     }
     return Frustum;
+}
+
+void CCamera::setAt(glm::vec3 vAt)
+{
+    const float Pi = glm::pi<float>();
+    float Dx = vAt.x - m_Pos.x;
+    float Dy = vAt.y - m_Pos.y;
+    float Dz = vAt.z - m_Pos.z;
+    float Phi = 0.0f;
+    if (Dy == 0.0f)
+    {
+        if (Dx >= 0)
+            Phi = 0.0f;
+        else
+            Phi = Pi;
+    }
+    else
+    {
+        Phi = glm::atan(abs(Dy / Dx));
+        if (Dx > 0)
+        {
+            if (Dy < 0)
+                Phi = 2 * Pi - Phi;
+        }
+        else
+        {
+            if (Dy > 0)
+                Phi = Pi - Phi;
+            else
+                Phi = Pi + Phi;
+        }
+    }
+    
+    m_Phi = Phi / Pi * 180;
+
+    float Length = glm::sqrt(Dx * Dx + Dy * Dy + Dz * Dz);
+    if (Length == 0)
+        m_Theta = 0;
+    else
+        m_Theta = glm::acos(Dz / Length) / Pi * 180;
 }

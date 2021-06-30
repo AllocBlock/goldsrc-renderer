@@ -11,6 +11,8 @@ void CApplicationTest::_initV()
     m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
     m_pInteractor = std::make_shared<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pRenderer);
+
+    m_pGUI->setCamera(m_pRenderer->getCamera());
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)

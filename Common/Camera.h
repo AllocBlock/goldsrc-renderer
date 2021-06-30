@@ -18,6 +18,7 @@ public:
 
 	glm::mat4 getProjMat() const;
 	glm::mat4 getViewMat() const;
+	glm::mat4 getViewProjMat() const;
 
 	glm::vec3 getPos() const { return m_Pos; }
 	glm::vec3 getUp() const { return m_Up; }
@@ -38,6 +39,7 @@ public:
 	void setAspect(float vAspect) { m_Aspect = vAspect; }
 	void setNear(float vNear) { m_Near = vNear; }
 	void setFar(float vFar) { m_Far = vFar; }
+	void setAt(glm::vec3 vAt);
 
 	SFrustum getFrustum() const;
 private:

@@ -314,6 +314,16 @@ void Common::transitionImageLayout(VkCommandBuffer vCommandBuffer, VkImage vImag
         SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         DestStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     }
+
+    else if (vOldLayout == VK_IMAGE_LAYOUT_UNDEFINED
+        && vNewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+    {
+        Barrier.srcAccessMask = 0;
+        Barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        DestStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    }
     else
     {
         throw std::runtime_error(u8"不支持该布局转换");

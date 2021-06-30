@@ -1,18 +1,20 @@
-#include "PipelineTest.h"
+#include "PipelineLight.h"
 
-struct SUniformBufferObjectVert
+struct SUBOVertLight
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
     alignas(16) glm::mat4 Model;
+    alignas(16) glm::mat4 LightMVP;
 };
 
-struct SUniformBufferObjectFrag
+struct SUBOFragLight
 {
-    alignas(16) glm::vec3 Eye;
+    alignas(16) float ShadowMapWidth;
+    alignas(16) float ShadowMapHeight;
 };
 
-void CPipelineTest::__createPlaceholderImage()
+void CPipelineLight::__createPlaceholderImage()
 {
     uint8_t PixelData = 0;
     VkImageCreateInfo ImageInfo = {};
@@ -37,7 +39,7 @@ void CPipelineTest::__createPlaceholderImage()
     m_PlaceholderImagePack.ImageView = Common::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
-void CPipelineTest::__updateDescriptorSet()
+void CPipelineLight::__updateDescriptorSet()
 {
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
@@ -47,18 +49,18 @@ void CPipelineTest::__updateDescriptorSet()
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_VertUniformBufferPackSet[i].Buffer;
         VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
+        VertBufferInfo.range = sizeof(SUBOVertLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferPackSet[i].Buffer;
-        FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
+        VertBufferInfo.buffer = m_FragUniformBufferPackSet[i].Buffer;
+        VertBufferInfo.offset = 0;
+        VertBufferInfo.range = sizeof(SUBOFragLight);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo} ,{} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_PlaceholderImagePack.ImageView;
+        CombinedSamplerInfo.imageView = (m_ShadowMapImageViewSet.empty() ? m_PlaceholderImagePack.ImageView : m_ShadowMapImageViewSet[i]);
         CombinedSamplerInfo.sampler = m_TextureSampler;
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 
@@ -66,39 +68,46 @@ void CPipelineTest::__updateDescriptorSet()
     }
 }
 
-void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
+void CPipelineLight::setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews)
 {
-    SUniformBufferObjectVert UBOVert = {};
+    m_ShadowMapImageViewSet = vShadowMapImageViews;
+}
+
+void CPipelineLight::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::mat4 vLightVP, float vShadowMapWidth, float vShadowMapHeight)
+{
+    SUBOVertLight UBOVert = {};
     UBOVert.Model = vModel;
     UBOVert.View = vView;
     UBOVert.Proj = vProj;
+    UBOVert.LightMVP = vLightVP;
 
     void* pData;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
+    ck(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOVertLight), 0, &pData));
+    memcpy(pData, &UBOVert, sizeof(SUBOVertLight));
     vkUnmapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory);
 
-    SUniformBufferObjectFrag UBOFrag = {};
-    UBOFrag.Eye = vEyePos;
+    SUBOFragLight UBOFrag = {};
+    UBOFrag.ShadowMapWidth = vShadowMapWidth;
+    UBOFrag.ShadowMapHeight = vShadowMapHeight;
 
-    ck(vkMapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
+    ck(vkMapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOFragLight), 0, &pData));
+    memcpy(pData, &UBOFrag, sizeof(SUBOFragLight));
     vkUnmapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory);
 }
 
-void CPipelineTest::destroy()
+void CPipelineLight::destroy()
 {
     __destroyResources();
     CPipelineBase::destroy();
 }
 
-void CPipelineTest::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+void CPipelineLight::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
-    voBinding = STestPointData::getBindingDescription();
-    voAttributeSet = STestPointData::getAttributeDescriptionSet();
+    voBinding = SLightPointData::getBindingDescription();
+    voAttributeSet = SLightPointData::getAttributeDescriptionSet();
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineTest::_getInputAssemblyStageInfoV()
+VkPipelineInputAssemblyStateCreateInfo CPipelineLight::_getInputAssemblyStageInfoV()
 {
     auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -106,18 +115,19 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineTest::_getInputAssemblyStageInfo
     return Info;
 }
 
-void CPipelineTest::_createResourceV(size_t vImageNum)
+void CPipelineLight::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
-    VkDeviceSize BufferSize = sizeof(SUniformBufferObjectVert);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVertLight);
+    VkDeviceSize FragBufferSize = sizeof(SUBOVertLight);
     m_VertUniformBufferPackSet.resize(vImageNum);
     m_FragUniformBufferPackSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Common::createBuffer(m_PhysicalDevice, m_Device, BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
-        Common::createBuffer(m_PhysicalDevice, m_Device, BufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
+        Common::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
+        Common::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
     }
 
     VkPhysicalDeviceProperties Properties = {};
@@ -168,7 +178,7 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
     __updateDescriptorSet();
 }
 
-void CPipelineTest::_initDescriptorV()
+void CPipelineLight::_initDescriptorV()
 {
     _ASSERTE(m_Device != VK_NULL_HANDLE);
     m_Descriptor.clear();
@@ -180,7 +190,7 @@ void CPipelineTest::_initDescriptorV()
     m_Descriptor.createLayout(m_Device);
 }
 
-void CPipelineTest::__destroyResources()
+void CPipelineLight::__destroyResources()
 {
     for (size_t i = 0; i < m_VertUniformBufferPackSet.size(); ++i)
     {
