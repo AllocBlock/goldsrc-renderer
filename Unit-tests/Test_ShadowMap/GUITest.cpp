@@ -29,6 +29,10 @@ void CGUITest::__drawGUI()
             m_pCamera->setAt(glm::vec3(At[0], At[1], At[2]));
         }
     }
+    if (ImGui::Button(u8"µ¼³öShadowMapÍ¼Æ¬"))
+    {
+        m_pRenderer->exportShadowMapToFile("shadowmap.ppm");
+    }
     ImGui::End();
     ImGui::Render();
 }

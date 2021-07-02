@@ -53,9 +53,9 @@ void CPipelineLight::__updateDescriptorSet()
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        VertBufferInfo.buffer = m_FragUniformBufferPackSet[i].Buffer;
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUBOFragLight);
+        FragBufferInfo.buffer = m_FragUniformBufferPackSet[i].Buffer;
+        FragBufferInfo.offset = 0;
+        FragBufferInfo.range = sizeof(SUBOFragLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo} ,{} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};

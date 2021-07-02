@@ -1,5 +1,46 @@
 #include "RendererTest.h"
 
+void CRendererTest::exportShadowMapToFile(std::string vFileName)
+{
+    
+
+    vkDeviceWaitIdle(m_AppInfo.Device);
+    VkDeviceSize Size = m_AppInfo.Extent.width * m_AppInfo.Extent.height * 16;
+    Common::SBufferPack StageBufferPack;
+    Common::createBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
+
+    VkBufferImageCopy CopyRegion = {};
+    CopyRegion.bufferOffset = 0;
+    CopyRegion.bufferImageHeight = 0;
+    CopyRegion.bufferRowLength = 0;
+    CopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    CopyRegion.imageSubresource.mipLevel = 0;
+    CopyRegion.imageSubresource.baseArrayLayer = 0;
+    CopyRegion.imageSubresource.layerCount = 1;
+    CopyRegion.imageOffset = VkOffset3D{ 0, 0, 0 };
+    CopyRegion.imageExtent = VkExtent3D{ m_AppInfo.Extent.width, m_AppInfo.Extent.height, 1 };
+
+    VkCommandBuffer CommandBuffer = Common::beginSingleTimeBuffer();
+    Common::transitionImageLayout(CommandBuffer, m_ShadowMapImagePackSet[0].Image, m_ShadowMapImageFormat, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
+    vkCmdCopyImageToBuffer(CommandBuffer, m_ShadowMapImagePackSet[0].Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StageBufferPack.Buffer, 1, &CopyRegion);
+    Common::transitionImageLayout(CommandBuffer, m_ShadowMapImagePackSet[0].Image, m_ShadowMapImageFormat, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
+    Common::endSingleTimeBuffer(CommandBuffer);
+
+    void* pDevData;
+    uint8_t* pData = new uint8_t[Size];
+    ck(vkMapMemory(m_AppInfo.Device, StageBufferPack.Memory, 0, Size, 0, &pDevData));
+    memcpy(pData, reinterpret_cast<char*>(pDevData), Size);
+    vkUnmapMemory(m_AppInfo.Device, StageBufferPack.Memory);
+
+    auto pImage = std::make_shared<CIOImage>();
+    pImage->setImageSize(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    pImage->setImageChannels(1);
+    pImage->setData(pData);
+    delete[] pData;
+
+    pImage->writePPM(vFileName);
+}
+
 void CRendererTest::_initV()
 {
     m_pLightCamera->setFov(90);
@@ -292,10 +333,12 @@ void CRendererTest::__createShadowMapImages()
         ImageInfo.format = m_ShadowMapImageFormat;
         ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        //ImageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+        ImageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+        //Common::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ShadowMapImagePack.Image, ShadowMapImagePack.Memory);
         Common::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ShadowMapImagePack.Image, ShadowMapImagePack.Memory);
         ShadowMapImagePack.ImageView = Common::createImageView(m_AppInfo.Device, ShadowMapImagePack.Image, m_ShadowMapImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
         VkCommandBuffer CommandBuffer = Common::beginSingleTimeBuffer();

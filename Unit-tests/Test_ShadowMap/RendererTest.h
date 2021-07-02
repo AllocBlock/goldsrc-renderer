@@ -14,6 +14,7 @@ public:
     }
 
     std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
+    void exportShadowMapToFile(std::string vFileName);
 
 protected:
     virtual void _initV() override;

@@ -314,7 +314,6 @@ void Common::transitionImageLayout(VkCommandBuffer vCommandBuffer, VkImage vImag
         SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         DestStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     }
-
     else if (vOldLayout == VK_IMAGE_LAYOUT_UNDEFINED
         && vNewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
     {
@@ -323,6 +322,24 @@ void Common::transitionImageLayout(VkCommandBuffer vCommandBuffer, VkImage vImag
 
         SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         DestStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    }
+    else if (vOldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+        && vNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        Barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+        Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        DestStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else if (vOldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+        && vNewLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+    {
+        Barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        Barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        SrcStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        DestStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     }
     else
     {

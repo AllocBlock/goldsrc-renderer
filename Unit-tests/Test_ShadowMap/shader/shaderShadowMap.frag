@@ -15,4 +15,5 @@ void main()
 {
     //float NormalizedZ = (outFragZ - ubo.ShadowMapCameraNear) / (ubo.ShadowMapCameraFar - ubo.ShadowMapCameraNear);
 	outColor = vec4(outFragZ, outFragZ, outFragZ, 1.0);
+	//outColor = vec4(NormalizedZ, NormalizedZ, NormalizedZ, 1.0);
 }

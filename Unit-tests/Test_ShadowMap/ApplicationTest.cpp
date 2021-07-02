@@ -13,6 +13,7 @@ void CApplicationTest::_initV()
     m_pInteractor->bindEvent(m_pWindow, m_pRenderer);
 
     m_pGUI->setCamera(m_pRenderer->getCamera());
+    m_pGUI->setRenderer(m_pRenderer);
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)
