@@ -8,12 +8,6 @@ struct SUBOVertLight
     alignas(16) glm::mat4 LightMVP;
 };
 
-struct SUBOFragLight
-{
-    alignas(16) float ShadowMapWidth;
-    alignas(16) float ShadowMapHeight;
-};
-
 void CPipelineLight::__createPlaceholderImage()
 {
     uint8_t PixelData = 0;
@@ -52,12 +46,6 @@ void CPipelineLight::__updateDescriptorSet()
         VertBufferInfo.range = sizeof(SUBOVertLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
-        VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferPackSet[i].Buffer;
-        FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUBOFragLight);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo} ,{} }));
-
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         CombinedSamplerInfo.imageView = (m_ShadowMapImageViewSet.empty() ? m_PlaceholderImagePack.ImageView : m_ShadowMapImageViewSet[i]);
@@ -85,14 +73,6 @@ void CPipelineLight::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel,
     ck(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOVertLight), 0, &pData));
     memcpy(pData, &UBOVert, sizeof(SUBOVertLight));
     vkUnmapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory);
-
-    SUBOFragLight UBOFrag = {};
-    UBOFrag.ShadowMapWidth = vShadowMapWidth;
-    UBOFrag.ShadowMapHeight = vShadowMapHeight;
-
-    ck(vkMapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOFragLight), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(SUBOFragLight));
-    vkUnmapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory);
 }
 
 void CPipelineLight::destroy()
@@ -120,14 +100,11 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
     __destroyResources();
 
     VkDeviceSize VertBufferSize = sizeof(SUBOVertLight);
-    VkDeviceSize FragBufferSize = sizeof(SUBOVertLight);
     m_VertUniformBufferPackSet.resize(vImageNum);
-    m_FragUniformBufferPackSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
         Common::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
-        Common::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
     }
 
     VkPhysicalDeviceProperties Properties = {};
@@ -184,8 +161,7 @@ void CPipelineLight::_initDescriptorV()
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("CombinedSampler", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_Device);
 }
@@ -195,10 +171,8 @@ void CPipelineLight::__destroyResources()
     for (size_t i = 0; i < m_VertUniformBufferPackSet.size(); ++i)
     {
         m_VertUniformBufferPackSet[i].destroy(m_Device);
-        m_FragUniformBufferPackSet[i].destroy(m_Device);
     }
     m_VertUniformBufferPackSet.clear();
-    m_FragUniformBufferPackSet.clear();
 
     m_PlaceholderImagePack.destroy(m_Device);
 

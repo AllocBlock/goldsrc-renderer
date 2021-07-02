@@ -33,7 +33,8 @@ glm::mat4 CCamera::getProjMat() const
 glm::mat4 CCamera::getViewMat() const
 {
     glm::vec3 At = m_Pos + getFront();
-    return glm::lookAt(m_Pos, At, m_Up);
+    glm::mat4 ViewMat = glm::lookAt(m_Pos, At, m_Up);
+    return ViewMat;
 }
 
 glm::mat4 CCamera::getViewProjMat() const

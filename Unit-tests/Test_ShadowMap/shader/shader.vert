@@ -12,15 +12,15 @@ layout(binding = 0) uniform UniformBufferObject
     mat4 LightMVP;
 } ubo;
 
-layout(location = 0) out vec3 outFragPosition;
+layout(location = 0) out vec4 outFragPosition;
 layout(location = 1) out vec3 outFragNormal;
-layout(location = 2) out vec3 outFragPositionFromLight;
+layout(location = 2) out vec4 outFragPositionFromLight;
 
 void main()
 {
     gl_Position = ubo.Project * ubo.View * ubo.Model * vec4(inPosition, 1.0);
 
-    outFragPosition = (ubo.Model * vec4(inPosition, 1.0)).xyz;
+    outFragPosition = (ubo.Model * vec4(inPosition, 1.0));
     outFragNormal = (ubo.Model * vec4(inNormal, 1.0)).xyz;
-    outFragPositionFromLight = (ubo.LightMVP * vec4(inPosition, 1.0)).xyz;
+    outFragPositionFromLight = (ubo.LightMVP * vec4(inPosition, 1.0));
 }

@@ -24,12 +24,14 @@ protected:
     virtual void _destroyV() override;
 
 private:
+    VkRenderPass __createRenderPassGeneral(VkAttachmentDescription vColorAttachment, VkAttachmentDescription vDepthAttachment);
     void __createRenderPassShadowMap();
     void __createRenderPassLighting();
     void __destroyRenderPasses();
     void __createGraphicsPipeline();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();
+    VkFramebuffer __createFramebufferGeneral(VkImageView vTargetImageView, VkImageView vDepthImageView, VkRenderPass vRenderPass);
     void __createLightFramebuffers();
     void __createShadowMapFramebuffers();
     void __createVertexBuffer();
@@ -59,6 +61,7 @@ private:
 
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
+    Common::SImagePack m_ShadowMapDepthImagePack;
     Common::SImagePack m_LightDepthImagePack;
 
     std::shared_ptr<CCamera> m_pCamera = nullptr;

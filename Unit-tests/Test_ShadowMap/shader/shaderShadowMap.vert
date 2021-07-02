@@ -8,12 +8,12 @@ layout(binding = 0) uniform UniformBufferObject
     mat4 MVP;
 } ubo;
 
-layout(location = 0) out float outFragZ;
+layout(location = 0) out vec4 outFragPosition;
 
 void main()
 {
     vec4 Pos = ubo.MVP * vec4(inPosition, 1.0);
     gl_Position = Pos;
 
-    outFragZ = Pos.z;
+    outFragPosition = Pos;
 }

@@ -2,8 +2,6 @@
 
 void CRendererTest::exportShadowMapToFile(std::string vFileName)
 {
-    
-
     vkDeviceWaitIdle(m_AppInfo.Device);
     VkDeviceSize Size = m_AppInfo.Extent.width * m_AppInfo.Extent.height * 16;
     Common::SBufferPack StageBufferPack;
@@ -43,6 +41,8 @@ void CRendererTest::exportShadowMapToFile(std::string vFileName)
 
 void CRendererTest::_initV()
 {
+    m_pLightCamera->setNear(4);
+    m_pLightCamera->setFar(30);
     m_pLightCamera->setFov(90);
     m_pLightCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
     m_pLightCamera->setPos(glm::vec3(10.0, 10.0, 10.0));
@@ -103,56 +103,8 @@ void CRendererTest::_destroyV()
     CRenderer::_destroyV();
 }
 
-void CRendererTest::__createRenderPassShadowMap()
+VkRenderPass CRendererTest::__createRenderPassGeneral(VkAttachmentDescription vColorAttachment, VkAttachmentDescription vDepthAttachment)
 {
-    VkAttachmentDescription ColorAttachment = {};
-    ColorAttachment.format = m_ShadowMapImageFormat;
-    ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    ColorAttachment.loadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
-    ColorAttachment.storeOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
-    ColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    ColorAttachment.initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
-    ColorAttachment.finalLayout = VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-    VkAttachmentReference ColorAttachmentRef = {};
-    ColorAttachmentRef.attachment = 0;
-    ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    std::array<VkSubpassDependency, 1> SubpassDependencies = {};
-    SubpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    SubpassDependencies[0].dstSubpass = 0;
-    SubpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].srcAccessMask = 0;
-    SubpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkSubpassDescription SubpassDesc = {};
-    SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    SubpassDesc.colorAttachmentCount = 1;
-    SubpassDesc.pColorAttachments = &ColorAttachmentRef;
-
-    std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc };
-
-    std::array<VkAttachmentDescription, 1> Attachments = { ColorAttachment };
-    VkRenderPassCreateInfo RenderPassInfo = {};
-    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    RenderPassInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-    RenderPassInfo.pAttachments = Attachments.data();
-    RenderPassInfo.subpassCount = static_cast<uint32_t>(SubpassDescs.size());
-    RenderPassInfo.pSubpasses = SubpassDescs.data();
-    RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
-    RenderPassInfo.pDependencies = SubpassDependencies.data();
-
-    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPassShadowMap));
-}
-
-void CRendererTest::__createRenderPassLighting()
-{
-    int RenderPassPosBitField = m_RenderPassPosBitField;
-    VkAttachmentDescription ColorAttachment = CRenderer::createAttachmentDescription(RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = CRenderer::createAttachmentDescription(RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
-
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
     ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -177,7 +129,7 @@ void CRendererTest::__createRenderPassLighting()
 
     std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc };
 
-    std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttachment };
+    std::array<VkAttachmentDescription, 2> Attachments = { vColorAttachment, vDepthAttachment };
     VkRenderPassCreateInfo RenderPassInfo = {};
     RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     RenderPassInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
@@ -187,7 +139,36 @@ void CRendererTest::__createRenderPassLighting()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPassLight));
+    VkRenderPass RenderPass;
+    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &RenderPass));
+    return RenderPass;
+}
+
+void CRendererTest::__createRenderPassShadowMap()
+{
+    VkAttachmentDescription ColorAttachment = {};
+    ColorAttachment.format = m_ShadowMapImageFormat;
+    ColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    ColorAttachment.loadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
+    ColorAttachment.storeOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
+    ColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    ColorAttachment.initialLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
+    ColorAttachment.finalLayout = VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkAttachmentDescription DepthAttachment = ColorAttachment;
+    DepthAttachment.format = VkFormat::VK_FORMAT_D32_SFLOAT;
+
+    m_RenderPassShadowMap = __createRenderPassGeneral(ColorAttachment, DepthAttachment);
+}
+
+void CRendererTest::__createRenderPassLighting()
+{
+    int RenderPassPosBitField = m_RenderPassPosBitField;
+    VkAttachmentDescription ColorAttachment = CRenderer::createAttachmentDescription(RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = CRenderer::createAttachmentDescription(RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
+
+    m_RenderPassLight = __createRenderPassGeneral(ColorAttachment, DepthAttachment);
 }
 
 void CRendererTest::__destroyRenderPasses()
@@ -246,59 +227,56 @@ void CRendererTest::__createDepthResources()
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     Common::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_LightDepthImagePack.Image, m_LightDepthImagePack.Memory);
+    ImageInfo.usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+    Common::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ShadowMapDepthImagePack.Image, m_ShadowMapDepthImagePack.Memory);
     m_LightDepthImagePack.ImageView = Common::createImageView(m_AppInfo.Device, m_LightDepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    m_ShadowMapDepthImagePack.ImageView = Common::createImageView(m_AppInfo.Device, m_ShadowMapDepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
     Common::transitionImageLayout(CommandBuffer, m_LightDepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+    Common::transitionImageLayout(CommandBuffer, m_ShadowMapDepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
     m_Command.endSingleTimeBuffer(CommandBuffer);
+}
+
+VkFramebuffer CRendererTest::__createFramebufferGeneral(VkImageView vTargetImageView, VkImageView vDepthImageView, VkRenderPass vRenderPass)
+{
+    std::array<VkImageView, 2> Attachments =
+    {
+        vTargetImageView,
+        vDepthImageView
+    };
+
+    VkFramebufferCreateInfo FramebufferInfo = {};
+    FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    FramebufferInfo.renderPass = m_RenderPassLight;
+    FramebufferInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
+    FramebufferInfo.pAttachments = Attachments.data();
+    FramebufferInfo.width = m_AppInfo.Extent.width;
+    FramebufferInfo.height = m_AppInfo.Extent.height;
+    FramebufferInfo.layers = 1;
+
+    VkFramebuffer FrameBuffer;
+    ck(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &FrameBuffer));
+    return FrameBuffer;
 }
 
 void CRendererTest::__createLightFramebuffers()
 {
     size_t ImageNum = m_AppInfo.TargetImageViewSet.size();
-    m_LightFramebufferSet.resize(ImageNum);
+    m_LightFramebufferSet.resize(ImageNum, VK_NULL_HANDLE);
     for (size_t i = 0; i < ImageNum; ++i)
     {
-        std::array<VkImageView, 2> Attachments =
-        {
-            m_AppInfo.TargetImageViewSet[i],
-            m_LightDepthImagePack.ImageView
-        };
-
-        VkFramebufferCreateInfo FramebufferInfo = {};
-        FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        FramebufferInfo.renderPass = m_RenderPassLight;
-        FramebufferInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-        FramebufferInfo.pAttachments = Attachments.data();
-        FramebufferInfo.width = m_AppInfo.Extent.width;
-        FramebufferInfo.height = m_AppInfo.Extent.height;
-        FramebufferInfo.layers = 1;
-
-        ck(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_LightFramebufferSet[i]));
+        m_LightFramebufferSet[i] = __createFramebufferGeneral(m_AppInfo.TargetImageViewSet[i], m_LightDepthImagePack.ImageView, m_RenderPassLight);
     }
 }
 
 void CRendererTest::__createShadowMapFramebuffers()
 {
     size_t ImageNum = m_ShadowMapImagePackSet.size();
-    m_ShadowFramebufferSet.resize(ImageNum);
+    m_ShadowFramebufferSet.resize(ImageNum, VK_NULL_HANDLE);
     for (size_t i = 0; i < ImageNum; ++i)
     {
-        std::array<VkImageView, 1> Attachments =
-        {
-            m_ShadowMapImagePackSet[i].ImageView,
-        };
-
-        VkFramebufferCreateInfo FramebufferInfo = {};
-        FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        FramebufferInfo.renderPass = m_RenderPassShadowMap;
-        FramebufferInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-        FramebufferInfo.pAttachments = Attachments.data();
-        FramebufferInfo.width = m_AppInfo.Extent.width;
-        FramebufferInfo.height = m_AppInfo.Extent.height;
-        FramebufferInfo.layers = 1;
-
-        ck(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_ShadowFramebufferSet[i]));
+        m_ShadowFramebufferSet[i] = __createFramebufferGeneral(m_ShadowMapImagePackSet[i].ImageView, m_ShadowMapDepthImagePack.ImageView, m_RenderPassShadowMap);
     }
 }
 
@@ -375,6 +353,7 @@ void CRendererTest::__destroyRecreateResources()
     m_ShadowFramebufferSet.clear();
 
     m_LightDepthImagePack.destroy(m_AppInfo.Device);
+    m_ShadowMapDepthImagePack.destroy(m_AppInfo.Device);
     for (auto& Framebuffer : m_LightFramebufferSet)
         vkDestroyFramebuffer(m_AppInfo.Device, Framebuffer, nullptr);
     m_LightFramebufferSet.clear();
@@ -480,14 +459,14 @@ void CRendererTest::__updateUniformBuffer(uint32_t vImageIndex)
     glm::mat4 LightVP = m_pLightCamera->getViewProjMat();
 
     m_PipelineShadowMap.updateUniformBuffer(vImageIndex, LightVP, m_pLightCamera->getNear(), m_pLightCamera->getFar());
-
     m_PipelineLight.updateUniformBuffer(vImageIndex, Model, View, Proj, LightVP, m_AppInfo.Extent.width, m_AppInfo.Extent.height);
 }
 
 void CRendererTest::__recordShadowMapRenderPass(VkCommandBuffer vCommandBuffer, uint32_t vImageIndex)
 {
-    std::array<VkClearValue, 1> ClearValues = {};
+    std::array<VkClearValue, 2> ClearValues = {};
     ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    ClearValues[1].depthStencil = { 1.0f, 0 };
 
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
