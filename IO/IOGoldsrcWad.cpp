@@ -71,7 +71,7 @@ void CIOGoldsrcWad::getTextureSize(size_t vTexIndex, uint32_t& voWidth, uint32_t
     voHeight = m_TexturesList[vTexIndex].Height;
 }
 
-void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void* vopData) const
+void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void* voData) const
 {
     _ASSERTE(vTexIndex >= 0 && vTexIndex < m_TexturesList.size());
     bool HasAlphaIndex = false;
@@ -80,7 +80,7 @@ void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void* vopData) const
         HasAlphaIndex = true;
     }
 
-    unsigned char* pIter = static_cast<unsigned char*>(vopData);
+    unsigned char* pIter = static_cast<unsigned char*>(voData);
     for (uint8_t PalatteIndex : m_TexturesList[vTexIndex].ImageDatas[0])
     {
         if (HasAlphaIndex && PalatteIndex == 0xff) // transparent color
