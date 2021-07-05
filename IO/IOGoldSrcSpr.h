@@ -1,26 +1,35 @@
 #pragma once
 #include "IOBase.h"
+#include "IOCommon.h"
 
 struct SSprHeader
 {
     char Magic[4];     // "IDSP"
-    int32_t Version;   // 1：索引模式； 2：直接存储颜色；
+    int32_t Version;   // 金源中始终为2
     int32_t Type;      // 0: vp parallel upright; 1: facing upright; 2: vp parallel; 3: oriented; 4: vp parallel oriented
+    int32_t TextureFormat;
     float Radius;      // Bounding Radius
     int32_t MaxWidth;  // 所以帧中最大的宽度
     int32_t MaxHeight; // 所以帧中最大的高度
     int32_t FrameNum;  // 帧的总数
     float BeamLength;  // 未知
-    int32_t SynchType; // 0=synchron 1=random (most commonly synchron)
+    int32_t SyncType; // 0=synchron 1=random (most commonly synchron)
+};
+
+struct SSprPalette
+{
+    int16_t Size; // 调色板大小，始终等于256
+    IOCommon::SGoldSrcColor ColorSet[256]; // 颜色
 };
 
 struct SSprPicture
 {
-    int32_t OffsetX; // horizontal offset, in 3D space
-    int32_t OffsetY; // vertical offset, in 3D space
-    int32_t Width;   // width of the picture
-    int32_t Height;  // height of the picture
-    std::vector<uint8_t> DataSet; // 数据
+    int32_t Group; // 组号？
+    int32_t OffsetX; // X方向偏移
+    int32_t OffsetY; // Y方向偏移
+    int32_t Width;   // 宽度
+    int32_t Height;  // 长度
+    std::vector<uint8_t> IndexSet; // 索引数据
 };
 
 // 基于 https://moddb.fandom.com/wiki/SPR (quake) 和 https://github.com/jpiolho/GoldSrcSprite （Goldsrc） 实现
@@ -33,7 +42,6 @@ public:
 
     size_t getFrameNum() const;
     void getFrameSize(size_t vIndex, uint32_t& voWidth, uint32_t& voHeight) const;
-    size_t getFrameTime(size_t vIndex) const;
     void getFrameRGBAPixels(size_t vIndex, void* voData) const;
 
 protected:
@@ -43,7 +51,7 @@ private:
     SSprPicture readPicture(std::ifstream& voFile);
 
     SSprHeader m_Header = {};
+    SSprPalette m_Palatte;
     std::vector<SSprPicture> m_FrameSet;
-    std::vector<float> m_TimeSet;
 };
 
