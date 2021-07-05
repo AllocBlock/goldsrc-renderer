@@ -15,7 +15,7 @@ void CRendererTest::_initV()
 
 void CRendererTest::_recreateV()
 {
-    CRenderer::_recreateV();
+    CRendererBase::_recreateV();
 
     __destroyRecreateResources();
     __createRecreateResources();
@@ -34,7 +34,7 @@ VkCommandBuffer CRendererTest::_requestCommandBufferV(uint32_t vImageIndex)
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-    ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
     std::array<VkClearValue, 2> ClearValues = {};
     ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -62,7 +62,7 @@ VkCommandBuffer CRendererTest::_requestCommandBufferV(uint32_t vImageIndex)
     }
     
     vkCmdEndRenderPass(CommandBuffer);
-    ck(vkEndCommandBuffer(CommandBuffer));
+    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
     return CommandBuffer;
 }
 
@@ -73,13 +73,13 @@ void CRendererTest::_destroyV()
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
-    CRenderer::_destroyV();
+    CRendererBase::_destroyV();
 }
 
 void CRendererTest::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = CRenderer::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = CRenderer::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -115,7 +115,7 @@ void CRendererTest::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
 void CRendererTest::__loadSkyBox()
@@ -176,15 +176,15 @@ void CRendererTest::__createCommandPoolAndBuffers()
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, m_AppInfo.TargetImageViewSet.size(), ECommandBufferLevel::PRIMARY);
 
-    Common::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
+    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
     {
         return m_Command.beginSingleTimeBuffer();
     };
-    Common::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
+    Vulkan::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
     {
         m_Command.endSingleTimeBuffer(vCommandBuffer);
     };
-    Common::setSingleTimeBufferFunc(BeginFunc, EndFunc);
+    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
 void CRendererTest::__createDepthResources()
@@ -206,11 +206,11 @@ void CRendererTest::__createDepthResources()
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    Common::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
-    m_DepthImagePack.ImageView = Common::createImageView(m_AppInfo.Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    Vulkan::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
+    m_DepthImagePack.ImageView = Vulkan::createImageView(m_AppInfo.Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Common::transitionImageLayout(CommandBuffer, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+    Vulkan::transitionImageLayout(CommandBuffer, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
@@ -235,7 +235,7 @@ void CRendererTest::__createFramebuffers()
         FramebufferInfo.height = m_AppInfo.Extent.height;
         FramebufferInfo.layers = 1;
 
-        ck(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
+        Vulkan::checkError(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
     }
 }
 
@@ -247,7 +247,7 @@ void CRendererTest::__createVertexBuffer()
     if (VertexNum > 0)
     {
         VkDeviceSize BufferSize = sizeof(STestPointData) * VertexNum;
-        Common::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_PointDataSet.data(), BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+        Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_PointDataSet.data(), BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
     }
 }
 

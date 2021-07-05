@@ -1,9 +1,9 @@
 #pragma once
-#include "Renderer.h"
+#include "RendererBase.h"
 #include "PipelineTest.h"
 #include "Camera.h"
 
-class CRendererTest : public CRenderer
+class CRendererTest : public CRendererBase
 {
 public:
     CRendererTest() : m_pCamera(std::make_shared<CCamera>()) {}
@@ -40,8 +40,8 @@ private:
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
     std::vector<VkFramebuffer> m_FramebufferSet;
-    Common::SBufferPack m_VertexBufferPack;
-    Common::SImagePack m_DepthImagePack;
+    Vulkan::SBufferPack m_VertexBufferPack;
+    Vulkan::SImagePack m_DepthImagePack;
 
     const std::string m_SkyFilePrefix = "../../data/neb6";
     std::shared_ptr<CCamera> m_pCamera = nullptr;

@@ -45,4 +45,3 @@ private:
     std::map<std::string, std::vector<VkCommandBuffer>> m_NameToBufferSetMap;
     size_t m_InUseSingleTimeNum = 0;
 };
-

@@ -1,4 +1,5 @@
 #include "Descriptor.h"
+#include "Vulkan.h"
 
 CDescriptor::~CDescriptor() { clear(); }
 
@@ -29,7 +30,7 @@ void CDescriptor::createLayout(VkDevice vDevice)
     LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
     LayoutInfo.pBindings = Bindings.data();
 
-    ck(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorLayout));
+    Vulkan::checkError(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorLayout));
 }
 
 const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t vImageNum)
@@ -50,7 +51,7 @@ const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t v
 
     __destroySetSet();
     m_DescriptorSetSet.resize(vImageNum);
-    ck(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSetSet.data()));
+    Vulkan::checkError(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSetSet.data()));
     return m_DescriptorSetSet;
 }
 
@@ -122,7 +123,7 @@ void CDescriptor::__createPool(size_t vImageNum)
     PoolInfo.pPoolSizes = PoolSize.data();
     PoolInfo.maxSets = static_cast<uint32_t>(vImageNum);
 
-    ck(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
+    Vulkan::checkError(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
 void CDescriptor::__destroyPool()

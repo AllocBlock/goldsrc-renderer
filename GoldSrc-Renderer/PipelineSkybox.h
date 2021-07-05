@@ -26,8 +26,8 @@ public:
     }
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "../Renderer/shader/skyVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "../Renderer/shader/skyFrag.spv"; }
+    virtual std::filesystem::path _getVertShaderPathV() override { return "shader/skyShaderVert.spv"; }
+    virtual std::filesystem::path _getFragShaderPathV() override { return "shader/skyShaderFrag.spv"; }
 
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;
@@ -39,10 +39,10 @@ private:
     void __updateDescriptorSet();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    Common::SImagePack m_SkyBoxImagePack; // cubemap
-    Common::SBufferPack m_VertexDataPack;
+    Vulkan::SImagePack m_SkyBoxImagePack; // cubemap
+    Vulkan::SBufferPack m_VertexDataPack;
     size_t m_VertexNum = 0;
-    std::vector<Common::SBufferPack> m_VertUniformBufferPacks;
-    std::vector<Common::SBufferPack> m_FragUniformBufferPacks;
+    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPacks;
+    std::vector<Vulkan::SBufferPack> m_FragUniformBufferPacks;
 };
 

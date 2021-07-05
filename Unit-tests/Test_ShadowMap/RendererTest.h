@@ -1,10 +1,10 @@
 #pragma once
-#include "Renderer.h"
+#include "RendererBase.h"
 #include "PipelineShadowMap.h"
 #include "PipelineLight.h"
 #include "Camera.h"
 
-class CRendererTest : public CRenderer
+class CRendererTest : public CRendererBase
 {
 public:
     CRendererTest() : m_pCamera(std::make_shared<CCamera>()),
@@ -49,20 +49,20 @@ private:
     VkRenderPass m_RenderPassShadowMap = VK_NULL_HANDLE;
     CPipelineShadowMap m_PipelineShadowMap;
     std::vector<VkFramebuffer> m_ShadowFramebufferSet;
-    std::vector<Common::SImagePack> m_ShadowMapImagePackSet;
-    Common::SBufferPack m_ShadowMapVertBufferPack;
+    std::vector<Vulkan::SImagePack> m_ShadowMapImagePackSet;
+    Vulkan::SBufferPack m_ShadowMapVertBufferPack;
     std::vector<SShadowMapPointData> m_ShadowMapPointDataSet;
 
     VkRenderPass m_RenderPassLight = VK_NULL_HANDLE;
     CPipelineLight m_PipelineLight;
     std::vector<VkFramebuffer> m_LightFramebufferSet;
-    Common::SBufferPack m_LightVertBufferPack;
+    Vulkan::SBufferPack m_LightVertBufferPack;
     std::vector<SLightPointData> m_LightPointDataSet;
 
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
-    Common::SImagePack m_ShadowMapDepthImagePack;
-    Common::SImagePack m_LightDepthImagePack;
+    Vulkan::SImagePack m_ShadowMapDepthImagePack;
+    Vulkan::SImagePack m_LightDepthImagePack;
 
     std::shared_ptr<CCamera> m_pCamera = nullptr;
     std::shared_ptr<CCamera> m_pLightCamera = nullptr;

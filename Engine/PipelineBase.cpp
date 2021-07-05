@@ -87,8 +87,8 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
     auto VertShaderCode = Common::readFileAsChar(_getVertShaderPathV());
     auto FragShaderCode = Common::readFileAsChar(_getFragShaderPathV());
 
-    VkShaderModule VertShaderModule = Common::createShaderModule(m_Device, VertShaderCode);
-    VkShaderModule FragShaderModule = Common::createShaderModule(m_Device, FragShaderCode);
+    VkShaderModule VertShaderModule = Vulkan::createShaderModule(m_Device, VertShaderCode);
+    VkShaderModule FragShaderModule = Vulkan::createShaderModule(m_Device, FragShaderCode);
 
     const auto& ShadeInfoSet = _getShadeStageInfoV(VertShaderModule, FragShaderModule);
 
@@ -142,7 +142,7 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
     PipelineLayoutInfo.pushConstantRangeCount = PushConstantRangeSet.size();
     PipelineLayoutInfo.pPushConstantRanges = PushConstantRangeSet.data();
 
-    ck(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout));
+    Vulkan::checkError(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
     VkGraphicsPipelineCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -160,7 +160,7 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
     PipelineInfo.renderPass = vRenderPass;
     PipelineInfo.subpass = vSubpass;
 
-    ck(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_Pipeline));
+    Vulkan::checkError(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_Pipeline));
 
     vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
     vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);

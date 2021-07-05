@@ -82,13 +82,13 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>,
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
 
-    VkCommandBuffer CommandBuffer = Common::beginSingleTimeBuffer();
-    Common::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, TotalImageSize, ImageInfo, m_SkyBoxImagePack.Image, m_SkyBoxImagePack.Memory);
-    Common::endSingleTimeBuffer(CommandBuffer);
+    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
+    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, TotalImageSize, ImageInfo, m_SkyBoxImagePack.Image, m_SkyBoxImagePack.Memory);
+    Vulkan::endSingleTimeBuffer(CommandBuffer);
     
     delete[] pPixelData;
 
-    m_SkyBoxImagePack.ImageView = Common::createImageView(m_Device, m_SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
+    m_SkyBoxImagePack.ImageView = Vulkan::createImageView(m_Device, m_SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
 
     // the sky image changed, so descriptor need to be updated
     __updateDescriptorSet();
@@ -102,7 +102,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView,
     UBOVert.EyePosition = vEyePos;
 
     void* pData;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
     memcpy(pData, &UBOVert, sizeof(UBOVert));
     vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
 
@@ -128,7 +128,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView,
         UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
     }
 
-    ck(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
+    Vulkan::checkError(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
     memcpy(pData, &UBOFrag, sizeof(UBOFrag));
     vkUnmapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory);
 }
@@ -187,9 +187,9 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
     VkDeviceSize DataSize = sizeof(SSimplePointData) * PointData.size();
     m_VertexNum = PointData.size();
 
-    VkCommandBuffer CommandBuffer = Common::beginSingleTimeBuffer();
-    Common::stageFillBuffer(m_PhysicalDevice, m_Device, PointData.data(), DataSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
-    Common::endSingleTimeBuffer(CommandBuffer);
+    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
+    Vulkan::stageFillBuffer(m_PhysicalDevice, m_Device, PointData.data(), DataSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
+    Vulkan::endSingleTimeBuffer(CommandBuffer);
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
@@ -199,8 +199,8 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Common::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
-        Common::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPacks[i].Buffer, m_FragUniformBufferPacks[i].Memory);
+        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
+        Vulkan::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPacks[i].Buffer, m_FragUniformBufferPacks[i].Memory);
     }
 
     VkPhysicalDeviceProperties Properties = {};
@@ -224,7 +224,7 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
     SamplerInfo.minLod = 0.0f;
     SamplerInfo.maxLod = 0.0f;
 
-    ck(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
+    Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
 }
 
 void CPipelineSkybox::_initDescriptorV()

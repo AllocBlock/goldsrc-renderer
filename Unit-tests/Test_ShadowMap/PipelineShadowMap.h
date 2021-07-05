@@ -53,7 +53,7 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    std::vector<Common::SBufferPack> m_VertUniformBufferPackSet;
-    std::vector<Common::SBufferPack> m_FragUniformBufferPackSet;
+    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPackSet;
+    std::vector<Vulkan::SBufferPack> m_FragUniformBufferPackSet;
 };
 

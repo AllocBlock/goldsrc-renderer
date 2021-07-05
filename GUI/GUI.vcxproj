@@ -55,7 +55,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Engine;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -71,7 +71,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Renderer;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Engine;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -91,14 +91,14 @@
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Engine\Engine.vcxproj">
+      <Project>{1fa794f5-b7fb-431f-8221-77f21034d0d9}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\imgui\imgui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
     </ProjectReference>
     <ProjectReference Include="..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Renderer\Renderer.vcxproj">
-      <Project>{1fa794f5-b7fb-431f-8221-77f21034d0d9}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

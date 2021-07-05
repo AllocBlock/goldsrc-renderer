@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "Vulkan.h"
 #include "Descriptor.h"
 
 #include <filesystem>

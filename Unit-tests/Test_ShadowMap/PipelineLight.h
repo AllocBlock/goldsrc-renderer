@@ -62,8 +62,8 @@ private:
     void __destroyResources();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<Common::SBufferPack> m_VertUniformBufferPackSet;
+    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPackSet;
     std::vector<VkImageView> m_ShadowMapImageViewSet;
-    Common::SImagePack m_PlaceholderImagePack;
+    Vulkan::SImagePack m_PlaceholderImagePack;
 };
 

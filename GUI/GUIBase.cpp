@@ -11,7 +11,7 @@
 
 void CGUIBase::_initV()
 {
-    CRenderer::_initV();
+    CRendererBase::_initV();
 
     _ASSERTE(m_pWindow);
 
@@ -57,7 +57,7 @@ void CGUIBase::_initV()
 
 void CGUIBase::_recreateV()
 {
-    CRenderer::_recreateV();
+    CRendererBase::_recreateV();
 
     __destroyRecreateSources();
     __createRecreateSources();
@@ -92,7 +92,7 @@ void CGUIBase::_destroyV()
 
     m_pWindow = nullptr;
 
-    CRenderer::_destroyV();
+    CRendererBase::_destroyV();
 }
 
 VkCommandBuffer CGUIBase::_requestCommandBufferV(uint32_t vImageIndex)
@@ -119,7 +119,7 @@ VkCommandBuffer CGUIBase::_requestCommandBufferV(uint32_t vImageIndex)
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), CommandBuffer);
 
     vkCmdEndRenderPass(CommandBuffer);
-    ck(vkEndCommandBuffer(CommandBuffer));
+    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
 
     return CommandBuffer;
 }
@@ -155,7 +155,7 @@ void CGUIBase::__createRenderPass()
     RenderPassInfo.dependencyCount = 1;
     RenderPassInfo.pDependencies = &SubpassDependency;
 
-    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
 void CGUIBase::__destroyRenderPass()
@@ -190,7 +190,7 @@ void CGUIBase::__createDescriptorPool()
     PoolInfo.pPoolSizes = PoolSizes.data();
     PoolInfo.maxSets = static_cast<uint32_t>(PoolSizes.size() * 1000);
 
-    ck(vkCreateDescriptorPool(m_AppInfo.Device, &PoolInfo, nullptr, &m_DescriptorPool));
+    Vulkan::checkError(vkCreateDescriptorPool(m_AppInfo.Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
 void CGUIBase::__destroyDescriptorPool()
@@ -217,7 +217,7 @@ void CGUIBase::__createRecreateSources()
     for (uint32_t i = 0; i < NumImage; ++i)
     {
         FramebufferInfo.pAttachments = &m_AppInfo.TargetImageViewSet[i];
-        ck(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FrameBufferSet[i]));
+        Vulkan::checkError(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FrameBufferSet[i]));
     }
 }
 

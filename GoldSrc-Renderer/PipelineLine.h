@@ -1,5 +1,6 @@
 #pragma once
 #include "PipelineBase.h"
+#include "Vulkan.h"
 
 #include <map>
 #include <glm/glm.hpp>
@@ -26,8 +27,8 @@ public:
     void removeObject(std::string vName);
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "../Renderer/shader/lineVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "../Renderer/shader/lineFrag.spv"; }
+    virtual std::filesystem::path _getVertShaderPathV() override { return "shader/lineShaderVert.spv"; }
+    virtual std::filesystem::path _getFragShaderPathV() override { return "shader/lineShaderFrag.spv"; }
 
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;
@@ -40,7 +41,7 @@ private:
 
     std::map<std::string, std::shared_ptr<SGuiObject>> m_NameObjectMap;
     size_t m_VertexNum = 0;
-    Common::SBufferPack m_VertexDataPack;
-    std::vector<Common::SBufferPack> m_VertUniformBufferPacks;
+    Vulkan::SBufferPack m_VertexDataPack;
+    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPacks;
 };
 

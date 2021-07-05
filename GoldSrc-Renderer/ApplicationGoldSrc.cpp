@@ -26,7 +26,7 @@ std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t
 
 void CApplicationGoldSrc::_createOtherResourceV()
 {
-    Common::SVulkanAppInfo AppInfo = getAppInfo();
+    Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
 
     m_pGUI = std::make_shared<CGUIMain>();
     m_pGUI->setWindow(m_pWindow);

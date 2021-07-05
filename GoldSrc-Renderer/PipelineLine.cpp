@@ -53,7 +53,7 @@ void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, g
     UBOVert.View = vView;
 
     void* pData;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
+    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
     memcpy(pData, &UBOVert, sizeof(UBOVert));
     vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
 }
@@ -104,7 +104,7 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Common::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
+        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
     }
 }
 
@@ -143,6 +143,6 @@ void CPipelineLine::__updateVertexBuffer()
             memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
             Offset += DataSize;
         }
-        Common::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
+        Vulkan::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
     }
 }

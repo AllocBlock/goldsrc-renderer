@@ -57,7 +57,7 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 
 	if (!pInteractor->m_IsMoving) return;
 
-	pCamera->setPhi(pInteractor->m_LastPhi - (pInteractor->m_LastMousePosX - vPosX) * pInteractor->m_HorizontalSensetivity);
+	pCamera->setPhi(pInteractor->m_LastPhi + (pInteractor->m_LastMousePosX - vPosX) * pInteractor->m_HorizontalSensetivity);
 	pCamera->setTheta(std::min(std::max(pInteractor->m_LastTheta - (pInteractor->m_LastMousePosY - vPosY) * pInteractor->m_VerticalSensetivity, 1.0), 179.0));
 }
 

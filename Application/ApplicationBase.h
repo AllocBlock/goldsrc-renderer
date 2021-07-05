@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "Vulkan.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -21,7 +22,7 @@ public:
     void render();
     void waitDevice();
     void destroy();
-    Common::SVulkanAppInfo getAppInfo();
+    Vulkan::SVulkanAppInfo getAppInfo();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
 

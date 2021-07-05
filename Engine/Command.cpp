@@ -1,4 +1,5 @@
 #include "Command.h"
+#include "Vulkan.h"
 
 CCommand::~CCommand()
 {
@@ -20,7 +21,7 @@ void CCommand::createPool(VkDevice vDevice, ECommandType vType, uint32_t vQueueI
     PoolInfo.flags = static_cast<VkCommandPoolCreateFlagBits>(vType);
     PoolInfo.queueFamilyIndex = vQueueIndex;
 
-    ck(vkCreateCommandPool(m_Device, &PoolInfo, nullptr, &m_CommandPool));
+    Vulkan::checkError(vkCreateCommandPool(m_Device, &PoolInfo, nullptr, &m_CommandPool));
 }
 
 void CCommand::createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel)
@@ -63,7 +64,7 @@ VkCommandBuffer CCommand::beginSingleTimeBuffer()
     VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
     m_InUseSingleTimeNum++;
 
@@ -74,15 +75,15 @@ void CCommand::endSingleTimeBuffer(VkCommandBuffer vCommandBuffer)
 {
     if (m_CommandPool == VK_NULL_HANDLE) throw "create command pool first";
 
-    ck(vkEndCommandBuffer(vCommandBuffer));
+    Vulkan::checkError(vkEndCommandBuffer(vCommandBuffer));
 
     VkSubmitInfo SubmitInfo = {};
     SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     SubmitInfo.commandBufferCount = 1;
     SubmitInfo.pCommandBuffers = &vCommandBuffer;
 
-    ck(vkQueueSubmit(m_Queue, 1, &SubmitInfo, VK_NULL_HANDLE));
-    ck(vkQueueWaitIdle(m_Queue));
+    Vulkan::checkError(vkQueueSubmit(m_Queue, 1, &SubmitInfo, VK_NULL_HANDLE));
+    Vulkan::checkError(vkQueueWaitIdle(m_Queue));
 
     vkFreeCommandBuffers(m_Device, m_CommandPool, 1, &vCommandBuffer);
     m_InUseSingleTimeNum--;
@@ -105,7 +106,7 @@ void CCommand::__allocBuffer(uint32_t vNum, ECommandBufferLevel vLevel, VkComman
     BufferAllocInfo.level = static_cast<VkCommandBufferLevel>(vLevel);
     BufferAllocInfo.commandBufferCount = vNum;
 
-    ck(vkAllocateCommandBuffers(m_Device, &BufferAllocInfo, voData));
+    Vulkan::checkError(vkAllocateCommandBuffers(m_Device, &BufferAllocInfo, voData));
 }
 
 void CCommand::__destoryPool()

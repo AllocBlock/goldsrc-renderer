@@ -40,7 +40,7 @@ void CPipelineShadowMap::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLi
     UBOVert.MVP = vLightViewProj;
 
     void* pData;
-    ck(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOVertLight), 0, &pData));
+    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOVertLight), 0, &pData));
     memcpy(pData, &UBOVert, sizeof(SUBOVertLight));
     vkUnmapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory);
 
@@ -48,7 +48,7 @@ void CPipelineShadowMap::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLi
     UBOFrag.ShadowMapCameraNear = vLightNear;
     UBOFrag.ShadowMapCameraFar = vLightFar;
 
-    ck(vkMapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOFragLight), 0, &pData));
+    Vulkan::checkError(vkMapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOFragLight), 0, &pData));
     memcpy(pData, &UBOVert, sizeof(SUBOFragLight));
     vkUnmapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory);
 }
@@ -84,8 +84,8 @@ void CPipelineShadowMap::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Common::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
-        Common::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
+        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
+        Vulkan::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
     }
 
     __updateDescriptorSet();

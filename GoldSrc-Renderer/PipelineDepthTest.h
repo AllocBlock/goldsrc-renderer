@@ -17,8 +17,8 @@ public:
 
 protected:
     void _initPushConstantV(VkCommandBuffer vCommandBuffer);
-    virtual std::filesystem::path _getVertShaderPathV() override { return "../Renderer/shader/vert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "../Renderer/shader/frag.spv"; }
+    virtual std::filesystem::path _getVertShaderPathV() override { return "shader/shaderVert.spv"; }
+    virtual std::filesystem::path _getFragShaderPathV() override { return "shader/shaderFrag.spv"; }
 
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;
@@ -35,7 +35,7 @@ private:
     float m_Opacity = 1.0f;
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<Common::SBufferPack> m_VertUniformBufferPackSet;
-    std::vector<Common::SBufferPack> m_FragUniformBufferPackSet;
-    Common::SImagePack m_PlaceholderImagePack;
+    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPackSet;
+    std::vector<Vulkan::SBufferPack> m_FragUniformBufferPackSet;
+    Vulkan::SImagePack m_PlaceholderImagePack;
 };

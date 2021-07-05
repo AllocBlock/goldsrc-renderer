@@ -1,14 +1,8 @@
 #include "ApplicationBase.h"
-
-#include "Common.h"
 #include "Log.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
-
-#include <iostream>
 #include <set>
+#include <iostream>
 
 void CApplicationBase::init(GLFWwindow* vWindow)
 {
@@ -30,7 +24,7 @@ void CApplicationBase::init(GLFWwindow* vWindow)
 
 void CApplicationBase::waitDevice()
 {
-    ck(vkDeviceWaitIdle(m_Device));
+    Vulkan::checkError(vkDeviceWaitIdle(m_Device));
 }
 
 void CApplicationBase::destroy()
@@ -74,8 +68,8 @@ void CApplicationBase::destroy()
 
 void CApplicationBase::render()
 {
-    ck(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()));
-    ck(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex]));
+    Vulkan::checkError(vkWaitForFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()));
+    Vulkan::checkError(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex]));
 
     uint32_t ImageIndex;
     VkResult Result = vkAcquireNextImageKHR(m_Device, m_Swapchain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
@@ -109,8 +103,8 @@ void CApplicationBase::render()
     SubmitInfo.signalSemaphoreCount = 1;
     SubmitInfo.pSignalSemaphores = SignalSemaphores;
 
-    ck(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex]));
-    ck(vkQueueSubmit(m_GraphicsQueue, 1, &SubmitInfo, m_InFlightFences[m_CurrentFrameIndex]));
+    Vulkan::checkError(vkResetFences(m_Device, 1, &m_InFlightFences[m_CurrentFrameIndex]));
+    Vulkan::checkError(vkQueueSubmit(m_GraphicsQueue, 1, &SubmitInfo, m_InFlightFences[m_CurrentFrameIndex]));
 
     VkSwapchainKHR SwapChains[] = { m_Swapchain };
     VkPresentInfoKHR PresentInfo = {};
@@ -135,9 +129,9 @@ void CApplicationBase::render()
     m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
 }
 
-Common::SVulkanAppInfo CApplicationBase::getAppInfo()
+Vulkan::SVulkanAppInfo CApplicationBase::getAppInfo()
 {
-    Common::SVulkanAppInfo Info;
+    Vulkan::SVulkanAppInfo Info;
     Info.Instance = m_Instance;
     Info.PhysicalDevice = m_PhysicalDevice;
     Info.Device = m_Device;
@@ -187,7 +181,7 @@ void CApplicationBase::__createInstance()
     InstanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     InstanceInfo.pApplicationInfo = &AppInfo;
 
-    if (ENABLE_VALIDATION_LAYERS && !Common::checkValidationLayerSupport(m_ValidationLayers))
+    if (ENABLE_VALIDATION_LAYERS && !Vulkan::checkValidationLayerSupport(m_ValidationLayers))
         throw std::runtime_error(u8"不支持所需的验证层");
 
     if (ENABLE_VALIDATION_LAYERS)
@@ -204,7 +198,7 @@ void CApplicationBase::__createInstance()
     InstanceInfo.enabledExtensionCount = static_cast<uint32_t>(Extensions.size());
     InstanceInfo.ppEnabledExtensionNames = Extensions.data();
 
-    ck(vkCreateInstance(&InstanceInfo, nullptr, &m_Instance));
+    Vulkan::checkError(vkCreateInstance(&InstanceInfo, nullptr, &m_Instance));
 }
 
 void CApplicationBase::__setupDebugMessenger()
@@ -221,26 +215,26 @@ void CApplicationBase::__setupDebugMessenger()
     if (pCreateDebugFunc == nullptr)
         throw std::runtime_error(u8"不支持调试函数");
     else
-        ck(pCreateDebugFunc(m_Instance, &DebugMessengerInfo, nullptr, &m_DebugMessenger));
+        Vulkan::checkError(pCreateDebugFunc(m_Instance, &DebugMessengerInfo, nullptr, &m_DebugMessenger));
 }
 
 
 void CApplicationBase::__createSurface()
 {
-    ck(glfwCreateWindowSurface(m_Instance, m_pWindow, nullptr, &m_Surface));
+    Vulkan::checkError(glfwCreateWindowSurface(m_Instance, m_pWindow, nullptr, &m_Surface));
 }
 
 void CApplicationBase::__choosePhysicalDevice()
 {
     uint32_t NumPhysicalDevice = 0;
     std::vector<VkPhysicalDevice> PhysicalDevices;
-    ck(vkEnumeratePhysicalDevices(m_Instance, &NumPhysicalDevice, nullptr));
+    Vulkan::checkError(vkEnumeratePhysicalDevices(m_Instance, &NumPhysicalDevice, nullptr));
     PhysicalDevices.resize(NumPhysicalDevice);
-    ck(vkEnumeratePhysicalDevices(m_Instance, &NumPhysicalDevice, PhysicalDevices.data()));
+    Vulkan::checkError(vkEnumeratePhysicalDevices(m_Instance, &NumPhysicalDevice, PhysicalDevices.data()));
 
     for (const auto& PhysicalDevice : PhysicalDevices)
     {
-        if (Common::isDeviceSuitable(PhysicalDevice, m_Surface, m_DeviceExtensions))
+        if (Vulkan::isDeviceSuitable(PhysicalDevice, m_Surface, m_DeviceExtensions))
         {
             m_PhysicalDevice = PhysicalDevice;
             break;
@@ -260,13 +254,13 @@ void CApplicationBase::__choosePhysicalDevice()
 
     for (const VkExtensionProperties& Extension : ExtensionProperties)
     {
-        std::cout << "[扩展] " << Extension.extensionName << ", " << Extension.specVersion << std::endl;
+        Common::Log::log("[扩展] " + std::string(Extension.extensionName) + ", " + std::to_string(Extension.specVersion));
     }
 }
 
 void CApplicationBase::__createDevice()
 {
-    Common::SQueueFamilyIndices QueueIndices = Common::findQueueFamilies(m_PhysicalDevice, m_Surface);
+    Vulkan::SQueueFamilyIndices QueueIndices = Vulkan::findQueueFamilies(m_PhysicalDevice, m_Surface);
 
     std::vector<VkDeviceQueueCreateInfo> QueueInfos;
     std::set<uint32_t> UniqueQueueFamilies = { QueueIndices.GraphicsFamilyIndex.value(), QueueIndices.PresentFamilyIndex.value() };
@@ -302,7 +296,7 @@ void CApplicationBase::__createDevice()
         DeviceInfo.enabledLayerCount = 0;
     }
 
-    ck(vkCreateDevice(m_PhysicalDevice, &DeviceInfo, nullptr, &m_Device));
+    Vulkan::checkError(vkCreateDevice(m_PhysicalDevice, &DeviceInfo, nullptr, &m_Device));
 
     m_GraphicsQueueIndex = QueueIndices.GraphicsFamilyIndex.value();
     m_PresentQueueFamily = QueueIndices.PresentFamilyIndex.value();
@@ -312,7 +306,7 @@ void CApplicationBase::__createDevice()
 
 void CApplicationBase::__createSwapchain()
 {
-    Common::SSwapChainSupportDetails SwapChainSupport = Common::getSwapChainSupport(m_PhysicalDevice, m_Surface);
+    Vulkan::SSwapChainSupportDetails SwapChainSupport = Vulkan::getSwapChainSupport(m_PhysicalDevice, m_Surface);
 
     VkSurfaceFormatKHR SurfaceFormat = __chooseSwapSurfaceFormat(SwapChainSupport.Formats);
     VkPresentModeKHR PresentMode = __chooseSwapPresentMode(SwapChainSupport.PresentModes);
@@ -335,7 +329,7 @@ void CApplicationBase::__createSwapchain()
     SwapChainInfo.imageArrayLayers = 1;
     SwapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    Common::SQueueFamilyIndices QueueIndices = Common::findQueueFamilies(m_PhysicalDevice, m_Surface);
+    Vulkan::SQueueFamilyIndices QueueIndices = Vulkan::findQueueFamilies(m_PhysicalDevice, m_Surface);
     uint32_t QueueFamilyIndices[] = { QueueIndices.GraphicsFamilyIndex.value(), QueueIndices.PresentFamilyIndex.value() };
 
     if (QueueIndices.GraphicsFamilyIndex != QueueIndices.PresentFamilyIndex)
@@ -356,7 +350,7 @@ void CApplicationBase::__createSwapchain()
     SwapChainInfo.clipped = VK_TRUE;
     SwapChainInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    ck(vkCreateSwapchainKHR(m_Device, &SwapChainInfo, nullptr, &m_Swapchain));
+    Vulkan::checkError(vkCreateSwapchainKHR(m_Device, &SwapChainInfo, nullptr, &m_Swapchain));
 
     vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &NumImage, nullptr);
     m_SwapchainImages.resize(NumImage);
@@ -371,7 +365,7 @@ void CApplicationBase::__createSwapchainImageViews()
 
     for (uint32_t i = 0; i < m_SwapchainImageViewSet.size(); ++i)
     {
-        m_SwapchainImageViewSet[i] = Common::createImageView(m_Device, m_SwapchainImages[i], m_SwapchainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        m_SwapchainImageViewSet[i] = Vulkan::createImageView(m_Device, m_SwapchainImages[i], m_SwapchainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
     }
 }
 
@@ -398,9 +392,9 @@ void CApplicationBase::__createSemaphores()
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
-        ck(vkCreateSemaphore(m_Device, &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
-        ck(vkCreateSemaphore(m_Device, &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
-        ck(vkCreateFence(m_Device, &FenceInfo, nullptr, &m_InFlightFences[i]));
+        Vulkan::checkError(vkCreateSemaphore(m_Device, &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
+        Vulkan::checkError(vkCreateSemaphore(m_Device, &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
+        Vulkan::checkError(vkCreateFence(m_Device, &FenceInfo, nullptr, &m_InFlightFences[i]));
     }
 }
 

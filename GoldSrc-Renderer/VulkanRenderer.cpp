@@ -103,7 +103,7 @@ std::shared_ptr<CCamera> CVulkanRenderer::getCamera()
 
 void CVulkanRenderer::_initV()
 {
-    CRenderer::_initV();
+    CRendererBase::_initV();
     m_NumSwapchainImage = m_AppInfo.TargetImageViewSet.size();
 
     __createRenderPass();
@@ -115,7 +115,7 @@ void CVulkanRenderer::_initV()
 
 void CVulkanRenderer::_recreateV()
 {
-    CRenderer::_recreateV();
+    CRendererBase::_recreateV();
 
     __destroyRecreateResources();
     __createRecreateResources();
@@ -134,7 +134,7 @@ void CVulkanRenderer::_destroyV()
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
-    CRenderer::_destroyV();
+    CRendererBase::_destroyV();
 }
 
 VkCommandBuffer CVulkanRenderer::_requestCommandBufferV(uint32_t vImageIndex)
@@ -155,7 +155,7 @@ VkCommandBuffer CVulkanRenderer::_requestCommandBufferV(uint32_t vImageIndex)
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+        Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
         // init
 
@@ -213,7 +213,7 @@ VkCommandBuffer CVulkanRenderer::_requestCommandBufferV(uint32_t vImageIndex)
         vkCmdExecuteCommands(CommandBuffer, 1, &GuiCommandBuffer);
 
         vkCmdEndRenderPass(CommandBuffer);
-        ck(vkEndCommandBuffer(CommandBuffer));
+        Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
     }
     return CommandBuffer;
 }
@@ -286,9 +286,9 @@ void CVulkanRenderer::__recordGuiCommandBuffer(uint32_t vImageIndex)
     CommandBufferBeginInfo.pInheritanceInfo = &InheritanceInfo;
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
-    ck(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
     m_PipelineSet.GuiLines.recordCommand(CommandBuffer, vImageIndex);
-    ck(vkEndCommandBuffer(CommandBuffer));
+    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
 }
 
 void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
@@ -407,8 +407,8 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
 
 void CVulkanRenderer::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = CRenderer::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = CRenderer::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -451,7 +451,7 @@ void CVulkanRenderer::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    ck(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
 void CVulkanRenderer::__destroyRenderPass()
@@ -477,15 +477,15 @@ void CVulkanRenderer::__createCommandPoolAndBuffers()
     m_Command.createBuffers(m_SceneCommandName, m_NumSwapchainImage, ECommandBufferLevel::PRIMARY);
     m_Command.createBuffers(m_GuiCommandName, m_NumSwapchainImage, ECommandBufferLevel::SECONDARY);
 
-    Common::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
+    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
     {
         return m_Command.beginSingleTimeBuffer();
     };
-    Common::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
+    Vulkan::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
     {
         m_Command.endSingleTimeBuffer(vCommandBuffer);
     };
-    Common::setSingleTimeBufferFunc(BeginFunc, EndFunc);
+    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
 void CVulkanRenderer::__createDepthResources()
@@ -507,8 +507,8 @@ void CVulkanRenderer::__createDepthResources()
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    Common::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
-    m_DepthImagePack.ImageView = Common::createImageView(m_AppInfo.Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    Vulkan::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
+    m_DepthImagePack.ImageView = Vulkan::createImageView(m_AppInfo.Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
     __transitionImageLayout(m_DepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
@@ -532,7 +532,7 @@ void CVulkanRenderer::__createFramebuffers()
         FramebufferInfo.height = m_AppInfo.Extent.height;
         FramebufferInfo.layers = 1;
 
-        ck(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
+        Vulkan::checkError(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
     }
 }
 
@@ -585,7 +585,7 @@ void CVulkanRenderer::__createVertexBuffer()
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Common::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
     delete[] pData;
 }
 
@@ -619,7 +619,7 @@ void CVulkanRenderer::__createIndexBuffer()
         memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Common::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
     delete[] pData;
 }
 
@@ -689,12 +689,12 @@ VkFormat CVulkanRenderer::__findSupportedFormat(const std::vector<VkFormat>& vCa
 
 uint32_t CVulkanRenderer::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
 {
-    return Common::findMemoryType(m_AppInfo.PhysicalDevice, vTypeFilter, vProperties);
+    return Vulkan::findMemoryType(m_AppInfo.PhysicalDevice, vTypeFilter, vProperties);
 }
 
 void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Common::transitionImageLayout(CommandBuffer, vImage, vFormat, vOldLayout, vNewLayout, vLayerCount);
+    Vulkan::transitionImageLayout(CommandBuffer, vImage, vFormat, vOldLayout, vNewLayout, vLayerCount);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
@@ -709,7 +709,7 @@ size_t CVulkanRenderer::__getActualTextureNum()
     return NumTexture;
 }
 
-void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Common::SImagePack& voImagePack)
+void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack)
 {
     int TexWidth = vpImage->getImageWidth();
     int TexHeight = vpImage->getImageHeight();
@@ -733,10 +733,10 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Common::stageFillImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
+    Vulkan::stageFillImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 
-    voImagePack.ImageView = Common::createImageView(m_AppInfo.Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    voImagePack.ImageView = Vulkan::createImageView(m_AppInfo.Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CVulkanRenderer::__calculateVisiableObjects()

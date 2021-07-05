@@ -1,5 +1,5 @@
 #pragma once
-#include "Renderer.h"
+#include "RendererBase.h"
 #include "Common.h"
 #include "Scene.h"
 #include "Camera.h"
@@ -44,7 +44,7 @@ struct SPipelineSet
     }
 };
 
-class CVulkanRenderer : public CRenderer
+class CVulkanRenderer : public CRendererBase
 {
 public:
     CVulkanRenderer();
@@ -114,7 +114,7 @@ private:
     uint32_t __findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
     void __transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount = 1);
     size_t __getActualTextureNum();
-    void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Common::SImagePack& voImagePack);
+    void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack);
     void __updateDescriptorSets();
 
     std::vector<SGoldSrcPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
@@ -126,11 +126,11 @@ private:
     std::string m_GuiCommandName = "Gui";
     std::vector<VkFramebuffer> m_FramebufferSet;
 
-    Common::SBufferPack m_VertexBufferPack;
-    Common::SBufferPack m_IndexBufferPack;
-    std::vector<Common::SImagePack> m_TextureImagePackSet;
-    Common::SImagePack m_DepthImagePack;
-    Common::SImagePack m_LightmapImagePack;
+    Vulkan::SBufferPack m_VertexBufferPack;
+    Vulkan::SBufferPack m_IndexBufferPack;
+    std::vector<Vulkan::SImagePack> m_TextureImagePackSet;
+    Vulkan::SImagePack m_DepthImagePack;
+    Vulkan::SImagePack m_LightmapImagePack;
 
     std::shared_ptr<SScene> m_pScene;
     std::shared_ptr<CCamera> m_pCamera = nullptr;

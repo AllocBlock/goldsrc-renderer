@@ -15,18 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Log.h">
+    <ClInclude Include="Vulkan.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Common.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Log.cpp">
+    <ClCompile Include="Vulkan.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
