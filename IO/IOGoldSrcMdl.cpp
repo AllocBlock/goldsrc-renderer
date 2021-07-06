@@ -3,83 +3,86 @@
 #include <vector>
 #include <array>
 
-// 存储mdl文件内的纹理
-// 从纹理块起始，若有n张纹理，则先是n个SMdlTexture数据
-// 紧跟着是图片数据，其起始索引通过SMdlTexture内的DataOffset得到，先存储了Width*Height个8位索引，紧跟256色24位调色板
-struct SMdlTexture
-{
-    char Name[64];
-    int32_t FlagBitField;
-    int32_t Width;
-    int32_t Height;
-    int32_t	DataOffset;
-    std::vector<uint8_t> IndexSet;
-    std::array<IOCommon::SGoldSrcColor, 256> Palette;
-
-    static size_t getHeaderSize()
-    {
-        return 64 * sizeof(char) + 4 * sizeof(int32_t);
-    }
-
-    void read(std::ifstream& voFile)
-    {
-        voFile.read(reinterpret_cast<char*>(this), getHeaderSize());
-        voFile.seekg(DataOffset);
-        IndexSet.resize(Width * Height);
-        voFile.read(reinterpret_cast<char*>(IndexSet.data()), Width * Height);
-        voFile.read(reinterpret_cast<char*>(Palette.data()), 256 * 3 * sizeof(float));
-    }
-};
-
-struct SMdlMesh
-{
-    int numtris;
-    int triindex;
-    int skinref;
-    int numnorms;		// per mesh normals
-    int normindex;		// normal vec3_t
-};
-
-struct SMdlModel
-{
-    char				name[64];
-
-    int					type;
-
-    float				boundingradius;
-
-    int					nummesh;
-    int					meshindex;
-
-    int					numverts;		// number of unique vertices
-    int					vertinfoindex;	// vertex bone info
-    int					vertindex;		// vertex vec3_t
-    int					numnorms;		// number of unique surface normals
-    int					norminfoindex;	// normal bone info
-    int					normindex;		// normal vec3_t
-
-    int					numgroups;		// deformation groups
-    int					groupindex;
-};
-
-struct SMdlBodyPart
-{
-    char Name[64];
-    int32_t ModelNum;
-    int32_t Base;
-    int32_t ModelDataOffset;
-};
-
-struct SMdlSkin
-{
-    std::vector<int16_t> RefToTextureIndex;
-
-    void read(std::ifstream& voFile, int vSkinNum)
-    {
-        RefToTextureIndex.resize(vSkinNum);
-        voFile.read(reinterpret_cast<char*>(RefToTextureIndex._Get_data()), vSkinNum * sizeof(int16_t));
-    }
-};
+//struct SMdlBone
+//{
+//    char Name[32];	// bone name for symbolic links
+//    int ParentIndex;		// parent bone
+//    int FlagBitField;		// ??
+//    int BoneControllerIndexSet[6];	// bone controller index, -1 == none
+//    float Value[6];	// default DoF values
+//    float Scale[6]; // scale for delta DoF values
+//};
+//
+//struct SMdlBoneController
+//{
+//    int Bone;	// -1 == 0
+//    int Type;	// X, Y, Z, XR, YR, ZR, M
+//    float Start;
+//    float End;
+//    int Rest;	// byte index value at rest
+//    int Index;	// 0-3 user set controller, 4 mouth
+//};
+//
+//struct SMdlBoundingBox
+//{
+//    int Bone;
+//    int Group;			// intersection group
+//    IOCommon::SGoldSrcVec3 min;		// bounding box
+//    IOCommon::SGoldSrcVec3 max;
+//};
+//
+//struct SMdlSequenceGroup
+//{
+//    char Label[32];	// textual name
+//    char Name[64]; // file name
+//    int Cache; // cache index pointer
+//    int Data; // hack for group 0
+//};
+//
+//struct SMdlSequenceDescription
+//{
+//    char Label[32];	// sequence label
+//
+//    float FPS;		// frames per second	
+//    int FlagBitField;		// looping/non-looping flags
+//
+//    int Activity;
+//    int ActWeight;
+//
+//    int EventNum;
+//    int EventDataOffset;
+//
+//    int FrameNum;	// number of frames per sequence
+//
+//    int PivotNum;	// number of foot pivots
+//    int PivotDataOffset;
+//
+//    int MotionType;
+//    int MotionBone;
+//    IOCommon::SGoldSrcVec3 LinearMovement;
+//    int AutomovePosindex;
+//    int AutomoveAngleindex;
+//
+//    IOCommon::SGoldSrcVec3 BBMin;		// per sequence bounding box
+//    IOCommon::SGoldSrcVec3 BBMax;
+//
+//    int BlendNum;
+//    int AnimationDataOffset;		// mstudioanim_t pointer relative to start of sequence group data
+//                                        // [blend][bone][X, Y, Z, XR, YR, ZR]
+//
+//    int BlendType[2];	// X, Y, Z, XR, YR, ZR
+//    float BlendStart[2];	// starting value
+//    float BlendEnd[2];	// ending value
+//    int BlendParent;
+//
+//    int SequenceGroup;		// sequence group for demand loading
+//
+//    int EntryNode;		// transition node at entry
+//    int ExitNode;		// transition node at exit
+//    int NodeFlags;		// transition rules
+//
+//    int NextSeq;		// auto advancing sequences
+//};
 
 bool CIOGoldSrcMdl::_readV(std::filesystem::path vFilePath)
 {
@@ -94,14 +97,20 @@ bool CIOGoldSrcMdl::_readV(std::filesystem::path vFilePath)
         (m_Header.Magic[3] == 'T' || m_Header.Magic[3] == 'Q'));
 
     // 读取纹理
-    std::vector<SMdlTexture> TextureSet(m_Header.TextureNum);
+    m_TextureSet.resize(m_Header.TextureNum);
     const size_t TextureHeaderSize = SMdlTexture::getHeaderSize();
     for (int i = 0; i < m_Header.TextureNum; ++i)
     {
-        File.seekg(m_Header.TextureDataIndex + i * TextureHeaderSize);
-        TextureSet[i].read(File);
+        File.seekg(m_Header.TextureDataOffset + i * TextureHeaderSize);
+        m_TextureSet[i].read(File);
     }
     
     // 读取部件
-
+    m_BodyPartSet.resize(m_Header.BodyPartNum);
+    const size_t BodyPartHeaderSize = SMdlBodyPart::getHeaderSize();
+    for (int i = 0; i < m_Header.BodyPartNum; ++i)
+    {
+        File.seekg(m_Header.BodyPartDataOffset + i * BodyPartHeaderSize);
+        m_BodyPartSet[i].read(File);
+    }
 }

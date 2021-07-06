@@ -47,16 +47,13 @@ bool CIOGoldSrcSpr::_readV(std::filesystem::path vFilePath)
 
     // ∂¡»°÷°
     for (int32_t i = 0; i < m_Header.FrameNum; ++i)
-        m_FrameSet.emplace_back(readPicture(File));
+        readPicture(File, m_FrameSet[i]);
 }
 
-SSprPicture CIOGoldSrcSpr::readPicture(std::ifstream& voFile)
+void CIOGoldSrcSpr::readPicture(std::ifstream& voFile, SSprPicture& voPicture)
 {
-    SSprPicture Picture;
-    voFile.read(reinterpret_cast<char*>(&Picture), sizeof(int32_t) * 5);
-    size_t Size = Picture.Width * Picture.Height;
-    Picture.IndexSet.resize(Size);
-    voFile.read(reinterpret_cast<char*>(Picture.IndexSet.data()), sizeof(uint8_t) * Size);
-
-    return std::move(Picture);
+    voFile.read(reinterpret_cast<char*>(&voPicture), sizeof(int32_t) * 5);
+    size_t Size = voPicture.Width * voPicture.Height;
+    voPicture.IndexSet.resize(Size);
+    voFile.read(reinterpret_cast<char*>(voPicture.IndexSet.data()), sizeof(uint8_t) * Size);
 }

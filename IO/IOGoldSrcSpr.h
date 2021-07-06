@@ -48,7 +48,7 @@ protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
-    SSprPicture readPicture(std::ifstream& voFile);
+    void readPicture(std::ifstream& voFile, SSprPicture& voPicture);
 
     SSprHeader m_Header = {};
     SSprPalette m_Palatte;
