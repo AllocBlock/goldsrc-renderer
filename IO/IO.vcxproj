@@ -97,6 +97,7 @@
     <ClCompile Include="IOCommon.cpp" />
     <ClCompile Include="IOGoldSrcBsp.cpp" />
     <ClCompile Include="IOGoldSrcMap.cpp" />
+    <ClCompile Include="IOGoldSrcMdl.cpp" />
     <ClCompile Include="IOGoldSrcRmf.cpp" />
     <ClCompile Include="IOGoldSrcSpr.cpp" />
     <ClCompile Include="IOGoldsrcWad.cpp" />
@@ -109,6 +110,7 @@
     <ClInclude Include="IOCommon.h" />
     <ClInclude Include="IOGoldSrcBsp.h" />
     <ClInclude Include="IOGoldSrcMap.h" />
+    <ClInclude Include="IOGoldSrcMdl.h" />
     <ClInclude Include="IOGoldSrcRmf.h" />
     <ClInclude Include="IOGoldSrcSpr.h" />
     <ClInclude Include="IOGoldsrcWad.h" />
