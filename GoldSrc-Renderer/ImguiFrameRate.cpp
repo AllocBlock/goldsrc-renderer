@@ -7,25 +7,25 @@
 
 CImguiFrameRate::CImguiFrameRate()
 {
-    m_LastTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    m_LastTimeStamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 }
 
 void CImguiFrameRate::draw()
 {
-    std::chrono::milliseconds CurTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-    float DeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastTimeStamp).count()) / 1000.0f;
-    float RealtimeFPS = 1.0f / DeltaTimeSecond;
+    std::chrono::microseconds CurTimeStamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
+    double DeltaTimeSecond = static_cast<double>((CurTimeStamp - m_LastTimeStamp).count()) / 1e6;
+    double RealtimeFPS = 1.0f / DeltaTimeSecond;
     m_SavedFrameRates.push_back(RealtimeFPS);
     if (m_SavedFrameRates.size() > m_SavedNum)
     {
-        float PoppedFrameRate = m_SavedFrameRates.front();
+        double PoppedFrameRate = m_SavedFrameRates.front();
         m_SavedFrameRates.erase(m_SavedFrameRates.begin(), m_SavedFrameRates.begin() + 1);
     }
     
     ImGui::Begin(u8"Ö¡ÂÊ", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize);
     ImGui::Text((u8"ÊµÊ±FPS: " + std::to_string(RealtimeFPS)).c_str());
-    float AverageDeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastAverageTimeStamp).count()) / 1000.0;
-    static float DisplayedAverageFrameRate = 0.0;
+    double AverageDeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastAverageTimeStamp).count()) / 1000.0;
+    static double DisplayedAverageFrameRate = 0.0;
     if (AverageDeltaTimeSecond >= m_AverageFrameRateUpdateInterval)
     {
         m_LastAverageTimeStamp = CurTimeStamp;

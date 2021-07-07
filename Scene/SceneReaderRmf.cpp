@@ -2,14 +2,13 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-std::shared_ptr<SScene> CSceneReaderRmf::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+std::shared_ptr<SScene> CSceneReaderRmf::_readV()
 {
-    m_ProgressReportFunc = vProgressReportFunc;
     m_pScene = std::make_shared<SScene>();
     
-    __readRmf(vFilePath);
+    __readRmf(m_FilePath);
     __readWadsAndInitTextures();
-    __reportProgress(u8"读取场景中");
+    _reportProgress(u8"读取场景中");
     __readObject(m_Rmf.getWorld());
 
     return m_pScene;
@@ -17,7 +16,7 @@ std::shared_ptr<SScene> CSceneReaderRmf::read(std::filesystem::path vFilePath, s
 
 void CSceneReaderRmf::__readRmf(std::filesystem::path vFilePath)
 {
-    __reportProgress(u8"[rmf]读取文件中");
+    _reportProgress(u8"[rmf]读取文件中");
     m_Rmf = CIOGoldSrcRmf(vFilePath);
     if (!m_Rmf.read())
         throw std::runtime_error(u8"文件解析失败");
@@ -26,12 +25,12 @@ void CSceneReaderRmf::__readRmf(std::filesystem::path vFilePath)
 void CSceneReaderRmf::__readWadsAndInitTextures()
 {
     // read wads
-    __reportProgress(u8"初始化纹理中");
+    _reportProgress(u8"初始化纹理中");
     m_TexNameToIndex.clear();
     m_TexNameToIndex["TextureNotFound"] = 0;
     m_pScene->TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
 
-    __reportProgress(u8"rmf不包含wad信息，将来会加入wad手动选择");
+    _reportProgress(u8"rmf不包含wad信息，将来会加入wad手动选择");
     // TODO: provide wads file selection for user
 }
 

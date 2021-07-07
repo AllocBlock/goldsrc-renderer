@@ -2,6 +2,8 @@
 #include "IOBase.h"
 #include "IOCommon.h"
 
+#include <array>
+
 struct SMdlHeader
 {
     char Magic[4];
@@ -80,11 +82,18 @@ struct SMdlTexture
     void read(std::ifstream& voFile)
     {
         voFile.read(reinterpret_cast<char*>(this), getHeaderSize());
-        voFile.seekg(DataOffset);
+        voFile.seekg(DataOffset, std::ios::beg);
         IndexSet.resize(Width * Height);
         voFile.read(reinterpret_cast<char*>(IndexSet.data()), Width * Height);
-        voFile.read(reinterpret_cast<char*>(Palette.data()), 256 * 3 * sizeof(float));
+        voFile.read(reinterpret_cast<char*>(Palette.data()), 256 * 3 * sizeof(uint8_t));
     }
+};
+
+struct SMdlTriangleVertex
+{
+    int16_t VertexIndex; // index into vertex array
+    int16_t NormalIndex; // index into normal array
+    int16_t S, T; // s,t position on skin
 };
 
 struct SMdlMesh
@@ -95,7 +104,7 @@ struct SMdlMesh
     int32_t NormalNum;		// per mesh normals
     int32_t NormalDataOffset; // normal vec3_t
 
-    std::vector<
+    std::vector<SMdlTriangleVertex> TriangleVertexSet;
 
     static size_t getHeaderSize()
     {
@@ -104,15 +113,54 @@ struct SMdlMesh
      
     void read(std::ifstream& voFile)
     {
+        if (voFile.fail())
+            throw std::runtime_error(u8"遇到错误");
         voFile.read(reinterpret_cast<char*>(this), getHeaderSize());
 
-        MeshSet.resize(MeshNum);
-        const size_t MeshHeaderSize = SMdlMesh::getHeaderSize();
-        for (int32_t i = 0; i < MeshNum; ++i)
+        voFile.seekg(TriangleDataOffset, std::ios::beg);
+
+        int16_t SignedVertexNum = 0;
+        do
         {
-            voFile.seekg(MeshDataOffset + i * MeshHeaderSize);
-            MeshSet[i].read(voFile);
-        }
+            voFile.read(reinterpret_cast<char*>(&SignedVertexNum), sizeof(int16_t));
+            if (voFile.fail())
+                throw std::runtime_error(u8"遇到错误");
+            if (SignedVertexNum == 0) break;
+
+            size_t VertexNum = std::abs(SignedVertexNum);
+            _ASSERTE(VertexNum >= 3);
+            std::vector<SMdlTriangleVertex> TempTriangleVertexSet(VertexNum);
+            voFile.read(reinterpret_cast<char*>(TempTriangleVertexSet.data()), VertexNum * sizeof(SMdlTriangleVertex));
+
+            if (SignedVertexNum > 0) // 大于零，代表后面VertexNum个顶点组成一个三角带图元，这里转为三角形图元
+            {
+                for (size_t i = 0; i < VertexNum - 2; ++i)
+                {
+                    TriangleVertexSet.emplace_back(TempTriangleVertexSet[i]);
+                    if (i % 2 == 0)
+                    {
+                        TriangleVertexSet.emplace_back(TempTriangleVertexSet[i + 1]);
+                        TriangleVertexSet.emplace_back(TempTriangleVertexSet[i + 2]);
+                    }
+                    else
+                    {
+                        TriangleVertexSet.emplace_back(TempTriangleVertexSet[i + 2]);
+                        TriangleVertexSet.emplace_back(TempTriangleVertexSet[i + 1]);
+                    }
+                    
+                }
+            }
+            else // 小于零，代表后面-VertexNum个顶点组成一个三角扇图元，这里也转为三角形图元
+            {
+                for (size_t i = 0; i < VertexNum - 2; ++i)
+                {
+                    TriangleVertexSet.emplace_back(TempTriangleVertexSet[0]);
+                    TriangleVertexSet.emplace_back(TempTriangleVertexSet[i + 1]);
+                    TriangleVertexSet.emplace_back(TempTriangleVertexSet[i + 2]);
+                }
+            }
+
+        } while (true);
     }
 };
 
@@ -128,16 +176,20 @@ struct SMdlModel
     int32_t MeshDataOffset;
 
     int32_t VertexNum;		// number of unique vertices
-    int32_t VertexInfoDataOffset;	// vertex bone info
+    int32_t VertexBondIndexDataOffset;	// vertex bone info
     int32_t VertexDataOffset;		// vertex vec3_t
     int32_t NormalNum;		// number of unique surface normals
-    int32_t NormalInfoDataOffset;	// normal bone info
+    int32_t NormalBondIndexDataOffset;	// normal bone info
     int32_t NormalDataOffset;		// normal vec3_t
 
     int32_t GroupNum;		// deformation groups
     int32_t GroupDataOffset;
 
     std::vector<SMdlMesh> MeshSet;
+    std::vector<IOCommon::SGoldSrcVec3> VertexSet;
+    std::vector<IOCommon::SGoldSrcVec3> NormalSet;
+    std::vector<int16_t> VertexBoneIndexSet;
+    std::vector<int16_t> NormalBoneIndexSet;
 
     static size_t getHeaderSize()
     {
@@ -152,9 +204,25 @@ struct SMdlModel
         const size_t MeshHeaderSize = SMdlMesh::getHeaderSize();
         for (int32_t i = 0; i < MeshNum; ++i)
         {
-            voFile.seekg(MeshDataOffset + i * MeshHeaderSize);
+            voFile.seekg(MeshDataOffset + i * MeshHeaderSize, std::ios::beg);
             MeshSet[i].read(voFile);
         }
+
+        VertexSet.resize(VertexNum);
+        voFile.seekg(VertexDataOffset, std::ios::beg);
+        voFile.read(reinterpret_cast<char*>(VertexSet.data()), VertexNum * sizeof(IOCommon::SGoldSrcVec3));
+
+        NormalSet.resize(NormalNum);
+        voFile.seekg(NormalDataOffset, std::ios::beg);
+        voFile.read(reinterpret_cast<char*>(NormalSet.data()), NormalNum * sizeof(IOCommon::SGoldSrcVec3));
+
+        VertexBoneIndexSet.resize(VertexNum);
+        voFile.seekg(VertexBondIndexDataOffset, std::ios::beg);
+        voFile.read(reinterpret_cast<char*>(VertexBoneIndexSet.data()), VertexNum * sizeof(int16_t));
+
+        NormalBoneIndexSet.resize(NormalNum);
+        voFile.seekg(NormalBondIndexDataOffset, std::ios::beg);
+        voFile.read(reinterpret_cast<char*>(NormalBoneIndexSet.data()), NormalNum * sizeof(int16_t));
     }
 };
 
@@ -169,7 +237,7 @@ struct SMdlBodyPart
 
     static size_t getHeaderSize()
     {
-        return sizeof(char) + 3 * sizeof(int32_t);
+        return 64 * sizeof(char) + 3 * sizeof(int32_t);
     }
 
     void read(std::ifstream& voFile)
@@ -180,7 +248,7 @@ struct SMdlBodyPart
         const size_t ModelHeaderSize = SMdlModel::getHeaderSize();
         for (int32_t i = 0; i < ModelNum; ++i)
         {
-            voFile.seekg(ModelDataOffset + i * ModelHeaderSize);
+            voFile.seekg(ModelDataOffset + i * ModelHeaderSize, std::ios::beg);
             ModelSet[i].read(voFile);
         }
     }
@@ -204,6 +272,8 @@ class CIOGoldSrcMdl : public CIOBase
 public:
     CIOGoldSrcMdl() : CIOBase() {}
     CIOGoldSrcMdl(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
+
+    std::vector<SMdlBodyPart> getBodyParts() const { return m_BodyPartSet; }
 protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
 

@@ -1,9 +1,6 @@
 #include "SceneCommon.h"
-
-std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
+std::shared_ptr<CIOImage> generateGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize, uint8_t vBaseColor1[3], uint8_t vBaseColor2[3])
 {
-    uint8_t BaseColor1[3] = { 0, 0, 0 };
-    uint8_t BaseColor2[3] = { 255, 0, 255 };
     size_t DataSize = vNumRow * vNumCol * vCellSize * vCellSize * 4;
     uint8_t* pIndices = new uint8_t[DataSize];
     for (size_t i = 0; i < DataSize / 4; i++)
@@ -13,9 +10,9 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
 
         uint8_t* pColor;
         if ((GridRowIndex + GridColIndex) % 2 == 0)
-            pColor = BaseColor1;
+            pColor = vBaseColor1;
         else
-            pColor = BaseColor2;
+            pColor = vBaseColor2;
         pIndices[i * 4] = pColor[0];
         pIndices[i * 4 + 1] = pColor[1];
         pIndices[i * 4 + 2] = pColor[2];
@@ -36,6 +33,13 @@ std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol
     pGrid->setData(pIndices);
 
     return pGrid;
+}
+
+std::shared_ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
+{
+    uint8_t BaseColor1[3] = { 0, 0, 0 };
+    uint8_t BaseColor2[3] = { 255, 0, 255 };
+    return generateGrid(vNumRow, vNumCol, vCellSize, BaseColor1, BaseColor2);
 }
 
 std::shared_ptr<CIOImage> generatePureColorTexture(uint8_t vBaseColor[3], size_t vSize)

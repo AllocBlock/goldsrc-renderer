@@ -39,6 +39,11 @@ SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, std::funct
         Result.Succeed = true;
         Result.pScene = SceneReader::read("obj", vFilePath, vProgressReportFunc);
     }
+    else if (vFilePath.extension() == ".mdl")
+    {
+        Result.Succeed = true;
+        Result.pScene = SceneReader::read("mdl", vFilePath, vProgressReportFunc);
+    }
     else
     {
         Result.Message = u8"不支持的文件格式（" + vFilePath.extension().u8string() + u8"）";
@@ -138,7 +143,7 @@ void CGUIMain::__drawGUI()
             if (ImGui::MenuItem(u8"打开"))
             {
                 FileDialog.SetTitle(u8"打开");
-                FileDialog.SetTypeFilters({ ".bsp", ".rmf", ".map", ".obj", ".*" });
+                FileDialog.SetTypeFilters({ ".bsp", ".rmf", ".map", ".obj", ".mdl", ".*" });
                 FileDialog.Open();
             }
             if (ImGui::MenuItem(u8"退出"))

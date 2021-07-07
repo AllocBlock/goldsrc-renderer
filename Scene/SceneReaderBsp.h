@@ -8,9 +8,9 @@
 
 class CSceneReaderBsp : public CSceneReaderBase
 {
-public:
-    std::shared_ptr<SScene> read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
 private:
+    virtual std::shared_ptr<SScene> _readV() override;
+
     void __readBsp(std::filesystem::path vFilePath);
     void __readTextures();
     std::vector<std::shared_ptr<S3DObject>> __loadLeaf(size_t vLeafIndex);

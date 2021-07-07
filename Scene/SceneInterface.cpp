@@ -1,4 +1,10 @@
 #include "SceneInterface.h"
+#include "SceneReaderObj.h"
+#include "SceneReaderRmf.h"
+#include "SceneReaderMap.h"
+#include "SceneReaderBsp.h"
+#include "SceneReaderMdl.h"
+
 #include <string>
 #include <functional>
 #include <algorithm>
@@ -27,6 +33,7 @@ REGISTER_FILE(CSceneReaderObj, "obj");
 REGISTER_FILE(CSceneReaderRmf, "rmf");
 REGISTER_FILE(CSceneReaderMap, "map");
 REGISTER_FILE(CSceneReaderBsp, "bsp");
+REGISTER_FILE(CSceneReaderMdl, "mdl");
 
 std::shared_ptr<SScene> SceneReader::read(std::string vType, std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
 {

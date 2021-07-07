@@ -3,19 +3,18 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcMap.h"
 
-std::shared_ptr<SScene> CSceneReaderMap::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+std::shared_ptr<SScene> CSceneReaderMap::_readV()
 {
-    m_ProgressReportFunc = vProgressReportFunc;
     m_pScene = std::make_shared<SScene>();
 
-    __reportProgress(u8"[map]读取文件中");
-    CIOGoldSrcMap Map = CIOGoldSrcMap(vFilePath);
+    _reportProgress(u8"[map]读取文件中");
+    CIOGoldSrcMap Map = CIOGoldSrcMap(m_FilePath);
     if (!Map.read())
         throw std::runtime_error(u8"文件解析失败");
     std::vector<std::filesystem::path> WadPaths = Map.getWadPaths();
-    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths, vProgressReportFunc);
+    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths, m_ProgressReportFunc);
 
-    __reportProgress(u8"整理纹理中");
+    _reportProgress(u8"整理纹理中");
     // find used textures, load and index them
     std::map<std::string, uint32_t> TexNameToIndex;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
@@ -42,7 +41,7 @@ std::shared_ptr<SScene> CSceneReaderMap::read(std::filesystem::path vFilePath, s
             TexNameToIndex[TexName] = 0;
     }
 
-    __reportProgress(u8"生成场景中");
+    _reportProgress(u8"生成场景中");
     // group polygon by texture, one object per texture 
     m_pScene->Objects.resize(UsedTextureNames.size());
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
@@ -103,6 +102,6 @@ std::shared_ptr<SScene> CSceneReaderMap::read(std::filesystem::path vFilePath, s
             pObject->TexIndices.emplace_back(TexIndex);
         }
     }
-    __reportProgress(u8"完成");
+    _reportProgress(u8"完成");
     return m_pScene;
 }

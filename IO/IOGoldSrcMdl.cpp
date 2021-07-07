@@ -101,7 +101,7 @@ bool CIOGoldSrcMdl::_readV(std::filesystem::path vFilePath)
     const size_t TextureHeaderSize = SMdlTexture::getHeaderSize();
     for (int i = 0; i < m_Header.TextureNum; ++i)
     {
-        File.seekg(m_Header.TextureDataOffset + i * TextureHeaderSize);
+        File.seekg(m_Header.TextureDataOffset + i * TextureHeaderSize, std::ios::beg);
         m_TextureSet[i].read(File);
     }
     
@@ -110,7 +110,7 @@ bool CIOGoldSrcMdl::_readV(std::filesystem::path vFilePath)
     const size_t BodyPartHeaderSize = SMdlBodyPart::getHeaderSize();
     for (int i = 0; i < m_Header.BodyPartNum; ++i)
     {
-        File.seekg(m_Header.BodyPartDataOffset + i * BodyPartHeaderSize);
+        File.seekg(m_Header.BodyPartDataOffset + i * BodyPartHeaderSize, std::ios::beg);
         m_BodyPartSet[i].read(File);
     }
 }

@@ -2,15 +2,13 @@
 #include "SceneCommon.h"
 #include "IOObj.h"
 
-std::shared_ptr<SScene> CSceneReaderObj::read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+std::shared_ptr<SScene> CSceneReaderObj::_readV()
 {
-    m_ProgressReportFunc = vProgressReportFunc;
-    
-    __reportProgress(u8"[obj]读取文件中");
+    _reportProgress(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();
-    Obj.read(vFilePath);
+    Obj.read(m_FilePath);
 
-    __reportProgress(u8"读取场景中");
+    _reportProgress(u8"读取场景中");
     std::shared_ptr<S3DObject> pObjObject = std::make_shared<S3DObject>();
     const uint32_t TexIndex = 0;
 

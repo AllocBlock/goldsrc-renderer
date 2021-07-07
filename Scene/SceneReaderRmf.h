@@ -9,8 +9,8 @@
 
 class CSceneReaderRmf : public CSceneReaderBase
 {
-public:
-    std::shared_ptr<SScene> read(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc);
+protected:
+    virtual std::shared_ptr<SScene> _readV() override;
 private:
     void __readRmf(std::filesystem::path vFilePath);
     void __readWadsAndInitTextures();
