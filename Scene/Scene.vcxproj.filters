@@ -45,6 +45,12 @@
     <ClCompile Include="SceneReaderMdl.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="3DObject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scene.h">
@@ -75,6 +81,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SceneReaderMdl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="3DObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="3DObjectGoldSrc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DataArrayBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralDataArray.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleValueDataArray.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

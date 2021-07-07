@@ -30,10 +30,10 @@ std::shared_ptr<SScene> CSceneReaderMdl::_readV()
     return pScene;
 }
 
-std::shared_ptr<S3DObject> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
+std::shared_ptr<C3DObjectGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
 {
-    auto pObject = std::make_shared<S3DObject>();
-    pObject->DataType = E3DObjectDataType::TRIAGNLE_LIST;
+    auto pObject = std::make_shared<C3DObjectGoldSrc>();
+    pObject->setPrimitiveType(E3DObjectPrimitiveType::TRIAGNLE_LIST);
 
     for (const auto& Model : vBodyPart.ModelSet)
     {
@@ -43,8 +43,15 @@ std::shared_ptr<S3DObject> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& v
     return pObject;
 }
 
-void CSceneReaderMdl::__readModel(const SMdlModel& vModel, std::shared_ptr<S3DObject> voObject)
+void CSceneReaderMdl::__readModel(const SMdlModel& vModel, std::shared_ptr<C3DObjectGoldSrc> voObject)
 {
+    auto pVertexArray = voObject->getVertexArray();
+    auto pColorArray = voObject->getColorArray();
+    auto pNormalArray = voObject->getNormalArray();
+    auto pTexCoordArray = voObject->getTexCoordArray();
+    auto pLightmapCoordArray = voObject->getLightmapCoordArray();
+    auto pTexIndexArray = voObject->getTexIndexArray();
+
     auto TextureSet = m_pIOMdl->getTextures();
     auto SkinReferenceSet = m_pIOMdl->getSkinReferences();
 
@@ -70,16 +77,16 @@ void CSceneReaderMdl::__readModel(const SMdlModel& vModel, std::shared_ptr<S3DOb
             Scale = std::max<float>(Scale, std::abs(Vertex.y));
             Scale = std::max<float>(Scale, std::abs(Vertex.z));
 
-            voObject->Vertices.emplace_back(Vertex);
-            voObject->Normals.emplace_back(Normal);
-            voObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            voObject->TexCoords.emplace_back(TexCoord);
-            voObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            voObject->TexIndices.emplace_back(TextureIndex);
+            pVertexArray->append(Vertex);
+            pColorArray->append(Normal);
+            pNormalArray->append(glm::vec3(1.0, 1.0, 1.0));
+            pTexCoordArray->append(TexCoord);
+            pLightmapCoordArray->append(glm::vec2(0.0, 0.0));
+            pTexIndexArray->append(TextureIndex);
         }
     }
 
     // 缩放到单位体积内
-    for (auto& Vertex : voObject->Vertices)
-        Vertex /= Scale;
+    for (size_t i = 0; i < pVertexArray->size(); ++i)
+        pVertexArray->set(i, pVertexArray->get(i) / Scale);
 }

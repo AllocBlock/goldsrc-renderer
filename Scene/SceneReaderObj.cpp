@@ -9,8 +9,15 @@ std::shared_ptr<SScene> CSceneReaderObj::_readV()
     Obj.read(m_FilePath);
 
     _reportProgress(u8"∂¡»°≥°æ∞÷–");
-    std::shared_ptr<S3DObject> pObjObject = std::make_shared<S3DObject>();
+    std::shared_ptr<C3DObjectGoldSrc> pObjObject = std::make_shared<C3DObjectGoldSrc>();
     const uint32_t TexIndex = 0;
+
+    auto pVertexArray = pObjObject->getVertexArray();
+    auto pColorArray = pObjObject->getColorArray();
+    auto pNormalArray = pObjObject->getNormalArray();
+    auto pTexCoordArray = pObjObject->getTexCoordArray();
+    auto pLightmapCoordArray = pObjObject->getLightmapCoordArray();
+    auto pTexIndexArray = pObjObject->getTexIndexArray();
 
     const std::vector<SObjFace>& Faces = Obj.getFaces();
     for (size_t i = 0; i < Faces.size(); ++i)
@@ -33,24 +40,18 @@ std::shared_ptr<SScene> CSceneReaderObj::_readV()
 
         for (size_t k = 2; k < Face.Nodes.size(); ++k)
         {
-            pObjObject->Vertices.emplace_back(Vertices[0]);
-            pObjObject->Vertices.emplace_back(Vertices[k - 1]);
-            pObjObject->Vertices.emplace_back(Vertices[k]);
-            pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pObjObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pObjObject->Normals.emplace_back(Normals[0]);
-            pObjObject->Normals.emplace_back(Normals[k - 1]);
-            pObjObject->Normals.emplace_back(Normals[k]);
-            pObjObject->TexCoords.emplace_back(TexCoords[0]);
-            pObjObject->TexCoords.emplace_back(TexCoords[k - 1]);
-            pObjObject->TexCoords.emplace_back(TexCoords[k]);
-            pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            pObjObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            pObjObject->TexIndices.emplace_back(TexIndex);
-            pObjObject->TexIndices.emplace_back(TexIndex);
-            pObjObject->TexIndices.emplace_back(TexIndex);
+            pVertexArray->append(Vertices[0]);
+            pVertexArray->append(Vertices[k - 1]);
+            pVertexArray->append(Vertices[k]);
+            pColorArray->append(glm::vec3(1.0, 1.0, 1.0), 3);
+            pNormalArray->append(Normals[0]);
+            pNormalArray->append(Normals[k - 1]);
+            pNormalArray->append(Normals[k]);
+            pTexCoordArray->append(TexCoords[0]);
+            pTexCoordArray->append(TexCoords[k - 1]);
+            pTexCoordArray->append(TexCoords[k]);
+            pLightmapCoordArray->append(glm::vec2(0.0, 0.0), 3);
+            pTexIndexArray->append(TexIndex, 3);
         }
     }
 

@@ -1,50 +1,12 @@
 #pragma once
 #include "IOImage.h"
+#include "3DObjectGoldSrc.h"
 
 #include <vector>
 #include <functional>
-#include <optional>
 #include <array>
 #include <map>
 #include <glm/glm.hpp>
-
-enum class E3DObjectDataType
-{
-    TRIAGNLE_LIST,
-    TRIAGNLE_STRIP_LIST,
-    INDEXED_TRIAGNLE_LIST,
-};
-
-// AABB
-struct S3DBoundingBox
-{
-    glm::vec3 Min;
-    glm::vec3 Max;
-};
-
-enum class E3DObjectRenderType
-{
-    NORMAL,
-    SKY
-};
-
-struct S3DObject
-{
-    E3DObjectDataType DataType = E3DObjectDataType::TRIAGNLE_LIST;
-    E3DObjectRenderType RenderType = E3DObjectRenderType::NORMAL;
-    std::vector<glm::vec3> Vertices;
-    std::vector<glm::vec3> Colors;
-    std::vector<glm::vec3> Normals;
-    std::vector<glm::vec2> TexCoords;
-    std::vector<glm::vec2> LightmapCoords;
-    std::vector<uint32_t> TexIndices;
-    std::vector<uint32_t> Indices;
-
-    bool HasLightmap = false;
-    std::vector<std::optional<size_t>> LightmapIndices;
-
-    std::optional<S3DBoundingBox> getBoundingBox() const;
-};
 
 struct SModelInfo
 {
@@ -106,7 +68,7 @@ private:
 
 struct SScene
 {
-    std::vector<std::shared_ptr<S3DObject>> Objects;
+    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
     std::vector<std::shared_ptr<CIOImage>> TexImages;
 
     bool UseLightmap = false;

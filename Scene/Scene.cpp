@@ -7,28 +7,6 @@
 
 #include <filesystem>
 
-std::optional<S3DBoundingBox> S3DObject::getBoundingBox() const
-{
-    std::optional<S3DBoundingBox> CachedBoundingBox = std::nullopt;
-    if (CachedBoundingBox.has_value()) return CachedBoundingBox.value();
-    if (Vertices.empty()) return std::nullopt;
-
-    S3DBoundingBox BoundingBox;
-    BoundingBox.Min = glm::vec3(INFINITY, INFINITY, INFINITY);
-    BoundingBox.Max = glm::vec3(-INFINITY, -INFINITY, -INFINITY);
-    for (size_t i = 0; i < Vertices.size(); ++i)
-    {
-        BoundingBox.Min.x = std::min<float>(BoundingBox.Min.x, Vertices[i].x);
-        BoundingBox.Min.y = std::min<float>(BoundingBox.Min.y, Vertices[i].y);
-        BoundingBox.Min.z = std::min<float>(BoundingBox.Min.z, Vertices[i].z);
-        BoundingBox.Max.x = std::max<float>(BoundingBox.Max.x, Vertices[i].x);
-        BoundingBox.Max.y = std::max<float>(BoundingBox.Max.y, Vertices[i].y);
-        BoundingBox.Max.z = std::max<float>(BoundingBox.Max.z, Vertices[i].z);
-    }
-    CachedBoundingBox = BoundingBox;
-    return BoundingBox;
-}
-
 bool SBspTreeNode::isPointFrontOfPlane(glm::vec3 vPoint) const
 {
     return glm::dot(PlaneNormal, vPoint) - PlaneDistance > 0;

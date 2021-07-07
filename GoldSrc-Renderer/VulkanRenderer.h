@@ -104,7 +104,7 @@ private:
     void __recordGuiCommandBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
-    bool __isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const;
+    bool __isObjectInSight(std::shared_ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
     std::pair<std::vector<size_t>, std::vector<size_t>> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
@@ -117,7 +117,7 @@ private:
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack);
     void __updateDescriptorSets();
 
-    std::vector<SGoldSrcPointData> __readPointData(std::shared_ptr<S3DObject> vpObject) const;
+    std::vector<SGoldSrcPointData> __readPointData(std::shared_ptr<C3DObjectGoldSrc> vpObject) const;
 
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = SPipelineSet();

@@ -73,14 +73,14 @@ void CSceneReaderRmf::__readObject(std::shared_ptr<SRmfObject> vpObject)
 
 void CSceneReaderRmf::__readSolid(std::shared_ptr<SRmfSolid> vpSolid)
 {
-    auto pObject = std::make_shared<S3DObject>();
+    auto pObject = std::make_shared<C3DObjectGoldSrc>();
     for (const SRmfFace& Face : vpSolid->Faces)
         __readSolidFace(Face, pObject);
 
     m_pScene->Objects.emplace_back(std::move(pObject));
 }
 
-void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, std::shared_ptr<S3DObject> vopObject)
+void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, std::shared_ptr<C3DObjectGoldSrc> vopObject)
 {
     uint32_t TexIndex = __requestTextureIndex(vFace.TextureName);
 
@@ -95,26 +95,24 @@ void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, std::shared_ptr<S3D
 
     glm::vec3 Normal = glm::normalize(glm::cross(Vertices[2] - Vertices[0], Vertices[1] - Vertices[0]));
     
+    auto pVertexArray = vopObject->getVertexArray();
+    auto pColorArray = vopObject->getColorArray();
+    auto pNormalArray = vopObject->getNormalArray();
+    auto pTexCoordArray = vopObject->getTexCoordArray();
+    auto pLightmapCoordArray = vopObject->getLightmapCoordArray();
+    auto pTexIndexArray = vopObject->getTexIndexArray();
     for (size_t k = 2; k < Vertices.size(); ++k)
     {
-        vopObject->Vertices.emplace_back(Vertices[0] * m_SceneScale);
-        vopObject->Vertices.emplace_back(Vertices[k - 1] * m_SceneScale);
-        vopObject->Vertices.emplace_back(Vertices[k] * m_SceneScale);
-        vopObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-        vopObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-        vopObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-        vopObject->Normals.emplace_back(Normal);
-        vopObject->Normals.emplace_back(Normal);
-        vopObject->Normals.emplace_back(Normal);
-        vopObject->TexCoords.emplace_back(TexCoords[0]);
-        vopObject->TexCoords.emplace_back(TexCoords[k - 1]);
-        vopObject->TexCoords.emplace_back(TexCoords[k]);
-        vopObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-        vopObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-        vopObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-        vopObject->TexIndices.emplace_back(TexIndex);
-        vopObject->TexIndices.emplace_back(TexIndex);
-        vopObject->TexIndices.emplace_back(TexIndex);
+        pVertexArray->append(Vertices[0] * m_SceneScale);
+        pVertexArray->append(Vertices[k - 1] * m_SceneScale);
+        pVertexArray->append(Vertices[k] * m_SceneScale);
+        pColorArray->append(glm::vec3(1.0, 1.0, 1.0), 3);
+        pNormalArray->append(Normal, 3);
+        pTexCoordArray->append(TexCoords[0]);
+        pTexCoordArray->append(TexCoords[k - 1]);
+        pTexCoordArray->append(TexCoords[k]);
+        pLightmapCoordArray->append(glm::vec2(0.0, 0.0), 3);
+        pTexIndexArray->append(TexIndex, 3);
     }
 }
 

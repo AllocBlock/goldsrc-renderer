@@ -26,17 +26,11 @@ void CVulkanRenderer::loadScene(std::shared_ptr<SScene> vpScene)
     size_t VertexOffset = 0;
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
-        std::shared_ptr<S3DObject> pObject = m_pScene->Objects[i];
-        if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
-        {
-            m_ObjectDataPositions[i].Offset = IndexOffset;
-            m_ObjectDataPositions[i].Size = pObject->Indices.size();
-            IndexOffset += m_ObjectDataPositions[i].Size;
-        }
-        else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
+        std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[i];
+        if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
         {
             m_ObjectDataPositions[i].Offset = VertexOffset;
-            m_ObjectDataPositions[i].Size = pObject->Vertices.size();
+            m_ObjectDataPositions[i].Size = pObject->getVertexArray()->size();
             VertexOffset += m_ObjectDataPositions[i].Size;
         }
         else
@@ -196,7 +190,7 @@ VkCommandBuffer CVulkanRenderer::_requestCommandBufferV(uint32_t vImageIndex)
 
                 for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
                 {
-                    bool EnableLightmap = m_pScene->Objects[i]->HasLightmap;
+                    bool EnableLightmap = m_pScene->Objects[i]->getLightMapEnable();
                     m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
                     {
@@ -320,7 +314,7 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
             m_RenderedObjectSet.insert(ObjectIndex);
             isLeafVisable = true;
 
-            bool EnableLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
+            bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapEnable();
             m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
 
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
@@ -378,7 +372,7 @@ void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex, bo
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
-        bool EnableLightmap = m_pScene->Objects[ObjectIndex]->HasLightmap;
+        bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapEnable();
         if (vBlend)
             m_PipelineSet.TrianglesWithBlend.setLightmapState(CommandBuffer, EnableLightmap);
         else
@@ -392,14 +386,14 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
     _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
-    std::shared_ptr<S3DObject> pObject = m_pScene->Objects[vObjectIndex];
+    std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
     vkCmdSetDepthBias(CommandBuffer, static_cast<float>(vObjectIndex) / m_pScene->Objects.size(), 0, 0);
-    if (pObject->DataType == E3DObjectDataType::INDEXED_TRIAGNLE_LIST)
+    if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::INDEXED_TRIAGNLE_LIST)
         vkCmdDrawIndexed(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0, 0);
-    else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_LIST)
+    else if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
         vkCmdDraw(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0);
-    else if (pObject->DataType == E3DObjectDataType::TRIAGNLE_STRIP_LIST)
+    else if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_STRIP_LIST)
         vkCmdDraw(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0);
     else
         throw std::runtime_error(u8"物体类型错误");
@@ -564,8 +558,8 @@ void CVulkanRenderer::__createVertexBuffer()
     size_t NumVertex = 0;
     if (m_pScene)
     {
-        for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
-            NumVertex += pObject->Vertices.size();
+        for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+            NumVertex += pObject->getVertexArray()->size();
         if (NumVertex == 0)
         {
             Common::Log::log(u8"没有顶点数据，跳过索引缓存创建");
@@ -578,10 +572,10 @@ void CVulkanRenderer::__createVertexBuffer()
     VkDeviceSize BufferSize = sizeof(SGoldSrcPointData) * NumVertex;
     void* pData = new char[BufferSize];
     size_t Offset = 0;
-    for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
+    for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
     {
         std::vector<SGoldSrcPointData> PointData = __readPointData(pObject);
-        size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->Vertices.size();
+        size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->getVertexArray()->size();
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
@@ -591,10 +585,10 @@ void CVulkanRenderer::__createVertexBuffer()
 
 void CVulkanRenderer::__createIndexBuffer()
 {
-    size_t NumIndex = 0;
+    /*size_t NumIndex = 0;
     if (m_pScene)
     {
-        for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
+        for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
             NumIndex += pObject->Indices.size();
 
         if (NumIndex == 0)
@@ -620,7 +614,7 @@ void CVulkanRenderer::__createIndexBuffer()
         Offset += SubBufferSize;
     }
     Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
-    delete[] pData;
+    delete[] pData;*/
 }
 
 void CVulkanRenderer::__updateDescriptorSets()
@@ -634,24 +628,31 @@ void CVulkanRenderer::__updateDescriptorSets()
     m_PipelineSet.GuiLines.updateDescriptorSet();
 }
 
-std::vector<SGoldSrcPointData> CVulkanRenderer::__readPointData(std::shared_ptr<S3DObject> vpObject) const
+std::vector<SGoldSrcPointData> CVulkanRenderer::__readPointData(std::shared_ptr<C3DObjectGoldSrc> vpObject) const
 {
-    size_t NumPoint = vpObject->Vertices.size();
-    _ASSERTE(NumPoint == vpObject->Colors.size());
-    _ASSERTE(NumPoint == vpObject->Normals.size());
-    _ASSERTE(NumPoint == vpObject->TexCoords.size());
-    _ASSERTE(NumPoint == vpObject->LightmapCoords.size());
-    _ASSERTE(NumPoint == vpObject->TexIndices.size());
+    auto pVertexArray = vpObject->getVertexArray();
+    auto pColorArray = vpObject->getColorArray();
+    auto pNormalArray = vpObject->getNormalArray();
+    auto pTexCoordArray = vpObject->getTexCoordArray();
+    auto pLightmapCoordArray = vpObject->getLightmapCoordArray();
+    auto pTexIndexArray = vpObject->getTexIndexArray();
+
+    size_t NumPoint = pVertexArray->size();
+    _ASSERTE(NumPoint == pColorArray->size());
+    _ASSERTE(NumPoint == pNormalArray->size());
+    _ASSERTE(NumPoint == pTexCoordArray->size());
+    _ASSERTE(NumPoint == pLightmapCoordArray->size());
+    _ASSERTE(NumPoint == pTexIndexArray->size());
 
     std::vector<SGoldSrcPointData> PointData(NumPoint);
     for (size_t i = 0; i < NumPoint; ++i)
     {
-        PointData[i].Pos = vpObject->Vertices[i];
-        PointData[i].Color = vpObject->Colors[i];
-        PointData[i].Normal = vpObject->Normals[i];
-        PointData[i].TexCoord = vpObject->TexCoords[i];
-        PointData[i].LightmapCoord = vpObject->LightmapCoords[i];
-        PointData[i].TexIndex = vpObject->TexIndices[i];
+        PointData[i].Pos = pVertexArray->get(i);
+        PointData[i].Color = pColorArray->get(i);
+        PointData[i].Normal = pNormalArray->get(i);
+        PointData[i].TexCoord = pTexCoordArray->get(i);
+        PointData[i].LightmapCoord = pLightmapCoordArray->get(i);
+        PointData[i].TexIndex = pTexIndexArray->get(i);
     }
     return PointData;
 }
@@ -770,7 +771,7 @@ void CVulkanRenderer::__calculateVisiableObjects()
     {
         m_AreObjectsVisable[i] = false;
 
-        if (m_pScene->Objects[i]->RenderType == E3DObjectRenderType::SKY || m_pScene->Objects[i]->Vertices.empty())
+        if (m_pScene->Objects[i]->getEffectType() == E3DObjectEffectType::SKY || m_pScene->Objects[i]->getVertexArray()->empty())
             continue;
         
         if (m_EnableCulling)
@@ -797,7 +798,7 @@ void CVulkanRenderer::__calculateVisiableObjects()
     }
 }
 
-bool CVulkanRenderer::__isObjectInSight(std::shared_ptr<S3DObject> vpObject, const SFrustum& vFrustum) const
+bool CVulkanRenderer::__isObjectInSight(std::shared_ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
 {
     // AABB frustum culling
     const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;

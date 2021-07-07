@@ -46,7 +46,7 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
     m_pScene->Objects.resize(UsedTextureNames.size());
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
-        m_pScene->Objects[i] = std::make_shared<S3DObject>();
+        m_pScene->Objects[i] = std::make_shared<C3DObjectGoldSrc>();
     }
 
     std::vector<SMapPolygon> Polygons = Map.getAllPolygons();
@@ -56,8 +56,8 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
         size_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
         size_t TexWidth = m_pScene->TexImages[TexIndex]->getImageWidth();
         size_t TexHeight = m_pScene->TexImages[TexIndex]->getImageHeight();
-        std::shared_ptr<S3DObject> pObject = m_pScene->Objects[TexIndex];
-        uint32_t IndexStart = pObject->Vertices.size();
+        std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[TexIndex];
+        uint32_t IndexStart = pObject->getVertexArray()->size();
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
@@ -80,26 +80,24 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
         IndexStart += static_cast<uint32_t>(Polygon.Vertices.size());*/
 
         // non-indexed data
+        auto pVertexArray = pObject->getVertexArray();
+        auto pColorArray = pObject->getColorArray();
+        auto pNormalArray = pObject->getNormalArray();
+        auto pTexCoordArray = pObject->getTexCoordArray();
+        auto pLightmapCoordArray = pObject->getLightmapCoordArray();
+        auto pTexIndexArray = pObject->getTexIndexArray();
         for (size_t k = 2; k < Polygon.Vertices.size(); ++k)
         {
-            pObject->Vertices.emplace_back(Polygon.Vertices[0]);
-            pObject->Vertices.emplace_back(Polygon.Vertices[k - 1]);
-            pObject->Vertices.emplace_back(Polygon.Vertices[k]);
-            pObject->Normals.emplace_back(Normal);
-            pObject->Normals.emplace_back(Normal);
-            pObject->Normals.emplace_back(Normal);
-            pObject->TexCoords.emplace_back(TexCoords[0]);
-            pObject->TexCoords.emplace_back(TexCoords[k - 1]);
-            pObject->TexCoords.emplace_back(TexCoords[k]);
-            pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            pObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            pObject->TexIndices.emplace_back(TexIndex);
-            pObject->TexIndices.emplace_back(TexIndex);
-            pObject->TexIndices.emplace_back(TexIndex);
+            pVertexArray->append(Polygon.Vertices[0]);
+            pVertexArray->append(Polygon.Vertices[k - 1]);
+            pVertexArray->append(Polygon.Vertices[k]);
+            pColorArray->append(glm::vec3(1.0, 1.0, 1.0), 3);
+            pNormalArray->append(Normal, 3);
+            pTexCoordArray->append(TexCoords[0]);
+            pTexCoordArray->append(TexCoords[k - 1]);
+            pTexCoordArray->append(TexCoords[k]);
+            pLightmapCoordArray->append(glm::vec2(0.0, 0.0), 3);
+            pTexIndexArray->append(TexIndex, 3);
         }
     }
     _reportProgress(u8"Íê³É");

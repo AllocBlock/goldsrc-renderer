@@ -2,6 +2,9 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcWad.h"
+#include "SingleValueDataArray.h"
+
+#include <sstream>
 
 std::shared_ptr<SScene> CSceneReaderBsp::_readV()
 {
@@ -21,6 +24,7 @@ std::shared_ptr<SScene> CSceneReaderBsp::_readV()
     if (m_HasLightmapData)
         __correntLightmapCoords();
 
+    __loadPointEntities();
     __loadSkyBox(m_FilePath.parent_path());
 
     return m_pScene;
@@ -85,17 +89,19 @@ void CSceneReaderBsp::__readTextures()
     m_pScene->TexImages = std::move(TexImages);
 }
 
-std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
+std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     _ASSERTE(vLeafIndex < Lumps.m_LumpLeaf.Leaves.size());
     const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
 
-    auto pObjectNormalPart = std::make_shared<S3DObject>();
-    pObjectNormalPart->RenderType = E3DObjectRenderType::NORMAL;
-    auto pObjectSkyPart = std::make_shared<S3DObject>();
-    pObjectSkyPart->RenderType = E3DObjectRenderType::SKY;
+    auto pObjectNormalPart = std::make_shared<C3DObjectGoldSrc>();
+    pObjectNormalPart->setMark("Brush");
+    pObjectNormalPart->setEffectType(E3DObjectEffectType::NORMAL);
+    auto pObjectSkyPart = std::make_shared<C3DObjectGoldSrc>();
+    pObjectSkyPart->setEffectType(E3DObjectEffectType::SKY);
+    pObjectNormalPart->setMark("Sky");
 
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -116,22 +122,22 @@ std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadLeaf(size_t vLeaf
         }
     }
 
-    std::vector<std::shared_ptr<S3DObject>> Objects;
-    if (!pObjectNormalPart->Vertices.empty())
+    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
+    if (pObjectNormalPart->getVertexArray()->size() > 0)
         Objects.emplace_back(std::move(pObjectNormalPart));
-    if (!pObjectSkyPart->Vertices.empty())
+    if (pObjectSkyPart->getVertexArray()->size() > 0)
         Objects.emplace_back(std::move(pObjectSkyPart));
     return Objects;
 }
 
-std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    auto pObjectNormalPart = std::make_shared<S3DObject>();
-    pObjectNormalPart->RenderType = E3DObjectRenderType::NORMAL;
-    auto pObjectSkyPart = std::make_shared<S3DObject>();
-    pObjectSkyPart->RenderType = E3DObjectRenderType::SKY;
+    auto pObjectNormalPart = std::make_shared<C3DObjectGoldSrc>();
+    pObjectNormalPart->setEffectType(E3DObjectEffectType::NORMAL);
+    auto pObjectSkyPart = std::make_shared<C3DObjectGoldSrc>();
+    pObjectSkyPart->setEffectType(E3DObjectEffectType::SKY);
     
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
     size_t TexWidth, TexHeight;
@@ -146,7 +152,7 @@ std::vector<std::shared_ptr<S3DObject>> CSceneReaderBsp::__loadEntity(size_t vMo
             __appendBspFaceToObject(pObjectNormalPart, FaceIndex);
     }
 
-    std::vector<std::shared_ptr<S3DObject>> Objects;
+    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
     Objects.emplace_back(std::move(pObjectNormalPart));
     Objects.emplace_back(std::move(pObjectSkyPart));
     return std::move(Objects);
@@ -157,7 +163,7 @@ void CSceneReaderBsp::__loadBspTree()
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     SBspTree BspTree;
-    std::vector<std::shared_ptr<S3DObject>> Objects;
+    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
 
     // read node and PVS data
     _reportProgress(u8"‘ÿ»ÎBSP ˝æ›");
@@ -187,9 +193,9 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[0]);
             Node.Front = NodeNum + LeafIndex;
-            std::vector<std::shared_ptr<S3DObject>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<std::shared_ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (std::shared_ptr<S3DObject> LeafObject : LeafObjects)
+            for (std::shared_ptr<C3DObjectGoldSrc> LeafObject : LeafObjects)
             {
                 ObjectIndices.emplace_back(Objects.size());
                 Objects.emplace_back(LeafObject);
@@ -202,9 +208,9 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[1]);
             Node.Back = NodeNum + LeafIndex;
-            std::vector<std::shared_ptr<S3DObject>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<std::shared_ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (std::shared_ptr<S3DObject> pLeafObject : LeafObjects)
+            for (std::shared_ptr<C3DObjectGoldSrc> pLeafObject : LeafObjects)
             {
                 ObjectIndices.emplace_back(Objects.size());
                 Objects.emplace_back(pLeafObject);
@@ -231,14 +237,14 @@ void CSceneReaderBsp::__loadBspTree()
         }
 
         // load entities data and calculate bounding box
-        std::vector<std::shared_ptr<S3DObject>> ModelObjects = __loadEntity(i);
+        std::vector<std::shared_ptr<C3DObjectGoldSrc>> ModelObjects = __loadEntity(i);
         std::vector<size_t> ObjectIndices;
         S3DBoundingBox TotalBoundingBox =
         {
             {INFINITY, INFINITY, INFINITY},
             {-INFINITY, -INFINITY, -INFINITY},
         };
-        for (std::shared_ptr<S3DObject> pModelObject : ModelObjects)
+        for (std::shared_ptr<C3DObjectGoldSrc> pModelObject : ModelObjects)
         {
             std::optional<S3DBoundingBox> BoundingBox = pModelObject->getBoundingBox();
             if (BoundingBox == std::nullopt) continue;
@@ -470,7 +476,7 @@ void CSceneReaderBsp::__getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& 
     voName = BspTexture.Name;
 }
 
-void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject, uint32_t vFaceIndex)
+void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<C3DObjectGoldSrc> pObject, uint32_t vFaceIndex)
 {
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -488,7 +494,7 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
     }
     else
     {
-        pObject->HasLightmap = true;
+        pObject->setLightMapEnable(true);
     }
     
     // scale texture coordinates
@@ -499,29 +505,30 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<S3DObject> pObject
     }
 
     // save scaled datas
+    auto pVertexArray = pObject->getVertexArray();
+    auto pColorArray = pObject->getColorArray();
+    auto pNormalArray = pObject->getNormalArray();
+    auto pTexCoordArray = pObject->getTexCoordArray();
+    auto pTexIndexArray = pObject->getTexIndexArray();
+    auto pLightmapIndexArray = pObject->getLightmapIndexArray();
+    auto pLightmapCoordArray = pObject->getLightmapCoordArray();
     for (size_t k = 2; k < Vertices.size(); ++k)
     {
-        pObject->Vertices.emplace_back(Vertices[0] * m_SceneScale);
-        pObject->Vertices.emplace_back(Vertices[k - 1] * m_SceneScale);
-        pObject->Vertices.emplace_back(Vertices[k] * m_SceneScale);
-        pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-        pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-        pObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-        pObject->Normals.emplace_back(Normal);
-        pObject->Normals.emplace_back(Normal);
-        pObject->Normals.emplace_back(Normal);
-        pObject->TexCoords.emplace_back(TexCoords[0]);
-        pObject->TexCoords.emplace_back(TexCoords[k - 1]);
-        pObject->TexCoords.emplace_back(TexCoords[k]);
-        pObject->LightmapCoords.emplace_back(LightmapCoords[0]);
-        pObject->LightmapCoords.emplace_back(LightmapCoords[k - 1]);
-        pObject->LightmapCoords.emplace_back(LightmapCoords[k]);
-        pObject->TexIndices.emplace_back(TexIndex);
-        pObject->TexIndices.emplace_back(TexIndex);
-        pObject->TexIndices.emplace_back(TexIndex);
-        pObject->LightmapIndices.emplace_back(LightmapIndex);
-        pObject->LightmapIndices.emplace_back(LightmapIndex);
-        pObject->LightmapIndices.emplace_back(LightmapIndex);
+        size_t VertexStartIndex = (k - 2) * 3;
+        pVertexArray->append(Vertices[0] * m_SceneScale);
+        pVertexArray->append(Vertices[k - 1] * m_SceneScale);
+        pVertexArray->append(Vertices[k] * m_SceneScale);
+        pColorArray->append(glm::vec3(1.0, 1.0, 1.0), 3);
+        pNormalArray->append(Normal, 3);
+        pTexCoordArray->append(TexCoords[0]);
+        pTexCoordArray->append(TexCoords[k - 1]);
+        pTexCoordArray->append(TexCoords[k]);
+        pTexIndexArray->append(TexIndex, 3);
+
+        pLightmapIndexArray->append(LightmapIndex, 3);
+        pLightmapCoordArray->append(LightmapCoords[0]);
+        pLightmapCoordArray->append(LightmapCoords[k - 1]);
+        pLightmapCoordArray->append(LightmapCoords[k]);
     }
 }
 
@@ -531,14 +538,17 @@ void CSceneReaderBsp::__correntLightmapCoords()
 
     for (auto& pObject : m_pScene->Objects)
     {
-        if (!pObject->HasLightmap) continue;
+        if (!pObject->getLightMapEnable()) continue;
 
-        for (size_t i = 0; i < pObject->LightmapCoords.size(); ++i)
+        auto pLightmapIndexArray = pObject->getLightmapIndexArray();
+        auto pLightmapTexCoordArray = pObject->getLightmapCoordArray();
+
+        for (size_t i = 0; i < pLightmapIndexArray->size(); ++i)
         {
-            if (pObject->LightmapIndices[i] == std::nullopt) continue;
+            if (pLightmapIndexArray->get(i) == std::nullopt) continue;
 
-            size_t LightmapIndex = pObject->LightmapIndices[i].value();
-            pObject->LightmapCoords[i] = m_pScene->pLightmap->getAcutalLightmapCoord(LightmapIndex, pObject->LightmapCoords[i]);
+            size_t LightmapIndex = pLightmapIndexArray->get(i).value();
+            pLightmapTexCoordArray->set(i, m_pScene->pLightmap->getAcutalLightmapCoord(LightmapIndex, pLightmapTexCoordArray->get(i)));
         }
     }
 }
@@ -612,4 +622,90 @@ std::optional<SMapEntity> CSceneReaderBsp::__findEntity(size_t vModelIndex)
         }
     }
     return std::nullopt;
+}
+
+void CSceneReaderBsp::__loadPointEntities()
+{
+    auto EntityLump = m_Bsp.getLumps().m_LumpEntity;
+    for (const auto& Entity : EntityLump.Entities)
+    {
+        if (!Entity.Brushes.empty()) continue;
+
+        auto pEntityCube = std::make_shared<C3DObjectGoldSrc>();
+        pEntityCube->setMark("Entity");
+        if (Entity.Properties.find("classname") != Entity.Properties.end())
+        {
+            pEntityCube->setObjectName(Entity.Properties.at("classname"));
+        }
+        glm::vec3 Origin = glm::vec3(0.0, 0.0, 0.0);
+        if (Entity.Properties.find("origin") != Entity.Properties.end())
+        {
+            std::istringstream StringStream(Entity.Properties.at("origin"));
+            float X = 0.0f, Y = 0.0f, Z = 0.0f;
+            StringStream >> X >> Y >> Z;
+            Origin = glm::vec3(X, Y, Z);
+        }
+        const float Size = 0.2f;
+        __appendCube(Origin / m_SceneScale, Size, pEntityCube);
+
+        m_pScene->Objects.emplace_back(pEntityCube);
+    }
+}
+
+void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, std::shared_ptr<C3DObjectGoldSrc> voObject)
+{
+    // create plane and vertex buffer
+    std::vector<glm::vec3> VertexSet =
+    {
+        { 1.0,  1.0,  1.0}, // 0
+        {-1.0,  1.0,  1.0}, // 1
+        {-1.0,  1.0, -1.0}, // 2
+        { 1.0,  1.0, -1.0}, // 3
+        { 1.0, -1.0,  1.0}, // 4
+        {-1.0, -1.0,  1.0}, // 5
+        {-1.0, -1.0, -1.0}, // 6
+        { 1.0, -1.0, -1.0}, // 7
+    };
+
+    for (auto& Vertex : VertexSet)
+    {
+        Vertex = vSize * Vertex + vOrigin;
+    }
+
+    const std::vector<size_t> IndexSet =
+    {
+        4, 1, 0, 4, 5, 1, // +z
+        3, 6, 7, 3, 2, 6, // -z
+        0, 2, 3, 0, 1, 2, // +y
+        5, 7, 6, 5, 4, 7, // -y
+        4, 3, 7, 4, 0, 3, // +x
+        1, 6, 2, 1, 5, 6, // -x
+    };
+
+    const std::vector<glm::vec3> NormalSet =
+    {
+        {0.0f, 0.0f, 1.0f},
+        {0.0f, 0.0f, -1.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, -1.0f, 0.0f},
+        {1.0f, 0.0f, 0.0f},
+        {-1.0f, 0.0f, 0.0f},
+    };
+
+    auto pVertexArray = voObject->getVertexArray();
+    auto pColorArray = voObject->getColorArray();
+    auto pNormalArray = voObject->getNormalArray();
+    auto pTexCoordArray = voObject->getTexCoordArray();
+    auto pLightmapCoordArray = voObject->getLightmapCoordArray();
+    auto pTexIndexArray = voObject->getTexIndexArray();
+
+    for (size_t i = 0; i < IndexSet.size(); ++i)
+    {
+        pVertexArray->append(VertexSet[IndexSet[i]]);
+        pColorArray->append(glm::vec3(0.0f, 0.0f, 0.0f));
+        pNormalArray->append(NormalSet[i / 6]);
+        pTexCoordArray->append(glm::vec2(0.0f, 0.0f));
+        pLightmapCoordArray->append(glm::vec2(0.0f, 0.0f));
+        pTexIndexArray->append(0);
+    }
 }
