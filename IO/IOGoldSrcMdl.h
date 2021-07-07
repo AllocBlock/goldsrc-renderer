@@ -87,6 +87,19 @@ struct SMdlTexture
         voFile.read(reinterpret_cast<char*>(IndexSet.data()), Width * Height);
         voFile.read(reinterpret_cast<char*>(Palette.data()), 256 * 3 * sizeof(uint8_t));
     }
+
+    void getRawRGBAPixels(void* voData) const
+    {
+        unsigned char* pIter = static_cast<unsigned char*>(voData);
+        for (uint8_t PalatteIndex : IndexSet)
+        {
+            IOCommon::SGoldSrcColor PixelColor = Palette[PalatteIndex];
+            *pIter++ = static_cast<unsigned char>(PixelColor.R);
+            *pIter++ = static_cast<unsigned char>(PixelColor.G);
+            *pIter++ = static_cast<unsigned char>(PixelColor.B);
+            *pIter++ = static_cast<unsigned char>(0xff);
+        }
+    }
 };
 
 struct SMdlTriangleVertex
@@ -273,7 +286,9 @@ public:
     CIOGoldSrcMdl() : CIOBase() {}
     CIOGoldSrcMdl(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
 
-    std::vector<SMdlBodyPart> getBodyParts() const { return m_BodyPartSet; }
+    const std::vector<SMdlBodyPart>& getBodyParts() const { return m_BodyPartSet; }
+    const std::vector<SMdlTexture>& getTextures() const { return m_TextureSet; }
+    const std::vector<int16_t>& getSkinReferences() const { return m_SkinReferenceSet; }
 protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
 
@@ -281,5 +296,6 @@ private:
     SMdlHeader m_Header = {};
     std::vector<SMdlTexture> m_TextureSet;
     std::vector<SMdlBodyPart> m_BodyPartSet;
+    std::vector<int16_t> m_SkinReferenceSet;
 };
 

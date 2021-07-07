@@ -9,6 +9,8 @@ protected:
 private:
     std::shared_ptr<S3DObject> __readBodyPart(const SMdlBodyPart& vBodyPart);
     void __readModel(const SMdlModel& vModel, std::shared_ptr<S3DObject> voObject);
+
+    std::shared_ptr<CIOGoldSrcMdl> m_pIOMdl = nullptr;
 };
 
 

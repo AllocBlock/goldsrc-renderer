@@ -113,4 +113,9 @@ bool CIOGoldSrcMdl::_readV(std::filesystem::path vFilePath)
         File.seekg(m_Header.BodyPartDataOffset + i * BodyPartHeaderSize, std::ios::beg);
         m_BodyPartSet[i].read(File);
     }
+
+    // 读取皮肤索引（Skin Reference，Mesh中存储了SkinRef字段，对应了m_SkinReferenceSet数组的索引，而m_SkinReferenceSet存储了对应纹理的索引
+    m_SkinReferenceSet.resize(m_Header.SkinReferenceNum);
+    File.seekg(m_Header.SkinDataOffset, std::ios::beg);
+    File.read(reinterpret_cast<char*>(m_SkinReferenceSet.data()), m_Header.SkinReferenceNum * sizeof(int16_t));
 }

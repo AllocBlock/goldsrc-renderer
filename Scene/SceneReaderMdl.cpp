@@ -3,20 +3,29 @@
 
 std::shared_ptr<SScene> CSceneReaderMdl::_readV()
 {
-    auto pIOMdl = std::make_shared<CIOGoldSrcMdl>();
-    pIOMdl->read(m_FilePath);
+    m_pIOMdl = std::make_shared<CIOGoldSrcMdl>();
+    m_pIOMdl->read(m_FilePath);
 
     auto pScene = std::make_shared<SScene>();
-    auto BodyPartSet = pIOMdl->getBodyParts();
+    auto BodyPartSet = m_pIOMdl->getBodyParts();
     for (const auto& BodyPart : BodyPartSet)
     {
         auto pObject = __readBodyPart(BodyPart);
         pScene->Objects.emplace_back(pObject);
     }
 
-    uint8_t BaseColor1[3] = { 255, 255, 255 };
-    uint8_t BaseColor2[3] = { 255, 0, 255 };
-    pScene->TexImages.emplace_back(generateGrid(4, 4, 16, BaseColor1, BaseColor2));
+    auto TextureSet = m_pIOMdl->getTextures();
+    for (const SMdlTexture& Texture : TextureSet)
+    {
+        void* pData = new uint8_t[Texture.Width * Texture.Height * 4];
+        Texture.getRawRGBAPixels(pData);
+        auto pImage = std::make_shared<CIOImage>();
+        pImage->setImageSize(Texture.Width, Texture.Height);
+        pImage->setData(pData);
+        delete[] pData;
+
+        pScene->TexImages.emplace_back(pImage);
+    }
 
     return pScene;
 }
@@ -36,17 +45,21 @@ std::shared_ptr<S3DObject> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& v
 
 void CSceneReaderMdl::__readModel(const SMdlModel& vModel, std::shared_ptr<S3DObject> voObject)
 {
-    size_t VertexStartIndex = voObject->Vertices.size();
+    auto TextureSet = m_pIOMdl->getTextures();
+    auto SkinReferenceSet = m_pIOMdl->getSkinReferences();
 
     float Scale = 0.0f;
-    std::ofstream Log("log.txt", std::ios::out);
     for (const auto& Mesh : vModel.MeshSet)
     {
+        uint32_t TextureIndex = SkinReferenceSet[Mesh.SkinReference];
+        double TextureWidth = TextureSet[TextureIndex].Width;
+        double TextureHeight = TextureSet[TextureIndex].Height;
         for (const auto& TriangleVertex : Mesh.TriangleVertexSet)
         {
             glm::vec3 Vertex = vModel.VertexSet[TriangleVertex.VertexIndex].glmVec3();
             glm::vec3 Normal = vModel.NormalSet[TriangleVertex.NormalIndex].glmVec3();
-
+            glm::vec2 TexCoord = glm::vec2(TriangleVertex.S / TextureWidth, TriangleVertex.T / TextureHeight);
+           
             //int16_t VertexBoneIndex = vModel.VertexBoneIndexSet[TriangleVertex.VertexIndex];
             //int16_t NormalBoneIndex = vModel.NormalBoneIndexSet[TriangleVertex.NormalIndex];
 
@@ -58,18 +71,14 @@ void CSceneReaderMdl::__readModel(const SMdlModel& vModel, std::shared_ptr<S3DOb
             Scale = std::max<float>(Scale, std::abs(Vertex.z));
 
             voObject->Vertices.emplace_back(Vertex);
-            
-            Log << Vertex.x << ", " << Vertex.y << ", " << Vertex.z << "\n";
-            
             voObject->Normals.emplace_back(Normal);
             voObject->Colors.emplace_back(glm::vec3(1.0, 1.0, 1.0));
-            voObject->TexCoords.emplace_back(glm::vec2(0.0, 0.0));
+            voObject->TexCoords.emplace_back(TexCoord);
             voObject->LightmapCoords.emplace_back(glm::vec2(0.0, 0.0));
-            voObject->TexIndices.emplace_back(0);
+            voObject->TexIndices.emplace_back(TextureIndex);
         }
     }
-    Log.close();
-    
+
     // 缩放到单位体积内
     for (auto& Vertex : voObject->Vertices)
         Vertex /= Scale;
