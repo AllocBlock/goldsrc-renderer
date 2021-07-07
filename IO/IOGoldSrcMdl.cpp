@@ -3,25 +3,6 @@
 #include <vector>
 #include <array>
 
-//struct SMdlBone
-//{
-//    char Name[32];	// bone name for symbolic links
-//    int ParentIndex;		// parent bone
-//    int FlagBitField;		// ??
-//    int BoneControllerIndexSet[6];	// bone controller index, -1 == none
-//    float Value[6];	// default DoF values
-//    float Scale[6]; // scale for delta DoF values
-//};
-//
-//struct SMdlBoneController
-//{
-//    int Bone;	// -1 == 0
-//    int Type;	// X, Y, Z, XR, YR, ZR, M
-//    float Start;
-//    float End;
-//    int Rest;	// byte index value at rest
-//    int Index;	// 0-3 user set controller, 4 mouth
-//};
 //
 //struct SMdlBoundingBox
 //{
@@ -118,4 +99,44 @@ bool CIOGoldSrcMdl::_readV(std::filesystem::path vFilePath)
     m_SkinReferenceSet.resize(m_Header.SkinReferenceNum);
     File.seekg(m_Header.SkinDataOffset, std::ios::beg);
     File.read(reinterpret_cast<char*>(m_SkinReferenceSet.data()), m_Header.SkinReferenceNum * sizeof(int16_t));
+
+    // 读取骨骼
+    m_BoneSet.resize(m_Header.BoneNum);
+    File.seekg(m_Header.BoneDataOffset, std::ios::beg);
+    File.read(reinterpret_cast<char*>(m_BoneSet.data()), m_Header.BoneNum * sizeof(SMdlBone));
+
+    m_BoneControllerSet.resize(m_Header.BoneControllerNum);
+    File.seekg(m_Header.BoneControllerDataOffset, std::ios::beg);
+    File.read(reinterpret_cast<char*>(m_BoneControllerSet.data()), m_Header.BoneControllerNum * sizeof(SMdlBoneController));
+
+    // 读取序列
+    m_SequenceDescriptionSet.resize(m_Header.SequenceNum);
+    File.seekg(m_Header.SequenceDataOffset, std::ios::beg);
+    File.read(reinterpret_cast<char*>(m_SequenceDescriptionSet.data()), m_Header.SequenceNum * sizeof(SMdlSequenceDescription));
+
+    // 计算骨骼变换
+    m_BoneTransformSet.resize(m_Header.BoneNum);
+    // TODO: 太复杂了，先缓一缓...
+
+    // 更新骨骼级联关系
+    std::vector<bool> BoneUpdateMarkSet(m_Header.BoneNum, false);
+    size_t UpdatedBoneNum = 0;
+    size_t Index = 0;
+    while (UpdatedBoneNum < m_Header.BoneNum)
+    {
+        if (BoneUpdateMarkSet[Index]) continue;
+        else if (m_BoneSet[Index].ParentIndex == -1) // 无父节点，无需更新
+        {
+            BoneUpdateMarkSet[Index] = true;
+            ++UpdatedBoneNum;
+            continue;
+        }
+        else if (BoneUpdateMarkSet[m_BoneSet[Index].ParentIndex]) // 父节点已更新，则可以更新自己
+        {
+            m_BoneTransformSet[Index] = m_BoneTransformSet[m_BoneSet[Index].ParentIndex] * m_BoneTransformSet[Index];
+            BoneUpdateMarkSet[Index] = true;
+            ++UpdatedBoneNum;
+            continue;
+        }
+    }
 }

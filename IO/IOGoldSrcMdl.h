@@ -69,7 +69,7 @@ struct SMdlTexture
     int32_t FlagBitField;
     int32_t Width;
     int32_t Height;
-    int32_t	DataOffset;
+    int32_t    DataOffset;
 
     std::vector<uint8_t> IndexSet;
     std::array<IOCommon::SGoldSrcColor, 256> Palette;
@@ -114,7 +114,7 @@ struct SMdlMesh
     int32_t TriangleNum;
     int32_t TriangleDataOffset;
     int32_t SkinReference;
-    int32_t NormalNum;		// per mesh normals
+    int32_t NormalNum;        // per mesh normals
     int32_t NormalDataOffset; // normal vec3_t
 
     std::vector<SMdlTriangleVertex> TriangleVertexSet;
@@ -188,14 +188,14 @@ struct SMdlModel
     int32_t MeshNum;
     int32_t MeshDataOffset;
 
-    int32_t VertexNum;		// number of unique vertices
-    int32_t VertexBondIndexDataOffset;	// vertex bone info
-    int32_t VertexDataOffset;		// vertex vec3_t
-    int32_t NormalNum;		// number of unique surface normals
-    int32_t NormalBondIndexDataOffset;	// normal bone info
-    int32_t NormalDataOffset;		// normal vec3_t
+    int32_t VertexNum;        // number of unique vertices
+    int32_t VertexBondIndexDataOffset;    // vertex bone info
+    int32_t VertexDataOffset;        // vertex vec3_t
+    int32_t NormalNum;        // number of unique surface normals
+    int32_t NormalBondIndexDataOffset;    // normal bone info
+    int32_t NormalDataOffset;        // normal vec3_t
 
-    int32_t GroupNum;		// deformation groups
+    int32_t GroupNum;        // deformation groups
     int32_t GroupDataOffset;
 
     std::vector<SMdlMesh> MeshSet;
@@ -278,6 +278,71 @@ struct SMdlSkin
     }
 };
 
+struct SMdlBone
+{
+    char Name[32]; // bone name for symbolic links
+    int ParentIndex; // parent bone
+    int FlagBitField; // ??
+    int BoneControllerIndexSet[6]; // bone controller index, -1 == none
+    float Value[6]; // default DoF values
+    float Scale[6]; // scale for delta DoF values
+};
+
+struct SMdlBoneController
+{
+    int Bone;    // -1 == 0
+    int Type;    // X, Y, Z, XR, YR, ZR, M
+    float Start;
+    float End;
+    int Rest;    // byte index value at rest
+    int Index;    // 0-3 user set controller, 4 mouth
+};
+
+struct SMdlSequenceDescription
+{
+    char				label[32];	// sequence label
+
+    float				fps;		// frames per second	
+    int					flags;		// looping/non-looping flags
+
+    int					activity;
+    int					actweight;
+
+    int					numevents;
+    int					eventindex;
+
+    int					numframes;	// number of frames per sequence
+
+    int					numpivots;	// number of foot pivots
+    int					pivotindex;
+
+    int					motiontype;
+    int					motionbone;
+    IOCommon::SGoldSrcVec3				linearmovement;
+    int					automoveposindex;
+    int					automoveangleindex;
+
+    IOCommon::SGoldSrcVec3				bbmin;		// per sequence bounding box
+    IOCommon::SGoldSrcVec3				bbmax;
+
+    int					numblends;
+    int					animindex;		// mstudioanim_t pointer relative to start of sequence group data
+                                        // [blend][bone][X, Y, Z, XR, YR, ZR]
+
+    int					blendtype[2];	// X, Y, Z, XR, YR, ZR
+    float				blendstart[2];	// starting value
+    float				blendend[2];	// ending value
+    int					blendparent;
+
+    int					seqgroup;		// sequence group for demand loading
+
+    int					entrynode;		// transition node at entry
+    int					exitnode;		// transition node at exit
+    int					nodeflags;		// transition rules
+
+    int					nextseq;		// auto advancing sequences
+};
+
 // 参考 https://github.com/MoeMod/HLMV-Qt
 // 有些许多mdl内的信息并未进行解析
 class CIOGoldSrcMdl : public CIOBase
@@ -297,5 +362,10 @@ private:
     std::vector<SMdlTexture> m_TextureSet;
     std::vector<SMdlBodyPart> m_BodyPartSet;
     std::vector<int16_t> m_SkinReferenceSet;
+    std::vector<SMdlBone> m_BoneSet;
+    std::vector<SMdlBoneController> m_BoneControllerSet;
+    std::vector<SMdlSequenceDescription> m_SequenceDescriptionSet;
+
+    std::vector<glm::mat4> m_BoneTransformSet;
 };
 
