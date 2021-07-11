@@ -295,6 +295,7 @@ void CVulkanRenderer::__renderByBspTree(uint32_t vImageIndex)
 
     m_RenderedObjectSet.clear();
     __renderTreeNode(vImageIndex, 0);
+    __renderPointEntities(vImageIndex);
     __renderModels(vImageIndex);
 }
 
@@ -378,6 +379,19 @@ void CVulkanRenderer::__renderModel(uint32_t vImageIndex, size_t vModelIndex, bo
         else
             m_PipelineSet.TrianglesWithDepthTest.setLightmapState(CommandBuffer, EnableLightmap);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
+    }
+}
+
+void CVulkanRenderer::__renderPointEntities(uint32_t vImageIndex)
+{
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    m_PipelineSet.TrianglesWithDepthTest.bind(CommandBuffer, vImageIndex);
+
+    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+    {
+        if (!m_AreObjectsVisable[i]) continue;
+        else if (m_pScene->Objects[i]->getMark() != "Entity") continue;
+        __recordObjectRenderCommand(vImageIndex, i);
     }
 }
 

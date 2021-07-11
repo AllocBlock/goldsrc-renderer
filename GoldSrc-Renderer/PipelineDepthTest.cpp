@@ -248,6 +248,8 @@ void CPipelineDepthTest::_initDescriptorV()
 
 void CPipelineDepthTest::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 {
+    m_EnableLightmap = false;
+    m_Opacity = 1.0;
     __updatePushConstant(vCommandBuffer, m_EnableLightmap, m_Opacity);
 }
 

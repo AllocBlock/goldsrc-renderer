@@ -24,7 +24,7 @@ void CImguiFrameRate::draw()
     
     ImGui::Begin(u8"Ö¡ÂÊ", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize);
     ImGui::Text((u8"ÊµÊ±FPS: " + std::to_string(RealtimeFPS)).c_str());
-    double AverageDeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastAverageTimeStamp).count()) / 1000.0;
+    double AverageDeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastAverageTimeStamp).count()) / 1e6;
     static double DisplayedAverageFrameRate = 0.0;
     if (AverageDeltaTimeSecond >= m_AverageFrameRateUpdateInterval)
     {

@@ -100,6 +100,7 @@ private:
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
     void __renderModels(uint32_t vImageIndex);
     void __renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend);
+    void __renderPointEntities(uint32_t vImageIndex);
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __recordGuiCommandBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
