@@ -1,6 +1,6 @@
 #pragma once
 #include "ApplicationBase.h"
-#include "GUIMain.h"
+#include "ImguiMain.h"
 
 class CApplicationGoldSrc : public CApplicationBase
 {

@@ -307,7 +307,7 @@ void CVulkanRenderer::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex
 
     if (vNodeIndex >= m_pScene->BspTree.NodeNum) // if is leaf, render it
     {
-        uint32_t LeafIndex = vNodeIndex - m_pScene->BspTree.NodeNum;
+        uint32_t LeafIndex = static_cast<uint32_t>(vNodeIndex - m_pScene->BspTree.NodeNum);
         bool isLeafVisable = false;
         for (size_t ObjectIndex : m_pScene->BspTree.LeafIndexToObjectIndices.at(LeafIndex))
         {
@@ -402,13 +402,16 @@ void CVulkanRenderer::__recordObjectRenderCommand(uint32_t vImageIndex, size_t v
     _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
     std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
+
+    uint32_t Size = static_cast<uint32_t>(DataPosition.Size);
+    uint32_t Offset = static_cast<uint32_t>(DataPosition.Offset);
     vkCmdSetDepthBias(CommandBuffer, static_cast<float>(vObjectIndex) / m_pScene->Objects.size(), 0, 0);
     if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::INDEXED_TRIAGNLE_LIST)
-        vkCmdDrawIndexed(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0, 0);
+        vkCmdDrawIndexed(CommandBuffer, Size, 1, Offset, 0, 0);
     else if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
-        vkCmdDraw(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0);
+        vkCmdDraw(CommandBuffer, Size, 1, Offset, 0);
     else if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_STRIP_LIST)
-        vkCmdDraw(CommandBuffer, DataPosition.Size, 1, DataPosition.Offset, 0);
+        vkCmdDraw(CommandBuffer, Size, 1, Offset, 0);
     else
         throw std::runtime_error(u8"物体类型错误");
 }
@@ -482,8 +485,8 @@ void CVulkanRenderer::__createGraphicsPipelines()
 void CVulkanRenderer::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
-    m_Command.createBuffers(m_SceneCommandName, m_NumSwapchainImage, ECommandBufferLevel::PRIMARY);
-    m_Command.createBuffers(m_GuiCommandName, m_NumSwapchainImage, ECommandBufferLevel::SECONDARY);
+    m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_NumSwapchainImage), ECommandBufferLevel::PRIMARY);
+    m_Command.createBuffers(m_GuiCommandName, static_cast<uint32_t>(m_NumSwapchainImage), ECommandBufferLevel::SECONDARY);
 
     Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
     {
@@ -726,8 +729,8 @@ size_t CVulkanRenderer::__getActualTextureNum()
 
 void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack)
 {
-    int TexWidth = vpImage->getImageWidth();
-    int TexHeight = vpImage->getImageHeight();
+    size_t TexWidth = vpImage->getWidth();
+    size_t TexHeight = vpImage->getHeight();
     const void* pPixelData = vpImage->getData();
 
     VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
@@ -735,8 +738,8 @@ void CVulkanRenderer::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = TexWidth;
-    ImageInfo.extent.height = TexHeight;
+    ImageInfo.extent.width = static_cast<uint32_t>(TexWidth);
+    ImageInfo.extent.height = static_cast<uint32_t>(TexHeight);
     ImageInfo.extent.depth = 1;
     ImageInfo.mipLevels = 1;
     ImageInfo.arrayLayers = 1;
@@ -772,7 +775,7 @@ void CVulkanRenderer::__calculateVisiableObjects()
         PVS.resize(m_pScene->Objects.size(), true);
         for (size_t i = 0; i < m_pScene->BspTree.LeafNum; ++i)
         {
-            if (!m_pScene->BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), i))
+            if (!m_pScene->BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), static_cast<uint32_t>(i)))
             {
                 std::vector<size_t> LeafObjectIndices = m_pScene->BspTree.LeafIndexToObjectIndices[i];
                 for (size_t LeafObjectIndex : LeafObjectIndices)

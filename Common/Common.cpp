@@ -2,18 +2,18 @@
 
 #include <fstream>
 
-const float g_ModOffset = 1e-9;
+const float g_ModOffset = 1e-9f;
 
-float Common::mod(float vVal, float vMax)
+double Common::mod(double vVal, double vMax)
 {
     if (vVal < 0)
     {
-        int Times = std::ceil(std::abs(vVal) / vMax - g_ModOffset);
+        int Times = static_cast<int>(std::ceil(std::abs(vVal) / vMax - g_ModOffset));
         return vVal + Times * vMax;
     }
     else
     {
-        int Times = std::floor(vVal / vMax);
+        int Times = static_cast<int>(std::floor(vVal / vMax));
         return vVal - Times * vMax;
     }
 }

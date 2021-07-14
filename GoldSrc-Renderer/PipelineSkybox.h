@@ -21,7 +21,7 @@ public:
             const VkDeviceSize Offsets[] = { 0 };
             bind(vCommandBuffer, vImageIndex);
             vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_VertexDataPack.Buffer, Offsets);
-            vkCmdDraw(vCommandBuffer, m_VertexNum, 1, 0, 0);
+            vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
         }
     }
 

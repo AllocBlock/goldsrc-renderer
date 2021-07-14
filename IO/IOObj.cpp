@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <random>
 
+using namespace Common;
+
 bool CIOObj::_readV(std::filesystem::path vFilePath) {
     m_pObj = std::make_shared<SObj>();
 
@@ -15,7 +17,7 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
     std::ifstream File;
     File.open(m_FilePath);
     if (!File.is_open()) {
-        Common::Log::log(vFilePath.u8string() + u8" 文件打开失败");
+        Log::log(vFilePath.u8string() + u8" 文件打开失败");
         return false;
     }
 
@@ -66,7 +68,7 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
                 if (FaceNode.empty()) break;
                 if (!std::regex_match(FaceNode, ReResult, ReFaceNode))
                 {
-                    Common::Log::log(u8" 面数据错误" + std::string(LineBuffer));
+                    Log::log(u8" 面数据错误" + std::string(LineBuffer));
                     continue;
                 }
                 SObjFaceNode FaceNodeInfo;
@@ -101,7 +103,7 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
             Line >> CurrentSmoothGroup;
         }
         else {
-            Common::Log::log(m_FilePath.u8string() + u8" obj格式有误或不支持的标记：" + Cmd);
+            Log::log(m_FilePath.u8string() + u8" obj格式有误或不支持的标记：" + Cmd);
             continue;
         }
     }
@@ -130,13 +132,13 @@ size_t CIOObj::getFaceNum() const
     else return 0;
 }
 
-size_t CIOObj::getFaceNodeNum(int vFaceIndex) const
+size_t CIOObj::getFaceNodeNum(size_t vFaceIndex) const
 {
     if (!m_pObj || vFaceIndex < 0 || vFaceIndex >= getFaceNum()) return 0;
     return m_pObj->Faces[vFaceIndex].Nodes.size();
 }
 
-glm::vec3 CIOObj::getVertex(int vFaceIndex, int vNodeIndex) const
+glm::vec3 CIOObj::getVertex(size_t vFaceIndex, size_t vNodeIndex) const
 {
     if (!m_pObj || 
         vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
@@ -146,7 +148,7 @@ glm::vec3 CIOObj::getVertex(int vFaceIndex, int vNodeIndex) const
     return m_pObj->Vertices[VertexId - 1] / m_ScaleFactor;
 }
 
-glm::vec2 CIOObj::getTexCoord(int vFaceIndex, int vNodeIndex) const
+glm::vec2 CIOObj::getTexCoord(size_t vFaceIndex, size_t vNodeIndex) const
 {
     if (!m_pObj ||
         vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
@@ -157,11 +159,11 @@ glm::vec2 CIOObj::getTexCoord(int vFaceIndex, int vNodeIndex) const
         return glm::vec2(NAN, NAN);
     // 纹理映射方式不同，obj->vulkan
     glm::vec2 TexCoor = m_pObj->TexCoords[TexCoordId - 1];
-    TexCoor.y = 1.0 - TexCoor.y;
+    TexCoor.y = 1.0f - TexCoor.y;
     return TexCoor;
 }
 
-glm::vec3 CIOObj::getNormal(int vFaceIndex, int vNodeIndex) const
+glm::vec3 CIOObj::getNormal(size_t vFaceIndex, size_t vNodeIndex) const
 {
     if (!m_pObj ||
         vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||

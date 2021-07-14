@@ -12,7 +12,7 @@ void saveSpr(const CIOGoldSrcSpr& vSpr, std::string vFilePrefix)
         vSpr.getFrameRGBAPixels(i, pData);
 
         CIOImage Image;
-        Image.setImageSize(Width, Height);
+        Image.setSize(Width, Height);
         Image.setData(pData);
         std::string FileName = vFilePrefix;
         if (FrameNum > 1)

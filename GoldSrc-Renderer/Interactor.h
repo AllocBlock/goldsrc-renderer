@@ -48,10 +48,10 @@ private:
 	std::shared_ptr<CVulkanRenderer> m_pRenderer = nullptr;
 
 	float m_Speed = 3.0;
-	const float m_BoostScale = 3.0;
-	const float m_CrawlScale = 0.5;
-	const float m_HorizontalSensetivity = 0.1;
-	const float m_VerticalSensetivity = 0.1;
+	const float m_BoostScale = 3.0f;
+	const float m_CrawlScale = 0.5f;
+	const float m_HorizontalSensetivity = 0.1f;
+	const float m_VerticalSensetivity = 0.1f;
 
 	bool m_Enabled = true;
 	double m_LastMousePosX = 0.0;

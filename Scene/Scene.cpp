@@ -27,7 +27,7 @@ uint32_t SBspTree::getPointLeaf(glm::vec3 vPoint)
             NodeIndex = Nodes[NodeIndex].Back.value();
         }
     }
-    uint32_t LeafIndex = NodeIndex - NodeNum;;
+    uint32_t LeafIndex = static_cast<uint32_t>(NodeIndex - NodeNum);
 
     return LeafIndex;
 }
@@ -35,7 +35,7 @@ uint32_t SBspTree::getPointLeaf(glm::vec3 vPoint)
 void SBspPvs::decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree)
 {
     RawData = vRawData;
-    LeafNum = vBspTree.LeafNum;
+    LeafNum = static_cast<uint32_t>(vBspTree.LeafNum);
 
     MapList.resize(LeafNum);
     MapList[0].resize(LeafNum, true); // leaf 0 can see all
@@ -121,13 +121,13 @@ void CLightmap::clear()
 
 size_t CLightmap::appendLightmap(std::shared_ptr<CIOImage> vpImage)
 {
-    if (m_Channel != vpImage->getImageChannels())
+    if (m_Channel != vpImage->getChannelNum())
     {
-        throw std::runtime_error(u8"错误：Lightmap图像的通道数量错误，要求为" + std::to_string(m_Channel) + u8"，实际为" + std::to_string(vpImage->getImageChannels()));
+        throw std::runtime_error(u8"错误：Lightmap图像的通道数量错误，要求为" + std::to_string(m_Channel) + u8"，实际为" + std::to_string(vpImage->getChannelNum()));
     }
     size_t LightmapIndex = m_LightmapImages.size();
 
-    if (m_StartWidth + vpImage->getImageWidth() > m_MaxWidth) // next row
+    if (m_StartWidth + vpImage->getWidth() > m_MaxWidth) // next row
     {
         m_StartHeight += m_CurrentRowHeight;
         m_StartWidth = m_CurrentRowHeight = 0;
@@ -135,12 +135,12 @@ size_t CLightmap::appendLightmap(std::shared_ptr<CIOImage> vpImage)
 
     // simply place texture in a row
     m_Offsets.emplace_back(std::make_pair(m_StartWidth, m_StartHeight));
-    m_StartWidth += vpImage->getImageWidth();
+    m_StartWidth += vpImage->getWidth();
     m_TotalWidth = std::max<size_t>(m_TotalWidth, m_StartWidth);
-    if (vpImage->getImageHeight() > m_CurrentRowHeight)
+    if (vpImage->getHeight() > m_CurrentRowHeight)
     {
-        m_TotalHeight += vpImage->getImageHeight() - m_CurrentRowHeight;
-        m_CurrentRowHeight = vpImage->getImageHeight();
+        m_TotalHeight += vpImage->getHeight() - m_CurrentRowHeight;
+        m_CurrentRowHeight = vpImage->getHeight();
     }
     m_LightmapImages.emplace_back(std::move(vpImage));
 
@@ -160,8 +160,8 @@ std::shared_ptr<CIOImage> CLightmap::getCombinedLightmap()
         const uint8_t* pImageData = reinterpret_cast<const uint8_t*>(pLightmap->getData());
 
         auto [OffsetWidth, OffsetHeight] = m_Offsets[i];
-        size_t RowNum = pLightmap->getImageHeight();
-        size_t RowSize = m_Channel * pLightmap->getImageWidth();
+        size_t RowNum = pLightmap->getHeight();
+        size_t RowSize = m_Channel * pLightmap->getWidth();
         size_t Stroke = m_Channel * m_TotalWidth;
         size_t StartOffset = OffsetHeight * Stroke + OffsetWidth * m_Channel;
         for (size_t k = 0; k < RowNum; ++k)
@@ -171,8 +171,8 @@ std::shared_ptr<CIOImage> CLightmap::getCombinedLightmap()
     }
 
     auto pCombinedLightmapImage = std::make_shared<CIOImage>();
-    pCombinedLightmapImage->setImageSize(m_TotalWidth, m_TotalHeight);
-    pCombinedLightmapImage->setImageChannels(m_Channel);
+    pCombinedLightmapImage->setSize(m_TotalWidth, m_TotalHeight);
+    pCombinedLightmapImage->setChannelNum(m_Channel);
     pCombinedLightmapImage->setData(pCombinedData);
     delete[] pCombinedData;
 
@@ -190,7 +190,7 @@ glm::vec2 CLightmap::getAcutalLightmapCoord(size_t vIndex, glm::vec2 vOriginTexC
     auto [OffsetWidth, OffsetHeight] = m_Offsets[vIndex];
     float OffsetX = static_cast<float>(OffsetWidth) / m_TotalWidth;
     float OffsetY = static_cast<float>(OffsetHeight) / m_TotalHeight;
-    float ScaleWidth = static_cast<float>(m_LightmapImages[vIndex]->getImageWidth()) / m_TotalWidth;
-    float ScaleHeight = static_cast<float>(m_LightmapImages[vIndex]->getImageHeight()) / m_TotalHeight;
+    float ScaleWidth = static_cast<float>(m_LightmapImages[vIndex]->getWidth()) / m_TotalWidth;
+    float ScaleHeight = static_cast<float>(m_LightmapImages[vIndex]->getHeight()) / m_TotalHeight;
     return glm::vec2(OffsetX + vOriginTexCoord.x * ScaleWidth, OffsetY + vOriginTexCoord.y * ScaleHeight);
 }

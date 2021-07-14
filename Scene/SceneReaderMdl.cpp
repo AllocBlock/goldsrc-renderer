@@ -20,7 +20,7 @@ std::shared_ptr<SScene> CSceneReaderMdl::_readV()
         void* pData = new uint8_t[Texture.Width * Texture.Height * 4];
         Texture.getRawRGBAPixels(pData);
         auto pImage = std::make_shared<CIOImage>();
-        pImage->setImageSize(Texture.Width, Texture.Height);
+        pImage->setSize(Texture.Width, Texture.Height);
         pImage->setData(pData);
         delete[] pData;
 
@@ -63,8 +63,8 @@ void CSceneReaderMdl::__readModel(const SMdlModel& vModel, std::shared_ptr<C3DOb
         double TextureHeight = TextureSet[TextureIndex].Height;
         for (const auto& TriangleVertex : Mesh.TriangleVertexSet)
         {
-            glm::vec3 Vertex = vModel.VertexSet[TriangleVertex.VertexIndex].glmVec3();
-            glm::vec3 Normal = vModel.NormalSet[TriangleVertex.NormalIndex].glmVec3();
+            glm::vec3 Vertex = vModel.VertexSet[TriangleVertex.VertexIndex].toGlm();
+            glm::vec3 Normal = vModel.NormalSet[TriangleVertex.NormalIndex].toGlm();
             glm::vec2 TexCoord = glm::vec2(TriangleVertex.S / TextureWidth, TriangleVertex.T / TextureHeight);
            
             //int16_t VertexBoneIndex = vModel.VertexBoneIndexSet[TriangleVertex.VertexIndex];

@@ -15,8 +15,8 @@ struct SUniformBufferObjectFrag
 void CPipelineTest::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
-    int TexWidth = vSkyBoxImageSet[0]->getImageWidth();
-    int TexHeight = vSkyBoxImageSet[0]->getImageHeight();
+    int TexWidth = vSkyBoxImageSet[0]->getWidth();
+    int TexHeight = vSkyBoxImageSet[0]->getHeight();
     size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
     size_t TotalImageSize = SingleFaceImageSize * 6;
     uint8_t* pPixelData = new uint8_t[TotalImageSize];
@@ -40,7 +40,7 @@ void CPipelineTest::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6
 
     for (size_t i = 0; i < vSkyBoxImageSet.size(); ++i)
     {
-        _ASSERTE(TexWidth == vSkyBoxImageSet[i]->getImageWidth() && TexHeight == vSkyBoxImageSet[i]->getImageHeight());
+        _ASSERTE(TexWidth == vSkyBoxImageSet[i]->getWidth() && TexHeight == vSkyBoxImageSet[i]->getHeight());
         const void* pData = vSkyBoxImageSet[i]->getData();
         memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
     }

@@ -8,8 +8,8 @@
 //{
 //    int Bone;
 //    int Group;			// intersection group
-//    IOCommon::SGoldSrcVec3 min;		// bounding box
-//    IOCommon::SGoldSrcVec3 max;
+//    Common::SVec3 min;		// bounding box
+//    Common::SVec3 max;
 //};
 //
 //struct SMdlSequenceGroup
@@ -40,12 +40,12 @@
 //
 //    int MotionType;
 //    int MotionBone;
-//    IOCommon::SGoldSrcVec3 LinearMovement;
+//    Common::SVec3 LinearMovement;
 //    int AutomovePosindex;
 //    int AutomoveAngleindex;
 //
-//    IOCommon::SGoldSrcVec3 BBMin;		// per sequence bounding box
-//    IOCommon::SGoldSrcVec3 BBMax;
+//    Common::SVec3 BBMin;		// per sequence bounding box
+//    Common::SVec3 BBMax;
 //
 //    int BlendNum;
 //    int AnimationDataOffset;		// mstudioanim_t pointer relative to start of sequence group data
@@ -139,4 +139,6 @@ bool CIOGoldSrcMdl::_readV(std::filesystem::path vFilePath)
             continue;
         }
     }
+
+    return true;
 }

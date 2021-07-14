@@ -12,7 +12,7 @@ void CCamera::reset()
     m_Aspect = 1.0f;
     m_Near = 0.01f;
     m_Far = 2000.0f;
-    m_Fov = 120.0f;
+    m_Fov = 90.0f;
 }
 
 glm::vec3 CCamera::getFront() const
@@ -95,7 +95,7 @@ SFrustum CCamera::getFrustum() const
 
     for (int i = 0; i < 6; ++i)
     {
-        float Length = glm::vec3(Frustum.Planes[i].x, Frustum.Planes[i].y, Frustum.Planes[i].z).length();
+        float Length = static_cast<float>(glm::length(glm::vec3(Frustum.Planes[i].x, Frustum.Planes[i].y, Frustum.Planes[i].z)));
         Frustum.Planes[i] /= Length;
     }
     return Frustum;
@@ -103,7 +103,7 @@ SFrustum CCamera::getFrustum() const
 
 void CCamera::setAt(glm::vec3 vAt)
 {
-    const float Pi = glm::pi<float>();
+    const float& Pi = glm::pi<float>();
     float Dx = vAt.x - m_Pos.x;
     float Dy = vAt.y - m_Pos.y;
     float Dz = vAt.z - m_Pos.z;

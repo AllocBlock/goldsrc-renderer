@@ -3,7 +3,7 @@
 #include <fstream>
 #include <algorithm>
 
-const size_t BSP_MAX_NAME_LENGTH = 16;
+using namespace Common;
 
 bool CIOGoldsrcWad::_readV(std::filesystem::path vFilePath)
 {
@@ -11,7 +11,7 @@ bool CIOGoldsrcWad::_readV(std::filesystem::path vFilePath)
     File.open(vFilePath.string(), std::ios::in | std::ios::binary);
     if (!File.is_open())
     {
-        Common::Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
+        Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
         return false;
     }
 
@@ -92,7 +92,7 @@ void CIOGoldsrcWad::getRawRGBAPixels(size_t vTexIndex, void* voData) const
         }
         else
         {
-            IOCommon::SGoldSrcColor PixelColor = m_TexturesList[vTexIndex].Palette[PalatteIndex];
+            GoldSrc::SColor PixelColor = m_TexturesList[vTexIndex].Palette[PalatteIndex];
             *pIter++ = static_cast<unsigned char>(PixelColor.R);
             *pIter++ = static_cast<unsigned char>(PixelColor.G);
             *pIter++ = static_cast<unsigned char>(PixelColor.B);
@@ -147,7 +147,7 @@ void SWadTexture::read(std::ifstream& vFile, uint32_t vOffset)
 
     for (int i = 0; i < Palette.size(); i++)
     {
-        IOCommon::SGoldSrcColor Color;
+        GoldSrc::SColor Color;
         Color.R = vFile.get();
         Color.G = vFile.get();
         Color.B = vFile.get();

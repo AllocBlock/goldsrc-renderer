@@ -36,7 +36,7 @@ struct SWadTexture
     uint32_t Height;
     std::array<uint32_t, 4> ImageOffsets;
     std::array<std::vector<uint8_t>, 4> ImageDatas;
-    std::array<IOCommon::SGoldSrcColor, 256> Palette;
+    std::array<Common::GoldSrc::SColor, 256> Palette;
 
     void read(std::ifstream& vFile, uint32_t vOffset);
 

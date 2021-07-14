@@ -7,6 +7,8 @@
 float SMapBrush::GlobalScale = 1.0f / 64.0f;
 const std::string g_ParseFailMessage = u8"MAP文件解析失败";
 
+using namespace Common;
+
 // vertice are stored at clockwise
 glm::vec3 SMapPlane::getNormal() const
 {
@@ -76,7 +78,7 @@ std::vector<SMapPolygon> SMapBrush::getPolygons()
                     static bool AlreadyLogged = false;
                     if (!AlreadyLogged)
                     {
-                        Common::Log::log(u8"map文件中存在疑似非法固体（同一个固体中存在相同的平面），可能导致渲染效果出错");
+                        Log::log(u8"map文件中存在疑似非法固体（同一个固体中存在相同的平面），可能导致渲染效果出错");
                         AlreadyLogged = true;
                     }
                 }
@@ -202,7 +204,7 @@ bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
     File.open(vFilePath, std::ios::in);
     if (!File.is_open())
     {
-        Common::Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
+        Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
         return false;
     }
 
@@ -366,7 +368,7 @@ std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
         {
             if (Properties.find("wad") == Properties.end())
             {
-                Common::Log::log(u8"未在worldspawn实体内找到wad文件信息");
+                Log::log(u8"未在worldspawn实体内找到wad文件信息");
                 return {};
             }
             else
@@ -389,7 +391,7 @@ std::string CIOGoldSrcMap::getSkyBoxPrefix()
         {
             if (Properties.find("skyname") == Properties.end())
             {
-                Common::Log::log(u8"未在worldspawn实体内找到wad文件信息");
+                Log::log(u8"未在worldspawn实体内找到wad文件信息");
                 return "";
             }
             else

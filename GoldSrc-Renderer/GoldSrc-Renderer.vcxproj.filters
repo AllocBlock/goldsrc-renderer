@@ -27,7 +27,7 @@
     <ClCompile Include="ImguiLog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GUIMain.cpp">
+    <ClCompile Include="ImguiMain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Interactor.cpp">
@@ -51,6 +51,9 @@
     <ClCompile Include="PipelineSkybox.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ImguiSelectFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImguiAlert.h">
@@ -62,7 +65,7 @@
     <ClInclude Include="ImguiLog.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GUIMain.h">
+    <ClInclude Include="ImguiMain.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Interactor.h">
@@ -87,6 +90,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PointData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiSelectFile.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

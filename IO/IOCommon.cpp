@@ -1,6 +1,8 @@
 #include "IOCommon.h"
 
-glm::vec3 IOCommon::SGoldSrcVec3::glmVec3() const
+using namespace Common;
+
+glm::vec3 GoldSrc::SVec3::toGlm() const
 {
     return glm::vec3(X, Y, Z);
 }

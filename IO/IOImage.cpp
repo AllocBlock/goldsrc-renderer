@@ -34,7 +34,11 @@ void CIOImage::writePPM(std::filesystem::path vFilePath)
 bool CIOImage::_readV(std::filesystem::path vFilePath)
 {
     __cleanup();
-    m_pData = static_cast<void*>(stbi_load(vFilePath.string().c_str(), &m_Width, &m_Height, &m_Channels, STBI_rgb_alpha)); // 强制读取为RGBA
+    int Width, Height, ChannelNum;
+    m_pData = static_cast<void*>(stbi_load(vFilePath.string().c_str(), &Width, &Height, &ChannelNum, STBI_rgb_alpha)); // 强制读取为RGBA
+    m_Width = Width;
+    m_Height = Height;
+    m_ChannelNum = ChannelNum;
     if (!m_pData)
         throw std::runtime_error(u8"图片读取失败：" + std::string(stbi_failure_reason()));
     return true;

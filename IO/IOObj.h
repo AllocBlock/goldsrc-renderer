@@ -37,10 +37,10 @@ public:
     CIOObj(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
 
     size_t getFaceNum() const;
-    size_t getFaceNodeNum(int vFaceIndex) const;
-    glm::vec3 getVertex(int vFaceIndex, int vNodeIndex) const;
-    glm::vec2 getTexCoord(int vFaceIndex, int vNodeIndex) const;
-    glm::vec3 getNormal(int vFaceIndex, int vNodeIndex) const;
+    size_t getFaceNodeNum(size_t vFaceIndex) const;
+    glm::vec3 getVertex(size_t vFaceIndex, size_t vNodeIndex) const;
+    glm::vec2 getTexCoord(size_t vFaceIndex, size_t vNodeIndex) const;
+    glm::vec3 getNormal(size_t vFaceIndex, size_t vNodeIndex) const;
 
     const std::vector<glm::vec3>& getVertices() { return m_pObj->Vertices; }
     const std::vector<glm::vec3>& getNormals() { return m_pObj->Normals; }

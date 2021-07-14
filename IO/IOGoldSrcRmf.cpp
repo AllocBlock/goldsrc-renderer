@@ -3,6 +3,8 @@
 
 #include <fstream>
 
+using namespace Common;
+
 float CIOGoldSrcRmf::getVersion() const
 {
     return Version;
@@ -40,7 +42,7 @@ bool CIOGoldSrcRmf::_readV(std::filesystem::path vFilePath)
     File.open(vFilePath.string(), std::ios::in | std::ios::binary);
     if (!File.is_open())
     {
-        Common::Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
+        Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
         return false;
     }
     File.read(reinterpret_cast<char*>(&Version), sizeof(float));
@@ -63,7 +65,7 @@ bool CIOGoldSrcRmf::_readV(std::filesystem::path vFilePath)
     File.read(reinterpret_cast<char*>(&CameraDataVersion), sizeof(float));
     File.read(reinterpret_cast<char*>(&ActiveCameraIndex), sizeof(int));
     File.read(reinterpret_cast<char*>(&CameraNum), sizeof(int));
-    Cameras = IOCommon::readArray<SRmfCamera>(File, sizeof(SRmfCamera) * CameraNum);
+    Cameras = IO::readArray<SRmfCamera>(File, sizeof(SRmfCamera) * CameraNum);
 
     return true;
 }
@@ -86,23 +88,23 @@ void SRmfFace::read(std::ifstream& vFile)
 {
     vFile.read(TextureName, sizeof(TextureName));
     vFile.read(reinterpret_cast<char*>(&Unknown), sizeof(float));
-    vFile.read(reinterpret_cast<char*>(&TextureDirectionU), sizeof(IOCommon::SGoldSrcVec3));
+    vFile.read(reinterpret_cast<char*>(&TextureDirectionU), sizeof(GoldSrc::SVec3));
     vFile.read(reinterpret_cast<char*>(&TextureOffsetU), sizeof(float));
-    vFile.read(reinterpret_cast<char*>(&TextureDirectionV), sizeof(IOCommon::SGoldSrcVec3));
+    vFile.read(reinterpret_cast<char*>(&TextureDirectionV), sizeof(GoldSrc::SVec3));
     vFile.read(reinterpret_cast<char*>(&TextureOffsetV), sizeof(float));
     vFile.read(reinterpret_cast<char*>(&TextureRotation), sizeof(float));
     vFile.read(reinterpret_cast<char*>(&TextureScaleU), sizeof(float));
     vFile.read(reinterpret_cast<char*>(&TextureScaleV), sizeof(float));
     vFile.read(Unknown2, sizeof(Unknown2));
     vFile.read(reinterpret_cast<char*>(&VertexNum), sizeof(int));
-    Vertices = IOCommon::readArray<IOCommon::SGoldSrcVec3>(vFile, sizeof(IOCommon::SGoldSrcVec3) * VertexNum);
+    Vertices = IO::readArray<GoldSrc::SVec3>(vFile, sizeof(GoldSrc::SVec3) * VertexNum);
     vFile.read(reinterpret_cast<char*>(&PlanePoints), sizeof(PlanePoints));
 }
 
 void SRmfVisGroup::read(std::ifstream& vFile)
 {
     vFile.read(Name, sizeof(Name));
-    vFile.read(reinterpret_cast<char*>(&Color), sizeof(IOCommon::SGoldSrcColor));
+    vFile.read(reinterpret_cast<char*>(&Color), sizeof(GoldSrc::SColor));
     vFile.read(reinterpret_cast<char*>(&Unknown), sizeof(char));
     vFile.read(reinterpret_cast<char*>(&Index), sizeof(int));
     vFile.read(reinterpret_cast<char*>(&IsVisible), sizeof(uint8_t));
@@ -113,7 +115,7 @@ void SRmfObject::__read(std::ifstream& vFile)
 {
     Type.read(vFile);
     vFile.read(reinterpret_cast<char*>(&VisGroupIndex), sizeof(int));
-    vFile.read(reinterpret_cast<char*>(&Color), sizeof(IOCommon::SGoldSrcColor));
+    vFile.read(reinterpret_cast<char*>(&Color), sizeof(GoldSrc::SColor));
     _readV(vFile);
 }
 
@@ -158,7 +160,7 @@ void SRmfEntity::_readV(std::ifstream& vFile)
     for (SRmfEntityProperty& Property : Properties)
         Property.read(vFile);
     vFile.read(Unknown2, sizeof(Unknown2));
-    vFile.read(reinterpret_cast<char*>(&Origin), sizeof(IOCommon::SGoldSrcVec3));
+    vFile.read(reinterpret_cast<char*>(&Origin), sizeof(GoldSrc::SVec3));
     vFile.read(Unknown3, sizeof(Unknown3));
 }
 
@@ -208,7 +210,7 @@ std::shared_ptr<SRmfObject> SRmfObject::create(std::ifstream& vFile)
 
 void SRmfCorner::read(std::ifstream& vFile)
 {
-    vFile.read(reinterpret_cast<char*>(&Origin), sizeof(IOCommon::SGoldSrcVec3));
+    vFile.read(reinterpret_cast<char*>(&Origin), sizeof(GoldSrc::SVec3));
     vFile.read(Name, sizeof(Name));
     vFile.read(reinterpret_cast<char*>(&PropertyNum), sizeof(int));
 

@@ -31,8 +31,8 @@ void CRendererTest::exportShadowMapToFile(std::string vFileName)
     vkUnmapMemory(m_AppInfo.Device, StageBufferPack.Memory);
 
     auto pImage = std::make_shared<CIOImage>();
-    pImage->setImageSize(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
-    pImage->setImageChannels(1);
+    pImage->setSize(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    pImage->setChannelNum(1);
     pImage->setData(pData);
     delete[] pData;
 

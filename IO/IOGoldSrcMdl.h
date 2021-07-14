@@ -12,12 +12,12 @@ struct SMdlHeader
     char Name[64];
     int Length;
 
-    IOCommon::SGoldSrcVec3 Eyeposition;    // ideal eye position
-    IOCommon::SGoldSrcVec3 Min;            // ideal movement hull size
-    IOCommon::SGoldSrcVec3 Max;
+    Common::GoldSrc::SVec3 Eyeposition;    // ideal eye position
+    Common::GoldSrc::SVec3 Min;            // ideal movement hull size
+    Common::GoldSrc::SVec3 Max;
 
-    IOCommon::SGoldSrcVec3 AABBMin;            // clipping bounding box
-    IOCommon::SGoldSrcVec3 AABBMax;
+    Common::GoldSrc::SVec3 AABBMin;            // clipping bounding box
+    Common::GoldSrc::SVec3 AABBMax;
 
     int                    FlagBitField;
 
@@ -72,7 +72,7 @@ struct SMdlTexture
     int32_t    DataOffset;
 
     std::vector<uint8_t> IndexSet;
-    std::array<IOCommon::SGoldSrcColor, 256> Palette;
+    std::array<Common::GoldSrc::SColor, 256> Palette;
 
     static size_t getHeaderSize()
     {
@@ -93,7 +93,7 @@ struct SMdlTexture
         unsigned char* pIter = static_cast<unsigned char*>(voData);
         for (uint8_t PalatteIndex : IndexSet)
         {
-            IOCommon::SGoldSrcColor PixelColor = Palette[PalatteIndex];
+            Common::GoldSrc::SColor PixelColor = Palette[PalatteIndex];
             *pIter++ = static_cast<unsigned char>(PixelColor.R);
             *pIter++ = static_cast<unsigned char>(PixelColor.G);
             *pIter++ = static_cast<unsigned char>(PixelColor.B);
@@ -111,11 +111,11 @@ struct SMdlTriangleVertex
 
 struct SMdlMesh
 {
-    int32_t TriangleNum;
-    int32_t TriangleDataOffset;
-    int32_t SkinReference;
-    int32_t NormalNum;        // per mesh normals
-    int32_t NormalDataOffset; // normal vec3_t
+    int32_t TriangleNum = 0;
+    int32_t TriangleDataOffset = 0;
+    int32_t SkinReference = 0;
+    int32_t NormalNum = 0;        // per mesh normals
+    int32_t NormalDataOffset = 0; // normal vec3_t
 
     std::vector<SMdlTriangleVertex> TriangleVertexSet;
 
@@ -179,28 +179,28 @@ struct SMdlMesh
 
 struct SMdlModel
 {
-    char Name[64];
+    char Name[64] = "";
 
-    int32_t Type;
+    int32_t Type = 0;
 
-    float BoundingRadius;
+    float BoundingRadius = 0.0f;
 
-    int32_t MeshNum;
-    int32_t MeshDataOffset;
+    int32_t MeshNum = 0;
+    int32_t MeshDataOffset = 0;
 
-    int32_t VertexNum;        // number of unique vertices
-    int32_t VertexBondIndexDataOffset;    // vertex bone info
-    int32_t VertexDataOffset;        // vertex vec3_t
-    int32_t NormalNum;        // number of unique surface normals
-    int32_t NormalBondIndexDataOffset;    // normal bone info
-    int32_t NormalDataOffset;        // normal vec3_t
+    int32_t VertexNum = 0;        // number of unique vertices
+    int32_t VertexBondIndexDataOffset = 0;    // vertex bone info
+    int32_t VertexDataOffset = 0;        // vertex vec3_t
+    int32_t NormalNum = 0;        // number of unique surface normals
+    int32_t NormalBondIndexDataOffset = 0;    // normal bone info
+    int32_t NormalDataOffset = 0;        // normal vec3_t
 
-    int32_t GroupNum;        // deformation groups
-    int32_t GroupDataOffset;
+    int32_t GroupNum = 0;        // deformation groups
+    int32_t GroupDataOffset = 0;
 
     std::vector<SMdlMesh> MeshSet;
-    std::vector<IOCommon::SGoldSrcVec3> VertexSet;
-    std::vector<IOCommon::SGoldSrcVec3> NormalSet;
+    std::vector<Common::GoldSrc::SVec3> VertexSet;
+    std::vector<Common::GoldSrc::SVec3> NormalSet;
     std::vector<int16_t> VertexBoneIndexSet;
     std::vector<int16_t> NormalBoneIndexSet;
 
@@ -223,11 +223,11 @@ struct SMdlModel
 
         VertexSet.resize(VertexNum);
         voFile.seekg(VertexDataOffset, std::ios::beg);
-        voFile.read(reinterpret_cast<char*>(VertexSet.data()), VertexNum * sizeof(IOCommon::SGoldSrcVec3));
+        voFile.read(reinterpret_cast<char*>(VertexSet.data()), VertexNum * sizeof(Common::GoldSrc::SVec3));
 
         NormalSet.resize(NormalNum);
         voFile.seekg(NormalDataOffset, std::ios::beg);
-        voFile.read(reinterpret_cast<char*>(NormalSet.data()), NormalNum * sizeof(IOCommon::SGoldSrcVec3));
+        voFile.read(reinterpret_cast<char*>(NormalSet.data()), NormalNum * sizeof(Common::GoldSrc::SVec3));
 
         VertexBoneIndexSet.resize(VertexNum);
         voFile.seekg(VertexBondIndexDataOffset, std::ios::beg);
@@ -241,10 +241,10 @@ struct SMdlModel
 
 struct SMdlBodyPart
 {
-    char Name[64];
-    int32_t ModelNum;
-    int32_t Base;
-    int32_t ModelDataOffset;
+    char Name[64] = "";
+    int32_t ModelNum = 0;
+    int32_t Base = 0;
+    int32_t ModelDataOffset = 0;
 
     std::vector<SMdlModel> ModelSet;
 
@@ -281,8 +281,8 @@ struct SMdlSkin
 struct SMdlBone
 {
     char Name[32]; // bone name for symbolic links
-    int ParentIndex; // parent bone
-    int FlagBitField; // ??
+    int ParentIndex = 0; // parent bone
+    int FlagBitField = 0; // ??
     int BoneControllerIndexSet[6]; // bone controller index, -1 == none
     float Value[6]; // default DoF values
     float Scale[6]; // scale for delta DoF values
@@ -290,57 +290,57 @@ struct SMdlBone
 
 struct SMdlBoneController
 {
-    int Bone;    // -1 == 0
-    int Type;    // X, Y, Z, XR, YR, ZR, M
-    float Start;
-    float End;
-    int Rest;    // byte index value at rest
-    int Index;    // 0-3 user set controller, 4 mouth
+    int Bone = 0;    // -1 == 0
+    int Type = 0;    // X, Y, Z, XR, YR, ZR, M
+    float Start = 0.0f;
+    float End = 0.0f;
+    int Rest = 0;    // byte index value at rest
+    int Index = 0;    // 0-3 user set controller, 4 mouth
 };
 
 struct SMdlSequenceDescription
 {
     char				label[32];	// sequence label
 
-    float				fps;		// frames per second	
-    int					flags;		// looping/non-looping flags
+    float				fps = 0.0f;		// frames per second	
+    int					flags = 0;		// looping/non-looping flags
 
-    int					activity;
-    int					actweight;
+    int					activity = 0;
+    int					actweight = 0;
 
-    int					numevents;
-    int					eventindex;
+    int					numevents = 0;
+    int					eventindex = 0;
 
-    int					numframes;	// number of frames per sequence
+    int					numframes = 0;	// number of frames per sequence
 
-    int					numpivots;	// number of foot pivots
-    int					pivotindex;
+    int					numpivots = 0;	// number of foot pivots
+    int					pivotindex = 0;
 
-    int					motiontype;
-    int					motionbone;
-    IOCommon::SGoldSrcVec3				linearmovement;
-    int					automoveposindex;
-    int					automoveangleindex;
+    int					motiontype = 0;
+    int					motionbone = 0;
+    Common::GoldSrc::SVec3				linearmovement;
+    int					automoveposindex = 0;
+    int					automoveangleindex = 0;
 
-    IOCommon::SGoldSrcVec3				bbmin;		// per sequence bounding box
-    IOCommon::SGoldSrcVec3				bbmax;
+    Common::GoldSrc::SVec3				bbmin;		// per sequence bounding box
+    Common::GoldSrc::SVec3				bbmax;
 
-    int					numblends;
-    int					animindex;		// mstudioanim_t pointer relative to start of sequence group data
+    int					numblends = 0;
+    int					animindex = 0;		// mstudioanim_t pointer relative to start of sequence group data
                                         // [blend][bone][X, Y, Z, XR, YR, ZR]
 
     int					blendtype[2];	// X, Y, Z, XR, YR, ZR
     float				blendstart[2];	// starting value
     float				blendend[2];	// ending value
-    int					blendparent;
+    int					blendparent = 0;
 
-    int					seqgroup;		// sequence group for demand loading
+    int					seqgroup = 0;		// sequence group for demand loading
 
-    int					entrynode;		// transition node at entry
-    int					exitnode;		// transition node at exit
-    int					nodeflags;		// transition rules
+    int					entrynode = 0;		// transition node at entry
+    int					exitnode = 0;		// transition node at exit
+    int					nodeflags = 0;		// transition rules
 
-    int					nextseq;		// auto advancing sequences
+    int					nextseq = 0;		// auto advancing sequences
 };
 
 // ²Î¿¼ https://github.com/MoeMod/HLMV-Qt

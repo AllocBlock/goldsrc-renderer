@@ -5,29 +5,7 @@
 #include "IOGoldSrcMap.h"
 #include <vector>
 
-#define BSP_MAX_NAME_LENGTH 16
-#define BSP_MIPMAP_LEVEL 4
-#define BSP_MAX_HULL 4
-
-enum class ELumpType
-{
-    ENTITIES = 0,
-    PLANES,
-    TEXTURES,
-    VERTICES,
-    VISIBILITY,
-    NODES,
-    TEXINFO,
-    FACES,
-    LIGHTING,
-    CLIPNODES,
-    LEAVES,
-    MARKSURFACES,
-    EDGES,
-    SURFEDGES,
-    MODELS,
-    NUM_LUMP_TYPE
-};
+const size_t LUMP_NUM = 15;
 
 struct SBspLumpInfo
 {
@@ -38,34 +16,10 @@ struct SBspLumpInfo
 struct SBspHeader
 {
     int32_t Version = 0;
-    SBspLumpInfo LumpInfos[static_cast<size_t>(ELumpType::NUM_LUMP_TYPE)];
+    SBspLumpInfo LumpInfos[LUMP_NUM];
 
     void read(std::ifstream& vFile);
 };
-
-//#define MAX_MAP_HULLS        4
-//
-//#define MAX_MAP_MODELS       400
-//#define MAX_MAP_BRUSHES      4096
-//#define MAX_MAP_ENTITIES     1024
-//#define MAX_MAP_ENTSTRING    (128*1024)
-//
-//#define MAX_MAP_PLANES       32767
-//#define MAX_MAP_NODES        32767
-//#define MAX_MAP_CLIPNODES    32767
-//#define MAX_MAP_LEAFS        8192
-//#define MAX_MAP_VERTS        65535
-//#define MAX_MAP_FACES        65535
-//#define MAX_MAP_MARKSURFACES 65535
-//#define MAX_MAP_TEXINFO      8192
-//#define MAX_MAP_EDGES        256000
-//#define MAX_MAP_SURFEDGES    512000
-//#define MAX_MAP_TEXTURES     512
-//#define MAX_MAP_MIPTEX       0x200000
-//#define MAX_MAP_LIGHTING     0x200000
-//#define MAX_MAP_VISIBILITY   0x200000
-//
-//#define MAX_MAP_PORTALS     65536
 
 /***************************************************************
  * SLumpEntity contains all entity data.
@@ -107,7 +61,7 @@ enum class EPlaneType
  **************************************************************/
 struct SBspPlane
 {
-    IOCommon::SGoldSrcVec3 Normal;
+    Common::GoldSrc::SVec3 Normal;
     float DistanceToOrigin;
     int32_t Type; // EPlaneType
 };
@@ -136,7 +90,7 @@ struct SBspTexture
 
     bool IsDataInBsp = false; // memory-only
     uint8_t* pIndices = nullptr; // memory-only
-    IOCommon::SGoldSrcColor Palette[256];
+    Common::GoldSrc::SColor Palette[256];
 
     void read(std::ifstream& vFile, uint64_t vOffset);
     bool getRawRGBAPixels(void* vopData) const;
@@ -149,7 +103,7 @@ struct SBspTexture
  **************************************************************/
 struct SLumpTexture
 {
-    uint32_t NumTexture;
+    uint32_t NumTexture = 0;
     std::vector<int32_t> TexOffsets;
     std::vector<SBspTexture> Textures;
 
@@ -161,7 +115,7 @@ struct SLumpTexture
  **************************************************************/
 struct SLumpVertex
 {
-    std::vector<IOCommon::SGoldSrcVec3> Vertices;
+    std::vector<Common::GoldSrc::SVec3> Vertices;
 
     void read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize);
 };
@@ -223,9 +177,9 @@ struct SLumpNode
  **************************************************************/
 struct SBspTexInfo
 {
-    IOCommon::SGoldSrcVec3 TextureDirectionU;
+    Common::GoldSrc::SVec3 TextureDirectionU;
     float TextureOffsetU;
-    IOCommon::SGoldSrcVec3 TextureDirectionV;
+    Common::GoldSrc::SVec3 TextureDirectionV;
     float TextureOffsetV;
     uint32_t TextureIndex;
     uint32_t Flags;
@@ -421,7 +375,7 @@ struct SBspModel
 {
     float BoundingBoxMin[3];
     float BoundingBoxMax[3];
-    IOCommon::SGoldSrcVec3 Origin;
+    Common::GoldSrc::SVec3 Origin;
     int32_t NodeIndices[BSP_MAX_HULL];
     int32_t VisLeafs;
     int32_t FirstFaceIndex;

@@ -8,8 +8,8 @@ std::shared_ptr<CIOImage> createSingleValueImage(size_t vWidth, size_t vHeight, 
     for (uint8_t& Byte : TestData1)
         Byte = vValue;
     std::shared_ptr<CIOImage> pImage = std::make_shared<CIOImage>();
-    pImage->setImageSize(vWidth, vHeight);
-    pImage->setImageChannels(4);
+    pImage->setSize(vWidth, vHeight);
+    pImage->setChannelNum(4);
     pImage->setData(TestData1.data());
 
     return pImage;
@@ -36,11 +36,11 @@ int main()
     // print result
     std::shared_ptr<CIOImage> pCombinedImage = Lightmap.getCombinedLightmap();
     const uint8_t* pIndices = reinterpret_cast<const uint8_t*>(pCombinedImage->getData());
-    size_t ImageWidth = pCombinedImage->getImageWidth();
+    size_t ImageWidth = pCombinedImage->getWidth();
     std::cout << "lightmap result:" << std::endl;
-    for (size_t i = 0; i < pCombinedImage->getImageHeight(); ++i)
+    for (size_t i = 0; i < pCombinedImage->getHeight(); ++i)
     {
-        for (size_t k = 0; k < pCombinedImage->getImageWidth(); ++k)
+        for (size_t k = 0; k < pCombinedImage->getWidth(); ++k)
         {
             std::cout << static_cast<int>(pIndices[i * ImageWidth * 4 + k * 4]) << " ";
             std::cout << static_cast<int>(pIndices[i * ImageWidth * 4 + k * 4 + 1]) << " ";

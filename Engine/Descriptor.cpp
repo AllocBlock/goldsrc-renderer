@@ -115,7 +115,7 @@ void CDescriptor::__createPool(size_t vImageNum)
 
     auto PoolSize = m_PoolSizeSet;
     for (auto& Size : PoolSize)
-        Size.descriptorCount *= vImageNum;
+        Size.descriptorCount *= static_cast<uint32_t>(vImageNum);
 
     VkDescriptorPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

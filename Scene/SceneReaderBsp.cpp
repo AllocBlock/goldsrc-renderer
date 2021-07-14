@@ -6,6 +6,8 @@
 
 #include <sstream>
 
+using namespace Common;
+
 std::shared_ptr<SScene> CSceneReaderBsp::_readV()
 {
     m_pScene = std::make_shared<SScene>();
@@ -32,7 +34,7 @@ std::shared_ptr<SScene> CSceneReaderBsp::_readV()
 
 void CSceneReaderBsp::__readBsp(std::filesystem::path vFilePath)
 {
-    _reportProgress(u8"[bsp]读取文件中");
+    Scene::reportProgress(u8"[bsp]读取文件中");
     m_Bsp = CIOGoldSrcBsp(vFilePath);
     if (!m_Bsp.read())
         throw std::runtime_error(u8"文件解析失败");
@@ -47,23 +49,23 @@ void CSceneReaderBsp::__readTextures()
     m_TexNameToIndex.clear();
     // read wads
     const std::vector<std::filesystem::path>& WadPaths = Lumps.m_LumpEntity.WadPaths;
-    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths, m_ProgressReportFunc);
+    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths);
 
     // load textures
     // iterate each texture in texture lump
     // if bsp contains its data, load it, otherwise find it in all wads
     // if found, load it, otherwise set mapper to 0
-    _reportProgress(u8"整理纹理中");
-    TexImages.push_back(generateBlackPurpleGrid(4, 4, 16));
+    Scene::reportProgress(u8"整理纹理中");
+    TexImages.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     m_TexNameToIndex["TextureNotFound"] = 0;
     for (size_t i = 0; i < Lumps.m_LumpTexture.Textures.size(); ++i)
     {
         const SBspTexture& BspTexture = Lumps.m_LumpTexture.Textures[i];
-        _reportProgress(u8"读取纹理（" + std::to_string(i + 1) + "/" + std::to_string(Lumps.m_LumpTexture.Textures.size()) + " " + BspTexture.Name + u8"）");
+        Scene::reportProgress(u8"读取纹理（" + std::to_string(i + 1) + "/" + std::to_string(Lumps.m_LumpTexture.Textures.size()) + " " + BspTexture.Name + u8"）");
         if (BspTexture.IsDataInBsp)
         {
-            std::shared_ptr<CIOImage> pTexImage = getIOImageFromBspTexture(BspTexture);
-            m_TexNameToIndex[BspTexture.Name] = TexImages.size();
+            std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromBspTexture(BspTexture);
+            m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImages.size());
             TexImages.emplace_back(std::move(pTexImage));
         }
         else
@@ -75,8 +77,8 @@ void CSceneReaderBsp::__readTextures()
                 if (Index.has_value())
                 {
                     Found = true;
-                    std::shared_ptr<CIOImage> pTexImage = getIOImageFromWad(Wad, Index.value());
-                    m_TexNameToIndex[BspTexture.Name] = TexImages.size();
+                    std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
+                    m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImages.size());
                     TexImages.emplace_back(std::move(pTexImage));
                     break;
                 }
@@ -155,7 +157,7 @@ std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(siz
     std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
     Objects.emplace_back(std::move(pObjectNormalPart));
     Objects.emplace_back(std::move(pObjectSkyPart));
-    return std::move(Objects);
+    return Objects;
 }
 
 void CSceneReaderBsp::__loadBspTree()
@@ -166,7 +168,7 @@ void CSceneReaderBsp::__loadBspTree()
     std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
 
     // read node and PVS data
-    _reportProgress(u8"载入BSP数据");
+    Scene::reportProgress(u8"载入BSP数据");
     size_t NodeNum = Lumps.m_LumpNode.Nodes.size();
     size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
     size_t ModelNum = Lumps.m_LumpModel.Models.size();
@@ -184,7 +186,7 @@ void CSceneReaderBsp::__loadBspTree()
         const SBspPlane& OriginPlane = Lumps.m_LumpPlane.Planes[OriginNode.PlaneIndex];
         SBspTreeNode& Node = BspTree.Nodes[i];
 
-        Node.PlaneNormal = OriginPlane.Normal.glmVec3();
+        Node.PlaneNormal = OriginPlane.Normal.toGlm();
         Node.PlaneDistance = OriginPlane.DistanceToOrigin * m_SceneScale;
 
         if (OriginNode.ChildrenIndices[0] > 0)
@@ -280,7 +282,7 @@ void CSceneReaderBsp::__loadBspTree()
 
 void CSceneReaderBsp::__loadBspPvs()
 {
-    _reportProgress(u8"载入VIS数据");
+    Scene::reportProgress(u8"载入VIS数据");
 
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
@@ -336,8 +338,8 @@ std::vector<glm::vec3> CSceneReaderBsp::__getBspFaceVertices(size_t vFaceIndex)
     for (uint16_t FaceVertexIndex : FaceVertexIndices)
     {
         _ASSERTE(FaceVertexIndex < Lumps.m_LumpVertex.Vertices.size());
-        const IOCommon::SGoldSrcVec3& Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
-        FaceVertices.emplace_back(Vertex.glmVec3());
+        const GoldSrc::SVec3& Vertex = Lumps.m_LumpVertex.Vertices[FaceVertexIndex];
+        FaceVertices.emplace_back(Vertex.toGlm());
     }
 
     return FaceVertices;
@@ -353,7 +355,7 @@ glm::vec3 CSceneReaderBsp::__getBspFaceNormal(size_t vFaceIndex)
     _ASSERTE(Face.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
     const SBspPlane& Plane = Lumps.m_LumpPlane.Planes[Face.PlaneIndex];
     bool ReverseNormal = (Face.PlaneSide != 0);
-    glm::vec3 Normal = Plane.Normal.glmVec3();
+    glm::vec3 Normal = Plane.Normal.toGlm();
     if (ReverseNormal) Normal *= -1;
     return Normal;
 }
@@ -426,8 +428,8 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
                 pIndices[k] = std::max<uint8_t>(pIndices[k], pTempData[k]);
         }
         auto pLightmapImage = std::make_shared<CIOImage>();
-        pLightmapImage->setImageSize(LightmapWidth, LightmapHeight);
-        pLightmapImage->setImageChannels(4);
+        pLightmapImage->setSize(LightmapWidth, LightmapHeight);
+        pLightmapImage->setChannelNum(4);
         pLightmapImage->setData(pIndices);
         delete[] pTempData;
         delete[] pIndices;
@@ -534,7 +536,7 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<C3DObjectGoldSrc> 
 
 void CSceneReaderBsp::__correntLightmapCoords()
 {
-    _reportProgress(u8"修正Lightmap数据");
+    Scene::reportProgress(u8"修正Lightmap数据");
 
     for (auto& pObject : m_pScene->Objects)
     {
@@ -555,7 +557,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
 
 void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
 {
-    _reportProgress(u8"载入天空盒");
+    Scene::reportProgress(u8"载入天空盒");
 
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
@@ -589,7 +591,7 @@ bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string
     for (size_t i = 0; i < SkyBoxPostfixes.size(); ++i)
     {
         std::filesystem::path ImagePath;
-        if (findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, ImagePath))
+        if (Scene::findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, ImagePath))
         {
             m_pScene->SkyBoxImages[i] = std::make_shared<CIOImage>();
             m_pScene->SkyBoxImages[i]->read(ImagePath);

@@ -18,12 +18,12 @@ struct SResultReadScene
 class CGUIMain : public CGUIBase
 {
 public:
-    CGUIMain() = default;
+    CGUIMain();
 
     void showAlert(std::string vText);
     void log(std::string vText);
 
-    static SResultReadScene readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc = nullptr);
+    static SResultReadScene readScene(std::filesystem::path vFilePath);
 
     void setRenderer(std::shared_ptr<CVulkanRenderer> vRenderer) { m_pRenderer = vRenderer; }
     std::shared_ptr<CVulkanRenderer> getRenderer() { return m_pRenderer; }

@@ -139,14 +139,14 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
     PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutInfo.setLayoutCount = 1;
     PipelineLayoutInfo.pSetLayouts = &Layout;
-    PipelineLayoutInfo.pushConstantRangeCount = PushConstantRangeSet.size();
+    PipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(PushConstantRangeSet.size());
     PipelineLayoutInfo.pPushConstantRanges = PushConstantRangeSet.data();
 
     Vulkan::checkError(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
     VkGraphicsPipelineCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    PipelineInfo.stageCount = ShadeInfoSet.size();
+    PipelineInfo.stageCount = static_cast<uint32_t>(ShadeInfoSet.size());
     PipelineInfo.pStages = ShadeInfoSet.data();
     PipelineInfo.pVertexInputState = &VertexInputInfo;
     PipelineInfo.pInputAssemblyState = &InputAssemblyInfo;

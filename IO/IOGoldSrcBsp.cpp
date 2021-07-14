@@ -4,13 +4,15 @@
 
 #include <fstream>
 
+using namespace Common;
+
 bool CIOGoldSrcBsp::_readV(std::filesystem::path vFilePath)
 {
     std::ifstream File;
     File.open(vFilePath.string(), std::ios::in | std::ios::binary);
     if (!File.is_open())
     {
-        Common::Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
+        Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
         return false;
     }
     m_Header.read(File);
@@ -59,7 +61,7 @@ void SLumpEntity::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 
 void SLumpPlane::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Planes = IOCommon::readArray<SBspPlane>(vFile, vOffset, vSize);
+    Planes = IO::readArray<SBspPlane>(vFile, vOffset, vSize);
 }
 
 void SBspTexture::read(std::ifstream& vFile, uint64_t vOffset)
@@ -110,62 +112,62 @@ void SLumpTexture::read(std::ifstream& vFile, uint64_t vOffset)
 
 void SLumpVertex::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Vertices = IOCommon::readArray<IOCommon::SGoldSrcVec3>(vFile, vOffset, vSize);
+    Vertices = IO::readArray<GoldSrc::SVec3>(vFile, vOffset, vSize);
 }
 
 void SLumpVisibility::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Vis = IOCommon::readArray<uint8_t>(vFile, vOffset, vSize);
+    Vis = IO::readArray<uint8_t>(vFile, vOffset, vSize);
 }
 
 void SLumpNode::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Nodes = IOCommon::readArray<SBspNode>(vFile, vOffset, vSize);
+    Nodes = IO::readArray<SBspNode>(vFile, vOffset, vSize);
 }
 
 void SLumpTexInfo::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    TexInfos = IOCommon::readArray<SBspTexInfo>(vFile, vOffset, vSize);
+    TexInfos = IO::readArray<SBspTexInfo>(vFile, vOffset, vSize);
 }
 
 void SLumpFace::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Faces = IOCommon::readArray<SBspFace>(vFile, vOffset, vSize);
+    Faces = IO::readArray<SBspFace>(vFile, vOffset, vSize);
 }
 
 void SLumpLighting::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Lightmaps = IOCommon::readArray<SBspLightmap>(vFile, vOffset, vSize);
+    Lightmaps = IO::readArray<SBspLightmap>(vFile, vOffset, vSize);
 }
 
 void SLumpClipNode::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    ClipNodes = IOCommon::readArray<SBspClipNode>(vFile, vOffset, vSize);
+    ClipNodes = IO::readArray<SBspClipNode>(vFile, vOffset, vSize);
 }
 
 void SLumpLeaf::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Leaves = IOCommon::readArray<SBspLeaf>(vFile, vOffset, vSize);
+    Leaves = IO::readArray<SBspLeaf>(vFile, vOffset, vSize);
 }
 
 void SLumpMarkSurface::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    FaceIndices = IOCommon::readArray<uint16_t>(vFile, vOffset, vSize);
+    FaceIndices = IO::readArray<uint16_t>(vFile, vOffset, vSize);
 }
 
 void SLumpEdge::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Edges = IOCommon::readArray<SBspEdge>(vFile, vOffset, vSize);
+    Edges = IO::readArray<SBspEdge>(vFile, vOffset, vSize);
 }
 
 void SLumpSurfedge::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    EdgeIndices = IOCommon::readArray<int32_t>(vFile, vOffset, vSize);
+    EdgeIndices = IO::readArray<int32_t>(vFile, vOffset, vSize);
 }
 
 void SLumpModel::read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
 {
-    Models = IOCommon::readArray<SBspModel>(vFile, vOffset, vSize);
+    Models = IO::readArray<SBspModel>(vFile, vOffset, vSize);
 }
 
 bool SBspTexture::getRawRGBAPixels(void* vopData) const
@@ -190,7 +192,7 @@ bool SBspTexture::getRawRGBAPixels(void* vopData) const
         }
         else
         {
-            const IOCommon::SGoldSrcColor& Color = Palette[pIndices[i]];
+            const GoldSrc::SColor& Color = Palette[pIndices[i]];
             pIter[i * 4] = Color.R;
             pIter[i * 4 + 1] = Color.G;
             pIter[i * 4 + 2] = Color.B;
@@ -203,16 +205,16 @@ bool SBspTexture::getRawRGBAPixels(void* vopData) const
 glm::vec2 SBspTexInfo::getTexCoord(glm::vec3 vVertex) const
 {
     glm::vec2 TexCoord;
-    TexCoord.x = (glm::dot(vVertex, TextureDirectionU.glmVec3()) + TextureOffsetU);
-    TexCoord.y = (glm::dot(vVertex, TextureDirectionV.glmVec3()) + TextureOffsetV);
+    TexCoord.x = (glm::dot(vVertex, TextureDirectionU.toGlm()) + TextureOffsetU);
+    TexCoord.y = (glm::dot(vVertex, TextureDirectionV.toGlm()) + TextureOffsetV);
     return TexCoord;
 }
 
 glm::vec2 SBspTexInfo::getNormalizedTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight) const
 {
     glm::vec2 TexCoord;
-    TexCoord.x = (glm::dot(vVertex, TextureDirectionU.glmVec3()) + TextureOffsetU) / vTexWidth;
-    TexCoord.y = (glm::dot(vVertex, TextureDirectionV.glmVec3()) + TextureOffsetV) / vTexHeight;
+    TexCoord.x = (glm::dot(vVertex, TextureDirectionU.toGlm()) + TextureOffsetU) / vTexWidth;
+    TexCoord.y = (glm::dot(vVertex, TextureDirectionV.toGlm()) + TextureOffsetV) / vTexHeight;
     return TexCoord;
 }
 

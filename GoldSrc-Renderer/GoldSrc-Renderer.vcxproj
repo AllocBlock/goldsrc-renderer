@@ -116,7 +116,8 @@
     <ClCompile Include="ImguiAlert.cpp" />
     <ClCompile Include="ImguiFrameRate.cpp" />
     <ClCompile Include="ImguiLog.cpp" />
-    <ClCompile Include="GUIMain.cpp" />
+    <ClCompile Include="ImguiMain.cpp" />
+    <ClCompile Include="ImguiSelectFile.cpp" />
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PipelineBlend.cpp" />
@@ -130,7 +131,8 @@
     <ClInclude Include="ImguiAlert.h" />
     <ClInclude Include="ImguiFrameRate.h" />
     <ClInclude Include="ImguiLog.h" />
-    <ClInclude Include="GUIMain.h" />
+    <ClInclude Include="ImguiMain.h" />
+    <ClInclude Include="ImguiSelectFile.h" />
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="PipelineBlend.h" />
     <ClInclude Include="PipelineDepthTest.h" />

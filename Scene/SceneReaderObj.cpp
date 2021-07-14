@@ -2,13 +2,15 @@
 #include "SceneCommon.h"
 #include "IOObj.h"
 
+using namespace Common;
+
 std::shared_ptr<SScene> CSceneReaderObj::_readV()
 {
-    _reportProgress(u8"[obj]读取文件中");
+    Scene::reportProgress(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();
     Obj.read(m_FilePath);
 
-    _reportProgress(u8"读取场景中");
+    Scene::reportProgress(u8"读取场景中");
     std::shared_ptr<C3DObjectGoldSrc> pObjObject = std::make_shared<C3DObjectGoldSrc>();
     const uint32_t TexIndex = 0;
 
@@ -57,7 +59,7 @@ std::shared_ptr<SScene> CSceneReaderObj::_readV()
 
     m_pScene = std::make_shared<SScene>();
     m_pScene->Objects.emplace_back(pObjObject);
-    m_pScene->TexImages.emplace_back(generateBlackPurpleGrid(4, 4, 16));
+    m_pScene->TexImages.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
 
     return m_pScene;
 }

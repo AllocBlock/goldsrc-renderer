@@ -1,6 +1,8 @@
-﻿#include "GUIMain.h"
+﻿#include "ImguiMain.h"
 #include "Common.h"
+#include "ImguiSelectFile.h"
 #include "SceneInterface.h"
+#include "SceneCommon.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -11,7 +13,24 @@
 #include <set>
 #include <future>
 
-SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, std::function<void(std::string)> vProgressReportFunc)
+using namespace Common;
+
+CGUIMain::CGUIMain()
+{
+    static std::function<void(std::string)> ProgressReportFunc = [=](std::string vMessage)
+    {
+        m_LoadingProgressReport = vMessage;
+    };
+
+    Scene::setGlobalReportProgressFunc(ProgressReportFunc);
+
+    /*static std::function<void(std::string)> RequestFilePathFunc = [=](std::string vMessage)
+    {
+        m_LoadingProgressReport = vMessage;
+    };*/
+}
+
+SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath)
 {
     SResultReadScene Result;
     Result.Succeed = false;
@@ -19,30 +38,17 @@ SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, std::funct
     {
         Result.Message = u8"文件不存在（" + vFilePath.u8string() + u8"）";
     }
-    else if (vFilePath.extension() == ".bsp")
+    else if (vFilePath.extension() == ".bsp" ||
+        vFilePath.extension() == ".rmf" ||
+        vFilePath.extension() == ".map" ||
+        vFilePath.extension() == ".bsp" ||
+        vFilePath.extension() == ".obj" ||
+        vFilePath.extension() == ".mdl"
+        )
     {
+        std::string Extension = vFilePath.extension().string().substr(1);
         Result.Succeed = true;
-        Result.pScene = SceneReader::read("bsp", vFilePath, vProgressReportFunc);
-    }
-    else if (vFilePath.extension() == ".rmf")
-    {
-        Result.Succeed = true;
-        Result.pScene = SceneReader::read("rmf", vFilePath, vProgressReportFunc);
-    }
-    else if (vFilePath.extension() == ".map")
-    {
-        Result.Succeed = true;
-        Result.pScene = SceneReader::read("map", vFilePath, vProgressReportFunc);
-    }
-    else if (vFilePath.extension() == ".obj")
-    {
-        Result.Succeed = true;
-        Result.pScene = SceneReader::read("obj", vFilePath, vProgressReportFunc);
-    }
-    else if (vFilePath.extension() == ".mdl")
-    {
-        Result.Succeed = true;
-        Result.pScene = SceneReader::read("mdl", vFilePath, vProgressReportFunc);
+        Result.pScene = SceneReader::read(Extension, vFilePath);
     }
     else
     {
@@ -87,21 +93,10 @@ void CGUIMain::__drawGUI()
 
     ImGui::ShowDemoWindow();
     // 文件选择框
-    static ImGui::FileBrowser FileDialog;
-    FileDialog.Display();
-    if (FileDialog.HasSelected())
-    {
-        static std::function<void(std::string)> ProgressReportFunc = [=](std::string vMessage)
-        {
-            m_LoadingProgressReport = vMessage;
-        };
+    static CImguiSelectFile ImguiSceneFileSelection;
+    ImguiSceneFileSelection.draw();
 
-        m_LoadingFilePath = FileDialog.GetSelected(); FileDialog.ClearSelected();
-        ImGui::OpenPopup(u8"提示");
-        m_FileReadingPromise = std::async(readScene, m_LoadingFilePath, ProgressReportFunc);
-    }
-
-    // 文件加载框
+    // 文件加载信息框
     ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     if (ImGui::BeginPopupModal(u8"提示", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
@@ -142,9 +137,17 @@ void CGUIMain::__drawGUI()
         {
             if (ImGui::MenuItem(u8"打开"))
             {
-                FileDialog.SetTitle(u8"打开");
-                FileDialog.SetTypeFilters({ ".bsp", ".rmf", ".map", ".obj", ".mdl", ".*" });
-                FileDialog.Open();
+                ImguiSceneFileSelection.setTitle(u8"打开");
+                ImguiSceneFileSelection.setFilters({ ".bsp", ".rmf", ".map", ".obj", ".mdl", ".*" });
+
+                auto FileSelectFunc = [this](std::filesystem::path vPath)
+                {
+                    if (vPath.empty()) return;
+                    m_LoadingFilePath = vPath;
+                    ImGui::OpenPopup(u8"提示"); // 打开加载提示
+                    m_FileReadingPromise = std::async(readScene, m_LoadingFilePath);
+                };
+                ImguiSceneFileSelection.start(FileSelectFunc);
             }
             if (ImGui::MenuItem(u8"退出"))
             {
@@ -183,8 +186,8 @@ void CGUIMain::__drawGUI()
         ImGui::Text(u8"相机位置");
         pCamera->setPos(Pos);
 
-        float Theta = pCamera->getTheta();
-        float Phi = pCamera->getPhi();
+        float Theta = static_cast<float>(pCamera->getTheta());
+        float Phi = static_cast<float>(pCamera->getPhi());
         ImGui::BeginGroup();
         ImGui::PushID(u8"相机方向参数");
         ImGui::PushID(0); ImGui::SetNextItemWidth(FullWidth / 2);
@@ -232,13 +235,13 @@ void CGUIMain::__drawGUI()
 
 
         static ERenderMethod LastMethod = m_pRenderer->getRenderMethod();
-        int RenderMethodIndex = std::find(RenderMethods.begin(), RenderMethods.end(), m_pRenderer->getRenderMethod()) - RenderMethods.begin();
+        int RenderMethodIndex = static_cast<int>(std::find(RenderMethods.begin(), RenderMethods.end(), m_pRenderer->getRenderMethod()) - RenderMethods.begin());
         if (LastMethod != RenderMethods[RenderMethodIndex])
         {
             LastMethod = RenderMethods[RenderMethodIndex];
             m_pRenderer->rerecordCommand();
         }
-        ImGui::Combo(u8"渲染模式", &RenderMethodIndex, RenderMethodNames.data(), RenderMethods.size());
+        ImGui::Combo(u8"渲染模式", &RenderMethodIndex, RenderMethodNames.data(), static_cast<int>(RenderMethods.size()));
         m_pRenderer->setRenderMethod(RenderMethods[RenderMethodIndex]);
 
         glm::vec3 CameraPos = m_pRenderer->getCamera()->getPos();
@@ -254,7 +257,7 @@ void CGUIMain::__drawGUI()
         if (!RenderObjectList.empty())
         {
             std::string RenderNodeListStr = "";
-            for (uint32_t ObjectIndex : RenderObjectList)
+            for (size_t ObjectIndex : RenderObjectList)
             {
                 RenderNodeListStr += std::to_string(ObjectIndex) + ", ";
             }

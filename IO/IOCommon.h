@@ -4,37 +4,47 @@
 #include <fstream>
 #include <glm/glm.hpp>
 
-namespace IOCommon
+const size_t BSP_MAX_NAME_LENGTH = 16;
+const size_t BSP_MIPMAP_LEVEL = 4;
+const size_t BSP_MAX_HULL = 4;
+
+namespace Common
 {
-    struct SGoldSrcVec3
+    namespace GoldSrc
     {
-        float X, Y, Z;
+        struct SVec3
+        {
+            float X, Y, Z;
 
-        glm::vec3 glmVec3() const;
-    };
+            glm::vec3 toGlm() const;
+        };
 
-    struct SGoldSrcColor
-    {
-        uint8_t R, G, B;
-    };
-
-    template <typename T>
-    std::vector<T> readArray(std::ifstream& vFile, uint64_t vSize)
-    {
-        _ASSERTE(!vFile.eof() && !vFile.fail());
-        _ASSERTE(vSize % sizeof(T) == 0);
-        size_t NumT = vSize / sizeof(T);
-        std::vector<T> Result;
-        Result.resize(NumT);
-        vFile.read(reinterpret_cast<char*>(Result.data()), vSize);
-        return std::move(Result);
+        struct SColor
+        {
+            uint8_t R, G, B;
+        };
     }
 
-    template <typename T>
-    std::vector<T> readArray(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
+    namespace IO
     {
-        _ASSERTE(!vFile.eof() && !vFile.fail());
-        vFile.seekg(vOffset, std::ios_base::beg);
-        return IOCommon::readArray<T>(vFile, vSize);
+        template <typename T>
+        std::vector<T> readArray(std::ifstream& vFile, uint64_t vSize)
+        {
+            _ASSERTE(!vFile.eof() && !vFile.fail());
+            _ASSERTE(vSize % sizeof(T) == 0);
+            size_t NumT = vSize / sizeof(T);
+            std::vector<T> Result;
+            Result.resize(NumT);
+            vFile.read(reinterpret_cast<char*>(Result.data()), vSize);
+            return Result;
+        }
+
+        template <typename T>
+        std::vector<T> readArray(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize)
+        {
+            _ASSERTE(!vFile.eof() && !vFile.fail());
+            vFile.seekg(vOffset, std::ios_base::beg);
+            return readArray<T>(vFile, vSize);
+        }
     }
 }
