@@ -36,7 +36,9 @@ namespace Common
 
         void reportProgress(std::string vText);
         void setGlobalReportProgressFunc(std::function<void(std::string)> vFunc);
-        SRequestResultFilePath requestFilePath(std::string vMessage);
-        void setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string)> vFunc);
+        SRequestResultFilePath requestFilePath(std::string vMessage, std::string vFilter);
+        void setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string, std::string)> vFunc);
+
+        bool requestFilePathUntilCancel(std::filesystem::path vFilePath, std::string vFilter, std::filesystem::path& voFilePath);
     }
 }

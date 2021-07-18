@@ -5,6 +5,7 @@
 #include "ImguiAlert.h"
 #include "ImguiFrameRate.h"
 #include "ImguiLog.h"
+#include "ImguiSelectFile.h"
 
 #include <future>
 
@@ -45,5 +46,6 @@ private:
 
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";
-    std::future<SResultReadScene> m_FileReadingPromise;
+    std::future<SResultReadScene> m_FileReadingFuture;
+    CImguiSelectFile m_FileSelection;
 };

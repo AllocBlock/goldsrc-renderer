@@ -1,6 +1,5 @@
 ﻿#include "ImguiMain.h"
 #include "Common.h"
-#include "ImguiSelectFile.h"
 #include "SceneInterface.h"
 #include "SceneCommon.h"
 
@@ -24,10 +23,22 @@ CGUIMain::CGUIMain()
 
     Scene::setGlobalReportProgressFunc(ProgressReportFunc);
 
-    /*static std::function<void(std::string)> RequestFilePathFunc = [=](std::string vMessage)
+    static auto RequestFilePathFunc = [=](std::string vMessage, std::string vFilter) -> Scene::SRequestResultFilePath
     {
-        m_LoadingProgressReport = vMessage;
-    };*/
+        m_FileSelection.setTitle(vMessage);
+        m_FileSelection.setFilters({ vFilter });
+        std::promise<std::filesystem::path> Promise;
+        auto Future = Promise.get_future();
+        m_FileSelection.start(std::move(Promise));
+        Future.wait();
+        auto Path = Future.get();
+        if (Path.empty())
+            return { Scene::ERequestResultState::CANCEL, "" };
+        else
+            return { Scene::ERequestResultState::CONTINUE, Path };
+    };
+
+    Scene::setGlobalRequestFilePathFunc(RequestFilePathFunc);
 }
 
 SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath)
@@ -93,10 +104,22 @@ void CGUIMain::__drawGUI()
 
     ImGui::ShowDemoWindow();
     // 文件选择框
-    static CImguiSelectFile ImguiSceneFileSelection;
-    ImguiSceneFileSelection.draw();
+    m_FileSelection.draw();
+    static std::future<std::filesystem::path> FileSelectionFuture;
+    if (FileSelectionFuture.valid() &&
+        FileSelectionFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+    {
+        auto Path = FileSelectionFuture.get();
+        if (!Path.empty())
+        {
+            m_LoadingFilePath = Path;
+            m_FileReadingFuture = std::async(readScene, m_LoadingFilePath);
+        }
+    }
 
     // 文件加载信息框
+    if (!m_FileSelection.isOpen() && !m_LoadingFilePath.empty() && !ImGui::IsPopupOpen(u8"提示"))
+        ImGui::OpenPopup(u8"提示"); // 打开加载提示
     ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     if (ImGui::BeginPopupModal(u8"提示", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
@@ -104,25 +127,19 @@ void CGUIMain::__drawGUI()
         ImGui::Text((u8"[ " + m_LoadingFilePath.u8string() + u8" ]").c_str());
         if (!m_LoadingProgressReport.empty()) ImGui::Text((u8"进度：" + m_LoadingProgressReport).c_str());
 
-        if (m_FileReadingPromise.valid() &&
-            m_FileReadingPromise.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
+        if (m_FileReadingFuture.valid() &&
+            m_FileReadingFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
         {
             ImGui::CloseCurrentPopup();
             m_LoadingFilePath = "";
             m_LoadingProgressReport = "";
-            try
-            {
-                const SResultReadScene& ResultScene = m_FileReadingPromise.get();
-                if (ResultScene.Succeed)
-                    m_pRenderer->loadScene(ResultScene.pScene);
-                else
-                    showAlert(ResultScene.Message);
-            }
-            catch (std::exception& vException)
-            {
-                showAlert(vException.what());
-            }
+            const SResultReadScene& ResultScene = m_FileReadingFuture.get();
+            if (ResultScene.Succeed)
+                m_pRenderer->loadScene(ResultScene.pScene);
+            else
+                showAlert(ResultScene.Message);
         }
+
         ImGui::EndPopup();
     }
 
@@ -131,23 +148,21 @@ void CGUIMain::__drawGUI()
 
     ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
     // 菜单栏
+
     if (ImGui::BeginMenuBar())
     {
         if (ImGui::BeginMenu(u8"文件"))
         {
             if (ImGui::MenuItem(u8"打开"))
             {
-                ImguiSceneFileSelection.setTitle(u8"打开");
-                ImguiSceneFileSelection.setFilters({ ".bsp", ".rmf", ".map", ".obj", ".mdl", ".*" });
-
-                auto FileSelectFunc = [this](std::filesystem::path vPath)
+                if (!m_FileSelection.isOpen())
                 {
-                    if (vPath.empty()) return;
-                    m_LoadingFilePath = vPath;
-                    ImGui::OpenPopup(u8"提示"); // 打开加载提示
-                    m_FileReadingPromise = std::async(readScene, m_LoadingFilePath);
-                };
-                ImguiSceneFileSelection.start(FileSelectFunc);
+                    std::promise<std::filesystem::path> FileSelectionPromise;
+                    FileSelectionFuture = FileSelectionPromise.get_future();
+                    m_FileSelection.setTitle(u8"打开");
+                    m_FileSelection.setFilters({ ".bsp", ".rmf", ".map", ".obj", ".mdl", ".*" });
+                    m_FileSelection.start(std::move(FileSelectionPromise));
+                }
             }
             if (ImGui::MenuItem(u8"退出"))
             {

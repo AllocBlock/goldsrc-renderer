@@ -4,7 +4,7 @@
 using namespace Common;
 
 std::function<void(std::string)> g_pReportProgressFunc = nullptr;
-std::function<Scene::SRequestResultFilePath(std::string)> g_pRequestFilePathFunc = nullptr;
+std::function<Scene::SRequestResultFilePath(std::string,std::string)> g_pRequestFilePathFunc = nullptr;
 
 std::shared_ptr<CIOImage> Scene::generateGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize, uint8_t vBaseColor1[3], uint8_t vBaseColor2[3])
 {
@@ -159,13 +159,38 @@ void Scene::setGlobalReportProgressFunc(std::function<void(std::string)> vFunc)
     g_pReportProgressFunc = vFunc;
 }
 
-Scene::SRequestResultFilePath Scene::requestFilePath(std::string vMessage)
+Scene::SRequestResultFilePath Scene::requestFilePath(std::string vMessage, std::string vFilter = ".*")
 {
-    if (g_pRequestFilePathFunc) return g_pRequestFilePathFunc(vMessage);
+    if (g_pRequestFilePathFunc) return g_pRequestFilePathFunc(vMessage, vFilter);
     else return { ERequestResultState::IGNORE_, "" };
 }
 
-void Scene::setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string)> vFunc)
+void Scene::setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string, std::string)> vFunc)
 {
     g_pRequestFilePathFunc = vFunc;
+}
+
+bool Scene::requestFilePathUntilCancel(std::filesystem::path vFilePath, std::string vFilter, std::filesystem::path& voFilePath)
+{
+    while (true)
+    {
+        if (Scene::findFile(vFilePath, "../data", vFilePath))
+        {
+            voFilePath = vFilePath;
+            return true;
+        }
+        else
+        {
+            Scene::SRequestResultFilePath FilePathResult;
+            FilePathResult = Scene::requestFilePath(u8"需要文件：" + vFilePath.u8string(), vFilter);
+            if (FilePathResult.State == Scene::ERequestResultState::CONTINUE)
+            {
+                vFilePath = FilePathResult.Data;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 }
