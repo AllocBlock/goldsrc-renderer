@@ -29,11 +29,25 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
     // read wads
     Scene::reportProgress(u8"初始化纹理中");
     m_TexNameToIndex.clear();
+    
+    Scene::reportProgress(u8"整理纹理中");
+    m_pScene->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     m_TexNameToIndex["TextureNotFound"] = 0;
-    m_pScene->TexImages.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
-
-    Scene::reportProgress(u8"rmf不包含wad信息，将来会加入wad手动选择");
-    // TODO: provide wads file selection for user
+    while (true)
+    {
+        Scene::SRequestResultFilePath FilePathResult;
+        FilePathResult = Scene::requestFilePath(u8"添加纹理", ".wad");
+        if (FilePathResult.State == Scene::ERequestResultState::CONTINUE)
+        {
+            CIOGoldsrcWad Wad;
+            Common::GoldSrc::readWad(FilePathResult.Data, Wad);
+            m_Wads.emplace_back(std::move(Wad));
+        }
+        else
+        {
+            break;
+        }
+    }
 }
 
 void CSceneReaderRmf::__readObject(std::shared_ptr<SRmfObject> vpObject)
@@ -130,9 +144,9 @@ uint32_t CSceneReaderRmf::__requestTextureIndex(std::string vTextureName)
             if (Index.has_value())
             {
                 std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
-                uint32_t TexIndex = static_cast<uint32_t>(m_pScene->TexImages.size());
+                uint32_t TexIndex = static_cast<uint32_t>(m_pScene->TexImageSet.size());
                 m_TexNameToIndex[vTextureName] = TexIndex;
-                m_pScene->TexImages.emplace_back(std::move(pTexImage));
+                m_pScene->TexImageSet.emplace_back(std::move(pTexImage));
                 return TexIndex;
             }
         }
@@ -145,7 +159,7 @@ glm::vec2 CSceneReaderRmf::__getTexCoord(SRmfFace vFace, glm::vec3 vVertex)
 {
     _ASSERTE(m_TexNameToIndex.find(vFace.TextureName) != m_TexNameToIndex.end());
     uint32_t TexIndex = m_TexNameToIndex.at(vFace.TextureName);
-    const std::shared_ptr<CIOImage> pImage = m_pScene->TexImages[TexIndex];
+    const std::shared_ptr<CIOImage> pImage = m_pScene->TexImageSet[TexIndex];
     size_t TexWidth = pImage->getWidth();
     size_t TexHeight = pImage->getHeight();
 

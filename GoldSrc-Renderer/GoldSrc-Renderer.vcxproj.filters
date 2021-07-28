@@ -54,6 +54,9 @@
     <ClCompile Include="ImguiSelectFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ImguiTextureViewer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImguiAlert.h">
@@ -93,6 +96,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ImguiSelectFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiTextureViewer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

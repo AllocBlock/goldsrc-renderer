@@ -24,7 +24,7 @@ std::shared_ptr<SScene> CSceneReaderMdl::_readV()
         pImage->setData(pData);
         delete[] pData;
 
-        pScene->TexImages.emplace_back(pImage);
+        pScene->TexImageSet.emplace_back(pImage);
     }
 
     return pScene;

@@ -44,19 +44,19 @@ void CSceneReaderBsp::__readTextures()
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    std::vector<std::shared_ptr<CIOImage>> TexImages;
+    std::vector<std::shared_ptr<CIOImage>> TexImageSet;
 
     m_TexNameToIndex.clear();
     // read wads
     const std::vector<std::filesystem::path>& WadPaths = Lumps.m_LumpEntity.WadPaths;
-    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths);
+    std::vector<CIOGoldsrcWad> Wads = GoldSrc::readWads(WadPaths);
 
     // load textures
     // iterate each texture in texture lump
     // if bsp contains its data, load it, otherwise find it in all wads
     // if found, load it, otherwise set mapper to 0
     Scene::reportProgress(u8"整理纹理中");
-    TexImages.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     m_TexNameToIndex["TextureNotFound"] = 0;
     for (size_t i = 0; i < Lumps.m_LumpTexture.Textures.size(); ++i)
     {
@@ -65,8 +65,8 @@ void CSceneReaderBsp::__readTextures()
         if (BspTexture.IsDataInBsp)
         {
             std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromBspTexture(BspTexture);
-            m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImages.size());
-            TexImages.emplace_back(std::move(pTexImage));
+            m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImageSet.size());
+            TexImageSet.emplace_back(std::move(pTexImage));
         }
         else
         {
@@ -78,8 +78,8 @@ void CSceneReaderBsp::__readTextures()
                 {
                     Found = true;
                     std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
-                    m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImages.size());
-                    TexImages.emplace_back(std::move(pTexImage));
+                    m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImageSet.size());
+                    TexImageSet.emplace_back(std::move(pTexImage));
                     break;
                 }
             }
@@ -88,7 +88,7 @@ void CSceneReaderBsp::__readTextures()
         }
     }
 
-    m_pScene->TexImages = std::move(TexImages);
+    m_pScene->TexImageSet = std::move(TexImageSet);
 }
 
 std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)

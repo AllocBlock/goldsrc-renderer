@@ -3,21 +3,28 @@
 
 using namespace Common;
 
-std::vector<CIOGoldsrcWad> readWads(const std::vector<std::filesystem::path>& vWadPaths)
+bool GoldSrc::readWad(std::filesystem::path vWadPath, CIOGoldsrcWad& voWad)
+{
+    std::filesystem::path RealWadPath;
+    if (!Scene::requestFilePathUntilCancel(vWadPath, ".wad", RealWadPath))
+    {
+        Common::Log::log(u8"未找到WAD文件：" + vWadPath.u8string());
+        return false;
+    }
+
+    Scene::reportProgress(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
+    voWad.read(RealWadPath);
+
+    return true;
+}
+
+std::vector<CIOGoldsrcWad> GoldSrc::readWads(const std::vector<std::filesystem::path>& vWadPaths)
 {
     std::vector<CIOGoldsrcWad> Wads(vWadPaths.size());
 
     for (size_t i = 0; i < vWadPaths.size(); ++i)
     {
-        std::filesystem::path RealWadPath;
-        if (!Scene::requestFilePathUntilCancel(vWadPaths[i], ".wad", RealWadPath))
-        {
-            Common::Log::log(u8"未找到WAD文件：" + vWadPaths[i].u8string());
-            continue;
-        }
-       
-        Scene::reportProgress(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
-        Wads[i].read(RealWadPath);
+        readWad(vWadPaths[i], Wads[i]);
     }
     return Wads;
 }

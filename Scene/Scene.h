@@ -69,7 +69,7 @@ private:
 struct SScene
 {
     std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
-    std::vector<std::shared_ptr<CIOImage>> TexImages;
+    std::vector<std::shared_ptr<CIOImage>> TexImageSet;
 
     bool UseLightmap = false;
     std::shared_ptr<CLightmap> pLightmap = nullptr;

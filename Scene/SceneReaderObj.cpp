@@ -59,7 +59,7 @@ std::shared_ptr<SScene> CSceneReaderObj::_readV()
 
     m_pScene = std::make_shared<SScene>();
     m_pScene->Objects.emplace_back(pObjObject);
-    m_pScene->TexImages.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    m_pScene->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
 
     return m_pScene;
 }

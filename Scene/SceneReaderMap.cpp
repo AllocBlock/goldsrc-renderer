@@ -14,13 +14,13 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
     if (!Map.read())
         throw std::runtime_error(u8"文件解析失败");
     std::vector<std::filesystem::path> WadPaths = Map.getWadPaths();
-    std::vector<CIOGoldsrcWad> Wads = readWads(WadPaths);
+    std::vector<CIOGoldsrcWad> Wads = GoldSrc::readWads(WadPaths);
 
     Scene::reportProgress(u8"整理纹理中");
     // find used textures, load and index them
     std::map<std::string, uint32_t> TexNameToIndex;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
-    m_pScene->TexImages.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    m_pScene->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     TexNameToIndex["TextureNotFound"] = 0;
     UsedTextureNames.insert("TextureNotFound");
     for (const std::string& TexName : UsedTextureNames)
@@ -32,10 +32,10 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
             if (Index.has_value())
             {
                 Found = true;
-                TexNameToIndex[TexName] = static_cast<uint32_t>(m_pScene->TexImages.size());
+                TexNameToIndex[TexName] = static_cast<uint32_t>(m_pScene->TexImageSet.size());
 
                 std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
-                m_pScene->TexImages.emplace_back(std::move(pTexImage));
+                m_pScene->TexImageSet.emplace_back(std::move(pTexImage));
                 break;
             }
         }
@@ -56,8 +56,8 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
     for (SMapPolygon& Polygon : Polygons)
     {
         uint32_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
-        size_t TexWidth = m_pScene->TexImages[TexIndex]->getWidth();
-        size_t TexHeight = m_pScene->TexImages[TexIndex]->getHeight();
+        size_t TexWidth = m_pScene->TexImageSet[TexIndex]->getWidth();
+        size_t TexHeight = m_pScene->TexImageSet[TexIndex]->getHeight();
         std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[TexIndex];
         uint32_t IndexStart = static_cast<uint32_t>(pObject->getVertexArray()->size());
 

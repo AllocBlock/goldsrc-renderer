@@ -5,4 +5,11 @@
 #include <filesystem>
 #include <functional>
 
-std::vector<CIOGoldsrcWad> readWads(const std::vector<std::filesystem::path>& vWadPaths);
+namespace Common
+{
+    namespace GoldSrc
+    {
+        bool readWad(std::filesystem::path vWadPath, CIOGoldsrcWad& voWad);
+        std::vector<CIOGoldsrcWad> readWads(const std::vector<std::filesystem::path>& vWadPaths);
+    }
+}

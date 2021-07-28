@@ -555,7 +555,7 @@ void CVulkanRenderer::__createTextureImages()
         m_TextureImagePackSet.resize(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            std::shared_ptr<CIOImage> pImage = m_pScene->TexImages[i];
+            std::shared_ptr<CIOImage> pImage = m_pScene->TexImageSet[i];
             __createImageFromIOImage(pImage, m_TextureImagePackSet[i]);
         }
     }
@@ -718,7 +718,7 @@ void CVulkanRenderer::__transitionImageLayout(VkImage vImage, VkFormat vFormat, 
 
 size_t CVulkanRenderer::__getActualTextureNum()
 {
-    size_t NumTexture = m_pScene ? m_pScene->TexImages.size() : 0;
+    size_t NumTexture = m_pScene ? m_pScene->TexImageSet.size() : 0;
     if (NumTexture > CPipelineDepthTest::MaxTextureNum)
     {
         Common::Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(CPipelineDepthTest::MaxTextureNum) + u8"), 多出的纹理将被忽略");
