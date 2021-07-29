@@ -2,6 +2,8 @@
 #include "Common.h"
 #include "SceneInterface.h"
 #include "SceneCommon.h"
+#include "ImguiRendererGoldSrc.h"
+#include "ImguiRendererSimple.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -14,7 +16,7 @@
 
 using namespace Common;
 
-CGUIMain::CGUIMain()
+CGUIMain::CGUIMain(): m_pCamera(std::make_shared<CCamera>())
 {
     static std::function<void(std::string)> ProgressReportFunc = [=](std::string vMessage)
     {
@@ -79,6 +81,19 @@ void CGUIMain::log(std::string vText)
     m_GUILog.log(vText);
 }
 
+std::vector<VkCommandBuffer> CGUIMain::_requestCommandBuffersV(uint32_t vImageIndex)
+{
+    auto CommandBufferSet = CGUIBase::_requestCommandBuffersV(vImageIndex);
+
+    if (m_pRenderer)
+    {
+        auto RendererCommandBufferSet = m_pRenderer->requestCommandBuffers(vImageIndex);
+        CommandBufferSet.insert(CommandBufferSet.begin(), RendererCommandBufferSet.begin(), RendererCommandBufferSet.end());
+    }
+
+    return CommandBufferSet;
+}
+
 void CGUIMain::_initV()
 {
     CGUIBase::_initV();
@@ -87,11 +102,66 @@ void CGUIMain::_initV()
     {
         m_GUILog.log(vText);
     });
+
+    __recreateRenderer();
 }
 
 void CGUIMain::_updateV(uint32_t vImageIndex)
 {
     __drawGUI();
+    if (m_pRenderer)
+        m_pRenderer->update(vImageIndex);
+}
+
+void CGUIMain::_recreateV()
+{
+    CGUIBase::_recreateV();
+    if (m_pRenderer)
+        m_pRenderer->recreate(m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.TargetImageViewSet);
+}
+
+void CGUIMain::_destroyV()
+{
+    if (m_pRenderer)
+        m_pRenderer->destroy();
+    CGUIBase::_destroyV();
+}
+
+void CGUIMain::__recreateRenderer()
+{
+    vkDeviceWaitIdle(m_AppInfo.Device);
+    if (m_pRenderer)
+        m_pRenderer->destroy();
+
+    switch (m_RenderMethod)
+    {
+    case ERenderMethod::DEFAULT:
+    {
+        m_pRenderer = std::make_shared<CRendererSceneSimple>();
+        m_pRenderer->init(m_AppInfo, ERendererPos::BEGIN);
+        m_pRenderer->setCamera(m_pCamera);
+        m_pGuiRenderer = std::make_shared<CImguiRendererSimple>();
+        m_pGuiRenderer->setTarget(m_pRenderer);
+        break;
+    }
+    case ERenderMethod::BSP:
+    {
+        m_pRenderer = std::make_shared<CRendererSceneGoldSrc>();
+        m_pRenderer->init(m_AppInfo, ERendererPos::BEGIN);
+        m_pRenderer->setCamera(m_pCamera);
+        m_pGuiRenderer = std::make_shared<CImguiRendererGoldSrc>();
+        m_pGuiRenderer->setTarget(m_pRenderer);
+        break;
+    }
+    default:
+        break;
+    }
+
+    _ASSERTE(m_pInteractor);
+    m_pInteractor->setRendererScene(m_pRenderer);
+
+    if (m_pScene)
+        m_pRenderer->loadScene(m_pScene);
 }
 
 void CGUIMain::__drawGUI()
@@ -135,7 +205,10 @@ void CGUIMain::__drawGUI()
             m_LoadingProgressReport = "";
             const SResultReadScene& ResultScene = m_FileReadingFuture.get();
             if (ResultScene.Succeed)
+            {
                 m_pRenderer->loadScene(ResultScene.pScene);
+                m_pScene = ResultScene.pScene;
+            }
             else
                 showAlert(ResultScene.Message);
         }
@@ -184,7 +257,7 @@ void CGUIMain::__drawGUI()
     // 相机设置
     if (ImGui::CollapsingHeader(u8"相机", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        std::shared_ptr<CCamera> pCamera = m_pRenderer->getCamera();
+        std::shared_ptr<CCamera> pCamera = m_pCamera;
         glm::vec3 Pos = pCamera->getPos();
 
         float FullWidth = ImGui::CalcItemWidth();
@@ -248,70 +321,17 @@ void CGUIMain::__drawGUI()
             u8"BSP树渲染"
         };
 
-
-        static ERenderMethod LastMethod = m_pRenderer->getRenderMethod();
-        int RenderMethodIndex = static_cast<int>(std::find(RenderMethods.begin(), RenderMethods.end(), m_pRenderer->getRenderMethod()) - RenderMethods.begin());
-        if (LastMethod != RenderMethods[RenderMethodIndex])
-        {
-            LastMethod = RenderMethods[RenderMethodIndex];
-            m_pRenderer->rerecordCommand();
-        }
+        static ERenderMethod LastMethod = m_RenderMethod;
+        int RenderMethodIndex = static_cast<int>(std::find(RenderMethods.begin(), RenderMethods.end(), m_RenderMethod) - RenderMethods.begin());
         ImGui::Combo(u8"渲染模式", &RenderMethodIndex, RenderMethodNames.data(), static_cast<int>(RenderMethods.size()));
-        m_pRenderer->setRenderMethod(RenderMethods[RenderMethodIndex]);
-
-        glm::vec3 CameraPos = m_pRenderer->getCamera()->getPos();
-        ImGui::Text((u8"相机位置：(" + std::to_string(CameraPos.x) + ", " + std::to_string(CameraPos.y) + ", " + std::to_string(CameraPos.z) + ")").c_str());
-        std::optional<uint32_t> CameraNodeIndex = m_pRenderer->getCameraNodeIndex();
-        if (CameraNodeIndex == std::nullopt)
-            ImGui::Text(u8"相机所处节点：-");
-        else
-            ImGui::Text((u8"相机所处节点：" + std::to_string(CameraNodeIndex.value())).c_str());
-
-        std::set<size_t> RenderObjectList = m_pRenderer->getRenderedObjectSet();
-        ImGui::Text((u8"渲染物体数：" + std::to_string(RenderObjectList.size())).c_str());
-        if (!RenderObjectList.empty())
+        m_RenderMethod = RenderMethods[RenderMethodIndex];
+        if (LastMethod != m_RenderMethod)
         {
-            std::string RenderNodeListStr = "";
-            for (size_t ObjectIndex : RenderObjectList)
-            {
-                RenderNodeListStr += std::to_string(ObjectIndex) + ", ";
-            }
-            ImGui::TextWrapped((u8"渲染物体：" + RenderNodeListStr).c_str());
+            LastMethod = m_RenderMethod;
+            __recreateRenderer();
         }
 
-        std::set<uint32_t> RenderNodeList = m_pRenderer->getRenderedNodeList();
-        ImGui::Text((u8"渲染节点数：" + std::to_string(RenderNodeList.size())).c_str());
-        if (!RenderNodeList.empty())
-        {
-            std::string RenderNodeListStr = "";
-            for (uint32_t NodeIndex : RenderNodeList)
-            {
-                RenderNodeListStr += std::to_string(NodeIndex) + ", ";
-            }
-            ImGui::TextWrapped((u8"渲染节点：" + RenderNodeListStr).c_str());
-        }
-
-        bool SkyRendering = m_pRenderer->getSkyState();
-        ImGui::Checkbox(u8"开启天空渲染", &SkyRendering);
-        m_pRenderer->setSkyState(SkyRendering);
-
-        static bool Culling = m_pRenderer->getCullingState();
-        ImGui::Checkbox(u8"开启剔除", &Culling);
-        m_pRenderer->setCullingState(Culling);
-
-        if (Culling)
-        {
-            ImGui::BeginGroup();
-            static bool FrustumCulling = m_pRenderer->getFrustumCullingState();
-            ImGui::Checkbox(u8"CPU视锥剔除", &FrustumCulling);
-            if (FrustumCulling != m_pRenderer->getFrustumCullingState()) m_pRenderer->rerecordCommand();
-            m_pRenderer->setFrustumCullingState(FrustumCulling);
-
-            static bool PVS = m_pRenderer->getPVSState();
-            ImGui::Checkbox(u8"PVS剔除", &PVS);
-            m_pRenderer->setPVSState(PVS);
-            ImGui::EndGroup();
-        }
+        m_pGuiRenderer->draw();
     }
 
     if (ImGui::CollapsingHeader(u8"其他", ImGuiTreeNodeFlags_DefaultOpen))
@@ -341,14 +361,6 @@ void CGUIMain::__drawGUI()
         log("log1");
         log("log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2");
         log("log3");
-    }
-
-    if (ImGui::Button("test bounding box (2x2x2 at origin)"))
-    {
-        S3DBoundingBox BB;
-        BB.Min = glm::vec3(-1.0, -1.0, -1.0);
-        BB.Max = glm::vec3(1.0, 1.0, 1.0);
-        m_pRenderer->setHighlightBoundingBox(BB);
     }
 
     ImGui::Render();

@@ -26,7 +26,7 @@ public:
     void init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField);
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews);
     void update(uint32_t vImageIndex);
-    VkCommandBuffer requestCommandBuffer(uint32_t vImageIndex);
+    std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
     void destroy();
 
     static VkAttachmentDescription createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, EImageType vType);
@@ -35,7 +35,8 @@ protected:
     virtual void _initV() {}
     virtual void _recreateV() {}
     virtual void _updateV(uint32_t vImageIndex) = 0;
-    virtual VkCommandBuffer _requestCommandBufferV(uint32_t vImageIndex) = 0;
+    virtual
+        std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
     virtual void _destroyV() {};
 
     Vulkan::SVulkanAppInfo m_AppInfo;

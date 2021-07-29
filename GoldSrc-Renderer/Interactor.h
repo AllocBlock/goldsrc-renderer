@@ -1,34 +1,24 @@
 #pragma once
-#include "VulkanRenderer.h"
+#include "RendererScene.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <memory>
-
-enum EMoveState
-{
-	STOP = 0x0000,
-	FRONT = 0x0001,
-	BEHIND = 0x0002,
-	LEFT = 0x0004,
-	RIGHT = 0x0008,
-	BOOST = 0x0010,
-	CRAWL = 0x0020,
-};
 
 class CInteractor
 {
 public:
 	CInteractor() = default;
 
-	void bindEvent(GLFWwindow* vWindow, std::shared_ptr<CVulkanRenderer> vRenderer);
+	void bindEvent(GLFWwindow* vWindow);
 	void enable() { m_Enabled = true; }
 	void disable() { m_Enabled = false; }
 	void update();
 	void reset();
 
 	float getSpeed() { return m_Speed; }
-	std::shared_ptr<CVulkanRenderer> getRenderer() { return m_pRenderer; }
+	void setRendererScene(std::shared_ptr<CRendererScene> vRenderer);
+	std::shared_ptr<CRendererScene> getRendererScene() { return m_pRenderer; }
 	bool getSelectionState() { return m_SelectionEnable; }
 
 	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
@@ -45,7 +35,7 @@ private:
 	bool __getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT);
 
 	GLFWwindow* m_pWindow = nullptr;
-	std::shared_ptr<CVulkanRenderer> m_pRenderer = nullptr;
+	std::shared_ptr<CRendererScene> m_pRenderer = nullptr;
 
 	float m_Speed = 3.0;
 	const float m_BoostScale = 3.0f;

@@ -135,8 +135,8 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView,
 
 void CPipelineSkybox::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
-    voBinding = SSimplePointData::getBindingDescription();
-    voAttributeSet = SSimplePointData::getAttributeDescriptionSet();
+    voBinding = SPositionPointData::getBindingDescription();
+    voAttributeSet = SPositionPointData::getAttributeDescriptionSet();
 }
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineSkybox::_getInputAssemblyStageInfoV()
@@ -174,7 +174,7 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
         { 1.0, -1.0, -1.0}, // 7
     };
 
-    const std::vector<SSimplePointData> PointData =
+    const std::vector<SPositionPointData> PointData =
     {
         {Vertices[4]}, {Vertices[0]}, {Vertices[1]}, {Vertices[4]}, {Vertices[1]}, {Vertices[5]}, // +z
         {Vertices[3]}, {Vertices[7]}, {Vertices[6]}, {Vertices[3]}, {Vertices[6]}, {Vertices[2]}, // -z
@@ -184,7 +184,7 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
         {Vertices[1]}, {Vertices[2]}, {Vertices[6]}, {Vertices[1]}, {Vertices[6]}, {Vertices[5]}, // -x
     };
 
-    VkDeviceSize DataSize = sizeof(SSimplePointData) * PointData.size();
+    VkDeviceSize DataSize = sizeof(SPositionPointData) * PointData.size();
     m_VertexNum = PointData.size();
 
     VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();

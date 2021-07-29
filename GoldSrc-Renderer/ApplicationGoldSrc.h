@@ -17,7 +17,6 @@ protected:
 
 private:
     std::shared_ptr<CGUIMain> m_pGUI = nullptr;
-    std::shared_ptr<CVulkanRenderer> m_pRenderer = nullptr;
     std::shared_ptr<CInteractor> m_pInteractor = nullptr;
 };
 

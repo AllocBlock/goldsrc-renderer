@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-struct SSimplePointData
+struct SPositionPointData
 {
     glm::vec3 Pos;
 
@@ -10,7 +10,7 @@ struct SSimplePointData
     {
         VkVertexInputBindingDescription BindingDescription = {};
         BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SSimplePointData);
+        BindingDescription.stride = sizeof(SPositionPointData);
         BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         return BindingDescription;
@@ -23,7 +23,7 @@ struct SSimplePointData
         AttributeDescriptionSet[0].binding = 0;
         AttributeDescriptionSet[0].location = 0;
         AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[0].offset = offsetof(SSimplePointData, Pos);
+        AttributeDescriptionSet[0].offset = offsetof(SPositionPointData, Pos);
 
         return AttributeDescriptionSet;
     }
@@ -81,6 +81,55 @@ struct SGoldSrcPointData
         AttributeDescriptionSet[5].location = 5;
         AttributeDescriptionSet[5].format = VK_FORMAT_R32_UINT;
         AttributeDescriptionSet[5].offset = offsetof(SGoldSrcPointData, TexIndex);
+
+        return AttributeDescriptionSet;
+    }
+};
+
+struct SSimplePointData
+{
+    glm::vec3 Pos;
+    glm::vec3 Normal;
+    glm::vec2 TexCoord;
+    uint32_t TexIndex;
+
+    static VkVertexInputBindingDescription getBindingDescription()
+    {
+        VkVertexInputBindingDescription BindingDescription = {};
+        BindingDescription.binding = 0;
+        BindingDescription.stride = sizeof(SSimplePointData);
+        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        return BindingDescription;
+    }
+
+    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+    {
+        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(4);
+        uint32_t Index = 0;
+        AttributeDescriptionSet[Index].binding = 0;
+        AttributeDescriptionSet[Index].location = Index;
+        AttributeDescriptionSet[Index].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, Pos);
+        Index++;
+
+        AttributeDescriptionSet[Index].binding = 0;
+        AttributeDescriptionSet[Index].location = Index;
+        AttributeDescriptionSet[Index].format = VK_FORMAT_R32G32B32_SFLOAT;
+        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, Normal);
+        Index++;
+
+        AttributeDescriptionSet[Index].binding = 0;
+        AttributeDescriptionSet[Index].location = Index;
+        AttributeDescriptionSet[Index].format = VK_FORMAT_R32G32_SFLOAT;
+        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, TexCoord);
+        Index++;
+
+        AttributeDescriptionSet[Index].binding = 0;
+        AttributeDescriptionSet[Index].location = Index;
+        AttributeDescriptionSet[Index].format = VK_FORMAT_R32_UINT;
+        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, TexIndex);
+        Index++;
 
         return AttributeDescriptionSet;
     }

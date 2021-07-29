@@ -1,11 +1,13 @@
 #pragma once
 #include "GUIBase.h"
 #include "Interactor.h"
-#include "VulkanRenderer.h"
+#include "RendererScene.h"
 #include "ImguiAlert.h"
 #include "ImguiFrameRate.h"
 #include "ImguiLog.h"
 #include "ImguiSelectFile.h"
+#include "ImguiRenderer.h"
+#include "Scene.h"
 
 #include <future>
 
@@ -26,26 +28,32 @@ public:
 
     static SResultReadScene readScene(std::filesystem::path vFilePath);
 
-    void setRenderer(std::shared_ptr<CVulkanRenderer> vRenderer) { m_pRenderer = vRenderer; }
-    std::shared_ptr<CVulkanRenderer> getRenderer() { return m_pRenderer; }
     void setInteractor(std::shared_ptr<CInteractor> vInteractor) { m_pInteractor = vInteractor; }
     std::shared_ptr<CInteractor> getInteractor() { return m_pInteractor; }
 protected:
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _initV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
+    virtual void _recreateV() override;
+    virtual void _destroyV() override;
 
 private:
     void __drawGUI();
+    void __recreateRenderer();
 
-    std::shared_ptr<CVulkanRenderer> m_pRenderer = nullptr;
+    std::shared_ptr<CCamera> m_pCamera = nullptr;
+    std::shared_ptr<SScene> m_pScene = nullptr;
+    std::shared_ptr<CRendererScene> m_pRenderer = nullptr;
     std::shared_ptr<CInteractor> m_pInteractor = nullptr;
 
     CImguiAlert m_GUIAlert = CImguiAlert();
     CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();
     CImguiLog m_GUILog = CImguiLog();
+    CImguiSelectFile m_FileSelection;
+    std::shared_ptr<CImguiRenderer> m_pGuiRenderer = nullptr;
 
+    ERenderMethod m_RenderMethod = ERenderMethod::DEFAULT;
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";
     std::future<SResultReadScene> m_FileReadingFuture;
-    CImguiSelectFile m_FileSelection;
 };

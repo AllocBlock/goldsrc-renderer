@@ -115,8 +115,11 @@
     <ClCompile Include="ApplicationGoldSrc.cpp" />
     <ClCompile Include="ImguiAlert.cpp" />
     <ClCompile Include="ImguiFrameRate.cpp" />
+    <ClCompile Include="ImguiRendererGoldSrc.cpp" />
     <ClCompile Include="ImguiLog.cpp" />
     <ClCompile Include="ImguiMain.cpp" />
+    <ClCompile Include="ImguiRenderer.cpp" />
+    <ClCompile Include="ImguiRendererSimple.cpp" />
     <ClCompile Include="ImguiSelectFile.cpp" />
     <ClCompile Include="ImguiTextureViewer.cpp" />
     <ClCompile Include="Interactor.cpp" />
@@ -124,23 +127,30 @@
     <ClCompile Include="PipelineBlend.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
     <ClCompile Include="PipelineLine.cpp" />
+    <ClCompile Include="PipelineSimple.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
+    <ClCompile Include="SimpleRenderer.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h" />
     <ClInclude Include="ImguiAlert.h" />
     <ClInclude Include="ImguiFrameRate.h" />
+    <ClInclude Include="ImguiRendererGoldSrc.h" />
     <ClInclude Include="ImguiLog.h" />
     <ClInclude Include="ImguiMain.h" />
+    <ClInclude Include="ImguiRenderer.h" />
+    <ClInclude Include="ImguiRendererSimple.h" />
     <ClInclude Include="ImguiSelectFile.h" />
     <ClInclude Include="ImguiTextureViewer.h" />
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="PipelineBlend.h" />
     <ClInclude Include="PipelineDepthTest.h" />
     <ClInclude Include="PipelineLine.h" />
+    <ClInclude Include="PipelineSimple.h" />
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PointData.h" />
+    <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -200,6 +210,26 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vert shader...</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vert shader...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="shader\simpleShader.frag">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Frag.spv</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Frag.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile frag shader...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile frag shader...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shader\simpleShader.vert">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vert shader...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vert shader...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>

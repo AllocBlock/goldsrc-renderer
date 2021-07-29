@@ -1,8 +1,6 @@
 #pragma once
-#include "RendererBase.h"
+#include "RendererScene.h"
 #include "Common.h"
-#include "Scene.h"
-#include "Camera.h"
 #include "PipelineSkybox.h"
 #include "PipelineDepthTest.h"
 #include "PipelineBlend.h"
@@ -22,62 +20,81 @@ enum class ERenderMethod
     BSP
 };
 
-struct SObjectDataPosition
-{
-    VkDeviceSize Offset;
-    VkDeviceSize Size;
-};
-
 struct SPipelineSet
 {
-    CPipelineDepthTest TrianglesWithDepthTest;
+    CPipelineDepthTest Main;
     CPipelineBlend TrianglesWithBlend;
-    CPipelineSkybox TrianglesSky;
+    CPipelineSkybox Sky;
     CPipelineLine GuiLines;
 
     void destroy()
     {
-        TrianglesWithDepthTest.destroy();
+        Main.destroy();
         TrianglesWithBlend.destroy();
-        TrianglesSky.destroy();
+        Sky.destroy();
         GuiLines.destroy();
     }
 };
 
-class CVulkanRenderer : public CRendererBase
+class CRendererSceneGoldSrc : public CRendererScene
 {
 public:
-    CVulkanRenderer();
+    CRendererSceneGoldSrc() = default;
     
-    std::shared_ptr<SScene> getScene() const { return m_pScene; }
-    void loadScene(std::shared_ptr<SScene> vpScene);
     void rerecordCommand();
-    std::shared_ptr<CCamera> getCamera();
 
     void setHighlightBoundingBox(S3DBoundingBox vBoundingBox);
     void removeHighlightBoundingBox();
     void addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd); 
 
     bool getSkyState() const { return m_EnableSky; }
-    void setSkyState(bool vSkyState) { m_EnableSky = vSkyState && m_pScene && m_pScene->UseSkyBox; }
     bool getCullingState() const { return m_EnableCulling; }
-    void setCullingState(bool vCullingState) { m_EnableCulling = vCullingState; }
     bool getFrustumCullingState() const { return m_EnableFrustumCulling; }
-    void setFrustumCullingState(bool vFrustumCullingState) { m_EnableFrustumCulling = vFrustumCullingState; }
     bool getPVSState() const { return m_EnablePVS; }
-    void setPVSState(bool vPVS) { m_EnablePVS = vPVS; }
+    bool getBSPState() const { return m_EnableBSP; }
     std::optional<uint32_t> getCameraNodeIndex() const { return m_CameraNodeIndex; }
     std::set<uint32_t> getRenderedNodeList() const { return m_RenderNodeSet; }
-    ERenderMethod getRenderMethod() const { return m_RenderMethod; }
     std::set<size_t> getRenderedObjectSet() const { return m_RenderedObjectSet; }
-    void setRenderMethod(ERenderMethod vRenderMethod) { m_RenderMethod = vRenderMethod; }
+
+    void setSkyState(bool vEnableSky)
+    { 
+        bool EnableSky = vEnableSky && m_pScene && m_pScene->UseSkyBox;
+        if (m_EnableSky != EnableSky) rerecordCommand();
+        m_EnableSky = EnableSky;
+    }
+    void setCullingState(bool vEnableCulling) 
+    { 
+        if (m_EnableCulling != vEnableCulling) rerecordCommand();
+        m_EnableCulling = vEnableCulling;
+    }
+    void setFrustumCullingState(bool vEnableFrustumCulling) 
+    { 
+        if (m_EnableFrustumCulling != vEnableFrustumCulling) rerecordCommand();
+        m_EnableFrustumCulling = vEnableFrustumCulling;
+    }
+    void setPVSState(bool vPVS) 
+    { 
+        bool EnablePVS = vPVS && m_pScene && m_pScene->BspPvs.LeafNum > 0;
+        if (m_EnablePVS != EnablePVS) rerecordCommand();
+        m_EnablePVS = EnablePVS;
+    }
+    void setBSPState(bool vEnableBSP) 
+    { 
+        bool EnableBSP = vEnableBSP && m_pScene && !m_pScene->BspTree.Nodes.empty();
+        if (!EnableBSP)
+            m_RenderNodeSet.clear();
+        if (m_EnableBSP != EnableBSP) rerecordCommand();
+        m_EnableBSP = EnableBSP;
+    }
 
 protected:
     virtual void _initV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
-    virtual VkCommandBuffer _requestCommandBufferV(uint32_t vImageIndex) override;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
+
+    virtual void _loadSceneV(std::shared_ptr<SScene> vScene);
 
 private:
     void __createRenderPass();
@@ -133,9 +150,6 @@ private:
     Vulkan::SImagePack m_DepthImagePack;
     Vulkan::SImagePack m_LightmapImagePack;
 
-    std::shared_ptr<SScene> m_pScene;
-    std::shared_ptr<CCamera> m_pCamera = nullptr;
-
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;
     std::set<size_t> m_RenderedObjectSet;
@@ -144,9 +158,9 @@ private:
     bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;
     bool m_EnablePVS = false;
+    bool m_EnableBSP = false;
     std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
     std::set<uint32_t> m_RenderNodeSet;
-    ERenderMethod m_RenderMethod = ERenderMethod::BSP;
 
     size_t m_NumSwapchainImage = 0;
 };

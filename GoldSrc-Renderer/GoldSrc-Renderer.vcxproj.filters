@@ -57,6 +57,21 @@
     <ClCompile Include="ImguiTextureViewer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SimpleRenderer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSimple.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiRendererGoldSrc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiRenderer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiRendererSimple.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImguiAlert.h">
@@ -101,6 +116,21 @@
     <ClInclude Include="ImguiTextureViewer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="SimpleRenderer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSimple.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiRendererGoldSrc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiRenderer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiRendererSimple.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shader\lineShader.frag">
@@ -119,6 +149,12 @@
       <Filter>资源文件</Filter>
     </CustomBuild>
     <CustomBuild Include="shader\skyShader.vert">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\simpleShader.vert">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\simpleShader.frag">
       <Filter>资源文件</Filter>
     </CustomBuild>
   </ItemGroup>

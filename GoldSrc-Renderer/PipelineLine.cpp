@@ -92,8 +92,8 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineLine::_getInputAssemblyStageInfo
 
 void CPipelineLine::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
-    voBinding = SSimplePointData::getBindingDescription();
-    voAttributeSet = SSimplePointData::getAttributeDescriptionSet();
+    voBinding = SPositionPointData::getBindingDescription();
+    voAttributeSet = SPositionPointData::getAttributeDescriptionSet();
 }
 
 void CPipelineLine::_createResourceV(size_t vImageNum)
@@ -131,7 +131,7 @@ void CPipelineLine::__updateVertexBuffer()
     }
     if (m_VertexNum > 0)
     {
-        VkDeviceSize BufferSize = sizeof(SSimplePointData) * m_VertexNum;
+        VkDeviceSize BufferSize = sizeof(SPositionPointData) * m_VertexNum;
 
         // TODO: addtional copy is made. Is there better way?
         void* pData = new char[BufferSize];

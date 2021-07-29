@@ -3,16 +3,31 @@
 #include <chrono>
 #include <glm/matrix.hpp>
 
-void CInteractor::bindEvent(GLFWwindow* vWindow, std::shared_ptr<CVulkanRenderer> vRenderer)
+enum EMoveState
+{
+	STOP = 0x0000,
+	FRONT = 0x0001,
+	BEHIND = 0x0002,
+	LEFT = 0x0004,
+	RIGHT = 0x0008,
+	BOOST = 0x0010,
+	CRAWL = 0x0020,
+};
+
+void CInteractor::bindEvent(GLFWwindow* vWindow)
 {
 	m_pWindow = vWindow;
-	m_pRenderer = vRenderer;
 
 	_ASSERTE(m_pWindow);
 	glfwSetWindowUserPointer(m_pWindow, this);
 	glfwSetKeyCallback(m_pWindow, CInteractor::onKeyboard);
 	glfwSetCursorPosCallback(m_pWindow, CInteractor::onMouseMove);
 	glfwSetMouseButtonCallback(m_pWindow, CInteractor::onMouseClick);
+}
+
+void CInteractor::setRendererScene(std::shared_ptr<CRendererScene> vRendererScene)
+{
+	m_pRenderer = vRendererScene;
 }
 
 void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods)
@@ -34,7 +49,7 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 
 				glfwGetCursorPos(vpWindow, &pInteractor->m_LastMousePosX, &pInteractor->m_LastMousePosY);
 
-				std::shared_ptr<CCamera> pCamera = pInteractor->getRenderer()->getCamera();
+				std::shared_ptr<CCamera> pCamera = pInteractor->getRendererScene()->getCamera();
 				pInteractor->m_LastPhi = pCamera->getPhi();
 				pInteractor->m_LastTheta = pCamera->getTheta();
 			}
@@ -54,7 +69,10 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
-	std::shared_ptr<CCamera> pCamera = pInteractor->getRenderer()->getCamera();
+	auto pRenderer = pInteractor->getRendererScene();
+	if (!pRenderer) return;
+	std::shared_ptr<CCamera> pCamera = pRenderer->getCamera();
+	if (!pCamera) return;
 
 	if (!pInteractor->m_IsMoving) return;
 
@@ -193,13 +211,13 @@ void CInteractor::__selectByClick(glm::vec2 vPos)
 		}
 	}
 
-	if (NearestBoundingBox.has_value())
+	/*if (NearestBoundingBox.has_value())
 	{
 		m_pRenderer->setHighlightBoundingBox(NearestBoundingBox.value());
 		m_pRenderer->addGuiLine("EyeRay", EyePos, EyePos + NearestDistance * Direction);
 	}
 	else
-		m_pRenderer->removeHighlightBoundingBox(); 
+		m_pRenderer->removeHighlightBoundingBox(); */
 }
 
 bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT)

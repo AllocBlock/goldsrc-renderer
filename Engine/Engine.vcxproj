@@ -103,6 +103,7 @@
     <ClInclude Include="Descriptor.h" />
     <ClInclude Include="PipelineBase.h" />
     <ClInclude Include="RendererBase.h" />
+    <ClInclude Include="RendererScene.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

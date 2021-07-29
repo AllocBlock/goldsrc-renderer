@@ -95,7 +95,7 @@ void CGUIBase::_destroyV()
     CRendererBase::_destroyV();
 }
 
-VkCommandBuffer CGUIBase::_requestCommandBufferV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CGUIBase::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
@@ -121,7 +121,7 @@ VkCommandBuffer CGUIBase::_requestCommandBufferV(uint32_t vImageIndex)
     vkCmdEndRenderPass(CommandBuffer);
     Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
 
-    return CommandBuffer;
+    return { CommandBuffer };
 }
 
 void CGUIBase::__createRenderPass()
