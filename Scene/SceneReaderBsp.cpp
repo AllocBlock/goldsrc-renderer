@@ -227,15 +227,15 @@ void CSceneReaderBsp::__loadBspTree()
     {
         // get entity opacity
         std::optional<SMapEntity> EntityOpt = __findEntity(i);
-        bool IsTransparent = false;
+        EGoldSrcRenderMode RenderMode = EGoldSrcRenderMode::NORMAL;
         float Opacity = 1.0f;
         if (EntityOpt.has_value())
         {
             const SMapEntity& Entity = EntityOpt.value();
-            int RenderMode = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
+            int RenderModeBit = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
             Opacity = Entity.Properties.find("renderamt") != Entity.Properties.end() ? std::stof(Entity.Properties.at("renderamt")) / 255.0f : 1.0f;
 
-            IsTransparent = (RenderMode != 0); // half transparent or indexed transparent
+            RenderMode = static_cast<EGoldSrcRenderMode>(RenderModeBit);
         }
 
         // load entities data and calculate bounding box
@@ -262,7 +262,7 @@ void CSceneReaderBsp::__loadBspTree()
 
         BspTree.ModelIndexToObjectIndex[i] = ObjectIndices;
         BspTree.ModelInfos[i].BoundingBox = TotalBoundingBox;
-        BspTree.ModelInfos[i].IsTransparent = IsTransparent;
+        BspTree.ModelInfos[i].RenderMode = RenderMode;
         BspTree.ModelInfos[i].Opacity = Opacity;
     }
 

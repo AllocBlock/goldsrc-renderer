@@ -1,6 +1,6 @@
-#include "PipelineBlend.h"
+#include "PipelineBlendAlpha.h"
 
-VkPipelineDepthStencilStateCreateInfo CPipelineBlend::_getDepthStencilInfoV()
+VkPipelineDepthStencilStateCreateInfo CPipelineBlendAlpha::_getDepthStencilInfoV()
 {
     VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
     DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -13,9 +13,9 @@ VkPipelineDepthStencilStateCreateInfo CPipelineBlend::_getDepthStencilInfoV()
     return DepthStencilInfo;
 }
 
-void CPipelineBlend::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
+void CPipelineBlendAlpha::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
 {
-    // result color = source color * source alpha + old color * (1 - source color)
+    // result color = source color * source alpha + dst(old) color * (1 - source alpha)
     // result alpha = source alpha
     voBlendAttachment = {};
     voBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;

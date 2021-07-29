@@ -317,13 +317,13 @@ void CGUIMain::__drawGUI()
 
         static const std::vector<const char*> RenderMethodNames =
         {
-            u8"默认",
-            u8"BSP树渲染"
+            u8"简易",
+            u8"金源渲染"
         };
 
         static ERenderMethod LastMethod = m_RenderMethod;
         int RenderMethodIndex = static_cast<int>(std::find(RenderMethods.begin(), RenderMethods.end(), m_RenderMethod) - RenderMethods.begin());
-        ImGui::Combo(u8"渲染模式", &RenderMethodIndex, RenderMethodNames.data(), static_cast<int>(RenderMethods.size()));
+        ImGui::Combo(u8"渲染器", &RenderMethodIndex, RenderMethodNames.data(), static_cast<int>(RenderMethods.size()));
         m_RenderMethod = RenderMethods[RenderMethodIndex];
         if (LastMethod != m_RenderMethod)
         {
@@ -331,7 +331,9 @@ void CGUIMain::__drawGUI()
             __recreateRenderer();
         }
 
+        ImGui::Indent(20.0f);
         m_pGuiRenderer->draw();
+        ImGui::Unindent();
     }
 
     if (ImGui::CollapsingHeader(u8"其他", ImGuiTreeNodeFlags_DefaultOpen))

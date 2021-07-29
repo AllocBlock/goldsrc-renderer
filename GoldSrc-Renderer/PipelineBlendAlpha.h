@@ -1,6 +1,6 @@
 #pragma once
 #include "PipelineDepthTest.h"
-class CPipelineBlend : public CPipelineDepthTest
+class CPipelineBlendAlpha : public CPipelineDepthTest
 {
 protected:
     virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;

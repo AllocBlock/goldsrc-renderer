@@ -472,11 +472,6 @@ VkFormat CRendererSceneSimple::__findSupportedFormat(const std::vector<VkFormat>
     throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
-uint32_t CRendererSceneSimple::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
-{
-    return Vulkan::findMemoryType(m_AppInfo.PhysicalDevice, vTypeFilter, vProperties);
-}
-
 void CRendererSceneSimple::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
     Vulkan::transitionImageLayout(CommandBuffer, vImage, vFormat, vOldLayout, vNewLayout, vLayerCount);

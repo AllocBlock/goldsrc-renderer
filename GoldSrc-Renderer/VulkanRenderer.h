@@ -3,7 +3,9 @@
 #include "Common.h"
 #include "PipelineSkybox.h"
 #include "PipelineDepthTest.h"
-#include "PipelineBlend.h"
+#include "PipelineBlendAlpha.h"
+#include "PipelineBlendAlphaTest.h"
+#include "PipelineBlendAdditive.h"
 #include "PipelineLine.h"
 #include "Descriptor.h"
 #include "Command.h"
@@ -22,15 +24,19 @@ enum class ERenderMethod
 
 struct SPipelineSet
 {
-    CPipelineDepthTest Main;
-    CPipelineBlend TrianglesWithBlend;
+    CPipelineDepthTest DepthTest;
+    CPipelineBlendAlpha BlendAlpha;
+    CPipelineBlendAlphaTest BlendAlphaTest;
+    CPipelineBlendAdditive BlendAdditive;
     CPipelineSkybox Sky;
     CPipelineLine GuiLines;
 
     void destroy()
     {
-        Main.destroy();
-        TrianglesWithBlend.destroy();
+        DepthTest.destroy();
+        BlendAlpha.destroy();
+        BlendAlphaTest.destroy();
+        BlendAdditive.destroy();
         Sky.destroy();
         GuiLines.destroy();
     }
@@ -62,6 +68,7 @@ public:
         if (m_EnableSky != EnableSky) rerecordCommand();
         m_EnableSky = EnableSky;
     }
+
     void setCullingState(bool vEnableCulling) 
     { 
         if (m_EnableCulling != vEnableCulling) rerecordCommand();
@@ -116,20 +123,18 @@ private:
     void __renderByBspTree(uint32_t vImageIndex);
     void __renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex);
     void __renderModels(uint32_t vImageIndex);
-    void __renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend);
+    void __renderModel(uint32_t vImageIndex, size_t vModelIndex);
     void __renderPointEntities(uint32_t vImageIndex);
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __recordGuiCommandBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
-    std::pair<std::vector<size_t>, std::vector<size_t>> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
     
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
-    uint32_t __findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
     void __transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount = 1);
     size_t __getActualTextureNum();
     void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack);

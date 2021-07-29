@@ -39,7 +39,7 @@
     <ClCompile Include="VulkanRenderer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineBlend.cpp">
+    <ClCompile Include="PipelineBlendAlpha.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PipelineDepthTest.cpp">
@@ -98,7 +98,7 @@
     <ClInclude Include="PipelineSkybox.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineBlend.h">
+    <ClInclude Include="PipelineBlendAlpha.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineDepthTest.h">
@@ -131,6 +131,12 @@
     <ClInclude Include="ImguiRendererSimple.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineBlendAdditive.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBlendAlphaTest.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shader\lineShader.frag">
@@ -155,6 +161,12 @@
       <Filter>资源文件</Filter>
     </CustomBuild>
     <CustomBuild Include="shader\simpleShader.frag">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\alphaTestShader.frag">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\alphaTestShader.vert">
       <Filter>资源文件</Filter>
     </CustomBuild>
   </ItemGroup>

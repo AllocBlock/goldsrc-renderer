@@ -124,7 +124,7 @@
     <ClCompile Include="ImguiTextureViewer.cpp" />
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PipelineBlend.cpp" />
+    <ClCompile Include="PipelineBlendAlpha.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
     <ClCompile Include="PipelineLine.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
@@ -144,7 +144,9 @@
     <ClInclude Include="ImguiSelectFile.h" />
     <ClInclude Include="ImguiTextureViewer.h" />
     <ClInclude Include="Interactor.h" />
-    <ClInclude Include="PipelineBlend.h" />
+    <ClInclude Include="PipelineBlendAdditive.h" />
+    <ClInclude Include="PipelineBlendAlpha.h" />
+    <ClInclude Include="PipelineBlendAlphaTest.h" />
     <ClInclude Include="PipelineDepthTest.h" />
     <ClInclude Include="PipelineLine.h" />
     <ClInclude Include="PipelineSimple.h" />
@@ -226,6 +228,26 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
     </CustomBuild>
     <CustomBuild Include="shader\simpleShader.vert">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vert shader...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vert shader...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="shader\alphaTestShader.frag">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Frag.spv</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Frag.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile frag shader...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile frag shader...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shader\alphaTestShader.vert">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>

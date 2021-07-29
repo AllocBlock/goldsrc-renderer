@@ -29,7 +29,6 @@ void CImguiRendererSimple::_drawV()
             ImGui::BeginGroup();
             bool FrustumCulling = m_pRenderer->getFrustumCullingState();
             ImGui::Checkbox(u8"CPUÊÓ×¶ÌÞ³ý", &FrustumCulling);
-            if (FrustumCulling != m_pRenderer->getFrustumCullingState()) m_pRenderer->rerecordCommand();
             m_pRenderer->setFrustumCullingState(FrustumCulling);
             ImGui::EndGroup();
             ImGui::Unindent();

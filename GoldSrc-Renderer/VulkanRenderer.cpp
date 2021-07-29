@@ -175,14 +175,14 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
                 __renderByBspTree(vImageIndex);
             else
             {
-                m_PipelineSet.Main.bind(CommandBuffer, vImageIndex);
+                m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
 
-                m_PipelineSet.Main.setOpacity(CommandBuffer, 1.0f);
+                m_PipelineSet.DepthTest.setOpacity(CommandBuffer, 1.0f);
 
                 for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
                 {
                     bool EnableLightmap = m_pScene->Objects[i]->getLightMapEnable();
-                    m_PipelineSet.Main.setLightmapState(CommandBuffer, EnableLightmap);
+                    m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
                     {
                         __recordObjectRenderCommand(vImageIndex, i);
@@ -208,8 +208,10 @@ void CRendererSceneGoldSrc::__createRecreateResources()
     __createGraphicsPipelines(); // extent
     __createDepthResources(); // extent
     __createFramebuffers(); // imageview, extent
-    m_PipelineSet.Main.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.TrianglesWithBlend.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.DepthTest.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.BlendAlpha.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.BlendAlphaTest.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.BlendAdditive.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.Sky.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.GuiLines.setImageNum(m_NumSwapchainImage);
     __createSceneResources();
@@ -284,7 +286,7 @@ void CRendererSceneGoldSrc::__renderByBspTree(uint32_t vImageIndex)
     if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
-    m_PipelineSet.Main.bind(CommandBuffer, vImageIndex);
+    m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
 
     __renderTreeNode(vImageIndex, 0);
     __renderPointEntities(vImageIndex);
@@ -295,7 +297,7 @@ void CRendererSceneGoldSrc::__renderTreeNode(uint32_t vImageIndex, uint32_t vNod
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
-    m_PipelineSet.Main.setOpacity(CommandBuffer, 1.0f);
+    m_PipelineSet.DepthTest.setOpacity(CommandBuffer, 1.0f);
 
     if (vNodeIndex >= m_pScene->BspTree.NodeNum) // if is leaf, render it
     {
@@ -308,7 +310,7 @@ void CRendererSceneGoldSrc::__renderTreeNode(uint32_t vImageIndex, uint32_t vNod
             isLeafVisable = true;
 
             bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapEnable();
-            m_PipelineSet.Main.setLightmapState(CommandBuffer, EnableLightmap);
+            m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
 
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
@@ -336,29 +338,48 @@ void CRendererSceneGoldSrc::__renderModels(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
-    auto [OpaqueSequence, TranparentSequence] = __sortModelRenderSequence();
-
-    m_PipelineSet.Main.bind(CommandBuffer, vImageIndex);
-    for(size_t ModelIndex : OpaqueSequence)
-        __renderModel(vImageIndex, ModelIndex, false);
-
-    m_PipelineSet.TrianglesWithBlend.bind(CommandBuffer, vImageIndex);
-    for (size_t ModelIndex : TranparentSequence)
-        __renderModel(vImageIndex, ModelIndex, true);
+    for (size_t i = 0; i < m_pScene->BspTree.ModelNum; ++i)
+    {
+        __renderModel(vImageIndex, i);
+    }
 }
 
-void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelIndex, bool vBlend)
+void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
     _ASSERTE(vModelIndex < m_pScene->BspTree.ModelInfos.size());
 
     const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[vModelIndex];
+    CPipelineDepthTest* pPipeline = nullptr;
 
-    if (vBlend)
-        m_PipelineSet.TrianglesWithBlend.setOpacity(CommandBuffer, ModelInfo.Opacity);
-    else
-        m_PipelineSet.Main.setOpacity(CommandBuffer, ModelInfo.Opacity);
+    switch (ModelInfo.RenderMode)
+    {
+    case EGoldSrcRenderMode::NORMAL:
+    case EGoldSrcRenderMode::COLOR:
+    case EGoldSrcRenderMode::TEXTURE:
+    case EGoldSrcRenderMode::GLOW:
+    {
+        pPipeline = &m_PipelineSet.DepthTest;
+        
+        break;
+    }
+    case EGoldSrcRenderMode::SOLID:
+    {
+        pPipeline = &m_PipelineSet.BlendAlphaTest;
+        break;
+    }
+    case EGoldSrcRenderMode::ADDITIVE:
+    {
+        pPipeline = &m_PipelineSet.BlendAdditive;
+        break;
+    }
+    default:
+        break;
+    }
+
+    pPipeline->bind(CommandBuffer, vImageIndex);
+    pPipeline->setOpacity(CommandBuffer, ModelInfo.Opacity);
 
     std::vector<size_t> ObjectIndices = m_pScene->BspTree.ModelIndexToObjectIndex[vModelIndex];
     for (size_t ObjectIndex : ObjectIndices)
@@ -366,10 +387,7 @@ void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelInd
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
         bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapEnable();
-        if (vBlend)
-            m_PipelineSet.TrianglesWithBlend.setLightmapState(CommandBuffer, EnableLightmap);
-        else
-            m_PipelineSet.Main.setLightmapState(CommandBuffer, EnableLightmap);
+        pPipeline->setLightmapState(CommandBuffer, EnableLightmap);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
 }
@@ -377,7 +395,7 @@ void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelInd
 void CRendererSceneGoldSrc::__renderPointEntities(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
-    m_PipelineSet.Main.bind(CommandBuffer, vImageIndex);
+    m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
 
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
@@ -469,8 +487,10 @@ void CRendererSceneGoldSrc::__destroyRenderPass()
 void CRendererSceneGoldSrc::__createGraphicsPipelines()
 {
     m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.Main.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.TrianglesWithBlend.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.DepthTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendAlpha.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendAlphaTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendAdditive.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device,m_RenderPass, m_AppInfo.Extent, 1);
 }
 
@@ -632,8 +652,10 @@ void CRendererSceneGoldSrc::__updateDescriptorSets()
     VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_LightmapImagePack.ImageView : VK_NULL_HANDLE;
     for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
         TextureSet[i] = m_TextureImagePackSet[i].ImageView;
-    m_PipelineSet.Main.updateDescriptorSet(TextureSet, Lightmap);
-    m_PipelineSet.TrianglesWithBlend.updateDescriptorSet(TextureSet, Lightmap);
+    m_PipelineSet.DepthTest.updateDescriptorSet(TextureSet, Lightmap);
+    m_PipelineSet.BlendAlpha.updateDescriptorSet(TextureSet, Lightmap);
+    m_PipelineSet.BlendAlphaTest.updateDescriptorSet(TextureSet, Lightmap);
+    m_PipelineSet.BlendAdditive.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.GuiLines.updateDescriptorSet();
 }
 
@@ -695,11 +717,6 @@ VkFormat CRendererSceneGoldSrc::__findSupportedFormat(const std::vector<VkFormat
     }
 
     throw std::runtime_error(u8"未找到适配的vulkan格式");
-}
-
-uint32_t CRendererSceneGoldSrc::__findMemoryType(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties)
-{
-    return Vulkan::findMemoryType(m_AppInfo.PhysicalDevice, vTypeFilter, vProperties);
 }
 
 void CRendererSceneGoldSrc::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
@@ -843,46 +860,6 @@ bool CRendererSceneGoldSrc::__isObjectInSight(std::shared_ptr<C3DObject> vpObjec
     return true;
 }
 
-std::pair<std::vector<size_t>, std::vector<size_t>> CRendererSceneGoldSrc::__sortModelRenderSequence()
-{
-    std::vector<size_t> OpaqueSequence, TranparentSequence;
-    std::vector<std::pair<size_t, float>> TranparentInfoForSort;
-    glm::vec3 CameraPos = m_pCamera->getPos();
-    for (size_t i = 0; i < m_pScene->BspTree.ModelNum; ++i)
-    {
-        const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[i];
-        if (ModelInfo.IsTransparent)
-        {
-            // simple sort in distance of camera and object center
-            S3DBoundingBox BoundingBox = ModelInfo.BoundingBox;
-            glm::vec3 Center = (BoundingBox.Min + BoundingBox.Max) * 0.5f;
-            float Distance = glm::distance(Center, CameraPos);
-            TranparentInfoForSort.emplace_back(std::make_pair(i, Distance));
-        }
-        else
-        {
-            OpaqueSequence.emplace_back(i);
-        }
-    }
-
-    // simple sort, may cause artifact if objects collapse
-    std::sort(
-        TranparentInfoForSort.begin(),
-        TranparentInfoForSort.end(),
-        [](const std::pair<size_t, float>& vA, const std::pair<size_t, float>& vB)->bool
-        {
-            return vA.second > vB.second;
-        }
-    );
-
-    for (auto Pair : TranparentInfoForSort)
-    {
-        TranparentSequence.emplace_back(Pair.first);
-    }
-
-    return std::make_pair(OpaqueSequence, TranparentSequence);
-}
-
 void CRendererSceneGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
@@ -896,8 +873,10 @@ void CRendererSceneGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
     glm::vec3 EyePos = m_pCamera->getPos();
     glm::vec3 Up = glm::normalize(m_pCamera->getUp());
 
-    m_PipelineSet.Main.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-    m_PipelineSet.TrianglesWithBlend.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.BlendAlpha.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     if (m_EnableSky)
         m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
     m_PipelineSet.GuiLines.updateUniformBuffer(vImageIndex, View, Proj);

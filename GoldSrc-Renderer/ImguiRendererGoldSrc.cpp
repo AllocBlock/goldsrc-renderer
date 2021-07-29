@@ -15,7 +15,7 @@ void CImguiRendererGoldSrc::_drawV()
     if (ImGui::CollapsingHeader(u8"渲染器设置", ImGuiTreeNodeFlags_DefaultOpen))
     {
         bool EnableBSP = m_pRenderer->getBSPState();
-        ImGui::Checkbox(u8"使用BSP树渲染", &EnableBSP);
+        ImGui::Checkbox(u8"使用BSP树渲染（支持实体渲染模式）", &EnableBSP);
         m_pRenderer->setBSPState(EnableBSP);
 
         bool SkyRendering = m_pRenderer->getSkyState();

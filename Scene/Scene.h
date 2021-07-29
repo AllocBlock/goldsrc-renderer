@@ -8,10 +8,20 @@
 #include <map>
 #include <glm/glm.hpp>
 
+enum class EGoldSrcRenderMode
+{
+    NORMAL = 0x00,
+    COLOR,
+    TEXTURE,
+    GLOW,
+    SOLID,
+    ADDITIVE
+};
+
 struct SModelInfo
 {
     S3DBoundingBox BoundingBox;
-    bool IsTransparent = false;
+    EGoldSrcRenderMode RenderMode = EGoldSrcRenderMode::NORMAL;
     float Opacity = 1.0f;
 };
 
