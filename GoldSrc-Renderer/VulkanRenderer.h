@@ -16,16 +16,10 @@
 #include <optional>
 #include <set>
 
-enum class ERenderMethod
-{
-    DEFAULT,
-    BSP
-};
-
 struct SPipelineSet
 {
     CPipelineDepthTest DepthTest;
-    CPipelineBlendAlpha BlendAlpha;
+    CPipelineBlendAlpha BlendTextureAlpha;
     CPipelineBlendAlphaTest BlendAlphaTest;
     CPipelineBlendAdditive BlendAdditive;
     CPipelineSkybox Sky;
@@ -34,7 +28,7 @@ struct SPipelineSet
     void destroy()
     {
         DepthTest.destroy();
-        BlendAlpha.destroy();
+        BlendTextureAlpha.destroy();
         BlendAlphaTest.destroy();
         BlendAdditive.destroy();
         Sky.destroy();
@@ -130,6 +124,7 @@ private:
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(std::shared_ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
+    std::vector<size_t> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
     

@@ -124,7 +124,6 @@
     <ClCompile Include="ImguiTextureViewer.cpp" />
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PipelineBlendAlpha.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
     <ClCompile Include="PipelineLine.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />

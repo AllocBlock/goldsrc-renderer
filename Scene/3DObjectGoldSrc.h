@@ -4,11 +4,11 @@
 class C3DObjectGoldSrc : public C3DObject
 {
 public:
-    bool getLightMapEnable() { return m_EnableLightmap; }
+    bool getLightMapState() { return m_EnableLightmap; }
     std::shared_ptr<CDataArrayBase<std::optional<size_t>>> getLightmapIndexArray() { return m_LightmapIndexArray; }
     std::shared_ptr<CDataArrayBase<glm::vec2>> getLightmapCoordArray() { return m_LightmapTexCoordArray; }
 
-    void setLightMapEnable(bool vEnable) { m_EnableLightmap = vEnable; }
+    void setLightMapState(bool vEnable) { m_EnableLightmap = vEnable; }
     void setLightmapIndexArray(std::shared_ptr<CDataArrayBase<std::optional<size_t>>> vLightmapIndexArray) { m_LightmapIndexArray = vLightmapIndexArray; }
     void setLightmapCoordArray(std::shared_ptr<CDataArrayBase<glm::vec2>> vLightmapCoordArray) { m_LightmapTexCoordArray = vLightmapCoordArray; }
 

@@ -99,11 +99,9 @@ std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_
     const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
 
     auto pObjectNormalPart = std::make_shared<C3DObjectGoldSrc>();
-    pObjectNormalPart->setMark("Brush");
-    pObjectNormalPart->setEffectType(E3DObjectEffectType::NORMAL);
+    pObjectNormalPart->setMark("brush");
     auto pObjectSkyPart = std::make_shared<C3DObjectGoldSrc>();
-    pObjectSkyPart->setEffectType(E3DObjectEffectType::SKY);
-    pObjectNormalPart->setMark("Sky");
+    pObjectSkyPart->setMark("sky");
 
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -137,9 +135,9 @@ std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(siz
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     auto pObjectNormalPart = std::make_shared<C3DObjectGoldSrc>();
-    pObjectNormalPart->setEffectType(E3DObjectEffectType::NORMAL);
+    pObjectNormalPart->setMark("entity");
     auto pObjectSkyPart = std::make_shared<C3DObjectGoldSrc>();
-    pObjectSkyPart->setEffectType(E3DObjectEffectType::SKY);
+    pObjectSkyPart->setMark("sky");
     
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
     size_t TexWidth, TexHeight;
@@ -223,7 +221,7 @@ void CSceneReaderBsp::__loadBspTree()
 
     // read models
     BspTree.ModelInfos.resize(ModelNum);
-    for (size_t i = 0; i < ModelNum; ++i)
+    for (size_t i = 1; i < ModelNum; ++i) // 从1号开始，0号实体似乎就是worldspawn，不含实体属性，包含全部固体
     {
         // get entity opacity
         std::optional<SMapEntity> EntityOpt = __findEntity(i);
@@ -496,7 +494,7 @@ void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<C3DObjectGoldSrc> 
     }
     else
     {
-        pObject->setLightMapEnable(true);
+        pObject->setLightMapState(true);
     }
     
     // scale texture coordinates
@@ -540,7 +538,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
 
     for (auto& pObject : m_pScene->Objects)
     {
-        if (!pObject->getLightMapEnable()) continue;
+        if (!pObject->getLightMapState()) continue;
 
         auto pLightmapIndexArray = pObject->getLightmapIndexArray();
         auto pLightmapTexCoordArray = pObject->getLightmapCoordArray();
@@ -634,10 +632,10 @@ void CSceneReaderBsp::__loadPointEntities()
         if (!Entity.Brushes.empty()) continue;
 
         auto pEntityCube = std::make_shared<C3DObjectGoldSrc>();
-        pEntityCube->setMark("Entity");
+        pEntityCube->setMark("point_entity");
         if (Entity.Properties.find("classname") != Entity.Properties.end())
         {
-            pEntityCube->setObjectName(Entity.Properties.at("classname"));
+            pEntityCube->setName(Entity.Properties.at("classname"));
         }
         glm::vec3 Origin = glm::vec3(0.0, 0.0, 0.0);
         if (Entity.Properties.find("origin") != Entity.Properties.end())

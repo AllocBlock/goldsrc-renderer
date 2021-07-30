@@ -82,6 +82,7 @@ void CRendererSceneGoldSrc::addGuiLine(std::string vName, glm::vec3 vStart, glm:
 void CRendererSceneGoldSrc::rerecordCommand()
 {
     m_RerecordCommandTimes += m_NumSwapchainImage;
+    m_RerecordCommandTimes += m_NumSwapchainImage;
 }
 
 void CRendererSceneGoldSrc::_initV()
@@ -181,7 +182,7 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
 
                 for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
                 {
-                    bool EnableLightmap = m_pScene->Objects[i]->getLightMapEnable();
+                    bool EnableLightmap = m_pScene->Objects[i]->getLightMapState();
                     m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
                     {
@@ -209,7 +210,7 @@ void CRendererSceneGoldSrc::__createRecreateResources()
     __createDepthResources(); // extent
     __createFramebuffers(); // imageview, extent
     m_PipelineSet.DepthTest.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.BlendAlpha.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.BlendTextureAlpha.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.BlendAlphaTest.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.BlendAdditive.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.Sky.setImageNum(m_NumSwapchainImage);
@@ -309,7 +310,7 @@ void CRendererSceneGoldSrc::__renderTreeNode(uint32_t vImageIndex, uint32_t vNod
             m_RenderedObjectSet.insert(ObjectIndex);
             isLeafVisable = true;
 
-            bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapEnable();
+            bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapState();
             m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
 
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
@@ -338,10 +339,76 @@ void CRendererSceneGoldSrc::__renderModels(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
+    // 这里去看了下Xash3D的源码，xash3d/engine/client/gl_rmain.c
+    // 它是按照纹理、叠加和发光的顺序绘制
+    // 也对实体进行简单的按距离排序
+    auto SortedModelSet = __sortModelRenderSequence();
+
+    for (size_t ModelIndex : SortedModelSet)
+    {
+        __renderModel(vImageIndex, ModelIndex);
+    }
+}
+
+struct SModelSortInfo
+{
+    size_t Index;
+    EGoldSrcRenderMode RenderMode;
+    float Distance;
+
+    int getRenderModePriority() const
+    {
+        switch (RenderMode)
+        {
+        case EGoldSrcRenderMode::NORMAL:
+        case EGoldSrcRenderMode::SOLID:
+            return 0;
+        case EGoldSrcRenderMode::COLOR:
+        case EGoldSrcRenderMode::TEXTURE:
+            return 1;
+        case EGoldSrcRenderMode::GLOW:
+        case EGoldSrcRenderMode::ADDITIVE:
+            return 2;
+        default: return -1;
+        }
+    }
+};
+
+std::vector<size_t> CRendererSceneGoldSrc::__sortModelRenderSequence()
+{
+    std::vector<SModelSortInfo> InfoForSort;
+    glm::vec3 CameraPos = m_pCamera->getPos();
     for (size_t i = 0; i < m_pScene->BspTree.ModelNum; ++i)
     {
-        __renderModel(vImageIndex, i);
+        const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[i];
+        S3DBoundingBox BoundingBox = ModelInfo.BoundingBox;
+        glm::vec3 Center = (BoundingBox.Min + BoundingBox.Max) * 0.5f;
+        float Distance = glm::distance(Center, CameraPos);
+
+        InfoForSort.emplace_back(SModelSortInfo{ i, ModelInfo.RenderMode, Distance });
     }
+
+    // simple sort, may cause artifact if objects collapse
+    std::sort(
+        InfoForSort.begin(),
+        InfoForSort.end(),
+        [](const SModelSortInfo& vA, const SModelSortInfo& vB)->bool
+        {
+            int ModePrioA = vA.getRenderModePriority();
+            int ModePrioB = vB.getRenderModePriority();
+            if (ModePrioA < ModePrioB) return true;
+            else if (ModePrioA == ModePrioB) return vA.Distance > vB.Distance;
+            else return false;
+        }
+    );
+
+    std::vector<size_t> SortedModelSet;
+    for (const SModelSortInfo& Info : InfoForSort)
+    {
+        SortedModelSet.emplace_back(Info.Index);
+    }
+
+    return SortedModelSet;
 }
 
 void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
@@ -356,12 +423,14 @@ void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelInd
     switch (ModelInfo.RenderMode)
     {
     case EGoldSrcRenderMode::NORMAL:
-    case EGoldSrcRenderMode::COLOR:
-    case EGoldSrcRenderMode::TEXTURE:
-    case EGoldSrcRenderMode::GLOW:
     {
         pPipeline = &m_PipelineSet.DepthTest;
-        
+        break;
+    }
+    case EGoldSrcRenderMode::COLOR:
+    case EGoldSrcRenderMode::TEXTURE:
+    {
+        pPipeline = &m_PipelineSet.BlendTextureAlpha;
         break;
     }
     case EGoldSrcRenderMode::SOLID:
@@ -370,6 +439,7 @@ void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelInd
         break;
     }
     case EGoldSrcRenderMode::ADDITIVE:
+    case EGoldSrcRenderMode::GLOW:
     {
         pPipeline = &m_PipelineSet.BlendAdditive;
         break;
@@ -386,7 +456,7 @@ void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelInd
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
-        bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapEnable();
+        bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapState();
         pPipeline->setLightmapState(CommandBuffer, EnableLightmap);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
@@ -400,7 +470,7 @@ void CRendererSceneGoldSrc::__renderPointEntities(uint32_t vImageIndex)
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
         if (!m_AreObjectsVisable[i]) continue;
-        else if (m_pScene->Objects[i]->getMark() != "Entity") continue;
+        else if (m_pScene->Objects[i]->getMark() != "point_entity") continue;
         __recordObjectRenderCommand(vImageIndex, i);
     }
 }
@@ -488,7 +558,7 @@ void CRendererSceneGoldSrc::__createGraphicsPipelines()
 {
     m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.DepthTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendAlpha.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendTextureAlpha.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.BlendAlphaTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.BlendAdditive.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device,m_RenderPass, m_AppInfo.Extent, 1);
@@ -653,7 +723,7 @@ void CRendererSceneGoldSrc::__updateDescriptorSets()
     for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
         TextureSet[i] = m_TextureImagePackSet[i].ImageView;
     m_PipelineSet.DepthTest.updateDescriptorSet(TextureSet, Lightmap);
-    m_PipelineSet.BlendAlpha.updateDescriptorSet(TextureSet, Lightmap);
+    m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAlphaTest.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAdditive.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.GuiLines.updateDescriptorSet();
@@ -797,7 +867,7 @@ void CRendererSceneGoldSrc::__calculateVisiableObjects()
     {
         m_AreObjectsVisable[i] = false;
 
-        if (m_pScene->Objects[i]->getEffectType() == E3DObjectEffectType::SKY || m_pScene->Objects[i]->getVertexArray()->empty())
+        if (m_pScene->Objects[i]->getMark() == "sky" || m_pScene->Objects[i]->getVertexArray()->empty())
             continue;
         
         if (m_EnableCulling)
@@ -874,7 +944,7 @@ void CRendererSceneGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
     glm::vec3 Up = glm::normalize(m_pCamera->getUp());
 
     m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-    m_PipelineSet.BlendAlpha.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     if (m_EnableSky)

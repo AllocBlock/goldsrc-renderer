@@ -56,6 +56,6 @@ void main()
 		}
 
 		float shadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
-		outColor = vec4(TexColor.rgb * shadow, TexColor.a * uPushConstant.Opacity);
+		outColor = vec4(TexColor.rgb * shadow, TexColor.a);
 	}
 }

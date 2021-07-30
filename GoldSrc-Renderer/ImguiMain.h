@@ -11,6 +11,12 @@
 
 #include <future>
 
+enum class ERenderMethod
+{
+    DEFAULT,
+    BSP
+};
+
 struct SResultReadScene
 {
     bool Succeed = false;
@@ -52,7 +58,7 @@ private:
     CImguiSelectFile m_FileSelection;
     std::shared_ptr<CImguiRenderer> m_pGuiRenderer = nullptr;
 
-    ERenderMethod m_RenderMethod = ERenderMethod::DEFAULT;
+    ERenderMethod m_RenderMethod = ERenderMethod::BSP;
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";
     std::future<SResultReadScene> m_FileReadingFuture;

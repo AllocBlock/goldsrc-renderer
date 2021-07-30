@@ -4,8 +4,8 @@
 class CObject
 {
 public:
-    void setObjectName(std::string vName) { m_Name = vName; }
-    std::string getObjectName() { return m_Name; }
+    void setName(std::string vName) { m_Name = vName; }
+    std::string getName() { return m_Name; }
     void setMark(std::string vMark) { m_Mark = vMark; }
     std::string getMark() { return m_Mark; }
 

@@ -529,7 +529,7 @@ void CRendererSceneSimple::__calculateVisiableObjects()
     {
         m_AreObjectsVisable[i] = false;
 
-        if (m_pScene->Objects[i]->getEffectType() == E3DObjectEffectType::SKY || m_pScene->Objects[i]->getVertexArray()->empty())
+        if (m_pScene->Objects[i]->getMark() == "sky" || m_pScene->Objects[i]->getVertexArray()->empty())
             continue;
         
         if (m_EnableCulling)

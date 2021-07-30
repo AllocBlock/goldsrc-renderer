@@ -39,9 +39,6 @@
     <ClCompile Include="VulkanRenderer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineBlendAlpha.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineDepthTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
