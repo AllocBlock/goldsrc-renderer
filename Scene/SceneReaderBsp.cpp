@@ -631,12 +631,12 @@ void CSceneReaderBsp::__loadPointEntities()
     {
         if (!Entity.Brushes.empty()) continue;
 
-        auto pEntityCube = std::make_shared<C3DObjectGoldSrc>();
-        pEntityCube->setMark("point_entity");
+        std::string Name;
         if (Entity.Properties.find("classname") != Entity.Properties.end())
         {
-            pEntityCube->setName(Entity.Properties.at("classname"));
+            Name = Entity.Properties.at("classname");
         }
+
         glm::vec3 Origin = glm::vec3(0.0, 0.0, 0.0);
         if (Entity.Properties.find("origin") != Entity.Properties.end())
         {
@@ -645,10 +645,25 @@ void CSceneReaderBsp::__loadPointEntities()
             StringStream >> X >> Y >> Z;
             Origin = glm::vec3(X, Y, Z);
         }
-        const float Size = 0.2f;
-        __appendCube(Origin / m_SceneScale, Size, pEntityCube);
 
-        m_pScene->Objects.emplace_back(pEntityCube);
+        if (Name == "env_sprite")
+        {
+            SprSet
+        }
+        else
+        {
+            auto pEntityCube = std::make_shared<C3DObjectGoldSrc>();
+            pEntityCube->setMark("point_entity");
+            if (!Name.empty())
+            {
+                pEntityCube->setName(Entity.Properties.at("classname"));
+            }
+
+            const float Size = 0.2f;
+            __appendCube(Origin / m_SceneScale, Size, pEntityCube);
+
+            m_pScene->Objects.emplace_back(pEntityCube);
+        }
     }
 }
 

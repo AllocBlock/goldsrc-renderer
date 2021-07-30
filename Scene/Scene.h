@@ -76,10 +76,29 @@ private:
     static const size_t m_Channel = 4; // RGBA 4 channels
 };
 
+enum class EGoldSrcSpriteType
+{
+    PARALLEL_UP_RIGHT = 0x00, // 始终面向相机，但z轴锁定（比如花草）
+    FACING_UP_RIGHT, // 和PARALLEL_UP_RIGHT类似，但是面向方向不由相机朝向决定，而是由玩家位置决定
+    PARALLEL, // 始终面向相机（比如光晕）
+    ORIENTED, // 固定方向
+    PARALLEL_ORIENTED // 始终面向相机，但是法向可以自定义
+};
+
+struct SGoldSrcSprite
+{
+    glm::vec3 Position;
+    float Scale;
+    EGoldSrcSpriteType Type;
+    std::shared_ptr<CIOImage> pImage;
+};
+
 struct SScene
 {
     std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
     std::vector<std::shared_ptr<CIOImage>> TexImageSet;
+
+    std::vector<SGoldSrcSprite> SprSet;
 
     bool UseLightmap = false;
     std::shared_ptr<CLightmap> pLightmap = nullptr;

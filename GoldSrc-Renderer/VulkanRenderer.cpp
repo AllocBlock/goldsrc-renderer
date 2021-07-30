@@ -79,9 +79,9 @@ void CRendererSceneGoldSrc::addGuiLine(std::string vName, glm::vec3 vStart, glm:
     m_PipelineSet.GuiLines.setObject(vName, std::move(pObject));
     rerecordCommand();
 }
+
 void CRendererSceneGoldSrc::rerecordCommand()
 {
-    m_RerecordCommandTimes += m_NumSwapchainImage;
     m_RerecordCommandTimes += m_NumSwapchainImage;
 }
 
@@ -232,11 +232,11 @@ void CRendererSceneGoldSrc::__destroyRecreateResources()
 
 void CRendererSceneGoldSrc::__createSceneResources()
 {
-    __createTextureImages(); // scene
-    __createLightmapImage(); // scene
+    __createTextureImages();
+    __createLightmapImage();
     __updateDescriptorSets();
-    __createVertexBuffer(); // scene
-    __createIndexBuffer(); // scene
+    __createVertexBuffer();
+    __createIndexBuffer();
 
     m_EnableSky = m_EnableSky && m_pScene && m_pScene->UseSkyBox;
 
