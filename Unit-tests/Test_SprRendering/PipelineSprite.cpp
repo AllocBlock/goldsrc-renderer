@@ -135,18 +135,6 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineSprite::_getInputAssemblyStageIn
     return Info;
 }
 
-VkPipelineDepthStencilStateCreateInfo CPipelineSprite::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
-}
-
 std::vector<VkPushConstantRange> CPipelineSprite::_getPushConstantRangeSetV()
 {
     VkPushConstantRange PushConstantVertInfo = {};
