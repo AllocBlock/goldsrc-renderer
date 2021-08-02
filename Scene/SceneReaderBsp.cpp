@@ -3,6 +3,7 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcWad.h"
 #include "SingleValueDataArray.h"
+#include "IOGoldSrcSpr.h"
 
 #include <sstream>
 
@@ -648,22 +649,41 @@ void CSceneReaderBsp::__loadPointEntities()
 
         if (Name == "env_sprite")
         {
-            SprSet
-        }
-        else
-        {
-            auto pEntityCube = std::make_shared<C3DObjectGoldSrc>();
-            pEntityCube->setMark("point_entity");
-            if (!Name.empty())
+            SGoldSrcSprite Sprite;
+            Sprite.Position = Origin * m_SceneScale;
+            Sprite.Scale = (Entity.Properties.find("scale") != Entity.Properties.end()) ? std::atoi(Entity.Properties.at("scale").c_str()) : 1.0;
+            std::string Name = (Entity.Properties.find("model") != Entity.Properties.end()) ? Entity.Properties.at("model") : "";
+
+            std::filesystem::path RealWadPath;
+            if (Scene::requestFilePathUntilCancel(Name, ".spr", RealWadPath))
             {
-                pEntityCube->setName(Entity.Properties.at("classname"));
+                CIOGoldSrcSpr Spr;
+                Spr.read(RealWadPath);
+                uint32_t Width = 0, Height = 0;
+                Spr.getFrameSize(0, Width, Height);
+                auto pImage = std::make_shared<CIOImage>();
+                void* pData = new uint8_t[Width * Height * 4];
+                Spr.getFrameRGBAPixels(0, pData);
+                pImage->setSize(Width, Height);
+                pImage->setData(pData);
+
+                Sprite.pImage = pImage;
+                Sprite.Type = static_cast<EGoldSrcSpriteType>(Spr.getType());
+                m_pScene->SprSet.emplace_back(Sprite);
             }
-
-            const float Size = 0.2f;
-            __appendCube(Origin / m_SceneScale, Size, pEntityCube);
-
-            m_pScene->Objects.emplace_back(pEntityCube);
         }
+
+        auto pEntityCube = std::make_shared<C3DObjectGoldSrc>();
+        pEntityCube->setMark("point_entity");
+        if (!Name.empty())
+        {
+            pEntityCube->setName(Entity.Properties.at("classname"));
+        }
+
+        const float Size = 0.2f;
+        __appendCube(Origin * m_SceneScale, Size, pEntityCube);
+
+        m_pScene->Objects.emplace_back(pEntityCube);
     }
 }
 

@@ -35,8 +35,7 @@ protected:
     virtual void _initV() {}
     virtual void _recreateV() {}
     virtual void _updateV(uint32_t vImageIndex) = 0;
-    virtual
-        std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
     virtual void _destroyV() {};
 
     Vulkan::SVulkanAppInfo m_AppInfo;

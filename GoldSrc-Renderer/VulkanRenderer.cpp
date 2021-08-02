@@ -163,6 +163,9 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
 
+        if (m_pScene && !m_pScene->SprSet.empty())
+            __recordSpriteRenderCommand(vImageIndex);
+
         VkDeviceSize Offsets[] = { 0 };
         if (m_VertexBufferPack.isValid())
             vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
@@ -213,6 +216,7 @@ void CRendererSceneGoldSrc::__createRecreateResources()
     m_PipelineSet.BlendTextureAlpha.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.BlendAlphaTest.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.BlendAdditive.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.Sprite.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.Sky.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.GuiLines.setImageNum(m_NumSwapchainImage);
     __createSceneResources();
@@ -243,6 +247,11 @@ void CRendererSceneGoldSrc::__createSceneResources()
     if (m_pScene && m_pScene->UseSkyBox)
     {
         m_PipelineSet.Sky.setSkyBoxImage(m_pScene->SkyBoxImages);
+    }
+
+    if (m_pScene && !m_pScene->SprSet.empty())
+    {
+        m_PipelineSet.Sprite.setSprites(m_pScene->SprSet);
     }
 
     rerecordCommand();
@@ -292,6 +301,7 @@ void CRendererSceneGoldSrc::__renderByBspTree(uint32_t vImageIndex)
     __renderTreeNode(vImageIndex, 0);
     __renderPointEntities(vImageIndex);
     __renderModels(vImageIndex);
+    __renderSprites(vImageIndex);
 }
 
 void CRendererSceneGoldSrc::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
@@ -348,6 +358,11 @@ void CRendererSceneGoldSrc::__renderModels(uint32_t vImageIndex)
     {
         __renderModel(vImageIndex, ModelIndex);
     }
+}
+
+void CRendererSceneGoldSrc::__renderSprites(uint32_t vImageIndex)
+{
+
 }
 
 struct SModelSortInfo
@@ -561,6 +576,7 @@ void CRendererSceneGoldSrc::__createGraphicsPipelines()
     m_PipelineSet.BlendTextureAlpha.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.BlendAlphaTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.BlendAdditive.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.Sprite.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device,m_RenderPass, m_AppInfo.Extent, 1);
 }
 
@@ -947,6 +963,7 @@ void CRendererSceneGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
     m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, View, Proj, EyePos);
     if (m_EnableSky)
         m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
     m_PipelineSet.GuiLines.updateUniformBuffer(vImageIndex, View, Proj);
@@ -956,4 +973,9 @@ void CRendererSceneGoldSrc::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
     m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
+}
+void CRendererSceneGoldSrc::__recordSpriteRenderCommand(uint32_t vImageIndex)
+{
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    m_PipelineSet.Sprite.recordCommand(CommandBuffer, vImageIndex);
 }

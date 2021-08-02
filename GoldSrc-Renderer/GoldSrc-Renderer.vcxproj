@@ -128,6 +128,7 @@
     <ClCompile Include="PipelineLine.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
+    <ClCompile Include="PipelineSprite.cpp" />
     <ClCompile Include="SimpleRenderer.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
@@ -150,6 +151,7 @@
     <ClInclude Include="PipelineLine.h" />
     <ClInclude Include="PipelineSimple.h" />
     <ClInclude Include="PipelineSkybox.h" />
+    <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PointData.h" />
     <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="VulkanRenderer.h" />
@@ -254,6 +256,20 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile vert shader...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="shader\sprShader.frag">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Frag.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile frag shader...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="shader\sprShader.vert">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vert shader...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
     </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

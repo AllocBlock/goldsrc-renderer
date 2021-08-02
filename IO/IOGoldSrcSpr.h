@@ -43,6 +43,7 @@ public:
     size_t getFrameNum() const;
     void getFrameSize(size_t vIndex, uint32_t& voWidth, uint32_t& voHeight) const;
     void getFrameRGBAPixels(size_t vIndex, void* voData) const;
+    int getType() const;
 
 protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;

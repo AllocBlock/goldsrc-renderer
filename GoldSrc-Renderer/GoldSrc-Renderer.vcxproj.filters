@@ -69,6 +69,9 @@
     <ClCompile Include="ImguiRendererSimple.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineSprite.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImguiAlert.h">
@@ -134,6 +137,9 @@
     <ClInclude Include="PipelineBlendAlphaTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineSprite.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shader\lineShader.frag">
@@ -164,6 +170,12 @@
       <Filter>资源文件</Filter>
     </CustomBuild>
     <CustomBuild Include="shader\alphaTestShader.vert">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\sprShader.frag">
+      <Filter>资源文件</Filter>
+    </CustomBuild>
+    <CustomBuild Include="shader\sprShader.vert">
       <Filter>资源文件</Filter>
     </CustomBuild>
   </ItemGroup>

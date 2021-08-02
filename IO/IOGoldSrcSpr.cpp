@@ -28,6 +28,11 @@ void CIOGoldSrcSpr::getFrameRGBAPixels(size_t vIndex, void* voData) const
     }
 }
 
+int CIOGoldSrcSpr::getType() const
+{
+    return m_Header.Type;
+}
+
 bool CIOGoldSrcSpr::_readV(std::filesystem::path vFilePath)
 {
     std::ifstream File(vFilePath, std::ios::in | std::ios::binary);

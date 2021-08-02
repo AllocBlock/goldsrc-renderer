@@ -7,6 +7,7 @@
 #include "PipelineBlendAlphaTest.h"
 #include "PipelineBlendAdditive.h"
 #include "PipelineLine.h"
+#include "PipelineSprite.h"
 #include "Descriptor.h"
 #include "Command.h"
 
@@ -22,6 +23,7 @@ struct SPipelineSet
     CPipelineBlendAlpha BlendTextureAlpha;
     CPipelineBlendAlphaTest BlendAlphaTest;
     CPipelineBlendAdditive BlendAdditive;
+    CPipelineSprite Sprite;
     CPipelineSkybox Sky;
     CPipelineLine GuiLines;
 
@@ -31,6 +33,7 @@ struct SPipelineSet
         BlendTextureAlpha.destroy();
         BlendAlphaTest.destroy();
         BlendAdditive.destroy();
+        Sprite.destroy();
         Sky.destroy();
         GuiLines.destroy();
     }
@@ -119,6 +122,7 @@ private:
     void __renderModels(uint32_t vImageIndex);
     void __renderModel(uint32_t vImageIndex, size_t vModelIndex);
     void __renderPointEntities(uint32_t vImageIndex);
+    void __renderSprites(uint32_t vImageIndex);
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __recordGuiCommandBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
@@ -127,6 +131,7 @@ private:
     std::vector<size_t> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
+    void __recordSpriteRenderCommand(uint32_t vImageIndex);
     
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);

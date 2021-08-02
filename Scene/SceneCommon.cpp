@@ -104,21 +104,26 @@ bool Scene::findFile(std::filesystem::path vFilePath, std::filesystem::path vSea
 
     std::filesystem::path FullPath = std::filesystem::absolute(vFilePath);
     std::filesystem::path CurDir = FullPath.parent_path();
+    std::filesystem::path FileName = FullPath.filename();
     while (!CurDir.empty() && CurDir != CurDir.parent_path())
     {
-        std::filesystem::path SearchPath = std::filesystem::relative(FullPath, CurDir);
-        std::filesystem::path CombinedSearchPath = std::filesystem::path(vSearchDir) / SearchPath;
+        std::filesystem::path CurPath = CurDir / FileName;
+        if (std::filesystem::exists(CurPath))
+        {
+            voFilePath = CurPath;
+            return true;
+        }
+        CurDir = CurDir.parent_path();
+    }
+    while (!vSearchDir.empty() && vSearchDir != vSearchDir.parent_path())
+    {
+        std::filesystem::path SearchPath = vSearchDir / FileName;
         if (std::filesystem::exists(SearchPath))
         {
             voFilePath = SearchPath;
             return true;
         }
-        else if (std::filesystem::exists(CombinedSearchPath))
-        {
-            voFilePath = CombinedSearchPath;
-            return true;
-        }
-        CurDir = CurDir.parent_path();
+        vSearchDir = vSearchDir.parent_path();
     }
 
     return false;
