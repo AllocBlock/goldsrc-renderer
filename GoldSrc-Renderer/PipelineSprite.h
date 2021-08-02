@@ -25,7 +25,6 @@ protected:
     virtual void _initDescriptorV() override;
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
     virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;
 
     static const size_t MaxSpriteNum;

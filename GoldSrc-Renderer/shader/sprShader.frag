@@ -18,5 +18,4 @@ layout(push_constant) uniform SPushConstant
 void main()
 {
 	outColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord);
-	outColor = vec4(1.0, 0.0, 0.0, 1.0);
 }

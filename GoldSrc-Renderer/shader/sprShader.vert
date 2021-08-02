@@ -21,8 +21,16 @@ layout(push_constant) uniform SPushConstant
 
 void main()
 {
+   
     vec3 Position = inPosition + uPushConstant.Origin;
+    if (true)
+    {
+        vec3 X = normalize(ubo.EyePosition - uPushConstant.Origin);
+        vec3 Y = normalize(cross(vec3(0.0, 0.0, 1.0), X));
+        vec3 Z = normalize(cross(X, Y));
+        mat3 Rotate = mat3(X, Y, Z);
+        Position = (Rotate * inPosition) + uPushConstant.Origin;
+    }
     gl_Position = ubo.Proj * ubo.View * vec4(Position, 1.0);
-    gl_Position = vec4(Position, 1.0);
     outFragTexCoord = inTexCoord;
 }

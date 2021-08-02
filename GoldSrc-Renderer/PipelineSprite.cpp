@@ -40,11 +40,11 @@ struct SPositionUVPointData
 
 struct SPushConstant
 {
-    alignas(16) glm::vec3 Origin;
-    alignas(16) uint32_t TexIndex;
+    glm::vec3 Origin;
+    uint32_t TexIndex;
 };
 
-struct SSkyUniformBufferObjectVert
+struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
@@ -58,9 +58,11 @@ void CPipelineSprite::destroy()
     if (m_TextureSampler != VK_NULL_HANDLE)
         vkDestroySampler(m_Device, m_TextureSampler, nullptr);
 
-    for(auto& ImagePack : m_SpriteImagePackSet)
+    for (auto& ImagePack : m_SpriteImagePackSet)
         ImagePack.destroy(m_Device);
     m_SpriteImagePackSet.clear();
+
+    m_PlaceholderImagePack.destroy(m_Device);
 
     m_VertexDataPack.destroy(m_Device);
     for (size_t i = 0; i < m_VertUniformBufferPacks.size(); ++i)
@@ -79,18 +81,19 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     for (auto& ImagePack : m_SpriteImagePackSet)
         ImagePack.destroy(m_Device);
     m_SpriteImagePackSet.resize(vSpriteImageSet.size());
+    m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
         __createImageFromIOImage(vSpriteImageSet[i].pImage, m_SpriteImagePackSet[i]);
-        m_SpriteSequence.emplace_back(std::make_pair(vSpriteImageSet[i].Position, i));
+        m_SpriteSequence[i] = std::make_pair(vSpriteImageSet[i].Position, i);
     }
-    
+
     __updateDescriptorSet();
 }
 
 void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
 {
-    SSkyUniformBufferObjectVert UBOVert = {};
+    SUniformBufferObjectVert UBOVert = {};
     UBOVert.Proj = vProj;
     UBOVert.View = vView;
     UBOVert.EyePosition = vEyePos;
@@ -108,13 +111,13 @@ void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImag
         const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_VertexDataPack.Buffer, Offsets);
-        for (auto &[Origin, TexIndex] : m_SpriteSequence)
+        for (auto& [Origin, TexIndex] : m_SpriteSequence)
         {
             SPushConstant Data = { Origin, TexIndex };
             vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Data), &Data);
             vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
         }
-        
+
     }
 }
 
@@ -130,18 +133,6 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineSprite::_getInputAssemblyStageIn
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;
-}
-
-VkPipelineDepthStencilStateCreateInfo CPipelineSprite::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
 }
 
 std::vector<VkPushConstantRange> CPipelineSprite::_getPushConstantRangeSetV()
@@ -168,14 +159,15 @@ void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 void CPipelineSprite::_createResourceV(size_t vImageNum)
 {
     // create unit square facing positive x-axis
+    // À≥ ±’Î
     const std::vector<SPositionUVPointData> PointData =
     {
-        {{ 1.0,  1.0, 1.0 }, {0.0, 1.0}},
-        {{ 1.0, -1.0, 1.0 }, {0.0, 0.0}},
-        {{-1.0, -1.0, 0.0 }, {1.0, 0.0}},
-        {{ 1.0,  1.0, 0.0 }, {0.0, 1.0}},
-        {{-1.0, -1.0, 1.0 }, {1.0, 0.0}},
-        {{ 1.0, -1.0, 0.0 }, {1.0, 1.0}},
+        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
+        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
+        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
+        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
+        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
+        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
     };
 
     VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
@@ -186,7 +178,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     Vulkan::endSingleTimeBuffer(CommandBuffer);
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
+    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
     m_VertUniformBufferPacks.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
@@ -248,7 +240,7 @@ void CPipelineSprite::__updateDescriptorSet()
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_VertUniformBufferPacks[i].Buffer;
         VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SSkyUniformBufferObjectVert);
+        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorImageInfo SamplerInfo = {};
