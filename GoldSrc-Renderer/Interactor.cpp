@@ -40,26 +40,6 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 
 	switch (vKey)
 	{
-		case GLFW_KEY_SPACE:
-		{
-			if (vAction == GLFW_PRESS)
-			{
-				pInteractor->m_IsMoving = true;
-				glfwSetInputMode(vpWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-				glfwGetCursorPos(vpWindow, &pInteractor->m_LastMousePosX, &pInteractor->m_LastMousePosY);
-
-				std::shared_ptr<CCamera> pCamera = pInteractor->getRendererScene()->getCamera();
-				pInteractor->m_LastPhi = pCamera->getPhi();
-				pInteractor->m_LastTheta = pCamera->getTheta();
-			}
-			else if (vAction == GLFW_RELEASE)
-			{
-				pInteractor->m_IsMoving = false;
-				glfwSetInputMode(vpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			}
-			break;
-		}
 		default:
 			break;
 	}
@@ -95,6 +75,25 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 			double XPos = 0.0, YPos = 0.0;
 			glfwGetCursorPos(vpWindow, &XPos, &YPos);
 			pInteractor->__selectByClick(glm::vec2(XPos, YPos));
+		}
+	}
+	else if (vButton == GLFW_MOUSE_BUTTON_RIGHT)
+	{
+		if (vAction == GLFW_PRESS)
+		{
+			pInteractor->m_IsMoving = true;
+			glfwSetInputMode(vpWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+			glfwGetCursorPos(vpWindow, &pInteractor->m_LastMousePosX, &pInteractor->m_LastMousePosY);
+
+			std::shared_ptr<CCamera> pCamera = pInteractor->getRendererScene()->getCamera();
+			pInteractor->m_LastPhi = pCamera->getPhi();
+			pInteractor->m_LastTheta = pCamera->getTheta();
+		}
+		else if (vAction == GLFW_RELEASE)
+		{
+			pInteractor->m_IsMoving = false;
+			glfwSetInputMode(vpWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		}
 	}
 }

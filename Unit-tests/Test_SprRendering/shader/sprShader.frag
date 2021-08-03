@@ -11,8 +11,11 @@ layout(binding = 2) uniform texture2D uTextures[MAX_SPRITE_NUM];
 
 layout(push_constant) uniform SPushConstant 
 {
-	vec3 Origin;
 	uint TexIndex;
+    uint SpriteType;
+    float Scale;
+	vec3 Origin;
+	vec3 Angle;
 } uPushConstant;
 
 void main()

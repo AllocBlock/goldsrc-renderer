@@ -163,9 +163,6 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
 
-        if (m_pScene && !m_pScene->SprSet.empty())
-            __recordSpriteRenderCommand(vImageIndex);
-
         VkDeviceSize Offsets[] = { 0 };
         if (m_VertexBufferPack.isValid())
             vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
@@ -195,6 +192,9 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
                 }
             }
         }
+
+        if (m_pScene && !m_pScene->SprSet.empty())
+            __recordSpriteRenderCommand(vImageIndex);
 
         // 3D GUI层，放置选择框等3D标志元素
         vkCmdNextSubpass(CommandBuffer, VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
@@ -957,13 +957,14 @@ void CRendererSceneGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
     glm::mat4 View = m_pCamera->getViewMat();
     glm::mat4 Proj = m_pCamera->getProjMat();
     glm::vec3 EyePos = m_pCamera->getPos();
+    glm::vec3 EyeDirection = m_pCamera->getFront();
     glm::vec3 Up = glm::normalize(m_pCamera->getUp());
 
     m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
     m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-    m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, View, Proj, EyePos);
+    m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, View, Proj, EyePos, EyeDirection);
     if (m_EnableSky)
         m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
     m_PipelineSet.GuiLines.updateUniformBuffer(vImageIndex, View, Proj);

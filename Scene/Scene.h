@@ -88,6 +88,7 @@ enum class EGoldSrcSpriteType
 struct SGoldSrcSprite
 {
     glm::vec3 Position;
+    glm::vec3 Angle;
     float Scale;
     EGoldSrcSpriteType Type;
     std::shared_ptr<CIOImage> pImage;

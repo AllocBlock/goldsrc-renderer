@@ -9,6 +9,14 @@
 
 using namespace Common;
 
+glm::vec3 stringToVec3(std::string vString)
+{
+    std::istringstream StringStream(vString);
+    float X = 0.0f, Y = 0.0f, Z = 0.0f;
+    StringStream >> X >> Y >> Z;
+    return glm::vec3(X, Y, Z);
+}
+
 std::shared_ptr<SScene> CSceneReaderBsp::_readV()
 {
     m_pScene = std::make_shared<SScene>();
@@ -641,16 +649,14 @@ void CSceneReaderBsp::__loadPointEntities()
         glm::vec3 Origin = glm::vec3(0.0, 0.0, 0.0);
         if (Entity.Properties.find("origin") != Entity.Properties.end())
         {
-            std::istringstream StringStream(Entity.Properties.at("origin"));
-            float X = 0.0f, Y = 0.0f, Z = 0.0f;
-            StringStream >> X >> Y >> Z;
-            Origin = glm::vec3(X, Y, Z);
+            Origin = stringToVec3(Entity.Properties.at("origin"));
         }
 
         if (Name == "env_sprite")
         {
             SGoldSrcSprite Sprite;
             Sprite.Position = Origin * m_SceneScale;
+            Sprite.Angle = (Entity.Properties.find("angles") != Entity.Properties.end()) ? stringToVec3(Entity.Properties.at("angles")) : glm::vec3(0.0f, 0.0f, 0.0f);
             Sprite.Scale = (Entity.Properties.find("scale") != Entity.Properties.end()) ? std::atoi(Entity.Properties.at("scale").c_str()) : 1.0;
             std::string Name = (Entity.Properties.find("model") != Entity.Properties.end()) ? Entity.Properties.at("model") : "";
 

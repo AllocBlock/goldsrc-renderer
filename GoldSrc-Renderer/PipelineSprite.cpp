@@ -38,17 +38,12 @@ struct SPositionUVPointData
     }
 };
 
-struct SPushConstant
-{
-    glm::vec3 Origin;
-    uint32_t TexIndex;
-};
-
 struct SUniformBufferObjectVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
     alignas(16) glm::vec3 EyePosition;
+    alignas(16) glm::vec3 EyeDirection;
 };
 
 void CPipelineSprite::destroy()
@@ -85,18 +80,23 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
         __createImageFromIOImage(vSpriteImageSet[i].pImage, m_SpriteImagePackSet[i]);
-        m_SpriteSequence[i] = std::make_pair(vSpriteImageSet[i].Position, i);
+        m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
+        m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
+        m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
+        m_SpriteSequence[i].Scale = vSpriteImageSet[i].Scale;
+        m_SpriteSequence[i].TexIndex = i;
     }
 
     __updateDescriptorSet();
 }
 
-void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
+void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vEyeDirection)
 {
     SUniformBufferObjectVert UBOVert = {};
     UBOVert.Proj = vProj;
     UBOVert.View = vView;
     UBOVert.EyePosition = vEyePos;
+    UBOVert.EyeDirection = vEyeDirection;
 
     void* pData;
     Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
@@ -111,10 +111,9 @@ void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImag
         const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_VertexDataPack.Buffer, Offsets);
-        for (auto& [Origin, TexIndex] : m_SpriteSequence)
+        for (auto& PushConstant : m_SpriteSequence)
         {
-            SPushConstant Data = { Origin, TexIndex };
-            vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Data), &Data);
+            vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &PushConstant);
             vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
         }
 
@@ -140,19 +139,47 @@ std::vector<VkPushConstantRange> CPipelineSprite::_getPushConstantRangeSetV()
     VkPushConstantRange PushConstantVertInfo = {};
     PushConstantVertInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     PushConstantVertInfo.offset = 0;
-    PushConstantVertInfo.size = sizeof(SPushConstant);
+    PushConstantVertInfo.size = sizeof(SSpritePushConstant);
 
     VkPushConstantRange PushConstantFragInfo = {};
     PushConstantFragInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
     PushConstantFragInfo.offset = 0;
-    PushConstantFragInfo.size = sizeof(SPushConstant);
+    PushConstantFragInfo.size = sizeof(SSpritePushConstant);
 
     return { PushConstantVertInfo, PushConstantFragInfo };
 }
 
+VkPipelineDepthStencilStateCreateInfo CPipelineSprite::_getDepthStencilInfoV()
+{
+    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
+    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    DepthStencilInfo.depthTestEnable = VK_FALSE;
+    DepthStencilInfo.depthWriteEnable = VK_FALSE;
+    DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+    DepthStencilInfo.stencilTestEnable = VK_FALSE;
+
+    return DepthStencilInfo;
+}
+
+void CPipelineSprite::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
+{
+    // result color = source color * source alpha + dst(old) color * (1 - source alpha)
+    // result alpha = source alpha
+    voBlendAttachment = {};
+    voBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    voBlendAttachment.blendEnable = VK_TRUE;
+    voBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    voBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    voBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    voBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    voBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    voBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+}
+
 void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 {
-    SPushConstant Data = { {0.0, 0.0, 0.0}, 0 };
+    SSpritePushConstant Data;
     vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Data), &Data);
 }
 
