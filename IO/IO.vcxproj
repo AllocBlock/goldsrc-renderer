@@ -96,6 +96,7 @@
     <ClCompile Include="IOBase.cpp" />
     <ClCompile Include="IOCommon.cpp" />
     <ClCompile Include="IOGoldSrcBsp.cpp" />
+    <ClCompile Include="IOGoldSrcForgeGameData.cpp" />
     <ClCompile Include="IOGoldSrcMap.cpp" />
     <ClCompile Include="IOGoldSrcMdl.cpp" />
     <ClCompile Include="IOGoldSrcRmf.cpp" />
@@ -109,6 +110,7 @@
     <ClInclude Include="IOBase.h" />
     <ClInclude Include="IOCommon.h" />
     <ClInclude Include="IOGoldSrcBsp.h" />
+    <ClInclude Include="IOGoldSrcForgeGameData.h" />
     <ClInclude Include="IOGoldSrcMap.h" />
     <ClInclude Include="IOGoldSrcMdl.h" />
     <ClInclude Include="IOGoldSrcRmf.h" />

@@ -29,7 +29,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_ShadowMap", "Unit-test
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vulkan", "Vulkan\Vulkan.vcxproj", "{117A19EF-C976-4370-B795-B58C27EE4AB0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_IO", "Test_IO\Test_IO.vcxproj", "{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_IO", "Unit-tests\Test_IO\Test_IO.vcxproj", "{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_SprRendering", "Unit-tests\Test_SprRendering\Test_SprRendering.vcxproj", "{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710}"
 EndProject

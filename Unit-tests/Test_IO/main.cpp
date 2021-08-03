@@ -1,5 +1,8 @@
 #include "IOGoldSrcSpr.h"
+#include "IOGoldSrcForgeGameData.h"
 #include "IOImage.h"
+
+#include <iostream>
 
 void saveSpr(const CIOGoldSrcSpr& vSpr, std::string vFilePrefix)
 {
@@ -24,7 +27,7 @@ void saveSpr(const CIOGoldSrcSpr& vSpr, std::string vFilePrefix)
     }
 }
 
-int main()
+void testSaveSpr()
 {
     CIOGoldSrcSpr Spr1;
     Spr1.read("spr/emc2t.spr");
@@ -33,5 +36,18 @@ int main()
     CIOGoldSrcSpr Spr2;
     Spr2.read("spr/explode1.spr");
     saveSpr(Spr2, "explode1");
+}
+
+void testFGD()
+{
+    CIOGoldSrcForgeGameData FGD;
+    FGD.read("../../data/cs16_0.8.2.0_vl.fgd");
+    std::cout << FGD.getEntityNum() << "\n";
+}
+
+int main()
+{
+    //testSaveSpr();
+    testFGD();
     return 0;
 }
