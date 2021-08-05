@@ -114,6 +114,7 @@
   <ItemGroup>
     <ClCompile Include="ApplicationGoldSrc.cpp" />
     <ClCompile Include="ImguiAlert.cpp" />
+    <ClCompile Include="ImguiFGD.cpp" />
     <ClCompile Include="ImguiFrameRate.cpp" />
     <ClCompile Include="ImguiRendererGoldSrc.cpp" />
     <ClCompile Include="ImguiLog.cpp" />
@@ -135,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h" />
     <ClInclude Include="ImguiAlert.h" />
+    <ClInclude Include="ImguiFGD.h" />
     <ClInclude Include="ImguiFrameRate.h" />
     <ClInclude Include="ImguiRendererGoldSrc.h" />
     <ClInclude Include="ImguiLog.h" />

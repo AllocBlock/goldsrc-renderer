@@ -306,6 +306,9 @@ void CGUIMain::__drawGUI()
         }
     }
 
+    // FGD设置
+    m_FGD.draw();
+
     // 渲染设置
     if (ImGui::CollapsingHeader(u8"渲染", ImGuiTreeNodeFlags_DefaultOpen))
     {

@@ -13,21 +13,27 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\Imgui">
+      <UniqueIdentifier>{ac74e681-1aa0-442b-be8e-e7bb9f1a122e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Renderer">
+      <UniqueIdentifier>{92ce53ab-468e-4aa1-afeb-a69772ec2b10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Imgui">
+      <UniqueIdentifier>{df4c598f-3d30-4888-8ffc-694197a9598b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Renderer">
+      <UniqueIdentifier>{bbbb4495-fb7b-4504-8213-03987ae03429}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Pipeline">
+      <UniqueIdentifier>{1f5a51fb-9e66-4c84-96b5-f52fcacfcc53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Pipeline">
+      <UniqueIdentifier>{b13500cf-d416-4d12-8b98-ada45626ea6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ImguiAlert.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ImguiFrameRate.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ImguiLog.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ImguiMain.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Interactor.cpp">
@@ -36,109 +42,127 @@
     <ClCompile Include="ApplicationGoldSrc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanRenderer.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="ImguiAlert.cpp">
+      <Filter>源文件\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineDepthTest.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="ImguiFGD.cpp">
+      <Filter>源文件\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineLine.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="ImguiFrameRate.cpp">
+      <Filter>源文件\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineSkybox.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="ImguiLog.cpp">
+      <Filter>源文件\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiSelectFile.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ImguiTextureViewer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SimpleRenderer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineSimple.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ImguiRendererGoldSrc.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="ImguiMain.cpp">
+      <Filter>源文件\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="ImguiRenderer.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiRendererGoldSrc.cpp">
+      <Filter>源文件\Imgui</Filter>
     </ClCompile>
     <ClCompile Include="ImguiRendererSimple.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiSelectFile.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiTextureViewer.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineDepthTest.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineLine.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSimple.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSkybox.cpp">
+      <Filter>源文件\Pipeline</Filter>
     </ClCompile>
     <ClCompile Include="PipelineSprite.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleRenderer.cpp">
+      <Filter>源文件\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanRenderer.cpp">
+      <Filter>源文件\Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ImguiAlert.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ImguiFrameRate.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ImguiLog.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ImguiMain.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Interactor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ApplicationGoldSrc.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanRenderer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineSkybox.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineBlendAlpha.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineDepthTest.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineLine.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PointData.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiSelectFile.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="ImguiAlert.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiTextureViewer.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="ImguiFGD.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleRenderer.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="ImguiFrameRate.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineSimple.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="ImguiLog.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiRendererGoldSrc.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="ImguiMain.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="ImguiRenderer.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiRendererGoldSrc.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="ImguiRendererSimple.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiSelectFile.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiTextureViewer.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="PipelineBlendAdditive.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBlendAlpha.h">
+      <Filter>头文件\Pipeline</Filter>
     </ClInclude>
     <ClInclude Include="PipelineBlendAlphaTest.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineDepthTest.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineLine.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSimple.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSkybox.h">
+      <Filter>头文件\Pipeline</Filter>
     </ClInclude>
     <ClInclude Include="PipelineSprite.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRenderer.h">
+      <Filter>头文件\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleRenderer.h">
+      <Filter>头文件\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@
 #include "ImguiLog.h"
 #include "ImguiSelectFile.h"
 #include "ImguiRenderer.h"
+#include "ImguiFGD.h"
 #include "Scene.h"
 
 #include <future>
@@ -56,6 +57,7 @@ private:
     CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();
     CImguiLog m_GUILog = CImguiLog();
     CImguiSelectFile m_FileSelection;
+    CImguiFGD m_FGD;
     std::shared_ptr<CImguiRenderer> m_pGuiRenderer = nullptr;
 
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;
