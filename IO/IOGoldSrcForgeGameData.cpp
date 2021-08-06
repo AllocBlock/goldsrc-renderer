@@ -2,6 +2,7 @@
 #include "Log.h"
 
 #include <regex>
+#include <algorithm>
 
 using namespace Common;
 
@@ -65,6 +66,21 @@ std::vector<std::string> __splitAttributeStr(std::string vText)
     return Result;
 }
 
+std::vector<std::string> __splitKeyValueStr(std::string vText)
+{
+    std::vector<std::string> Result;
+
+    std::regex ReKeyValue(R"ALLOCBLOCK(\w*\(\w*\)(\s*:\s*(("[^"]*")|([^\[\]\n="]*)))*\s*(\s*=\s*\[[^\]]*\])?)ALLOCBLOCK");
+
+    std::regex_iterator<std::string::const_iterator> ReBegin(vText.cbegin(), vText.cend(), ReKeyValue);
+    for (auto pIter = ReBegin; pIter != std::sregex_iterator(); ++pIter)
+    {
+        Result.emplace_back(pIter->str());
+    }
+
+    return Result;
+}
+
 SFGDAttribute CIOGoldSrcForgeGameData::__parseAttributeFromString(std::string vText)
 {
     SFGDAttribute Result;
@@ -75,6 +91,65 @@ SFGDAttribute CIOGoldSrcForgeGameData::__parseAttributeFromString(std::string vT
     _CHECK_ERROR(std::regex_search(vText, MatchResult, ReKeyValue));
     Result.Name = CIOBase::trimString(MatchResult[1].str());
     Result.Value = CIOBase::trimString(MatchResult[2].str());
+    
+    return Result;
+}
+
+std::vector<SFGDKeyValueInfoCandidate> CIOGoldSrcForgeGameData::__parseCandidateSetFromString(std::string vText)
+{
+    std::vector<SFGDKeyValueInfoCandidate> Result;
+
+    std::smatch MatchResult;
+    std::regex ReCandidateChoice(R"ALLOCBLOCK(.*:.*)ALLOCBLOCK"); // 匹配包含:符号的一行
+    std::regex ReCandidateChoiceDetail(R"ALLOCBLOCK(([^:]*)\s*:\s*("[^"]*")(?:\s*:\s*([^:\s]*))?)ALLOCBLOCK");
+
+    std::regex_iterator<std::string::const_iterator> ReBegin(vText.cbegin(), vText.cend(), ReCandidateChoice);
+    for (auto pIter = ReBegin; pIter != std::sregex_iterator(); ++pIter)
+    {
+        std::string CandidateStr = pIter->str();
+        _CHECK_ERROR(std::regex_search(CandidateStr, MatchResult, ReCandidateChoiceDetail));
+        SFGDKeyValueInfoCandidate Candidate;
+        Candidate.Value = __convertToUTF8(MatchResult[1].str());
+        Candidate.DisplayName = __convertToUTF8(MatchResult[2].str());
+        Candidate.Default = __convertToUTF8(MatchResult[3].str());
+        Result.emplace_back(std::move(Candidate));
+    }
+
+    return Result;
+}
+
+SFGDKeyValueInfo CIOGoldSrcForgeGameData::__parseKeyValueFromString(std::string vText)
+{
+    SFGDKeyValueInfo Result;
+
+    std::smatch MatchResult;
+    std::regex ReNameAndType(R"ALLOCBLOCK(^\s*(\w*)\((\w*)\))ALLOCBLOCK");
+    std::regex ReKeyValueNormal(R"ALLOCBLOCK(^\s*(\w*)\((\w*)\)\s*(?::\s*("[^"]*"))?\s*(?::\s*([^:]*))?\s*(?::\s*("[^"]*"))?\s*$)ALLOCBLOCK");
+    std::regex ReKeyValueChoice(R"ALLOCBLOCK(^\s*(\w*)\((\w*)\)\s*(?::\s*("[^"]*"))?\s*(?::\s*([^:]*))?\s*(?::\s*("[^"]*"))?\s*=\s*\[([^\]]*)\]$)ALLOCBLOCK");
+
+
+    _CHECK_ERROR(std::regex_search(vText, MatchResult, ReNameAndType));
+    std::string Type = CIOBase::trimString(MatchResult[2].str());
+    std::transform(Type.begin(), Type.end(), Type.begin(), [&](char vChar)->char { return std::tolower(vChar); });
+    if (Type == "string" || Type == "integer" || Type == "target_source" || Type == "target_destination" ||
+        Type == "color255" || Type == "color1" || Type == "sprite" || Type == "sound" || Type == "studio")
+    {
+        _CHECK_ERROR(std::regex_match(vText, MatchResult, ReKeyValueNormal));
+    }
+    else if (Type == "choices" || Type == "flags" || Type == "Flags")
+    {
+        _CHECK_ERROR(std::regex_match(vText, MatchResult, ReKeyValueChoice));
+        Result.CandidateSet = __parseCandidateSetFromString(MatchResult[5].str());
+    }
+    else
+    {
+        throw std::runtime_error(u8"未知的FGD键值类型：" + Type);
+    }
+    Result.Name = __convertToUTF8(MatchResult[1].str());
+    Result.Type = __convertToUTF8(MatchResult[2].str());
+    Result.DisplayName = __convertToUTF8(MatchResult[3].str());
+    Result.Default = __convertToUTF8(MatchResult[4].str());
+    Result.Description = __convertToUTF8(MatchResult[5].str());
     
     return Result;
 }
@@ -113,7 +188,14 @@ std::pair<std::string, std::string> CIOGoldSrcForgeGameData::__parseNameAndDescr
 std::vector<SFGDKeyValueInfo> CIOGoldSrcForgeGameData::__parseKeyValueInfoSetFromString(std::string vText)
 {
     std::vector<SFGDKeyValueInfo> Result;
-    // TODO: 暂时用不到
+
+    auto KeyValueStringSet = __splitKeyValueStr(vText);
+    for (const auto& KeyValueString : KeyValueStringSet)
+    {
+        auto KeyValue = __parseKeyValueFromString(KeyValueString);
+        // TODO: 获取父类的属性一并加入
+        Result.emplace_back(KeyValue);
+    }
     return Result;
 }
 
@@ -160,4 +242,10 @@ void CIOGoldSrcForgeGameData::__checkResult(bool vResult, int vLine)
     {
         throw std::runtime_error(u8"解析FGD文件失败，位于行" + std::to_string(vLine));
     }
+}
+
+std::string CIOGoldSrcForgeGameData::__convertToUTF8(std::string vText)
+{
+    std::filesystem::path vPath(vText);
+    return vPath.u8string();
 }

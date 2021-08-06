@@ -8,7 +8,7 @@ struct SFGDAttribute
     std::string Value;
 };
 
-struct SFGDKeyValueInfoItem
+struct SFGDKeyValueInfoCandidate
 {
     std::string Value;
     std::string DisplayName;
@@ -21,7 +21,8 @@ struct SFGDKeyValueInfo
     std::string Type;
     std::string DisplayName;
     std::string Default;
-    std::vector<SFGDKeyValueInfoItem> AttributeSet;
+    std::string Description;
+    std::vector<SFGDKeyValueInfoCandidate> CandidateSet;
 };
 
 struct SFGDEntity
@@ -56,6 +57,9 @@ private:
     std::pair<std::string, std::string> __parseNameAndDescriptionFromString(std::string vText);
     std::vector<SFGDKeyValueInfo> __parseKeyValueInfoSetFromString(std::string vText);
     SFGDAttribute __parseAttributeFromString(std::string vText);
+    SFGDKeyValueInfo __parseKeyValueFromString(std::string vText);
+    std::vector<SFGDKeyValueInfoCandidate> __parseCandidateSetFromString(std::string vText);
+    std::string __convertToUTF8(std::string vText);
 
     std::vector<SFGDEntity> m_EntitySet;
 };
