@@ -1,6 +1,7 @@
 #pragma once
 #include "ApplicationBase.h"
 #include "ImguiMain.h"
+#include "SceneInteractor.h"
 
 class CApplicationGoldSrc : public CApplicationBase
 {
@@ -17,6 +18,6 @@ protected:
 
 private:
     std::shared_ptr<CGUIMain> m_pGUI = nullptr;
-    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+    std::shared_ptr<CSceneInteractor> m_pInteractor = nullptr;
 };
 

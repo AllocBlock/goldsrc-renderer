@@ -1,6 +1,6 @@
 #pragma once
 #include "GUIBase.h"
-#include "Interactor.h"
+#include "SceneInteractor.h"
 #include "RendererScene.h"
 #include "ImguiAlert.h"
 #include "ImguiFrameRate.h"
@@ -35,8 +35,8 @@ public:
 
     static SResultReadScene readScene(std::filesystem::path vFilePath);
 
-    void setInteractor(std::shared_ptr<CInteractor> vInteractor) { m_pInteractor = vInteractor; }
-    std::shared_ptr<CInteractor> getInteractor() { return m_pInteractor; }
+    void setInteractor(std::shared_ptr<CSceneInteractor> vInteractor) { m_pInteractor = vInteractor; }
+    std::shared_ptr<CSceneInteractor> getInteractor() { return m_pInteractor; }
 protected:
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _initV() override;
@@ -51,7 +51,7 @@ private:
     std::shared_ptr<CCamera> m_pCamera = nullptr;
     std::shared_ptr<SScene> m_pScene = nullptr;
     std::shared_ptr<CRendererScene> m_pRenderer = nullptr;
-    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+    std::shared_ptr<CSceneInteractor> m_pInteractor = nullptr;
 
     CImguiAlert m_GUIAlert = CImguiAlert();
     CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();

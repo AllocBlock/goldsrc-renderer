@@ -90,6 +90,9 @@
     <ClCompile Include="VulkanRenderer.cpp">
       <Filter>源文件\Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="SceneInteractor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h">
@@ -157,6 +160,9 @@
     </ClInclude>
     <ClInclude Include="SimpleRenderer.h">
       <Filter>头文件\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneInteractor.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -17,10 +17,10 @@
  * +- 加快、减慢移动、旋转速度
  */
 
-class CInteractor
+class CSceneInteractor
 {
 public:
-	CInteractor() = default;
+	CSceneInteractor() = default;
 
 	void bindEvent(GLFWwindow* vWindow);
 	void enable() { m_Enabled = true; }

@@ -1,4 +1,4 @@
-#include "Interactor.h"
+#include "SceneInteractor.h"
 #include "imgui.h"
 #include <chrono>
 #include <glm/matrix.hpp>
@@ -27,25 +27,25 @@ enum class ERotateState
 	CRAWL = 0x0020,
 };
 
-void CInteractor::bindEvent(GLFWwindow* vWindow)
+void CSceneInteractor::bindEvent(GLFWwindow* vWindow)
 {
 	m_pWindow = vWindow;
 
 	_ASSERTE(m_pWindow);
 	glfwSetWindowUserPointer(m_pWindow, this);
-	glfwSetKeyCallback(m_pWindow, CInteractor::onKeyboard);
-	glfwSetCursorPosCallback(m_pWindow, CInteractor::onMouseMove);
-	glfwSetMouseButtonCallback(m_pWindow, CInteractor::onMouseClick);
+	glfwSetKeyCallback(m_pWindow, CSceneInteractor::onKeyboard);
+	glfwSetCursorPosCallback(m_pWindow, CSceneInteractor::onMouseMove);
+	glfwSetMouseButtonCallback(m_pWindow, CSceneInteractor::onMouseClick);
 }
 
-void CInteractor::setRendererScene(std::shared_ptr<CRendererScene> vRendererScene)
+void CSceneInteractor::setRendererScene(std::shared_ptr<CRendererScene> vRendererScene)
 {
 	m_pRenderer = vRendererScene;
 }
 
-void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods)
+void CSceneInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods)
 {
-	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
+	CSceneInteractor* pInteractor = reinterpret_cast<CSceneInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
 	if (vAction == GLFW_PRESS && 
 		(ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)) 
@@ -77,9 +77,9 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 	}
 }
 
-void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
+void CSceneInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
-	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
+	CSceneInteractor* pInteractor = reinterpret_cast<CSceneInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
 	auto pRenderer = pInteractor->getRendererScene();
 	if (!pRenderer) return;
@@ -92,11 +92,11 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 	pCamera->setTheta(std::min(std::max(pInteractor->m_LastTheta - (pInteractor->m_LastMousePosY - vPosY) * pInteractor->m_VerticalSensetivity, 1.0), 179.0));
 }
 
-void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods)
+void CSceneInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods)
 {
 	if (ImGui::GetIO().WantCaptureMouse) return;
 
-	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
+	CSceneInteractor* pInteractor = reinterpret_cast<CSceneInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	
 	if (!pInteractor->m_Enabled) return;
 
@@ -130,21 +130,21 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 	}
 }
 
-void CInteractor::update()
+void CSceneInteractor::update()
 {
 	float DeltaTime = __getDeltaTime();
 	__updateMove(DeltaTime);
 	__updateRotate(DeltaTime);
 }
 
-void CInteractor::reset()
+void CSceneInteractor::reset()
 {
 	auto pCamera = m_pRenderer->getCamera();
 	pCamera->reset();
 	m_Speed = 3.0f;
 }
 
-float CInteractor::__getDeltaTime()
+float CSceneInteractor::__getDeltaTime()
 {
 	static std::chrono::milliseconds LastTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
 	std::chrono::milliseconds CurrentTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
@@ -153,7 +153,7 @@ float CInteractor::__getDeltaTime()
 	return DeltaTime;
 }
 
-int CInteractor::__getCurrentMoveState()
+int CSceneInteractor::__getCurrentMoveState()
 {
 	int MoveState = static_cast<int>(EMoveState::STOP);
 	if (!m_IsMoving)
@@ -186,7 +186,7 @@ int CInteractor::__getCurrentMoveState()
 	return MoveState;
 }
 
-int CInteractor::__getCurrentRotateState()
+int CSceneInteractor::__getCurrentRotateState()
 {
 	int RotateState = static_cast<int>(ERotateState::STOP);
 	if (!m_IsMoving)
@@ -213,7 +213,7 @@ int CInteractor::__getCurrentRotateState()
 	return RotateState;
 }
 
-void CInteractor::__startMovingMode()
+void CSceneInteractor::__startMovingMode()
 {
 	auto pCamera = m_pRenderer->getCamera();
 	if (!pCamera) return;
@@ -227,13 +227,13 @@ void CInteractor::__startMovingMode()
 	m_LastTheta = pCamera->getTheta();
 }
 
-void CInteractor::__stopMovingMode()
+void CSceneInteractor::__stopMovingMode()
 {
 	m_IsMoving = false;
 	glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
-void CInteractor::__updateMove(float vDeltaTime)
+void CSceneInteractor::__updateMove(float vDeltaTime)
 {
 	int MoveState = __getCurrentMoveState();
 	if (MoveState == int(EMoveState::STOP)) return;
@@ -258,7 +258,7 @@ void CInteractor::__updateMove(float vDeltaTime)
 	pCamera->setPos(pCamera->getPos() + Move);
 }
 
-void CInteractor::__updateRotate(float vDeltaTime)
+void CSceneInteractor::__updateRotate(float vDeltaTime)
 {
 	// йс╫г
 	double Scale = m_Speed * vDeltaTime * 1000.0;
@@ -278,7 +278,7 @@ void CInteractor::__updateRotate(float vDeltaTime)
 	pCamera->setTheta(std::min(std::max(pCamera->getTheta() - m_VerticalSensetivity * RotateUp * Scale, 1.0), 179.0));
 }
 
-void CInteractor::__selectByClick(glm::vec2 vPos)
+void CSceneInteractor::__selectByClick(glm::vec2 vPos)
 {
 	const auto& pScene = m_pRenderer->getScene();
 	const auto& pCamera = m_pRenderer->getCamera();
@@ -333,7 +333,7 @@ void CInteractor::__selectByClick(glm::vec2 vPos)
 		m_pRenderer->removeHighlightBoundingBox(); */
 }
 
-bool CInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT)
+bool CSceneInteractor::__getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT)
 {
 	vDirection = glm::normalize(vDirection);
 

@@ -10,7 +10,7 @@ void CApplicationTest::_initV()
     m_pRenderer = std::make_shared<CRendererTest>();
     m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
     m_pInteractor = std::make_shared<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pRenderer);
+    m_pInteractor->bindEvent(m_pWindow, m_pRenderer->getCamera());
 
     m_pGUI->setCamera(m_pRenderer->getCamera());
     m_pGUI->setRenderer(m_pRenderer);
@@ -34,8 +34,8 @@ std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vI
 
 void CApplicationTest::_createOtherResourceV()
 {
-    m_pGUI->recreate(m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViewSet);
-    m_pRenderer->recreate(m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViewSet);
+    m_pGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageViews());
+    m_pRenderer->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageViews());
 }
 
 void CApplicationTest::_destroyOtherResourceV()

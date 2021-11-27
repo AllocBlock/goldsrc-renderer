@@ -129,6 +129,7 @@
     <ClCompile Include="PipelineSimple.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />
+    <ClCompile Include="SceneInteractor.cpp" />
     <ClCompile Include="SimpleRenderer.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
@@ -153,6 +154,7 @@
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PointData.h" />
+    <ClInclude Include="SceneInteractor.h" />
     <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>

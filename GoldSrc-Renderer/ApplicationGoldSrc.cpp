@@ -23,7 +23,7 @@ void CApplicationGoldSrc::_createOtherResourceV()
 {
     Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
 
-    m_pInteractor = std::make_shared<CInteractor>();
+    m_pInteractor = std::make_shared<CSceneInteractor>();
     m_pInteractor->bindEvent(m_pWindow);
 
     m_pGUI = std::make_shared<CGUIMain>();
@@ -36,7 +36,7 @@ void CApplicationGoldSrc::_createOtherResourceV()
 
 void CApplicationGoldSrc::_recreateOtherResourceV()
 {
-    m_pGUI->recreate(m_SwapchainImageFormat, m_SwapchainExtent, m_SwapchainImageViewSet);
+    m_pGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageViews());
 }
 
 void CApplicationGoldSrc::_destroyOtherResourceV()
