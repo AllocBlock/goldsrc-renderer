@@ -97,6 +97,7 @@
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="PipelineBase.cpp" />
     <ClCompile Include="RendererBase.cpp" />
+    <ClCompile Include="SetupGLFW.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -106,6 +107,7 @@
     <ClInclude Include="PipelineBase.h" />
     <ClInclude Include="RendererBase.h" />
     <ClInclude Include="RendererScene.h" />
+    <ClInclude Include="SetupGLFW.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
