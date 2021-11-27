@@ -30,6 +30,7 @@ void CDebugMessenger::destroy()
         throw std::runtime_error(u8"不支持调试函数");
     else
         pDestroyDebugFunc(m_Instance, m_Handle, nullptr);
+    m_Handle = VK_NULL_HANDLE;
 }
 
 void CDebugMessenger::setCustomCallback(DebugMessageCallbackFunc_t vCallback)

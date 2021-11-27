@@ -3,13 +3,26 @@
 #include <chrono>
 #include <glm/matrix.hpp>
 
-enum EMoveState
+enum class EMoveState
 {
 	STOP = 0x0000,
 	FRONT = 0x0001,
 	BEHIND = 0x0002,
 	LEFT = 0x0004,
 	RIGHT = 0x0008,
+	UP = 0x0010,
+	DOWN = 0x0020,
+	BOOST = 0x0040,
+	CRAWL = 0x0080,
+};
+
+enum class ERotateState
+{
+	STOP = 0x0000,
+	LEFT = 0x0001,
+	RIGHT = 0x0002,
+	UP = 0x0004,
+	DOWN = 0x0008,
 	BOOST = 0x0010,
 	CRAWL = 0x0020,
 };
@@ -38,10 +51,29 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 		(ImGui::GetIO().WantCaptureKeyboard || ImGui::GetIO().WantCaptureMouse)) 
 		return;
 
-	switch (vKey)
+	if (vAction == GLFW_PRESS || vAction == GLFW_REPEAT)
 	{
-		default:
-			break;
+		if (pInteractor->m_KeyCallbackMap.find(vKey) != pInteractor->m_KeyCallbackMap.end())
+		{
+			pInteractor->m_KeyCallbackMap[vKey]();
+		}
+		else
+		{
+			// 默认行为
+			if (vKey == GLFW_KEY_CAPS_LOCK)
+			{
+				if (pInteractor->m_IsMoving)
+					pInteractor->__stopMovingMode();
+				else
+					pInteractor->__startMovingMode();
+			}
+			else if (vKey == GLFW_KEY_EQUAL)
+				pInteractor->m_Speed *= 1.05;
+			else if (vKey == GLFW_KEY_MINUS)
+				pInteractor->m_Speed *= 0.95;
+			else if (vKey == GLFW_KEY_ESCAPE)
+				pInteractor->__stopMovingMode();
+		}
 	}
 }
 
@@ -101,24 +133,8 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 void CInteractor::update()
 {
 	float DeltaTime = __getDeltaTime();
-
-	float Scale = 1.0;
-	float MoveForward = 0.0, MoveLeft = 0.0;
-
-	int MoveState = __getCurrentMoveState();
-	if (MoveState == EMoveState::STOP) return;
-	if (MoveState & EMoveState::BOOST) Scale *= m_BoostScale;
-	if (MoveState & EMoveState::CRAWL) Scale *= m_CrawlScale;
-	if (MoveState & EMoveState::FRONT) MoveForward += 1;
-	if (MoveState & EMoveState::BEHIND) MoveForward -= 1;
-	if (MoveState & EMoveState::LEFT) MoveLeft += 1;
-	if (MoveState & EMoveState::RIGHT) MoveLeft -= 1;
-
-	const auto& pCamera = m_pRenderer->getCamera();
-	glm::vec3 Front = pCamera->getFront();
-	glm::vec3 Left = pCamera->getLeft();
-	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft) * Scale * m_Speed * DeltaTime;
-	pCamera->setPos(pCamera->getPos() + Move);
+	__updateMove(DeltaTime);
+	__updateRotate(DeltaTime);
 }
 
 void CInteractor::reset()
@@ -144,24 +160,122 @@ int CInteractor::__getCurrentMoveState()
 		return MoveState;
 
 	bool KeyW = glfwGetKey(m_pWindow, GLFW_KEY_W) == GLFW_PRESS;
-	if (KeyW) MoveState |= EMoveState::FRONT;
+	if (KeyW) MoveState |= int(EMoveState::FRONT);
 
 	bool KeyS = glfwGetKey(m_pWindow, GLFW_KEY_S) == GLFW_PRESS;
-	if (KeyS) MoveState |= EMoveState::BEHIND;
+	if (KeyS) MoveState |= int(EMoveState::BEHIND);
 
 	bool KeyA = glfwGetKey(m_pWindow, GLFW_KEY_A) == GLFW_PRESS;
-	if (KeyA) MoveState |= EMoveState::LEFT;
+	if (KeyA) MoveState |= int(EMoveState::LEFT);
 
 	bool KeyD = glfwGetKey(m_pWindow, GLFW_KEY_D) == GLFW_PRESS;
-	if (KeyD) MoveState |= EMoveState::RIGHT;
+	if (KeyD) MoveState |= int(EMoveState::RIGHT);
+
+	bool KeyE = glfwGetKey(m_pWindow, GLFW_KEY_E) == GLFW_PRESS;
+	if (KeyE) MoveState |= int(EMoveState::UP);
+
+	bool KeyQ = glfwGetKey(m_pWindow, GLFW_KEY_Q) == GLFW_PRESS;
+	if (KeyQ) MoveState |= int(EMoveState::DOWN);
 
 	bool KeyLeftShift = glfwGetKey(m_pWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-	if (KeyLeftShift) MoveState |= EMoveState::BOOST;
+	if (KeyLeftShift) MoveState |= int(EMoveState::BOOST);
 
 	bool KeyLeftCtrl = glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
-	if (KeyLeftCtrl) MoveState |= EMoveState::CRAWL;
-	
+	if (KeyLeftCtrl) MoveState |= int(EMoveState::CRAWL);
+
 	return MoveState;
+}
+
+int CInteractor::__getCurrentRotateState()
+{
+	int RotateState = static_cast<int>(ERotateState::STOP);
+	if (!m_IsMoving)
+		return RotateState;
+
+	bool KeyArrowUp = glfwGetKey(m_pWindow, GLFW_KEY_UP) == GLFW_PRESS;
+	if (KeyArrowUp) RotateState |= int(ERotateState::UP);
+
+	bool KeyArrowDown = glfwGetKey(m_pWindow, GLFW_KEY_DOWN) == GLFW_PRESS;
+	if (KeyArrowDown) RotateState |= int(ERotateState::DOWN);
+
+	bool KeyArrowLeft = glfwGetKey(m_pWindow, GLFW_KEY_LEFT) == GLFW_PRESS;
+	if (KeyArrowLeft) RotateState |= int(ERotateState::LEFT);
+
+	bool KeyArrowRight = glfwGetKey(m_pWindow, GLFW_KEY_RIGHT) == GLFW_PRESS;
+	if (KeyArrowRight) RotateState |= int(ERotateState::RIGHT);
+
+	bool KeyLeftShift = glfwGetKey(m_pWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+	if (KeyLeftShift) RotateState |= int(ERotateState::BOOST);
+
+	bool KeyLeftCtrl = glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+	if (KeyLeftCtrl) RotateState |= int(ERotateState::CRAWL);
+
+	return RotateState;
+}
+
+void CInteractor::__startMovingMode()
+{
+	auto pCamera = m_pRenderer->getCamera();
+	if (!pCamera) return;
+
+	m_IsMoving = true;
+	glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	glfwGetCursorPos(m_pWindow, &m_LastMousePosX, &m_LastMousePosY);
+
+	m_LastPhi = pCamera->getPhi();
+	m_LastTheta = pCamera->getTheta();
+}
+
+void CInteractor::__stopMovingMode()
+{
+	m_IsMoving = false;
+	glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
+void CInteractor::__updateMove(float vDeltaTime)
+{
+	int MoveState = __getCurrentMoveState();
+	if (MoveState == int(EMoveState::STOP)) return;
+
+	float Scale = 1.0;
+	float MoveForward = 0.0, MoveLeft = 0.0, MoveUp = 0.0;
+
+	if (MoveState & int(EMoveState::BOOST)) Scale *= m_BoostScale;
+	if (MoveState & int(EMoveState::CRAWL)) Scale *= m_CrawlScale;
+	if (MoveState & int(EMoveState::FRONT)) MoveForward += 1;
+	if (MoveState & int(EMoveState::BEHIND)) MoveForward -= 1;
+	if (MoveState & int(EMoveState::LEFT)) MoveLeft += 1;
+	if (MoveState & int(EMoveState::RIGHT)) MoveLeft -= 1;
+	if (MoveState & int(EMoveState::UP)) MoveUp += 1;
+	if (MoveState & int(EMoveState::DOWN)) MoveUp -= 1;
+
+	auto pCamera = m_pRenderer->getCamera();
+	glm::vec3 Front = pCamera->getFront();
+	glm::vec3 Left = pCamera->getLeft();
+	glm::vec3 Up = pCamera->getUp();
+	glm::vec3 Move = (Front * MoveForward + Left * MoveLeft + Up * MoveUp) * Scale * m_Speed * vDeltaTime;
+	pCamera->setPos(pCamera->getPos() + Move);
+}
+
+void CInteractor::__updateRotate(float vDeltaTime)
+{
+	// 视角
+	double Scale = m_Speed * vDeltaTime * 1000.0;
+	int RotateState = __getCurrentRotateState();
+	if (RotateState == int(ERotateState::STOP)) return;
+
+	double RotateLeft = 0.0, RotateUp = 0.0;
+	if (RotateState & int(ERotateState::UP)) RotateUp += 1;
+	if (RotateState & int(ERotateState::DOWN)) RotateUp -= 1;
+	if (RotateState & int(ERotateState::LEFT)) RotateLeft += 1;
+	if (RotateState & int(ERotateState::RIGHT)) RotateLeft -= 1;
+	if (RotateState & int(ERotateState::BOOST)) Scale *= m_BoostScale;
+	if (RotateState & int(ERotateState::CRAWL)) Scale *= m_CrawlScale;
+
+	auto pCamera = m_pRenderer->getCamera();
+	pCamera->setPhi(pCamera->getPhi() - m_HorizontalSensetivity * RotateLeft * Scale);
+	pCamera->setTheta(std::min(std::max(pCamera->getTheta() - m_VerticalSensetivity * RotateUp * Scale, 1.0), 179.0));
 }
 
 void CInteractor::__selectByClick(glm::vec2 vPos)

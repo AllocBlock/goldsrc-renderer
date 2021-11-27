@@ -30,6 +30,9 @@
     <ClCompile Include="Camera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Interactor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PipelineBase.h">
@@ -48,6 +51,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RendererScene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Interactor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

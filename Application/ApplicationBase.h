@@ -40,12 +40,12 @@ protected:
     virtual void _destroyOtherResourceV();
 
     GLFWwindow* m_pWindow = nullptr;
-    std::shared_ptr<vk::CInstance> m_pInstance = nullptr;
-    std::shared_ptr<vk::CDebugMessenger> m_pDebugMessenger = nullptr;
-    std::shared_ptr<vk::CSurface> m_pSurface = nullptr;
+    std::shared_ptr<vk::CInstance> m_pInstance = std::make_shared<vk::CInstance>();;
+    std::shared_ptr<vk::CDebugMessenger> m_pDebugMessenger = std::make_shared<vk::CDebugMessenger>();;
+    std::shared_ptr<vk::CSurface> m_pSurface = std::make_shared<vk::CSurface>();;
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-    std::shared_ptr<vk::CDevice> m_pDevice = nullptr;
-    std::shared_ptr<vk::CSwapchain> m_pSwapchain = nullptr;
+    std::shared_ptr<vk::CDevice> m_pDevice = std::make_shared<vk::CDevice>();
+    std::shared_ptr<vk::CSwapchain> m_pSwapchain = std::make_shared<vk::CSwapchain>();;
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
@@ -66,18 +66,14 @@ protected:
     };
 
 private:
-    
     void __createInstance();
     void __setupDebugMessenger();
-    void __destroyDebugMessenger();
-    void __createSurface();
     void __choosePhysicalDevice();
-    void __createDevice();
-    void __createSwapchain();
     void __createSemaphores();
+    void __createSwapchain();
+    void __destroySwapchain();
 
     void __recreateSwapchain();
-    void __destroySwapchainResources();
 
     std::vector<const char*> __getRequiredExtensions();
 };

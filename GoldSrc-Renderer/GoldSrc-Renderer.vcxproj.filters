@@ -36,9 +36,6 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Interactor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ApplicationGoldSrc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -95,9 +92,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Interactor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ApplicationGoldSrc.h">
       <Filter>头文件</Filter>
     </ClInclude>

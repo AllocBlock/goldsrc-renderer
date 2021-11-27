@@ -88,7 +88,6 @@
   <ItemGroup>
     <ClCompile Include="ApplicationTest.cpp" />
     <ClCompile Include="GUITest.cpp" />
-    <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />
     <ClCompile Include="RendererTest.cpp" />
     <ClCompile Include="main.cpp" />
@@ -96,7 +95,6 @@
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h" />
     <ClInclude Include="GUITest.h" />
-    <ClInclude Include="Interactor.h" />
     <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="RendererTest.h" />
   </ItemGroup>

@@ -10,9 +10,9 @@ void CApplicationBase::init(GLFWwindow* vWindow)
 
     __createInstance();
     if (ENABLE_VALIDATION_LAYERS) __setupDebugMessenger();
-    __createSurface();
+    m_pSurface->create(m_pInstance->get(), m_pWindow);
     __choosePhysicalDevice();
-    __createDevice();
+    m_pDevice->create(m_PhysicalDevice, m_pSurface->get(), m_DeviceExtensions, m_ValidationLayers);
     __createSemaphores();
     __createSwapchain();
 
@@ -31,7 +31,7 @@ void CApplicationBase::destroy()
     if (m_pInstance->get() == VK_NULL_HANDLE) return;
 
     _destroyOtherResourceV();
-    __destroySwapchainResources();
+    __destroySwapchain();
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
@@ -42,7 +42,7 @@ void CApplicationBase::destroy()
 
     m_pDevice->destroy();
     m_pSurface->destroy();
-    if (ENABLE_VALIDATION_LAYERS) __destroyDebugMessenger();
+    if (ENABLE_VALIDATION_LAYERS) m_pDebugMessenger->destroy();
     m_pInstance->destroy();
 
     m_pWindow = nullptr;
@@ -177,13 +177,6 @@ void CApplicationBase::__setupDebugMessenger()
     m_pDebugMessenger->setCustomCallback(pCallback);
 }
 
-
-void CApplicationBase::__createSurface()
-{
-    m_pSurface = std::make_shared<vk::CSurface>();
-    m_pSurface->create(m_pInstance->get(), m_pWindow);
-}
-
 void CApplicationBase::__choosePhysicalDevice()
 {
     uint32_t NumPhysicalDevice = 0;
@@ -218,19 +211,12 @@ void CApplicationBase::__choosePhysicalDevice()
     }
 }
 
-void CApplicationBase::__createDevice()
-{
-    m_pDevice = std::make_shared<vk::CDevice>();
-    m_pDevice->create(m_PhysicalDevice, m_pSurface->get(), m_DeviceExtensions, m_ValidationLayers);
-}
-
 void CApplicationBase::__createSwapchain()
 {
-    m_pSwapchain = std::make_shared<vk::CSwapchain>();
     m_pSwapchain->create(m_pDevice->get(), m_PhysicalDevice, m_pSurface->get(), m_pWindow);
 }
 
-void CApplicationBase::__destroySwapchainResources()
+void CApplicationBase::__destroySwapchain()
 {
     m_pSwapchain->destroy();
 }
@@ -259,7 +245,7 @@ void CApplicationBase::__createSemaphores()
 void CApplicationBase::__recreateSwapchain()
 {
     waitDevice();
-    __destroySwapchainResources();
+    __destroySwapchain();
     __createSwapchain();
     _recreateOtherResourceV();
 }
@@ -278,9 +264,4 @@ std::vector<const char*> CApplicationBase::__getRequiredExtensions()
     }
 
     return Extensions;
-}
-
-void CApplicationBase::__destroyDebugMessenger()
-{
-    m_pDebugMessenger->destroy();
 }

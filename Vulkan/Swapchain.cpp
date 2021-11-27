@@ -66,7 +66,7 @@ void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSu
 void CSwapchain::destroy()
 {
     if (m_Handle) vkDestroySwapchainKHR(m_Device, m_Handle, nullptr);
-    m_Handle == VK_NULL_HANDLE;
+    m_Handle = VK_NULL_HANDLE;
 
     __destroyImageViews();
     m_Device = VK_NULL_HANDLE;
