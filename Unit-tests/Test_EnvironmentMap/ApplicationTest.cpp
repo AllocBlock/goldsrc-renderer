@@ -24,10 +24,11 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
 
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
 {
-    return {
-        m_pRenderer->requestCommandBuffer(vImageIndex),
-        m_pGUI->requestCommandBuffer(vImageIndex)
-    };
+    std::vector<VkCommandBuffer> SceneBuffers = m_pRenderer->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> GUIBuffers = m_pGUI->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> Result = SceneBuffers;
+    Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
+    return Result;
 }
 
 void CApplicationTest::_createOtherResourceV()

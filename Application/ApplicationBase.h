@@ -1,6 +1,11 @@
 #pragma once
 #include "Common.h"
 #include "Vulkan.h"
+#include "Instance.h"
+#include "DebugMessenger.h"
+#include "Surface.h"
+#include "Device.h"
+#include "SwapChain.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -35,25 +40,16 @@ protected:
     virtual void _destroyOtherResourceV();
 
     GLFWwindow* m_pWindow = nullptr;
-    VkInstance m_Instance = VK_NULL_HANDLE;
-    VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
+    std::shared_ptr<vk::CInstance> m_pInstance = nullptr;
+    std::shared_ptr<vk::CDebugMessenger> m_pDebugMessenger = nullptr;
+    std::shared_ptr<vk::CSurface> m_pSurface = nullptr;
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-    VkDevice m_Device = VK_NULL_HANDLE;
-    VkSwapchainKHR m_Swapchain = VK_NULL_HANDLE;
-    std::vector<VkImage> m_SwapchainImages;
-    std::vector<VkImageView> m_SwapchainImageViewSet;
-    VkFormat m_SwapchainImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
-    VkExtent2D m_SwapchainExtent = { 0, 0 };
-
-    uint32_t m_GraphicsQueueIndex = 0;
-    uint32_t m_PresentQueueFamily = 0;
-    VkQueue m_GraphicsQueue = VK_NULL_HANDLE;
-    VkQueue m_PresentQueue = VK_NULL_HANDLE;
+    std::shared_ptr<vk::CDevice> m_pDevice = nullptr;
+    std::shared_ptr<vk::CSwapchain> m_pSwapchain = nullptr;
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
     std::vector<VkFence> m_InFlightFences;
-    VkDebugUtilsMessengerEXT m_DebugMessenger = VK_NULL_HANDLE;
 
     const int m_MaxFrameInFlight = 2;
     int m_CurrentFrameIndex = 0;
@@ -70,6 +66,7 @@ protected:
     };
 
 private:
+    
     void __createInstance();
     void __setupDebugMessenger();
     void __destroyDebugMessenger();
@@ -77,15 +74,11 @@ private:
     void __choosePhysicalDevice();
     void __createDevice();
     void __createSwapchain();
-    void __createSwapchainImageViews();
     void __createSemaphores();
 
     void __recreateSwapchain();
     void __destroySwapchainResources();
 
     std::vector<const char*> __getRequiredExtensions();
-    VkSurfaceFormatKHR __chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats);
-    VkPresentModeKHR __chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& vAvailablePresentModes);
-    VkExtent2D __chooseSwapExtent(const VkSurfaceCapabilitiesKHR& vCapabilities);
 };
 

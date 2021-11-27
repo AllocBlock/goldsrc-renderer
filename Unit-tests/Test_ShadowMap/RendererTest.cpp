@@ -75,7 +75,7 @@ void CRendererTest::_updateV(uint32_t vImageIndex)
     __updateUniformBuffer(vImageIndex);
 }
 
-VkCommandBuffer CRendererTest::_requestCommandBufferV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
@@ -89,7 +89,7 @@ VkCommandBuffer CRendererTest::_requestCommandBufferV(uint32_t vImageIndex)
     __recordLightRenderPass(CommandBuffer, vImageIndex);
 
     Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
-    return CommandBuffer;
+    return { CommandBuffer };
 }
 
 void CRendererTest::_destroyV()
