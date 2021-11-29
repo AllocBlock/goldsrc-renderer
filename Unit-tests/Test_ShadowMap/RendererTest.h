@@ -1,5 +1,6 @@
 #pragma once
 #include "RendererBase.h"
+#include "FrameBuffer.h"
 #include "PipelineShadowMap.h"
 #include "PipelineLight.h"
 #include "Camera.h"
@@ -31,7 +32,6 @@ private:
     void __createGraphicsPipeline();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();
-    VkFramebuffer __createFramebufferGeneral(VkImageView vTargetImageView, VkImageView vDepthImageView, VkRenderPass vRenderPass);
     void __createLightFramebuffers();
     void __createShadowMapFramebuffers();
     void __createVertexBuffer();
@@ -48,14 +48,14 @@ private:
    
     VkRenderPass m_RenderPassShadowMap = VK_NULL_HANDLE;
     CPipelineShadowMap m_PipelineShadowMap;
-    std::vector<VkFramebuffer> m_ShadowFramebufferSet;
+    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_ShadowFramebufferSet;
     std::vector<Vulkan::SImagePack> m_ShadowMapImagePackSet;
     Vulkan::SBufferPack m_ShadowMapVertBufferPack;
     std::vector<SShadowMapPointData> m_ShadowMapPointDataSet;
 
     VkRenderPass m_RenderPassLight = VK_NULL_HANDLE;
     CPipelineLight m_PipelineLight;
-    std::vector<VkFramebuffer> m_LightFramebufferSet;
+    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_LightFramebufferSet;
     Vulkan::SBufferPack m_LightVertBufferPack;
     std::vector<SLightPointData> m_LightPointDataSet;
 

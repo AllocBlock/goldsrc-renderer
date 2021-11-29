@@ -238,35 +238,14 @@ void CRendererTest::__createDepthResources()
     m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
-VkFramebuffer CRendererTest::__createFramebufferGeneral(VkImageView vTargetImageView, VkImageView vDepthImageView, VkRenderPass vRenderPass)
-{
-    std::array<VkImageView, 2> Attachments =
-    {
-        vTargetImageView,
-        vDepthImageView
-    };
-
-    VkFramebufferCreateInfo FramebufferInfo = {};
-    FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    FramebufferInfo.renderPass = m_RenderPassLight;
-    FramebufferInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-    FramebufferInfo.pAttachments = Attachments.data();
-    FramebufferInfo.width = m_AppInfo.Extent.width;
-    FramebufferInfo.height = m_AppInfo.Extent.height;
-    FramebufferInfo.layers = 1;
-
-    VkFramebuffer FrameBuffer;
-    Vulkan::checkError(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &FrameBuffer));
-    return FrameBuffer;
-}
-
 void CRendererTest::__createLightFramebuffers()
 {
     size_t ImageNum = m_AppInfo.TargetImageViewSet.size();
     m_LightFramebufferSet.resize(ImageNum, VK_NULL_HANDLE);
     for (size_t i = 0; i < ImageNum; ++i)
     {
-        m_LightFramebufferSet[i] = __createFramebufferGeneral(m_AppInfo.TargetImageViewSet[i], m_LightDepthImagePack.ImageView, m_RenderPassLight);
+        m_LightFramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_LightFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassLight, { m_AppInfo.TargetImageViewSet[i], m_LightDepthImagePack.ImageView }, m_AppInfo.Extent);
     }
 }
 
@@ -276,7 +255,8 @@ void CRendererTest::__createShadowMapFramebuffers()
     m_ShadowFramebufferSet.resize(ImageNum, VK_NULL_HANDLE);
     for (size_t i = 0; i < ImageNum; ++i)
     {
-        m_ShadowFramebufferSet[i] = __createFramebufferGeneral(m_ShadowMapImagePackSet[i].ImageView, m_ShadowMapDepthImagePack.ImageView, m_RenderPassShadowMap);
+        m_ShadowFramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_ShadowFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassShadowMap, { m_ShadowMapImagePackSet[i].ImageView, m_ShadowMapDepthImagePack.ImageView }, m_AppInfo.Extent);
     }
 }
 
@@ -348,14 +328,14 @@ void CRendererTest::__destroyRecreateResources()
     for (auto& ShadowMapImagePack : m_ShadowMapImagePackSet)
         ShadowMapImagePack.destroy(m_AppInfo.Device);
 
-    for (auto& Framebuffer : m_ShadowFramebufferSet)
-        vkDestroyFramebuffer(m_AppInfo.Device, Framebuffer, nullptr);
+    for (auto& pFramebuffer : m_ShadowFramebufferSet)
+        pFramebuffer->destroy();
     m_ShadowFramebufferSet.clear();
 
     m_LightDepthImagePack.destroy(m_AppInfo.Device);
     m_ShadowMapDepthImagePack.destroy(m_AppInfo.Device);
-    for (auto& Framebuffer : m_LightFramebufferSet)
-        vkDestroyFramebuffer(m_AppInfo.Device, Framebuffer, nullptr);
+    for (auto& pFramebuffer : m_LightFramebufferSet)
+        pFramebuffer->destroy();
     m_LightFramebufferSet.clear();
 
     m_PipelineShadowMap.destroy();
@@ -471,7 +451,7 @@ void CRendererTest::__recordShadowMapRenderPass(VkCommandBuffer vCommandBuffer, 
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass = m_RenderPassShadowMap;
-    RenderPassBeginInfo.framebuffer = m_ShadowFramebufferSet[vImageIndex];
+    RenderPassBeginInfo.framebuffer = m_ShadowFramebufferSet[vImageIndex]->get();
     RenderPassBeginInfo.renderArea.offset = { 0, 0 };
     RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
     RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
@@ -500,7 +480,7 @@ void CRendererTest::__recordLightRenderPass(VkCommandBuffer vCommandBuffer, uint
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass = m_RenderPassLight;
-    RenderPassBeginInfo.framebuffer = m_LightFramebufferSet[vImageIndex];
+    RenderPassBeginInfo.framebuffer = m_LightFramebufferSet[vImageIndex]->get();
     RenderPassBeginInfo.renderArea.offset = { 0, 0 };
     RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
     RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());

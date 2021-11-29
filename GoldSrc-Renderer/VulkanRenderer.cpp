@@ -152,7 +152,7 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
         VkRenderPassBeginInfo RenderPassBeginInfo = {};
         RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         RenderPassBeginInfo.renderPass = m_RenderPass;
-        RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex];
+        RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
         RenderPassBeginInfo.renderArea.offset = { 0, 0 };
         RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
         RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
@@ -226,8 +226,8 @@ void CRendererSceneGoldSrc::__destroyRecreateResources()
 {
     m_DepthImagePack.destroy(m_AppInfo.Device);
 
-    for (auto& Framebuffer : m_FramebufferSet)
-        vkDestroyFramebuffer(m_AppInfo.Device, Framebuffer, nullptr);
+    for (auto& pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
     m_FramebufferSet.clear();
 
     __destroySceneResources();
@@ -277,7 +277,7 @@ void CRendererSceneGoldSrc::__recordGuiCommandBuffer(uint32_t vImageIndex)
     InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
     InheritanceInfo.renderPass = m_RenderPass;
     InheritanceInfo.subpass = 1;
-    InheritanceInfo.framebuffer = m_FramebufferSet[vImageIndex];
+    InheritanceInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
 
     VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -626,22 +626,14 @@ void CRendererSceneGoldSrc::__createFramebuffers()
     m_FramebufferSet.resize(m_NumSwapchainImage);
     for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
-        std::array<VkImageView, 2> Attachments =
+        std::vector<VkImageView> AttachmentSet =
         {
             m_AppInfo.TargetImageViewSet[i],
             m_DepthImagePack.ImageView
         };
 
-        VkFramebufferCreateInfo FramebufferInfo = {};
-        FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        FramebufferInfo.renderPass = m_RenderPass;
-        FramebufferInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-        FramebufferInfo.pAttachments = Attachments.data();
-        FramebufferInfo.width = m_AppInfo.Extent.width;
-        FramebufferInfo.height = m_AppInfo.Extent.height;
-        FramebufferInfo.layers = 1;
-
-        Vulkan::checkError(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
+        m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
     }
 }
 

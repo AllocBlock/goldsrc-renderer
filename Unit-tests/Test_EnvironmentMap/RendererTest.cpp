@@ -220,22 +220,14 @@ void CRendererTest::__createFramebuffers()
     m_FramebufferSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
-        std::array<VkImageView, 2> Attachments =
+        std::vector<VkImageView> AttachmentSet =
         {
             m_AppInfo.TargetImageViewSet[i],
             m_DepthImagePack.ImageView
         };
 
-        VkFramebufferCreateInfo FramebufferInfo = {};
-        FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        FramebufferInfo.renderPass = m_RenderPass;
-        FramebufferInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-        FramebufferInfo.pAttachments = Attachments.data();
-        FramebufferInfo.width = m_AppInfo.Extent.width;
-        FramebufferInfo.height = m_AppInfo.Extent.height;
-        FramebufferInfo.layers = 1;
-
-        Vulkan::checkError(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FramebufferSet[i]));
+        m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
     }
 }
 
@@ -264,8 +256,8 @@ void CRendererTest::__destroyRecreateResources()
 {
     m_DepthImagePack.destroy(m_AppInfo.Device);
 
-    for (auto& Framebuffer : m_FramebufferSet)
-        vkDestroyFramebuffer(m_AppInfo.Device, Framebuffer, nullptr);
+    for (auto& pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
     m_FramebufferSet.clear();
     m_Pipeline.destroy();
 }

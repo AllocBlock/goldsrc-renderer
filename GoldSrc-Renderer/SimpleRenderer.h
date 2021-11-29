@@ -1,6 +1,7 @@
 #pragma once
 #include "RendererScene.h"
 #include "Common.h"
+#include "FrameBuffer.h"
 #include "Scene.h"
 #include "Camera.h"
 #include "PipelineSkybox.h"
@@ -91,7 +92,7 @@ private:
     SSimplePipelineSet m_PipelineSet = SSimplePipelineSet();
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";
-    std::vector<VkFramebuffer> m_FramebufferSet;
+    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
 
     Vulkan::SBufferPack m_VertexBufferPack;
     Vulkan::SBufferPack m_IndexBufferPack;

@@ -84,6 +84,7 @@
   <ItemGroup>
     <ClInclude Include="DebugMessenger.h" />
     <ClInclude Include="Device.h" />
+    <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="Swapchain.h" />
@@ -93,6 +94,7 @@
   <ItemGroup>
     <ClCompile Include="DebugMessenger.cpp" />
     <ClCompile Include="Device.cpp" />
+    <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="Swapchain.cpp" />

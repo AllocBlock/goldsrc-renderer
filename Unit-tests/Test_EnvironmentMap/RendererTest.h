@@ -1,5 +1,6 @@
 #pragma once
 #include "RendererBase.h"
+#include "FrameBuffer.h"
 #include "PipelineTest.h"
 #include "Camera.h"
 
@@ -39,7 +40,7 @@ private:
     CPipelineTest m_Pipeline;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
-    std::vector<VkFramebuffer> m_FramebufferSet;
+    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
     Vulkan::SBufferPack m_VertexBufferPack;
     Vulkan::SImagePack m_DepthImagePack;
 

@@ -2,6 +2,7 @@
 #include "RendererBase.h"
 #include "PipelineSprite.h"
 #include "Camera.h"
+#include "FrameBuffer.h"
 
 class CRendererTest : public CRendererBase
 {
@@ -34,7 +35,7 @@ private:
     CPipelineSprite m_Pipeline;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
-    std::vector<VkFramebuffer> m_FramebufferSet;
+    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
     Vulkan::SImagePack m_DepthImagePack;
 
     std::shared_ptr<CCamera> m_pCamera = nullptr;
