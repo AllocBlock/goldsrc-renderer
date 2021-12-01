@@ -36,7 +36,7 @@ private:
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
     std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
-    Vulkan::SImagePack m_DepthImagePack;
+    std::shared_ptr<vk::CImage> m_pDepthImage;
 
     std::shared_ptr<CCamera> m_pCamera = nullptr;
 };

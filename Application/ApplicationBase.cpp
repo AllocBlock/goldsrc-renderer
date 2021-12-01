@@ -159,10 +159,11 @@ void CApplicationBase::__createInstance()
     std::vector<const char*> Extensions = __getRequiredExtensions();
 
     m_pInstance = std::make_shared<vk::CInstance>();
+
+    std::vector<const char*> ValidationLayers;
     if (ENABLE_VALIDATION_LAYERS)
-        m_pInstance->create("GoldSrc Renderer", m_ValidationLayers, Extensions);
-    else
-        m_pInstance->create("GoldSrc Renderer", {}, Extensions);
+        ValidationLayers = m_ValidationLayers;
+    m_pInstance->create("Base Instance", ValidationLayers, Extensions);
 }
 
 void CApplicationBase::__setupDebugMessenger()

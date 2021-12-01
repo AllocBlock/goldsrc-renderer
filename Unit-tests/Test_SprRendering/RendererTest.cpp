@@ -139,7 +139,7 @@ void CRendererTest::__createCommandPoolAndBuffers()
 
 void CRendererTest::__createDepthResources()
 {
-    m_DepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
+    m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createFramebuffers()
@@ -151,7 +151,7 @@ void CRendererTest::__createFramebuffers()
         std::vector<VkImageView> Attachments =
         {
             m_AppInfo.TargetImageViewSet[i],
-            m_DepthImagePack.ImageView
+            m_pDepthImage->get()
         };
 
         m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
@@ -221,7 +221,7 @@ void CRendererTest::__createRecreateResources()
 
 void CRendererTest::__destroyRecreateResources()
 {
-    m_DepthImagePack.destroy(m_AppInfo.Device);
+    m_pDepthImage->destroy();
 
     for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();

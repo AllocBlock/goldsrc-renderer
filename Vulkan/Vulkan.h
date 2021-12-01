@@ -5,6 +5,7 @@
 #include <optional>
 #include <filesystem>
 #include <functional>
+#include "Image.h"
 
 namespace Vulkan
 {
@@ -30,51 +31,6 @@ namespace Vulkan
             Extent = { 0, 0 };
             ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
             TargetImageViewSet.clear();
-        }
-    };
-
-    struct SImagePack
-    {
-        VkImage Image = VK_NULL_HANDLE;
-        VkDeviceMemory Memory = VK_NULL_HANDLE;
-        VkImageView ImageView = VK_NULL_HANDLE;
-
-        bool isValid()
-        {
-            return Image != VK_NULL_HANDLE && Memory != VK_NULL_HANDLE && ImageView != VK_NULL_HANDLE;
-        }
-
-        void destroy(VkDevice vDevice)
-        {
-            if (!isValid()) return;
-
-            vkDestroyImage(vDevice, Image, nullptr);
-            vkFreeMemory(vDevice, Memory, nullptr);
-            vkDestroyImageView(vDevice, ImageView, nullptr);
-            Image = VK_NULL_HANDLE;
-            Memory = VK_NULL_HANDLE;
-            ImageView = VK_NULL_HANDLE;
-        }
-    };
-
-    struct SBufferPack
-    {
-        VkBuffer Buffer = VK_NULL_HANDLE;
-        VkDeviceMemory Memory = VK_NULL_HANDLE;
-
-        bool isValid()
-        {
-            return Buffer != VK_NULL_HANDLE && Memory != VK_NULL_HANDLE;
-        }
-
-        void destroy(VkDevice vDevice)
-        {
-            if (!isValid()) return;
-
-            vkDestroyBuffer(vDevice, Buffer, nullptr);
-            vkFreeMemory(vDevice, Memory, nullptr);
-            Buffer = VK_NULL_HANDLE;
-            Memory = VK_NULL_HANDLE;
         }
     };
 
@@ -107,19 +63,11 @@ namespace Vulkan
     bool checkDeviceExtensionSupport(const VkPhysicalDevice& vPhysicalDevice, const std::vector<const char*>& vDeviceExtensions);
     bool isDeviceSuitable(const VkPhysicalDevice& vPhysicalDevice, const VkSurfaceKHR& vSurface, const std::vector<const char*>& vDeviceExtensions);
 
-    VkImageView createImageView(VkDevice vDevice, VkImage vImage, VkFormat vFormat, VkImageAspectFlags vAspectFlags, VkImageViewType vViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D, uint32_t vLayerCount = 1);
     uint32_t findMemoryType(VkPhysicalDevice vPhysicalDevice, uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
-    void createBuffer(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
-    void copyBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vSrcBuffer, VkBuffer vDstBuffer, VkDeviceSize vSize);
-    void createImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkImageCreateInfo vImageInfo, VkMemoryPropertyFlags vProperties, VkImage& voImage, VkDeviceMemory& voImageMemory);
-    void transitionImageLayout(VkCommandBuffer vCommandBuffer, VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount);
-    void copyBufferToImage(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, VkImage vImage, size_t vWidth, size_t vHeight, uint32_t vLayerCount);
-    void stageFillBuffer(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const void* vData, VkDeviceSize vSize, VkBuffer& voBuffer, VkDeviceMemory& voBufferMemory);
-    void stageFillImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const void* vData, VkDeviceSize vSize, VkImageCreateInfo vImageInfo, VkImage& voImage, VkDeviceMemory& voBufferMemory);
 
     void setSingleTimeBufferFunc(beginSingleTimeBufferFunc_t vBeginFunc, endSingleTimeBufferFunc_t vEndFunc);
     VkCommandBuffer beginSingleTimeBuffer();
     void endSingleTimeBuffer(VkCommandBuffer vCommandBuffer);
 
-    SImagePack createDepthImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage = NULL, VkFormat vFormat = VkFormat::VK_FORMAT_D32_SFLOAT);
+    std::shared_ptr<vk::CImage> createDepthImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage = NULL, VkFormat vFormat = VkFormat::VK_FORMAT_D32_SFLOAT);
 }

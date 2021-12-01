@@ -55,12 +55,22 @@ void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSu
     Vulkan::checkError(vkCreateSwapchainKHR(vDevice, &SwapChainInfo, nullptr, &m_Handle));
 
     vkGetSwapchainImagesKHR(vDevice, m_Handle, &NumImage, nullptr);
+    std::vector<VkImage> SwapchainImageSet(NumImage);
+    vkGetSwapchainImagesKHR(vDevice, m_Handle, &NumImage, SwapchainImageSet.data());
+
+    vk::SImageViewInfo ViewInfo;
+    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    m_ImageViewSet.resize(NumImage);
     m_ImageSet.resize(NumImage);
-    vkGetSwapchainImagesKHR(vDevice, m_Handle, &NumImage, m_ImageSet.data());
+    for (size_t i = 0; i < NumImage; ++i)
+    {
+        m_ImageSet[i] = std::make_shared<vk::CImage>();
+        m_ImageSet[i]->setImage(vDevice, SwapchainImageSet[i], SurfaceFormat.format, ViewInfo);
+        m_ImageViewSet[i] = m_ImageSet[i]->get();
+    }
     m_ImageFormat = SurfaceFormat.format;
     m_Extent = Extent;
-
-    __createImageViews();
 }
 
 void CSwapchain::destroy()
@@ -68,9 +78,11 @@ void CSwapchain::destroy()
     if (m_Handle) vkDestroySwapchainKHR(m_Device, m_Handle, nullptr);
     m_Handle = VK_NULL_HANDLE;
 
-    __destroyImageViews();
     m_Device = VK_NULL_HANDLE;
+    for (auto pImage : m_ImageSet)
+        pImage->destroy();
     m_ImageSet.clear();
+    m_ImageViewSet.clear();
     m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
     m_Extent = { 0, 0 };
 }
@@ -152,21 +164,4 @@ VkExtent2D CSwapchain::__chooseSwapExtent(GLFWwindow* vWindow, const VkSurfaceCa
         };
         return ActualExtent;
     }
-}
-
-void CSwapchain::__createImageViews()
-{
-    m_ImageViewSet.resize(m_ImageSet.size());
-
-    for (uint32_t i = 0; i < m_ImageViewSet.size(); ++i)
-    {
-        m_ImageViewSet[i] = Vulkan::createImageView(m_Device, m_ImageSet[i], m_ImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
-    }
-}
-
-void CSwapchain::__destroyImageViews()
-{
-    for (auto& ImageView : m_ImageViewSet)
-        vkDestroyImageView(m_Device, ImageView, nullptr);
-    m_ImageViewSet.clear();
 }

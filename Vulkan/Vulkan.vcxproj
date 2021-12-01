@@ -82,10 +82,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Buffer.h" />
     <ClInclude Include="DebugMessenger.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Fence.h" />
     <ClInclude Include="FrameBuffer.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="Swapchain.h" />
@@ -93,10 +95,12 @@
     <ClInclude Include="VulkanHandle.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="DebugMessenger.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Fence.cpp" />
     <ClCompile Include="FrameBuffer.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="Swapchain.cpp" />
