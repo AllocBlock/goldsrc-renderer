@@ -32,7 +32,7 @@ std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vI
     return Result;
 }
 
-void CApplicationTest::_createOtherResourceV()
+void CApplicationTest::_recreateOtherResourceV()
 {
     m_pGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageViews());
     m_pRenderer->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageViews());

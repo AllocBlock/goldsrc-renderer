@@ -120,4 +120,6 @@ namespace Vulkan
     void setSingleTimeBufferFunc(beginSingleTimeBufferFunc_t vBeginFunc, endSingleTimeBufferFunc_t vEndFunc);
     VkCommandBuffer beginSingleTimeBuffer();
     void endSingleTimeBuffer(VkCommandBuffer vCommandBuffer);
+
+    SImagePack createDepthImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage = NULL, VkFormat vFormat = VkFormat::VK_FORMAT_D32_SFLOAT);
 }

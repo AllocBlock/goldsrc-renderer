@@ -600,25 +600,7 @@ void CRendererSceneGoldSrc::__createCommandPoolAndBuffers()
 void CRendererSceneGoldSrc::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
-
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = m_AppInfo.Extent.width;
-    ImageInfo.extent.height = m_AppInfo.Extent.height;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = DepthFormat;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    Vulkan::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImagePack.Image, m_DepthImagePack.Memory);
-    m_DepthImagePack.ImageView = Vulkan::createImageView(m_AppInfo.Device, m_DepthImagePack.Image, DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
-    __transitionImageLayout(m_DepthImagePack.Image, DepthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    m_DepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, DepthFormat);
 }
 
 void CRendererSceneGoldSrc::__createFramebuffers()
