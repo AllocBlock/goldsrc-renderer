@@ -37,7 +37,7 @@ void CApplicationBase::destroy()
     {
         vkDestroySemaphore(m_pDevice->get(), m_RenderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(m_pDevice->get(), m_ImageAvailableSemaphores[i], nullptr);
-        vkDestroyFence(m_pDevice->get(), m_InFlightFences[i], nullptr);
+        m_InFlightFenceSet[i]->destroy();
     }
 
     m_pDevice->destroy();
@@ -54,8 +54,7 @@ void CApplicationBase::destroy()
 
 void CApplicationBase::render()
 {
-    Vulkan::checkError(vkWaitForFences(m_pDevice->get(), 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, std::numeric_limits<uint64_t>::max()));
-    Vulkan::checkError(vkResetFences(m_pDevice->get(), 1, &m_InFlightFences[m_CurrentFrameIndex]));
+    m_InFlightFenceSet[m_CurrentFrameIndex]->wait();
 
     uint32_t ImageIndex;
     VkResult Result = vkAcquireNextImageKHR(m_pDevice->get(), m_pSwapchain->get(), std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
@@ -89,8 +88,8 @@ void CApplicationBase::render()
     SubmitInfo.signalSemaphoreCount = 1;
     SubmitInfo.pSignalSemaphores = SignalSemaphores;
 
-    Vulkan::checkError(vkResetFences(m_pDevice->get(), 1, &m_InFlightFences[m_CurrentFrameIndex]));
-    Vulkan::checkError(vkQueueSubmit(m_pDevice->getGraphicsQueue(), 1, &SubmitInfo, m_InFlightFences[m_CurrentFrameIndex]));
+    m_InFlightFenceSet[m_CurrentFrameIndex]->reset();
+    Vulkan::checkError(vkQueueSubmit(m_pDevice->getGraphicsQueue(), 1, &SubmitInfo, m_InFlightFenceSet[m_CurrentFrameIndex]->get()));
 
     VkSwapchainKHR SwapChains[] = { m_pSwapchain->get() };
     VkPresentInfoKHR PresentInfo = {};
@@ -225,20 +224,17 @@ void CApplicationBase::__createSemaphores()
 {
     m_ImageAvailableSemaphores.resize(m_MaxFrameInFlight);
     m_RenderFinishedSemaphores.resize(m_MaxFrameInFlight);
-    m_InFlightFences.resize(m_MaxFrameInFlight);
+    m_InFlightFenceSet.resize(m_MaxFrameInFlight);
 
     VkSemaphoreCreateInfo SemaphoreInfo = {};
     SemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    VkFenceCreateInfo FenceInfo = {};
-    FenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    FenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
         Vulkan::checkError(vkCreateSemaphore(m_pDevice->get(), &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
         Vulkan::checkError(vkCreateSemaphore(m_pDevice->get(), &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
-        Vulkan::checkError(vkCreateFence(m_pDevice->get(), &FenceInfo, nullptr, &m_InFlightFences[i]));
+        m_InFlightFenceSet[i] = std::make_shared<vk::CFence>();
+        m_InFlightFenceSet[i]->create(m_pDevice->get(), true);
     }
 }
 

@@ -6,6 +6,7 @@
 #include "Surface.h"
 #include "Device.h"
 #include "SwapChain.h"
+#include "Fence.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -49,7 +50,7 @@ protected:
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-    std::vector<VkFence> m_InFlightFences;
+    std::vector<std::shared_ptr<vk::CFence>> m_InFlightFenceSet;
 
     const int m_MaxFrameInFlight = 2;
     int m_CurrentFrameIndex = 0;

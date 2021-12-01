@@ -287,7 +287,7 @@ void CRendererSceneSimple::__createCommandPoolAndBuffers()
 void CRendererSceneSimple::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
-    m_DepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, DepthFormat);
+    m_DepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, NULL, DepthFormat);
 }
 
 void CRendererSceneSimple::__createFramebuffers()
