@@ -231,6 +231,6 @@ void CInteractor::__updateRotate(float vDeltaTime)
 	if (RotateState & int(ERotateState::BOOST)) Scale *= m_BoostScale;
 	if (RotateState & int(ERotateState::CRAWL)) Scale *= m_CrawlScale;
 
-	m_pCamera->setPhi(m_pCamera->getPhi() - m_HorizontalSensetivity * RotateLeft * Scale);
+	m_pCamera->setPhi(m_pCamera->getPhi() + m_HorizontalSensetivity * RotateLeft * Scale);
 	m_pCamera->setTheta(std::min(std::max(m_pCamera->getTheta() - m_VerticalSensetivity * RotateUp * Scale, 1.0), 179.0));
 }
