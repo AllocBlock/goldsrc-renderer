@@ -4,6 +4,8 @@
 #include "Descriptor.h"
 #include "IOImage.h"
 #include "Scene.h"
+#include "Image.h"
+#include "Buffer.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -41,14 +43,14 @@ protected:
     static const size_t MaxSpriteNum;
 private:
     void __updateDescriptorSet();
-    void __createImageFromIOImage(std::shared_ptr<CIOImage> vImage, Vulkan::SImagePack& voImagePack);
+    std::shared_ptr<vk::CImage> __createImageFromIOImage(std::shared_ptr<CIOImage> vImage);
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<Vulkan::SImagePack> m_SpriteImagePackSet;
-    Vulkan::SImagePack m_PlaceholderImagePack;
+    std::vector<std::shared_ptr<vk::CImage>> m_SpriteImageSet;
+    std::shared_ptr<vk::CImage> m_pPlaceholderImage;
     std::vector<SSpritePushConstant> m_SpriteSequence;
-    Vulkan::SBufferPack m_VertexDataPack;
+    std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
     size_t m_VertexNum = 0;
-    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPacks;
+    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
 };
 

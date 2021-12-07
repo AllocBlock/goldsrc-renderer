@@ -4,8 +4,8 @@ void CRendererTest::exportShadowMapToFile(std::string vFileName)
 {
     vkDeviceWaitIdle(m_AppInfo.Device);
     VkDeviceSize Size = m_AppInfo.Extent.width * m_AppInfo.Extent.height * 16;
-    Vulkan::SBufferPack StageBufferPack;
-    Vulkan::createBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, StageBufferPack.Buffer, StageBufferPack.Memory);
+    vk::CBuffer StageBuffer;
+    StageBuffer.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     VkBufferImageCopy CopyRegion = {};
     CopyRegion.bufferOffset = 0;
@@ -19,16 +19,11 @@ void CRendererTest::exportShadowMapToFile(std::string vFileName)
     CopyRegion.imageExtent = VkExtent3D{ m_AppInfo.Extent.width, m_AppInfo.Extent.height, 1 };
 
     VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::transitionImageLayout(CommandBuffer, m_ShadowMapImagePackSet[0].Image, m_ShadowMapImageFormat, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
-    vkCmdCopyImageToBuffer(CommandBuffer, m_ShadowMapImagePackSet[0].Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, StageBufferPack.Buffer, 1, &CopyRegion);
-    Vulkan::transitionImageLayout(CommandBuffer, m_ShadowMapImagePackSet[0].Image, m_ShadowMapImageFormat, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
+    m_ShadowMapImageSet[0]->copyToBuffer(CommandBuffer, CopyRegion, StageBuffer.get());
     Vulkan::endSingleTimeBuffer(CommandBuffer);
 
-    void* pDevData;
     uint8_t* pData = new uint8_t[Size];
-    Vulkan::checkError(vkMapMemory(m_AppInfo.Device, StageBufferPack.Memory, 0, Size, 0, &pDevData));
-    memcpy(pData, reinterpret_cast<char*>(pDevData), Size);
-    vkUnmapMemory(m_AppInfo.Device, StageBufferPack.Memory);
+    StageBuffer.copyToHost(Size, pData);
 
     auto pImage = std::make_shared<CIOImage>();
     pImage->setSize(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
@@ -95,8 +90,8 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
 void CRendererTest::_destroyV()
 {
     __destroyRecreateResources();
-    m_ShadowMapVertBufferPack.destroy(m_AppInfo.Device);
-    m_LightVertBufferPack.destroy(m_AppInfo.Device);
+    m_ShadowMapVertBuffer->destroy();
+    m_pLightVertBuffer->destroy();
     __destroyRenderPasses();
     m_Command.clear();
 
@@ -209,8 +204,8 @@ void CRendererTest::__createCommandPoolAndBuffers()
 
 void CRendererTest::__createDepthResources()
 {
-    m_LightDepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
-    m_ShadowMapDepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+    m_pLightDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
+    m_pShadowMapDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 }
 
 void CRendererTest::__createLightFramebuffers()
@@ -220,18 +215,18 @@ void CRendererTest::__createLightFramebuffers()
     for (size_t i = 0; i < ImageNum; ++i)
     {
         m_LightFramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
-        m_LightFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassLight, { m_AppInfo.TargetImageViewSet[i], m_LightDepthImagePack.ImageView }, m_AppInfo.Extent);
+        m_LightFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassLight, { m_AppInfo.TargetImageViewSet[i], m_pLightDepthImage->get() }, m_AppInfo.Extent);
     }
 }
 
 void CRendererTest::__createShadowMapFramebuffers()
 {
-    size_t ImageNum = m_ShadowMapImagePackSet.size();
+    size_t ImageNum = m_ShadowMapImageSet.size();
     m_ShadowFramebufferSet.resize(ImageNum, VK_NULL_HANDLE);
     for (size_t i = 0; i < ImageNum; ++i)
     {
         m_ShadowFramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
-        m_ShadowFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassShadowMap, { m_ShadowMapImagePackSet[i].ImageView, m_ShadowMapDepthImagePack.ImageView }, m_AppInfo.Extent);
+        m_ShadowFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassShadowMap, { m_ShadowMapImageSet[i]->get(), m_pShadowMapDepthImage->get() }, m_AppInfo.Extent);
     }
 }
 
@@ -243,17 +238,21 @@ void CRendererTest::__createVertexBuffer()
     if (VertexNum > 0)
     {
         VkDeviceSize ShadowMapVertBufferSize = sizeof(SShadowMapPointData) * VertexNum;
-        Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_ShadowMapPointDataSet.data(), ShadowMapVertBufferSize, m_ShadowMapVertBufferPack.Buffer, m_ShadowMapVertBufferPack.Memory);
+        m_ShadowMapVertBuffer = std::make_shared<vk::CBuffer>();
+        m_ShadowMapVertBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ShadowMapVertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_ShadowMapVertBuffer->stageFill(m_ShadowMapPointDataSet.data(), ShadowMapVertBufferSize);
 
         VkDeviceSize LightVertBufferSize = sizeof(SLightPointData) * VertexNum;
-        Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_LightPointDataSet.data(), LightVertBufferSize, m_LightVertBufferPack.Buffer, m_LightVertBufferPack.Memory);
+        m_pLightVertBuffer = std::make_shared<vk::CBuffer>();
+        m_pLightVertBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, LightVertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pLightVertBuffer->stageFill(m_LightPointDataSet.data(), LightVertBufferSize);
     }
 }
 
 void CRendererTest::__createShadowMapImages()
 {
-    m_ShadowMapImagePackSet.resize(m_AppInfo.TargetImageViewSet.size());
-    for (auto& ShadowMapImagePack : m_ShadowMapImagePackSet)
+    m_ShadowMapImageSet.resize(m_AppInfo.TargetImageViewSet.size());
+    for (auto& pShadowMapImage : m_ShadowMapImageSet)
     {
         VkImageCreateInfo ImageInfo = {};
         ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -271,11 +270,13 @@ void CRendererTest::__createShadowMapImages()
         ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        //Vulkan::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ShadowMapImagePack.Image, ShadowMapImagePack.Memory);
-        Vulkan::createImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ShadowMapImagePack.Image, ShadowMapImagePack.Memory);
-        ShadowMapImagePack.ImageView = Vulkan::createImageView(m_AppInfo.Device, ShadowMapImagePack.Image, m_ShadowMapImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
+        vk::SImageViewInfo ViewInfo;
+        ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+
+        pShadowMapImage = std::make_shared<vk::CImage>();
+        pShadowMapImage->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
         VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-        Vulkan::transitionImageLayout(CommandBuffer, ShadowMapImagePack.Image, m_ShadowMapImageFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1);
+        pShadowMapImage->transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         Vulkan::endSingleTimeBuffer(CommandBuffer);
     }
 }
@@ -287,12 +288,12 @@ void CRendererTest::__createRecreateResources()
     __createLightFramebuffers();
     __createShadowMapImages();
     __createShadowMapFramebuffers();
-    m_PipelineShadowMap.setImageNum(m_ShadowMapImagePackSet.size());
+    m_PipelineShadowMap.setImageNum(m_ShadowMapImageSet.size());
 
     std::vector<VkImageView> ShadowMapImageViewSet;
-    for (auto ImagePack : m_ShadowMapImagePackSet)
+    for (auto pImage : m_ShadowMapImageSet)
     {
-        ShadowMapImageViewSet.emplace_back(ImagePack.ImageView);
+        ShadowMapImageViewSet.emplace_back(pImage->get());
     }
     m_PipelineLight.setShadowMapImageViews(ShadowMapImageViewSet);
     m_PipelineLight.setImageNum(m_AppInfo.TargetImageViewSet.size());
@@ -300,15 +301,15 @@ void CRendererTest::__createRecreateResources()
 
 void CRendererTest::__destroyRecreateResources()
 {
-    for (auto& ShadowMapImagePack : m_ShadowMapImagePackSet)
-        ShadowMapImagePack.destroy(m_AppInfo.Device);
+    for (auto& pShadowMapImage : m_ShadowMapImageSet)
+        pShadowMapImage->destroy();
 
     for (auto& pFramebuffer : m_ShadowFramebufferSet)
         pFramebuffer->destroy();
     m_ShadowFramebufferSet.clear();
 
-    m_LightDepthImagePack.destroy(m_AppInfo.Device);
-    m_ShadowMapDepthImagePack.destroy(m_AppInfo.Device);
+    m_pLightDepthImage->destroy();
+    m_pShadowMapDepthImage->destroy();
     for (auto& pFramebuffer : m_LightFramebufferSet)
         pFramebuffer->destroy();
     m_LightFramebufferSet.clear();
@@ -434,11 +435,12 @@ void CRendererTest::__recordShadowMapRenderPass(VkCommandBuffer vCommandBuffer, 
 
     vkCmdBeginRenderPass(vCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    if (m_ShadowMapVertBufferPack.isValid())
+    if (m_ShadowMapVertBuffer->isValid())
     {
         VkDeviceSize Offsets[] = { 0 };
         size_t VertexNum = m_ShadowMapPointDataSet.size();
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_ShadowMapVertBufferPack.Buffer, Offsets);
+        VkBuffer VertBuffer = m_ShadowMapVertBuffer->get();
+        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_PipelineShadowMap.bind(vCommandBuffer, vImageIndex);
         vkCmdDraw(vCommandBuffer, VertexNum, 1, 0, 0);
     }
@@ -463,11 +465,12 @@ void CRendererTest::__recordLightRenderPass(VkCommandBuffer vCommandBuffer, uint
 
     vkCmdBeginRenderPass(vCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    if (m_LightVertBufferPack.isValid())
+    if (m_pLightVertBuffer->isValid())
     {
         VkDeviceSize Offsets[] = { 0 };
         size_t VertexNum = m_LightPointDataSet.size();
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_LightVertBufferPack.Buffer, Offsets);
+        VkBuffer VertBuffer = m_pLightVertBuffer->get();
+        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_PipelineLight.bind(vCommandBuffer, vImageIndex);
         vkCmdDraw(vCommandBuffer, VertexNum, 1, 0, 0);
     }

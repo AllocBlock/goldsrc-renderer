@@ -1,6 +1,7 @@
 #include "SimpleRenderer.h"
 #include "Common.h"
 #include "Descriptor.h"
+#include "Function.h"
 
 #include <iostream>
 #include <vector>
@@ -116,14 +117,20 @@ std::vector<VkCommandBuffer> CRendererSceneSimple::_requestCommandBuffersV(uint3
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
-
+        
+        bool Valid = true;
         VkDeviceSize Offsets[] = { 0 };
-        if (m_VertexBufferPack.isValid())
-            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
-        if (m_IndexBufferPack.isValid())
-            vkCmdBindIndexBuffer(CommandBuffer, m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
+        if (m_pVertexBuffer &&m_pVertexBuffer->isValid())
+        {
+            VkBuffer VertBuffer = m_pVertexBuffer->get();
+            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
+        }
+        else if (m_pIndexBuffer && m_pIndexBuffer->isValid())
+            vkCmdBindIndexBuffer(CommandBuffer, m_pIndexBuffer->get(), 0, VK_INDEX_TYPE_UINT32);
+        else
+            Valid = false;
 
-        if (m_VertexBufferPack.isValid() || m_IndexBufferPack.isValid())
+        if (Valid)
         {
             __calculateVisiableObjects();
             m_PipelineSet.Main.bind(CommandBuffer, vImageIndex);
@@ -154,7 +161,7 @@ void CRendererSceneSimple::__createRecreateResources()
 
 void CRendererSceneSimple::__destroyRecreateResources()
 {
-    m_DepthImagePack.destroy(m_AppInfo.Device);
+    m_pDepthImage->destroy();
 
     for (auto& pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
@@ -181,14 +188,14 @@ void CRendererSceneSimple::__createSceneResources()
 
 void CRendererSceneSimple::__destroySceneResources()
 {
-    for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
+    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
     {
-        m_TextureImagePackSet[i].destroy(m_AppInfo.Device);
+        m_TextureImageSet[i]->destroy();
     }
-    m_TextureImagePackSet.clear();
+    m_TextureImageSet.clear();
 
-    m_IndexBufferPack.destroy(m_AppInfo.Device);
-    m_VertexBufferPack.destroy(m_AppInfo.Device);
+    if (m_pIndexBuffer) m_pIndexBuffer->destroy();
+    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 }
 
 void CRendererSceneSimple::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
@@ -287,7 +294,7 @@ void CRendererSceneSimple::__createCommandPoolAndBuffers()
 void CRendererSceneSimple::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
-    m_DepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, NULL, DepthFormat);
+    m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, NULL, DepthFormat);
 }
 
 void CRendererSceneSimple::__createFramebuffers()
@@ -298,7 +305,7 @@ void CRendererSceneSimple::__createFramebuffers()
         std::vector<VkImageView> AttachmentSet =
         {
             m_AppInfo.TargetImageViewSet[i],
-            m_DepthImagePack.ImageView
+            m_pDepthImage->get()
         };
 
         m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
@@ -311,11 +318,10 @@ void CRendererSceneSimple::__createTextureImages()
     size_t NumTexture = __getActualTextureNum();
     if (NumTexture > 0)
     {
-        m_TextureImagePackSet.resize(NumTexture);
+        m_TextureImageSet.resize(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            std::shared_ptr<CIOImage> pImage = m_pScene->TexImageSet[i];
-            __createImageFromIOImage(pImage, m_TextureImagePackSet[i]);
+            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_pScene->TexImageSet[i]);
         }
     }
 }
@@ -343,10 +349,13 @@ void CRendererSceneSimple::__createVertexBuffer()
     {
         std::vector<SSimplePointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SSimplePointData) * pObject->getVertexArray()->size();
-        memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
+        memcpy(reinterpret_cast<char*>(pData) + Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+
+    m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->stageFill(pData, BufferSize);
     delete[] pData;
 }
 
@@ -386,9 +395,9 @@ void CRendererSceneSimple::__createIndexBuffer()
 
 void CRendererSceneSimple::__updateDescriptorSets()
 {
-    std::vector<VkImageView> TextureSet(m_TextureImagePackSet.size());
-    for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
-        TextureSet[i] = m_TextureImagePackSet[i].ImageView;
+    std::vector<VkImageView> TextureSet(m_TextureImageSet.size());
+    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
+        TextureSet[i] = m_TextureImageSet[i]->get();
     m_PipelineSet.Main.updateDescriptorSet(TextureSet);
 }
 
@@ -431,12 +440,12 @@ VkFormat CRendererSceneSimple::__findSupportedFormat(const std::vector<VkFormat>
         VkFormatProperties Props;
         vkGetPhysicalDeviceFormatProperties(m_AppInfo.PhysicalDevice, Format, &Props);
 
-        if (vTiling == VK_IMAGE_TILING_LINEAR && 
+        if (vTiling == VK_IMAGE_TILING_LINEAR &&
             (Props.linearTilingFeatures & vFeatures) == vFeatures)
         {
             return Format;
         }
-        else if (vTiling == VK_IMAGE_TILING_OPTIMAL && 
+        else if (vTiling == VK_IMAGE_TILING_OPTIMAL &&
             (Props.optimalTilingFeatures & vFeatures) == vFeatures)
         {
             return Format;
@@ -444,12 +453,6 @@ VkFormat CRendererSceneSimple::__findSupportedFormat(const std::vector<VkFormat>
     }
 
     throw std::runtime_error(u8"未找到适配的vulkan格式");
-}
-
-void CRendererSceneSimple::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Vulkan::transitionImageLayout(CommandBuffer, vImage, vFormat, vOldLayout, vNewLayout, vLayerCount);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
 }
 
 size_t CRendererSceneSimple::__getActualTextureNum()
@@ -461,36 +464,6 @@ size_t CRendererSceneSimple::__getActualTextureNum()
         NumTexture = CPipelineSimple::MaxTextureNum;
     }
     return NumTexture;
-}
-
-void CRendererSceneSimple::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack)
-{
-    size_t TexWidth = vpImage->getWidth();
-    size_t TexHeight = vpImage->getHeight();
-    const void* pPixelData = vpImage->getData();
-
-    VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
-
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = static_cast<uint32_t>(TexWidth);
-    ImageInfo.extent.height = static_cast<uint32_t>(TexHeight);
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
-
-    voImagePack.ImageView = Vulkan::createImageView(m_AppInfo.Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CRendererSceneSimple::__calculateVisiableObjects()
@@ -505,7 +478,7 @@ void CRendererSceneSimple::__calculateVisiableObjects()
 
         if (m_pScene->Objects[i]->getMark() == "sky" || m_pScene->Objects[i]->getVertexArray()->empty())
             continue;
-        
+
         if (m_EnableCulling)
         {
             if (i >= m_pScene->BspTree.NodeNum + m_pScene->BspTree.LeafNum) // ignore culling for model for now

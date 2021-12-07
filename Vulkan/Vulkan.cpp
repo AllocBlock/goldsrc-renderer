@@ -30,7 +30,7 @@ Vulkan::SQueueFamilyIndices Vulkan::findQueueFamilies(const VkPhysicalDevice& vP
     vkGetPhysicalDeviceQueueFamilyProperties(vPhysicalDevice, &NumQueueFamily, QueueFamilies.data());
 
     SQueueFamilyIndices Indices;
-    for (size_t i = 0; i < NumQueueFamily; ++i)
+    for (uint32_t i = 0; i < NumQueueFamily; ++i)
     {
         if (QueueFamilies[i].queueCount > 0 &&
             QueueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)

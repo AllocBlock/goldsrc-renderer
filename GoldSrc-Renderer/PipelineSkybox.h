@@ -4,6 +4,8 @@
 #include "PointData.h"
 #include "Descriptor.h"
 #include "IOImage.h"
+#include "Image.h"
+#include "Buffer.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -16,11 +18,12 @@ public:
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vUp);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
     {
-        if (m_VertexDataPack.isValid())
+        if (m_pVertexBuffer->isValid())
         {
+            VkBuffer VertBuffer = m_pVertexBuffer->get();
             const VkDeviceSize Offsets[] = { 0 };
             bind(vCommandBuffer, vImageIndex);
-            vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_VertexDataPack.Buffer, Offsets);
+            vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);
             vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
         }
     }
@@ -39,10 +42,10 @@ private:
     void __updateDescriptorSet();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    Vulkan::SImagePack m_SkyBoxImagePack; // cubemap
-    Vulkan::SBufferPack m_VertexDataPack;
+    std::shared_ptr<vk::CImage> m_pSkyBoxImage; // cubemap
+    std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
     size_t m_VertexNum = 0;
-    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPacks;
-    std::vector<Vulkan::SBufferPack> m_FragUniformBufferPacks;
+    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CBuffer>> m_FragUniformBufferSet;
 };
 

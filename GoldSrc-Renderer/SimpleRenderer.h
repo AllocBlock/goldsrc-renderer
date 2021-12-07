@@ -8,6 +8,8 @@
 #include "PipelineSimple.h"
 #include "Descriptor.h"
 #include "Command.h"
+#include "Image.h"
+#include "Buffer.h"
 
 #include <vulkan/vulkan.h> 
 #include <glm/glm.hpp>
@@ -81,9 +83,7 @@ private:
 
     VkFormat __findDepthFormat();
     VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
-    void __transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount = 1);
     size_t __getActualTextureNum();
-    void __createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack);
     void __updateDescriptorSets();
 
     std::vector<SSimplePointData> __readPointData(std::shared_ptr<C3DObjectGoldSrc> vpObject) const;
@@ -94,10 +94,10 @@ private:
     std::string m_SceneCommandName = "Scene";
     std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
 
-    Vulkan::SBufferPack m_VertexBufferPack;
-    Vulkan::SBufferPack m_IndexBufferPack;
-    std::vector<Vulkan::SImagePack> m_TextureImagePackSet;
-    Vulkan::SImagePack m_DepthImagePack;
+    std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
+    std::shared_ptr<vk::CBuffer> m_pIndexBuffer;
+    std::vector<std::shared_ptr<vk::CImage>> m_TextureImageSet;
+    std::shared_ptr<vk::CImage> m_pDepthImage;
 
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;

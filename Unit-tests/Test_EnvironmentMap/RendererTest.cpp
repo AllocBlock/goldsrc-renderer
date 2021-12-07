@@ -51,10 +51,11 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
 
     vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    if (m_VertexBufferPack.isValid())
+    if (m_pVertexBuffer->isValid())
     {
+        VkBuffer VertBuffer = m_pVertexBuffer->get();
         VkDeviceSize Offsets[] = { 0 };
-        vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
+        vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_Pipeline.bind(CommandBuffer, vImageIndex);
 
         size_t VertexNum = m_PointDataSet.size();
@@ -69,7 +70,7 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
 void CRendererTest::_destroyV()
 {
     __destroyRecreateResources();
-    m_VertexBufferPack.destroy(m_AppInfo.Device);
+    m_pVertexBuffer->destroy();
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
@@ -189,7 +190,7 @@ void CRendererTest::__createCommandPoolAndBuffers()
 
 void CRendererTest::__createDepthResources()
 {
-    m_DepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
+    m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createFramebuffers()
@@ -201,7 +202,7 @@ void CRendererTest::__createFramebuffers()
         std::vector<VkImageView> AttachmentSet =
         {
             m_AppInfo.TargetImageViewSet[i],
-            m_DepthImagePack.ImageView
+            m_pDepthImage->get()
         };
 
         m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
@@ -217,7 +218,9 @@ void CRendererTest::__createVertexBuffer()
     if (VertexNum > 0)
     {
         VkDeviceSize BufferSize = sizeof(STestPointData) * VertexNum;
-        Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_PointDataSet.data(), BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+        m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+        m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }
 
@@ -232,7 +235,7 @@ void CRendererTest::__createRecreateResources()
 
 void CRendererTest::__destroyRecreateResources()
 {
-    m_DepthImagePack.destroy(m_AppInfo.Device);
+    m_pDepthImage->destroy();
 
     for (auto& pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();

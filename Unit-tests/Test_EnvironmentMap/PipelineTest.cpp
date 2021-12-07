@@ -61,13 +61,14 @@ void CPipelineTest::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, TotalImageSize, ImageInfo, m_SkyBoxImagePack.Image, m_SkyBoxImagePack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    vk::SImageViewInfo ViewInfo;
+    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+    ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
+    m_pSkyBoxImage = std::make_shared<vk::CImage>();
+    m_pSkyBoxImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
-
-    m_SkyBoxImagePack.ImageView = Vulkan::createImageView(m_Device, m_SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
 
     // the sky image changed, so descriptor need to be updated
     __updateDescriptorSet();
@@ -91,11 +92,11 @@ void CPipelineTest::__createPlaceholderImage()
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, &PixelData, sizeof(uint8_t), ImageInfo, m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    vk::SImageViewInfo ViewInfo;
+    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    m_PlaceholderImagePack.ImageView = Vulkan::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    m_pPlaceholderImage = std::make_shared<vk::CImage>();
+    m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
 void CPipelineTest::__updateDescriptorSet()
@@ -106,20 +107,20 @@ void CPipelineTest::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferPackSet[i].Buffer;
+        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferPackSet[i].Buffer;
+        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_SkyBoxImagePack.isValid() ? m_SkyBoxImagePack.ImageView : m_PlaceholderImagePack.ImageView;
+        CombinedSamplerInfo.imageView = m_pSkyBoxImage->isValid() ? m_pSkyBoxImage->get() : m_pPlaceholderImage->get();
         CombinedSamplerInfo.sampler = m_TextureSampler;
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 
@@ -133,18 +134,11 @@ void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, 
     UBOVert.Model = vModel;
     UBOVert.View = vView;
     UBOVert.Proj = vProj;
-
-    void* pData;
-    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
-    vkUnmapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory);
+    m_VertUniformBufferSet[vImageIndex]->fill(&UBOVert, sizeof(UBOVert));
 
     SUniformBufferObjectFrag UBOFrag = {};
     UBOFrag.Eye = vEyePos;
-
-    Vulkan::checkError(vkMapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
-    vkUnmapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory);
+    m_FragUniformBufferSet[vImageIndex]->fill(&UBOFrag, sizeof(UBOFrag));
 }
 
 void CPipelineTest::destroy()
@@ -173,13 +167,15 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
 
     VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
     VkDeviceSize FragBufferSize = sizeof(SUniformBufferObjectFrag);
-    m_VertUniformBufferPackSet.resize(vImageNum);
-    m_FragUniformBufferPackSet.resize(vImageNum);
+    m_VertUniformBufferSet.resize(vImageNum);
+    m_FragUniformBufferSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
+        m_VertUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_FragUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
 
     VkPhysicalDeviceProperties Properties = {};
@@ -205,27 +201,7 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
 
     Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
 
-    uint8_t PixelData = 0;
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = 1;
-    ImageInfo.extent.height = 1;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, &PixelData, 4, ImageInfo, m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
-
-    m_PlaceholderImagePack.ImageView = Vulkan::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    __createPlaceholderImage();
 }
 
 void CPipelineTest::_initDescriptorV()
@@ -242,16 +218,16 @@ void CPipelineTest::_initDescriptorV()
 
 void CPipelineTest::__destroyResources()
 {
-    for (size_t i = 0; i < m_VertUniformBufferPackSet.size(); ++i)
+    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
     {
-        m_VertUniformBufferPackSet[i].destroy(m_Device);
-        m_FragUniformBufferPackSet[i].destroy(m_Device);
+        m_VertUniformBufferSet[i]->destroy();
+        m_FragUniformBufferSet[i]->destroy();
     }
-    m_VertUniformBufferPackSet.clear();
-    m_FragUniformBufferPackSet.clear();
+    m_VertUniformBufferSet.clear();
+    m_FragUniformBufferSet.clear();
 
-    m_SkyBoxImagePack.destroy(m_Device);
-    m_PlaceholderImagePack.destroy(m_Device);
+    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
+    if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
 
     if (m_TextureSampler != VK_NULL_HANDLE)
     {
@@ -259,4 +235,3 @@ void CPipelineTest::__destroyResources()
         m_TextureSampler = VK_NULL_HANDLE;
     }
 }
-

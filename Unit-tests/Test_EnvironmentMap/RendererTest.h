@@ -3,6 +3,8 @@
 #include "FrameBuffer.h"
 #include "PipelineTest.h"
 #include "Camera.h"
+#include "Image.h"
+#include "Buffer.h"
 
 class CRendererTest : public CRendererBase
 {
@@ -41,8 +43,8 @@ private:
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
     std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
-    Vulkan::SBufferPack m_VertexBufferPack;
-    Vulkan::SImagePack m_DepthImagePack;
+    std::shared_ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
+    std::shared_ptr<vk::CImage> m_pDepthImage = nullptr;
 
     const std::string m_SkyFilePrefix = "../../data/neb6";
     std::shared_ptr<CCamera> m_pCamera = nullptr;

@@ -1,6 +1,7 @@
 #pragma once
 #include "PipelineBase.h"
 #include "Vulkan.h"
+#include "Buffer.h"
 
 #include <map>
 #include <glm/glm.hpp>
@@ -41,7 +42,6 @@ private:
 
     std::map<std::string, std::shared_ptr<SGuiObject>> m_NameObjectMap;
     size_t m_VertexNum = 0;
-    Vulkan::SBufferPack m_VertexDataPack;
-    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPacks;
+    std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
+    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
 };
-

@@ -8,6 +8,7 @@ void CBuffer::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkDevic
     destroy();
 
     if (vSize == 0) throw "Size == 0";
+    m_PhysicalDevice = vPhysicalDevice;
     m_Device = vDevice;
     m_Size = vSize;
     VkBufferCreateInfo BufferInfo = {};
@@ -41,6 +42,7 @@ void CBuffer::destroy()
     m_Size = 0;
 
     m_Device = VK_NULL_HANDLE;
+    m_PhysicalDevice = VK_NULL_HANDLE;
 }
 
 bool CBuffer::isValid()
@@ -57,25 +59,32 @@ void CBuffer::copyFrom(VkCommandBuffer vCommandBuffer, VkBuffer vSrcBuffer, VkDe
     vkCmdCopyBuffer(vCommandBuffer, vSrcBuffer, m_Handle, 1, &CopyRegion);
 }
 
-void CBuffer::fill(VkDevice vDevice, const void* vData, VkDeviceSize vSize)
+void CBuffer::copyToHost(VkDeviceSize vSize, void* vPtr)
+{
+    void* pDevData;
+    Vulkan::checkError(vkMapMemory(m_Device, m_Memory, 0, vSize, 0, &pDevData));
+    memcpy(vPtr, reinterpret_cast<char*>(pDevData), vSize);
+    vkUnmapMemory(m_Device, m_Memory);
+}
+
+void CBuffer::fill(const void* vData, VkDeviceSize vSize)
 {
     if (!isValid()) throw "Cant fill in NULL handle buffer";
     else if (m_Size < vSize) throw "Cant fill in smaller buffer";
 
     void* pDevData;
-    Vulkan::checkError(vkMapMemory(vDevice, m_Memory, 0, vSize, 0, &pDevData));
+    Vulkan::checkError(vkMapMemory(m_Device, m_Memory, 0, vSize, 0, &pDevData));
     memcpy(reinterpret_cast<char*>(pDevData), vData, vSize);
-    vkUnmapMemory(vDevice, m_Memory);
+    vkUnmapMemory(m_Device, m_Memory);
 }
 
-void CBuffer::stageFill(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const void* vData, VkDeviceSize vSize)
+void CBuffer::stageFill(const void* vData, VkDeviceSize vSize)
 {
     if (!isValid()) throw "Cant fill in NULL handle buffer";
     else if (m_Size < vSize) throw "Cant fill in smaller buffer";
-
     CBuffer StageBuffer;
-    StageBuffer.create(vPhysicalDevice, vDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    StageBuffer.fill(vDevice, vData, vSize);
+    StageBuffer.create(m_PhysicalDevice, m_Device, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    StageBuffer.fill(vData, vSize);
 
     VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
     copyFrom(CommandBuffer, StageBuffer.get(), vSize);

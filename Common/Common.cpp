@@ -1,6 +1,7 @@
 #include "Common.h"
 
 #include <fstream>
+#include <vulkan/vulkan.h>
 
 const float g_ModOffset = 1e-9f;
 

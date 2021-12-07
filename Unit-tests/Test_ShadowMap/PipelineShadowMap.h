@@ -1,6 +1,7 @@
 #pragma once
 #include "PipelineBase.h"
 #include "Camera.h"
+#include "Buffer.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -53,7 +54,7 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPackSet;
-    std::vector<Vulkan::SBufferPack> m_FragUniformBufferPackSet;
+    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CBuffer>> m_FragUniformBufferSet;
 };
 

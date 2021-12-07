@@ -12,7 +12,7 @@ void CImage::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const Vk
     m_Device = vDevice;
     m_Width = vImageInfo.extent.width;
     m_Height = vImageInfo.extent.height;
-    m_LayerCount = vViewInfo.LayerCount;
+    m_LayerCount = vImageInfo.arrayLayers;
     m_Format = vImageInfo.format;
     m_Layout = vImageInfo.initialLayout;
 
@@ -35,10 +35,10 @@ void CImage::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const Vk
     std::cout << "create memory 0x" << std::setbase(16) << (uint64_t)(m_Memory) << std::setbase(10) << std::endl;
 #endif
 
-    __createImageView(vDevice, vViewInfo, vImageInfo.format);
+    __createImageView(vDevice, vViewInfo, vImageInfo.format, vImageInfo.arrayLayers);
 }
 
-void CImage::setImage(VkDevice vDevice, VkImage vImage, VkFormat vFormat, const SImageViewInfo& vViewInfo)
+void CImage::setImage(VkDevice vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
 {
     destroy();
 
@@ -47,7 +47,7 @@ void CImage::setImage(VkDevice vDevice, VkImage vImage, VkFormat vFormat, const 
 
     m_IsSet = true;
     m_Image = vImage;
-    __createImageView(vDevice, vViewInfo, vFormat);
+    __createImageView(vDevice, vViewInfo, vFormat, vLayerCount);
 }
 
 void CImage::destroy()
@@ -78,7 +78,7 @@ bool CImage::isValid()
     else return m_Image != VK_NULL_HANDLE && m_Memory != VK_NULL_HANDLE && m_Handle != VK_NULL_HANDLE;
 }
 
-void CImage::copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight, uint32_t vLayerCount)
+void CImage::copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight)
 {
     VkBufferImageCopy Region = {};
     Region.bufferOffset = 0;
@@ -88,29 +88,38 @@ void CImage::copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, si
     Region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     Region.imageSubresource.mipLevel = 0;
     Region.imageSubresource.baseArrayLayer = 0;
-    Region.imageSubresource.layerCount = vLayerCount;
+    Region.imageSubresource.layerCount = m_LayerCount;
 
     Region.imageOffset = { 0, 0, 0 };
     Region.imageExtent = { static_cast<uint32_t>(vWidth), static_cast<uint32_t>(vHeight), 1 };
 
     vkCmdCopyBufferToImage(vCommandBuffer, vBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
+    m_Layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 }
 
-void CImage::stageFill(VkDevice vDevice, const void* vData, VkDeviceSize vSize)
+void CImage::stageFill(const void* vData, VkDeviceSize vSize)
 {
     if (!isValid()) throw "Cant fill in NULL handle image";
 
     CBuffer StageBuffer;
-    StageBuffer.create(m_PhysicalDevice, vDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    StageBuffer.fill(vDevice, vData, vSize);
+    StageBuffer.create(m_PhysicalDevice, m_Device, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    StageBuffer.fill(vData, vSize);
 
     VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
     transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyFromBuffer(CommandBuffer, StageBuffer.get(), m_Width, m_Height, m_LayerCount);
+    copyFromBuffer(CommandBuffer, StageBuffer.get(), m_Width, m_Height);
     transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     Vulkan::endSingleTimeBuffer(CommandBuffer);
 
     StageBuffer.destroy();
+}
+
+void CImage::copyToBuffer(VkCommandBuffer vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer)
+{
+    VkImageLayout OriginalLayout = m_Layout;
+    transitionLayout(vCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    vkCmdCopyImageToBuffer(vCommandBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vTargetBuffer, 1, &vCopyRegion);
+    transitionLayout(vCommandBuffer, OriginalLayout);
 }
 
 void CImage::transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout)
@@ -218,7 +227,7 @@ void CImage::transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNew
     m_Layout = vNewLayout;
 }
 
-void CImage::__createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo, VkFormat vFormat)
+void CImage::__createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo, VkFormat vFormat, uint32_t vLayerCount)
 {
     VkImageViewCreateInfo ImageViewInfo = {};
     ImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -229,7 +238,7 @@ void CImage::__createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo
     ImageViewInfo.subresourceRange.baseMipLevel = 0;
     ImageViewInfo.subresourceRange.levelCount = 1;
     ImageViewInfo.subresourceRange.baseArrayLayer = 0;
-    ImageViewInfo.subresourceRange.layerCount = vViewInfo.LayerCount;
+    ImageViewInfo.subresourceRange.layerCount = vLayerCount;
 
     Vulkan::checkError(vkCreateImageView(vDevice, &ImageViewInfo, nullptr, &m_Handle));
 

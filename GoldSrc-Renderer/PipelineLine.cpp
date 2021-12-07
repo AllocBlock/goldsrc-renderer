@@ -22,10 +22,10 @@ VkPipelineDepthStencilStateCreateInfo CPipelineLine::_getDepthStencilInfoV()
 void CPipelineLine::destroy()
 {
     m_VertexNum = 0;
-    m_VertexDataPack.destroy(m_Device);
-    for (auto& Buffer : m_VertUniformBufferPacks)
-        Buffer.destroy(m_Device);
-    m_VertUniformBufferPacks.clear();
+    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
+    for (auto pBuffer : m_VertUniformBufferSet)
+        pBuffer->destroy();
+    m_VertUniformBufferSet.clear();
 
     CPipelineBase::destroy();
 }
@@ -37,7 +37,7 @@ void CPipelineLine::updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferPacks[i].Buffer;
+        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SGuiUniformBufferObjectVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} , {} }));
@@ -51,11 +51,7 @@ void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, g
     SGuiUniformBufferObjectVert UBOVert = {};
     UBOVert.Proj = vProj;
     UBOVert.View = vView;
-
-    void* pData;
-    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
-    vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
+    m_VertUniformBufferSet[vImageIndex]->fill(&UBOVert, sizeof(UBOVert));
 }
 
 void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
@@ -65,7 +61,8 @@ void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
     VkDeviceSize Offsets[] = { 0 };
     if (m_VertexNum > 0)
     {
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_VertexDataPack.Buffer, Offsets);
+        VkBuffer Buffer = m_pVertexBuffer->get();
+        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
         vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
     }
 }
@@ -100,11 +97,12 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
 {
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SGuiUniformBufferObjectVert);
-    m_VertUniformBufferPacks.resize(vImageNum);
+    m_VertUniformBufferSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
+        m_VertUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
 }
 
@@ -121,7 +119,7 @@ void CPipelineLine::_initDescriptorV()
 void CPipelineLine::__updateVertexBuffer()
 {
     vkDeviceWaitIdle(m_Device);
-    m_VertexDataPack.destroy(m_Device);
+    m_pVertexBuffer->destroy();
 
     m_VertexNum = 0;
     for (const auto& Pair : m_NameObjectMap)
@@ -143,6 +141,6 @@ void CPipelineLine::__updateVertexBuffer()
             memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
             Offset += DataSize;
         }
-        Vulkan::stageFillBuffer(m_PhysicalDevice, m_Device, pData, BufferSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
+        m_pVertexBuffer->fill(pData, BufferSize);
     }
 }

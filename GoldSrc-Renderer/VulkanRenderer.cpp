@@ -1,6 +1,7 @@
 #include "VulkanRenderer.h"
 #include "Common.h"
 #include "Descriptor.h"
+#include "Function.h"
 
 #include <iostream>
 #include <vector>
@@ -163,13 +164,19 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
 
+        bool Valid = true;
         VkDeviceSize Offsets[] = { 0 };
-        if (m_VertexBufferPack.isValid())
-            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &m_VertexBufferPack.Buffer, Offsets);
-        if (m_IndexBufferPack.isValid())
-            vkCmdBindIndexBuffer(CommandBuffer, m_IndexBufferPack.Buffer, 0, VK_INDEX_TYPE_UINT32);
+        if (m_pVertexBuffer && m_pVertexBuffer->isValid())
+        {
+            VkBuffer VertBuffer = m_pVertexBuffer->get();
+            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
+        }
+        else if (m_pIndexBuffer && m_pIndexBuffer->isValid())
+            vkCmdBindIndexBuffer(CommandBuffer, m_pIndexBuffer->get(), 0, VK_INDEX_TYPE_UINT32);
+        else
+            Valid = false;
 
-        if (m_VertexBufferPack.isValid() || m_IndexBufferPack.isValid())
+        if (Valid)
         {
             __calculateVisiableObjects();
             if (m_EnableBSP)
@@ -224,7 +231,7 @@ void CRendererSceneGoldSrc::__createRecreateResources()
 
 void CRendererSceneGoldSrc::__destroyRecreateResources()
 {
-    m_DepthImagePack.destroy(m_AppInfo.Device);
+    m_pDepthImage->destroy();
 
     for (auto& pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
@@ -259,15 +266,15 @@ void CRendererSceneGoldSrc::__createSceneResources()
 
 void CRendererSceneGoldSrc::__destroySceneResources()
 {
-    for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
+    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
     {
-        m_TextureImagePackSet[i].destroy(m_AppInfo.Device);
+        m_TextureImageSet[i]->destroy();
     }
-    m_TextureImagePackSet.clear();
+    m_TextureImageSet.clear();
 
-    m_LightmapImagePack.destroy(m_AppInfo.Device);
-    m_IndexBufferPack.destroy(m_AppInfo.Device);
-    m_VertexBufferPack.destroy(m_AppInfo.Device);
+    if (m_pLightmapImage) m_pLightmapImage->destroy();
+    if (m_pIndexBuffer) m_pIndexBuffer->destroy();
+    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 }
 
 void CRendererSceneGoldSrc::__recordGuiCommandBuffer(uint32_t vImageIndex)
@@ -600,7 +607,7 @@ void CRendererSceneGoldSrc::__createCommandPoolAndBuffers()
 void CRendererSceneGoldSrc::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
-    m_DepthImagePack = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, NULL, DepthFormat);
+    m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, NULL, DepthFormat);
 }
 
 void CRendererSceneGoldSrc::__createFramebuffers()
@@ -611,7 +618,7 @@ void CRendererSceneGoldSrc::__createFramebuffers()
         std::vector<VkImageView> AttachmentSet =
         {
             m_AppInfo.TargetImageViewSet[i],
-            m_DepthImagePack.ImageView
+            m_pDepthImage->get()
         };
 
         m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
@@ -624,11 +631,10 @@ void CRendererSceneGoldSrc::__createTextureImages()
     size_t NumTexture = __getActualTextureNum();
     if (NumTexture > 0)
     {
-        m_TextureImagePackSet.resize(NumTexture);
+        m_TextureImageSet.resize(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            std::shared_ptr<CIOImage> pImage = m_pScene->TexImageSet[i];
-            __createImageFromIOImage(pImage, m_TextureImagePackSet[i]);
+            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_pScene->TexImageSet[i]);
         }
     }
 }
@@ -638,7 +644,7 @@ void CRendererSceneGoldSrc::__createLightmapImage()
     if (m_pScene && m_pScene->UseLightmap)
     {
         std::shared_ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
-        __createImageFromIOImage(pCombinedLightmapImage, m_LightmapImagePack);
+        m_pLightmapImage = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pCombinedLightmapImage);
     }
 }
 
@@ -668,7 +674,9 @@ void CRendererSceneGoldSrc::__createVertexBuffer()
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->stageFill(pData, BufferSize);
     delete[] pData;
 }
 
@@ -702,16 +710,16 @@ void CRendererSceneGoldSrc::__createIndexBuffer()
         memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack->get(), m_VertexBufferPack.Memory);
     delete[] pData;*/
 }
 
 void CRendererSceneGoldSrc::__updateDescriptorSets()
 {
-    std::vector<VkImageView> TextureSet(m_TextureImagePackSet.size());
-    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_LightmapImagePack.ImageView : VK_NULL_HANDLE;
-    for (size_t i = 0; i < m_TextureImagePackSet.size(); ++i)
-        TextureSet[i] = m_TextureImagePackSet[i].ImageView;
+    std::vector<VkImageView> TextureSet(m_TextureImageSet.size());
+    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_pLightmapImage->get() : VK_NULL_HANDLE;
+    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
+        TextureSet[i] = m_TextureImageSet[i]->get();
     m_PipelineSet.DepthTest.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAlphaTest.updateDescriptorSet(TextureSet, Lightmap);
@@ -779,12 +787,6 @@ VkFormat CRendererSceneGoldSrc::__findSupportedFormat(const std::vector<VkFormat
     throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
-void CRendererSceneGoldSrc::__transitionImageLayout(VkImage vImage, VkFormat vFormat, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vLayerCount) {
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Vulkan::transitionImageLayout(CommandBuffer, vImage, vFormat, vOldLayout, vNewLayout, vLayerCount);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
-}
-
 size_t CRendererSceneGoldSrc::__getActualTextureNum()
 {
     size_t NumTexture = m_pScene ? m_pScene->TexImageSet.size() : 0;
@@ -794,36 +796,6 @@ size_t CRendererSceneGoldSrc::__getActualTextureNum()
         NumTexture = CPipelineDepthTest::MaxTextureNum;
     }
     return NumTexture;
-}
-
-void CRendererSceneGoldSrc::__createImageFromIOImage(std::shared_ptr<CIOImage> vpImage, Vulkan::SImagePack& voImagePack)
-{
-    size_t TexWidth = vpImage->getWidth();
-    size_t TexHeight = vpImage->getHeight();
-    const void* pPixelData = vpImage->getData();
-
-    VkDeviceSize DataSize = static_cast<uint64_t>(4) * TexWidth * TexHeight;
-
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = static_cast<uint32_t>(TexWidth);
-    ImageInfo.extent.height = static_cast<uint32_t>(TexHeight);
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
-
-    voImagePack.ImageView = Vulkan::createImageView(m_AppInfo.Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void CRendererSceneGoldSrc::__calculateVisiableObjects()

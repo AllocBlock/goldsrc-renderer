@@ -1,6 +1,8 @@
 #pragma once
 #include "PipelineBase.h"
 #include "IOImage.h"
+#include "Image.h"
+#include "Buffer.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -62,8 +64,8 @@ private:
     void __destroyResources();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<Vulkan::SBufferPack> m_VertUniformBufferPackSet;
+    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
     std::vector<VkImageView> m_ShadowMapImageViewSet;
-    Vulkan::SImagePack m_PlaceholderImagePack;
+    std::shared_ptr<vk::CImage> m_pPlaceholderImage;
 };
 

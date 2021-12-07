@@ -16,7 +16,7 @@ namespace vk
 
         T get() { return m_Handle; }
     protected:
-        T m_Handle;
+        T m_Handle = VK_NULL_HANDLE;
     };
 }
 

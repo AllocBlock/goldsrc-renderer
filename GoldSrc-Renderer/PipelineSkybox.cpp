@@ -20,15 +20,15 @@ void CPipelineSkybox::destroy()
 
     if (m_TextureSampler != VK_NULL_HANDLE)
         vkDestroySampler(m_Device, m_TextureSampler, nullptr);
-    m_SkyBoxImagePack.destroy(m_Device);
-    m_VertexDataPack.destroy(m_Device);
-    for (size_t i = 0; i < m_VertUniformBufferPacks.size(); ++i)
+    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
+    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
+    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
     {
-        m_VertUniformBufferPacks[i].destroy(m_Device);
-        m_FragUniformBufferPacks[i].destroy(m_Device);
+        m_VertUniformBufferSet[i]->destroy();
+        m_FragUniformBufferSet[i]->destroy();
     }
-    m_VertUniformBufferPacks.clear();
-    m_FragUniformBufferPacks.clear();
+    m_VertUniformBufferSet.clear();
+    m_FragUniformBufferSet.clear();
 
     CPipelineBase::destroy();
 }
@@ -82,13 +82,13 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>,
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, TotalImageSize, ImageInfo, m_SkyBoxImagePack.Image, m_SkyBoxImagePack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
-    
-    delete[] pPixelData;
+    vk::SImageViewInfo ViewInfo;
+    ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
-    m_SkyBoxImagePack.ImageView = Vulkan::createImageView(m_Device, m_SkyBoxImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE, 6);
+    m_pSkyBoxImage = std::make_shared<vk::CImage>();
+    m_pSkyBoxImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
+    delete[] pPixelData;
 
     // the sky image changed, so descriptor need to be updated
     __updateDescriptorSet();
@@ -100,11 +100,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView,
     UBOVert.Proj = vProj;
     UBOVert.View = vView;
     UBOVert.EyePosition = vEyePos;
-
-    void* pData;
-    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
-    vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
+    m_VertUniformBufferSet[vImageIndex]->fill(&UBOVert, sizeof(UBOVert));
 
     SSkyUniformBufferObjectFrag UBOFrag = {};
     glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
@@ -127,10 +123,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView,
         float RotationRad = glm::acos(glm::dot(FixUp, Up));
         UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
     }
-
-    Vulkan::checkError(vkMapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOFrag), 0, &pData));
-    memcpy(pData, &UBOFrag, sizeof(UBOFrag));
-    vkUnmapMemory(m_Device, m_FragUniformBufferPacks[vImageIndex].Memory);
+    m_FragUniformBufferSet[vImageIndex]->fill(&UBOFrag, sizeof(UBOFrag));
 }
 
 void CPipelineSkybox::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -187,20 +180,22 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
     VkDeviceSize DataSize = sizeof(SPositionPointData) * PointData.size();
     m_VertexNum = PointData.size();
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillBuffer(m_PhysicalDevice, m_Device, PointData.data(), DataSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexBuffer->create(m_PhysicalDevice, m_Device, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->stageFill(PointData.data(), DataSize);
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
     VkDeviceSize FragBufferSize = sizeof(SSkyUniformBufferObjectFrag);
-    m_VertUniformBufferPacks.resize(vImageNum);
-    m_FragUniformBufferPacks.resize(vImageNum);
+    m_VertUniformBufferSet.resize(vImageNum);
+    m_FragUniformBufferSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPacks[i].Buffer, m_FragUniformBufferPacks[i].Memory);
+        m_VertUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_FragUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
 
     VkPhysicalDeviceProperties Properties = {};
@@ -247,20 +242,20 @@ void CPipelineSkybox::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferPacks[i].Buffer;
+        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SSkyUniformBufferObjectVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferPacks[i].Buffer;
+        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SSkyUniformBufferObjectFrag);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_SkyBoxImagePack.ImageView;
+        CombinedSamplerInfo.imageView = m_pSkyBoxImage->get();
         CombinedSamplerInfo.sampler = m_TextureSampler;
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 

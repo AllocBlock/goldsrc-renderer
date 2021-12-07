@@ -53,18 +53,18 @@ void CPipelineSprite::destroy()
     if (m_TextureSampler != VK_NULL_HANDLE)
         vkDestroySampler(m_Device, m_TextureSampler, nullptr);
 
-    for (auto& ImagePack : m_SpriteImagePackSet)
-        ImagePack.destroy(m_Device);
-    m_SpriteImagePackSet.clear();
+    for (auto pImage : m_SpriteImageSet)
+        pImage->destroy();
+    m_SpriteImageSet.clear();
 
-    m_PlaceholderImagePack.destroy(m_Device);
+    m_pPlaceholderImage->destroy();
 
-    m_VertexDataPack.destroy(m_Device);
-    for (size_t i = 0; i < m_VertUniformBufferPacks.size(); ++i)
+    m_pVertexBuffer->destroy();
+    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
     {
-        m_VertUniformBufferPacks[i].destroy(m_Device);
+        m_VertUniformBufferSet[i]->destroy();
     }
-    m_VertUniformBufferPacks.clear();
+    m_VertUniformBufferSet.clear();
 
     CPipelineBase::destroy();
 }
@@ -73,13 +73,13 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
 {
     _ASSERTE(vSpriteImageSet.size() <= CPipelineSprite::MaxSpriteNum);
     // 为图标创建vkimage
-    for (auto& ImagePack : m_SpriteImagePackSet)
-        ImagePack.destroy(m_Device);
-    m_SpriteImagePackSet.resize(vSpriteImageSet.size());
+    for (auto pImage : m_SpriteImageSet)
+        pImage->destroy();
+    m_SpriteImageSet.resize(vSpriteImageSet.size());
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        __createImageFromIOImage(vSpriteImageSet[i].pImage, m_SpriteImagePackSet[i]);
+        m_SpriteImageSet[i] = __createImageFromIOImage(vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -97,20 +97,17 @@ void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView,
     UBOVert.View = vView;
     UBOVert.EyePosition = vEyePos;
     UBOVert.EyeDirection = vEyeDirection;
-
-    void* pData;
-    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory, 0, sizeof(UBOVert), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(UBOVert));
-    vkUnmapMemory(m_Device, m_VertUniformBufferPacks[vImageIndex].Memory);
+    m_VertUniformBufferSet[vImageIndex]->fill(&UBOVert, sizeof(UBOVert));
 }
 
 void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
 {
-    if (m_VertexDataPack.isValid())
+    if (m_pVertexBuffer->isValid())
     {
+        VkBuffer Buffer = m_pVertexBuffer->get();
         const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &m_VertexDataPack.Buffer, Offsets);
+        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
         for (auto& PushConstant : m_SpriteSequence)
         {
             vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &PushConstant);
@@ -200,17 +197,18 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
     m_VertexNum = PointData.size();
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillBuffer(m_PhysicalDevice, m_Device, PointData.data(), DataSize, m_VertexDataPack.Buffer, m_VertexDataPack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexBuffer->create(m_PhysicalDevice, m_Device, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->stageFill(PointData.data(), DataSize);
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
-    m_VertUniformBufferPacks.resize(vImageNum);
+    m_VertUniformBufferSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPacks[i].Buffer, m_VertUniformBufferPacks[i].Memory);
+        m_VertUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
 
     // sampler
@@ -242,7 +240,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     auto pTinyImage = std::make_shared<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(&Data);
-    __createImageFromIOImage(pTinyImage, m_PlaceholderImagePack);
+    m_pPlaceholderImage = __createImageFromIOImage(pTinyImage);
 }
 
 void CPipelineSprite::_initDescriptorV()
@@ -265,7 +263,7 @@ void CPipelineSprite::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferPacks[i].Buffer;
+        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
@@ -276,7 +274,7 @@ void CPipelineSprite::__updateDescriptorSet()
         SamplerInfo.sampler = m_TextureSampler;
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {SamplerInfo} }));
 
-        const size_t NumTexture = m_SpriteImagePackSet.size();
+        const size_t NumTexture = m_SpriteImageSet.size();
         std::vector<VkDescriptorImageInfo> TexImageInfoSet(CPipelineSprite::MaxSpriteNum);
         for (size_t i = 0; i < CPipelineSprite::MaxSpriteNum; ++i)
         {
@@ -286,7 +284,7 @@ void CPipelineSprite::__updateDescriptorSet()
                 if (i == 0) // no texture, use default placeholder texture
                 {
                     TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    TexImageInfoSet[i].imageView = m_PlaceholderImagePack.ImageView;
+                    TexImageInfoSet[i].imageView = m_pPlaceholderImage->get();
                     TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
                 }
                 else
@@ -297,7 +295,7 @@ void CPipelineSprite::__updateDescriptorSet()
             else
             {
                 TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                TexImageInfoSet[i].imageView = m_SpriteImagePackSet[i].ImageView;
+                TexImageInfoSet[i].imageView = m_SpriteImageSet[i]->get();
                 TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
             }
         }
@@ -307,7 +305,7 @@ void CPipelineSprite::__updateDescriptorSet()
     }
 }
 
-void CPipelineSprite::__createImageFromIOImage(std::shared_ptr<CIOImage> vImage, Vulkan::SImagePack& voImagePack)
+std::shared_ptr<vk::CImage> CPipelineSprite::__createImageFromIOImage(std::shared_ptr<CIOImage> vImage)
 {
     size_t TexWidth = vImage->getWidth();
     size_t TexHeight = vImage->getHeight();
@@ -330,9 +328,12 @@ void CPipelineSprite::__createImageFromIOImage(std::shared_ptr<CIOImage> vImage,
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, pPixelData, DataSize, ImageInfo, voImagePack.Image, voImagePack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    vk::SImageViewInfo ViewInfo;
+    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    voImagePack.ImageView = Vulkan::createImageView(m_Device, voImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    std::shared_ptr<vk::CImage> pImage = std::make_shared<vk::CImage>();
+    pImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    pImage->stageFill(pPixelData, DataSize);
+
+    return pImage;
 }

@@ -19,13 +19,13 @@ void CPipelineShadowMap::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferPackSet[i].Buffer;
+        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUBOVertLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferPackSet[i].Buffer;
+        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUBOFragLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo} ,{} }));
@@ -38,19 +38,12 @@ void CPipelineShadowMap::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLi
 {
     SUBOVertLight UBOVert = {};
     UBOVert.MVP = vLightViewProj;
-
-    void* pData;
-    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOVertLight), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(SUBOVertLight));
-    vkUnmapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory);
+    m_VertUniformBufferSet[vImageIndex]->fill(&UBOVert, sizeof(SUBOVertLight));
 
     SUBOFragLight UBOFrag = {};
     UBOFrag.ShadowMapCameraNear = vLightNear;
     UBOFrag.ShadowMapCameraFar = vLightFar;
-
-    Vulkan::checkError(vkMapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOFragLight), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(SUBOFragLight));
-    vkUnmapMemory(m_Device, m_FragUniformBufferPackSet[vImageIndex].Memory);
+    m_FragUniformBufferSet[vImageIndex]->fill(&UBOFrag, sizeof(SUBOFragLight));
 }
 
 void CPipelineShadowMap::destroy()
@@ -79,13 +72,15 @@ void CPipelineShadowMap::_createResourceV(size_t vImageNum)
 
     VkDeviceSize VertBufferSize = sizeof(SUBOVertLight);
     VkDeviceSize FragBufferSize = sizeof(SUBOFragLight);
-    m_VertUniformBufferPackSet.resize(vImageNum);
-    m_FragUniformBufferPackSet.resize(vImageNum);
+    m_VertUniformBufferSet.resize(vImageNum);
+    m_FragUniformBufferSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_FragUniformBufferPackSet[i].Buffer, m_FragUniformBufferPackSet[i].Memory);
+        m_VertUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_FragUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
 
     __updateDescriptorSet();
@@ -104,12 +99,12 @@ void CPipelineShadowMap::_initDescriptorV()
 
 void CPipelineShadowMap::__destroyResources()
 {
-    for (size_t i = 0; i < m_VertUniformBufferPackSet.size(); ++i)
+    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
     {
-        m_VertUniformBufferPackSet[i].destroy(m_Device);
-        m_FragUniformBufferPackSet[i].destroy(m_Device);
+        m_VertUniformBufferSet[i]->destroy();
+        m_FragUniformBufferSet[i]->destroy();
     }
-    m_VertUniformBufferPackSet.clear();
-    m_FragUniformBufferPackSet.clear();
+    m_VertUniformBufferSet.clear();
+    m_FragUniformBufferSet.clear();
 }
 

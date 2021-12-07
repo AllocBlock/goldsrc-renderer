@@ -26,11 +26,11 @@ void CPipelineLight::__createPlaceholderImage()
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, &PixelData, sizeof(uint8_t), ImageInfo, m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    vk::SImageViewInfo ViewInfo;
+    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    m_PlaceholderImagePack.ImageView = Vulkan::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+    m_pPlaceholderImage = std::make_shared<vk::CImage>();
+    m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
 void CPipelineLight::__updateDescriptorSet()
@@ -41,14 +41,14 @@ void CPipelineLight::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferPackSet[i].Buffer;
+        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUBOVertLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = (m_ShadowMapImageViewSet.empty() ? m_PlaceholderImagePack.ImageView : m_ShadowMapImageViewSet[i]);
+        CombinedSamplerInfo.imageView = (m_ShadowMapImageViewSet.empty() ? m_pPlaceholderImage->get() : m_ShadowMapImageViewSet[i]);
         CombinedSamplerInfo.sampler = m_TextureSampler;
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 
@@ -68,11 +68,7 @@ void CPipelineLight::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel,
     UBOVert.View = vView;
     UBOVert.Proj = vProj;
     UBOVert.LightMVP = vLightVP;
-
-    void* pData;
-    Vulkan::checkError(vkMapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory, 0, sizeof(SUBOVertLight), 0, &pData));
-    memcpy(pData, &UBOVert, sizeof(SUBOVertLight));
-    vkUnmapMemory(m_Device, m_VertUniformBufferPackSet[vImageIndex].Memory);
+    m_VertUniformBufferSet[vImageIndex]->fill(&UBOVert, sizeof(SUBOVertLight));
 }
 
 void CPipelineLight::destroy()
@@ -100,11 +96,12 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
     __destroyResources();
 
     VkDeviceSize VertBufferSize = sizeof(SUBOVertLight);
-    m_VertUniformBufferPackSet.resize(vImageNum);
+    m_VertUniformBufferSet.resize(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        Vulkan::createBuffer(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_VertUniformBufferPackSet[i].Buffer, m_VertUniformBufferPackSet[i].Memory);
+        m_VertUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
+        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     }
 
     VkPhysicalDeviceProperties Properties = {};
@@ -130,28 +127,7 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
 
     Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
 
-    uint8_t PixelData = 0;
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = 1;
-    ImageInfo.extent.height = 1;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    Vulkan::stageFillImage(m_PhysicalDevice, m_Device, &PixelData, 4, ImageInfo, m_PlaceholderImagePack.Image, m_PlaceholderImagePack.Memory);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
-
-    m_PlaceholderImagePack.ImageView = Vulkan::createImageView(m_Device, m_PlaceholderImagePack.Image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-
+    __createPlaceholderImage();
     __updateDescriptorSet();
 }
 
@@ -168,13 +144,14 @@ void CPipelineLight::_initDescriptorV()
 
 void CPipelineLight::__destroyResources()
 {
-    for (size_t i = 0; i < m_VertUniformBufferPackSet.size(); ++i)
+    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
     {
-        m_VertUniformBufferPackSet[i].destroy(m_Device);
+        m_VertUniformBufferSet[i]->destroy();
     }
-    m_VertUniformBufferPackSet.clear();
+    m_VertUniformBufferSet.clear();
 
-    m_PlaceholderImagePack.destroy(m_Device);
+    if (m_pPlaceholderImage)
+        m_pPlaceholderImage->destroy();
 
     if (m_TextureSampler != VK_NULL_HANDLE)
     {

@@ -1,30 +1,29 @@
 #pragma once
 #include "VulkanHandle.h"
-
 namespace vk
 {
     struct SImageViewInfo
     {
         SImageViewInfo() = default;
 
-        VkImageAspectFlags AspectFlags = 0;
+        VkImageAspectFlags AspectFlags = VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
         VkImageViewType ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
-        uint32_t LayerCount = 1;
     };
 
     class CImage : public IVulkanHandle<VkImageView>
     {
     public:
         void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo);
-        void setImage(VkDevice vDevice, VkImage vImage, VkFormat vFormat, const SImageViewInfo& vViewInfo);
+        void setImage(VkDevice vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
         void destroy();
         bool isValid();
-        void copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight, uint32_t vLayerCount);
-        void stageFill(VkDevice vDevice, const void* vData, VkDeviceSize vSize);
+        void copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
+        void stageFill(const void* vData, VkDeviceSize vSize);
         void transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout);
+        void copyToBuffer(VkCommandBuffer vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
 
     private:
-        void __createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo, VkFormat vFormat);
+        void __createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo, VkFormat vFormat, uint32_t vLayerCount);
 
         bool m_IsSet = false;
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
