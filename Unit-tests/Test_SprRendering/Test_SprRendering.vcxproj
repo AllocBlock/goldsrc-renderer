@@ -108,6 +108,9 @@
     <ProjectReference Include="..\..\Engine\Engine.vcxproj">
       <Project>{1fa794f5-b7fb-431f-8221-77f21034d0d9}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\Function\Function.vcxproj">
+      <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\GUI\GUI.vcxproj">
       <Project>{261e72f5-c295-46fe-ba6b-1c0f741b6ab5}</Project>
     </ProjectReference>
