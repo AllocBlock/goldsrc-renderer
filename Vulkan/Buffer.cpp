@@ -92,3 +92,8 @@ void CBuffer::stageFill(const void* vData, VkDeviceSize vSize)
 
     StageBuffer.destroy();
 }
+
+VkDeviceSize CBuffer::getSize()
+{
+    return m_Size;
+}

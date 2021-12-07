@@ -2,6 +2,7 @@
 #include "PipelineBase.h"
 #include "Vulkan.h"
 #include "Buffer.h"
+#include "UniformBuffer.h"
 
 #include <map>
 #include <glm/glm.hpp>
@@ -43,5 +44,5 @@ private:
     std::map<std::string, std::shared_ptr<SGuiObject>> m_NameObjectMap;
     size_t m_VertexNum = 0;
     std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
-    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
 };

@@ -6,6 +6,7 @@
 #include "Scene.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "UniformBuffer.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -43,7 +44,6 @@ protected:
     static const size_t MaxSpriteNum;
 private:
     void __updateDescriptorSet();
-    std::shared_ptr<vk::CImage> __createImageFromIOImage(std::shared_ptr<CIOImage> vImage);
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
     std::vector<std::shared_ptr<vk::CImage>> m_SpriteImageSet;
@@ -51,6 +51,6 @@ private:
     std::vector<SSpritePushConstant> m_SpriteSequence;
     std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
     size_t m_VertexNum = 0;
-    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
 };
 

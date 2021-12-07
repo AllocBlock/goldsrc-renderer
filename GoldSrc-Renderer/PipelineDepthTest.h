@@ -3,6 +3,7 @@
 #include "PointData.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "UniformBuffer.h"
 
 #include <glm/glm.hpp>
 
@@ -37,7 +38,7 @@ private:
     float m_Opacity = 1.0f;
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
-    std::vector<std::shared_ptr<vk::CBuffer>> m_FragUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
     std::shared_ptr<vk::CImage> m_pPlaceholderImage;
 };

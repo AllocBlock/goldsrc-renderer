@@ -6,6 +6,7 @@
 #include "IOImage.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "UniformBuffer.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -45,7 +46,7 @@ private:
     std::shared_ptr<vk::CImage> m_pSkyBoxImage; // cubemap
     std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
     size_t m_VertexNum = 0;
-    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
-    std::vector<std::shared_ptr<vk::CBuffer>> m_FragUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
 };
 

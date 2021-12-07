@@ -97,7 +97,7 @@ void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView,
     UBOVert.EyePosition = vEyePos;
     UBOVert.EyeDirection = vEyeDirection;
 
-    m_VertUniformBufferSet[vImageIndex]->fill(&UBOVert, sizeof(UBOVert));
+    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
 void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
@@ -206,8 +206,8 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
     }
 
     // sampler

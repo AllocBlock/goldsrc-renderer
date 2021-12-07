@@ -91,6 +91,7 @@
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="Swapchain.h" />
+    <ClInclude Include="UniformBuffer.h" />
     <ClInclude Include="Vulkan.h" />
     <ClInclude Include="VulkanHandle.h" />
   </ItemGroup>
@@ -104,6 +105,7 @@
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="Surface.cpp" />
     <ClCompile Include="Swapchain.cpp" />
+    <ClCompile Include="UniformBuffer.cpp" />
     <ClCompile Include="Vulkan.cpp" />
     <ClCompile Include="VulkanHandle.cpp" />
   </ItemGroup>

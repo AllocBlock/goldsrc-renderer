@@ -13,6 +13,7 @@ namespace vk
         void copyToHost(VkDeviceSize vSize, void* pPtr);
         void fill(const void* vData, VkDeviceSize vSize);
         void stageFill(const void* vData, VkDeviceSize vSize);
+        VkDeviceSize getSize();
 
     private:
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;

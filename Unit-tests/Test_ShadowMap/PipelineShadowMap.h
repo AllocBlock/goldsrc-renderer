@@ -2,6 +2,7 @@
 #include "PipelineBase.h"
 #include "Camera.h"
 #include "Buffer.h"
+#include "UniformBuffer.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -54,7 +55,7 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    std::vector<std::shared_ptr<vk::CBuffer>> m_VertUniformBufferSet;
-    std::vector<std::shared_ptr<vk::CBuffer>> m_FragUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
 };
 
