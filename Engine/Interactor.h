@@ -31,8 +31,8 @@ public:
 	void reset();
 
 	float getSpeed() { return m_Speed; }
-
 	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
+	std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
 
 	static void onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods);
 	static void onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY);

@@ -16,8 +16,13 @@
 
 using namespace Common;
 
-CGUIMain::CGUIMain(): m_pCamera(std::make_shared<CCamera>())
+CGUIMain::CGUIMain()
 {
+    Common::Log::setLogObserverFunc([=](std::string vText)
+    {
+        m_GUILog.log(vText);
+    });
+
     static std::function<void(std::string)> ProgressReportFunc = [=](std::string vMessage)
     {
         m_LoadingProgressReport = vMessage;
@@ -81,95 +86,8 @@ void CGUIMain::log(std::string vText)
     m_GUILog.log(vText);
 }
 
-std::vector<VkCommandBuffer> CGUIMain::_requestCommandBuffersV(uint32_t vImageIndex)
+void CGUIMain::_renderUIV()
 {
-    auto CommandBufferSet = CGUIBase::_requestCommandBuffersV(vImageIndex);
-
-    if (m_pRenderer)
-    {
-        auto RendererCommandBufferSet = m_pRenderer->requestCommandBuffers(vImageIndex);
-        CommandBufferSet.insert(CommandBufferSet.begin(), RendererCommandBufferSet.begin(), RendererCommandBufferSet.end());
-    }
-
-    return CommandBufferSet;
-}
-
-void CGUIMain::_initV()
-{
-    CGUIBase::_initV();
-
-    Common::Log::setLogObserverFunc([=](std::string vText)
-    {
-        m_GUILog.log(vText);
-    });
-
-    __recreateRenderer();
-}
-
-void CGUIMain::_updateV(uint32_t vImageIndex)
-{
-    __drawGUI();
-    if (m_pRenderer)
-        m_pRenderer->update(vImageIndex);
-}
-
-void CGUIMain::_recreateV()
-{
-    CGUIBase::_recreateV();
-    if (m_pRenderer)
-        m_pRenderer->recreate(m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.TargetImageViewSet);
-}
-
-void CGUIMain::_destroyV()
-{
-    if (m_pRenderer)
-        m_pRenderer->destroy();
-    CGUIBase::_destroyV();
-}
-
-void CGUIMain::__recreateRenderer()
-{
-    vkDeviceWaitIdle(m_AppInfo.Device);
-    if (m_pRenderer)
-        m_pRenderer->destroy();
-
-    switch (m_RenderMethod)
-    {
-    case ERenderMethod::DEFAULT:
-    {
-        m_pRenderer = std::make_shared<CRendererSceneSimple>();
-        m_pRenderer->init(m_AppInfo, ERendererPos::BEGIN);
-        m_pRenderer->setCamera(m_pCamera);
-        m_pGuiRenderer = std::make_shared<CImguiRendererSimple>();
-        m_pGuiRenderer->setTarget(m_pRenderer);
-        break;
-    }
-    case ERenderMethod::BSP:
-    {
-        m_pRenderer = std::make_shared<CRendererSceneGoldSrc>();
-        m_pRenderer->init(m_AppInfo, ERendererPos::BEGIN);
-        m_pRenderer->setCamera(m_pCamera);
-        m_pGuiRenderer = std::make_shared<CImguiRendererGoldSrc>();
-        m_pGuiRenderer->setTarget(m_pRenderer);
-        break;
-    }
-    default:
-        break;
-    }
-
-    _ASSERTE(m_pInteractor);
-    m_pInteractor->setRendererScene(m_pRenderer);
-
-    if (m_pScene)
-        m_pRenderer->loadScene(m_pScene);
-}
-
-void CGUIMain::__drawGUI()
-{
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
     ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
 
     ImGui::ShowDemoWindow();
@@ -180,7 +98,11 @@ void CGUIMain::__drawGUI()
         FileSelectionFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
     {
         auto Path = FileSelectionFuture.get();
-        if (!Path.empty())
+        if (!m_ReadSceneCallback)
+        {
+            showAlert(u8"无法载入场景，未给GUI指定载入回调函数");
+        }
+        else if (!Path.empty())
         {
             m_LoadingFilePath = Path;
             m_FileReadingFuture = std::async(readScene, m_LoadingFilePath);
@@ -206,8 +128,9 @@ void CGUIMain::__drawGUI()
             const SResultReadScene& ResultScene = m_FileReadingFuture.get();
             if (ResultScene.Succeed)
             {
-                m_pRenderer->loadScene(ResultScene.pScene);
-                m_pScene = ResultScene.pScene;
+                // TODO: load scene for renderer
+                _ASSERTE(m_ReadSceneCallback);
+                m_ReadSceneCallback(ResultScene.pScene);
             }
             else
                 showAlert(ResultScene.Message);
@@ -237,10 +160,10 @@ void CGUIMain::__drawGUI()
                     m_FileSelection.start(std::move(FileSelectionPromise));
                 }
             }
-            if (ImGui::MenuItem(u8"退出"))
+            /*if (ImGui::MenuItem(u8"退出"))
             {
                 glfwSetWindowShouldClose(m_pWindow, GLFW_TRUE);
-            }
+            }*/
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
@@ -257,7 +180,7 @@ void CGUIMain::__drawGUI()
     // 相机设置
     if (ImGui::CollapsingHeader(u8"相机", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        std::shared_ptr<CCamera> pCamera = m_pCamera;
+        std::shared_ptr<CCamera> pCamera = m_pInteractor->getCamera();
         glm::vec3 Pos = pCamera->getPos();
 
         float FullWidth = ImGui::CalcItemWidth();
@@ -330,12 +253,19 @@ void CGUIMain::__drawGUI()
         m_RenderMethod = RenderMethods[RenderMethodIndex];
         if (LastMethod != m_RenderMethod)
         {
-            LastMethod = m_RenderMethod;
-            __recreateRenderer();
+            if (m_ChangeRenderMethodCallback)
+            {
+                m_ChangeRenderMethodCallback(m_RenderMethod);
+                LastMethod = m_RenderMethod;
+            }
+            else
+            {
+                showAlert(u8"无法切换渲染器，未给GUI指定切换回调函数");
+                m_RenderMethod = LastMethod;
+            }
         }
 
         ImGui::Indent(20.0f);
-        m_pGuiRenderer->draw();
         ImGui::Unindent();
     }
 
@@ -367,6 +297,4 @@ void CGUIMain::__drawGUI()
         log("log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2log2");
         log("log3");
     }
-
-    ImGui::Render();
 }

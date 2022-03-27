@@ -1,7 +1,6 @@
 #pragma once
-#include "GUIBase.h"
+#include "ImguiBase.h"
 #include "SceneInteractor.h"
-#include "RendererScene.h"
 #include "ImguiAlert.h"
 #include "ImguiFrameRate.h"
 #include "ImguiLog.h"
@@ -25,7 +24,11 @@ struct SResultReadScene
     std::shared_ptr<SScene> pScene;
 };
 
-class CGUIMain : public CGUIBase
+// TODO: custom event loop!
+using ReadSceneCallbackFunc_T = std::function<void(std::shared_ptr<SScene>)>;
+using ChangeRenderMethodCallbackFunc_T = std::function<void(ERenderMethod)>;
+
+class CGUIMain : public CImguiBase
 {
 public:
     CGUIMain();
@@ -33,24 +36,26 @@ public:
     void showAlert(std::string vText);
     void log(std::string vText);
 
-    static SResultReadScene readScene(std::filesystem::path vFilePath);
+    void setReadSceneCallback(ReadSceneCallbackFunc_T vCallback)
+    {
+        m_ReadSceneCallback = vCallback;
+    }
 
-    void setInteractor(std::shared_ptr<CSceneInteractor> vInteractor) { m_pInteractor = vInteractor; }
-    std::shared_ptr<CSceneInteractor> getInteractor() { return m_pInteractor; }
+    void setChangeRendererCallback(ChangeRenderMethodCallbackFunc_T vCallback)
+    {
+        m_ChangeRenderMethodCallback = vCallback;
+    }
+
+    void setInteractor(std::shared_ptr<CSceneInteractor> vInteractor)
+    {
+        m_pInteractor = vInteractor;
+    }
+
+    static SResultReadScene readScene(std::filesystem::path vFilePath);
 protected:
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
-    virtual void _initV() override;
-    virtual void _updateV(uint32_t vImageIndex) override;
-    virtual void _recreateV() override;
-    virtual void _destroyV() override;
+    virtual void _renderUIV() override;
 
 private:
-    void __drawGUI();
-    void __recreateRenderer();
-
-    std::shared_ptr<CCamera> m_pCamera = nullptr;
-    std::shared_ptr<SScene> m_pScene = nullptr;
-    std::shared_ptr<CRendererScene> m_pRenderer = nullptr;
     std::shared_ptr<CSceneInteractor> m_pInteractor = nullptr;
 
     CImguiAlert m_GUIAlert = CImguiAlert();
@@ -58,10 +63,12 @@ private:
     CImguiLog m_GUILog = CImguiLog();
     CImguiSelectFile m_FileSelection;
     CImguiFGD m_FGD;
-    std::shared_ptr<CImguiRenderer> m_pGuiRenderer = nullptr;
 
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";
     std::future<SResultReadScene> m_FileReadingFuture;
+
+    ReadSceneCallbackFunc_T m_ReadSceneCallback = nullptr;
+    ChangeRenderMethodCallbackFunc_T m_ChangeRenderMethodCallback = nullptr;
 };

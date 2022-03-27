@@ -33,6 +33,8 @@ public:
 	std::shared_ptr<CRendererScene> getRendererScene() { return m_pRenderer; }
 	bool getSelectionState() { return m_SelectionEnable; }
 
+	std::shared_ptr<CCamera> getCamera() { return m_pRenderer ? m_pRenderer->getCamera() : nullptr; }
+
 	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
 	void setSelectionState(bool vState) { m_SelectionEnable = vState; }
 

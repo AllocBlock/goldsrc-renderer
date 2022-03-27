@@ -107,6 +107,7 @@
     <ClInclude Include="Command.h" />
     <ClInclude Include="Descriptor.h" />
     <ClInclude Include="GUI.h" />
+    <ClInclude Include="ImguiBase.h" />
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="PipelineBase.h" />
     <ClInclude Include="RendererBase.h" />

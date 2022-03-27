@@ -51,3 +51,31 @@ void CApplicationTest::_destroyOtherResourceV()
     m_pGUI->destroy();
     m_pRenderer->destroy();
 }
+
+
+SResultReadScene CApplicationTest::__readScene(std::filesystem::path vFilePath)
+{
+    SResultReadScene Result;
+    Result.Succeed = false;
+    if (!std::filesystem::exists(vFilePath))
+    {
+        Result.Message = u8"文件不存在（" + vFilePath.u8string() + u8"）";
+    }
+    else if (vFilePath.extension() == ".bsp" ||
+        vFilePath.extension() == ".rmf" ||
+        vFilePath.extension() == ".map" ||
+        vFilePath.extension() == ".bsp" ||
+        vFilePath.extension() == ".obj" ||
+        vFilePath.extension() == ".mdl"
+        )
+    {
+        std::string Extension = vFilePath.extension().string().substr(1);
+        Result.Succeed = true;
+        Result.pScene = SceneReader::read(Extension, vFilePath);
+    }
+    else
+    {
+        Result.Message = u8"不支持的文件格式（" + vFilePath.extension().u8string() + u8"）";
+    }
+    return Result;
+}
