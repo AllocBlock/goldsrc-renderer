@@ -13,6 +13,7 @@ layout(binding = 1) uniform SUniformBufferObject
 {
     vec3 uEye;
 } ubo;
+
 layout(binding = 2) uniform sampler uTexSampler;
 layout(binding = 3) uniform texture2D uTextures[MAX_TEXTURE_NUM];
 

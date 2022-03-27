@@ -35,6 +35,7 @@ public:
 protected:
     virtual void _initV();
     virtual void _updateV(uint32_t vImageIndex);
+    virtual void _renderUIV(uint32_t vImageIndex) {};
     virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex);
     virtual void _createOtherResourceV();
     virtual void _recreateOtherResourceV();

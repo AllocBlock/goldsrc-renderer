@@ -74,7 +74,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Engine;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Engine;$(SolutionDir)Function;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -97,9 +97,6 @@
     </ProjectReference>
     <ProjectReference Include="..\Function\Function.vcxproj">
       <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\GUI\GUI.vcxproj">
-      <Project>{261e72f5-c295-46fe-ba6b-1c0f741b6ab5}</Project>
     </ProjectReference>
     <ProjectReference Include="..\imgui\imgui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>

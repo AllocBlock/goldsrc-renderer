@@ -27,13 +27,19 @@
     <ClCompile Include="RendererBase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SetupGLFW.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="Camera.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Interactor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SetupGLFW.cpp">
+    <ClCompile Include="UserInterface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,16 +56,22 @@
     <ClInclude Include="RendererBase.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="RendererScene.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Interactor.h">
+    <ClInclude Include="SetupGLFW.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SetupGLFW.h">
+    <ClInclude Include="UserInterface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Interactor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

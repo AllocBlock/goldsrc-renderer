@@ -16,6 +16,10 @@ bool CIOBase::read()
     {
         throw std::runtime_error(u8"未指定要读取的文件");
     }
+    else if (!std::filesystem::exists(m_FilePath))
+    {
+        throw std::runtime_error(u8"文件不存在 " + m_FilePath.u8string());
+    }
     return _readV(m_FilePath);
 }
 

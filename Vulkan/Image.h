@@ -13,6 +13,8 @@ namespace vk
     class CImage : public IVulkanHandle<VkImageView>
     {
     public:
+        using Ptr = std::shared_ptr<CImage>;
+
         void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo);
         void setImage(VkDevice vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
         void destroy();

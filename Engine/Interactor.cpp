@@ -1,4 +1,5 @@
 #include "Interactor.h"
+#include "UserInterface.h"
 #include <chrono>
 #include <glm/matrix.hpp>
 
@@ -40,6 +41,8 @@ void CInteractor::bindEvent(GLFWwindow* vWindow, std::shared_ptr<CCamera> vCamer
 
 void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods)
 {
+	if (UI::isUsingKeyboard()) return;
+
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled) return;
 
@@ -71,6 +74,8 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 
 void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
+    if (UI::isUsingMouse()) return;
+
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled || !pInteractor->m_IsMoving) return;
 
@@ -81,6 +86,8 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 
 void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods)
 {
+    if (UI::isUsingMouse()) return;
+
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	
 	if (!pInteractor->m_Enabled) return;

@@ -15,29 +15,29 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GoldSrc-Renderer", "GoldSrc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{7F241464-4B6B-4226-AABC-869FC3A6473D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unit Tests", "Unit Tests", "{6AC53CF0-C9ED-43BC-B139-C78119CC740C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{6AC53CF0-C9ED-43BC-B139-C78119CC740C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Lightmap", "Unit-tests\Test_Lightmap\Test_Lightmap.vcxproj", "{DF58233A-DF16-474B-B40C-5BF691768A13}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUI", "GUI\GUI.vcxproj", "{261E72F5-C295-46FE-BA6B-1C0F741B6AB5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Lightmap", "Tests\Test_Lightmap\Test_Lightmap.vcxproj", "{DF58233A-DF16-474B-B40C-5BF691768A13}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application", "Application\Application.vcxproj", "{6DA54335-FB5B-4ABF-BC32-EE03B73794B5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_EnvironmentMap", "Unit-tests\Test_EnvironmentMap\Test_EnvironmentMap.vcxproj", "{74A882ED-ADE6-409E-9E99-1E3E29790DA6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_EnvironmentMap", "Tests\Test_EnvironmentMap\Test_EnvironmentMap.vcxproj", "{74A882ED-ADE6-409E-9E99-1E3E29790DA6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_ShadowMap", "Unit-tests\Test_ShadowMap\Test_ShadowMap.vcxproj", "{BA475F22-F6BC-4FE7-8B7E-5B498FF27A97}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_ShadowMap", "Tests\Test_ShadowMap\Test_ShadowMap.vcxproj", "{BA475F22-F6BC-4FE7-8B7E-5B498FF27A97}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vulkan", "Vulkan\Vulkan.vcxproj", "{117A19EF-C976-4370-B795-B58C27EE4AB0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_IO", "Unit-tests\Test_IO\Test_IO.vcxproj", "{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_IO", "Tests\Test_IO\Test_IO.vcxproj", "{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_SprRendering", "Unit-tests\Test_SprRendering\Test_SprRendering.vcxproj", "{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_SprRendering", "Tests\Test_SprRendering\Test_SprRendering.vcxproj", "{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lib", "Lib", "{1B306592-C7AE-4A27-BBA0-CFB9B7F9DFA7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stb", "Lib\stb\stb.vcxproj", "{9E505423-95DE-4095-B96B-07B6024714AD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Function", "Function\Function.vcxproj", "{E36EBE08-0944-4E1A-86D2-509A565A49A3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_PBR", "Tests\Test_PBR\Test_PBR.vcxproj", "{19498310-A186-4EA4-8268-23AEC051A5BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,12 +89,6 @@ Global
 		{DF58233A-DF16-474B-B40C-5BF691768A13}.Release|x64.ActiveCfg = Release|x64
 		{DF58233A-DF16-474B-B40C-5BF691768A13}.Release|x64.Build.0 = Release|x64
 		{DF58233A-DF16-474B-B40C-5BF691768A13}.Release|x86.ActiveCfg = Release|x64
-		{261E72F5-C295-46FE-BA6B-1C0F741B6AB5}.Debug|x64.ActiveCfg = Debug|x64
-		{261E72F5-C295-46FE-BA6B-1C0F741B6AB5}.Debug|x64.Build.0 = Debug|x64
-		{261E72F5-C295-46FE-BA6B-1C0F741B6AB5}.Debug|x86.ActiveCfg = Debug|x64
-		{261E72F5-C295-46FE-BA6B-1C0F741B6AB5}.Release|x64.ActiveCfg = Release|x64
-		{261E72F5-C295-46FE-BA6B-1C0F741B6AB5}.Release|x64.Build.0 = Release|x64
-		{261E72F5-C295-46FE-BA6B-1C0F741B6AB5}.Release|x86.ActiveCfg = Release|x64
 		{6DA54335-FB5B-4ABF-BC32-EE03B73794B5}.Debug|x64.ActiveCfg = Debug|x64
 		{6DA54335-FB5B-4ABF-BC32-EE03B73794B5}.Debug|x64.Build.0 = Debug|x64
 		{6DA54335-FB5B-4ABF-BC32-EE03B73794B5}.Debug|x86.ActiveCfg = Debug|x64
@@ -145,6 +139,12 @@ Global
 		{E36EBE08-0944-4E1A-86D2-509A565A49A3}.Release|x64.Build.0 = Release|x64
 		{E36EBE08-0944-4E1A-86D2-509A565A49A3}.Release|x86.ActiveCfg = Release|Win32
 		{E36EBE08-0944-4E1A-86D2-509A565A49A3}.Release|x86.Build.0 = Release|Win32
+		{19498310-A186-4EA4-8268-23AEC051A5BF}.Debug|x64.ActiveCfg = Debug|x64
+		{19498310-A186-4EA4-8268-23AEC051A5BF}.Debug|x64.Build.0 = Debug|x64
+		{19498310-A186-4EA4-8268-23AEC051A5BF}.Debug|x86.ActiveCfg = Debug|x64
+		{19498310-A186-4EA4-8268-23AEC051A5BF}.Release|x64.ActiveCfg = Release|x64
+		{19498310-A186-4EA4-8268-23AEC051A5BF}.Release|x64.Build.0 = Release|x64
+		{19498310-A186-4EA4-8268-23AEC051A5BF}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -156,6 +156,7 @@ Global
 		{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
 		{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
 		{9E505423-95DE-4095-B96B-07B6024714AD} = {1B306592-C7AE-4A27-BBA0-CFB9B7F9DFA7}
+		{19498310-A186-4EA4-8268-23AEC051A5BF} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8B46BA88-79F5-429F-9E71-8FF7423CA028}

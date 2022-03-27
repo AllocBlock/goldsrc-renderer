@@ -77,6 +77,11 @@ void CRendererBase::update(uint32_t vImageIndex)
     _updateV(vImageIndex);
 }
 
+void CRendererBase::renderUI(uint32_t vImageIndex)
+{
+    _renderUIV(vImageIndex);
+}
+
 std::vector<VkCommandBuffer> CRendererBase::requestCommandBuffers(uint32_t vImageIndex)
 {
     return _requestCommandBuffersV(vImageIndex);

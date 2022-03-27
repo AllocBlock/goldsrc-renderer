@@ -24,6 +24,16 @@ layout(push_constant) uniform SPushConstant
 	float Opacity;
 } uPushConstant;
 
+float gammaCorrection(float v)
+{
+	return pow(v, 1/2.2);
+}
+
+vec3 gammaCorrection(vec3 vColor)
+{
+	return vec3(gammaCorrection(vColor.r), gammaCorrection(vColor.g), gammaCorrection(vColor.b));
+}
+
 void main()
 {
 	uint TexIndex = inFragTexIndex;
@@ -54,6 +64,6 @@ void main()
 		}
 
 		float shadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
-		outColor = vec4(TexColor.rgb * shadow, TexColor.a * uPushConstant.Opacity);
+		outColor = vec4(gammaCorrection(TexColor.rgb * shadow), TexColor.a * uPushConstant.Opacity);
 	}
 }
