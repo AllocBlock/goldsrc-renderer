@@ -42,6 +42,9 @@
     <ClCompile Include="UserInterface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="VertexAttributeDescriptor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PipelineBase.h">
@@ -72,6 +75,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Interactor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexAttributeDescriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

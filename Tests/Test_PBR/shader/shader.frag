@@ -26,7 +26,9 @@ layout(binding = 1) uniform SUniformBufferObject
     vec4 Eye;
     SMaterialPBR Material;
     uint ForceUseMat;
-    uint UseNormalMap;
+    uint UseColorTexture;
+    uint UseNormalTexture;
+    uint UseSpecularTexture;
 } ubo;
 
 layout(binding = 2) uniform samplerCube uSkyCubeSampler;
@@ -59,34 +61,10 @@ vec3 gDirectionLightColor = vec3(5);
 
 SMaterialPBR getCurMaterial()
 {
-    if (ubo.ForceUseMat > 0)
+    if (ubo.ForceUseMat > 0u)
         return ubo.Material;
     else
         return uboMaterial.List[inFragMaterialIndex];
-}
-
-vec3 phong()
-{
-    vec3 Res = vec3(0.0);
-    for(int i = 0; i < POINT_LIGHT_NUMBER; ++i)
-    {
-        // Ambient
-        float Ambient = 0.05;
-
-        // Diffuse
-        vec3 L = normalize(gPointLightPositions[i] - inFragPosition);
-        vec3 N = normalize(inFragNormal);
-        float Diffuse = max(dot(L, N), 0.0);
-
-        // Specular
-        vec3 V = normalize(ubo.Eye.xyz - inFragPosition);
-        vec3 R = reflect(-L, N);
-        float spec = 0.0;
-        vec3 H = normalize(L + V);  
-        float Specular = pow(max(dot(N, H), 0.0), pow(2, (1 - ubo.Material.OMR.b) * 20));
-        Res += (Ambient + Diffuse + Specular) * ubo.Material.Albedo.rgb * gPointLightColors[i];
-    }
-    return Res / float(POINT_LIGHT_NUMBER); 
 }
 
 vec3 gammaCorrect(vec3 vLinear)
@@ -168,21 +146,20 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-vec4 sampleSlot(uint vIndex, texture2D vTexture, vec4 vDefault)
+vec4 sampleSlot(int vIndex, texture2D vTexture, vec4 vDefault)
 {
     return vIndex >= 0 ? texture(sampler2D(vTexture, uSampler), inTexCoord) : vDefault;
 }
 
-vec3 sampleSlot(uint vIndex, texture2D vTexture, vec3 vDefault)
+vec3 sampleSlot(int vIndex, texture2D vTexture, vec3 vDefault)
 {
     return vIndex >= 0 ? texture(sampler2D(vTexture, uSampler), inTexCoord).rgb : vDefault;
 }
 
-float sampleSlot(uint vIndex, texture2D vTexture, float vDefault)
+float sampleSlot(int vIndex, texture2D vTexture, float vDefault)
 {
     return vIndex >= 0 ? texture(sampler2D(vTexture, uSampler), inTexCoord).r : vDefault;
 }
-
 
 vec3 W = inFragPosition;
 vec3 N = normalize(inFragNormal);
@@ -237,34 +214,35 @@ vec3 shadePBR()
 {
     SMaterialPBR Mat = getCurMaterial();
 
-    vec3 BaseColor = sampleSlot(Mat.ColorIdx, uTextureColorSet[uint(Mat.ColorIdx)], Mat.Albedo).rgb;
-    if (Mat.NormalIdx >= 0 && ubo.UseNormalMap > 0)
+    vec3 BaseColor = Mat.Albedo.rgb;
+    if (ubo.UseColorTexture > 0)
+        BaseColor = sampleSlot(Mat.ColorIdx, uTextureColorSet[uint(Mat.ColorIdx)], BaseColor);
+
+    if (Mat.NormalIdx >= 0 && ubo.UseNormalTexture > 0)
     {
         vec3 Normal = sampleSlot(Mat.NormalIdx, uTextureNormalSet[uint(Mat.NormalIdx)], N).xyz;
         N = TBNMat * Normal;
     }
     
-    vec4 OMR = sampleSlot(Mat.SpecularIdx, uTextureSpecularSet[uint(Mat.SpecularIdx)], Mat.OMR);
-    float AO = OMR.r;
+    vec4 OMR = Mat.OMR;
+    if (ubo.UseSpecularTexture > 0)
+        OMR = sampleSlot(Mat.SpecularIdx, uTextureSpecularSet[uint(Mat.SpecularIdx)], OMR);
+
+    //float AO = OMR.r;
+    float AO = 1.0;
     float Metallic = OMR.g;
     float Roughness = OMR.b;
-
-    //vec3 BaseColor = Mat.Albedo.rgb;
-    //float Metallic = Mat.OMR.g;
-    //float Roughness = Mat.OMR.b;
 
     //return BaseColor;
     //return W;
     //return N;
     //return T;
     //return Normal;
-    //return vec3(0, Metallic, Roughness);
+    //return OMR.rgb;
 
     // use texture color
     //vec3 TexCoord = normalize(inFragNormal);
     //Mat.Albedo = texture(uSkyCubeSampler, TexCoord);
-
-    float ao = 1.0;
 
     vec3 LumColor = vec3(0.0);
     // point light
@@ -283,7 +261,7 @@ vec3 shadePBR()
     // Ambient lighting (note that the next IBL tutorial will replace
     // this Ambient lighting with environment lighting).
     vec3 Ambient = vec3(0.1, 0.1, 0.1);
-    vec3 AmbientColor = Ambient * Mat.Albedo.rgb * ao;
+    vec3 AmbientColor = Ambient * BaseColor * AO;
 
     vec3 Result = AmbientColor + LumColor;
 
@@ -296,6 +274,5 @@ vec3 shadePBR()
 
 void main()
 {
-    //outColor = vec4(phong(), 1.0);
     outColor = vec4(shadePBR(), 1.0);
 }

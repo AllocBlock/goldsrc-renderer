@@ -12,7 +12,6 @@ void CRendererTest::_initV()
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createVertexBuffer();
-    __createMaterials();
     __createRecreateResources();
 }
 
@@ -31,14 +30,21 @@ void CRendererTest::_updateV(uint32_t vImageIndex)
 
 void CRendererTest::_renderUIV(uint32_t vImageIndex)
 {
-    UI::toggle("Force Use Material", m_ForceUseMat);
-    if (m_ForceUseMat)
+    UI::toggle("Use Color Texture", m_PipelineControl.UseColorTexture);
+    UI::toggle("Use Normal Texture", m_PipelineControl.UseNormalTexture);
+    UI::toggle("Use Specular Texture", m_PipelineControl.UseSpecularTexture);
+
+    UI::split();
+
+    UI::toggle("Force Use Material", m_PipelineControl.ForceUseMat);
+    if (m_PipelineControl.ForceUseMat)
     {
-        UI::inputColor("Base Color", m_Material.Albedo);
-        UI::drag("Metallic", m_Material.OMR.g, 0.0f, 1.0f, 0.01f);
-        UI::drag("Roughness", m_Material.OMR.b, 0.0f, 1.0f, 0.01f);
+        UI::indent(20.0f);
+        UI::inputColor("Base Color", m_PipelineControl.Material.Albedo);
+        UI::drag("Metallic", m_PipelineControl.Material.OMR.g, 0.0f, 1.0f, 0.01f);
+        UI::drag("Roughness", m_PipelineControl.Material.OMR.b, 0.0f, 1.0f, 0.01f);
+        UI::indent(-20.0f);
     }
-    UI::toggle("Use Normap Map", m_UseNormalMap);
 }
 
 std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -89,7 +95,6 @@ void CRendererTest::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertexBuffer->destroy();
-    m_pMaterialBuffer->destroy();
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
@@ -269,7 +274,7 @@ void CRendererTest::__createMaterials()
         for (int j = 0; j < 8; ++j)
         {
             int Index = i * 8 + j;
-            MaterialSet[Index].Albedo = m_Material.Albedo;
+            MaterialSet[Index].Albedo = glm::vec4(1.0f);
             MaterialSet[Index].OMR.g = float(i) / 7.0f;
             MaterialSet[Index].OMR.b = float(j) / 7.0f;
             MaterialSet[Index].ColorIdx = 0;
@@ -285,6 +290,8 @@ void CRendererTest::__createMaterials()
 
 void CRendererTest::__createRecreateResources()
 {
+    __createMaterials();
+
     __createGraphicsPipeline();
     __createDepthResources();
     __createFramebuffers();
@@ -297,6 +304,18 @@ void CRendererTest::__createRecreateResources()
 void CRendererTest::__destroyRecreateResources()
 {
     m_pDepthImage->destroy();
+
+    for (int i = 0; i < m_TextureColorSet.size(); ++i)
+        m_TextureColorSet[i]->destroy();
+    m_TextureColorSet.clear();
+    for (int i = 0; i < m_TextureNormalSet.size(); ++i)
+        m_TextureNormalSet[i]->destroy();
+    m_TextureNormalSet.clear();
+    for (int i = 0; i < m_TextureSpecularSet.size(); ++i)
+        m_TextureSpecularSet[i]->destroy();
+    m_TextureSpecularSet.clear();
+
+    m_pMaterialBuffer->destroy();
 
     for (auto& pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
@@ -375,5 +394,5 @@ void CRendererTest::__updateUniformBuffer(uint32_t vImageIndex)
     glm::vec3 EyePos = m_pCamera->getPos();
     glm::vec3 Up = glm::normalize(m_pCamera->getUp());
 
-    m_Pipeline.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos, m_ForceUseMat, m_UseNormalMap, m_Material);
+    m_Pipeline.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos, m_PipelineControl);
 }

@@ -1,5 +1,6 @@
 #include "PipelineTest.h"
 #include "MaterialPBR.h"
+#include "Function.h"
 
 struct SUniformBufferObjectVert
 {
@@ -12,8 +13,10 @@ struct SUniformBufferObjectFrag
 {
     glm::vec4 Eye;
     SMaterialPBR Material;
-    uint32_t ForceUseMat = 0;
-    uint32_t UseNormalMap = 0;
+    uint32_t ForceUseMat = 0u;
+    uint32_t UseColorTexture = 1u;
+    uint32_t UseNormalTexture = 1u;
+    uint32_t UseSpecularTexture = 1u;
 };
 
 size_t CPipelineTest::MaxTextureNum = 16;
@@ -94,6 +97,7 @@ void CPipelineTest::setMaterialBuffer(std::shared_ptr<vk::CBuffer> vMaterialBuff
 
 void CPipelineTest::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet)
 {
+    _ASSERTE(m_pPlaceholderImage);
     _ASSERTE(vColorSet.size() <= CPipelineTest::MaxTextureNum);
     _ASSERTE(vNormalSet.size() <= CPipelineTest::MaxTextureNum);
     _ASSERTE(vSpecularSet.size() <= CPipelineTest::MaxTextureNum);
@@ -124,27 +128,12 @@ void CPipelineTest::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, c
 
 void CPipelineTest::__createPlaceholderImage()
 {
-    uint8_t PixelData = 0;
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = 1;
-    ImageInfo.extent.height = 1;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    vk::SImageViewInfo ViewInfo;
-    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-
-    m_pPlaceholderImage = std::make_shared<vk::CImage>();
-    m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    // placeholder image
+    uint8_t Data = 0;
+    auto pTinyImage = std::make_shared<CIOImage>();
+    pTinyImage->setSize(1, 1);
+    pTinyImage->setData(&Data);
+    m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
 }
 
 void CPipelineTest::__updateDescriptorSet()
@@ -217,7 +206,7 @@ void CPipelineTest::__updateDescriptorSet()
     }
 }
 
-void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, bool vForceUseMat, bool vUseNormalMap, const SMaterialPBR& vMaterial)
+void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl)
 {
     SUniformBufferObjectVert UBOVert = {};
     UBOVert.Model = vModel;
@@ -227,9 +216,11 @@ void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, 
 
     SUniformBufferObjectFrag UBOFrag = {};
     UBOFrag.Eye = glm::vec4(vEyePos, 0.0f);
-    UBOFrag.Material = vMaterial;
-    UBOFrag.ForceUseMat = vForceUseMat ? 1u : 0u;
-    UBOFrag.UseNormalMap = vUseNormalMap ? 1u : 0u;
+    UBOFrag.Material = vControl.Material;
+    UBOFrag.ForceUseMat = vControl.ForceUseMat ? 1u : 0u;
+    UBOFrag.UseColorTexture = vControl.UseColorTexture ? 1u : 0u;
+    UBOFrag.UseNormalTexture = vControl.UseNormalTexture ? 1u : 0u;
+    UBOFrag.UseSpecularTexture = vControl.UseSpecularTexture ? 1u : 0u;
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
@@ -332,4 +323,15 @@ void CPipelineTest::__destroyResources()
         vkDestroySampler(m_Device, m_TextureSampler, nullptr);
         m_TextureSampler = VK_NULL_HANDLE;
     }
+
+    if (m_Sampler != VK_NULL_HANDLE)
+    {
+        vkDestroySampler(m_Device, m_Sampler, nullptr);
+        m_Sampler = VK_NULL_HANDLE;
+    }
+
+    m_TextureColorSet.clear();
+    m_TextureNormalSet.clear();
+    m_TextureSpecularSet.clear();
+    m_pMaterialBuffer = nullptr;
 }

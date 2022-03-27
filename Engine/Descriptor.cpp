@@ -71,6 +71,7 @@ void CDescriptor::update(size_t vSetIndex, const std::vector<SDescriptorWriteInf
         DescriptorWrites[i].descriptorCount = m_DescriptorInfoSet[i].Size;
         DescriptorWrites[i].pBufferInfo = vWriteInfoSet[i].BufferInfoSet.empty() ? nullptr : vWriteInfoSet[i].BufferInfoSet.data();
         DescriptorWrites[i].pImageInfo = vWriteInfoSet[i].ImageInfoSet.empty() ? nullptr : vWriteInfoSet[i].ImageInfoSet.data();
+        _ASSERTE(!vWriteInfoSet[i].BufferInfoSet.empty() || !vWriteInfoSet[i].ImageInfoSet.empty());
     }
 
     vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);

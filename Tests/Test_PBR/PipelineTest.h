@@ -5,6 +5,7 @@
 #include "Buffer.h"
 #include "UniformBuffer.h"
 #include "MaterialPBR.h"
+#include "VertexAttributeDescriptor.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -29,44 +30,32 @@ struct STestPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(5);
-
-        AttributeDescriptionSet[0].binding = 0;
-        AttributeDescriptionSet[0].location = 0;
-        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[0].offset = offsetof(STestPointData, Pos);
-
-        AttributeDescriptionSet[1].binding = 0;
-        AttributeDescriptionSet[1].location = 1;
-        AttributeDescriptionSet[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[1].offset = offsetof(STestPointData, Normal);
-
-        AttributeDescriptionSet[2].binding = 0;
-        AttributeDescriptionSet[2].location = 2;
-        AttributeDescriptionSet[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[2].offset = offsetof(STestPointData, Tangent);
-
-        AttributeDescriptionSet[3].binding = 0;
-        AttributeDescriptionSet[3].location = 3;
-        AttributeDescriptionSet[3].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptionSet[3].offset = offsetof(STestPointData, TexCoord);
-
-        AttributeDescriptionSet[4].binding = 0;
-        AttributeDescriptionSet[4].location = 4;
-        AttributeDescriptionSet[4].format = VK_FORMAT_R32_UINT;
-        AttributeDescriptionSet[4].offset = offsetof(STestPointData, MaterialIndex);
-
-        return AttributeDescriptionSet;
+        VertexAttributeDescriptor Descriptor;
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(STestPointData, Pos));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(STestPointData, Normal));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(STestPointData, Tangent));
+        Descriptor.add(VK_FORMAT_R32G32_SFLOAT,    offsetof(STestPointData, TexCoord));
+        Descriptor.add(VK_FORMAT_R32_UINT,         offsetof(STestPointData, MaterialIndex));
+        return Descriptor.generate();
     }
 };
 
 class CPipelineTest : public CPipelineBase
 {
 public:
+    struct SControl
+    {
+        SMaterialPBR Material;
+        bool ForceUseMat = false;
+        bool UseColorTexture = true;
+        bool UseNormalTexture = true;
+        bool UseSpecularTexture = true;
+    };
+
     void setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet);
     void setMaterialBuffer(std::shared_ptr<vk::CBuffer> vMaterialBuffer);
     void setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet);
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos,  bool vForceUseMat, bool vUseNormalMap, const SMaterialPBR& vMaterial);
+    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl);
     void destroy();
 
     bool isReady() {

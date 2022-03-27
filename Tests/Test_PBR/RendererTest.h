@@ -57,9 +57,7 @@ private:
 
     uint32_t m_GridSize = 8;
 
-    bool m_ForceUseMat = false;
-    bool m_UseNormalMap = false;
-    SMaterialPBR m_Material;
+    CPipelineTest::SControl m_PipelineControl;
     std::vector<vk::CImage::Ptr> m_TextureColorSet;
     std::vector<vk::CImage::Ptr> m_TextureNormalSet;
     std::vector<vk::CImage::Ptr> m_TextureSpecularSet;

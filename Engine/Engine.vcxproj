@@ -100,6 +100,7 @@
     <ClCompile Include="RendererBase.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
     <ClCompile Include="UserInterface.cpp" />
+    <ClCompile Include="VertexAttributeDescriptor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -112,6 +113,7 @@
     <ClInclude Include="RendererScene.h" />
     <ClInclude Include="SetupGLFW.h" />
     <ClInclude Include="UserInterface.h" />
+    <ClInclude Include="VertexAttributeDescriptor.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

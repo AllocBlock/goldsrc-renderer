@@ -11,6 +11,8 @@ namespace UI
     bool inputColor(std::string vName, glm::vec3& vioColor);
     bool inputColor(std::string vName, glm::vec4& vioColor);
     bool toggle(std::string vName, bool& vioValue);
+    void indent(float vWidth);
+    void split();
     bool isUsingMouse();
     bool isUsingKeyboard();
 };

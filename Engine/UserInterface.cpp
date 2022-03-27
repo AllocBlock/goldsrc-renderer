@@ -33,6 +33,16 @@ bool UI::toggle(std::string vName, bool& vioValue)
     return ImGui::Checkbox(vName.c_str(), &vioValue);
 }
 
+void UI::indent(float vWidth)
+{
+    ImGui::Indent(vWidth);
+}
+
+void UI::split()
+{
+    ImGui::Separator();
+}
+
 bool UI::isUsingMouse()
 {
     ImGuiIO& IO = ImGui::GetIO();

@@ -4,7 +4,7 @@
 int main()
 {
 	GLFW::init();
-	GLFWwindow* pWindow = GLFW::createWindow(1280, 800, "Environment Mapping Test");
+	GLFWwindow* pWindow = GLFW::createWindow(1280, 800, "PBR Test");
 	std::shared_ptr<CApplicationTest> pApp = std::make_shared<CApplicationTest>();
 	pApp->init(pWindow);
 
