@@ -1,6 +1,7 @@
 #pragma once
 #include "Vulkan.h"
 #include "Command.h"
+#include "GUI.h"
 
 #include <vulkan/vulkan.h>
 #include <string>
@@ -18,7 +19,7 @@ enum class EImageType
     DEPTH
 };
 
-class CRendererBase
+class CRendererBase : public IGUI
 {
 public:
     CRendererBase() = default;
@@ -26,7 +27,6 @@ public:
     void init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField);
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews);
     void update(uint32_t vImageIndex);
-    void renderUI(uint32_t vImageIndex);
     std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
     void destroy();
 
@@ -36,7 +36,7 @@ protected:
     virtual void _initV() {}
     virtual void _recreateV() {}
     virtual void _updateV(uint32_t vImageIndex) {}
-    virtual void _renderUIV(uint32_t vImageIndex) {}
+    virtual void _renderUIV() override {}
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
     virtual void _destroyV() {};
 

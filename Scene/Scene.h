@@ -96,6 +96,8 @@ struct SGoldSrcSprite
 
 struct SScene
 {
+    using Ptr = std::shared_ptr<SScene>;
+
     std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
     std::vector<std::shared_ptr<CIOImage>> TexImageSet;
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "GUI.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -9,9 +10,11 @@ struct SFrustum
 	std::array<glm::vec4, 6> Planes = { glm::vec4(), glm::vec4(), glm::vec4(), glm::vec4() };
 };
 
-class CCamera
+class CCamera : public IGUI
 {
 public:
+	using Ptr = std::shared_ptr<CCamera>;
+
 	CCamera() { reset(); }
 
 	void reset();
@@ -24,8 +27,8 @@ public:
 	glm::vec3 getUp() const { return m_Up; }
 	glm::vec3 getFront() const;
 	glm::vec3 getLeft() const { return glm::normalize(glm::cross(m_Up, getFront())); }
-	double getPhi() const { return m_Phi; }
-	double getTheta() const { return m_Theta; }
+	float getPhi() const { return m_Phi; }
+	float getTheta() const { return m_Theta; }
 	float getFov() const { return m_Fov; }
 	float getAspect() const { return m_Aspect; }
 	float getNear() const { return m_Near; }
@@ -33,8 +36,8 @@ public:
 
 	void setPos(glm::vec3 vPos) { m_Pos = vPos; }
 	void setUp(glm::vec3 vUp) { m_Up = vUp; }
-	void setPhi(double vPhi) { m_Phi = Common::mod(vPhi, 360.0f);}
-	void setTheta(double vTheta) { m_Theta = Common::mod(vTheta, 180.0f); }
+	void setPhi(float vPhi) { m_Phi = Common::mod(vPhi, 360.0f);}
+	void setTheta(float vTheta) { m_Theta = Common::mod(vTheta, 180.0f); }
 	void setFov(float vFov) { m_Fov = vFov; }
 	void setAspect(float vAspect) { m_Aspect = vAspect; }
 	void setNear(float vNear) { m_Near = vNear; }
@@ -42,11 +45,15 @@ public:
 	void setAt(glm::vec3 vAt);
 
 	SFrustum getFrustum() const;
+
+protected:
+	virtual void _renderUIV() override;
+
 private:
 	glm::vec3 m_Pos;
 	glm::vec3 m_Up;
-	double m_Phi;
-	double m_Theta;
+	float m_Phi;
+	float m_Theta;
 	float m_Aspect;
 	float m_Near;
 	float m_Far;

@@ -94,7 +94,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="Descriptor.cpp" />
-    <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="GUIRenderer.cpp" />
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="PipelineBase.cpp" />
     <ClCompile Include="RendererBase.cpp" />
@@ -106,8 +106,8 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="Descriptor.h" />
+    <ClInclude Include="GUIRenderer.h" />
     <ClInclude Include="GUI.h" />
-    <ClInclude Include="ImguiBase.h" />
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="PipelineBase.h" />
     <ClInclude Include="RendererBase.h" />

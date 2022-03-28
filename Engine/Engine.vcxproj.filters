@@ -33,7 +33,7 @@
     <ClCompile Include="Camera.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GUI.cpp">
+    <ClCompile Include="GUIRenderer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Interactor.cpp">
@@ -71,7 +71,7 @@
     <ClInclude Include="Camera.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GUI.h">
+    <ClInclude Include="GUIRenderer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Interactor.h">
@@ -80,7 +80,7 @@
     <ClInclude Include="VertexAttributeDescriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiBase.h">
+    <ClInclude Include="GUI.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

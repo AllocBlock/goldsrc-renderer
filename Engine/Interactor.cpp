@@ -111,6 +111,22 @@ void CInteractor::reset()
 	m_Speed = 3.0f;
 }
 
+void CInteractor::_renderUIV()
+{
+	if (UI::collapse(u8"Interactor"))
+    {    
+		// 帮助
+        UI::text(u8"操作方法");
+		UI::bulletText(u8"按住空格开始控制相机，松开即结束");
+		UI::bulletText(u8"WASD前后左右移动");
+		UI::bulletText(u8"按住左Shift键加速，按住左Ctrl键减速");
+		UI::bulletText(u8"移动鼠标转动视角");
+		UI::split();
+
+		UI::slider(u8"速度", m_Speed, 0.1f, 10.0f, "%.1f");
+	}
+}
+
 float CInteractor::__getDeltaTime()
 {
 	static std::chrono::milliseconds LastTimeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());

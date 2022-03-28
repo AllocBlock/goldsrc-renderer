@@ -98,6 +98,7 @@ protected:
     virtual void _initV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
+    virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 

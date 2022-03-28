@@ -2,6 +2,7 @@
 #include "Common.h"
 #include "Descriptor.h"
 #include "Function.h"
+#include "UserInterface.h"
 
 #include <iostream>
 #include <vector>
@@ -69,6 +70,30 @@ void CRendererSceneSimple::_recreateV()
 void CRendererSceneSimple::_updateV(uint32_t vImageIndex)
 {
     __updateAllUniformBuffer(vImageIndex);
+}
+
+void CRendererSceneSimple::_renderUIV()
+{
+    if (UI::collapse(u8"äÖÈ¾Æ÷ÉèÖÃ"))
+    {
+        bool SkyRendering = getSkyState();
+        UI::toggle(u8"¿ªÆôÌì¿ÕäÖÈ¾", SkyRendering);
+        setSkyState(SkyRendering);
+
+        bool Culling = getCullingState();
+        UI::toggle(u8"¿ªÆôÌÞ³ý", Culling);
+        setCullingState(Culling);
+        Culling = getCullingState();
+
+        if (Culling)
+        {
+            UI::indent(20.0f);
+            bool FrustumCulling = getFrustumCullingState();
+            UI::toggle(u8"CPUÊÓ×¶ÌÞ³ý", FrustumCulling);
+            setFrustumCullingState(FrustumCulling);
+            UI::unindent();
+        }
+    }
 }
 
 void CRendererSceneSimple::_destroyV()

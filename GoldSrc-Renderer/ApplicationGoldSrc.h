@@ -1,9 +1,9 @@
 #pragma once
 #include "ApplicationBase.h"
 #include "RendererScene.h"
-#include "GUI.h"
+#include "GUIRenderer.h"
 #include "ImguiMain.h"
-#include "SceneInteractor.h"
+#include "Interactor.h"
 #include "Scene.h"
 
 class CApplicationGoldSrc : public CApplicationBase
@@ -24,9 +24,9 @@ private:
     void __recreateRenderer(ERenderMethod vMethod = ERenderMethod::BSP);
 
     std::shared_ptr<CRendererScene> m_pRenderer = nullptr;
-    std::shared_ptr<CGUI> m_pGUI = nullptr;
+    std::shared_ptr<CGUIRenderer> m_pGUI = nullptr;
     std::shared_ptr<CGUIMain> m_pMainUI = nullptr;
-    std::shared_ptr<CSceneInteractor> m_pInteractor = nullptr;
+    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
     std::shared_ptr<CCamera> m_pCamera = nullptr;
 
     std::shared_ptr<SScene> m_pScene = nullptr;

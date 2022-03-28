@@ -5,7 +5,7 @@
 
 const float g_ModOffset = 1e-9f;
 
-double Common::mod(double vVal, double vMax)
+float Common::mod(float vVal, float vMax)
 {
     if (vVal < 0)
     {

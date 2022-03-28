@@ -1,6 +1,6 @@
 #pragma once
-#include "ImguiBase.h"
-#include "SceneInteractor.h"
+#include "GUI.h"
+#include "Interactor.h"
 #include "ImguiAlert.h"
 #include "ImguiFrameRate.h"
 #include "ImguiLog.h"
@@ -28,7 +28,7 @@ struct SResultReadScene
 using ReadSceneCallbackFunc_T = std::function<void(std::shared_ptr<SScene>)>;
 using ChangeRenderMethodCallbackFunc_T = std::function<void(ERenderMethod)>;
 
-class CGUIMain : public CImguiBase
+class CGUIMain : public IGUI
 {
 public:
     CGUIMain();
@@ -46,7 +46,12 @@ public:
         m_ChangeRenderMethodCallback = vCallback;
     }
 
-    void setInteractor(std::shared_ptr<CSceneInteractor> vInteractor)
+    void setRenderSettingCallback(std::function<void()> vCallback)
+    {
+        m_RenderSettingCallback = vCallback;
+    }
+
+    void setInteractor(std::shared_ptr<CInteractor> vInteractor)
     {
         m_pInteractor = vInteractor;
     }
@@ -56,7 +61,7 @@ protected:
     virtual void _renderUIV() override;
 
 private:
-    std::shared_ptr<CSceneInteractor> m_pInteractor = nullptr;
+    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
 
     CImguiAlert m_GUIAlert = CImguiAlert();
     CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();
@@ -64,11 +69,19 @@ private:
     CImguiSelectFile m_FileSelection;
     CImguiFGD m_FGD;
 
+    struct SControl
+    {
+        bool ShowWidgetFGD = false;
+        bool ShowWidgetLog = false;
+        bool ShowWidgetFrameRate = false;
+    } m_Control;
+
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";
     std::future<SResultReadScene> m_FileReadingFuture;
 
+    std::function<void()> m_RenderSettingCallback = nullptr;
     ReadSceneCallbackFunc_T m_ReadSceneCallback = nullptr;
     ChangeRenderMethodCallbackFunc_T m_ChangeRenderMethodCallback = nullptr;
 };

@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "UserInterface.h"
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -139,4 +140,20 @@ void CCamera::setAt(glm::vec3 vAt)
         m_Theta = 0;
     else
         m_Theta = glm::acos(Dz / Length) / Pi * 180;
+}
+
+void CCamera::_renderUIV()
+{
+    if (UI::collapse("Camera", true))
+    {
+        UI::drag(u8"Œª÷√", m_Pos);
+        UI::drag(u8"∏©—ˆΩ«", m_Theta);
+        UI::drag(u8"ª∑ ”Ω«", m_Phi);
+        UI::slider(u8" ”“∞∑∂Œß", m_Fov, 10.0f, 170.0f, "%.1f");
+
+        if (UI::button(u8"÷ÿ÷√"))
+        {
+            reset();
+        }
+    }
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "ApplicationBase.h"
 #include "GUI.h"
+#include "GUIRenderer.h"
 #include "RendererTest.h"
 #include "Interactor.h"
 
@@ -18,7 +19,7 @@ protected:
     virtual void _destroyOtherResourceV() override;
 
 private:
-    std::shared_ptr<CGUI> m_pGUI = nullptr;
+    std::shared_ptr<CGUIRenderer> m_pGUI = nullptr;
     std::shared_ptr<CRendererTest> m_pRenderer = nullptr;
     std::shared_ptr<CInteractor> m_pInteractor = nullptr;
 };

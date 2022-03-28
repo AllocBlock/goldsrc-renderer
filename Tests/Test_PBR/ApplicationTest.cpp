@@ -5,7 +5,7 @@ void CApplicationTest::_initV()
 {
     Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
 
-    m_pGUI = std::make_shared<CGUI>();
+    m_pGUI = std::make_shared<CGUIRenderer>();
     m_pGUI->setWindow(m_pWindow);
     m_pGUI->init(AppInfo, ERendererPos::END);
     m_pRenderer = std::make_shared<CRendererTest>();

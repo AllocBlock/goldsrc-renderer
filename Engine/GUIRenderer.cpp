@@ -1,4 +1,4 @@
-﻿#include "GUI.h"
+﻿#include "GUIRenderer.h"
 #include "Common.h"
 #include "Log.h"
 
@@ -9,7 +9,7 @@
 #include <iostream>
 #include <set>
 
-void CGUI::beginFrame(std::string vTitle)
+void CGUIRenderer::beginFrame(std::string vTitle)
 {
     if (m_Begined) throw "Already in a frame";
     ImGui_ImplVulkan_NewFrame();
@@ -19,7 +19,7 @@ void CGUI::beginFrame(std::string vTitle)
     m_Begined = true;
 }
 
-void CGUI::endFrame()
+void CGUIRenderer::endFrame()
 {
     if (!m_Begined) throw "Already out of a frame";
     ImGui::End();
@@ -27,7 +27,7 @@ void CGUI::endFrame()
     m_Begined = false;
 }
 
-void CGUI::_initV()
+void CGUIRenderer::_initV()
 {
     CRendererBase::_initV();
 
@@ -73,7 +73,7 @@ void CGUI::_initV()
     __createRecreateSources();
 }
 
-void CGUI::_recreateV()
+void CGUIRenderer::_recreateV()
 {
     CRendererBase::_recreateV();
 
@@ -81,12 +81,12 @@ void CGUI::_recreateV()
     __createRecreateSources();
 }
 
-void CGUI::_renderUIV(uint32_t vImageIndex)
+void CGUIRenderer::_renderUIV()
 {
     ImGui::Text(u8"默认GUI");
 }
 
-void CGUI::_destroyV()
+void CGUIRenderer::_destroyV()
 {
     if (m_AppInfo.Device == VK_NULL_HANDLE) return;
 
@@ -107,7 +107,7 @@ void CGUI::_destroyV()
     CRendererBase::_destroyV();
 }
 
-std::vector<VkCommandBuffer> CGUI::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CGUIRenderer::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
@@ -138,7 +138,7 @@ std::vector<VkCommandBuffer> CGUI::_requestCommandBuffersV(uint32_t vImageIndex)
     return { CommandBuffer };
 }
 
-void CGUI::__createRenderPass()
+void CGUIRenderer::__createRenderPass()
 {
     // create renderpass
     VkAttachmentDescription Attachment = createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
@@ -172,7 +172,7 @@ void CGUI::__createRenderPass()
     Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
-void CGUI::__destroyRenderPass()
+void CGUIRenderer::__destroyRenderPass()
 {
     if (m_RenderPass != VK_NULL_HANDLE)
     {
@@ -181,7 +181,7 @@ void CGUI::__destroyRenderPass()
     }
 }
 
-void CGUI::__createDescriptorPool()
+void CGUIRenderer::__createDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> PoolSizes =
     {
@@ -207,7 +207,7 @@ void CGUI::__createDescriptorPool()
     Vulkan::checkError(vkCreateDescriptorPool(m_AppInfo.Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
-void CGUI::__destroyDescriptorPool()
+void CGUIRenderer::__destroyDescriptorPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE)
     {
@@ -216,7 +216,7 @@ void CGUI::__destroyDescriptorPool()
     }
 }
 
-void CGUI::__createRecreateSources()
+void CGUIRenderer::__createRecreateSources()
 {
     uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.TargetImageViewSet.size());
     // create framebuffers
@@ -235,7 +235,7 @@ void CGUI::__createRecreateSources()
     }
 }
 
-void CGUI::__destroyRecreateSources()
+void CGUIRenderer::__destroyRecreateSources()
 {
     for (auto& FrameBuffer : m_FrameBufferSet)
         vkDestroyFramebuffer(m_AppInfo.Device, FrameBuffer, nullptr);

@@ -57,12 +57,6 @@
     <ClCompile Include="ImguiRenderer.cpp">
       <Filter>源文件\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiRendererGoldSrc.cpp">
-      <Filter>源文件\Imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="ImguiRendererSimple.cpp">
-      <Filter>源文件\Imgui</Filter>
-    </ClCompile>
     <ClCompile Include="ImguiSelectFile.cpp">
       <Filter>源文件\Imgui</Filter>
     </ClCompile>
@@ -90,7 +84,7 @@
     <ClCompile Include="VulkanRenderer.cpp">
       <Filter>源文件\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="SceneInteractor.cpp">
+    <ClCompile Include="SceneProbe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -117,12 +111,6 @@
       <Filter>头文件\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="ImguiRenderer.h">
-      <Filter>头文件\Imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="ImguiRendererGoldSrc.h">
-      <Filter>头文件\Imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="ImguiRendererSimple.h">
       <Filter>头文件\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="ImguiSelectFile.h">
@@ -161,7 +149,7 @@
     <ClInclude Include="SimpleRenderer.h">
       <Filter>头文件\Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="SceneInteractor.h">
+    <ClInclude Include="SceneProbe.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

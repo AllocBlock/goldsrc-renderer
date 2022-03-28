@@ -116,11 +116,9 @@
     <ClCompile Include="ImguiAlert.cpp" />
     <ClCompile Include="ImguiFGD.cpp" />
     <ClCompile Include="ImguiFrameRate.cpp" />
-    <ClCompile Include="ImguiRendererGoldSrc.cpp" />
     <ClCompile Include="ImguiLog.cpp" />
     <ClCompile Include="ImguiMain.cpp" />
     <ClCompile Include="ImguiRenderer.cpp" />
-    <ClCompile Include="ImguiRendererSimple.cpp" />
     <ClCompile Include="ImguiSelectFile.cpp" />
     <ClCompile Include="ImguiTextureViewer.cpp" />
     <ClCompile Include="main.cpp" />
@@ -129,7 +127,7 @@
     <ClCompile Include="PipelineSimple.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />
-    <ClCompile Include="SceneInteractor.cpp" />
+    <ClCompile Include="SceneProbe.cpp" />
     <ClCompile Include="SimpleRenderer.cpp" />
     <ClCompile Include="VulkanRenderer.cpp" />
   </ItemGroup>
@@ -138,11 +136,9 @@
     <ClInclude Include="ImguiAlert.h" />
     <ClInclude Include="ImguiFGD.h" />
     <ClInclude Include="ImguiFrameRate.h" />
-    <ClInclude Include="ImguiRendererGoldSrc.h" />
     <ClInclude Include="ImguiLog.h" />
     <ClInclude Include="ImguiMain.h" />
     <ClInclude Include="ImguiRenderer.h" />
-    <ClInclude Include="ImguiRendererSimple.h" />
     <ClInclude Include="ImguiSelectFile.h" />
     <ClInclude Include="ImguiTextureViewer.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />
@@ -154,7 +150,7 @@
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PointData.h" />
-    <ClInclude Include="SceneInteractor.h" />
+    <ClInclude Include="SceneProbe.h" />
     <ClInclude Include="SimpleRenderer.h" />
     <ClInclude Include="VulkanRenderer.h" />
   </ItemGroup>

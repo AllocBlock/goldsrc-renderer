@@ -2,6 +2,7 @@
 #include "Common.h"
 #include "Descriptor.h"
 #include "Function.h"
+#include "UserInterface.h"
 
 #include <iostream>
 #include <vector>
@@ -110,6 +111,73 @@ void CRendererSceneGoldSrc::_recreateV()
 void CRendererSceneGoldSrc::_updateV(uint32_t vImageIndex)
 {
     __updateAllUniformBuffer(vImageIndex);
+}
+
+void CRendererSceneGoldSrc::_renderUIV()
+{
+    if (UI::collapse(u8"仿金源"))
+    {
+        bool EnableBSP = getBSPState();
+        UI::toggle(u8"使用BSP树渲染（支持实体渲染模式）", EnableBSP);
+        setBSPState(EnableBSP);
+
+        bool SkyRendering = getSkyState();
+        UI::toggle(u8"开启天空渲染", SkyRendering);
+        setSkyState(SkyRendering);
+
+        bool Culling = getCullingState();
+        UI::toggle(u8"开启剔除", Culling);
+        setCullingState(Culling);
+        Culling = getCullingState();
+
+        if (Culling)
+        {
+            UI::indent(20.0f);
+            bool FrustumCulling = getFrustumCullingState();
+            UI::toggle(u8"CPU视锥剔除", FrustumCulling);
+            setFrustumCullingState(FrustumCulling);
+
+            bool PVS = getPVSState();
+            UI::toggle(u8"PVS剔除", PVS);
+            setPVSState(PVS);
+            UI::unindent();
+        }
+
+        std::optional<uint32_t> CameraNodeIndex = getCameraNodeIndex();
+        if (CameraNodeIndex == std::nullopt)
+            UI::text(u8"相机所处节点：-");
+        else
+            UI::text((u8"相机所处节点：" + std::to_string(CameraNodeIndex.value())).c_str());
+
+        if (!getBSPState())
+        {
+            std::set<size_t> RenderObjectList = getRenderedObjectSet();
+            UI::text((u8"渲染物体数：" + std::to_string(RenderObjectList.size())).c_str());
+            if (!RenderObjectList.empty())
+            {
+                std::string RenderNodeListStr = "";
+                for (size_t ObjectIndex : RenderObjectList)
+                {
+                    RenderNodeListStr += std::to_string(ObjectIndex) + ", ";
+                }
+                UI::text((u8"渲染物体：" + RenderNodeListStr).c_str(), true);
+            }
+        }
+        else
+        {
+            std::set<uint32_t> RenderNodeList = getRenderedNodeList();
+            UI::text((u8"渲染节点数：" + std::to_string(RenderNodeList.size())).c_str());
+            if (!RenderNodeList.empty())
+            {
+                std::string RenderNodeListStr = "";
+                for (uint32_t NodeIndex : RenderNodeList)
+                {
+                    RenderNodeListStr += std::to_string(NodeIndex) + ", ";
+                }
+                UI::text((u8"渲染节点：" + RenderNodeListStr).c_str(), true);
+            }
+        }
+    }
 }
 
 void CRendererSceneGoldSrc::_destroyV()

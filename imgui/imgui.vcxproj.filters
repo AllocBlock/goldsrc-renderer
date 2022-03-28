@@ -36,6 +36,9 @@
     <ClCompile Include="imgui_impl_glfw.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="imfilebrowser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imstb_rectpack.h">

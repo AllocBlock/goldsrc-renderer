@@ -1,5 +1,6 @@
 #pragma once
 #include "Camera.h"
+#include "GUI.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -19,7 +20,7 @@
  * +- 加快、减慢移动、旋转速度
  */
 
-class CInteractor
+class CInteractor : public IGUI
 {
 public:
 	CInteractor() = default;
@@ -39,6 +40,8 @@ public:
 	static void onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods);
 	
 private:
+	virtual void _renderUIV() override;
+
 	float __getDeltaTime();
 	int __getCurrentMoveState();
 	int __getCurrentRotateState();
