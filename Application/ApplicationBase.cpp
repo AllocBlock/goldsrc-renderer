@@ -60,7 +60,7 @@ void CApplicationBase::render()
     VkResult Result = vkAcquireNextImageKHR(m_pDevice->get(), m_pSwapchain->get(), std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
     _updateV(ImageIndex);
-    _renderUIV(ImageIndex);
+    _renderUIV();
 
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
     {

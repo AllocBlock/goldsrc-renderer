@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "IOImage.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -41,7 +41,7 @@ struct SLightPointData
     }
 };
 
-class CPipelineLight : public CPipelineBase
+class CPipelineLight : public IPipeline
 {
 public:
     void setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews);

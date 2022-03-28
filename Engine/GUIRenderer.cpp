@@ -29,7 +29,7 @@ void CGUIRenderer::endFrame()
 
 void CGUIRenderer::_initV()
 {
-    CRendererBase::_initV();
+    IRenderer::_initV();
 
     _ASSERTE(m_pWindow);
 
@@ -75,7 +75,7 @@ void CGUIRenderer::_initV()
 
 void CGUIRenderer::_recreateV()
 {
-    CRendererBase::_recreateV();
+    IRenderer::_recreateV();
 
     __destroyRecreateSources();
     __createRecreateSources();
@@ -104,7 +104,7 @@ void CGUIRenderer::_destroyV()
 
     m_pWindow = nullptr;
 
-    CRendererBase::_destroyV();
+    IRenderer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CGUIRenderer::_requestCommandBuffersV(uint32_t vImageIndex)

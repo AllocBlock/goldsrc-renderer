@@ -1,15 +1,15 @@
-#include "PipelineTest.h"
+#include "PipelinePBS.h"
 #include "MaterialPBR.h"
 #include "Function.h"
 
-struct SUniformBufferObjectVert
+struct SUBOVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
     alignas(16) glm::mat4 Model;
 };
 
-struct SUniformBufferObjectFrag
+struct SUBOFrag
 {
     glm::vec4 Eye;
     SMaterialPBR Material;
@@ -19,9 +19,9 @@ struct SUniformBufferObjectFrag
     uint32_t UseSpecularTexture = 1u;
 };
 
-size_t CPipelineTest::MaxTextureNum = 16;
+size_t CPipelinePBS::MaxTextureNum = 16;
 
-void CPipelineTest::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
+void CPipelinePBS::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
     int TexWidth = vSkyBoxImageSet[0]->getWidth();
@@ -85,7 +85,7 @@ void CPipelineTest::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6
         __updateDescriptorSet();
 }
 
-void CPipelineTest::setMaterialBuffer(std::shared_ptr<vk::CBuffer> vMaterialBuffer)
+void CPipelinePBS::setMaterialBuffer(std::shared_ptr<vk::CBuffer> vMaterialBuffer)
 {
     _ASSERTE(vMaterialBuffer);
     m_pMaterialBuffer = vMaterialBuffer;
@@ -95,16 +95,16 @@ void CPipelineTest::setMaterialBuffer(std::shared_ptr<vk::CBuffer> vMaterialBuff
         __updateDescriptorSet();
 }
 
-void CPipelineTest::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet)
+void CPipelinePBS::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet)
 {
     _ASSERTE(m_pPlaceholderImage);
-    _ASSERTE(vColorSet.size() <= CPipelineTest::MaxTextureNum);
-    _ASSERTE(vNormalSet.size() <= CPipelineTest::MaxTextureNum);
-    _ASSERTE(vSpecularSet.size() <= CPipelineTest::MaxTextureNum);
-    m_TextureColorSet.resize(CPipelineTest::MaxTextureNum);
-    m_TextureNormalSet.resize(CPipelineTest::MaxTextureNum);
-    m_TextureSpecularSet.resize(CPipelineTest::MaxTextureNum);
-    for (int i = 0; i < CPipelineTest::MaxTextureNum; ++i)
+    _ASSERTE(vColorSet.size() <= CPipelinePBS::MaxTextureNum);
+    _ASSERTE(vNormalSet.size() <= CPipelinePBS::MaxTextureNum);
+    _ASSERTE(vSpecularSet.size() <= CPipelinePBS::MaxTextureNum);
+    m_TextureColorSet.resize(CPipelinePBS::MaxTextureNum);
+    m_TextureNormalSet.resize(CPipelinePBS::MaxTextureNum);
+    m_TextureSpecularSet.resize(CPipelinePBS::MaxTextureNum);
+    for (int i = 0; i < CPipelinePBS::MaxTextureNum; ++i)
     {
         if (i < vColorSet.size())
             m_TextureColorSet[i] = vColorSet[i];
@@ -126,7 +126,7 @@ void CPipelineTest::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, c
         __updateDescriptorSet();
 }
 
-void CPipelineTest::__createPlaceholderImage()
+void CPipelinePBS::__createPlaceholderImage()
 {
     // placeholder image
     uint8_t Data = 0;
@@ -136,7 +136,7 @@ void CPipelineTest::__createPlaceholderImage()
     m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
 }
 
-void CPipelineTest::__updateDescriptorSet()
+void CPipelinePBS::__updateDescriptorSet()
 {
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
@@ -146,13 +146,13 @@ void CPipelineTest::__updateDescriptorSet()
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
+        VertBufferInfo.range = sizeof(SUBOVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
         FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
         FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
+        FragBufferInfo.range = sizeof(SUBOFrag);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};
@@ -173,8 +173,8 @@ void CPipelineTest::__updateDescriptorSet()
         SamplerInfo.sampler = m_Sampler;
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {SamplerInfo} }));
 
-        std::vector<VkDescriptorImageInfo> TexImageColorInfoSet(CPipelineTest::MaxTextureNum);
-        for (size_t i = 0; i < CPipelineTest::MaxTextureNum; ++i)
+        std::vector<VkDescriptorImageInfo> TexImageColorInfoSet(CPipelinePBS::MaxTextureNum);
+        for (size_t i = 0; i < CPipelinePBS::MaxTextureNum; ++i)
         {
             TexImageColorInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             TexImageColorInfoSet[i].imageView = m_TextureColorSet[i]->get();
@@ -182,8 +182,8 @@ void CPipelineTest::__updateDescriptorSet()
         }
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageColorInfoSet }));
 
-        std::vector<VkDescriptorImageInfo> TexImageNormalInfoSet(CPipelineTest::MaxTextureNum);
-        for (size_t i = 0; i < CPipelineTest::MaxTextureNum; ++i)
+        std::vector<VkDescriptorImageInfo> TexImageNormalInfoSet(CPipelinePBS::MaxTextureNum);
+        for (size_t i = 0; i < CPipelinePBS::MaxTextureNum; ++i)
         {
             TexImageNormalInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             TexImageNormalInfoSet[i].imageView = m_TextureNormalSet[i]->get();
@@ -192,8 +192,8 @@ void CPipelineTest::__updateDescriptorSet()
 
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageNormalInfoSet }));
 
-        std::vector<VkDescriptorImageInfo> TexImageSpecularInfoSet(CPipelineTest::MaxTextureNum);
-        for (size_t i = 0; i < CPipelineTest::MaxTextureNum; ++i)
+        std::vector<VkDescriptorImageInfo> TexImageSpecularInfoSet(CPipelinePBS::MaxTextureNum);
+        for (size_t i = 0; i < CPipelinePBS::MaxTextureNum; ++i)
         {
             TexImageSpecularInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
             TexImageSpecularInfoSet[i].imageView = m_TextureSpecularSet[i]->get();
@@ -206,15 +206,15 @@ void CPipelineTest::__updateDescriptorSet()
     }
 }
 
-void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl)
+void CPipelinePBS::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl)
 {
-    SUniformBufferObjectVert UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
     UBOVert.View = vView;
     UBOVert.Proj = vProj;
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
-    SUniformBufferObjectFrag UBOFrag = {};
+    SUBOFrag UBOFrag = {};
     UBOFrag.Eye = glm::vec4(vEyePos, 0.0f);
     UBOFrag.Material = vControl.Material;
     UBOFrag.ForceUseMat = vControl.ForceUseMat ? 1u : 0u;
@@ -224,32 +224,32 @@ void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, 
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineTest::destroy()
+void CPipelinePBS::destroy()
 {
     __destroyResources();
-    CPipelineBase::destroy();
+    IPipeline::destroy();
 }
 
-void CPipelineTest::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+void CPipelinePBS::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
-    voBinding = STestPointData::getBindingDescription();
-    voAttributeSet = STestPointData::getAttributeDescriptionSet();
+    voBinding = SPBSPointData::getBindingDescription();
+    voAttributeSet = SPBSPointData::getAttributeDescriptionSet();
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineTest::_getInputAssemblyStageInfoV()
+VkPipelineInputAssemblyStateCreateInfo CPipelinePBS::_getInputAssemblyStageInfoV()
 {
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;
 }
 
-void CPipelineTest::_createResourceV(size_t vImageNum)
+void CPipelinePBS::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
-    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
-    VkDeviceSize FragBufferSize = sizeof(SUniformBufferObjectFrag);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
+    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
     m_VertUniformBufferSet.resize(vImageNum);
     m_FragUniformBufferSet.resize(vImageNum);
 
@@ -288,7 +288,7 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
     __createPlaceholderImage();
 }
 
-void CPipelineTest::_initDescriptorV()
+void CPipelinePBS::_initDescriptorV()
 {
     _ASSERTE(m_Device != VK_NULL_HANDLE);
     m_Descriptor.clear();
@@ -298,14 +298,14 @@ void CPipelineTest::_initDescriptorV()
     m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("UboFragMaterial", 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("Sampler", 4, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureColors", 5, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineTest::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureNormals", 6, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineTest::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureSpeculars", 7, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineTest::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureColors", 5, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureNormals", 6, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureSpeculars", 7, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_Device);
 }
 
-void CPipelineTest::__destroyResources()
+void CPipelinePBS::__destroyResources()
 {
     for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
     {

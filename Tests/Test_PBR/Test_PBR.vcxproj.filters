@@ -21,13 +21,16 @@
     <ClCompile Include="ApplicationTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineTest.cpp">
+    <ClCompile Include="PipelinePBS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RendererTest.cpp">
+    <ClCompile Include="RendererPBR.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MaterialPBR.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineEnvironment.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,13 +38,16 @@
     <ClInclude Include="ApplicationTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineTest.h">
+    <ClInclude Include="PipelinePBS.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RendererTest.h">
+    <ClInclude Include="RendererPBR.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MaterialPBR.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineEnvironment.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

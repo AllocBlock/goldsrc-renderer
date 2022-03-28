@@ -1,10 +1,10 @@
 #pragma once
-#include "RendererBase.h"
+#include "Renderer.h"
 #include "PipelineSprite.h"
 #include "Camera.h"
 #include "FrameBuffer.h"
 
-class CRendererTest : public CRendererBase
+class CRendererTest : public IRenderer
 {
 public:
     CRendererTest() : m_pCamera(std::make_shared<CCamera>()) {}

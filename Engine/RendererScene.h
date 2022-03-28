@@ -1,5 +1,5 @@
 #pragma once
-#include "RendererBase.h"
+#include "Renderer.h"
 #include "Camera.h"
 #include "Scene.h"
 
@@ -9,7 +9,7 @@ struct SObjectDataPosition
     VkDeviceSize Size;
 };
 
-class CRendererScene : public CRendererBase
+class CRendererScene : public IRenderer
 {
 public:
     CRendererScene():m_pCamera(std::make_shared<CCamera>()) {};

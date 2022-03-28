@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "Camera.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
@@ -34,7 +34,7 @@ struct SShadowMapPointData
     }
 };
 
-class CPipelineShadowMap : public CPipelineBase
+class CPipelineShadowMap : public IPipeline
 {
 public:
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLightViewProj, float vLightNear, float vLightFar);

@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "PointData.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 
-class CPipelineDepthTest : public CPipelineBase
+class CPipelineDepthTest : public IPipeline
 {
 public:
     void setLightmapState(VkCommandBuffer vCommandBuffer, bool vEnable);

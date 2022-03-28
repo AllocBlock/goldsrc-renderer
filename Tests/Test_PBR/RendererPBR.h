@@ -1,16 +1,16 @@
 #pragma once
-#include "RendererBase.h"
+#include "Renderer.h"
 #include "FrameBuffer.h"
-#include "PipelineTest.h"
 #include "Camera.h"
 #include "Image.h"
 #include "Buffer.h"
 #include "MaterialPBR.h"
+#include "PipelinePBS.h"
 
-class CRendererTest : public CRendererBase
+class CRendererPBR : public IRenderer
 {
 public:
-    CRendererTest() : m_pCamera(std::make_shared<CCamera>()) {}
+    CRendererPBR() : m_pCamera(std::make_shared<CCamera>()) {}
 
     std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
 
@@ -18,7 +18,7 @@ protected:
     virtual void _initV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
-    virtual void _renderUIV(uint32_t vImageIndex) override;
+    virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
@@ -42,7 +42,7 @@ private:
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth);
    
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
-    CPipelineTest m_Pipeline;
+    CPipelinePBS m_Pipeline;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
     std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
@@ -52,12 +52,12 @@ private:
 
     const std::string m_SkyFilePrefix = "../../data/neb6";
     std::shared_ptr<CCamera> m_pCamera = nullptr;
-    std::vector<STestPointData> m_PointDataSet;
+    std::vector<SPBSPointData> m_PointDataSet;
     std::array<std::shared_ptr<CIOImage>, 6> m_SkyBoxImageSet;
 
     uint32_t m_GridSize = 8;
 
-    CPipelineTest::SControl m_PipelineControl;
+    CPipelinePBS::SControl m_PipelineControl;
     std::vector<vk::CImage::Ptr> m_TextureColorSet;
     std::vector<vk::CImage::Ptr> m_TextureNormalSet;
     std::vector<vk::CImage::Ptr> m_TextureSpecularSet;

@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "IOImage.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -41,7 +41,7 @@ struct STestPointData
     }
 };
 
-class CPipelineTest : public CPipelineBase
+class CPipelineTest : public IPipeline
 {
 public:
     void setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet);

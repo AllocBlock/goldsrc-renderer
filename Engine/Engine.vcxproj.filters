@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PipelineBase.cpp">
+    <ClCompile Include="Pipeline.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Descriptor.cpp">
@@ -24,7 +24,7 @@
     <ClCompile Include="Command.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RendererBase.cpp">
+    <ClCompile Include="Renderer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SetupGLFW.cpp">
@@ -47,7 +47,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PipelineBase.h">
+    <ClInclude Include="Pipeline.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Descriptor.h">
@@ -56,7 +56,7 @@
     <ClInclude Include="Command.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RendererBase.h">
+    <ClInclude Include="Renderer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RendererScene.h">

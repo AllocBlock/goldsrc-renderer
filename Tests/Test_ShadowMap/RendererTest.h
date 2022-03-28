@@ -1,5 +1,5 @@
 #pragma once
-#include "RendererBase.h"
+#include "Renderer.h"
 #include "FrameBuffer.h"
 #include "PipelineShadowMap.h"
 #include "PipelineLight.h"
@@ -7,7 +7,7 @@
 #include "Buffer.h"
 #include "Image.h"
 
-class CRendererTest : public CRendererBase
+class CRendererTest : public IRenderer
 {
 public:
     CRendererTest() : m_pCamera(std::make_shared<CCamera>()),

@@ -30,7 +30,7 @@ void CPipelineSkybox::destroy()
     m_VertUniformBufferSet.clear();
     m_FragUniformBufferSet.clear();
 
-    CPipelineBase::destroy();
+    IPipeline::destroy();
 }
 
 void CPipelineSkybox::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
@@ -134,7 +134,7 @@ void CPipelineSkybox::_getVertexInputInfoV(VkVertexInputBindingDescription& voBi
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineSkybox::_getInputAssemblyStageInfoV()
 {
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;

@@ -74,7 +74,7 @@ void CPipelineLight::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel,
 void CPipelineLight::destroy()
 {
     __destroyResources();
-    CPipelineBase::destroy();
+    IPipeline::destroy();
 }
 
 void CPipelineLight::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -85,7 +85,7 @@ void CPipelineLight::_getVertexInputInfoV(VkVertexInputBindingDescription& voBin
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineLight::_getInputAssemblyStageInfoV()
 {
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;

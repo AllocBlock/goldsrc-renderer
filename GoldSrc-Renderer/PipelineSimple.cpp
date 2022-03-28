@@ -2,14 +2,14 @@
 
 size_t CPipelineSimple::MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
 
-struct SUniformBufferObjectVert
+struct SUBOVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
     alignas(16) glm::mat4 Model;
 };
 
-struct SUniformBufferObjectFrag
+struct SUBOFrag
 {
     alignas(16) glm::vec3 Eye;
 };
@@ -24,13 +24,13 @@ void CPipelineSimple::updateDescriptorSet(const std::vector<VkImageView>& vTextu
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
+        VertBufferInfo.range = sizeof(SUBOVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo}, {} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
         FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
         FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
+        FragBufferInfo.range = sizeof(SUBOFrag);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo}, {} }));
 
         VkDescriptorImageInfo SamplerInfo = {};
@@ -74,13 +74,13 @@ void CPipelineSimple::updateDescriptorSet(const std::vector<VkImageView>& vTextu
 
 void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
 {
-    SUniformBufferObjectVert UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
     UBOVert.View = vView;
     UBOVert.Proj = vProj;
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
-    SUniformBufferObjectFrag UBOFrag = {};
+    SUBOFrag UBOFrag = {};
     UBOFrag.Eye = vEyePos;
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
@@ -88,7 +88,7 @@ void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel
 void CPipelineSimple::destroy()
 {
     __destroyResources();
-    CPipelineBase::destroy();
+    IPipeline::destroy();
 }
 
 void CPipelineSimple::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -99,7 +99,7 @@ void CPipelineSimple::_getVertexInputInfoV(VkVertexInputBindingDescription& voBi
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineSimple::_getInputAssemblyStageInfoV()
 {
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;
@@ -122,8 +122,8 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
-    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
-    VkDeviceSize FragBufferSize = sizeof(SUniformBufferObjectFrag);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
+    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
     m_VertUniformBufferSet.resize(vImageNum);
     m_FragUniformBufferSet.resize(vImageNum);
 

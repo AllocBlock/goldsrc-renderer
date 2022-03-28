@@ -19,10 +19,10 @@ enum class EImageType
     DEPTH
 };
 
-class CRendererBase : public IGUI
+class IRenderer : public IGUI
 {
 public:
-    CRendererBase() = default;
+    IRenderer() = default;
 
     void init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField);
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews);

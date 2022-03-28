@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "Common.h"
 #include "Descriptor.h"
 #include "IOImage.h"
@@ -20,7 +20,7 @@ struct SSpritePushConstant
     alignas(16) glm::vec3 Angle = glm::vec3(0.0f, 0.0f, 0.0f);
 };
 
-class CPipelineSprite : public CPipelineBase
+class CPipelineSprite : public IPipeline
 {
 public:
     void destroy();

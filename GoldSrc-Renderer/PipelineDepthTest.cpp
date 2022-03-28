@@ -8,14 +8,14 @@ struct SPushConstant
     float Opacity = 1.0;
 };
 
-struct SUniformBufferObjectVert
+struct SUBOVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
     alignas(16) glm::mat4 Model;
 };
 
-struct SUniformBufferObjectFrag
+struct SUBOFrag
 {
     alignas(16) glm::vec3 Eye;
 };
@@ -30,13 +30,13 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
         VkDescriptorBufferInfo VertBufferInfo = {};
         VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
         VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
+        VertBufferInfo.range = sizeof(SUBOVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo}, {} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
         FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
         FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUniformBufferObjectFrag);
+        FragBufferInfo.range = sizeof(SUBOFrag);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo}, {} }));
 
         VkDescriptorImageInfo SamplerInfo = {};
@@ -86,13 +86,13 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
 
 void CPipelineDepthTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
 {
-    SUniformBufferObjectVert UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
     UBOVert.View = vView;
     UBOVert.Proj = vProj;
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
-    SUniformBufferObjectFrag UBOFrag = {};
+    SUBOFrag UBOFrag = {};
     UBOFrag.Eye = vEyePos;
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
@@ -120,7 +120,7 @@ void CPipelineDepthTest::setOpacity(VkCommandBuffer vCommandBuffer, float vOpaci
 void CPipelineDepthTest::destroy()
 {
     __destroyResources();
-    CPipelineBase::destroy();
+    IPipeline::destroy();
 }
 
 void CPipelineDepthTest::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -131,7 +131,7 @@ void CPipelineDepthTest::_getVertexInputInfoV(VkVertexInputBindingDescription& v
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineDepthTest::_getInputAssemblyStageInfoV()
 {
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;
@@ -169,8 +169,8 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
-    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
-    VkDeviceSize FragBufferSize = sizeof(SUniformBufferObjectFrag);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
+    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
     m_VertUniformBufferSet.resize(vImageNum);
     m_FragUniformBufferSet.resize(vImageNum);
 

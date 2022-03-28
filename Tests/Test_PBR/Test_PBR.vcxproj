@@ -88,15 +88,17 @@
   <ItemGroup>
     <ClCompile Include="ApplicationTest.cpp" />
     <ClCompile Include="MaterialPBR.cpp" />
-    <ClCompile Include="RendererTest.cpp" />
+    <ClCompile Include="PipelineEnvironment.cpp" />
+    <ClCompile Include="RendererPBR.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PipelineTest.cpp" />
+    <ClCompile Include="PipelinePBS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h" />
     <ClInclude Include="MaterialPBR.h" />
-    <ClInclude Include="RendererTest.h" />
-    <ClInclude Include="PipelineTest.h" />
+    <ClInclude Include="PipelineEnvironment.h" />
+    <ClInclude Include="RendererPBR.h" />
+    <ClInclude Include="PipelinePBS.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shader\shader.frag">

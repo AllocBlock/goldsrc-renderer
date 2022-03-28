@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "PointData.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -7,7 +7,7 @@
 
 #include <glm/glm.hpp>
 
-class CPipelineSimple : public CPipelineBase
+class CPipelineSimple : public IPipeline
 {
 public:
     void updateDescriptorSet(const std::vector<VkImageView>& vTextureSet);

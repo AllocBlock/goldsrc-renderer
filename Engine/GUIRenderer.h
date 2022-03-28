@@ -1,11 +1,11 @@
 #pragma once
 #include "Command.h"
-#include "RendererBase.h"
+#include "Renderer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class CGUIRenderer : public CRendererBase
+class CGUIRenderer : public IRenderer
 {
 public:
     CGUIRenderer() = default;

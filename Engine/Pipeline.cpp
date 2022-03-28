@@ -1,6 +1,6 @@
-#include "PipelineBase.h"
+#include "Pipeline.h"
 
-std::vector<VkPipelineShaderStageCreateInfo> CPipelineBase::getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule)
+std::vector<VkPipelineShaderStageCreateInfo> IPipeline::getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule)
 {
     VkPipelineShaderStageCreateInfo VertShaderStageInfo = {};
     VertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -17,7 +17,7 @@ std::vector<VkPipelineShaderStageCreateInfo> CPipelineBase::getDefaultShadeStage
     return { VertShaderStageInfo, FragShaderStageInfo };
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineBase::getDefaultInputAssemblyStageInfo()
+VkPipelineInputAssemblyStateCreateInfo IPipeline::getDefaultInputAssemblyStageInfo()
 {
     // default triangle list
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
@@ -28,7 +28,7 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineBase::getDefaultInputAssemblySta
     return InputAssemblyInfo;
 }
 
-VkPipelineRasterizationStateCreateInfo CPipelineBase::getDefaultRasterizationStageInfo()
+VkPipelineRasterizationStateCreateInfo IPipeline::getDefaultRasterizationStageInfo()
 {
     // default clockwise, back culling, no depth bias
     VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
@@ -44,7 +44,7 @@ VkPipelineRasterizationStateCreateInfo CPipelineBase::getDefaultRasterizationSta
     return RasterizerInfo;
 }
 
-VkPipelineMultisampleStateCreateInfo CPipelineBase::getDefaultMultisampleStageInfo()
+VkPipelineMultisampleStateCreateInfo IPipeline::getDefaultMultisampleStageInfo()
 {
     // default no msaa
     VkPipelineMultisampleStateCreateInfo Multisampling = {};
@@ -55,7 +55,7 @@ VkPipelineMultisampleStateCreateInfo CPipelineBase::getDefaultMultisampleStageIn
     return Multisampling;
 }
 
-VkPipelineDepthStencilStateCreateInfo CPipelineBase::getDefaultDepthStencilInfo()
+VkPipelineDepthStencilStateCreateInfo IPipeline::getDefaultDepthStencilInfo()
 {
     // default enable depth test
     VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
@@ -69,13 +69,13 @@ VkPipelineDepthStencilStateCreateInfo CPipelineBase::getDefaultDepthStencilInfo(
     return DepthStencilInfo;
 }
 
-std::vector<VkPushConstantRange> CPipelineBase::getDefaultPushConstantRangeSet()
+std::vector<VkPushConstantRange> IPipeline::getDefaultPushConstantRangeSet()
 {
     // default no push constant
     return {};
 }
 
-void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
+void IPipeline::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
 {
     destroy();
 
@@ -166,7 +166,7 @@ void CPipelineBase::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, V
     vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
 }
 
-void CPipelineBase::setImageNum(size_t vImageNum)
+void IPipeline::setImageNum(size_t vImageNum)
 {
     if (vImageNum == m_ImageNum) return;
     m_ImageNum = vImageNum;
@@ -174,7 +174,7 @@ void CPipelineBase::setImageNum(size_t vImageNum)
     _createResourceV(vImageNum);
 }
 
-void CPipelineBase::destroy()
+void IPipeline::destroy()
 {
     m_ImageNum = 0;
     
@@ -189,7 +189,7 @@ void CPipelineBase::destroy()
     m_PhysicalDevice = VK_NULL_HANDLE;
 }
 
-void CPipelineBase::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void IPipeline::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
 {
     const auto& DescriptorSet = m_Descriptor.getDescriptorSet(vImageIndex);
     vkCmdBindPipeline(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
@@ -197,21 +197,21 @@ void CPipelineBase::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
     _initPushConstantV(vCommandBuffer);
 }
 
-void CPipelineBase::_initPushConstantV(VkCommandBuffer vCommandBuffer)
+void IPipeline::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 {
 }
 
-std::vector<VkPipelineShaderStageCreateInfo> CPipelineBase::_getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule)
+std::vector<VkPipelineShaderStageCreateInfo> IPipeline::_getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule)
 {
-    return CPipelineBase::getDefaultShadeStageInfo(vVertModule, vFragModule);
+    return IPipeline::getDefaultShadeStageInfo(vVertModule, vFragModule);
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineBase::_getInputAssemblyStageInfoV()
+VkPipelineInputAssemblyStateCreateInfo IPipeline::_getInputAssemblyStageInfoV()
 {
-    return CPipelineBase::getDefaultInputAssemblyStageInfo();
+    return IPipeline::getDefaultInputAssemblyStageInfo();
 }
 
-void CPipelineBase::_getViewportStageInfoV(VkExtent2D vExtent, VkViewport& voViewport, VkRect2D& voScissor)
+void IPipeline::_getViewportStageInfoV(VkExtent2D vExtent, VkViewport& voViewport, VkRect2D& voScissor)
 {
     voViewport = {};
     voViewport.width = static_cast<float>(vExtent.width);
@@ -224,22 +224,22 @@ void CPipelineBase::_getViewportStageInfoV(VkExtent2D vExtent, VkViewport& voVie
     voScissor.extent = vExtent;
 }
 
-VkPipelineRasterizationStateCreateInfo CPipelineBase::_getRasterizationStageInfoV()
+VkPipelineRasterizationStateCreateInfo IPipeline::_getRasterizationStageInfoV()
 {
-    return CPipelineBase::getDefaultRasterizationStageInfo();
+    return IPipeline::getDefaultRasterizationStageInfo();
 }
 
-VkPipelineMultisampleStateCreateInfo CPipelineBase::_getMultisampleStageInfoV()
+VkPipelineMultisampleStateCreateInfo IPipeline::_getMultisampleStageInfoV()
 {
-    return CPipelineBase::getDefaultMultisampleStageInfo();
+    return IPipeline::getDefaultMultisampleStageInfo();
 }
 
-VkPipelineDepthStencilStateCreateInfo CPipelineBase::_getDepthStencilInfoV()
+VkPipelineDepthStencilStateCreateInfo IPipeline::_getDepthStencilInfoV()
 {
-    return CPipelineBase::getDefaultDepthStencilInfo();
+    return IPipeline::getDefaultDepthStencilInfo();
 }
 
-void CPipelineBase::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
+void IPipeline::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
 {
     // default disable blending
     voBlendAttachment = {};
@@ -247,12 +247,12 @@ void CPipelineBase::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voB
     voBlendAttachment.blendEnable = VK_FALSE;
 }
 
-std::vector<VkDynamicState> CPipelineBase::_getEnabledDynamicSetV()
+std::vector<VkDynamicState> IPipeline::_getEnabledDynamicSetV()
 {
     return {};
 }
 
-std::vector<VkPushConstantRange> CPipelineBase::_getPushConstantRangeSetV()
+std::vector<VkPushConstantRange> IPipeline::_getPushConstantRangeSetV()
 {
-    return CPipelineBase::getDefaultPushConstantRangeSet();
+    return IPipeline::getDefaultPushConstantRangeSet();
 }

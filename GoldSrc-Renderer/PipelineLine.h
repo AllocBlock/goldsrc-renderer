@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "Vulkan.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
@@ -18,7 +18,7 @@ struct SGuiObject
     std::vector<glm::vec3> Data;
 };
 
-class CPipelineLine : public CPipelineBase
+class CPipelineLine : public IPipeline
 {
 public:
     void destroy();

@@ -1,8 +1,8 @@
-#include "RendererTest.h"
+#include "RendererPBR.h"
 #include "UserInterface.h"
 #include "Function.h"
 
-void CRendererTest::_initV()
+void CRendererPBR::_initV()
 {
     m_pCamera->setFov(90);
     m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
@@ -15,20 +15,20 @@ void CRendererTest::_initV()
     __createRecreateResources();
 }
 
-void CRendererTest::_recreateV()
+void CRendererPBR::_recreateV()
 {
-    CRendererBase::_recreateV();
+    IRenderer::_recreateV();
 
     __destroyRecreateResources();
     __createRecreateResources();
 }
 
-void CRendererTest::_updateV(uint32_t vImageIndex)
+void CRendererPBR::_updateV(uint32_t vImageIndex)
 {
     __updateUniformBuffer(vImageIndex);
 }
 
-void CRendererTest::_renderUIV(uint32_t vImageIndex)
+void CRendererPBR::_renderUIV()
 {
     UI::toggle("Use Color Texture", m_PipelineControl.UseColorTexture);
     UI::toggle("Use Normal Texture", m_PipelineControl.UseNormalTexture);
@@ -43,11 +43,11 @@ void CRendererTest::_renderUIV(uint32_t vImageIndex)
         UI::inputColor("Base Color", m_PipelineControl.Material.Albedo);
         UI::drag("Metallic", m_PipelineControl.Material.OMR.g, 0.01f, 0.0f, 1.0f);
         UI::drag("Roughness", m_PipelineControl.Material.OMR.b, 0.01f, 0.0f, 1.0f);
-        UI::indent(-20.0f);
+        UI::unindent();
     }
 }
 
-std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRendererPBR::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     if (!m_Pipeline.isReady())
         throw "Not Ready";
@@ -91,20 +91,20 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
     return { CommandBuffer };
 }
 
-void CRendererTest::_destroyV()
+void CRendererPBR::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertexBuffer->destroy();
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
-    CRendererBase::_destroyV();
+    IRenderer::_destroyV();
 }
 
-void CRendererTest::__createRenderPass()
+void CRendererPBR::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -143,7 +143,7 @@ void CRendererTest::__createRenderPass()
     Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
-void CRendererTest::__loadSkyBox()
+void CRendererPBR::__loadSkyBox()
 {
     if (m_SkyFilePrefix.empty()) throw "sky box image file not found";
 
@@ -162,7 +162,7 @@ void CRendererTest::__loadSkyBox()
         throw "sky box image file not found";
 }
 
-bool CRendererTest::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension)
+bool CRendererPBR::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension)
 {
     // front back up down right left
     std::array<std::string, 6> SkyBoxPostfixes = { "ft", "bk", "up", "dn", "rt", "lf" };
@@ -182,7 +182,7 @@ bool CRendererTest::__readSkyboxImages(std::string vSkyFilePrefix, std::string v
     return true;
 }
 
-void CRendererTest::__destroyRenderPass()
+void CRendererPBR::__destroyRenderPass()
 {
     if (m_RenderPass != VK_NULL_HANDLE)
     {
@@ -191,12 +191,12 @@ void CRendererTest::__destroyRenderPass()
     }
 }
 
-void CRendererTest::__createGraphicsPipeline()
+void CRendererPBR::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
 }
 
-void CRendererTest::__createCommandPoolAndBuffers()
+void CRendererPBR::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, m_AppInfo.TargetImageViewSet.size(), ECommandBufferLevel::PRIMARY);
@@ -212,12 +212,12 @@ void CRendererTest::__createCommandPoolAndBuffers()
     Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
-void CRendererTest::__createDepthResources()
+void CRendererPBR::__createDepthResources()
 {
     m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
 }
 
-void CRendererTest::__createFramebuffers()
+void CRendererPBR::__createFramebuffers()
 {
     size_t ImageNum = m_AppInfo.TargetImageViewSet.size();
     m_FramebufferSet.resize(ImageNum);
@@ -234,21 +234,21 @@ void CRendererTest::__createFramebuffers()
     }
 }
 
-void CRendererTest::__createVertexBuffer()
+void CRendererPBR::__createVertexBuffer()
 {
      __generateScene();
     size_t VertexNum = m_PointDataSet.size();
 
     if (VertexNum > 0)
     {
-        VkDeviceSize BufferSize = sizeof(STestPointData) * VertexNum;
+        VkDeviceSize BufferSize = sizeof(SPBSPointData) * VertexNum;
         m_pVertexBuffer = std::make_shared<vk::CBuffer>();
         m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }
 
-void CRendererTest::__createMaterials()
+void CRendererPBR::__createMaterials()
 {
     std::shared_ptr<CIOImage> pColorImage = std::make_shared<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
@@ -288,7 +288,7 @@ void CRendererTest::__createMaterials()
     m_pMaterialBuffer->stageFill(MaterialSet.data(), BufferSize);
 }
 
-void CRendererTest::__createRecreateResources()
+void CRendererPBR::__createRecreateResources()
 {
     __createMaterials();
 
@@ -301,7 +301,7 @@ void CRendererTest::__createRecreateResources()
     m_Pipeline.setTextures(m_TextureColorSet, m_TextureNormalSet, m_TextureSpecularSet);
 }
 
-void CRendererTest::__destroyRecreateResources()
+void CRendererPBR::__destroyRecreateResources()
 {
     m_pDepthImage->destroy();
 
@@ -323,7 +323,7 @@ void CRendererTest::__destroyRecreateResources()
     m_Pipeline.destroy();
 }
 
-void CRendererTest::__generateScene()
+void CRendererPBR::__generateScene()
 {
     float Sqrt2 = std::sqrt(2);
     float Sqrt3 = std::sqrt(3);
@@ -351,7 +351,7 @@ void CRendererTest::__generateScene()
     
 }
 
-void CRendererTest::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth)
+void CRendererPBR::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth)
 {
     if (vDepth == 0)
     {
@@ -365,7 +365,7 @@ void CRendererTest::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm
             glm::vec3 Bitangent = cross(Normal, glm::vec3(0.0f, 0.0f, 1.0f));
             glm::vec3 Tangent = cross(Bitangent, Normal);
 
-            m_PointDataSet.emplace_back(STestPointData({ vCenter + Vertex, Normal, Tangent, TexCoord, vMaterialIndex }));
+            m_PointDataSet.emplace_back(SPBSPointData({ vCenter + Vertex, Normal, Tangent, TexCoord, vMaterialIndex }));
         }
     }
     else
@@ -381,7 +381,7 @@ void CRendererTest::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm
     }
 }
 
-void CRendererTest::__updateUniformBuffer(uint32_t vImageIndex)
+void CRendererPBR::__updateUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
     if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)

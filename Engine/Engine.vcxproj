@@ -96,8 +96,8 @@
     <ClCompile Include="Descriptor.cpp" />
     <ClCompile Include="GUIRenderer.cpp" />
     <ClCompile Include="Interactor.cpp" />
-    <ClCompile Include="PipelineBase.cpp" />
-    <ClCompile Include="RendererBase.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
     <ClCompile Include="UserInterface.cpp" />
     <ClCompile Include="VertexAttributeDescriptor.cpp" />
@@ -109,8 +109,8 @@
     <ClInclude Include="GUIRenderer.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="Interactor.h" />
-    <ClInclude Include="PipelineBase.h" />
-    <ClInclude Include="RendererBase.h" />
+    <ClInclude Include="Pipeline.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="RendererScene.h" />
     <ClInclude Include="SetupGLFW.h" />
     <ClInclude Include="UserInterface.h" />

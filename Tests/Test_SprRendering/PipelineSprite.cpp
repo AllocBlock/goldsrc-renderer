@@ -65,7 +65,7 @@ void CPipelineSprite::destroy()
         pBuffer->destroy();
     m_VertUniformBufferSet.clear();
 
-    CPipelineBase::destroy();
+    IPipeline::destroy();
 }
 
 void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImageSet)
@@ -125,7 +125,7 @@ void CPipelineSprite::_getVertexInputInfoV(VkVertexInputBindingDescription& voBi
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineSprite::_getInputAssemblyStageInfoV()
 {
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;

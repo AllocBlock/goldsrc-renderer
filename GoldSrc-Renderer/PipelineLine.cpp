@@ -27,7 +27,7 @@ void CPipelineLine::destroy()
         pBuffer->destroy();
     m_VertUniformBufferSet.clear();
 
-    CPipelineBase::destroy();
+    IPipeline::destroy();
 }
 
 void CPipelineLine::updateDescriptorSet()
@@ -81,7 +81,7 @@ void CPipelineLine::removeObject(std::string vName)
 
 VkPipelineInputAssemblyStateCreateInfo CPipelineLine::_getInputAssemblyStageInfoV()
 {
-    auto Info = CPipelineBase::getDefaultInputAssemblyStageInfo();
+    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     Info.primitiveRestartEnable = VK_FALSE;
     return Info;

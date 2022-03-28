@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "GUI.h"
 #include "Vulkan.h"
 #include "Descriptor.h"
 
@@ -7,10 +8,10 @@
 #include <optional>
 #include <vulkan/vulkan.h> 
 
-struct CPipelineBase
+struct IPipeline : public IGUI
 {
 public:
-    CPipelineBase() = default;
+    IPipeline() = default;
 
     void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void setImageNum(size_t vImageNum);

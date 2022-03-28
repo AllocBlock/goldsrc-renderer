@@ -1,6 +1,6 @@
-#include "RendererBase.h"
+#include "Renderer.h"
 
-VkAttachmentDescription CRendererBase::createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, EImageType vType)
+VkAttachmentDescription IRenderer::createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, EImageType vType)
 {
     VkAttachmentStoreOp StoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
 
@@ -57,14 +57,14 @@ VkAttachmentDescription CRendererBase::createAttachmentDescription(int vRenderer
     return Attachment;
 }
 
-void CRendererBase::init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField)
+void IRenderer::init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField)
 {
     m_AppInfo = vAppInfo;
     m_RenderPassPosBitField = vRenderPassPosBitField;
     _initV();
 }
 
-void CRendererBase::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews)
+void IRenderer::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews)
 {
     m_AppInfo.ImageFormat = vImageFormat;
     m_AppInfo.Extent = vExtent;
@@ -72,17 +72,17 @@ void CRendererBase::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const st
     _recreateV();
 }
 
-void CRendererBase::update(uint32_t vImageIndex)
+void IRenderer::update(uint32_t vImageIndex)
 {
     _updateV(vImageIndex);
 } 
 
-std::vector<VkCommandBuffer> CRendererBase::requestCommandBuffers(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> IRenderer::requestCommandBuffers(uint32_t vImageIndex)
 {
     return _requestCommandBuffersV(vImageIndex);
 }
 
-void CRendererBase::destroy()
+void IRenderer::destroy()
 {
     _destroyV();
     m_RenderPassPosBitField = 0;

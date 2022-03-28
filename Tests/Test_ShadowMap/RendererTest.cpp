@@ -59,7 +59,7 @@ void CRendererTest::_initV()
 
 void CRendererTest::_recreateV()
 {
-    CRendererBase::_recreateV();
+    IRenderer::_recreateV();
 
     __destroyRecreateResources();
     __createRecreateResources();
@@ -95,7 +95,7 @@ void CRendererTest::_destroyV()
     __destroyRenderPasses();
     m_Command.clear();
 
-    CRendererBase::_destroyV();
+    IRenderer::_destroyV();
 }
 
 VkRenderPass CRendererTest::__createRenderPassGeneral(VkAttachmentDescription vColorAttachment, VkAttachmentDescription vDepthAttachment)
@@ -160,8 +160,8 @@ void CRendererTest::__createRenderPassShadowMap()
 void CRendererTest::__createRenderPassLighting()
 {
     int RenderPassPosBitField = m_RenderPassPosBitField;
-    VkAttachmentDescription ColorAttachment = CRendererBase::createAttachmentDescription(RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = CRendererBase::createAttachmentDescription(RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = IRenderer::createAttachmentDescription(RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = IRenderer::createAttachmentDescription(RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
 
     m_RenderPassLight = __createRenderPassGeneral(ColorAttachment, DepthAttachment);
 }

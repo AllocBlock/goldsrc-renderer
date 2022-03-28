@@ -4,6 +4,8 @@
 class CIOImage : public CIOBase
 {
 public:
+    using Ptr = std::shared_ptr<CIOImage>;
+
     CIOImage() : CIOBase() {}
     CIOImage(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
     CIOImage(const CIOImage& vObj)

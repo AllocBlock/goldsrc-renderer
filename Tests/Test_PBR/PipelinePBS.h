@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "IOImage.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 #include <array>
 
-struct STestPointData
+struct SPBSPointData
 {
     glm::vec3 Pos;
     glm::vec3 Normal;
@@ -22,7 +22,7 @@ struct STestPointData
     {
         VkVertexInputBindingDescription BindingDescription = {};
         BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(STestPointData);
+        BindingDescription.stride = sizeof(SPBSPointData);
         BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
         return BindingDescription;
@@ -31,16 +31,16 @@ struct STestPointData
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
         VertexAttributeDescriptor Descriptor;
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(STestPointData, Pos));
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(STestPointData, Normal));
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(STestPointData, Tangent));
-        Descriptor.add(VK_FORMAT_R32G32_SFLOAT,    offsetof(STestPointData, TexCoord));
-        Descriptor.add(VK_FORMAT_R32_UINT,         offsetof(STestPointData, MaterialIndex));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Pos));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Normal));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Tangent));
+        Descriptor.add(VK_FORMAT_R32G32_SFLOAT,    offsetof(SPBSPointData, TexCoord));
+        Descriptor.add(VK_FORMAT_R32_UINT,         offsetof(SPBSPointData, MaterialIndex));
         return Descriptor.generate();
     }
 };
 
-class CPipelineTest : public CPipelineBase
+class CPipelinePBS : public IPipeline
 {
 public:
     struct SControl

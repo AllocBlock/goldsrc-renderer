@@ -89,7 +89,7 @@ void CRendererSceneGoldSrc::rerecordCommand()
 
 void CRendererSceneGoldSrc::_initV()
 {
-    CRendererBase::_initV();
+    IRenderer::_initV();
     m_NumSwapchainImage = m_AppInfo.TargetImageViewSet.size();
 
     __createRenderPass();
@@ -101,7 +101,7 @@ void CRendererSceneGoldSrc::_initV()
 
 void CRendererSceneGoldSrc::_recreateV()
 {
-    CRendererBase::_recreateV();
+    IRenderer::_recreateV();
 
     __destroyRecreateResources();
     __createRecreateResources();
@@ -187,7 +187,7 @@ void CRendererSceneGoldSrc::_destroyV()
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
-    CRendererBase::_destroyV();
+    IRenderer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -588,8 +588,8 @@ void CRendererSceneGoldSrc::__recordObjectRenderCommand(uint32_t vImageIndex, si
 
 void CRendererSceneGoldSrc::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = CRendererBase::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;

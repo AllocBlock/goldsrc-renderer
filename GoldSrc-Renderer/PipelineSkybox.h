@@ -1,5 +1,5 @@
 #pragma once
-#include "PipelineBase.h"
+#include "Pipeline.h"
 #include "Common.h"
 #include "PointData.h"
 #include "Descriptor.h"
@@ -11,7 +11,7 @@
 #include <glm/glm.hpp>
 #include <array>
 
-class CPipelineSkybox : public CPipelineBase
+class CPipelineSkybox : public IPipeline
 {
 public:
     void destroy();
