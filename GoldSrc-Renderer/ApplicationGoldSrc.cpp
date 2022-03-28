@@ -28,7 +28,7 @@ std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t
     return Result;
 }
 
-void CApplicationGoldSrc::_renderUIV(uint32_t vImageIndex)
+void CApplicationGoldSrc::_renderUIV()
 {
     m_pGUI->beginFrame(u8"PBR and IBL");
     m_pMainUI->renderUI();

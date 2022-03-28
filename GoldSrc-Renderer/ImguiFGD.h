@@ -1,4 +1,5 @@
 #pragma once
+#include "Pointer.h"
 #include "IOGoldSrcForgeGameData.h"
 #include "ImguiSelectFile.h"
 

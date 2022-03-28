@@ -56,7 +56,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Engine;$(SolutionDir)Function;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Engine;$(SolutionDir)Function;$(VK_SDK_PATH)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -74,7 +74,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Engine;$(SolutionDir)Function;$(GLFW_PATH)\include;$(VK_SDK_PATH)\Include;$(GLM_PATH)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)imgui;$(SolutionDir)Common;$(SolutionDir)Vulkan;$(SolutionDir)Application;$(SolutionDir)Scene;$(SolutionDir)IO;$(SolutionDir)GUI;$(SolutionDir)Engine;$(SolutionDir)Function;$(VK_SDK_PATH)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,6 +103,9 @@
     </ProjectReference>
     <ProjectReference Include="..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Lib\stb\stb.vcxproj">
+      <Project>{9e505423-95de-4095-b96b-07b6024714ad}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Scene\Scene.vcxproj">
       <Project>{eb9ba7fd-f347-4886-83bd-d119a929aa39}</Project>
@@ -270,7 +273,19 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\glm.0.9.9.800\build\native\glm.targets" Condition="Exists('..\packages\glm.0.9.9.800\build\native\glm.targets')" />
+    <Import Project="..\packages\glfw.3.3.6\build\native\glfw.targets" Condition="Exists('..\packages\glfw.3.3.6\build\native\glfw.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\glm.0.9.9.800\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\glm.0.9.9.800\build\native\glm.targets'))" />
+    <Error Condition="!Exists('..\packages\glfw.3.3.6\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\glfw.3.3.6\build\native\glfw.targets'))" />
+  </Target>
 </Project>

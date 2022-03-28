@@ -742,7 +742,7 @@ void CRendererSceneGoldSrc::__createVertexBuffer()
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    m_pVertexBuffer = vk::CBuffermake<>();
+    m_pVertexBuffer = make<vk::CBuffer>();
     m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(pData, BufferSize);
     delete[] pData;
