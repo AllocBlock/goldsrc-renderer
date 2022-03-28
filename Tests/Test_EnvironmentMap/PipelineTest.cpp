@@ -12,7 +12,7 @@ struct SUBOFrag
     alignas(16) glm::vec3 Eye;
 };
 
-void CPipelineTest::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
+void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
     int TexWidth = vSkyBoxImageSet[0]->getWidth();
@@ -65,7 +65,7 @@ void CPipelineTest::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
-    m_pSkyBoxImage = std::make_shared<vk::CImage>();
+    m_pSkyBoxImage = make<vk::CImage>();
     m_pSkyBoxImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
@@ -95,7 +95,7 @@ void CPipelineTest::__createPlaceholderImage()
     vk::SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    m_pPlaceholderImage = std::make_shared<vk::CImage>();
+    m_pPlaceholderImage = make<vk::CImage>();
     m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
@@ -172,9 +172,9 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
-        m_FragUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
     }
 

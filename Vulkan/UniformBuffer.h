@@ -7,12 +7,14 @@ namespace vk
     class CUniformBuffer : public IVulkanHandle<VkBuffer>
     {
     public:
+        _DEFINE_PTR(CUniformBuffer);
+
         void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkDeviceSize vSize);
         void update(const void* vData);
         void destroy();
 
     private:
-        std::shared_ptr<vk::CBuffer> m_pBuffer = nullptr;
+        ptr<vk::CBuffer> m_pBuffer = nullptr;
     };
 }
 

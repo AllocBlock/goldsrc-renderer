@@ -8,7 +8,7 @@ int main()
 {
 	GLFW::init();
 	GLFWwindow* pWindow = GLFW::createWindow(1280, 800, "Vulkan Simple Render");
-	std::shared_ptr<CApplicationGoldSrc> pApp = std::make_shared<CApplicationGoldSrc>();
+	ptr<CApplicationGoldSrc> pApp = make<CApplicationGoldSrc>();
 	pApp->init(pWindow);
 
 	GLFW::startLoop(pWindow, [=]()

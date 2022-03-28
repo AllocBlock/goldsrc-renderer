@@ -17,7 +17,7 @@ private:
 
     CImguiSelectFile m_FileSelection;
     bool m_IsOpen = true;
-    std::shared_ptr<CIOGoldSrcForgeGameData> m_pIOFGD = nullptr;
+    ptr<CIOGoldSrcForgeGameData> m_pIOFGD = nullptr;
     std::future<std::filesystem::path> m_Future;
 };
 

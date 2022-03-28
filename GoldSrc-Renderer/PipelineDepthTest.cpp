@@ -176,9 +176,9 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
-        m_FragUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
     }
 
@@ -223,7 +223,7 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
 
     vk::SImageViewInfo ViewInfo;
 
-    m_pPlaceholderImage = std::make_shared<vk::CImage>();
+    m_pPlaceholderImage = make<vk::CImage>();
     m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 

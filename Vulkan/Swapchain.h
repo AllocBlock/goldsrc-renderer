@@ -9,6 +9,8 @@ namespace vk
     class CSwapchain : public IVulkanHandle<VkSwapchainKHR>
     {
     public:
+        _DEFINE_PTR(CSwapchain);
+
         void create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface, GLFWwindow* vWindow);
         void destroy();
         VkExtent2D getExtent();
@@ -21,7 +23,7 @@ namespace vk
         VkExtent2D __chooseSwapExtent(GLFWwindow* vWindow, const VkSurfaceCapabilitiesKHR& vCapabilities);
 
         VkDevice m_Device = VK_NULL_HANDLE;
-        std::vector<std::shared_ptr<vk::CImage>> m_ImageSet;
+        std::vector<vk::CImage::Ptr> m_ImageSet;
         std::vector<VkImageView> m_ImageViewSet;
         VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
         VkExtent2D m_Extent = { 0, 0 };

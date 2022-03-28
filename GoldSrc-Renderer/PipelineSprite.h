@@ -46,11 +46,11 @@ private:
     void __updateDescriptorSet();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<std::shared_ptr<vk::CImage>> m_SpriteImageSet;
-    std::shared_ptr<vk::CImage> m_pPlaceholderImage;
+    std::vector<vk::CImage::Ptr> m_SpriteImageSet;
+    vk::CImage::Ptr m_pPlaceholderImage;
     std::vector<SSpritePushConstant> m_SpriteSequence;
-    std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
+    ptr<vk::CBuffer> m_pVertexBuffer;
     size_t m_VertexNum = 0;
-    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
 };
 

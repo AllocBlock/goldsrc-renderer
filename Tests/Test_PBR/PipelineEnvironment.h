@@ -31,6 +31,7 @@ struct SFullScreenPointData
 class CPipelineEnvironment : public IPipeline
 {
 public:
+
     void setEnvironmentMap(CIOImage::Ptr vHDRI);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::Ptr vCamera);
     void destroy();

@@ -44,7 +44,7 @@ struct STestPointData
 class CPipelineTest : public IPipeline
 {
 public:
-    void setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet);
+    void setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos);
     void destroy();
 
@@ -65,9 +65,9 @@ private:
     void __destroyResources();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
-    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
-    std::shared_ptr<vk::CImage> m_pSkyBoxImage = nullptr;
-    std::shared_ptr<vk::CImage> m_pPlaceholderImage = nullptr;
+    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
+    vk::CImage::Ptr m_pSkyBoxImage = nullptr;
+    vk::CImage::Ptr m_pPlaceholderImage = nullptr;
 };
 

@@ -27,6 +27,7 @@ public:
     const CDescriptor& getDescriptor() const { return m_Descriptor; }
 
 protected:
+    virtual void _renderUIV() override {};
     virtual std::filesystem::path _getVertShaderPathV() = 0;
     virtual std::filesystem::path _getFragShaderPathV() = 0;
     virtual void _createResourceV(size_t vImageNum) = 0;

@@ -5,5 +5,5 @@
 
 namespace Function
 {
-    std::shared_ptr<vk::CImage> createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, std::shared_ptr<CIOImage> vImage);
+    vk::CImage::Ptr createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, ptr<CIOImage> vImage);
 }

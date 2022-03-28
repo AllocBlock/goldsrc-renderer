@@ -17,15 +17,15 @@ glm::vec3 stringToVec3(std::string vString)
     return glm::vec3(X, Y, Z);
 }
 
-std::shared_ptr<SScene> CSceneReaderBsp::_readV()
+ptr<SScene> CSceneReaderBsp::_readV()
 {
-    m_pScene = std::make_shared<SScene>();
+    m_pScene = make<SScene>();
     
     __readBsp(m_FilePath);
     if (!m_Bsp.getLumps().m_LumpLighting.Lightmaps.empty())
     {
         m_pScene->UseLightmap = true;
-        m_pScene->pLightmap = std::make_shared<CLightmap>();
+        m_pScene->pLightmap = make<CLightmap>();
         m_HasLightmapData = true;
     }
 
@@ -53,7 +53,7 @@ void CSceneReaderBsp::__readTextures()
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    std::vector<std::shared_ptr<CIOImage>> TexImageSet;
+    std::vector<ptr<CIOImage>> TexImageSet;
 
     m_TexNameToIndex.clear();
     // read wads
@@ -73,7 +73,7 @@ void CSceneReaderBsp::__readTextures()
         Scene::reportProgress(u8"读取纹理（" + std::to_string(i + 1) + "/" + std::to_string(Lumps.m_LumpTexture.Textures.size()) + " " + BspTexture.Name + u8"）");
         if (BspTexture.IsDataInBsp)
         {
-            std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromBspTexture(BspTexture);
+            ptr<CIOImage> pTexImage = Scene::getIOImageFromBspTexture(BspTexture);
             m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImageSet.size());
             TexImageSet.emplace_back(std::move(pTexImage));
         }
@@ -86,7 +86,7 @@ void CSceneReaderBsp::__readTextures()
                 if (Index.has_value())
                 {
                     Found = true;
-                    std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
+                    ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
                     m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImageSet.size());
                     TexImageSet.emplace_back(std::move(pTexImage));
                     break;
@@ -100,16 +100,16 @@ void CSceneReaderBsp::__readTextures()
     m_pScene->TexImageSet = std::move(TexImageSet);
 }
 
-std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
+std::vector<ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     _ASSERTE(vLeafIndex < Lumps.m_LumpLeaf.Leaves.size());
     const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
 
-    auto pObjectNormalPart = std::make_shared<C3DObjectGoldSrc>();
+    auto pObjectNormalPart = make<C3DObjectGoldSrc>();
     pObjectNormalPart->setMark("brush");
-    auto pObjectSkyPart = std::make_shared<C3DObjectGoldSrc>();
+    auto pObjectSkyPart = make<C3DObjectGoldSrc>();
     pObjectSkyPart->setMark("sky");
 
     size_t TexWidth, TexHeight;
@@ -131,7 +131,7 @@ std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_
         }
     }
 
-    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<C3DObjectGoldSrc>> Objects;
     if (pObjectNormalPart->getVertexArray()->size() > 0)
         Objects.emplace_back(std::move(pObjectNormalPart));
     if (pObjectSkyPart->getVertexArray()->size() > 0)
@@ -139,13 +139,13 @@ std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_
     return Objects;
 }
 
-std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+std::vector<ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    auto pObjectNormalPart = std::make_shared<C3DObjectGoldSrc>();
+    auto pObjectNormalPart = make<C3DObjectGoldSrc>();
     pObjectNormalPart->setMark("entity");
-    auto pObjectSkyPart = std::make_shared<C3DObjectGoldSrc>();
+    auto pObjectSkyPart = make<C3DObjectGoldSrc>();
     pObjectSkyPart->setMark("sky");
     
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
@@ -161,7 +161,7 @@ std::vector<std::shared_ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(siz
             __appendBspFaceToObject(pObjectNormalPart, FaceIndex);
     }
 
-    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<C3DObjectGoldSrc>> Objects;
     Objects.emplace_back(std::move(pObjectNormalPart));
     Objects.emplace_back(std::move(pObjectSkyPart));
     return Objects;
@@ -172,7 +172,7 @@ void CSceneReaderBsp::__loadBspTree()
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     SBspTree BspTree;
-    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<C3DObjectGoldSrc>> Objects;
 
     // read node and PVS data
     Scene::reportProgress(u8"载入BSP数据");
@@ -202,9 +202,9 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[0]);
             Node.Front = NodeNum + LeafIndex;
-            std::vector<std::shared_ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (std::shared_ptr<C3DObjectGoldSrc> LeafObject : LeafObjects)
+            for (ptr<C3DObjectGoldSrc> LeafObject : LeafObjects)
             {
                 ObjectIndices.emplace_back(Objects.size());
                 Objects.emplace_back(LeafObject);
@@ -217,9 +217,9 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[1]);
             Node.Back = NodeNum + LeafIndex;
-            std::vector<std::shared_ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (std::shared_ptr<C3DObjectGoldSrc> pLeafObject : LeafObjects)
+            for (ptr<C3DObjectGoldSrc> pLeafObject : LeafObjects)
             {
                 ObjectIndices.emplace_back(Objects.size());
                 Objects.emplace_back(pLeafObject);
@@ -246,14 +246,14 @@ void CSceneReaderBsp::__loadBspTree()
         }
 
         // load entities data and calculate bounding box
-        std::vector<std::shared_ptr<C3DObjectGoldSrc>> ModelObjects = __loadEntity(i);
+        std::vector<ptr<C3DObjectGoldSrc>> ModelObjects = __loadEntity(i);
         std::vector<size_t> ObjectIndices;
         S3DBoundingBox TotalBoundingBox =
         {
             {INFINITY, INFINITY, INFINITY},
             {-INFINITY, -INFINITY, -INFINITY},
         };
-        for (std::shared_ptr<C3DObjectGoldSrc> pModelObject : ModelObjects)
+        for (ptr<C3DObjectGoldSrc> pModelObject : ModelObjects)
         {
             std::optional<S3DBoundingBox> BoundingBox = pModelObject->getBoundingBox();
             if (BoundingBox == std::nullopt) continue;
@@ -434,7 +434,7 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
             for (size_t k = 0; k < LightmapImageSize; ++k)
                 pIndices[k] = std::max<uint8_t>(pIndices[k], pTempData[k]);
         }
-        auto pLightmapImage = std::make_shared<CIOImage>();
+        auto pLightmapImage = make<CIOImage>();
         pLightmapImage->setSize(LightmapWidth, LightmapHeight);
         pLightmapImage->setChannelNum(4);
         pLightmapImage->setData(pIndices);
@@ -485,7 +485,7 @@ void CSceneReaderBsp::__getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& 
     voName = BspTexture.Name;
 }
 
-void CSceneReaderBsp::__appendBspFaceToObject(std::shared_ptr<C3DObjectGoldSrc> pObject, uint32_t vFaceIndex)
+void CSceneReaderBsp::__appendBspFaceToObject(ptr<C3DObjectGoldSrc> pObject, uint32_t vFaceIndex)
 {
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -600,7 +600,7 @@ bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string
         std::filesystem::path ImagePath;
         if (Scene::findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, ImagePath))
         {
-            m_pScene->SkyBoxImages[i] = std::make_shared<CIOImage>();
+            m_pScene->SkyBoxImages[i] = make<CIOImage>();
             m_pScene->SkyBoxImages[i]->read(ImagePath);
         }
         else
@@ -667,7 +667,7 @@ void CSceneReaderBsp::__loadPointEntities()
                 Spr.read(RealWadPath);
                 uint32_t Width = 0, Height = 0;
                 Spr.getFrameSize(0, Width, Height);
-                auto pImage = std::make_shared<CIOImage>();
+                auto pImage = make<CIOImage>();
                 void* pData = new uint8_t[Width * Height * 4];
                 Spr.getFrameRGBAPixels(0, pData);
                 pImage->setSize(Width, Height);
@@ -679,7 +679,7 @@ void CSceneReaderBsp::__loadPointEntities()
             }
         }
 
-        auto pEntityCube = std::make_shared<C3DObjectGoldSrc>();
+        auto pEntityCube = make<C3DObjectGoldSrc>();
         pEntityCube->setMark("point_entity");
         if (!Name.empty())
         {
@@ -693,7 +693,7 @@ void CSceneReaderBsp::__loadPointEntities()
     }
 }
 
-void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, std::shared_ptr<C3DObjectGoldSrc> voObject)
+void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, ptr<C3DObjectGoldSrc> voObject)
 {
     // create plane and vertex buffer
     std::vector<glm::vec3> VertexSet =

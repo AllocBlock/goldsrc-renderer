@@ -18,8 +18,8 @@ protected:
     virtual void _destroyOtherResourceV() override;
 
 private:
-    std::shared_ptr<CGUITest> m_pGUI = nullptr;
-    std::shared_ptr<CRendererTest> m_pRenderer = nullptr;
-    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+    ptr<CGUITest> m_pGUI = nullptr;
+    ptr<CRendererTest> m_pRenderer = nullptr;
+    ptr<CInteractor> m_pInteractor = nullptr;
 };
 

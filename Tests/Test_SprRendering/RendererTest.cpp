@@ -154,7 +154,7 @@ void CRendererTest::__createFramebuffers()
             m_pDepthImage->get()
         };
 
-        m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
         m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, Attachments, m_AppInfo.Extent);
     }
 }
@@ -215,7 +215,7 @@ void CRendererTest::__createRecreateResources()
     glm::vec3 Position;
     float Scale;
     EGoldSrcSpriteType Type;
-    std::shared_ptr<CIOImage> pImage;
+    ptr<CIOImage> pImage;
     m_Pipeline.setSprites(SpriteSet);
 }
 

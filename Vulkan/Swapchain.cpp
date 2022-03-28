@@ -65,7 +65,7 @@ void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSu
     m_ImageSet.resize(NumImage);
     for (size_t i = 0; i < NumImage; ++i)
     {
-        m_ImageSet[i] = std::make_shared<vk::CImage>();
+        m_ImageSet[i] = make<vk::CImage>();
         m_ImageSet[i]->setImage(vDevice, SwapchainImageSet[i], SurfaceFormat.format, 1, ViewInfo);
         m_ImageViewSet[i] = m_ImageSet[i]->get();
     }

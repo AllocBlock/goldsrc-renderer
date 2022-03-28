@@ -1,4 +1,5 @@
 #pragma once
+#include "Pointer.h"
 #include "Common.h"
 #include "GUI.h"
 
@@ -13,7 +14,7 @@ struct SFrustum
 class CCamera : public IGUI
 {
 public:
-	using Ptr = std::shared_ptr<CCamera>;
+	_DEFINE_PTR(CCamera);
 
 	CCamera() { reset(); }
 

@@ -11,7 +11,7 @@
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 
-void CRendererSceneSimple::_loadSceneV(std::shared_ptr<SScene> vScene)
+void CRendererSceneSimple::_loadSceneV(ptr<SScene> vScene)
 {
     vkDeviceWaitIdle(m_AppInfo.Device);
     m_pScene = vScene;
@@ -21,7 +21,7 @@ void CRendererSceneSimple::_loadSceneV(std::shared_ptr<SScene> vScene)
     size_t VertexOffset = 0;
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
-        std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[i];
+        ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[i];
         if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
         {
             m_ObjectDataPositions[i].Offset = VertexOffset;
@@ -228,7 +228,7 @@ void CRendererSceneSimple::__recordObjectRenderCommand(uint32_t vImageIndex, siz
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
     _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
-    std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
+    ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
 
     uint32_t Size = static_cast<uint32_t>(DataPosition.Size);
@@ -333,7 +333,7 @@ void CRendererSceneSimple::__createFramebuffers()
             m_pDepthImage->get()
         };
 
-        m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
         m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
     }
 }
@@ -356,7 +356,7 @@ void CRendererSceneSimple::__createVertexBuffer()
     size_t NumVertex = 0;
     if (m_pScene)
     {
-        for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+        for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
             NumVertex += pObject->getVertexArray()->size();
         if (NumVertex == 0)
         {
@@ -370,7 +370,7 @@ void CRendererSceneSimple::__createVertexBuffer()
     VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
     void* pData = new char[BufferSize];
     size_t Offset = 0;
-    for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+    for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
     {
         std::vector<SSimplePointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SSimplePointData) * pObject->getVertexArray()->size();
@@ -378,7 +378,7 @@ void CRendererSceneSimple::__createVertexBuffer()
         Offset += SubBufferSize;
     }
 
-    m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexBuffer = make<vk::CBuffer>();
     m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(pData, BufferSize);
     delete[] pData;
@@ -389,7 +389,7 @@ void CRendererSceneSimple::__createIndexBuffer()
     /*size_t NumIndex = 0;
     if (m_pScene)
     {
-        for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+        for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
             NumIndex += pObject->Indices.size();
 
         if (NumIndex == 0)
@@ -404,7 +404,7 @@ void CRendererSceneSimple::__createIndexBuffer()
     VkDeviceSize BufferSize = sizeof(uint32_t) * NumIndex;
     void* pData = new char[BufferSize];
     size_t Offset = 0;
-    for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
+    for (ptr<S3DObject> pObject : m_pScene->Objects)
     {
         size_t IndexOffset = Offset / sizeof(uint32_t);
         std::vector<uint32_t> Indices = pObject->Indices;
@@ -426,7 +426,7 @@ void CRendererSceneSimple::__updateDescriptorSets()
     m_PipelineSet.Main.updateDescriptorSet(TextureSet);
 }
 
-std::vector<SSimplePointData> CRendererSceneSimple::__readPointData(std::shared_ptr<C3DObjectGoldSrc> vpObject) const
+std::vector<SSimplePointData> CRendererSceneSimple::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const
 {
     auto pVertexArray = vpObject->getVertexArray();
     auto pNormalArray = vpObject->getNormalArray();
@@ -522,7 +522,7 @@ void CRendererSceneSimple::__calculateVisiableObjects()
     }
 }
 
-bool CRendererSceneSimple::__isObjectInSight(std::shared_ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
+bool CRendererSceneSimple::__isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
 {
     // AABB frustum culling
     const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;

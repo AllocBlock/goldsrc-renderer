@@ -171,7 +171,7 @@ bool CRendererPBR::__readSkyboxImages(std::string vSkyFilePrefix, std::string vE
         std::filesystem::path ImagePath = vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension;
         if (std::filesystem::exists(ImagePath))
         {
-            m_SkyBoxImageSet[i] = std::make_shared<CIOImage>();
+            m_SkyBoxImageSet[i] = make<CIOImage>();
             m_SkyBoxImageSet[i]->read(ImagePath);
         }
         else
@@ -229,7 +229,7 @@ void CRendererPBR::__createFramebuffers()
             m_pDepthImage->get()
         };
 
-        m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
         m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
     }
 }
@@ -242,7 +242,7 @@ void CRendererPBR::__createVertexBuffer()
     if (VertexNum > 0)
     {
         VkDeviceSize BufferSize = sizeof(SPBSPointData) * VertexNum;
-        m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+        m_pVertexBuffer = make<vk::CBuffer>();
         m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
@@ -250,17 +250,17 @@ void CRendererPBR::__createVertexBuffer()
 
 void CRendererPBR::__createMaterials()
 {
-    std::shared_ptr<CIOImage> pColorImage = std::make_shared<CIOImage>("./textures/Stone_albedo.jpg");
+    CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
     vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pColorImage);
     m_TextureColorSet.push_back(pColor);
 
-    std::shared_ptr<CIOImage> pNormalImage = std::make_shared<CIOImage>("./textures/Stone_normal.jpg");
+    CIOImage::Ptr pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
     pNormalImage->read();
     vk::CImage::Ptr pNormal = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pNormalImage);
     m_TextureNormalSet.push_back(pNormal);
 
-    std::shared_ptr<CIOImage> pSpecularImage = std::make_shared<CIOImage>("./textures/Stone_omr.jpg");
+    CIOImage::Ptr pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
     pSpecularImage->read();
     vk::CImage::Ptr pSpecular = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pSpecularImage);
     m_TextureSpecularSet.push_back(pSpecular);
@@ -283,7 +283,7 @@ void CRendererPBR::__createMaterials()
         }
 
     VkDeviceSize BufferSize = sizeof(SMaterialPBR) * Num;
-    m_pMaterialBuffer = std::make_shared<vk::CBuffer>();
+    m_pMaterialBuffer = make<vk::CBuffer>();
     m_pMaterialBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pMaterialBuffer->stageFill(MaterialSet.data(), BufferSize);
 }

@@ -65,8 +65,8 @@ private:
     void __destroyResources();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;
-    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
     std::vector<VkImageView> m_ShadowMapImageViewSet;
-    std::shared_ptr<vk::CImage> m_pPlaceholderImage;
+    vk::CImage::Ptr m_pPlaceholderImage;
 };
 

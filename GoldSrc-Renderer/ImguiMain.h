@@ -21,11 +21,11 @@ struct SResultReadScene
 {
     bool Succeed = false;
     std::string Message;
-    std::shared_ptr<SScene> pScene;
+    ptr<SScene> pScene;
 };
 
 // TODO: custom event loop!
-using ReadSceneCallbackFunc_T = std::function<void(std::shared_ptr<SScene>)>;
+using ReadSceneCallbackFunc_T = std::function<void(ptr<SScene>)>;
 using ChangeRenderMethodCallbackFunc_T = std::function<void(ERenderMethod)>;
 
 class CGUIMain : public IGUI
@@ -51,7 +51,7 @@ public:
         m_RenderSettingCallback = vCallback;
     }
 
-    void setInteractor(std::shared_ptr<CInteractor> vInteractor)
+    void setInteractor(ptr<CInteractor> vInteractor)
     {
         m_pInteractor = vInteractor;
     }
@@ -61,7 +61,7 @@ protected:
     virtual void _renderUIV() override;
 
 private:
-    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+    ptr<CInteractor> m_pInteractor = nullptr;
 
     CImguiAlert m_GUIAlert = CImguiAlert();
     CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();

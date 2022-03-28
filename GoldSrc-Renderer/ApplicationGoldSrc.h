@@ -23,12 +23,12 @@ protected:
 private:
     void __recreateRenderer(ERenderMethod vMethod = ERenderMethod::BSP);
 
-    std::shared_ptr<CRendererScene> m_pRenderer = nullptr;
-    std::shared_ptr<CGUIRenderer> m_pGUI = nullptr;
-    std::shared_ptr<CGUIMain> m_pMainUI = nullptr;
-    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
-    std::shared_ptr<CCamera> m_pCamera = nullptr;
+    ptr<CRendererScene> m_pRenderer = nullptr;
+    ptr<CGUIRenderer> m_pGUI = nullptr;
+    ptr<CGUIMain> m_pMainUI = nullptr;
+    ptr<CInteractor> m_pInteractor = nullptr;
+    ptr<CCamera> m_pCamera = nullptr;
 
-    std::shared_ptr<SScene> m_pScene = nullptr;
+    ptr<SScene> m_pScene = nullptr;
 };
 

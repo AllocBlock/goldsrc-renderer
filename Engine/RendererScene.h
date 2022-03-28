@@ -12,18 +12,18 @@ struct SObjectDataPosition
 class CRendererScene : public IRenderer
 {
 public:
-    CRendererScene():m_pCamera(std::make_shared<CCamera>()) {};
+    CRendererScene():m_pCamera(make<CCamera>()) {};
 
-    std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
-    void setCamera(std::shared_ptr<CCamera> vCamera) { m_pCamera = vCamera; }
+    ptr<CCamera> getCamera() { return m_pCamera; }
+    void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; }
 
-    std::shared_ptr<SScene> getScene() const { return m_pScene; }
-    void loadScene(std::shared_ptr<SScene> vScene) { _loadSceneV(vScene); }
+    ptr<SScene> getScene() const { return m_pScene; }
+    void loadScene(ptr<SScene> vScene) { _loadSceneV(vScene); }
 
 protected:
-    virtual void _loadSceneV(std::shared_ptr<SScene> vScene) = 0;
+    virtual void _loadSceneV(ptr<SScene> vScene) = 0;
 
-    std::shared_ptr<CCamera> m_pCamera = nullptr;
-    std::shared_ptr<SScene> m_pScene = nullptr;
+    ptr<CCamera> m_pCamera = nullptr;
+    ptr<SScene> m_pScene = nullptr;
 };
 

@@ -9,9 +9,9 @@
 class CRendererTest : public IRenderer
 {
 public:
-    CRendererTest() : m_pCamera(std::make_shared<CCamera>()) {}
+    CRendererTest() : m_pCamera(make<CCamera>()) {}
 
-    std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
+    ptr<CCamera> getCamera() { return m_pCamera; }
 
 protected:
     virtual void _initV() override;
@@ -42,13 +42,13 @@ private:
     CPipelineTest m_Pipeline;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
-    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
-    std::shared_ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
-    std::shared_ptr<vk::CImage> m_pDepthImage = nullptr;
+    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
+    ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
+    vk::CImage::Ptr m_pDepthImage = nullptr;
 
     const std::string m_SkyFilePrefix = "../../data/neb6";
-    std::shared_ptr<CCamera> m_pCamera = nullptr;
+    ptr<CCamera> m_pCamera = nullptr;
     std::vector<STestPointData> m_PointDataSet;
-    std::array<std::shared_ptr<CIOImage>, 6> m_SkyBoxImageSet;
+    std::array<ptr<CIOImage>, 6> m_SkyBoxImageSet;
 };
 

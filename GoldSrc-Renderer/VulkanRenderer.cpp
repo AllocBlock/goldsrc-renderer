@@ -11,7 +11,7 @@
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 
-void CRendererSceneGoldSrc::_loadSceneV(std::shared_ptr<SScene> vScene)
+void CRendererSceneGoldSrc::_loadSceneV(ptr<SScene> vScene)
 {
     vkDeviceWaitIdle(m_AppInfo.Device);
     m_pScene = vScene;
@@ -23,7 +23,7 @@ void CRendererSceneGoldSrc::_loadSceneV(std::shared_ptr<SScene> vScene)
     size_t VertexOffset = 0;
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
-        std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[i];
+        ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[i];
         if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
         {
             m_ObjectDataPositions[i].Offset = VertexOffset;
@@ -43,7 +43,7 @@ void CRendererSceneGoldSrc::_loadSceneV(std::shared_ptr<SScene> vScene)
 
 void CRendererSceneGoldSrc::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
 {
-    auto pObject = std::make_shared<SGuiObject>();
+    auto pObject = make<SGuiObject>();
 
     std::array<glm::vec3, 8> Vertices =
     {
@@ -76,7 +76,7 @@ void CRendererSceneGoldSrc::removeHighlightBoundingBox()
 
 void CRendererSceneGoldSrc::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
 {
-    auto pObject = std::make_shared<SGuiObject>();
+    auto pObject = make<SGuiObject>();
     pObject->Data = { vStart, vEnd };
     m_PipelineSet.GuiLines.setObject(vName, std::move(pObject));
     rerecordCommand();
@@ -570,7 +570,7 @@ void CRendererSceneGoldSrc::__recordObjectRenderCommand(uint32_t vImageIndex, si
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
     _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
-    std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
+    ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
     SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
 
     uint32_t Size = static_cast<uint32_t>(DataPosition.Size);
@@ -689,7 +689,7 @@ void CRendererSceneGoldSrc::__createFramebuffers()
             m_pDepthImage->get()
         };
 
-        m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
         m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
     }
 }
@@ -711,7 +711,7 @@ void CRendererSceneGoldSrc::__createLightmapImage()
 {
     if (m_pScene && m_pScene->UseLightmap)
     {
-        std::shared_ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
+        ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
         m_pLightmapImage = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pCombinedLightmapImage);
     }
 }
@@ -721,7 +721,7 @@ void CRendererSceneGoldSrc::__createVertexBuffer()
     size_t NumVertex = 0;
     if (m_pScene)
     {
-        for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+        for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
             NumVertex += pObject->getVertexArray()->size();
         if (NumVertex == 0)
         {
@@ -735,14 +735,14 @@ void CRendererSceneGoldSrc::__createVertexBuffer()
     VkDeviceSize BufferSize = sizeof(SGoldSrcPointData) * NumVertex;
     void* pData = new char[BufferSize];
     size_t Offset = 0;
-    for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+    for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
     {
         std::vector<SGoldSrcPointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->getVertexArray()->size();
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexBuffer = vk::CBuffermake<>();
     m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(pData, BufferSize);
     delete[] pData;
@@ -753,7 +753,7 @@ void CRendererSceneGoldSrc::__createIndexBuffer()
     /*size_t NumIndex = 0;
     if (m_pScene)
     {
-        for (std::shared_ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+        for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
             NumIndex += pObject->Indices.size();
 
         if (NumIndex == 0)
@@ -768,7 +768,7 @@ void CRendererSceneGoldSrc::__createIndexBuffer()
     VkDeviceSize BufferSize = sizeof(uint32_t) * NumIndex;
     void* pData = new char[BufferSize];
     size_t Offset = 0;
-    for (std::shared_ptr<S3DObject> pObject : m_pScene->Objects)
+    for (ptr<S3DObject> pObject : m_pScene->Objects)
     {
         size_t IndexOffset = Offset / sizeof(uint32_t);
         std::vector<uint32_t> Indices = pObject->Indices;
@@ -795,7 +795,7 @@ void CRendererSceneGoldSrc::__updateDescriptorSets()
     m_PipelineSet.GuiLines.updateDescriptorSet();
 }
 
-std::vector<SGoldSrcPointData> CRendererSceneGoldSrc::__readPointData(std::shared_ptr<C3DObjectGoldSrc> vpObject) const
+std::vector<SGoldSrcPointData> CRendererSceneGoldSrc::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const
 {
     auto pVertexArray = vpObject->getVertexArray();
     auto pColorArray = vpObject->getColorArray();
@@ -924,7 +924,7 @@ void CRendererSceneGoldSrc::__calculateVisiableObjects()
     }
 }
 
-bool CRendererSceneGoldSrc::__isObjectInSight(std::shared_ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
+bool CRendererSceneGoldSrc::__isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
 {
     // AABB frustum culling
     const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;

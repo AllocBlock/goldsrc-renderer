@@ -1,8 +1,8 @@
 #pragma once
-#include "DataArrayBase.h"
+#include "DataArray.h"
 
 template <typename T>
-class CSingleValueDataArray : public CDataArrayBase<T>
+class CSingleValueDataArray : public IDataArray<T>
 {
 public:
     CSingleValueDataArray() = default;

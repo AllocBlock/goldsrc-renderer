@@ -5,8 +5,8 @@
 class CSceneReaderMap : public CSceneReaderBase
 {
 protected:
-    virtual std::shared_ptr<SScene> _readV() override;
+    virtual ptr<SScene> _readV() override;
 private:
-    std::shared_ptr<SScene> m_pScene = nullptr;
+    ptr<SScene> m_pScene = nullptr;
 };
 

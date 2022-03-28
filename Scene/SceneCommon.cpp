@@ -1,12 +1,13 @@
 #include "Common.h"
 #include "SceneCommon.h"
+#include "Pointer.h"
 
 using namespace Common;
 
 std::function<void(std::string)> g_pReportProgressFunc = nullptr;
 std::function<Scene::SRequestResultFilePath(std::string,std::string)> g_pRequestFilePathFunc = nullptr;
 
-std::shared_ptr<CIOImage> Scene::generateGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize, uint8_t vBaseColor1[3], uint8_t vBaseColor2[3])
+ptr<CIOImage> Scene::generateGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize, uint8_t vBaseColor1[3], uint8_t vBaseColor2[3])
 {
     size_t DataSize = vNumRow * vNumCol * vCellSize * vCellSize * 4;
     uint8_t* pIndices = new uint8_t[DataSize];
@@ -35,21 +36,21 @@ std::shared_ptr<CIOImage> Scene::generateGrid(size_t vNumRow, size_t vNumCol, si
         }
         std::cout << std::endl;
     }*/
-    std::shared_ptr<CIOImage> pGrid = std::make_shared<CIOImage>();
+    ptr<CIOImage> pGrid = make<CIOImage>();
     pGrid->setSize(vNumCol * vCellSize, vNumRow * vCellSize);
     pGrid->setData(pIndices);
 
     return pGrid;
 }
 
-std::shared_ptr<CIOImage> Scene::generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
+ptr<CIOImage> Scene::generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize)
 {
     uint8_t BaseColor1[3] = { 0, 0, 0 };
     uint8_t BaseColor2[3] = { 255, 0, 255 };
     return generateGrid(vNumRow, vNumCol, vCellSize, BaseColor1, BaseColor2);
 }
 
-std::shared_ptr<CIOImage> Scene::generatePureColorTexture(uint8_t vBaseColor[3], size_t vSize)
+ptr<CIOImage> Scene::generatePureColorTexture(uint8_t vBaseColor[3], size_t vSize)
 {
     size_t DataSize = vSize * vSize * 4;
     uint8_t* pIndices = new uint8_t[DataSize];
@@ -61,14 +62,14 @@ std::shared_ptr<CIOImage> Scene::generatePureColorTexture(uint8_t vBaseColor[3],
         pIndices[i * 4 + 3] = static_cast<uint8_t>(255);
     }
 
-    std::shared_ptr<CIOImage> pPure = std::make_shared<CIOImage>();
+    ptr<CIOImage> pPure = make<CIOImage>();
     pPure->setSize(vSize, vSize);
     pPure->setData(pIndices);
 
     return pPure;
 }
 
-std::shared_ptr<CIOImage> Scene::generateDiagonalGradientGrid(size_t vWidth, size_t vHeight, uint8_t vR1, uint8_t vG1, uint8_t vB1, uint8_t vR2, uint8_t vG2, uint8_t vB2)
+ptr<CIOImage> Scene::generateDiagonalGradientGrid(size_t vWidth, size_t vHeight, uint8_t vR1, uint8_t vG1, uint8_t vB1, uint8_t vR2, uint8_t vG2, uint8_t vB2)
 {
     uint8_t BaseColor1[3] = { vR1, vG1, vB1 };
     uint8_t BaseColor2[3] = { vR2, vG2, vB2 };
@@ -91,7 +92,7 @@ std::shared_ptr<CIOImage> Scene::generateDiagonalGradientGrid(size_t vWidth, siz
         }
     }
 
-    std::shared_ptr<CIOImage> pGradient = std::make_shared<CIOImage>();
+    ptr<CIOImage> pGradient = make<CIOImage>();
     pGradient->setSize(vWidth, vHeight);
     pGradient->setData(pIndices);
 
@@ -129,12 +130,12 @@ bool Scene::findFile(std::filesystem::path vFilePath, std::filesystem::path vSea
     return false;
 }
 
-std::shared_ptr<CIOImage> Scene::getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex)
+ptr<CIOImage> Scene::getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex)
 {
     uint32_t Width = 0, Height = 0;
     vWad.getTextureSize(vIndex, Width, Height);
 
-    std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+    ptr<CIOImage> pTexImage = make<CIOImage>();
     pTexImage->setSize(static_cast<int>(Width), static_cast<int>(Height));
     void* pIndices = new uint8_t[static_cast<size_t>(4) * Width * Height];
     vWad.getRawRGBAPixels(vIndex, pIndices);
@@ -143,11 +144,11 @@ std::shared_ptr<CIOImage> Scene::getIOImageFromWad(const CIOGoldsrcWad& vWad, si
     return pTexImage;
 }
 
-std::shared_ptr<CIOImage> Scene::getIOImageFromBspTexture(const SBspTexture& vBspTexture)
+ptr<CIOImage> Scene::getIOImageFromBspTexture(const SBspTexture& vBspTexture)
 {
     uint8_t* pIndices = new uint8_t[static_cast<size_t>(4) * vBspTexture.Width * vBspTexture.Height];
     vBspTexture.getRawRGBAPixels(pIndices);
-    std::shared_ptr<CIOImage> pTexImage = std::make_shared<CIOImage>();
+    ptr<CIOImage> pTexImage = make<CIOImage>();
     pTexImage->setSize(vBspTexture.Width, vBspTexture.Height);
     pTexImage->setData(pIndices);
     delete[] pIndices;

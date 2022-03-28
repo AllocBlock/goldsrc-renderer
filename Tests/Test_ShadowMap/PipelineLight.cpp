@@ -29,7 +29,7 @@ void CPipelineLight::__createPlaceholderImage()
     vk::SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    m_pPlaceholderImage = std::make_shared<vk::CImage>();
+    m_pPlaceholderImage = make<vk::CImage>();
     m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
@@ -100,7 +100,7 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
     }
 

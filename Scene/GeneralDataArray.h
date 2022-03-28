@@ -1,10 +1,10 @@
 #pragma once
-#include "DataArrayBase.h"
+#include "DataArray.h"
 
 #include <vector>
 
 template <typename T>
-class CGeneralDataArray : public CDataArrayBase<T>
+class CGeneralDataArray : public IDataArray<T>
 {
 protected:
     virtual size_t _sizeV() override

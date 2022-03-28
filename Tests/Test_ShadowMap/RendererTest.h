@@ -10,13 +10,13 @@
 class CRendererTest : public IRenderer
 {
 public:
-    CRendererTest() : m_pCamera(std::make_shared<CCamera>()),
-        m_pLightCamera(std::make_shared<CCamera>())
+    CRendererTest() : m_pCamera(make<CCamera>()),
+        m_pLightCamera(make<CCamera>())
     {
         
     }
 
-    std::shared_ptr<CCamera> getCamera() { return m_pCamera; }
+    ptr<CCamera> getCamera() { return m_pCamera; }
     void exportShadowMapToFile(std::string vFileName);
 
 protected:
@@ -50,24 +50,24 @@ private:
    
     VkRenderPass m_RenderPassShadowMap = VK_NULL_HANDLE;
     CPipelineShadowMap m_PipelineShadowMap;
-    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_ShadowFramebufferSet;
-    std::vector<std::shared_ptr<vk::CImage>> m_ShadowMapImageSet;
-    std::shared_ptr<vk::CBuffer> m_ShadowMapVertBuffer;
+    std::vector<ptr<vk::CFrameBuffer>> m_ShadowFramebufferSet;
+    std::vector<vk::CImage::Ptr> m_ShadowMapImageSet;
+    ptr<vk::CBuffer> m_ShadowMapVertBuffer;
     std::vector<SShadowMapPointData> m_ShadowMapPointDataSet;
 
     VkRenderPass m_RenderPassLight = VK_NULL_HANDLE;
     CPipelineLight m_PipelineLight;
-    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_LightFramebufferSet;
-    std::shared_ptr<vk::CBuffer> m_pLightVertBuffer;
+    std::vector<ptr<vk::CFrameBuffer>> m_LightFramebufferSet;
+    ptr<vk::CBuffer> m_pLightVertBuffer;
     std::vector<SLightPointData> m_LightPointDataSet;
 
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";
-    std::shared_ptr<vk::CImage> m_pShadowMapDepthImage;
-    std::shared_ptr<vk::CImage> m_pLightDepthImage;
+    vk::CImage::Ptr m_pShadowMapDepthImage;
+    vk::CImage::Ptr m_pLightDepthImage;
 
-    std::shared_ptr<CCamera> m_pCamera = nullptr;
-    std::shared_ptr<CCamera> m_pLightCamera = nullptr;
+    ptr<CCamera> m_pCamera = nullptr;
+    ptr<CCamera> m_pLightCamera = nullptr;
 
     VkFormat m_ShadowMapImageFormat = VkFormat::VK_FORMAT_R32_SFLOAT;
 };

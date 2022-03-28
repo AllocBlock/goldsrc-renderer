@@ -9,10 +9,10 @@
 class CImguiRenderer
 {
 public:
-    void setTarget(std::shared_ptr<CRendererScene> vRenderer);
+    void setTarget(ptr<CRendererScene> vRenderer);
     void draw();
 protected:
-    virtual void _setTargetV(std::shared_ptr<CRendererScene> vRenderer) = 0;
+    virtual void _setTargetV(ptr<CRendererScene> vRenderer) = 0;
     virtual void _drawV() = 0;
 };
 

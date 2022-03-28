@@ -1,8 +1,12 @@
 #pragma once
+#include "Pointer.h"
+
 template <typename T>
-class CDataArrayBase
+class IDataArray
 {
 public:
+    _DEFINE_PTR(IDataArray<T>);
+
     bool empty() { return size() == 0; }
     size_t size() { return _sizeV(); }
     void resize(size_t vSize, T vFill = T()) { _resizeV(vSize, vFill); }

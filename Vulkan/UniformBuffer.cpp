@@ -6,7 +6,7 @@ using namespace vk;
 void CUniformBuffer::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkDeviceSize vSize)
 {
     destroy();
-    m_pBuffer = std::make_shared<CBuffer>();
+    m_pBuffer = make<CBuffer>();
     m_pBuffer->create(vPhysicalDevice, vDevice, vSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     m_Handle = m_pBuffer->get();

@@ -3,5 +3,5 @@
 
 namespace SceneReader
 {
-    std::shared_ptr<SScene> read(std::string vType, std::filesystem::path vFilePath);
+    ptr<SScene> read(std::string vType, std::filesystem::path vFilePath);
 }

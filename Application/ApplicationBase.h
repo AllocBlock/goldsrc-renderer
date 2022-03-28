@@ -42,16 +42,16 @@ protected:
     virtual void _destroyOtherResourceV();
 
     GLFWwindow* m_pWindow = nullptr;
-    std::shared_ptr<vk::CInstance> m_pInstance = std::make_shared<vk::CInstance>();;
-    std::shared_ptr<vk::CDebugMessenger> m_pDebugMessenger = std::make_shared<vk::CDebugMessenger>();;
-    std::shared_ptr<vk::CSurface> m_pSurface = std::make_shared<vk::CSurface>();;
+    vk::CInstance::Ptr m_pInstance = make<vk::CInstance>();
+    ptr<vk::CDebugMessenger> m_pDebugMessenger = make<vk::CDebugMessenger>();
+    vk::CSurface::Ptr m_pSurface = make<vk::CSurface>();
     VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-    std::shared_ptr<vk::CDevice> m_pDevice = std::make_shared<vk::CDevice>();
-    std::shared_ptr<vk::CSwapchain> m_pSwapchain = std::make_shared<vk::CSwapchain>();;
+    vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
+    vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-    std::vector<std::shared_ptr<vk::CFence>> m_InFlightFenceSet;
+    std::vector<vk::CFence::Ptr> m_InFlightFenceSet;
 
     const int m_MaxFrameInFlight = 2;
     int m_CurrentFrameIndex = 0;

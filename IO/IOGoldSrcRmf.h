@@ -3,6 +3,7 @@
 #include "IOCommon.h"
 #include "IOBase.h"
 #include "IOGoldSrcMap.h"
+#include "Pointer.h"
 #include <vector>
 
 struct SRmfVariableString
@@ -69,7 +70,7 @@ struct SRmfObject
     
     Common::GoldSrc::SColor Color; // The display color in VHE.
 
-    static std::shared_ptr<SRmfObject> create(std::ifstream& vFile);
+    static ptr<SRmfObject> create(std::ifstream& vFile);
 protected:
     virtual void _readV(std::ifstream& vFile) = 0;
 private:
@@ -99,7 +100,7 @@ protected:
 struct SRmfEntity : SRmfObject
 {
     int SolidNum; // 0 = Point entity
-    std::vector<std::shared_ptr<SRmfSolid>> Solids;
+    std::vector<ptr<SRmfSolid>> Solids;
     SRmfVariableString ClassName; // 128 byte max
     char Unknown[4];
     int EntityFlags; // Bit field entity flags (refers to the checkboxes in properties dialog)
@@ -121,7 +122,7 @@ protected:
 struct SRmfGroup : SRmfObject
 {
     int ObjectNum; // Number of objects in this group (An object is a solid, entity or group)
-    std::vector<std::shared_ptr<SRmfObject>> Objects;
+    std::vector<ptr<SRmfObject>> Objects;
 
 protected:
     virtual void _readV(std::ifstream& vFile) override;
@@ -135,7 +136,7 @@ protected:
 struct SRmfWorld : SRmfObject
 {
     int ObjectNum;
-    std::vector<std::shared_ptr<SRmfObject>> Objects;
+    std::vector<ptr<SRmfObject>> Objects;
     SRmfVariableString ClassName; // Should be "worldspawn"
     char Unknown[4];
     int EntityFlags; // Probably unused
@@ -198,7 +199,7 @@ public:
 
     float getVersion() const;
     const std::vector<SRmfVisGroup>& getVisGroups() const;
-    const std::shared_ptr<SRmfWorld>& getWorld() const;
+    const ptr<SRmfWorld>& getWorld() const;
     const std::vector<SRmfPath>& getPaths() const;
     size_t getActiveCameraIndex() const;
     const std::vector<SRmfCamera>& getCameras() const;
@@ -211,7 +212,7 @@ private:
     char Magic[3] = { 0 }; // Header, always "RMF\0"
     int VisGroupNum = 0;
     std::vector<SRmfVisGroup> VisGroups;
-    std::shared_ptr<SRmfWorld> pWorld;
+    ptr<SRmfWorld> pWorld;
     int PathNum = 0;
     std::vector<SRmfPath> Paths;
     char Mark[8] = { 0 }; // Should be "DOCINFO"

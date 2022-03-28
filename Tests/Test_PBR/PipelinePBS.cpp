@@ -21,7 +21,7 @@ struct SUBOFrag
 
 size_t CPipelinePBS::MaxTextureNum = 16;
 
-void CPipelinePBS::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
+void CPipelinePBS::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
     int TexWidth = vSkyBoxImageSet[0]->getWidth();
@@ -74,7 +74,7 @@ void CPipelinePBS::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
-    m_pSkyBoxImage = std::make_shared<vk::CImage>();
+    m_pSkyBoxImage = make<vk::CImage>();
     m_pSkyBoxImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
@@ -85,7 +85,7 @@ void CPipelinePBS::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>
         __updateDescriptorSet();
 }
 
-void CPipelinePBS::setMaterialBuffer(std::shared_ptr<vk::CBuffer> vMaterialBuffer)
+void CPipelinePBS::setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer)
 {
     _ASSERTE(vMaterialBuffer);
     m_pMaterialBuffer = vMaterialBuffer;
@@ -130,7 +130,7 @@ void CPipelinePBS::__createPlaceholderImage()
 {
     // placeholder image
     uint8_t Data = 0;
-    auto pTinyImage = std::make_shared<CIOImage>();
+    CIOImage::Ptr pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(&Data);
     m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
@@ -255,9 +255,9 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
-        m_FragUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
     }
 

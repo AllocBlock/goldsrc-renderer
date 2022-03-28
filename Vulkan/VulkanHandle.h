@@ -1,6 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include <iostream>
+#include "Pointer.h"
 
 namespace vk
 {
@@ -8,8 +9,6 @@ namespace vk
     class IVulkanHandle
     {
     public:
-        using Ptr = std::shared_ptr<T>;
-
         virtual ~IVulkanHandle()
         {
             if (m_Handle)

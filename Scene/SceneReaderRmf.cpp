@@ -4,9 +4,9 @@
 
 using namespace Common;
 
-std::shared_ptr<SScene> CSceneReaderRmf::_readV()
+ptr<SScene> CSceneReaderRmf::_readV()
 {
-    m_pScene = std::make_shared<SScene>();
+    m_pScene = make<SScene>();
     
     __readRmf(m_FilePath);
     __readWadsAndInitTextures();
@@ -50,35 +50,35 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
     }
 }
 
-void CSceneReaderRmf::__readObject(std::shared_ptr<SRmfObject> vpObject)
+void CSceneReaderRmf::__readObject(ptr<SRmfObject> vpObject)
 {
     if (vpObject->Type.String == "CMapWorld")
     {
-        std::shared_ptr<SRmfWorld> pWorld = std::reinterpret_pointer_cast<SRmfWorld>(vpObject);
-        for (std::shared_ptr<SRmfObject> pObject : pWorld->Objects)
+        ptr<SRmfWorld> pWorld = std::reinterpret_pointer_cast<SRmfWorld>(vpObject);
+        for (ptr<SRmfObject> pObject : pWorld->Objects)
         {
             __readObject(pObject);
         }
     }
     else if (vpObject->Type.String == "CMapGroup")
     {
-        std::shared_ptr<SRmfGroup> pGroup = std::reinterpret_pointer_cast<SRmfGroup>(vpObject);
-        for (std::shared_ptr<SRmfObject> pObject : pGroup->Objects)
+        ptr<SRmfGroup> pGroup = std::reinterpret_pointer_cast<SRmfGroup>(vpObject);
+        for (ptr<SRmfObject> pObject : pGroup->Objects)
         {
             __readObject(pObject);
         }
     }
     else if (vpObject->Type.String == "CMapEntity")
     {
-        std::shared_ptr<SRmfEntity> pEntity = std::reinterpret_pointer_cast<SRmfEntity>(vpObject);
-        for (std::shared_ptr<SRmfObject> pObject : pEntity->Solids)
+        ptr<SRmfEntity> pEntity = std::reinterpret_pointer_cast<SRmfEntity>(vpObject);
+        for (ptr<SRmfObject> pObject : pEntity->Solids)
         {
             __readObject(pObject);
         }
     }
     else if (vpObject->Type.String == "CMapSolid")
     {
-        std::shared_ptr<SRmfSolid> pSolid = std::reinterpret_pointer_cast<SRmfSolid>(vpObject);
+        ptr<SRmfSolid> pSolid = std::reinterpret_pointer_cast<SRmfSolid>(vpObject);
         __readSolid(pSolid);
     }
     else
@@ -87,16 +87,16 @@ void CSceneReaderRmf::__readObject(std::shared_ptr<SRmfObject> vpObject)
     }
 }
 
-void CSceneReaderRmf::__readSolid(std::shared_ptr<SRmfSolid> vpSolid)
+void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
 {
-    auto pObject = std::make_shared<C3DObjectGoldSrc>();
+    auto pObject = make<C3DObjectGoldSrc>();
     for (const SRmfFace& Face : vpSolid->Faces)
         __readSolidFace(Face, pObject);
 
     m_pScene->Objects.emplace_back(std::move(pObject));
 }
 
-void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, std::shared_ptr<C3DObjectGoldSrc> vopObject)
+void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, ptr<C3DObjectGoldSrc> vopObject)
 {
     uint32_t TexIndex = __requestTextureIndex(vFace.TextureName);
 
@@ -143,7 +143,7 @@ uint32_t CSceneReaderRmf::__requestTextureIndex(std::string vTextureName)
             std::optional<size_t> Index = Wad.findTexture(vTextureName);
             if (Index.has_value())
             {
-                std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
+                ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
                 uint32_t TexIndex = static_cast<uint32_t>(m_pScene->TexImageSet.size());
                 m_TexNameToIndex[vTextureName] = TexIndex;
                 m_pScene->TexImageSet.emplace_back(std::move(pTexImage));
@@ -159,7 +159,7 @@ glm::vec2 CSceneReaderRmf::__getTexCoord(SRmfFace vFace, glm::vec3 vVertex)
 {
     _ASSERTE(m_TexNameToIndex.find(vFace.TextureName) != m_TexNameToIndex.end());
     uint32_t TexIndex = m_TexNameToIndex.at(vFace.TextureName);
-    const std::shared_ptr<CIOImage> pImage = m_pScene->TexImageSet[TexIndex];
+    const ptr<CIOImage> pImage = m_pScene->TexImageSet[TexIndex];
     size_t TexWidth = pImage->getWidth();
     size_t TexHeight = pImage->getHeight();
 

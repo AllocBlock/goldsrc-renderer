@@ -24,6 +24,8 @@ namespace vk
     class CDebugMessenger : public IVulkanHandle<VkDebugUtilsMessengerEXT>
     {
     public:
+        _DEFINE_PTR(CDebugMessenger);
+
         void create(VkInstance vInstance);
         void destroy();
         void setCustomCallback(DebugMessageCallbackFunc_t vCallback);

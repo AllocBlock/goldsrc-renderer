@@ -63,13 +63,13 @@ class CLightmap
 {
 public:
     void clear();
-    size_t appendLightmap(std::shared_ptr<CIOImage> vpImage);
+    size_t appendLightmap(ptr<CIOImage> vpImage);
     std::pair<size_t, size_t> getLightmapSize();
     glm::vec2 getAcutalLightmapCoord(size_t vIndex, glm::vec2 vOriginTexCoord);
-    std::shared_ptr<CIOImage> getCombinedLightmap();
+    ptr<CIOImage> getCombinedLightmap();
 private:
     const size_t m_MaxWidth = 0x4000;
-    std::vector<std::shared_ptr<CIOImage>> m_LightmapImages;
+    std::vector<ptr<CIOImage>> m_LightmapImages;
     size_t m_TotalWidth = 0, m_TotalHeight = 0;
     size_t m_StartHeight = 0, m_StartWidth = 0, m_CurrentRowHeight = 0;
     std::vector<std::pair<size_t, size_t>> m_Offsets;
@@ -91,25 +91,25 @@ struct SGoldSrcSprite
     glm::vec3 Angle;
     float Scale;
     EGoldSrcSpriteType Type;
-    std::shared_ptr<CIOImage> pImage;
+    ptr<CIOImage> pImage;
 };
 
 struct SScene
 {
-    using Ptr = std::shared_ptr<SScene>;
+    using Ptr = ptr<SScene>;
 
-    std::vector<std::shared_ptr<C3DObjectGoldSrc>> Objects;
-    std::vector<std::shared_ptr<CIOImage>> TexImageSet;
+    std::vector<ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<CIOImage>> TexImageSet;
 
     std::vector<SGoldSrcSprite> SprSet;
 
     bool UseLightmap = false;
-    std::shared_ptr<CLightmap> pLightmap = nullptr;
+    ptr<CLightmap> pLightmap = nullptr;
 
     bool UsePVS = false;
     SBspTree BspTree;
     SBspPvs BspPvs;
 
     bool UseSkyBox = false;
-    std::array<std::shared_ptr<CIOImage>, 6> SkyBoxImages;
+    std::array<ptr<CIOImage>, 6> SkyBoxImages;
 };

@@ -92,7 +92,7 @@
     <ClInclude Include="3DObjectGoldSrc.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="DataArrayBase.h">
+    <ClInclude Include="DataArray.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="GeneralDataArray.h">

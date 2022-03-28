@@ -147,7 +147,7 @@ bool CRendererTest::__readSkyboxImages(std::string vSkyFilePrefix, std::string v
         std::filesystem::path ImagePath = vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension;
         if (std::filesystem::exists(ImagePath))
         {
-            m_SkyBoxImageSet[i] = std::make_shared<CIOImage>();
+            m_SkyBoxImageSet[i] = make<CIOImage>();
             m_SkyBoxImageSet[i]->read(ImagePath);
         }
         else
@@ -205,7 +205,7 @@ void CRendererTest::__createFramebuffers()
             m_pDepthImage->get()
         };
 
-        m_FramebufferSet[i] = std::make_shared<vk::CFrameBuffer>();
+        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
         m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
     }
 }
@@ -218,7 +218,7 @@ void CRendererTest::__createVertexBuffer()
     if (VertexNum > 0)
     {
         VkDeviceSize BufferSize = sizeof(STestPointData) * VertexNum;
-        m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+        m_pVertexBuffer = make<vk::CBuffer>();
         m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }

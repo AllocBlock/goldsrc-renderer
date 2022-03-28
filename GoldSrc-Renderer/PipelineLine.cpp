@@ -67,7 +67,7 @@ void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
     }
 }
 
-void CPipelineLine::setObject(std::string vName, std::shared_ptr<SGuiObject> vObject)
+void CPipelineLine::setObject(std::string vName, ptr<SGuiObject> vObject)
 {
     m_NameObjectMap[vName] = std::move(vObject);
     __updateVertexBuffer();
@@ -101,7 +101,7 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
     }
 }

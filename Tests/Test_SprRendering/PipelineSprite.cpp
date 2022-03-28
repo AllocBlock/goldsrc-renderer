@@ -196,7 +196,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
 
     VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
     m_VertexNum = PointData.size();
-    m_pVertexDataBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexDataBuffer = make<vk::CBuffer>();
     m_pVertexDataBuffer->create(m_PhysicalDevice, m_Device, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexDataBuffer->stageFill(PointData.data(), DataSize);
 
@@ -206,7 +206,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
     }
 
@@ -236,7 +236,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
 
     // placeholder image
     uint8_t Data = 0;
-    auto pTinyImage = std::make_shared<CIOImage>();
+    auto pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(&Data);
     m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);

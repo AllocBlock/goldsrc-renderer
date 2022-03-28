@@ -7,6 +7,8 @@ namespace vk
     class CDevice : public IVulkanHandle<VkDevice>
     {
     public:
+        _DEFINE_PTR(CDevice);
+
         void create(VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet);
         void destroy();
         void waitUntilIdle();

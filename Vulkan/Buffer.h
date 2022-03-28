@@ -6,6 +6,8 @@ namespace vk
     class CBuffer : public IVulkanHandle<VkBuffer>
     {
     public:
+        _DEFINE_PTR(CBuffer);
+
         void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties);
         void destroy();
         bool isValid();

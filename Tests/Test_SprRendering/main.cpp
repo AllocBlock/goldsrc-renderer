@@ -5,7 +5,7 @@ int main()
 {
 	GLFW::init();
 	GLFWwindow* pWindow = GLFW::createWindow(1280, 800, "Spr Rendering Test");
-	std::shared_ptr<CApplicationTest> pApp = std::make_shared<CApplicationTest>();
+	ptr<CApplicationTest> pApp = make<CApplicationTest>();
 	pApp->init(pWindow);
 
 	GLFW::startLoop(pWindow, [=]()

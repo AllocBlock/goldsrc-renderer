@@ -15,7 +15,7 @@ const std::vector<SRmfVisGroup>& CIOGoldSrcRmf::getVisGroups() const
     return VisGroups;
 }
 
-const std::shared_ptr<SRmfWorld>& CIOGoldSrcRmf::getWorld() const
+const ptr<SRmfWorld>& CIOGoldSrcRmf::getWorld() const
 {
     return pWorld;
 }
@@ -123,7 +123,7 @@ void SRmfWorld::_readV(std::ifstream& vFile)
 {
     vFile.read(reinterpret_cast<char*>(&ObjectNum), sizeof(int));
     Objects.resize(ObjectNum);
-    for(std::shared_ptr<SRmfObject>& pObject : Objects)
+    for(ptr<SRmfObject>& pObject : Objects)
         pObject = SRmfObject::create(vFile);
     ClassName.read(vFile);
     if (ClassName.String != "worldspawn")
@@ -150,7 +150,7 @@ void SRmfEntity::_readV(std::ifstream& vFile)
 {
     vFile.read(reinterpret_cast<char*>(&SolidNum), sizeof(int));
     Solids.resize(SolidNum);
-    for (std::shared_ptr<SRmfSolid>& pSolid : Solids)
+    for (ptr<SRmfSolid>& pSolid : Solids)
         pSolid = std::reinterpret_pointer_cast<SRmfSolid>(SRmfObject::create(vFile));
     ClassName.read(vFile);
     vFile.read(Unknown, sizeof(Unknown));
@@ -168,11 +168,11 @@ void SRmfGroup::_readV(std::ifstream& vFile)
 {
     vFile.read(reinterpret_cast<char*>(&ObjectNum), sizeof(int));
     Objects.resize(ObjectNum);
-    for (std::shared_ptr<SRmfObject>& pObject : Objects)
+    for (ptr<SRmfObject>& pObject : Objects)
         pObject = SRmfObject::create(vFile);
 }
 
-std::shared_ptr<SRmfObject> SRmfObject::create(std::ifstream& vFile)
+ptr<SRmfObject> SRmfObject::create(std::ifstream& vFile)
 {
     std::streampos OriginPosition = vFile.tellg();
     SRmfVariableString ObjectHeader;
@@ -180,25 +180,25 @@ std::shared_ptr<SRmfObject> SRmfObject::create(std::ifstream& vFile)
     vFile.seekg(OriginPosition);
     if (ObjectHeader.String == "CMapWorld")
     {
-        auto pWorld = std::make_shared<SRmfWorld>();
+        auto pWorld = make<SRmfWorld>();
         pWorld->__read(vFile);
         return pWorld;
     }
     else if (ObjectHeader.String == "CMapSolid")
     {
-        auto pSolid = std::make_shared<SRmfSolid>();
+        auto pSolid = make<SRmfSolid>();
         pSolid->__read(vFile);
         return pSolid;
     }
     else if (ObjectHeader.String == "CMapEntity")
     {
-        auto pEntity = std::make_shared<SRmfEntity>();
+        auto pEntity = make<SRmfEntity>();
         pEntity->__read(vFile);
         return pEntity;
     }
     else if (ObjectHeader.String == "CMapGroup")
     {
-        auto pGroup = std::make_shared<SRmfGroup>();
+        auto pGroup = make<SRmfGroup>();
         pGroup->__read(vFile);
         return pGroup;
     }

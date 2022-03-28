@@ -172,9 +172,9 @@ void Vulkan::endSingleTimeBuffer(VkCommandBuffer vCommandBuffer)
     g_EndFunc(vCommandBuffer);
 }
 
-std::shared_ptr<vk::CImage> Vulkan::createDepthImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
+vk::CImage::Ptr Vulkan::createDepthImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
 {
-    std::shared_ptr<vk::CImage> pImage = std::make_shared<vk::CImage>();
+    vk::CImage::Ptr pImage = make<vk::CImage>();
 
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

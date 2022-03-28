@@ -19,8 +19,8 @@ protected:
     virtual void _destroyOtherResourceV() override;
 
 private:
-    std::shared_ptr<CGUIRenderer> m_pGUI = nullptr;
-    std::shared_ptr<CRendererPBR> m_pRenderer = nullptr;
-    std::shared_ptr<CInteractor> m_pInteractor = nullptr;
+    ptr<CGUIRenderer> m_pGUI = nullptr;
+    ptr<CRendererPBR> m_pRenderer = nullptr;
+    ptr<CInteractor> m_pInteractor = nullptr;
 };
 

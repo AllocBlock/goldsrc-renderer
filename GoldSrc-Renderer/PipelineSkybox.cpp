@@ -33,7 +33,7 @@ void CPipelineSkybox::destroy()
     IPipeline::destroy();
 }
 
-void CPipelineSkybox::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>, 6>& vSkyBoxImageSet)
+void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
     size_t TexWidth = vSkyBoxImageSet[0]->getWidth();
@@ -85,7 +85,7 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<std::shared_ptr<CIOImage>,
     vk::SImageViewInfo ViewInfo;
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
-    m_pSkyBoxImage = std::make_shared<vk::CImage>();
+    m_pSkyBoxImage = make<vk::CImage>();
     m_pSkyBoxImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
@@ -180,7 +180,7 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
     VkDeviceSize DataSize = sizeof(SPositionPointData) * PointData.size();
     m_VertexNum = PointData.size();
 
-    m_pVertexBuffer = std::make_shared<vk::CBuffer>();
+    m_pVertexBuffer = make<vk::CBuffer>();
     m_pVertexBuffer->create(m_PhysicalDevice, m_Device, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(PointData.data(), DataSize);
 
@@ -192,9 +192,9 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
-        m_FragUniformBufferSet[i] = std::make_shared<vk::CUniformBuffer>();
+        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
     }
 

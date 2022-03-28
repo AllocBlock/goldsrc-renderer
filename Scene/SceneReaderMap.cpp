@@ -5,9 +5,9 @@
 
 using namespace Common;
 
-std::shared_ptr<SScene> CSceneReaderMap::_readV()
+ptr<SScene> CSceneReaderMap::_readV()
 {
-    m_pScene = std::make_shared<SScene>();
+    m_pScene = make<SScene>();
 
     Scene::reportProgress(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(m_FilePath);
@@ -34,7 +34,7 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
                 Found = true;
                 TexNameToIndex[TexName] = static_cast<uint32_t>(m_pScene->TexImageSet.size());
 
-                std::shared_ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
+                ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
                 m_pScene->TexImageSet.emplace_back(std::move(pTexImage));
                 break;
             }
@@ -48,7 +48,7 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
     m_pScene->Objects.resize(UsedTextureNames.size());
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
-        m_pScene->Objects[i] = std::make_shared<C3DObjectGoldSrc>();
+        m_pScene->Objects[i] = make<C3DObjectGoldSrc>();
     }
 
     std::vector<SMapPolygon> Polygons = Map.getAllPolygons();
@@ -58,7 +58,7 @@ std::shared_ptr<SScene> CSceneReaderMap::_readV()
         uint32_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
         size_t TexWidth = m_pScene->TexImageSet[TexIndex]->getWidth();
         size_t TexHeight = m_pScene->TexImageSet[TexIndex]->getHeight();
-        std::shared_ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[TexIndex];
+        ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[TexIndex];
         uint32_t IndexStart = static_cast<uint32_t>(pObject->getVertexArray()->size());
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);

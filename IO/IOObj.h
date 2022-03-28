@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Pointer.h"
 #include "IOBase.h"
 #include "IOMtl.h"
 
@@ -51,7 +52,7 @@ protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
-    std::shared_ptr<SObj> m_pObj = nullptr;
-    std::shared_ptr<CIOMtl> m_pMtl = nullptr;
+    ptr<SObj> m_pObj = nullptr;
+    ptr<CIOMtl> m_pMtl = nullptr;
     float m_ScaleFactor = 1.0;
 };

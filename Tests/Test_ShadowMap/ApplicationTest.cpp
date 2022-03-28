@@ -4,12 +4,12 @@ void CApplicationTest::_initV()
 {
     Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
 
-    m_pGUI = std::make_shared<CGUITest>();
+    m_pGUI = make<CGUITest>();
     m_pGUI->setWindow(m_pWindow);
     m_pGUI->init(AppInfo, ERendererPos::END);
-    m_pRenderer = std::make_shared<CRendererTest>();
+    m_pRenderer = make<CRendererTest>();
     m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
-    m_pInteractor = std::make_shared<CInteractor>();
+    m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pRenderer->getCamera());
 
     m_pGUI->setCamera(m_pRenderer->getCamera());

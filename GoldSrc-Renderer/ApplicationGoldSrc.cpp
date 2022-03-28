@@ -9,7 +9,7 @@
 
 void CApplicationGoldSrc::_initV()
 {
-    m_pCamera = std::make_shared<CCamera>();
+    m_pCamera = make<CCamera>();
 }
 
 void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
@@ -39,21 +39,21 @@ void CApplicationGoldSrc::_createOtherResourceV()
 {
     Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
 
-    m_pInteractor = std::make_shared<CInteractor>();
+    m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
-    m_pGUI = std::make_shared<CGUIRenderer>();
+    m_pGUI = make<CGUIRenderer>();
     m_pGUI->setWindow(m_pWindow);
     m_pGUI->init(AppInfo, ERendererPos::END);
 
-    m_pMainUI = std::make_shared<CGUIMain>();
+    m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
     m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
     {
         __recreateRenderer(vMethod);
     });
 
-    m_pMainUI->setReadSceneCallback([this](std::shared_ptr<SScene> vScene)
+    m_pMainUI->setReadSceneCallback([this](ptr<SScene> vScene)
     {
         m_pScene = vScene;
         m_pRenderer->loadScene(vScene);
@@ -93,14 +93,14 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
     {
     case ERenderMethod::DEFAULT:
     {
-        m_pRenderer = std::make_shared<CRendererSceneSimple>();
+        m_pRenderer = make<CRendererSceneSimple>();
         m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
         m_pRenderer->setCamera(m_pCamera);
         break;
     }
     case ERenderMethod::BSP:
     {
-        m_pRenderer = std::make_shared<CRendererSceneGoldSrc>();
+        m_pRenderer = make<CRendererSceneGoldSrc>();
         m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
         m_pRenderer->setCamera(m_pCamera);
         break;

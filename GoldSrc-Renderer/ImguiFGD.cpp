@@ -23,7 +23,7 @@ void CImguiFGD::draw()
             auto Path = m_Future.get();
             if (!Path.empty())
             {
-                m_pIOFGD = std::make_shared<CIOGoldSrcForgeGameData>();
+                m_pIOFGD = make<CIOGoldSrcForgeGameData>();
                 m_pIOFGD->read(Path);
             }
         }

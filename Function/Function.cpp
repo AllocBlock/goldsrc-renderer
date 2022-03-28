@@ -1,7 +1,7 @@
 #include "Function.h"
 #include "Vulkan.h"
 
-std::shared_ptr<vk::CImage> Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, std::shared_ptr<CIOImage> vImage)
+vk::CImage::Ptr Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, ptr<CIOImage> vImage)
 {
     size_t TexWidth = vImage->getWidth();
     size_t TexHeight = vImage->getHeight();
@@ -27,7 +27,8 @@ std::shared_ptr<vk::CImage> Function::createImageFromIOImage(VkPhysicalDevice vP
     vk::SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    std::shared_ptr<vk::CImage> pImage = std::make_shared<vk::CImage>();
+    ptr<vk::CImage> pImage2;
+    vk::CImage::Ptr pImage = make<vk::CImage>();
     pImage->create(vPhysicalDevice, vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
     pImage->stageFill(pPixelData, DataSize);

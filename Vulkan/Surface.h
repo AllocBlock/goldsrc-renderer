@@ -8,6 +8,8 @@ namespace vk
     class CSurface : public IVulkanHandle<VkSurfaceKHR>
     {
     public:
+        _DEFINE_PTR(CSurface);
+
         void create(VkInstance vInstance, GLFWwindow* vWindow);
         void destroy();
     private:

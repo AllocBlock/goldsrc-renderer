@@ -9,7 +9,7 @@
 using namespace Common;
 
 bool CIOObj::_readV(std::filesystem::path vFilePath) {
-    m_pObj = std::make_shared<SObj>();
+    m_pObj = make<SObj>();
 
     if (!vFilePath.empty()) m_FilePath = vFilePath;
     _ASSERTE(std::filesystem::exists(m_FilePath));
@@ -92,7 +92,7 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
             MtlFilePath.replace_extension("mtl");
             if (std::filesystem::exists(MtlFilePath))
             {
-                m_pMtl = std::make_shared<CIOMtl>();
+                m_pMtl = make<CIOMtl>();
                 m_pMtl->read(MtlFilePath.string());
             }
         }

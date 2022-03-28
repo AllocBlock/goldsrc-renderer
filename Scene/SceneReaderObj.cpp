@@ -4,14 +4,14 @@
 
 using namespace Common;
 
-std::shared_ptr<SScene> CSceneReaderObj::_readV()
+ptr<SScene> CSceneReaderObj::_readV()
 {
     Scene::reportProgress(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();
     Obj.read(m_FilePath);
 
     Scene::reportProgress(u8"读取场景中");
-    std::shared_ptr<C3DObjectGoldSrc> pObjObject = std::make_shared<C3DObjectGoldSrc>();
+    ptr<C3DObjectGoldSrc> pObjObject = make<C3DObjectGoldSrc>();
     const uint32_t TexIndex = 0;
 
     auto pVertexArray = pObjObject->getVertexArray();
@@ -57,7 +57,7 @@ std::shared_ptr<SScene> CSceneReaderObj::_readV()
         }
     }
 
-    m_pScene = std::make_shared<SScene>();
+    m_pScene = make<SScene>();
     m_pScene->Objects.emplace_back(pObjObject);
     m_pScene->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
 

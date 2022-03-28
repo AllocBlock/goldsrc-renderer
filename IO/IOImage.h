@@ -1,10 +1,11 @@
 #pragma once
 #include "IOBase.h"
+#include "Pointer.h"
 
 class CIOImage : public CIOBase
 {
 public:
-    using Ptr = std::shared_ptr<CIOImage>;
+    _DEFINE_PTR(CIOImage);
 
     CIOImage() : CIOBase() {}
     CIOImage(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}

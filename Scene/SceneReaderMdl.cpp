@@ -1,12 +1,12 @@
 #include "SceneReaderMdl.h"
 #include "SceneCommon.h"
 
-std::shared_ptr<SScene> CSceneReaderMdl::_readV()
+ptr<SScene> CSceneReaderMdl::_readV()
 {
-    m_pIOMdl = std::make_shared<CIOGoldSrcMdl>();
+    m_pIOMdl = make<CIOGoldSrcMdl>();
     m_pIOMdl->read(m_FilePath);
 
-    auto pScene = std::make_shared<SScene>();
+    auto pScene = make<SScene>();
     auto BodyPartSet = m_pIOMdl->getBodyParts();
     for (const auto& BodyPart : BodyPartSet)
     {
@@ -19,7 +19,7 @@ std::shared_ptr<SScene> CSceneReaderMdl::_readV()
     {
         void* pData = new uint8_t[Texture.Width * Texture.Height * 4];
         Texture.getRawRGBAPixels(pData);
-        auto pImage = std::make_shared<CIOImage>();
+        auto pImage = make<CIOImage>();
         pImage->setSize(Texture.Width, Texture.Height);
         pImage->setData(pData);
         delete[] pData;
@@ -30,9 +30,9 @@ std::shared_ptr<SScene> CSceneReaderMdl::_readV()
     return pScene;
 }
 
-std::shared_ptr<C3DObjectGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
+ptr<C3DObjectGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
 {
-    auto pObject = std::make_shared<C3DObjectGoldSrc>();
+    auto pObject = make<C3DObjectGoldSrc>();
     pObject->setPrimitiveType(E3DObjectPrimitiveType::TRIAGNLE_LIST);
 
     for (const auto& Model : vBodyPart.ModelSet)
@@ -43,7 +43,7 @@ std::shared_ptr<C3DObjectGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBody
     return pObject;
 }
 
-void CSceneReaderMdl::__readModel(const SMdlModel& vModel, std::shared_ptr<C3DObjectGoldSrc> voObject)
+void CSceneReaderMdl::__readModel(const SMdlModel& vModel, ptr<C3DObjectGoldSrc> voObject)
 {
     auto pVertexArray = voObject->getVertexArray();
     auto pColorArray = voObject->getColorArray();

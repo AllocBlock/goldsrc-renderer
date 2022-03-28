@@ -107,7 +107,7 @@
     <ClInclude Include="3DObject.h" />
     <ClInclude Include="3DObjectGoldSrc.h" />
     <ClInclude Include="SingleValueDataArray.h" />
-    <ClInclude Include="DataArrayBase.h" />
+    <ClInclude Include="DataArray.h" />
     <ClInclude Include="GeneralDataArray.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="SceneReaderMap.h" />

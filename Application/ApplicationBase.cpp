@@ -159,7 +159,7 @@ void CApplicationBase::__createInstance()
 {
     std::vector<const char*> Extensions = __getRequiredExtensions();
 
-    m_pInstance = std::make_shared<vk::CInstance>();
+    m_pInstance = make<vk::CInstance>();
 
     std::vector<const char*> ValidationLayers;
     if (ENABLE_VALIDATION_LAYERS)
@@ -169,7 +169,7 @@ void CApplicationBase::__createInstance()
 
 void CApplicationBase::__setupDebugMessenger()
 {
-    m_pDebugMessenger = std::make_shared<vk::CDebugMessenger>();
+    m_pDebugMessenger = make<vk::CDebugMessenger>();
     m_pDebugMessenger->create(m_pInstance->get());
     vk::DebugMessageCallbackFunc_t pCallback = [=](vk::EDebugMessageServerity vServerity, std::string vMessage)
     {
@@ -235,7 +235,7 @@ void CApplicationBase::__createSemaphores()
     {
         Vulkan::checkError(vkCreateSemaphore(m_pDevice->get(), &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
         Vulkan::checkError(vkCreateSemaphore(m_pDevice->get(), &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
-        m_InFlightFenceSet[i] = std::make_shared<vk::CFence>();
+        m_InFlightFenceSet[i] = make<vk::CFence>();
         m_InFlightFenceSet[i]->create(m_pDevice->get(), true);
     }
 }

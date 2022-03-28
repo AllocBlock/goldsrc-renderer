@@ -70,5 +70,5 @@ namespace Vulkan
     VkCommandBuffer beginSingleTimeBuffer();
     void endSingleTimeBuffer(VkCommandBuffer vCommandBuffer);
 
-    std::shared_ptr<vk::CImage> createDepthImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage = NULL, VkFormat vFormat = VkFormat::VK_FORMAT_D32_SFLOAT);
+    vk::CImage::Ptr createDepthImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage = NULL, VkFormat vFormat = VkFormat::VK_FORMAT_D32_SFLOAT);
 }

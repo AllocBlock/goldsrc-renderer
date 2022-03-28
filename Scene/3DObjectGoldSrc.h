@@ -5,16 +5,16 @@ class C3DObjectGoldSrc : public C3DObject
 {
 public:
     bool getLightMapState() { return m_EnableLightmap; }
-    std::shared_ptr<CDataArrayBase<std::optional<size_t>>> getLightmapIndexArray() { return m_LightmapIndexArray; }
-    std::shared_ptr<CDataArrayBase<glm::vec2>> getLightmapCoordArray() { return m_LightmapTexCoordArray; }
+    IDataArray<std::optional<size_t>>::Ptr getLightmapIndexArray() { return m_LightmapIndexArray; }
+    IDataArray<glm::vec2>::Ptr getLightmapCoordArray() { return m_LightmapTexCoordArray; }
 
     void setLightMapState(bool vEnable) { m_EnableLightmap = vEnable; }
-    void setLightmapIndexArray(std::shared_ptr<CDataArrayBase<std::optional<size_t>>> vLightmapIndexArray) { m_LightmapIndexArray = vLightmapIndexArray; }
-    void setLightmapCoordArray(std::shared_ptr<CDataArrayBase<glm::vec2>> vLightmapCoordArray) { m_LightmapTexCoordArray = vLightmapCoordArray; }
+    void setLightmapIndexArray(ptr<IDataArray<std::optional<size_t>>> vLightmapIndexArray) { m_LightmapIndexArray = vLightmapIndexArray; }
+    void setLightmapCoordArray(ptr<IDataArray<glm::vec2>> vLightmapCoordArray) { m_LightmapTexCoordArray = vLightmapCoordArray; }
 
 protected:
     bool m_EnableLightmap = false;
-    std::shared_ptr<CDataArrayBase<std::optional<size_t>>> m_LightmapIndexArray = std::make_shared<CGeneralDataArray<std::optional<size_t>>>();
-    std::shared_ptr<CDataArrayBase<glm::vec2>> m_LightmapTexCoordArray = std::make_shared<CGeneralDataArray<glm::vec2>>();
+    IDataArray<std::optional<size_t>>::Ptr m_LightmapIndexArray = make<CGeneralDataArray<std::optional<size_t>>>();
+    IDataArray<glm::vec2>::Ptr m_LightmapTexCoordArray = make<CGeneralDataArray<glm::vec2>>();
 };
 

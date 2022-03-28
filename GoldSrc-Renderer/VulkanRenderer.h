@@ -102,7 +102,7 @@ protected:
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _loadSceneV(std::shared_ptr<SScene> vScene);
+    virtual void _loadSceneV(ptr<SScene> vScene);
 
 private:
     void __createRenderPass();
@@ -131,7 +131,7 @@ private:
     void __recordGuiCommandBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
-    bool __isObjectInSight(std::shared_ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
+    bool __isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
     std::vector<size_t> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
@@ -142,20 +142,20 @@ private:
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
 
-    std::vector<SGoldSrcPointData> __readPointData(std::shared_ptr<C3DObjectGoldSrc> vpObject) const;
+    std::vector<SGoldSrcPointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
 
     VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = SPipelineSet();
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";
     std::string m_GuiCommandName = "Gui";
-    std::vector<std::shared_ptr<vk::CFrameBuffer>> m_FramebufferSet;
+    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
 
-    std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
-    std::shared_ptr<vk::CBuffer> m_pIndexBuffer;
-    std::vector<std::shared_ptr<vk::CImage>> m_TextureImageSet;
-    std::shared_ptr<vk::CImage> m_pDepthImage;
-    std::shared_ptr<vk::CImage> m_pLightmapImage;
+    ptr<vk::CBuffer> m_pVertexBuffer;
+    ptr<vk::CBuffer> m_pIndexBuffer;
+    std::vector<vk::CImage::Ptr> m_TextureImageSet;
+    vk::CImage::Ptr m_pDepthImage;
+    vk::CImage::Ptr m_pLightmapImage;
 
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;

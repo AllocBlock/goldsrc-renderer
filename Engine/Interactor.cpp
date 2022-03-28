@@ -27,7 +27,7 @@ enum class ERotateState
 	CRAWL = 0x0020,
 };
 
-void CInteractor::bindEvent(GLFWwindow* vWindow, std::shared_ptr<CCamera> vCamera)
+void CInteractor::bindEvent(GLFWwindow* vWindow, ptr<CCamera> vCamera)
 {
 	m_pWindow = vWindow;
 	m_pCamera = vCamera;
@@ -79,7 +79,7 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled || !pInteractor->m_IsMoving) return;
 
-	std::shared_ptr<CCamera> pCamera = pInteractor->m_pCamera;
+	ptr<CCamera> pCamera = pInteractor->m_pCamera;
 	pCamera->setPhi(pInteractor->m_LastPhi + (pInteractor->m_LastMousePosX - vPosX) * pInteractor->m_HorizontalSensetivity);
 	pCamera->setTheta(std::min(std::max(pInteractor->m_LastTheta - (pInteractor->m_LastMousePosY - vPosY) * pInteractor->m_VerticalSensetivity, 1.0), 179.0));
 }

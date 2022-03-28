@@ -25,7 +25,7 @@ public:
     void updateDescriptorSet();
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
-    void setObject(std::string vName, std::shared_ptr<SGuiObject> vObject);
+    void setObject(std::string vName, ptr<SGuiObject> vObject);
     void removeObject(std::string vName);
 
 protected:
@@ -41,8 +41,8 @@ protected:
 private:
     void __updateVertexBuffer();
 
-    std::map<std::string, std::shared_ptr<SGuiObject>> m_NameObjectMap;
+    std::map<std::string, ptr<SGuiObject>> m_NameObjectMap;
     size_t m_VertexNum = 0;
-    std::shared_ptr<vk::CBuffer> m_pVertexBuffer;
-    std::vector<std::shared_ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    ptr<vk::CBuffer> m_pVertexBuffer;
+    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
 };

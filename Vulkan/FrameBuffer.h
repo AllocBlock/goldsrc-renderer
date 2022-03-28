@@ -7,6 +7,8 @@ namespace vk
     class CFrameBuffer : public IVulkanHandle<VkFramebuffer>
     {
     public:
+        _DEFINE_PTR(CFrameBuffer);
+
         void create(VkDevice vDevice, VkRenderPass vRenderPass, const std::vector<VkImageView>& vAttachmentSet, VkExtent2D vExtent);
         void destroy();
     private:
