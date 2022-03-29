@@ -1,37 +1,15 @@
 #pragma once
 #include "Pipeline.h"
-#include "VertexAttributeDescriptor.h""
 #include <glm/glm.hpp>
 #include "Camera.h"
 #include "UniformBuffer.h"
 #include "IOImage.h"
-
-struct SFullScreenPointData
-{
-    glm::vec3 Pos;
-
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SFullScreenPointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return BindingDescription;
-    }
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-    {
-        VertexAttributeDescriptor Descriptor;
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SFullScreenPointData, Pos));
-        return Descriptor.generate();
-    }
-};
+#include "FullScreenPoint.h"
 
 class CPipelineEnvironment : public IPipeline
 {
 public:
-
+    bool isReady() { return m_Ready; }
     void setEnvironmentMap(CIOImage::Ptr vHDRI);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::Ptr vCamera);
     void destroy();
@@ -52,13 +30,14 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    struct SControl
+    bool m_Ready = false;
+
+    struct SControl 
     {
         glm::vec3 Rotation;
     } m_Control;
 
     VkSampler m_Sampler = VK_NULL_HANDLE;
-    std::vector<vk::CUniformBuffer::Ptr> m_VertUBSet;
     std::vector<vk::CUniformBuffer::Ptr> m_FragUBSet;
     vk::CImage::Ptr m_pEnvironmentImage = nullptr;
     vk::CImage::Ptr m_pPlaceholderImage = nullptr;

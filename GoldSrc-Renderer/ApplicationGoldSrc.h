@@ -1,7 +1,7 @@
 #pragma once
 #include "ApplicationBase.h"
 #include "RendererScene.h"
-#include "GUIRenderer.h"
+#include "GUIPass.h"
 #include "ImguiMain.h"
 #include "Interactor.h"
 #include "Scene.h"

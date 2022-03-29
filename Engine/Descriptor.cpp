@@ -35,6 +35,7 @@ void CDescriptor::createLayout(VkDevice vDevice)
 
 const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t vImageNum)
 {
+    _ASSERTE(vImageNum > 0);
     _ASSERTE(m_Device != VK_NULL_HANDLE);
     _ASSERTE(m_DescriptorLayout != VK_NULL_HANDLE);
 

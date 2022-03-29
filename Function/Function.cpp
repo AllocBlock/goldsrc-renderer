@@ -45,3 +45,13 @@ vk::CImage::Ptr Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevic
 
     return pImage;
 }
+
+vk::CImage::Ptr Function::createPlaceholderImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice)
+{
+    // placeholder image
+    uint8_t Data[4] = { 0, 0, 0, 0 };
+    CIOImage::Ptr pTinyImage = make<CIOImage>();
+    pTinyImage->setSize(1, 1);
+    pTinyImage->setData(Data);
+    return Function::createImageFromIOImage(vPhysicalDevice, vDevice, pTinyImage);
+}

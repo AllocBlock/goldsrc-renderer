@@ -31,17 +31,15 @@ layout(binding = 1) uniform SUniformBufferObject
     uint UseSpecularTexture;
 } ubo;
 
-layout(binding = 2) uniform samplerCube uSkyCubeSampler;
-
-layout(binding = 3) uniform UniformBufferObject
+layout(binding = 2) uniform UniformBufferObject
 {
     SMaterialPBR List[16];
 } uboMaterial;
 
-layout(binding = 4) uniform sampler uSampler;
-layout(binding = 5) uniform texture2D uTextureColorSet[MAX_TEXTURE_NUM];
-layout(binding = 6) uniform texture2D uTextureNormalSet[MAX_TEXTURE_NUM];
-layout(binding = 7) uniform texture2D uTextureSpecularSet[MAX_TEXTURE_NUM];
+layout(binding = 3) uniform sampler uSampler;
+layout(binding = 4) uniform texture2D uTextureColorSet[MAX_TEXTURE_NUM];
+layout(binding = 5) uniform texture2D uTextureNormalSet[MAX_TEXTURE_NUM];
+layout(binding = 6) uniform texture2D uTextureSpecularSet[MAX_TEXTURE_NUM];
 
 const int POINT_LIGHT_NUMBER = 2;
 vec3 gPointLightPositions[POINT_LIGHT_NUMBER] = 

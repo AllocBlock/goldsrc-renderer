@@ -1,5 +1,5 @@
 #pragma once
-#include "Renderer.h"
+#include "RenderPass.h"
 #include "FrameBuffer.h"
 #include "PipelineShadowMap.h"
 #include "PipelineLight.h"
@@ -7,7 +7,7 @@
 #include "Buffer.h"
 #include "Image.h"
 
-class CRendererTest : public IRenderer
+class CRendererTest : public IRenderPass
 {
 public:
     CRendererTest() : m_pCamera(make<CCamera>()),

@@ -1,11 +1,11 @@
-#include "ApplicationTest.h"
+#include "ApplicationPBR.h"
 #include "SetupGLFW.h"
 
 int main()
 {
 	GLFW::init();
 	GLFWwindow* pWindow = GLFW::createWindow(1280, 800, "PBR Test");
-	ptr<CApplicationTest> pApp = make<CApplicationTest>();
+	ptr<CApplicationPBR> pApp = make<CApplicationPBR>();
 	pApp->init(pWindow);
 
 	GLFW::startLoop(pWindow, [=]()

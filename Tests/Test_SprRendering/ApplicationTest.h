@@ -19,7 +19,7 @@ protected:
 
 private:
     ptr<CGUITest> m_pGUI = nullptr;
-    ptr<CRendererTest> m_pRenderer = nullptr;
+    ptr<CRendererTest> m_pRenderPass = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };
 

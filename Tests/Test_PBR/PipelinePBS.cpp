@@ -21,70 +21,6 @@ struct SUBOFrag
 
 size_t CPipelinePBS::MaxTextureNum = 16;
 
-void CPipelinePBS::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
-{
-    // format 6 image into one cubemap image
-    int TexWidth = vSkyBoxImageSet[0]->getWidth();
-    int TexHeight = vSkyBoxImageSet[0]->getHeight();
-    size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
-    size_t TotalImageSize = SingleFaceImageSize * 6;
-    uint8_t* pPixelData = new uint8_t[TotalImageSize];
-    memset(pPixelData, 0, TotalImageSize);
-    /*
-     * a cubemap image in vulkan has 6 faces(layers), and in sequence they are
-     * +x, -x, +y, -y, +z, -z
-     *
-     * in vulkan:
-     * +y
-     * +z +x -z -x
-     * -y
-     *
-     * cubemap face to outside(fold +y and -y behind)
-     * in GoldSrc:
-     * up
-     * right front left back
-     * down
-     * in sequence: front back up down right left
-     */
-
-    for (size_t i = 0; i < vSkyBoxImageSet.size(); ++i)
-    {
-        _ASSERTE(TexWidth == vSkyBoxImageSet[i]->getWidth() && TexHeight == vSkyBoxImageSet[i]->getHeight());
-        const void* pData = vSkyBoxImageSet[i]->getData();
-        memcpy_s(pPixelData + i * SingleFaceImageSize, SingleFaceImageSize, pData, SingleFaceImageSize);
-    }
-
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = TexWidth;
-    ImageInfo.extent.height = TexHeight;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 6;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    ImageInfo.flags = VkImageCreateFlagBits::VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; // important for cubemap
-
-    vk::SImageViewInfo ViewInfo;
-    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-    ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
-
-    m_pSkyBoxImage = make<vk::CImage>();
-    m_pSkyBoxImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-    m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
-    delete[] pPixelData;
-
-    // the sky image changed, so descriptor need to be updated
-    // FIXME: 
-    if (isReady())
-        __updateDescriptorSet();
-}
-
 void CPipelinePBS::setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer)
 {
     _ASSERTE(vMaterialBuffer);
@@ -128,12 +64,7 @@ void CPipelinePBS::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, co
 
 void CPipelinePBS::__createPlaceholderImage()
 {
-    // placeholder image
-    uint8_t Data[4] = { 0, 0, 0, 0 };
-    CIOImage::Ptr pTinyImage = make<CIOImage>();
-    pTinyImage->setSize(1, 1);
-    pTinyImage->setData(Data);
-    m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
+    m_pPlaceholderImage = Function::createPlaceholderImage(m_PhysicalDevice, m_Device);
 }
 
 void CPipelinePBS::__updateDescriptorSet()
@@ -154,12 +85,6 @@ void CPipelinePBS::__updateDescriptorSet()
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUBOFrag);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
-
-        VkDescriptorImageInfo CombinedSamplerInfo = {};
-        CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_pSkyBoxImage->isValid() ? m_pSkyBoxImage->get() : m_pPlaceholderImage->get();
-        CombinedSamplerInfo.sampler = m_TextureSampler;
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 
         VkDescriptorBufferInfo FragMaterialBufferInfo = {};
         FragMaterialBufferInfo.buffer = m_pMaterialBuffer ? m_pMaterialBuffer->get() : nullptr;
@@ -282,7 +207,6 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
     SamplerInfo.minLod = 0.0f;
     SamplerInfo.maxLod = 0.0f;
 
-    Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
     Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_Sampler));
 
     __createPlaceholderImage();
@@ -295,12 +219,11 @@ void CPipelinePBS::_initDescriptorV()
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
     m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("UboFragMaterial", 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("Sampler", 4, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureColors", 5, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureNormals", 6, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureSpeculars", 7, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("UboFragMaterial", 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("Sampler", 3, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureColors", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureNormals", 5, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureSpeculars", 6, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_Device);
 }
@@ -315,14 +238,7 @@ void CPipelinePBS::__destroyResources()
     m_VertUniformBufferSet.clear();
     m_FragUniformBufferSet.clear();
 
-    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
     if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
-
-    if (m_TextureSampler != VK_NULL_HANDLE)
-    {
-        vkDestroySampler(m_Device, m_TextureSampler, nullptr);
-        m_TextureSampler = VK_NULL_HANDLE;
-    }
 
     if (m_Sampler != VK_NULL_HANDLE)
     {

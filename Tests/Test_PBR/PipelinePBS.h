@@ -52,14 +52,13 @@ public:
         bool UseSpecularTexture = true;
     };
 
-    void setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet);
     void setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer);
     void setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl);
     void destroy();
 
     bool isReady() {
-        return m_pMaterialBuffer && m_pSkyBoxImage && m_TextureColorSet.size() > 0;
+        return m_pMaterialBuffer && m_TextureColorSet.size() > 0;
     }
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
@@ -78,11 +77,9 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    VkSampler m_TextureSampler = VK_NULL_HANDLE;
     VkSampler m_Sampler = VK_NULL_HANDLE;
     std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
     std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
-    vk::CImage::Ptr m_pSkyBoxImage = nullptr;
     vk::CImage::Ptr m_pPlaceholderImage = nullptr;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
     std::vector<vk::CImage::Ptr> m_TextureColorSet;

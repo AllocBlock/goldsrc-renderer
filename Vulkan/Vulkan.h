@@ -67,6 +67,7 @@ namespace Vulkan
     uint32_t findMemoryType(VkPhysicalDevice vPhysicalDevice, uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties);
 
     void setSingleTimeBufferFunc(beginSingleTimeBufferFunc_t vBeginFunc, endSingleTimeBufferFunc_t vEndFunc);
+    void removeSingleTimeBufferFunc();
     VkCommandBuffer beginSingleTimeBuffer();
     void endSingleTimeBuffer(VkCommandBuffer vCommandBuffer);
 

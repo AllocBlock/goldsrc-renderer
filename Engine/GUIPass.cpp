@@ -1,4 +1,4 @@
-﻿#include "GUIRenderer.h"
+﻿#include "GUIPass.h"
 #include "Common.h"
 #include "Log.h"
 
@@ -29,7 +29,7 @@ void CGUIRenderer::endFrame()
 
 void CGUIRenderer::_initV()
 {
-    IRenderer::_initV();
+    IRenderPass::_initV();
 
     _ASSERTE(m_pWindow);
 
@@ -75,7 +75,7 @@ void CGUIRenderer::_initV()
 
 void CGUIRenderer::_recreateV()
 {
-    IRenderer::_recreateV();
+    IRenderPass::_recreateV();
 
     __destroyRecreateSources();
     __createRecreateSources();
@@ -104,7 +104,7 @@ void CGUIRenderer::_destroyV()
 
     m_pWindow = nullptr;
 
-    IRenderer::_destroyV();
+    IRenderPass::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CGUIRenderer::_requestCommandBuffersV(uint32_t vImageIndex)

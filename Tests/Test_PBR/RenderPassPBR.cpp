@@ -1,34 +1,33 @@
-#include "RendererPBR.h"
+#include "RenderPassPBR.h"
 #include "UserInterface.h"
 #include "Function.h"
 
-void CRendererPBR::_initV()
+void CRenderPassPBR::_initV()
 {
     m_pCamera->setFov(90);
     m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
     m_pCamera->setPos(glm::vec3(0.0, -1.0, 0.0));
 
-    __loadSkyBox();
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createVertexBuffer();
     __createRecreateResources();
 }
 
-void CRendererPBR::_recreateV()
+void CRenderPassPBR::_recreateV()
 {
-    IRenderer::_recreateV();
+    IRenderPass::_recreateV();
 
     __destroyRecreateResources();
     __createRecreateResources();
 }
 
-void CRendererPBR::_updateV(uint32_t vImageIndex)
+void CRenderPassPBR::_updateV(uint32_t vImageIndex)
 {
     __updateUniformBuffer(vImageIndex);
 }
 
-void CRendererPBR::_renderUIV()
+void CRenderPassPBR::_renderUIV()
 {
     UI::toggle("Use Color Texture", m_PipelineControl.UseColorTexture);
     UI::toggle("Use Normal Texture", m_PipelineControl.UseNormalTexture);
@@ -47,7 +46,7 @@ void CRendererPBR::_renderUIV()
     }
 }
 
-std::vector<VkCommandBuffer> CRendererPBR::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     if (!m_Pipeline.isReady())
         throw "Not Ready";
@@ -91,20 +90,21 @@ std::vector<VkCommandBuffer> CRendererPBR::_requestCommandBuffersV(uint32_t vIma
     return { CommandBuffer };
 }
 
-void CRendererPBR::_destroyV()
+void CRenderPassPBR::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertexBuffer->destroy();
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
-    IRenderer::_destroyV();
+    IRenderPass::_destroyV();
 }
 
-void CRendererPBR::__createRenderPass()
+void CRenderPassPBR::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    // use own depth
+    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(ERendererPos::BEGIN, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -143,46 +143,7 @@ void CRendererPBR::__createRenderPass()
     Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
-void CRendererPBR::__loadSkyBox()
-{
-    if (m_SkyFilePrefix.empty()) throw "sky box image file not found";
-
-    std::vector<std::string> Extensions = { ".tga", ".bmp", ".png", ".jpg" };
-
-    bool FoundSkyBoxImages = false;
-    for (const std::string& Extension : Extensions)
-    {
-        if (__readSkyboxImages(m_SkyFilePrefix, Extension))
-        {
-            FoundSkyBoxImages = true;
-            break;
-        }
-    }
-    if (!FoundSkyBoxImages)
-        throw "sky box image file not found";
-}
-
-bool CRendererPBR::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension)
-{
-    // front back up down right left
-    std::array<std::string, 6> SkyBoxPostfixes = { "ft", "bk", "up", "dn", "rt", "lf" };
-    for (size_t i = 0; i < SkyBoxPostfixes.size(); ++i)
-    {
-        std::filesystem::path ImagePath = vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension;
-        if (std::filesystem::exists(ImagePath))
-        {
-            m_SkyBoxImageSet[i] = make<CIOImage>();
-            m_SkyBoxImageSet[i]->read(ImagePath);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-void CRendererPBR::__destroyRenderPass()
+void CRenderPassPBR::__destroyRenderPass()
 {
     if (m_RenderPass != VK_NULL_HANDLE)
     {
@@ -191,33 +152,23 @@ void CRendererPBR::__destroyRenderPass()
     }
 }
 
-void CRendererPBR::__createGraphicsPipeline()
+void CRenderPassPBR::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
 }
 
-void CRendererPBR::__createCommandPoolAndBuffers()
+void CRenderPassPBR::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, m_AppInfo.TargetImageViewSet.size(), ECommandBufferLevel::PRIMARY);
-
-    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
-    {
-        return m_Command.beginSingleTimeBuffer();
-    };
-    Vulkan::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
-    {
-        m_Command.endSingleTimeBuffer(vCommandBuffer);
-    };
-    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
-void CRendererPBR::__createDepthResources()
+void CRenderPassPBR::__createDepthResources()
 {
     m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
 }
 
-void CRendererPBR::__createFramebuffers()
+void CRenderPassPBR::__createFramebuffers()
 {
     size_t ImageNum = m_AppInfo.TargetImageViewSet.size();
     m_FramebufferSet.resize(ImageNum);
@@ -234,7 +185,7 @@ void CRendererPBR::__createFramebuffers()
     }
 }
 
-void CRendererPBR::__createVertexBuffer()
+void CRenderPassPBR::__createVertexBuffer()
 {
      __generateScene();
     size_t VertexNum = m_PointDataSet.size();
@@ -248,10 +199,9 @@ void CRendererPBR::__createVertexBuffer()
     }
 }
 
-void CRendererPBR::__createMaterials()
+void CRenderPassPBR::__createMaterials()
 { 
-    //CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
-    CIOImage::Ptr pColorImage = make<CIOImage>("./textures/old_hall_4k.exr");
+    CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
     vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pColorImage);
     m_TextureColorSet.push_back(pColor);
@@ -289,20 +239,19 @@ void CRendererPBR::__createMaterials()
     m_pMaterialBuffer->stageFill(MaterialSet.data(), BufferSize);
 }
 
-void CRendererPBR::__createRecreateResources()
+void CRenderPassPBR::__createRecreateResources()
 {
     __createMaterials();
 
-    __createGraphicsPipeline();
+    __createGraphicsPipeline(); 
     __createDepthResources();
     __createFramebuffers();
     m_Pipeline.setImageNum(m_AppInfo.TargetImageViewSet.size());
-    m_Pipeline.setSkyBoxImage(m_SkyBoxImageSet);
     m_Pipeline.setMaterialBuffer(m_pMaterialBuffer);
     m_Pipeline.setTextures(m_TextureColorSet, m_TextureNormalSet, m_TextureSpecularSet);
 }
 
-void CRendererPBR::__destroyRecreateResources()
+void CRenderPassPBR::__destroyRecreateResources()
 {
     m_pDepthImage->destroy();
 
@@ -324,7 +273,7 @@ void CRendererPBR::__destroyRecreateResources()
     m_Pipeline.destroy();
 }
 
-void CRendererPBR::__generateScene()
+void CRenderPassPBR::__generateScene()
 {
     float Sqrt2 = std::sqrt(2);
     float Sqrt3 = std::sqrt(3);
@@ -352,7 +301,7 @@ void CRendererPBR::__generateScene()
     
 }
 
-void CRendererPBR::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth)
+void CRenderPassPBR::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth)
 {
     if (vDepth == 0)
     {
@@ -382,7 +331,7 @@ void CRendererPBR::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm:
     }
 }
 
-void CRendererPBR::__updateUniformBuffer(uint32_t vImageIndex)
+void CRenderPassPBR::__updateUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
     if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)

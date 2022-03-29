@@ -1,5 +1,5 @@
 #pragma once
-#include "Renderer.h"
+#include "RenderPass.h"
 #include "FrameBuffer.h"
 #include "Camera.h"
 #include "Image.h"
@@ -7,10 +7,10 @@
 #include "MaterialPBR.h"
 #include "PipelinePBS.h"
 
-class CRendererPBR : public IRenderer
+class CRenderPassPBR : public IRenderPass
 {
 public:
-    CRendererPBR() : m_pCamera(make<CCamera>()) {}
+    CRenderPassPBR() : m_pCamera(make<CCamera>()) {}
 
     ptr<CCamera> getCamera() { return m_pCamera; }
 
@@ -23,8 +23,6 @@ protected:
     virtual void _destroyV() override;
 
 private:
-    void __loadSkyBox();
-    bool __readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension);
     void __createRenderPass();
     void __destroyRenderPass();
     void __createGraphicsPipeline();
@@ -48,16 +46,14 @@ private:
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
-    vk::CImage::Ptr m_pDepthImage = nullptr;
+    vk::CImage::Ptr m_pDepthImage = nullptr; 
 
-    const std::string m_SkyFilePrefix = "../../data/neb6";
     ptr<CCamera> m_pCamera = nullptr;
     std::vector<SPBSPointData> m_PointDataSet;
-    std::array<ptr<CIOImage>, 6> m_SkyBoxImageSet;
 
     uint32_t m_GridSize = 8;
-
-    CPipelinePBS::SControl m_PipelineControl;
+     
+    CPipelinePBS::SControl m_PipelineControl; 
     std::vector<vk::CImage::Ptr> m_TextureColorSet;
     std::vector<vk::CImage::Ptr> m_TextureNormalSet;
     std::vector<vk::CImage::Ptr> m_TextureSpecularSet;

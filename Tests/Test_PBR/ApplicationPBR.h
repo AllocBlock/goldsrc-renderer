@@ -1,14 +1,15 @@
 #pragma once
 #include "ApplicationBase.h"
 #include "GUI.h"
-#include "GUIRenderer.h"
-#include "RendererPBR.h"
+#include "GUIPass.h"
+#include "RenderPassPBR.h"
+#include "RenderPassFullScreen.h"
 #include "Interactor.h"
 
-class CApplicationTest : public CApplicationBase
+class CApplicationPBR : public CApplicationBase
 {
 public:
-    CApplicationTest() = default;
+    CApplicationPBR() = default;
 
 protected:
     virtual void _initV() override;
@@ -20,7 +21,8 @@ protected:
 
 private:
     ptr<CGUIRenderer> m_pGUI = nullptr;
-    ptr<CRendererPBR> m_pRenderer = nullptr;
+    ptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
+    ptr<CRenderPassFullScreen> m_pRenderPassSky = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };
 

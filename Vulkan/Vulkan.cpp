@@ -160,6 +160,12 @@ void Vulkan::setSingleTimeBufferFunc(Vulkan::beginSingleTimeBufferFunc_t vBeginF
     g_EndFunc = vEndFunc;
 }
 
+void Vulkan::removeSingleTimeBufferFunc()
+{
+    g_BeginFunc = nullptr;
+    g_EndFunc = nullptr;
+}
+
 VkCommandBuffer Vulkan::beginSingleTimeBuffer()
 {
     _ASSERTE(g_BeginFunc != nullptr);

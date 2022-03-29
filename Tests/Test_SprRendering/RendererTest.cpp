@@ -15,7 +15,7 @@ void CRendererTest::_initV()
 
 void CRendererTest::_recreateV()
 {
-    IRenderer::_recreateV();
+    IRenderPass::_recreateV();
 
     __destroyRecreateResources();
     __createRecreateResources();
@@ -62,13 +62,13 @@ void CRendererTest::_destroyV()
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
-    IRenderer::_destroyV();
+    IRenderPass::_destroyV();
 }
 
 void CRendererTest::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = IRenderer::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;

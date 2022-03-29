@@ -9,6 +9,7 @@
 
 enum ERendererPos
 {
+    MIDDLE = 0x00,
     BEGIN = 0x01,
     END = 0x02
 };
@@ -19,10 +20,10 @@ enum class EImageType
     DEPTH
 };
 
-class IRenderer : public IGUI
+class IRenderPass : public IGUI
 {
 public:
-    IRenderer() = default;
+    IRenderPass() = default;
 
     void init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField);
     void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews);

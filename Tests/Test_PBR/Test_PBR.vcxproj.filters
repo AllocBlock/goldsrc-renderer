@@ -18,13 +18,13 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ApplicationTest.cpp">
+    <ClCompile Include="ApplicationPBR.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PipelinePBS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RendererPBR.cpp">
+    <ClCompile Include="RenderPassPBR.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MaterialPBR.cpp">
@@ -33,21 +33,30 @@
     <ClCompile Include="PipelineEnvironment.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPassFullScreen.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationTest.h">
+    <ClInclude Include="ApplicationPBR.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelinePBS.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RendererPBR.h">
+    <ClInclude Include="RenderPassPBR.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MaterialPBR.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineEnvironment.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassFullScreen.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FullScreenPoint.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

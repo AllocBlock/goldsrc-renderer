@@ -6,4 +6,5 @@
 namespace Function
 {
     vk::CImage::Ptr createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, ptr<CIOImage> vImage);
+    vk::CImage::Ptr createPlaceholderImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice);
 }
