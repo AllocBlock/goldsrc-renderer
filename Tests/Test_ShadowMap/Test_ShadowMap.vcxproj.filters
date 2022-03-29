@@ -52,20 +52,18 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\shader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shaderShadowMap.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shaderShadowMap.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\shaderShadowMap.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\shaderShadowMap.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\shader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\shader.vert">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

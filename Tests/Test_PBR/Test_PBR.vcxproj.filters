@@ -52,14 +52,18 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\shader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\env.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\shader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\shader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\env.frag">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -30,7 +30,7 @@ std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t
 
 void CApplicationGoldSrc::_renderUIV()
 {
-    m_pGUI->beginFrame(u8"PBR and IBL");
+    m_pGUI->beginFrame();
     m_pMainUI->renderUI();
     m_pGUI->endFrame();
 }

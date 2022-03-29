@@ -20,8 +20,8 @@ public:
 
 protected:
     void _initPushConstantV(VkCommandBuffer vCommandBuffer);
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shader/shaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shader/shaderFrag.spv"; }
+    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shaderVert.spv"; }
+    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shaderFrag.spv"; }
 
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;

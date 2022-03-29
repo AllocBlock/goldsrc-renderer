@@ -64,6 +64,9 @@
       <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(GLFW_PATH)\lib;$(VK_SDK_PATH)\Lib;</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>$(SolutionDir)Tools/compileShader.py $(ProjectDir)shaders</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -84,6 +87,9 @@
       <AdditionalDependencies>glfw3.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(GLFW_PATH)\lib;$(VK_SDK_PATH)\Lib;</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>$(SolutionDir)Tools/compileShader.py $(ProjectDir)shaders</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ApplicationTest.cpp" />
@@ -99,26 +105,6 @@
     <ClInclude Include="PipelineShadowMap.h" />
     <ClInclude Include="RendererTest.h" />
     <ClInclude Include="PipelineLight.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="shader\shader.frag">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Frag.spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)frag.spv</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile frag shader...</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile Frag Shader</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)frag.spv</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.vert">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vert shader...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)vert.spv</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile Vert Shader</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)vert.spv</Outputs>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Application\Application.vcxproj">
@@ -141,27 +127,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\shaderShadowMap.frag">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Frag.spv</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Frag.spv</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)fragShadowMap.spv</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)fragShadowMap.spv</Outputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile frag shader...</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile Frag Shadow Map Shader</Message>
-    </CustomBuild>
-    <CustomBuild Include="shader\shaderShadowMap.vert">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)%(Filename)Vert.spv</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VULKAN_SDK)\Bin\glslangValidator.exe -V %(Identity) -o %(RelativeDir)vertShadowMap.spv</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compile vert shader...</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compile Vert Shadow Map Shader</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename)Vert.spv</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(RelativeDir)vertShadowMap.spv</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\shader.frag" />
+    <None Include="shaders\shader.vert" />
+    <None Include="shaders\shaderShadowMap.frag" />
+    <None Include="shaders\shaderShadowMap.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

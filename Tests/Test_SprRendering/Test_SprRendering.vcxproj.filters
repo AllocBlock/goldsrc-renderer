@@ -46,14 +46,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\sprShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\sprShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
+    <None Include="shaders\sprShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\sprShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

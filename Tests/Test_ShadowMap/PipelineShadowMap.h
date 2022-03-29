@@ -43,8 +43,8 @@ public:
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shader/vertShadowMap.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shader/fragShadowMap.spv"; }
+    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/vertShadowMap.spv"; }
+    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/fragShadowMap.spv"; }
 
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;

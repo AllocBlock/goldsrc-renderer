@@ -31,9 +31,6 @@
     <Filter Include="头文件\Pipeline">
       <UniqueIdentifier>{b13500cf-d416-4d12-8b98-ada45626ea6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="资源文件\dll">
-      <UniqueIdentifier>{b2bd329d-3e86-4680-b621-54e0c1398956}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -157,49 +154,42 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shader\lineShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\skyShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\lineShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\shader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\skyShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\simpleShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\simpleShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\alphaTestShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\alphaTestShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\sprShader.frag">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-    <CustomBuild Include="shader\sprShader.vert">
-      <Filter>资源文件</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="..\Lib\FreeImage\FreeImage.dll">
-      <Filter>资源文件\dll</Filter>
-    </CopyFileToFolders>
+    <None Include="shaders\shader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\simpleShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\simpleShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\skyShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\skyShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\sprShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\sprShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\alphaTestShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\alphaTestShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\lineShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\lineShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\shader.frag">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -29,8 +29,8 @@ public:
     void removeObject(std::string vName);
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shader/lineShaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shader/lineShaderFrag.spv"; }
+    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/lineShaderVert.spv"; }
+    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/lineShaderFrag.spv"; }
 
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;
