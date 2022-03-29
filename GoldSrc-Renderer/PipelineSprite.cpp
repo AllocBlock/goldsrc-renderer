@@ -237,10 +237,10 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
 
     // placeholder image
-    uint8_t Data = 0;
+    uint8_t Data[4] = { 0, 0, 0, 0 };
     auto pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
-    pTinyImage->setData(&Data);
+    pTinyImage->setData(Data);
     m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
 }
 

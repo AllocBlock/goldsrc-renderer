@@ -2,6 +2,14 @@
 #include "IOBase.h"
 #include "Pointer.h"
 
+// FIXME: BRG only on little endian OS 
+enum class EPixelFormat
+{
+    UNKNOWN,
+    RGBA8,
+    RGBA32,
+};
+
 class CIOImage : public CIOBase
 {
 public:
@@ -21,7 +29,11 @@ public:
     size_t getWidth() const { return m_Width; }
     size_t getHeight() const { return m_Height; }
     size_t getChannelNum() const { return m_ChannelNum; }
-    const void* getData() const { return m_pData; }
+    size_t getBitPerPixel() const;
+    size_t getBitDepth() const;
+    EPixelFormat getPixelFormat() const { return m_PixelFormat; }
+    size_t getDataSize() const { return m_Width * m_Height * getBitPerPixel(); }
+    const void* getData() const { return m_Data.data(); }
 
     void setSize(size_t vWidth, size_t vHeight) { m_Width = vWidth; m_Height = vHeight; }
     void setChannelNum(size_t vChannels) { m_ChannelNum = vChannels; }
@@ -33,10 +45,15 @@ protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
+    using byte = uint8_t;
+
+    bool __readImageStb();
+    bool __readImageTinyexr();
     void __cleanup();
 
     size_t m_Width = 0;
     size_t m_Height = 0;
-    size_t m_ChannelNum = 0;
-    void* m_pData = nullptr;
+    size_t m_ChannelNum = 4;
+    EPixelFormat m_PixelFormat = EPixelFormat::RGBA8;
+    std::vector<byte> m_Data;
 };

@@ -31,6 +31,9 @@
     <Filter Include="头文件\Pipeline">
       <UniqueIdentifier>{b13500cf-d416-4d12-8b98-ada45626ea6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="资源文件\dll">
+      <UniqueIdentifier>{b2bd329d-3e86-4680-b621-54e0c1398956}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -193,5 +196,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\Lib\FreeImage\FreeImage.dll">
+      <Filter>资源文件\dll</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

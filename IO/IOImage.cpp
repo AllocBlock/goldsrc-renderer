@@ -1,18 +1,38 @@
 #include "IOImage.h"
+#include <algorithm>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "tinyexr.h"
 
-void CIOImage::setData(const void* vpData)
+void CIOImage::setData(const void* vData)
 {
-    if (m_pData) STBI_FREE(m_pData);
-    size_t DataSize = static_cast<size_t>(4) * m_Width * m_Height;
-    m_pData = STBI_MALLOC(DataSize);
-    memcpy_s(m_pData, DataSize, vpData, DataSize);
+    size_t DataSize = getDataSize();
+    m_Data.resize(DataSize, 0);
+    byte* pData = (byte*) vData;
+    std::copy(pData, pData + DataSize, std::begin(m_Data));
 }
+
+size_t CIOImage::getBitDepth() const
+{
+    switch (m_PixelFormat)
+    {
+    case EPixelFormat::RGBA8: return 8;
+    case EPixelFormat::RGBA32: return 32;
+    case EPixelFormat::UNKNOWN:
+    default:
+        return 0;
+    }
+}
+size_t CIOImage::getBitPerPixel() const
+{
+    return getBitDepth() / 8 * m_ChannelNum;
+}
+
 
 void CIOImage::writePPM(std::filesystem::path vFilePath)
 {
-    uint8_t* pIter = reinterpret_cast<uint8_t*>(m_pData);
+    _ASSERTE(m_PixelFormat == EPixelFormat::RGBA8);
+    uint8_t* pIter = reinterpret_cast<uint8_t*>(m_Data.data());
 
     std::ofstream File(vFilePath, std::ios::out);
     File << "P3" << std::endl;
@@ -34,18 +54,59 @@ void CIOImage::writePPM(std::filesystem::path vFilePath)
 bool CIOImage::_readV(std::filesystem::path vFilePath)
 {
     __cleanup();
+
+    std::string Ext = vFilePath.extension().string();
+
+    std::transform(Ext.begin(), Ext.end(), Ext.begin(), [](unsigned char c) { return std::tolower(c); });
+
+    if (Ext == ".exr")
+        return __readImageTinyexr();
+    else
+        return __readImageStb();
+}
+
+bool CIOImage::__readImageStb()
+{
     int Width, Height, ChannelNum;
-    m_pData = static_cast<void*>(stbi_load(vFilePath.string().c_str(), &Width, &Height, &ChannelNum, STBI_rgb_alpha)); // «ø÷∆∂¡»°Œ™RGBA
+    byte* pData = stbi_load(m_FilePath.string().c_str(), &Width, &Height, &ChannelNum, STBI_rgb_alpha); // «ø÷∆∂¡»°Œ™RGBA
+    if (!pData)
+        throw std::runtime_error(u8"Õº∆¨∂¡»° ß∞‹£∫" + std::string(stbi_failure_reason()));
+
     m_Width = Width;
     m_Height = Height;
-    m_ChannelNum = ChannelNum;
-    if (!m_pData)
-        throw std::runtime_error(u8"Õº∆¨∂¡»° ß∞‹£∫" + std::string(stbi_failure_reason()));
+    m_ChannelNum = 4;
+    m_PixelFormat = EPixelFormat::RGBA8;
+    setData(pData);
+
+    stbi_image_free(pData);
+
     return true;
+}
+
+bool CIOImage::__readImageTinyexr()
+{
+    float* pData; // width * height * RGBA
+    int Width, Height;
+    const char* pErr = nullptr;
+
+    int Res = LoadEXR(&pData, &Width, &Height, m_FilePath.string().c_str(), &pErr);
+
+    if (Res != TINYEXR_SUCCESS)
+    {
+        free(pData);
+        throw std::runtime_error(u8"Õº∆¨∂¡»° ß∞‹£∫" + (pErr ? std::string(pErr) : u8"Œª÷√¥ÌŒÛ"));
+    }
+
+    m_Width = Width;
+    m_Height = Height;
+    m_ChannelNum = 4;
+    m_PixelFormat = EPixelFormat::RGBA32;
+    setData(pData);
+    
+    free(pData);
 }
 
 void CIOImage::__cleanup()
 {
-    if (m_pData)
-        stbi_image_free(m_pData);
+    m_Data.clear();
 }

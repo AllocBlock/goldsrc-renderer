@@ -129,10 +129,10 @@ void CPipelinePBS::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, co
 void CPipelinePBS::__createPlaceholderImage()
 {
     // placeholder image
-    uint8_t Data = 0;
+    uint8_t Data[4] = { 0, 0, 0, 0 };
     CIOImage::Ptr pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
-    pTinyImage->setData(&Data);
+    pTinyImage->setData(Data);
     m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
 }
 

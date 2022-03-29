@@ -250,7 +250,8 @@ void CRendererPBR::__createVertexBuffer()
 
 void CRendererPBR::__createMaterials()
 {
-    CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
+    //CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
+    CIOImage::Ptr pColorImage = make<CIOImage>("./textures/old_hall_4k.exr");
     pColorImage->read();
     vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pColorImage);
     m_TextureColorSet.push_back(pColor);
