@@ -10,8 +10,9 @@
 class CRenderPassPBR : public IRenderPass
 {
 public:
-    CRenderPassPBR() : m_pCamera(make<CCamera>()) {}
+    CRenderPassPBR() = default;
 
+    void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; }
     ptr<CCamera> getCamera() { return m_pCamera; }
 
 protected:

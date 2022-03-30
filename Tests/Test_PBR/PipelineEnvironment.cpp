@@ -7,9 +7,10 @@ struct SUBOVert
     glm::vec4 EyePos;
 };
 
-void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vHDRI)
+void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
 {
-    m_pEnvironmentImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vHDRI);
+    m_pEnvironmentImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSkyImage);
+    __precalculateIBL(vSkyImage);
     __updateDescriptorSet();
     m_Ready = true;
 }
@@ -90,6 +91,11 @@ void CPipelineEnvironment::_initDescriptorV()
     m_Descriptor.add("CombinedSampler", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_Device);
+}
+
+void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
+{
+    // TODO: implement IBL 
 }
 
 void CPipelineEnvironment::__createPlaceholderImage()

@@ -8,28 +8,31 @@ void CApplicationPBR::_initV()
 
     registerGlobalCommandBuffer(m_pDevice->get(), m_pDevice->getGraphicsQueueIndex());
 
-    m_pRenderPassSky = make<CRenderPassFullScreen>();
-    m_pRenderPassSky->init(AppInfo, ERendererPos::BEGIN);
+    m_pCamera = make<CCamera>();
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
+
+    m_pRenderPassFullScreen = make<CRenderPassFullScreen>();
+    m_pRenderPassFullScreen->init(AppInfo, ERendererPos::BEGIN);
     
     m_pRenderPassPBR = make<CRenderPassPBR>();
     m_pRenderPassPBR->init(AppInfo, ERendererPos::MIDDLE);
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pRenderPassPBR->getCamera());
-    m_pRenderPassPBR->getCamera()->setPos(glm::vec3(0.0f, -13.6114998f, 0.0f));
-    m_pRenderPassPBR->getCamera()->setPhi(90);
-    m_pRenderPassPBR->getCamera()->setTheta(90);
+    m_pRenderPassPBR->setCamera(m_pCamera);
 
     m_pGUI = make<CGUIRenderer>();
     m_pGUI->setWindow(m_pWindow);
     m_pGUI->init(AppInfo, ERendererPos::END);
 
-    m_pRenderPassSky->setCamera(m_pRenderPassPBR->getCamera());
+    m_pCamera->setPos(glm::vec3(0.0f, -13.6114998f, 0.0f));
+    m_pCamera->setPhi(90);
+    m_pCamera->setTheta(90);
 }
 
 void CApplicationPBR::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
-    m_pRenderPassSky->update(vImageIndex);
+    m_pPipelineEnv->updateUniformBuffer(vImageIndex, m_pCamera);
+    m_pRenderPassFullScreen->update(vImageIndex);
     m_pRenderPassPBR->update(vImageIndex);
     m_pGUI->update(vImageIndex);
 }
@@ -40,13 +43,13 @@ void CApplicationPBR::_renderUIV()
     m_pRenderPassPBR->getCamera()->renderUI();
     m_pInteractor->renderUI();
     m_pRenderPassPBR->renderUI();
-    m_pRenderPassSky->renderUI();
+    m_pRenderPassFullScreen->renderUI();
     m_pGUI->endFrame();
 }
 
 std::vector<VkCommandBuffer> CApplicationPBR::_getCommandBufferSetV(uint32_t vImageIndex)
 {
-    std::vector<VkCommandBuffer> SkyBuffers = m_pRenderPassSky->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> SkyBuffers = m_pRenderPassFullScreen->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> SceneBuffers = m_pRenderPassPBR->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> GUIBuffers = m_pGUI->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> Result = SkyBuffers;
@@ -61,14 +64,24 @@ void CApplicationPBR::_createOtherResourceV()
     auto Extent = m_pSwapchain->getExtent();
     auto ImageViewSet = m_pSwapchain->getImageViews();
 
-    m_pRenderPassSky->recreate(ImageFormat, Extent, ImageViewSet);
+    m_pRenderPassFullScreen->recreate(ImageFormat, Extent, ImageViewSet);
     m_pRenderPassPBR->recreate(ImageFormat, Extent, ImageViewSet);
     m_pGUI->recreate(ImageFormat, Extent, ImageViewSet);
+
+    m_pPipelineEnv = make<CPipelineEnvironment>();
+    m_pPipelineEnv->create(m_PhysicalDevice, m_pDevice->get(), m_pRenderPassFullScreen->getRenderPass(), m_pSwapchain->getExtent(), 0);
+    m_pPipelineEnv->setImageNum(m_pSwapchain->getImageViews().size());
+    m_pRenderPassFullScreen->setPipeline(m_pPipelineEnv);
+
+    CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
+    pSkyIOImage->read();
+    m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
 }
 
 void CApplicationPBR::_destroyOtherResourceV()
 {
-    m_pRenderPassSky->destroy();
+    m_pPipelineEnv->destroy();
+    m_pRenderPassFullScreen->destroy();
     m_pRenderPassPBR->destroy();
     m_pGUI->destroy();
 

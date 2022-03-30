@@ -4,10 +4,6 @@
 
 void CRenderPassPBR::_initV()
 {
-    m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
-    m_pCamera->setPos(glm::vec3(0.0, -1.0, 0.0));
-
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createVertexBuffer();

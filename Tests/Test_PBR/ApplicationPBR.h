@@ -4,6 +4,7 @@
 #include "GUIPass.h"
 #include "RenderPassPBR.h"
 #include "RenderPassFullScreen.h"
+#include "PipelineEnvironment.h"
 #include "Interactor.h"
 
 class CApplicationPBR : public CApplicationBase
@@ -20,9 +21,11 @@ protected:
     virtual void _destroyOtherResourceV() override;
 
 private:
+    ptr<CCamera> m_pCamera = nullptr;
     ptr<CGUIRenderer> m_pGUI = nullptr;
     ptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
-    ptr<CRenderPassFullScreen> m_pRenderPassSky = nullptr;
+    ptr<CRenderPassFullScreen> m_pRenderPassFullScreen = nullptr;
+    ptr<CPipelineEnvironment> m_pPipelineEnv = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };
 

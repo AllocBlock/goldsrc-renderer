@@ -10,7 +10,7 @@ class CPipelineEnvironment : public IPipeline
 {
 public:
     bool isReady() { return m_Ready; }
-    void setEnvironmentMap(CIOImage::Ptr vHDRI);
+    void setEnvironmentMap(CIOImage::Ptr vSkyImage);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::Ptr vCamera);
     void destroy();
 
@@ -26,6 +26,7 @@ protected:
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
 
 private:
+    void __precalculateIBL(CIOImage::Ptr vSkyImage);
     void __createPlaceholderImage();
     void __updateDescriptorSet();
     void __destroyResources();

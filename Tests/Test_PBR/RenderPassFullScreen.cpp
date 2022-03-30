@@ -18,19 +18,10 @@ void CRenderPassFullScreen::_recreateV()
     __createRecreateResources();
 }
 
-void CRenderPassFullScreen::_updateV(uint32_t vImageIndex)
-{
-    if (m_pCamera)
-        m_Pipeline.updateUniformBuffer(vImageIndex, m_pCamera);
-}
-
-void CRenderPassFullScreen::_renderUIV()
-{
-}
-
 std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    _ASSERTE(m_Pipeline.isReady());
+    _ASSERTE(m_pPipeline);
+    //_ASSERTE(m_pPipeline->isReady());
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
@@ -59,7 +50,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
         VkBuffer VertBuffer = m_pVertexBuffer->get();
         VkDeviceSize Offsets[] = { 0 };
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
-        m_Pipeline.bind(CommandBuffer, vImageIndex);
+        m_pPipeline->bind(CommandBuffer, vImageIndex);
 
         size_t VertexNum = m_PointDataSet.size();
         vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
@@ -125,11 +116,6 @@ void CRenderPassFullScreen::__destroyRenderPass()
     }
 }
 
-void CRenderPassFullScreen::__createGraphicsPipeline()
-{
-    m_Pipeline.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-}
-
 void CRenderPassFullScreen::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
@@ -168,13 +154,7 @@ void CRenderPassFullScreen::__createVertexBuffer()
 
 void CRenderPassFullScreen::__createRecreateResources()
 {
-    __createGraphicsPipeline();
     __createFramebuffers();
-    m_Pipeline.setImageNum(m_AppInfo.TargetImageViewSet.size());
-
-    CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
-    pSkyIOImage->read();
-    m_Pipeline.setEnvironmentMap(pSkyIOImage);
 }
 
 void CRenderPassFullScreen::__destroyRecreateResources()
@@ -182,7 +162,6 @@ void CRenderPassFullScreen::__destroyRecreateResources()
     for (auto& pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
     m_FramebufferSet.clear();
-    m_Pipeline.destroy();
 }
 
 void CRenderPassFullScreen::__generateScene()
