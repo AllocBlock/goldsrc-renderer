@@ -12,10 +12,20 @@ class CRenderPassFullScreen : public IRenderPass
 public:
     CRenderPassFullScreen() {}
 
-    void setPipeline(ptr<IPipeline> vPipeline) { m_pPipeline = vPipeline; }
-    ptr<IPipeline> getPipeline(ptr<IPipeline> vPipeline) { return m_pPipeline; }
+    template <typename T>
+    ptr<T> initPipeline()
+    {
+        _ASSERTE(m_RenderPass != VK_NULL_HANDLE);
+        if (m_pPipeline) m_pPipeline->destroy();
+        ptr<T> pPipeline = make<T>();
+        m_pPipeline = pPipeline;
+        m_pPipeline->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+        m_pPipeline->setImageNum(m_AppInfo.TargetImageViewSet.size());
+        return pPipeline;
+    }
+    ptr<IPipeline> getPipeline() { return m_pPipeline; }
     
-    VkRenderPass getRenderPass() { return m_RenderPass; }
+    //VkRenderPass getRenderPass() { return m_RenderPass; }
 
 protected:
     virtual void _initV() override;

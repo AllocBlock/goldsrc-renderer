@@ -64,6 +64,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
 void CRenderPassFullScreen::_destroyV()
 {
     __destroyRecreateResources();
+    if (m_pPipeline) m_pPipeline->destroy();
     m_pVertexBuffer->destroy();
     vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
@@ -155,6 +156,8 @@ void CRenderPassFullScreen::__createVertexBuffer()
 void CRenderPassFullScreen::__createRecreateResources()
 {
     __createFramebuffers();
+    if (m_pPipeline)
+        m_pPipeline->setImageNum(m_AppInfo.TargetImageViewSet.size());
 }
 
 void CRenderPassFullScreen::__destroyRecreateResources()

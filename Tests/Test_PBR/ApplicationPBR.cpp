@@ -14,6 +14,11 @@ void CApplicationPBR::_initV()
 
     m_pRenderPassFullScreen = make<CRenderPassFullScreen>();
     m_pRenderPassFullScreen->init(AppInfo, ERendererPos::BEGIN);
+    m_pPipelineEnv = m_pRenderPassFullScreen->initPipeline<CPipelineEnvironment>();
+
+    CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
+    pSkyIOImage->read();
+    m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
     
     m_pRenderPassPBR = make<CRenderPassPBR>();
     m_pRenderPassPBR->init(AppInfo, ERendererPos::MIDDLE);
@@ -67,15 +72,6 @@ void CApplicationPBR::_createOtherResourceV()
     m_pRenderPassFullScreen->recreate(ImageFormat, Extent, ImageViewSet);
     m_pRenderPassPBR->recreate(ImageFormat, Extent, ImageViewSet);
     m_pGUI->recreate(ImageFormat, Extent, ImageViewSet);
-
-    m_pPipelineEnv = make<CPipelineEnvironment>();
-    m_pPipelineEnv->create(m_PhysicalDevice, m_pDevice->get(), m_pRenderPassFullScreen->getRenderPass(), m_pSwapchain->getExtent(), 0);
-    m_pPipelineEnv->setImageNum(m_pSwapchain->getImageViews().size());
-    m_pRenderPassFullScreen->setPipeline(m_pPipelineEnv);
-
-    CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
-    pSkyIOImage->read();
-    m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
 }
 
 void CApplicationPBR::_destroyOtherResourceV()
