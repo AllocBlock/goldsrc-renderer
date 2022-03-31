@@ -47,6 +47,9 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
     if (!m_Pipeline.isReady())
         throw "Not Ready";
 
+    if (m_FramebufferSet.empty())
+        __createFramebuffers();
+
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
     VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
@@ -241,7 +244,6 @@ void CRenderPassPBR::__createRecreateResources()
 
     __createGraphicsPipeline(); 
     __createDepthResources();
-    __createFramebuffers();
     m_Pipeline.setImageNum(m_AppInfo.TargetImageViewSet.size());
     m_Pipeline.setMaterialBuffer(m_pMaterialBuffer);
     m_Pipeline.setTextures(m_TextureColorSet, m_TextureNormalSet, m_TextureSpecularSet);

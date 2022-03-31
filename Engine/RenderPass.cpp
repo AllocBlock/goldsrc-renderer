@@ -61,6 +61,9 @@ void IRenderPass::init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPo
 {
     m_AppInfo = vAppInfo;
     m_RenderPassPosBitField = vRenderPassPosBitField;
+
+    auto Ports = _getPortV();
+    m_pLink = make<CRenderPassLink>(Ports);
     _initV();
 }
 

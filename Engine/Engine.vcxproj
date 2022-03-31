@@ -99,6 +99,7 @@
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="RenderPass.cpp" />
+    <ClCompile Include="RenderPassPort.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
     <ClCompile Include="UserInterface.cpp" />
     <ClCompile Include="VertexAttributeDescriptor.cpp" />
@@ -114,6 +115,7 @@
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="RenderPass.h" />
     <ClInclude Include="RendererScene.h" />
+    <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />
     <ClInclude Include="UserInterface.h" />
     <ClInclude Include="VertexAttributeDescriptor.h" />

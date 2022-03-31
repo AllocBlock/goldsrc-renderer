@@ -2,6 +2,7 @@
 #include "Vulkan.h"
 #include "Command.h"
 #include "GUI.h"
+#include "RenderPassPort.h"
 
 #include <vulkan/vulkan.h>
 #include <string>
@@ -35,6 +36,7 @@ public:
 
 protected:
     virtual void _initV() {}
+    virtual CRenderPassPort _getPortV() { return CRenderPassPort(); }
     virtual void _recreateV() {}
     virtual void _updateV(uint32_t vImageIndex) {}
     virtual void _renderUIV() override {}
@@ -42,6 +44,7 @@ protected:
     virtual void _destroyV() {};
 
     Vulkan::SVulkanAppInfo m_AppInfo;
+    ptr<CRenderPassLink> m_pLink;
     int m_RenderPassPosBitField = 0;
 };
 

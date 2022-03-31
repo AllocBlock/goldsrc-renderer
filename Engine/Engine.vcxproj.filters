@@ -48,6 +48,9 @@
     <ClCompile Include="GlobalSingleTimeBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPassPort.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -87,6 +90,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="GlobalSingleTimeBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassPort.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
