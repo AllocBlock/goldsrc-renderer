@@ -44,7 +44,7 @@ void CApplicationGoldSrc::_createOtherResourceV()
 
     m_pPassGUI = make<CGUIRenderPass>();
     m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo, ERendererPos::END);
+    m_pPassGUI->init(AppInfo, vk::ERenderPassPos::END);
 
     m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
@@ -96,14 +96,14 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
     case ERenderMethod::DEFAULT:
     {
         m_pPassScene = make<CSceneSimpleRenderPass>();
-        m_pPassScene->init(AppInfo, ERendererPos::BEGIN);
+        m_pPassScene->init(AppInfo, vk::ERenderPassPos::BEGIN);
         m_pPassScene->setCamera(m_pCamera);
         break;
     }
     case ERenderMethod::BSP:
     {
         m_pPassScene = make<CSceneGoldSrcRenderPass>();
-        m_pPassScene->init(AppInfo, ERendererPos::BEGIN);
+        m_pPassScene->init(AppInfo, vk::ERenderPassPos::BEGIN);
         m_pPassScene->setCamera(m_pCamera);
         break;
     }

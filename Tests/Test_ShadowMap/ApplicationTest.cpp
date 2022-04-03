@@ -6,9 +6,9 @@ void CApplicationTest::_initV()
 
     m_pGUI = make<CGUITest>();
     m_pGUI->setWindow(m_pWindow);
-    m_pGUI->init(AppInfo, ERendererPos::END);
+    m_pGUI->init(AppInfo, ERenderPassPos::END);
     m_pRenderPass = make<CRendererTest>();
-    m_pRenderPass->init(AppInfo, ERendererPos::BEGIN);
+    m_pRenderPass->init(AppInfo, ERenderPassPos::BEGIN);
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
 

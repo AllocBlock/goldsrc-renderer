@@ -59,7 +59,7 @@ void CGUIRenderPass::_initV()
     InitInfo.MinImageCount = NumImage;
     InitInfo.ImageCount = NumImage;
     InitInfo.CheckVkResultFn = nullptr;
-    ImGui_ImplVulkan_Init(&InitInfo, m_RenderPass);
+    ImGui_ImplVulkan_Init(&InitInfo, m_Handle);
 
     // create command pool and buffers
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
@@ -108,7 +108,6 @@ void CGUIRenderPass::_destroyV()
 
     m_Command.clear();
     __destroyDescriptorPool();
-    __destroyRenderPass();
 
     m_pWindow = nullptr;
 
@@ -122,28 +121,22 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
-    VkClearValue ClearValue = {};
-    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
     VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo);
 
-    VkRenderPassBeginInfo RenderPassBeginInfo = {};
-    RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass = m_RenderPass;
-    RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
-    RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
-    RenderPassBeginInfo.clearValueCount = 1;
-    RenderPassBeginInfo.pClearValues = &ClearValue;
-    vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkClearValue ClearValue = {};
+    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, { ClearValue });
 
     auto pDrawData = ImGui::GetDrawData();
     if (pDrawData)
         ImGui_ImplVulkan_RenderDrawData(pDrawData, CommandBuffer);
 
-    vkCmdEndRenderPass(CommandBuffer);
+    end();
     Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
 
     return { CommandBuffer };
@@ -152,7 +145,7 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
 void CGUIRenderPass::__createRenderPass()
 {
     // create renderpass
-    VkAttachmentDescription Attachment = createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription Attachment = createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, vk::EImageType::COLOR);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -180,16 +173,7 @@ void CGUIRenderPass::__createRenderPass()
     RenderPassInfo.dependencyCount = 1;
     RenderPassInfo.pDependencies = &SubpassDependency;
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
-}
-
-void CGUIRenderPass::__destroyRenderPass()
-{
-    if (m_RenderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
-        m_RenderPass = VK_NULL_HANDLE;
-    }
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
 }
 
 void CGUIRenderPass::__createDescriptorPool()
@@ -240,7 +224,7 @@ void CGUIRenderPass::__createFramebuffer()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
     }
 }
 

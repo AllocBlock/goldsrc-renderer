@@ -107,7 +107,6 @@ void CSceneSimpleRenderPass::_destroyV()
 {
     __destroyRecreateResources();
 
-    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
     IRenderPass::_destroyV();
@@ -135,20 +134,11 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
         // init
-        std::array<VkClearValue, 2> ClearValues = {};
-        ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-        ClearValues[1].depthStencil = { 1.0f, 0 };
+        std::vector<VkClearValue> ClearValueSet(2);
+        ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+        ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        VkRenderPassBeginInfo RenderPassBeginInfo = {};
-        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        RenderPassBeginInfo.renderPass = m_RenderPass;
-        RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
-        RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-        RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
-        RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
-        RenderPassBeginInfo.pClearValues = ClearValues.data();
-
-        vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -178,7 +168,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
             }
         }
 
-        vkCmdEndRenderPass(CommandBuffer);
+        end();
         Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
     }
     return { CommandBuffer };
@@ -254,8 +244,8 @@ void CSceneSimpleRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, s
 
 void CSceneSimpleRenderPass::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, vk::EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), vk::EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -291,22 +281,13 @@ void CSceneSimpleRenderPass::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
-}
-
-void CSceneSimpleRenderPass::__destroyRenderPass()
-{
-    if (m_RenderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
-        m_RenderPass = VK_NULL_HANDLE;
-    }
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
 }
 
 void CSceneSimpleRenderPass::__createGraphicsPipelines()
 {
-    m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.Main.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_Handle, m_AppInfo.Extent);
+    m_PipelineSet.Main.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_Handle, m_AppInfo.Extent);
 }
 
 void CSceneSimpleRenderPass::__createCommandPoolAndBuffers()
@@ -343,7 +324,7 @@ void CSceneSimpleRenderPass::__createFramebuffers()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
     }
 }
 

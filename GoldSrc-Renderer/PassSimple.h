@@ -62,7 +62,6 @@ protected:
 
 private:
     void __createRenderPass();
-    void __destroyRenderPass();
     void __createGraphicsPipelines();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();
@@ -90,7 +89,6 @@ private:
 
     std::vector<SSimplePointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
 
-    VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     SSimplePipelineSet m_PipelineSet = SSimplePipelineSet();
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";

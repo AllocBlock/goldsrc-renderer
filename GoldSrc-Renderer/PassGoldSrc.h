@@ -107,7 +107,6 @@ protected:
 
 private:
     void __createRenderPass();
-    void __destroyRenderPass();
     void __createGraphicsPipelines();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();
@@ -145,7 +144,6 @@ private:
 
     std::vector<SGoldSrcPointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
 
-    VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     SPipelineSet m_PipelineSet = SPipelineSet();
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";

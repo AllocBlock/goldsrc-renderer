@@ -6,7 +6,7 @@
 #include "Image.h"
 #include "Buffer.h"
 
-class CRendererTest : public IRenderPass
+class CRendererTest : public vk::IRenderPass
 {
 public:
     CRendererTest() : m_pCamera(make<CCamera>()) {}
@@ -38,7 +38,6 @@ private:
     void __generateScene();
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth);
    
-    VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     CPipelineTest m_Pipeline;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";

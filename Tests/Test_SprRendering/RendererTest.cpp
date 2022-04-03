@@ -36,22 +36,13 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
 
     Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
-    std::array<VkClearValue, 2> ClearValues = {};
-    ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    ClearValues[1].depthStencil = { 1.0f, 0 };
+    std::vector<VkClearValue> ClearValueSet(2);
+    ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-    VkRenderPassBeginInfo RenderPassBeginInfo = {};
-    RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass = m_RenderPass;
-    RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
-    RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-    RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
-    RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
-    RenderPassBeginInfo.pClearValues = ClearValues.data();
-
-    vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, ClearValueSet);
     m_Pipeline.recordCommand(CommandBuffer, vImageIndex);
-    vkCmdEndRenderPass(CommandBuffer);
+    end();
     Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
     return { CommandBuffer };
 }

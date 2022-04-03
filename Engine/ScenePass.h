@@ -9,7 +9,7 @@ struct SObjectDataPosition
     VkDeviceSize Size;
 };
 
-class CSceneRenderPass : public IRenderPass
+class CSceneRenderPass : public vk::IRenderPass
 {
 public:
     CSceneRenderPass():m_pCamera(make<CCamera>()) {};

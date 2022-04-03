@@ -191,8 +191,6 @@ void CSceneGoldSrcRenderPass::_destroyV()
 {
     __destroyRecreateResources();
 
-    if (m_RenderPass)
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
     IRenderPass::_destroyV();
@@ -224,21 +222,11 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
         // init
+        std::vector<VkClearValue> ClearValueSet(2);
+        ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+        ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        std::array<VkClearValue, 2> ClearValues = {};
-        ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-        ClearValues[1].depthStencil = { 1.0f, 0 };
-
-        VkRenderPassBeginInfo RenderPassBeginInfo = {};
-        RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        RenderPassBeginInfo.renderPass = m_RenderPass;
-        RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
-        RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-        RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
-        RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
-        RenderPassBeginInfo.pClearValues = ClearValues.data();
-
-        vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+        begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -287,7 +275,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         VkCommandBuffer GuiCommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
         vkCmdExecuteCommands(CommandBuffer, 1, &GuiCommandBuffer);
 
-        vkCmdEndRenderPass(CommandBuffer);
+        end();
         Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
     }
     return { CommandBuffer };
@@ -360,7 +348,7 @@ void CSceneGoldSrcRenderPass::__recordGuiCommandBuffer(uint32_t vImageIndex)
     _ASSERTE(vImageIndex < m_NumSwapchainImage);
     VkCommandBufferInheritanceInfo InheritanceInfo = {};
     InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-    InheritanceInfo.renderPass = m_RenderPass;
+    InheritanceInfo.renderPass = m_Handle;
     InheritanceInfo.subpass = 1;
     InheritanceInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
 
@@ -598,8 +586,8 @@ void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, 
 
 void CSceneGoldSrcRenderPass::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
+    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, vk::EImageType::COLOR);
+    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), vk::EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -642,27 +630,19 @@ void CSceneGoldSrcRenderPass::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
-}
-
-void CSceneGoldSrcRenderPass::__destroyRenderPass()
-{
-    if (m_RenderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
-        m_RenderPass = VK_NULL_HANDLE;
-    }
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
 }
 
 void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
 {
-    m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.DepthTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendTextureAlpha.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendAlphaTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendAdditive.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.Sprite.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device,m_RenderPass, m_AppInfo.Extent, 1);
+    VkRenderPass RenderPass = m_Handle;
+    m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.DepthTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendTextureAlpha.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendAlphaTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendAdditive.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.Sprite.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent, 1);
 }
 
 void CSceneGoldSrcRenderPass::__createCommandPoolAndBuffers()
@@ -700,7 +680,7 @@ void CSceneGoldSrcRenderPass::__createFramebuffers()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
     }
 }
 

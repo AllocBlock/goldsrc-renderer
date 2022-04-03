@@ -1,5 +1,7 @@
 #include "RenderPass.h"
 
+using namespace vk;
+
 VkAttachmentDescription IRenderPass::createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, EImageType vType)
 {
     // TODO: handle loadop to match render pass port, or always use load? but how to clear?
@@ -25,7 +27,7 @@ VkAttachmentDescription IRenderPass::createAttachmentDescription(int vRendererPo
     
     VkImageLayout InitImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
     VkImageLayout FinalImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    if (vRendererPosBitField & ERendererPos::BEGIN)
+    if (vRendererPosBitField & ERenderPassPos::BEGIN)
     {
         LoadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
         InitImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
@@ -36,7 +38,7 @@ VkAttachmentDescription IRenderPass::createAttachmentDescription(int vRendererPo
         InitImageLayout = OptimalLayout;
     }
 
-    if (vRendererPosBitField & ERendererPos::END)
+    if (vRendererPosBitField & ERenderPassPos::END)
     {
         FinalImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     }
@@ -90,5 +92,37 @@ std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers(uint32_t vImageI
 void IRenderPass::destroy()
 {
     _destroyV();
-    m_RenderPassPosBitField = (int)ERendererPos::MIDDLE;
+    if (m_Handle)
+    {
+        vkDestroyRenderPass(m_AppInfo.Device, m_Handle, nullptr);
+        m_Handle = VK_NULL_HANDLE;
+    }
+    m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;
+}
+
+void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues)
+{
+    _ASSERTE(!m_Begined);
+
+    VkRenderPassBeginInfo RenderPassBeginInfo = {};
+    RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    RenderPassBeginInfo.renderPass = m_Handle;
+    RenderPassBeginInfo.framebuffer = vFrameBuffer;
+    RenderPassBeginInfo.renderArea.offset = { 0, 0 };
+    RenderPassBeginInfo.renderArea.extent = vRenderExtent;
+    RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(vClearValues.size());
+    RenderPassBeginInfo.pClearValues = vClearValues.data();
+
+    vkCmdBeginRenderPass(vCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    m_CurrentCommandBuffer = vCommandBuffer;
+    m_Begined = true;
+}
+
+void IRenderPass::end()
+{
+    _ASSERTE(m_Begined);
+    vkCmdEndRenderPass(m_CurrentCommandBuffer);
+    m_CurrentCommandBuffer = VK_NULL_HANDLE;
+    m_Begined = false;
 }

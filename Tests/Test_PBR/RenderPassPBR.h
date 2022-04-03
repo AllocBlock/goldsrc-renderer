@@ -7,7 +7,7 @@
 #include "MaterialPBR.h"
 #include "PipelinePBS.h"
 
-class CRenderPassPBR : public IRenderPass
+class CRenderPassPBR : public vk::IRenderPass
 {
 public:
     CRenderPassPBR() = default;
@@ -41,7 +41,6 @@ private:
     void __generateScene();
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth);
    
-    VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     CPipelinePBS m_Pipeline;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Test";

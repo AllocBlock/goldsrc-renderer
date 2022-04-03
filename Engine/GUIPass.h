@@ -6,7 +6,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class CGUIRenderPass : public IRenderPass
+class CGUIRenderPass : public vk::IRenderPass
 {
 public:
     CGUIRenderPass() = default;
@@ -26,7 +26,6 @@ protected:
     virtual void _destroyV() override;
 
     GLFWwindow* m_pWindow = nullptr;
-    VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Main";
@@ -36,7 +35,6 @@ protected:
 
 private:
     void __createRenderPass();
-    void __destroyRenderPass();
     void __createDescriptorPool();
     void __destroyDescriptorPool();
     void __createFramebuffer();

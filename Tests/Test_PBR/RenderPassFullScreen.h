@@ -7,7 +7,7 @@
 #include "Pipeline.h"
 #include "FullScreenPoint.h"
 
-class CRenderPassFullScreen : public IRenderPass
+class CRenderPassFullScreen : public vk::IRenderPass
 {
 public:
     CRenderPassFullScreen() {}
@@ -15,11 +15,12 @@ public:
     template <typename T>
     ptr<T> initPipeline()
     {
-        _ASSERTE(m_RenderPass != VK_NULL_HANDLE);
+        VkRenderPass RenderPass = get();
+        _ASSERTE(RenderPass != VK_NULL_HANDLE);
         if (m_pPipeline) m_pPipeline->destroy();
         ptr<T> pPipeline = make<T>();
         m_pPipeline = pPipeline;
-        m_pPipeline->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+        m_pPipeline->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
         m_pPipeline->setImageNum(m_AppInfo.ImageNum);
         return pPipeline;
     }
@@ -46,7 +47,6 @@ private:
 
     void __generateScene();
    
-    VkRenderPass m_RenderPass = VK_NULL_HANDLE;
     ptr<IPipeline> m_pPipeline = nullptr;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "FullScreen";

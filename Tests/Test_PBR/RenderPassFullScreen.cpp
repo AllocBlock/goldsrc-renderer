@@ -41,20 +41,10 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
 
     Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
-    std::array<VkClearValue, 1> ClearValues = {};
-    ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    VkClearValue ClearValue = {};
+    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    VkRenderPassBeginInfo RenderPassBeginInfo = {};
-    RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass = m_RenderPass;
-    RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
-    RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-    RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
-    RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
-    RenderPassBeginInfo.pClearValues = ClearValues.data();
-
-    vkCmdBeginRenderPass(CommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = m_pVertexBuffer->get();
@@ -66,7 +56,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
         vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
     }
     
-    vkCmdEndRenderPass(CommandBuffer);
+    end();
     Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
     return { CommandBuffer };
 }

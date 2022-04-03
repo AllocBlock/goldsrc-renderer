@@ -13,7 +13,7 @@ void CApplicationPBR::_initV()
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
     m_pRenderPassFullScreen = make<CRenderPassFullScreen>();
-    m_pRenderPassFullScreen->init(AppInfo, ERendererPos::BEGIN);
+    m_pRenderPassFullScreen->init(AppInfo, ERenderPassPos::BEGIN);
     m_pPipelineEnv = m_pRenderPassFullScreen->initPipeline<CPipelineEnvironment>();
 
     CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
@@ -21,12 +21,12 @@ void CApplicationPBR::_initV()
     m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
     
     m_pRenderPassPBR = make<CRenderPassPBR>();
-    m_pRenderPassPBR->init(AppInfo, ERendererPos::MIDDLE);
+    m_pRenderPassPBR->init(AppInfo, ERenderPassPos::MIDDLE);
     m_pRenderPassPBR->setCamera(m_pCamera);
 
     m_pGUI = make<CGUIRenderPass>();
     m_pGUI->setWindow(m_pWindow);
-    m_pGUI->init(AppInfo, ERendererPos::END);
+    m_pGUI->init(AppInfo, ERenderPassPos::END);
 
     m_pCamera->setPos(glm::vec3(0.0f, -13.6114998f, 0.0f));
     m_pCamera->setPhi(90);
