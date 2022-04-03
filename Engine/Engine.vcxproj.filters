@@ -65,7 +65,7 @@
     <ClInclude Include="RenderPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RendererScene.h">
+    <ClInclude Include="ScenePass.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SetupGLFW.h">

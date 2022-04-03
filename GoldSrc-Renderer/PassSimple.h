@@ -1,5 +1,5 @@
 #pragma once
-#include "RendererScene.h"
+#include "ScenePass.h"
 #include "Common.h"
 #include "FrameBuffer.h"
 #include "Scene.h"
@@ -28,10 +28,10 @@ struct SSimplePipelineSet
     }
 };
 
-class CRendererSceneSimple : public CRendererScene
+class CSceneSimpleRenderPass : public CSceneRenderPass
 {
 public:
-    CRendererSceneSimple() = default;
+    CSceneSimpleRenderPass() = default;
 
     void rerecordCommand();
 
@@ -51,6 +51,7 @@ public:
 
 protected:
     virtual void _initV() override;
+    virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;

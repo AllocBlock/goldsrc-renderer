@@ -20,7 +20,7 @@ public:
         ptr<T> pPipeline = make<T>();
         m_pPipeline = pPipeline;
         m_pPipeline->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
-        m_pPipeline->setImageNum(m_AppInfo.TargetImageViewSet.size());
+        m_pPipeline->setImageNum(m_AppInfo.ImageNum);
         return pPipeline;
     }
     ptr<IPipeline> getPipeline() { return m_pPipeline; }
@@ -29,6 +29,7 @@ public:
 
 protected:
     virtual void _initV() override;
+    virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;

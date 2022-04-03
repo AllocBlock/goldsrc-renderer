@@ -2,6 +2,8 @@
 
 VkAttachmentDescription IRenderPass::createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, EImageType vType)
 {
+    // TODO: handle loadop to match render pass port, or always use load? but how to clear?
+
     VkAttachmentStoreOp StoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
 
     VkImageLayout OptimalLayout;
@@ -67,11 +69,11 @@ void IRenderPass::init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPo
     _initV();
 }
 
-void IRenderPass::recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews)
+void IRenderPass::recreate(VkFormat vImageFormat, VkExtent2D vExtent, size_t vImageNum)
 {
     m_AppInfo.ImageFormat = vImageFormat;
     m_AppInfo.Extent = vExtent;
-    m_AppInfo.TargetImageViewSet = vTargetImageViews;
+    m_AppInfo.ImageNum = vImageNum;
     _recreateV();
 }
 
@@ -88,5 +90,5 @@ std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers(uint32_t vImageI
 void IRenderPass::destroy()
 {
     _destroyV();
-    m_RenderPassPosBitField = ERendererPos::MIDDLE;
+    m_RenderPassPosBitField = (int)ERendererPos::MIDDLE;
 }

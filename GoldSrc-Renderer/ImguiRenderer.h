@@ -1,6 +1,6 @@
 #pragma once
-#include "VulkanRenderer.h"
-#include "RendererScene.h"
+#include "PassGoldSrc.h"
+#include "ScenePass.h"
 
 #include <vector>
 #include <string>
@@ -9,10 +9,10 @@
 class CImguiRenderer
 {
 public:
-    void setTarget(ptr<CRendererScene> vRenderer);
+    void setTarget(ptr<CSceneRenderPass> vRenderer);
     void draw();
 protected:
-    virtual void _setTargetV(ptr<CRendererScene> vRenderer) = 0;
+    virtual void _setTargetV(ptr<CSceneRenderPass> vRenderer) = 0;
     virtual void _drawV() = 0;
 };
 

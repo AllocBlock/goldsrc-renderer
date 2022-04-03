@@ -1,5 +1,5 @@
 #pragma once
-#include "RendererScene.h"
+#include "ScenePass.h"
 #include "Common.h"
 #include "FrameBuffer.h"
 #include "PipelineSkybox.h"
@@ -42,10 +42,10 @@ struct SPipelineSet
     }
 };
 
-class CRendererSceneGoldSrc : public CRendererScene
+class CSceneGoldSrcRenderPass : public CSceneRenderPass
 {
 public:
-    CRendererSceneGoldSrc() = default;
+    CSceneGoldSrcRenderPass() = default;
     
     void rerecordCommand();
 
@@ -96,6 +96,7 @@ public:
 
 protected:
     virtual void _initV() override;
+    virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;

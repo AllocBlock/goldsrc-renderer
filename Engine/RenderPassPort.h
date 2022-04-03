@@ -25,6 +25,9 @@ public:
     void addOutput(const SPort& vPort);
     void clear();
 
+    bool hasInput() const { return !m_InputSet.empty(); }
+    bool hasOutput() const { return !m_OutputSet.empty(); }
+
 private:
     std::vector<SPort> m_InputSet;
     std::vector<SPort> m_OutputSet;
@@ -39,7 +42,7 @@ enum class EPortType
 struct SLink
 {
     std::string TargetName;
-    vk::CImage::Ptr Image = nullptr;
+    VkImageView ImageView = nullptr;
     EPortType Type;
     size_t Index = 0;
 
@@ -55,13 +58,19 @@ public:
     CRenderPassLink() = delete;
     CRenderPassLink(CRenderPassPort vPorts) : m_Ports(vPorts) {}
 
-    void link(std::string vTargetName, vk::CImage::Ptr vImage, EPortType vType, size_t vIndex = 0);
     void link(const SLink& vLink);
-    vk::CImage::Ptr getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0);
-    vk::CImage::Ptr getInput(std::string vTargetName, size_t vIndex = 0);
-    vk::CImage::Ptr getOutput(std::string vTargetName, size_t vIndex = 0);
+    void link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
+    void unlink(const SLink& vLink);
+    void unlink(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
+    bool hasLink(const SLink& vLink);
+    bool hasLink(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
+    VkImageView getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0);
+    VkImageView getInput(std::string vTargetName, size_t vIndex = 0);
+    VkImageView getOutput(std::string vTargetName, size_t vIndex = 0);
 
 private:
+    bool __findLink(const SLink& vLink, size_t& voIndex);
+
     const CRenderPassPort& m_Ports;
     std::vector<SLink> m_LinkSet;
 };

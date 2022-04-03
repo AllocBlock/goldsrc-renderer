@@ -10,6 +10,13 @@ void CRenderPassFullScreen::_initV()
     __createRecreateResources();
 }
 
+CRenderPassPort CRenderPassFullScreen::_getPortV()
+{
+    CRenderPassPort Ports;
+    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    return Ports;
+}
+
 void CRenderPassFullScreen::_recreateV()
 {
     IRenderPass::_recreateV();
@@ -22,6 +29,9 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
 {
     _ASSERTE(m_pPipeline);
     //_ASSERTE(m_pPipeline->isReady());
+
+    if (m_FramebufferSet.empty())
+        __createFramebuffers();
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
@@ -120,18 +130,18 @@ void CRenderPassFullScreen::__destroyRenderPass()
 void CRenderPassFullScreen::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.TargetImageViewSet.size(), ECommandBufferLevel::PRIMARY);
+    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 
 void CRenderPassFullScreen::__createFramebuffers()
 {
-    size_t ImageNum = m_AppInfo.TargetImageViewSet.size();
+    size_t ImageNum = m_AppInfo.ImageNum;
     m_FramebufferSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_AppInfo.TargetImageViewSet[i]
+            m_pLink->getOutput("Output", i)
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
@@ -155,9 +165,8 @@ void CRenderPassFullScreen::__createVertexBuffer()
 
 void CRenderPassFullScreen::__createRecreateResources()
 {
-    __createFramebuffers();
     if (m_pPipeline)
-        m_pPipeline->setImageNum(m_AppInfo.TargetImageViewSet.size());
+        m_pPipeline->setImageNum(m_AppInfo.ImageNum);
 }
 
 void CRenderPassFullScreen::__destroyRecreateResources()

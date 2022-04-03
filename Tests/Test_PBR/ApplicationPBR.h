@@ -18,11 +18,14 @@ protected:
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex) override;
     virtual void _createOtherResourceV() override;
+    virtual void _recreateOtherResourceV() override;
     virtual void _destroyOtherResourceV() override;
 
 private:
+    void __linkPasses();
+
     ptr<CCamera> m_pCamera = nullptr;
-    ptr<CGUIRenderer> m_pGUI = nullptr;
+    ptr<CGUIRenderPass> m_pGUI = nullptr;
     ptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
     ptr<CRenderPassFullScreen> m_pRenderPassFullScreen = nullptr;
     ptr<CPipelineEnvironment> m_pPipelineEnv = nullptr;

@@ -20,7 +20,7 @@ namespace Vulkan
         VkQueue GraphicsQueue;
         VkExtent2D Extent;
         VkFormat ImageFormat;
-        std::vector<VkImageView> TargetImageViewSet;
+        size_t ImageNum;
 
         void clear()
         {
@@ -31,7 +31,7 @@ namespace Vulkan
             GraphicsQueue = VK_NULL_HANDLE;
             Extent = { 0, 0 };
             ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
-            TargetImageViewSet.clear();
+            ImageNum = 0;
         }
     };
 

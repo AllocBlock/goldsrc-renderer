@@ -134,8 +134,8 @@
     <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />
     <ClCompile Include="SceneProbe.cpp" />
-    <ClCompile Include="SimpleRenderer.cpp" />
-    <ClCompile Include="VulkanRenderer.cpp" />
+    <ClCompile Include="PassSimple.cpp" />
+    <ClCompile Include="PassGoldSrc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h" />
@@ -157,8 +157,8 @@
     <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PointData.h" />
     <ClInclude Include="SceneProbe.h" />
-    <ClInclude Include="SimpleRenderer.h" />
-    <ClInclude Include="VulkanRenderer.h" />
+    <ClInclude Include="PassSimple.h" />
+    <ClInclude Include="PassGoldSrc.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

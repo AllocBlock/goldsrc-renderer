@@ -9,7 +9,7 @@
 #include <iostream>
 #include <set>
 
-void CGUIRenderer::beginFrame(std::string vTitle)
+void CGUIRenderPass::beginFrame(std::string vTitle)
 {
     if (m_Begined) throw "Already in a frame";
     ImGui_ImplVulkan_NewFrame();
@@ -19,7 +19,7 @@ void CGUIRenderer::beginFrame(std::string vTitle)
     m_Begined = true;
 }
 
-void CGUIRenderer::endFrame()
+void CGUIRenderPass::endFrame()
 {
     if (!m_Begined) throw "Already out of a frame";
     ImGui::End();
@@ -27,13 +27,13 @@ void CGUIRenderer::endFrame()
     m_Begined = false;
 }
 
-void CGUIRenderer::_initV()
+void CGUIRenderPass::_initV()
 {
     IRenderPass::_initV();
 
     _ASSERTE(m_pWindow);
 
-    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.TargetImageViewSet.size());
+    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
     __createRenderPass();
     __createDescriptorPool();
 
@@ -73,7 +73,15 @@ void CGUIRenderer::_initV()
     __createRecreateSources();
 }
 
-void CGUIRenderer::_recreateV()
+CRenderPassPort CGUIRenderPass::_getPortV()
+{
+    CRenderPassPort Ports;
+    Ports.addOutput("Input", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    return Ports;
+}
+
+void CGUIRenderPass::_recreateV()
 {
     IRenderPass::_recreateV();
 
@@ -81,18 +89,18 @@ void CGUIRenderer::_recreateV()
     __createRecreateSources();
 }
 
-void CGUIRenderer::_renderUIV()
+void CGUIRenderPass::_renderUIV()
 {
     ImGui::Text(u8"默认GUI");
 }
 
-void CGUIRenderer::_destroyV()
+void CGUIRenderPass::_destroyV()
 {
     if (m_AppInfo.Device == VK_NULL_HANDLE) return;
 
-    for (auto FrameBuffer : m_FrameBufferSet)
-        vkDestroyFramebuffer(m_AppInfo.Device, FrameBuffer, nullptr);
-    m_FrameBufferSet.clear();
+    for (auto pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
+    m_FramebufferSet.clear();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -107,8 +115,11 @@ void CGUIRenderer::_destroyV()
     IRenderPass::_destroyV();
 }
 
-std::vector<VkCommandBuffer> CGUIRenderer::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
+    if (m_FramebufferSet.empty())
+        __createFramebuffer();
+
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
     VkClearValue ClearValue = {};
@@ -122,7 +133,7 @@ std::vector<VkCommandBuffer> CGUIRenderer::_requestCommandBuffersV(uint32_t vIma
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass = m_RenderPass;
-    RenderPassBeginInfo.framebuffer = m_FrameBufferSet[vImageIndex];
+    RenderPassBeginInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
     RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
     RenderPassBeginInfo.clearValueCount = 1;
     RenderPassBeginInfo.pClearValues = &ClearValue;
@@ -138,7 +149,7 @@ std::vector<VkCommandBuffer> CGUIRenderer::_requestCommandBuffersV(uint32_t vIma
     return { CommandBuffer };
 }
 
-void CGUIRenderer::__createRenderPass()
+void CGUIRenderPass::__createRenderPass()
 {
     // create renderpass
     VkAttachmentDescription Attachment = createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
@@ -172,7 +183,7 @@ void CGUIRenderer::__createRenderPass()
     Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
-void CGUIRenderer::__destroyRenderPass()
+void CGUIRenderPass::__destroyRenderPass()
 {
     if (m_RenderPass != VK_NULL_HANDLE)
     {
@@ -181,7 +192,7 @@ void CGUIRenderer::__destroyRenderPass()
     }
 }
 
-void CGUIRenderer::__createDescriptorPool()
+void CGUIRenderPass::__createDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> PoolSizes =
     {
@@ -207,7 +218,7 @@ void CGUIRenderer::__createDescriptorPool()
     Vulkan::checkError(vkCreateDescriptorPool(m_AppInfo.Device, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
-void CGUIRenderer::__destroyDescriptorPool()
+void CGUIRenderPass::__destroyDescriptorPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE)
     {
@@ -216,28 +227,30 @@ void CGUIRenderer::__destroyDescriptorPool()
     }
 }
 
-void CGUIRenderer::__createRecreateSources()
+void CGUIRenderPass::__createFramebuffer()
 {
-    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.TargetImageViewSet.size());
-    // create framebuffers
-    m_FrameBufferSet.resize(NumImage);
-    VkFramebufferCreateInfo FramebufferInfo = {};
-    FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    FramebufferInfo.renderPass = m_RenderPass;
-    FramebufferInfo.attachmentCount = 1;
-    FramebufferInfo.width = m_AppInfo.Extent.width;
-    FramebufferInfo.height = m_AppInfo.Extent.height;
-    FramebufferInfo.layers = 1;
-    for (uint32_t i = 0; i < NumImage; ++i)
+    uint32_t ImageNum = static_cast<uint32_t>(m_AppInfo.ImageNum);
+
+    m_FramebufferSet.resize(ImageNum);
+    for (size_t i = 0; i < ImageNum; ++i)
     {
-        FramebufferInfo.pAttachments = &m_AppInfo.TargetImageViewSet[i];
-        Vulkan::checkError(vkCreateFramebuffer(m_AppInfo.Device, &FramebufferInfo, nullptr, &m_FrameBufferSet[i]));
+        std::vector<VkImageView> AttachmentSet =
+        {
+            m_pLink->getOutput("Output", i)
+        };
+
+        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
     }
 }
 
-void CGUIRenderer::__destroyRecreateSources()
+void CGUIRenderPass::__createRecreateSources()
 {
-    for (auto& FrameBuffer : m_FrameBufferSet)
-        vkDestroyFramebuffer(m_AppInfo.Device, FrameBuffer, nullptr);
-    m_FrameBufferSet.clear();
+}
+
+void CGUIRenderPass::__destroyRecreateSources()
+{
+    for (auto& pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
+    m_FramebufferSet.clear();
 }

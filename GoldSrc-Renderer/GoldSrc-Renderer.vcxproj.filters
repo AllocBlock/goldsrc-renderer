@@ -16,20 +16,20 @@
     <Filter Include="头文件\Imgui">
       <UniqueIdentifier>{ac74e681-1aa0-442b-be8e-e7bb9f1a122e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\Renderer">
-      <UniqueIdentifier>{92ce53ab-468e-4aa1-afeb-a69772ec2b10}</UniqueIdentifier>
-    </Filter>
     <Filter Include="源文件\Imgui">
       <UniqueIdentifier>{df4c598f-3d30-4888-8ffc-694197a9598b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="源文件\Renderer">
-      <UniqueIdentifier>{bbbb4495-fb7b-4504-8213-03987ae03429}</UniqueIdentifier>
     </Filter>
     <Filter Include="源文件\Pipeline">
       <UniqueIdentifier>{1f5a51fb-9e66-4c84-96b5-f52fcacfcc53}</UniqueIdentifier>
     </Filter>
     <Filter Include="头文件\Pipeline">
       <UniqueIdentifier>{b13500cf-d416-4d12-8b98-ada45626ea6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\RenderPass">
+      <UniqueIdentifier>{92ce53ab-468e-4aa1-afeb-a69772ec2b10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RenderPass">
+      <UniqueIdentifier>{bbbb4495-fb7b-4504-8213-03987ae03429}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -78,11 +78,11 @@
     <ClCompile Include="PipelineSprite.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
-    <ClCompile Include="SimpleRenderer.cpp">
-      <Filter>源文件\Renderer</Filter>
+    <ClCompile Include="PassSimple.cpp">
+      <Filter>源文件\RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanRenderer.cpp">
-      <Filter>源文件\Renderer</Filter>
+    <ClCompile Include="PassGoldSrc.cpp">
+      <Filter>源文件\RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="SceneProbe.cpp">
       <Filter>源文件</Filter>
@@ -143,11 +143,11 @@
     <ClInclude Include="PipelineSprite.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanRenderer.h">
-      <Filter>头文件\Renderer</Filter>
+    <ClInclude Include="PassGoldSrc.h">
+      <Filter>头文件\RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleRenderer.h">
-      <Filter>头文件\Renderer</Filter>
+    <ClInclude Include="PassSimple.h">
+      <Filter>头文件\RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="SceneProbe.h">
       <Filter>头文件</Filter>

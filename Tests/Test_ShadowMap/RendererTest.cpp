@@ -189,7 +189,7 @@ void CRendererTest::__createGraphicsPipeline()
 void CRendererTest::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.TargetImageViewSet.size(), ECommandBufferLevel::PRIMARY);
+    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 
     Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
     {
@@ -210,7 +210,7 @@ void CRendererTest::__createDepthResources()
 
 void CRendererTest::__createLightFramebuffers()
 {
-    size_t ImageNum = m_AppInfo.TargetImageViewSet.size();
+    size_t ImageNum = m_AppInfo.ImageNum;
     m_LightFramebufferSet.resize(ImageNum, VK_NULL_HANDLE);
     for (size_t i = 0; i < ImageNum; ++i)
     {
@@ -251,7 +251,7 @@ void CRendererTest::__createVertexBuffer()
 
 void CRendererTest::__createShadowMapImages()
 {
-    m_ShadowMapImageSet.resize(m_AppInfo.TargetImageViewSet.size());
+    m_ShadowMapImageSet.resize(m_AppInfo.ImageNum);
     for (auto& pShadowMapImage : m_ShadowMapImageSet)
     {
         VkImageCreateInfo ImageInfo = {};
@@ -296,7 +296,7 @@ void CRendererTest::__createRecreateResources()
         ShadowMapImageViewSet.emplace_back(pImage->get());
     }
     m_PipelineLight.setShadowMapImageViews(ShadowMapImageViewSet);
-    m_PipelineLight.setImageNum(m_AppInfo.TargetImageViewSet.size());
+    m_PipelineLight.setImageNum(m_AppInfo.ImageNum);
 }
 
 void CRendererTest::__destroyRecreateResources()

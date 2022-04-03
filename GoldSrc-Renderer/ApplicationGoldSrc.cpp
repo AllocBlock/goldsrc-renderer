@@ -1,7 +1,7 @@
 #include "ApplicationGoldSrc.h"
 #include "ApplicationGoldSrc.h"
-#include "VulkanRenderer.h"
-#include "SimpleRenderer.h"
+#include "PassGoldSrc.h"
+#include "PassSimple.h"
 #include "Common.h"
 
 #include <iostream>
@@ -15,14 +15,14 @@ void CApplicationGoldSrc::_initV()
 void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
-    m_pGUI->update(vImageIndex);
-    m_pRenderer->update(vImageIndex);
+    m_pPassGUI->update(vImageIndex);
+    m_pPassScene->update(vImageIndex);
 }
 
 std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t vImageIndex)
 {
-    std::vector<VkCommandBuffer> SceneBuffers = m_pRenderer->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> GUIBuffers = m_pGUI->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> SceneBuffers = m_pPassScene->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> Result = SceneBuffers;
     Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
     return Result;
@@ -30,9 +30,9 @@ std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t
 
 void CApplicationGoldSrc::_renderUIV()
 {
-    m_pGUI->beginFrame();
+    m_pPassGUI->beginFrame();
     m_pMainUI->renderUI();
-    m_pGUI->endFrame();
+    m_pPassGUI->endFrame();
 }
 
 void CApplicationGoldSrc::_createOtherResourceV()
@@ -42,27 +42,28 @@ void CApplicationGoldSrc::_createOtherResourceV()
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
-    m_pGUI = make<CGUIRenderer>();
-    m_pGUI->setWindow(m_pWindow);
-    m_pGUI->init(AppInfo, ERendererPos::END);
+    m_pPassGUI = make<CGUIRenderPass>();
+    m_pPassGUI->setWindow(m_pWindow);
+    m_pPassGUI->init(AppInfo, ERendererPos::END);
 
     m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
     m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
     {
         __recreateRenderer(vMethod);
+        __linkPasses();
     });
 
     m_pMainUI->setReadSceneCallback([this](ptr<SScene> vScene)
     {
         m_pScene = vScene;
-        m_pRenderer->loadScene(vScene);
+        m_pPassScene->loadScene(vScene);
     });
     m_pMainUI->setRenderSettingCallback([this]()
     {
         if (m_pCamera) m_pCamera->renderUI();
         if (m_pInteractor) m_pInteractor->renderUI();
-        if (m_pRenderer) m_pRenderer->renderUI();
+        if (m_pPassScene) m_pPassScene->renderUI();
     });
 
     _recreateOtherResourceV();
@@ -70,39 +71,40 @@ void CApplicationGoldSrc::_createOtherResourceV()
 
 void CApplicationGoldSrc::_recreateOtherResourceV()
 {
-    if (m_pRenderer)
-        m_pRenderer->destroy();
+    if (m_pPassScene)
+        m_pPassScene->destroy();
     __recreateRenderer(ERenderMethod::BSP);
-    m_pGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageViews());
+    m_pPassGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    __linkPasses();
 }
 
 void CApplicationGoldSrc::_destroyOtherResourceV()
 {
-    m_pRenderer->destroy();
-    m_pGUI->destroy();
+    m_pPassScene->destroy();
+    m_pPassGUI->destroy();
 }
 
 void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
 {
     m_pDevice->waitUntilIdle();
-    if (m_pRenderer)
-        m_pRenderer->destroy();
+    if (m_pPassScene)
+        m_pPassScene->destroy();
 
     auto AppInfo = getAppInfo();
     switch (vMethod)
     {
     case ERenderMethod::DEFAULT:
     {
-        m_pRenderer = make<CRendererSceneSimple>();
-        m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
-        m_pRenderer->setCamera(m_pCamera);
+        m_pPassScene = make<CSceneSimpleRenderPass>();
+        m_pPassScene->init(AppInfo, ERendererPos::BEGIN);
+        m_pPassScene->setCamera(m_pCamera);
         break;
     }
     case ERenderMethod::BSP:
     {
-        m_pRenderer = make<CRendererSceneGoldSrc>();
-        m_pRenderer->init(AppInfo, ERendererPos::BEGIN);
-        m_pRenderer->setCamera(m_pCamera);
+        m_pPassScene = make<CSceneGoldSrcRenderPass>();
+        m_pPassScene->init(AppInfo, ERendererPos::BEGIN);
+        m_pPassScene->setCamera(m_pCamera);
         break;
     }
     default:
@@ -110,5 +112,19 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
     }
 
     if (m_pScene)
-        m_pRenderer->loadScene(m_pScene);
+        m_pPassScene->loadScene(m_pScene);
+}
+
+void CApplicationGoldSrc::__linkPasses()
+{
+    auto pLinkScene = m_pPassScene->getLink();
+    auto pLinkGui = m_pPassGUI->getLink();
+
+    const auto& ImageViews = m_pSwapchain->getImageViews();
+    for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
+    {
+        pLinkScene->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkGui->link("Input", ImageViews[i], EPortType::INPUT, i);
+        pLinkGui->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+    }
 }

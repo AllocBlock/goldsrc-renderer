@@ -1,6 +1,6 @@
 #include "ImguiRenderer.h"
 
-void CImguiRenderer::setTarget(ptr<CRendererScene> vRenderer)
+void CImguiRenderer::setTarget(ptr<CSceneRenderPass> vRenderer)
 {
     _setTargetV(vRenderer);
 }

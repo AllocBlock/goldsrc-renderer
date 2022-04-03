@@ -175,7 +175,7 @@ void CRendererTest::__createGraphicsPipeline()
 void CRendererTest::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.TargetImageViewSet.size(), ECommandBufferLevel::PRIMARY);
+    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 
     Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
     {
@@ -195,7 +195,7 @@ void CRendererTest::__createDepthResources()
 
 void CRendererTest::__createFramebuffers()
 {
-    size_t ImageNum = m_AppInfo.TargetImageViewSet.size();
+    size_t ImageNum = m_AppInfo.ImageNum;
     m_FramebufferSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
@@ -229,7 +229,7 @@ void CRendererTest::__createRecreateResources()
     __createGraphicsPipeline();
     __createDepthResources();
     __createFramebuffers();
-    m_Pipeline.setImageNum(m_AppInfo.TargetImageViewSet.size());
+    m_Pipeline.setImageNum(m_AppInfo.ImageNum);
     m_Pipeline.setSkyBoxImage(m_SkyBoxImageSet);
 }
 

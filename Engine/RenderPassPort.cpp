@@ -30,39 +30,73 @@ void CRenderPassPort::clear()
     m_OutputSet.clear();
 }
 
-void CRenderPassLink::link(std::string vTargetName, vk::CImage::Ptr vImage, EPortType vType, size_t vIndex)
-{
-    _ASSERTE(vImage);
-    m_LinkSet.push_back({ vTargetName, vImage, vType, vIndex });
-}
-
 void CRenderPassLink::link(const SLink& vLink)
 {
-    _ASSERTE(vLink.Image);
+    _ASSERTE(vLink.ImageView != VK_NULL_HANDLE);
+    unlink(vLink);
     m_LinkSet.emplace_back(vLink);
 }
 
+void CRenderPassLink::link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex)
+{
+    link({ vTargetName, vImageView, vType, vIndex });
+}
 
-vk::CImage::Ptr CRenderPassLink::getImage(std::string vTargetName, EPortType vType, size_t vIndex)
+void CRenderPassLink::unlink(const SLink& vLink)
+{
+    size_t Index;
+    if (__findLink(vLink, Index))
+        m_LinkSet.erase(m_LinkSet.begin() + Index);
+}
+
+void CRenderPassLink::unlink(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex)
+{
+    unlink({ vTargetName, vImageView, vType, vIndex });
+}
+
+bool CRenderPassLink::hasLink(const SLink& vLink)
+{
+    size_t Index;
+    return __findLink(vLink, Index);
+}
+
+bool CRenderPassLink::hasLink(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex)
+{
+    return hasLink({ vTargetName, vImageView, vType, vIndex });
+}
+
+VkImageView CRenderPassLink::getImage(std::string vTargetName, EPortType vType, size_t vIndex)
 {
     _ASSERTE(!vTargetName.empty());
-    _ASSERTE(vIndex < m_LinkSet.size());
     for (const SLink& Link : m_LinkSet)
     {
         if (Link.Type != vType) continue;
         if (Link.TargetName == vTargetName && Link.Index == vIndex)
-            return Link.Image;
+            return Link.ImageView;
     }
     throw std::runtime_error(u8"Î´ÕÒµ½¸Ã¶Ë¿Ú");
     return nullptr;
 }
 
-vk::CImage::Ptr CRenderPassLink::getInput(std::string vTargetName, size_t vIndex)
+VkImageView CRenderPassLink::getInput(std::string vTargetName, size_t vIndex)
 {
     return getImage(vTargetName, EPortType::INPUT, vIndex);
 }
 
-vk::CImage::Ptr CRenderPassLink::getOutput(std::string vTargetName, size_t vIndex)
+VkImageView CRenderPassLink::getOutput(std::string vTargetName, size_t vIndex)
 {
     return getImage(vTargetName, EPortType::OUTPUT, vIndex);
+}
+
+
+bool CRenderPassLink::__findLink(const SLink& vLink, size_t& voIndex)
+{
+    auto pResult = std::find(m_LinkSet.begin(), m_LinkSet.end(), vLink);
+    if (pResult != m_LinkSet.end())
+    {
+        voIndex = std::distance(m_LinkSet.begin(), pResult);
+        return true;
+    }
+    else
+        return false;
 }

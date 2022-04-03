@@ -1,6 +1,6 @@
 #pragma once
 #include "ApplicationBase.h"
-#include "RendererScene.h"
+#include "ScenePass.h"
 #include "GUIPass.h"
 #include "ImguiMain.h"
 #include "Interactor.h"
@@ -22,9 +22,10 @@ protected:
 
 private:
     void __recreateRenderer(ERenderMethod vMethod = ERenderMethod::BSP);
+    void __linkPasses();
 
-    ptr<CRendererScene> m_pRenderer = nullptr;
-    ptr<CGUIRenderer> m_pGUI = nullptr;
+    ptr<CSceneRenderPass> m_pPassScene = nullptr;
+    ptr<CGUIRenderPass> m_pPassGUI = nullptr;
     ptr<CGUIMain> m_pMainUI = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
     ptr<CCamera> m_pCamera = nullptr;

@@ -24,7 +24,7 @@ void CApplicationPBR::_initV()
     m_pRenderPassPBR->init(AppInfo, ERendererPos::MIDDLE);
     m_pRenderPassPBR->setCamera(m_pCamera);
 
-    m_pGUI = make<CGUIRenderer>();
+    m_pGUI = make<CGUIRenderPass>();
     m_pGUI->setWindow(m_pWindow);
     m_pGUI->init(AppInfo, ERendererPos::END);
 
@@ -65,13 +65,20 @@ std::vector<VkCommandBuffer> CApplicationPBR::_getCommandBufferSetV(uint32_t vIm
 
 void CApplicationPBR::_createOtherResourceV()
 {
+    _recreateOtherResourceV();
+}
+
+void CApplicationPBR::_recreateOtherResourceV()
+{
     auto ImageFormat = m_pSwapchain->getImageFormat();
     auto Extent = m_pSwapchain->getExtent();
-    auto ImageViewSet = m_pSwapchain->getImageViews();
+    auto ImageNum = m_pSwapchain->getImageNum();
 
-    m_pRenderPassFullScreen->recreate(ImageFormat, Extent, ImageViewSet);
-    m_pRenderPassPBR->recreate(ImageFormat, Extent, ImageViewSet);
-    m_pGUI->recreate(ImageFormat, Extent, ImageViewSet);
+    m_pRenderPassFullScreen->recreate(ImageFormat, Extent, ImageNum);
+    m_pRenderPassPBR->recreate(ImageFormat, Extent, ImageNum);
+    m_pGUI->recreate(ImageFormat, Extent, ImageNum);
+
+    __linkPasses();
 }
 
 void CApplicationPBR::_destroyOtherResourceV()
@@ -82,4 +89,21 @@ void CApplicationPBR::_destroyOtherResourceV()
     m_pGUI->destroy();
 
     unregisterGlobalCommandBuffer();
+}
+
+void CApplicationPBR::__linkPasses()
+{
+    auto pLinkPBR = m_pRenderPassPBR->getLink();
+    auto pLinkEnv = m_pRenderPassFullScreen->getLink();
+    auto pLinkGui = m_pGUI->getLink();
+
+    const auto& ImageViews = m_pSwapchain->getImageViews();
+    for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
+    {
+        pLinkEnv->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkPBR->link("Input", ImageViews[i], EPortType::INPUT, i);
+        pLinkPBR->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkGui->link("Input", ImageViews[i], EPortType::INPUT, i);
+        pLinkGui->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+    }
 }

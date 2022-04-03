@@ -125,7 +125,7 @@ Vulkan::SVulkanAppInfo CApplicationBase::getAppInfo()
     Info.GraphicsQueue = m_pDevice->getGraphicsQueue();
     Info.Extent = m_pSwapchain->getExtent();
     Info.ImageFormat = m_pSwapchain->getImageFormat();
-    Info.TargetImageViewSet = m_pSwapchain->getImageViews();
+    Info.ImageNum = m_pSwapchain->getImageNum();
 
     return Info;
 }

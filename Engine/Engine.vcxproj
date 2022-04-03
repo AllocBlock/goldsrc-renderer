@@ -114,7 +114,7 @@
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="RenderPass.h" />
-    <ClInclude Include="RendererScene.h" />
+    <ClInclude Include="ScenePass.h" />
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />
     <ClInclude Include="UserInterface.h" />

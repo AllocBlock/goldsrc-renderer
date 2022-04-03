@@ -1,14 +1,15 @@
 #pragma once
 #include "Command.h"
 #include "RenderPass.h"
+#include "FrameBuffer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class CGUIRenderer : public IRenderPass
+class CGUIRenderPass : public IRenderPass
 {
 public:
-    CGUIRenderer() = default;
+    CGUIRenderPass() = default;
 
     GLFWwindow* getWindow() { return m_pWindow; }
     void setWindow(GLFWwindow* vWindow) { m_pWindow = vWindow; }
@@ -18,6 +19,7 @@ public:
 
 protected:
     virtual void _initV() override;
+    virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
@@ -28,7 +30,7 @@ protected:
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Main";
-    std::vector<VkFramebuffer> m_FrameBufferSet;
+    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
 
     bool m_Begined = false;
 
@@ -37,6 +39,7 @@ private:
     void __destroyRenderPass();
     void __createDescriptorPool();
     void __destroyDescriptorPool();
+    void __createFramebuffer();
     void __createRecreateSources();
     void __destroyRecreateSources();
 };

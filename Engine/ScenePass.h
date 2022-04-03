@@ -9,10 +9,10 @@ struct SObjectDataPosition
     VkDeviceSize Size;
 };
 
-class CRendererScene : public IRenderPass
+class CSceneRenderPass : public IRenderPass
 {
 public:
-    CRendererScene():m_pCamera(make<CCamera>()) {};
+    CSceneRenderPass():m_pCamera(make<CCamera>()) {};
 
     ptr<CCamera> getCamera() { return m_pCamera; }
     void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; }

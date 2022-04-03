@@ -1,4 +1,4 @@
-#include "VulkanRenderer.h"
+#include "PassGoldSrc.h"
 #include "Common.h"
 #include "Descriptor.h"
 #include "Function.h"
@@ -11,7 +11,7 @@
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 
-void CRendererSceneGoldSrc::_loadSceneV(ptr<SScene> vScene)
+void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
 {
     vkDeviceWaitIdle(m_AppInfo.Device);
     m_pScene = vScene;
@@ -41,7 +41,7 @@ void CRendererSceneGoldSrc::_loadSceneV(ptr<SScene> vScene)
     __createSceneResources();
 }
 
-void CRendererSceneGoldSrc::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
+void CSceneGoldSrcRenderPass::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
 {
     auto pObject = make<SGuiObject>();
 
@@ -68,13 +68,13 @@ void CRendererSceneGoldSrc::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
     rerecordCommand();
 }
 
-void CRendererSceneGoldSrc::removeHighlightBoundingBox()
+void CSceneGoldSrcRenderPass::removeHighlightBoundingBox()
 {
     m_PipelineSet.GuiLines.removeObject("HighlightBoundingBox");
     rerecordCommand();
 }
 
-void CRendererSceneGoldSrc::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
+void CSceneGoldSrcRenderPass::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
 {
     auto pObject = make<SGuiObject>();
     pObject->Data = { vStart, vEnd };
@@ -82,15 +82,15 @@ void CRendererSceneGoldSrc::addGuiLine(std::string vName, glm::vec3 vStart, glm:
     rerecordCommand();
 }
 
-void CRendererSceneGoldSrc::rerecordCommand()
+void CSceneGoldSrcRenderPass::rerecordCommand()
 {
     m_RerecordCommandTimes += m_NumSwapchainImage;
 }
 
-void CRendererSceneGoldSrc::_initV()
+void CSceneGoldSrcRenderPass::_initV()
 {
     IRenderPass::_initV();
-    m_NumSwapchainImage = m_AppInfo.TargetImageViewSet.size();
+    m_NumSwapchainImage = m_AppInfo.ImageNum;
 
     __createRenderPass();
     __createCommandPoolAndBuffers();
@@ -99,7 +99,14 @@ void CRendererSceneGoldSrc::_initV()
     rerecordCommand();
 }
 
-void CRendererSceneGoldSrc::_recreateV()
+CRenderPassPort CSceneGoldSrcRenderPass::_getPortV()
+{
+    CRenderPassPort Ports;
+    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    return Ports;
+}
+
+void CSceneGoldSrcRenderPass::_recreateV()
 {
     IRenderPass::_recreateV();
 
@@ -108,12 +115,12 @@ void CRendererSceneGoldSrc::_recreateV()
     rerecordCommand();
 }
 
-void CRendererSceneGoldSrc::_updateV(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::_updateV(uint32_t vImageIndex)
 {
     __updateAllUniformBuffer(vImageIndex);
 }
 
-void CRendererSceneGoldSrc::_renderUIV()
+void CSceneGoldSrcRenderPass::_renderUIV()
 {
     if (UI::collapse(u8"仿金源"))
     {
@@ -180,18 +187,22 @@ void CRendererSceneGoldSrc::_renderUIV()
     }
 }
 
-void CRendererSceneGoldSrc::_destroyV()
+void CSceneGoldSrcRenderPass::_destroyV()
 {
     __destroyRecreateResources();
 
-    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
+    if (m_RenderPass)
+        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
     IRenderPass::_destroyV();
 }
 
-std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
+    if (m_FramebufferSet.empty())
+        __createFramebuffers();
+
     m_RenderedObjectSet.clear();
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
@@ -282,11 +293,10 @@ std::vector<VkCommandBuffer> CRendererSceneGoldSrc::_requestCommandBuffersV(uint
     return { CommandBuffer };
 }
 
-void CRendererSceneGoldSrc::__createRecreateResources()
+void CSceneGoldSrcRenderPass::__createRecreateResources()
 {
     __createGraphicsPipelines(); // extent
     __createDepthResources(); // extent
-    __createFramebuffers(); // imageview, extent
     m_PipelineSet.DepthTest.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.BlendTextureAlpha.setImageNum(m_NumSwapchainImage);
     m_PipelineSet.BlendAlphaTest.setImageNum(m_NumSwapchainImage);
@@ -297,7 +307,7 @@ void CRendererSceneGoldSrc::__createRecreateResources()
     __createSceneResources();
 }
 
-void CRendererSceneGoldSrc::__destroyRecreateResources()
+void CSceneGoldSrcRenderPass::__destroyRecreateResources()
 {
     m_pDepthImage->destroy();
 
@@ -309,7 +319,7 @@ void CRendererSceneGoldSrc::__destroyRecreateResources()
     m_PipelineSet.destroy();
 }
 
-void CRendererSceneGoldSrc::__createSceneResources()
+void CSceneGoldSrcRenderPass::__createSceneResources()
 {
     __createTextureImages();
     __createLightmapImage();
@@ -332,7 +342,7 @@ void CRendererSceneGoldSrc::__createSceneResources()
     rerecordCommand();
 }
 
-void CRendererSceneGoldSrc::__destroySceneResources()
+void CSceneGoldSrcRenderPass::__destroySceneResources()
 {
     for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
     {
@@ -345,7 +355,7 @@ void CRendererSceneGoldSrc::__destroySceneResources()
     if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 }
 
-void CRendererSceneGoldSrc::__recordGuiCommandBuffer(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__recordGuiCommandBuffer(uint32_t vImageIndex)
 {
     _ASSERTE(vImageIndex < m_NumSwapchainImage);
     VkCommandBufferInheritanceInfo InheritanceInfo = {};
@@ -365,7 +375,7 @@ void CRendererSceneGoldSrc::__recordGuiCommandBuffer(uint32_t vImageIndex)
     Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
 }
 
-void CRendererSceneGoldSrc::__renderByBspTree(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
 {
     m_RenderNodeSet.clear();
     if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
@@ -379,7 +389,7 @@ void CRendererSceneGoldSrc::__renderByBspTree(uint32_t vImageIndex)
     __renderSprites(vImageIndex);
 }
 
-void CRendererSceneGoldSrc::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
+void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
@@ -420,7 +430,7 @@ void CRendererSceneGoldSrc::__renderTreeNode(uint32_t vImageIndex, uint32_t vNod
     }
 }
 
-void CRendererSceneGoldSrc::__renderModels(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__renderModels(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
@@ -435,7 +445,7 @@ void CRendererSceneGoldSrc::__renderModels(uint32_t vImageIndex)
     }
 }
 
-void CRendererSceneGoldSrc::__renderSprites(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__renderSprites(uint32_t vImageIndex)
 {
 
 }
@@ -464,7 +474,7 @@ struct SModelSortInfo
     }
 };
 
-std::vector<size_t> CRendererSceneGoldSrc::__sortModelRenderSequence()
+std::vector<size_t> CSceneGoldSrcRenderPass::__sortModelRenderSequence()
 {
     std::vector<SModelSortInfo> InfoForSort;
     glm::vec3 CameraPos = m_pCamera->getPos();
@@ -501,7 +511,7 @@ std::vector<size_t> CRendererSceneGoldSrc::__sortModelRenderSequence()
     return SortedModelSet;
 }
 
-void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
+void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
@@ -552,7 +562,7 @@ void CRendererSceneGoldSrc::__renderModel(uint32_t vImageIndex, size_t vModelInd
     }
 }
 
-void CRendererSceneGoldSrc::__renderPointEntities(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
     m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
@@ -565,7 +575,7 @@ void CRendererSceneGoldSrc::__renderPointEntities(uint32_t vImageIndex)
     }
 }
 
-void CRendererSceneGoldSrc::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
+void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
@@ -586,7 +596,7 @@ void CRendererSceneGoldSrc::__recordObjectRenderCommand(uint32_t vImageIndex, si
         throw std::runtime_error(u8"物体类型错误");
 }
 
-void CRendererSceneGoldSrc::__createRenderPass()
+void CSceneGoldSrcRenderPass::__createRenderPass()
 {
     VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
     VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, __findDepthFormat(), EImageType::DEPTH);
@@ -635,7 +645,7 @@ void CRendererSceneGoldSrc::__createRenderPass()
     Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
-void CRendererSceneGoldSrc::__destroyRenderPass()
+void CSceneGoldSrcRenderPass::__destroyRenderPass()
 {
     if (m_RenderPass != VK_NULL_HANDLE)
     {
@@ -644,7 +654,7 @@ void CRendererSceneGoldSrc::__destroyRenderPass()
     }
 }
 
-void CRendererSceneGoldSrc::__createGraphicsPipelines()
+void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
 {
     m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
     m_PipelineSet.DepthTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
@@ -655,7 +665,7 @@ void CRendererSceneGoldSrc::__createGraphicsPipelines()
     m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device,m_RenderPass, m_AppInfo.Extent, 1);
 }
 
-void CRendererSceneGoldSrc::__createCommandPoolAndBuffers()
+void CSceneGoldSrcRenderPass::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_NumSwapchainImage), ECommandBufferLevel::PRIMARY);
@@ -672,20 +682,20 @@ void CRendererSceneGoldSrc::__createCommandPoolAndBuffers()
     Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
-void CRendererSceneGoldSrc::__createDepthResources()
+void CSceneGoldSrcRenderPass::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
     m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, NULL, DepthFormat);
 }
 
-void CRendererSceneGoldSrc::__createFramebuffers()
+void CSceneGoldSrcRenderPass::__createFramebuffers()
 {
     m_FramebufferSet.resize(m_NumSwapchainImage);
     for (size_t i = 0; i < m_NumSwapchainImage; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_AppInfo.TargetImageViewSet[i],
+            m_pLink->getOutput("Output", i),
             m_pDepthImage->get()
         };
 
@@ -694,7 +704,7 @@ void CRendererSceneGoldSrc::__createFramebuffers()
     }
 }
 
-void CRendererSceneGoldSrc::__createTextureImages()
+void CSceneGoldSrcRenderPass::__createTextureImages()
 {
     size_t NumTexture = __getActualTextureNum();
     if (NumTexture > 0)
@@ -707,7 +717,7 @@ void CRendererSceneGoldSrc::__createTextureImages()
     }
 }
 
-void CRendererSceneGoldSrc::__createLightmapImage()
+void CSceneGoldSrcRenderPass::__createLightmapImage()
 {
     if (m_pScene && m_pScene->UseLightmap)
     {
@@ -716,7 +726,7 @@ void CRendererSceneGoldSrc::__createLightmapImage()
     }
 }
 
-void CRendererSceneGoldSrc::__createVertexBuffer()
+void CSceneGoldSrcRenderPass::__createVertexBuffer()
 {
     size_t NumVertex = 0;
     if (m_pScene)
@@ -748,7 +758,7 @@ void CRendererSceneGoldSrc::__createVertexBuffer()
     delete[] pData;
 }
 
-void CRendererSceneGoldSrc::__createIndexBuffer()
+void CSceneGoldSrcRenderPass::__createIndexBuffer()
 {
     /*size_t NumIndex = 0;
     if (m_pScene)
@@ -782,7 +792,7 @@ void CRendererSceneGoldSrc::__createIndexBuffer()
     delete[] pData;*/
 }
 
-void CRendererSceneGoldSrc::__updateDescriptorSets()
+void CSceneGoldSrcRenderPass::__updateDescriptorSets()
 {
     std::vector<VkImageView> TextureSet(m_TextureImageSet.size());
     VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_pLightmapImage->get() : VK_NULL_HANDLE;
@@ -795,7 +805,7 @@ void CRendererSceneGoldSrc::__updateDescriptorSets()
     m_PipelineSet.GuiLines.updateDescriptorSet();
 }
 
-std::vector<SGoldSrcPointData> CRendererSceneGoldSrc::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const
+std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const
 {
     auto pVertexArray = vpObject->getVertexArray();
     auto pColorArray = vpObject->getColorArray();
@@ -824,7 +834,7 @@ std::vector<SGoldSrcPointData> CRendererSceneGoldSrc::__readPointData(ptr<C3DObj
     return PointData;
 }
 
-VkFormat CRendererSceneGoldSrc::__findDepthFormat()
+VkFormat CSceneGoldSrcRenderPass::__findDepthFormat()
 {
     return __findSupportedFormat(
         { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -833,7 +843,7 @@ VkFormat CRendererSceneGoldSrc::__findDepthFormat()
     );
 }
 
-VkFormat CRendererSceneGoldSrc::__findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures)
+VkFormat CSceneGoldSrcRenderPass::__findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures)
 {
     for (VkFormat Format : vCandidates)
     {
@@ -855,7 +865,7 @@ VkFormat CRendererSceneGoldSrc::__findSupportedFormat(const std::vector<VkFormat
     throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
-size_t CRendererSceneGoldSrc::__getActualTextureNum()
+size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
 {
     size_t NumTexture = m_pScene ? m_pScene->TexImageSet.size() : 0;
     if (NumTexture > CPipelineDepthTest::MaxTextureNum)
@@ -866,7 +876,7 @@ size_t CRendererSceneGoldSrc::__getActualTextureNum()
     return NumTexture;
 }
 
-void CRendererSceneGoldSrc::__calculateVisiableObjects()
+void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 {
     if (!m_pScene) return;
 
@@ -924,7 +934,7 @@ void CRendererSceneGoldSrc::__calculateVisiableObjects()
     }
 }
 
-bool CRendererSceneGoldSrc::__isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
+bool CSceneGoldSrcRenderPass::__isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
 {
     // AABB frustum culling
     const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;
@@ -960,7 +970,7 @@ bool CRendererSceneGoldSrc::__isObjectInSight(ptr<C3DObject> vpObject, const SFr
     return true;
 }
 
-void CRendererSceneGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
     if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
@@ -984,12 +994,12 @@ void CRendererSceneGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
     m_PipelineSet.GuiLines.updateUniformBuffer(vImageIndex, View, Proj);
 }
 
-void CRendererSceneGoldSrc::__recordSkyRenderCommand(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
     m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
 }
-void CRendererSceneGoldSrc::__recordSpriteRenderCommand(uint32_t vImageIndex)
+void CSceneGoldSrcRenderPass::__recordSpriteRenderCommand(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
     m_PipelineSet.Sprite.recordCommand(CommandBuffer, vImageIndex);

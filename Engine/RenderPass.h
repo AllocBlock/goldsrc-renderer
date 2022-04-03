@@ -27,16 +27,19 @@ public:
     IRenderPass() = default;
 
     void init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField);
-    void recreate(VkFormat vImageFormat, VkExtent2D vExtent, const std::vector<VkImageView>& vTargetImageViews);
+    void recreate(VkFormat vImageFormat, VkExtent2D vExtent, size_t vImageNum);
     void update(uint32_t vImageIndex);
     std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
     void destroy();
+
+    ptr<CRenderPassLink> getLink() { return m_pLink; }
+    const CRenderPassPort& getPort() const { return m_Port; }
 
     static VkAttachmentDescription createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, EImageType vType);
 
 protected:
     virtual void _initV() {}
-    virtual CRenderPassPort _getPortV() { return CRenderPassPort(); }
+    virtual CRenderPassPort _getPortV() = 0;
     virtual void _recreateV() {}
     virtual void _updateV(uint32_t vImageIndex) {}
     virtual void _renderUIV() override {}
@@ -45,6 +48,7 @@ protected:
 
     Vulkan::SVulkanAppInfo m_AppInfo;
     ptr<CRenderPassLink> m_pLink;
-    int m_RenderPassPosBitField = 0;
+    CRenderPassPort m_Port;
+    int m_RenderPassPosBitField = (int)ERendererPos::MIDDLE;
 };
 
