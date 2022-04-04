@@ -128,6 +128,7 @@
     <ClCompile Include="ImguiSelectFile.cpp" />
     <ClCompile Include="ImguiTextureViewer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PassLine.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
     <ClCompile Include="PipelineLine.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
@@ -147,6 +148,7 @@
     <ClInclude Include="ImguiRenderer.h" />
     <ClInclude Include="ImguiSelectFile.h" />
     <ClInclude Include="ImguiTextureViewer.h" />
+    <ClInclude Include="PassLine.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />
     <ClInclude Include="PipelineBlendAlpha.h" />
     <ClInclude Include="PipelineBlendAlphaTest.h" />

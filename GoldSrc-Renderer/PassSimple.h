@@ -105,6 +105,4 @@ private:
     bool m_EnableSky = true;
     bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;
-
-    size_t m_NumSwapchainImage = 0;
 };

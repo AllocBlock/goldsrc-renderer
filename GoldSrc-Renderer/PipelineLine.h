@@ -3,6 +3,8 @@
 #include "Vulkan.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
+#include "Camera.h"
+#include "VertexAttributeDescriptor.h"
 
 #include <map>
 #include <glm/glm.hpp>
@@ -22,8 +24,7 @@ class CPipelineLine : public IPipeline
 {
 public:
     void destroy();
-    void updateDescriptorSet();
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj);
+    void updateUniformBuffer(uint32_t vImageIndex, ptr<CCamera> vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
     void setObject(std::string vName, ptr<SGuiObject> vObject);
     void removeObject(std::string vName);
@@ -39,6 +40,29 @@ protected:
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
 
 private:
+    struct SPointData
+    {
+        glm::vec3 Pos;
+
+        static VkVertexInputBindingDescription getBindingDescription()
+        {
+            VkVertexInputBindingDescription BindingDescription = {};
+            BindingDescription.binding = 0;
+            BindingDescription.stride = sizeof(SPointData);
+            BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            return BindingDescription;
+        }
+
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            VertexAttributeDescriptor Descriptor;
+            Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPointData, Pos));
+            return Descriptor.generate();
+        }
+    };
+
+    void __updateDescriptorSet();
     void __updateVertexBuffer();
 
     std::map<std::string, ptr<SGuiObject>> m_NameObjectMap;

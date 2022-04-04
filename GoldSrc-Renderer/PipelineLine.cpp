@@ -30,27 +30,11 @@ void CPipelineLine::destroy()
     IPipeline::destroy();
 }
 
-void CPipelineLine::updateDescriptorSet()
-{
-    for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
-    {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SGuiUniformBufferObjectVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} , {} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
-    }
-}
-
-void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj)
+void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, ptr<CCamera> vCamera)
 {
     SGuiUniformBufferObjectVert UBOVert = {};
-    UBOVert.Proj = vProj;
-    UBOVert.View = vView;
+    UBOVert.Proj = vCamera->getProjMat();
+    UBOVert.View = vCamera->getViewMat();
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
@@ -89,8 +73,8 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineLine::_getInputAssemblyStageInfo
 
 void CPipelineLine::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
-    voBinding = SPositionPointData::getBindingDescription();
-    voAttributeSet = SPositionPointData::getAttributeDescriptionSet();
+    voBinding = SPointData::getBindingDescription();
+    voAttributeSet = SPointData::getAttributeDescriptionSet();
 }
 
 void CPipelineLine::_createResourceV(size_t vImageNum)
@@ -104,6 +88,8 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
     }
+
+    __updateDescriptorSet();
 }
 
 void CPipelineLine::_initDescriptorV()
@@ -116,10 +102,26 @@ void CPipelineLine::_initDescriptorV()
     m_Descriptor.createLayout(m_Device);
 }
 
+void CPipelineLine::__updateDescriptorSet()
+{
+    for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
+    {
+        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
+
+        VkDescriptorBufferInfo VertBufferInfo = {};
+        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
+        VertBufferInfo.offset = 0;
+        VertBufferInfo.range = sizeof(SGuiUniformBufferObjectVert);
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} , {} }));
+
+        m_Descriptor.update(i, DescriptorWriteInfoSet);
+    }
+}
+
 void CPipelineLine::__updateVertexBuffer()
 {
     vkDeviceWaitIdle(m_Device);
-    m_pVertexBuffer->destroy();
+    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 
     m_VertexNum = 0;
     for (const auto& Pair : m_NameObjectMap)
@@ -129,7 +131,7 @@ void CPipelineLine::__updateVertexBuffer()
     }
     if (m_VertexNum > 0)
     {
-        VkDeviceSize BufferSize = sizeof(SPositionPointData) * m_VertexNum;
+        VkDeviceSize BufferSize = sizeof(SPointData) * m_VertexNum;
 
         // TODO: addtional copy is made. Is there better way?
         void* pData = new char[BufferSize];
@@ -141,6 +143,8 @@ void CPipelineLine::__updateVertexBuffer()
             memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
             Offset += DataSize;
         }
-        m_pVertexBuffer->fill(pData, BufferSize);
+        m_pVertexBuffer = make<vk::CBuffer>();
+        m_pVertexBuffer->create(m_PhysicalDevice, m_Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->stageFill(pData, BufferSize);
     }
 }

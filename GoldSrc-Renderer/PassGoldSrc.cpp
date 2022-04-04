@@ -41,56 +41,14 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
     __createSceneResources();
 }
 
-void CSceneGoldSrcRenderPass::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
-{
-    auto pObject = make<SGuiObject>();
-
-    std::array<glm::vec3, 8> Vertices =
-    {
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Min.z),
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Min.y, vBoundingBox.Max.z),
-        glm::vec3(vBoundingBox.Max.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
-        glm::vec3(vBoundingBox.Min.x, vBoundingBox.Max.y, vBoundingBox.Max.z),
-    };
-
-    pObject->Data =
-    {
-        Vertices[0], Vertices[1],  Vertices[1], Vertices[2],  Vertices[2], Vertices[3],  Vertices[3], Vertices[0],
-        Vertices[4], Vertices[5],  Vertices[5], Vertices[6],  Vertices[6], Vertices[7],  Vertices[7], Vertices[4],
-        Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
-    };
-
-    m_PipelineSet.GuiLines.setObject("HighlightBoundingBox", std::move(pObject));
-    rerecordCommand();
-}
-
-void CSceneGoldSrcRenderPass::removeHighlightBoundingBox()
-{
-    m_PipelineSet.GuiLines.removeObject("HighlightBoundingBox");
-    rerecordCommand();
-}
-
-void CSceneGoldSrcRenderPass::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd)
-{
-    auto pObject = make<SGuiObject>();
-    pObject->Data = { vStart, vEnd };
-    m_PipelineSet.GuiLines.setObject(vName, std::move(pObject));
-    rerecordCommand();
-}
-
 void CSceneGoldSrcRenderPass::rerecordCommand()
 {
-    m_RerecordCommandTimes += m_NumSwapchainImage;
+    m_RerecordCommandTimes += m_AppInfo.ImageNum;
 }
 
 void CSceneGoldSrcRenderPass::_initV()
 {
     IRenderPass::_initV();
-    m_NumSwapchainImage = m_AppInfo.ImageNum;
 
     __createRenderPass();
     __createCommandPoolAndBuffers();
@@ -198,8 +156,11 @@ void CSceneGoldSrcRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_FramebufferSet.empty())
+    if (m_FramebufferSet.empty() || m_pLink->isUpdated())
+    {
         __createFramebuffers();
+        m_pLink->setUpdateState(false);
+    }
 
     m_RenderedObjectSet.clear();
 
@@ -213,8 +174,6 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
     }
     if (RerecordCommand)
     {
-        __recordGuiCommandBuffer(vImageIndex);
-
         VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -270,11 +229,6 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         if (m_pScene && !m_pScene->SprSet.empty())
             __recordSpriteRenderCommand(vImageIndex);
 
-        // 3D GUI层，放置选择框等3D标志元素
-        vkCmdNextSubpass(CommandBuffer, VkSubpassContents::VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-        VkCommandBuffer GuiCommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
-        vkCmdExecuteCommands(CommandBuffer, 1, &GuiCommandBuffer);
-
         end();
         Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
     }
@@ -285,14 +239,17 @@ void CSceneGoldSrcRenderPass::__createRecreateResources()
 {
     __createGraphicsPipelines(); // extent
     __createDepthResources(); // extent
-    m_PipelineSet.DepthTest.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.BlendTextureAlpha.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.BlendAlphaTest.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.BlendAdditive.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.Sprite.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.Sky.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.GuiLines.setImageNum(m_NumSwapchainImage);
+    uint32_t ImageNum = m_AppInfo.ImageNum;
+    m_PipelineSet.DepthTest.setImageNum(ImageNum);
+    m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
+    m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
+    m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
+    m_PipelineSet.Sprite.setImageNum(ImageNum);
+    m_PipelineSet.Sky.setImageNum(ImageNum);
     __createSceneResources();
+
+    for (int i = 0; i < ImageNum; ++i)
+        m_pLink->link("Depth", m_pDepthImage->get(), EPortType::OUTPUT, i);
 }
 
 void CSceneGoldSrcRenderPass::__destroyRecreateResources()
@@ -341,26 +298,6 @@ void CSceneGoldSrcRenderPass::__destroySceneResources()
     if (m_pLightmapImage) m_pLightmapImage->destroy();
     if (m_pIndexBuffer) m_pIndexBuffer->destroy();
     if (m_pVertexBuffer) m_pVertexBuffer->destroy();
-}
-
-void CSceneGoldSrcRenderPass::__recordGuiCommandBuffer(uint32_t vImageIndex)
-{
-    _ASSERTE(vImageIndex < m_NumSwapchainImage);
-    VkCommandBufferInheritanceInfo InheritanceInfo = {};
-    InheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-    InheritanceInfo.renderPass = m_Handle;
-    InheritanceInfo.subpass = 1;
-    InheritanceInfo.framebuffer = m_FramebufferSet[vImageIndex]->get();
-
-    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-    CommandBufferBeginInfo.pInheritanceInfo = &InheritanceInfo;
-
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_GuiCommandName, vImageIndex);
-    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
-    m_PipelineSet.GuiLines.recordCommand(CommandBuffer, vImageIndex);
-    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
 }
 
 void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
@@ -424,6 +361,7 @@ void CSceneGoldSrcRenderPass::__renderModels(uint32_t vImageIndex)
 
     // 这里去看了下Xash3D的源码，xash3d/engine/client/gl_rmain.c
     // 它是按照纹理、叠加和发光的顺序绘制
+    // 
     // 也对实体进行简单的按距离排序
     auto SortedModelSet = __sortModelRenderSequence();
 
@@ -597,7 +535,7 @@ void CSceneGoldSrcRenderPass::__createRenderPass()
     DepthAttachmentRef.attachment = 1;
     DepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    std::array<VkSubpassDependency, 2> SubpassDependencies = {};
+    std::array<VkSubpassDependency, 1> SubpassDependencies = {};
     SubpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
     SubpassDependencies[0].dstSubpass = 0;
     SubpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -605,20 +543,13 @@ void CSceneGoldSrcRenderPass::__createRenderPass()
     SubpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     SubpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-    SubpassDependencies[1].srcSubpass = 0;
-    SubpassDependencies[1].dstSubpass = 1;
-    SubpassDependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[1].srcAccessMask = 0;
-    SubpassDependencies[1].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
     VkSubpassDescription SubpassDesc = {};
     SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     SubpassDesc.colorAttachmentCount = 1;
     SubpassDesc.pColorAttachments = &ColorAttachmentRef;
     SubpassDesc.pDepthStencilAttachment = &DepthAttachmentRef;
 
-    std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc, SubpassDesc };
+    std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc };
 
     std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttachment };
     VkRenderPassCreateInfo RenderPassInfo = {};
@@ -642,24 +573,12 @@ void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
     m_PipelineSet.BlendAlphaTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
     m_PipelineSet.BlendAdditive.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
     m_PipelineSet.Sprite.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.GuiLines.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent, 1);
 }
 
 void CSceneGoldSrcRenderPass::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
-    m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_NumSwapchainImage), ECommandBufferLevel::PRIMARY);
-    m_Command.createBuffers(m_GuiCommandName, static_cast<uint32_t>(m_NumSwapchainImage), ECommandBufferLevel::SECONDARY);
-
-    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
-    {
-        return m_Command.beginSingleTimeBuffer();
-    };
-    Vulkan::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
-    {
-        m_Command.endSingleTimeBuffer(vCommandBuffer);
-    };
-    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
+    m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CSceneGoldSrcRenderPass::__createDepthResources()
@@ -670,8 +589,8 @@ void CSceneGoldSrcRenderPass::__createDepthResources()
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()
 {
-    m_FramebufferSet.resize(m_NumSwapchainImage);
-    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
+    m_FramebufferSet.resize(m_AppInfo.ImageNum);
+    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
@@ -782,7 +701,6 @@ void CSceneGoldSrcRenderPass::__updateDescriptorSets()
     m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAlphaTest.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAdditive.updateDescriptorSet(TextureSet, Lightmap);
-    m_PipelineSet.GuiLines.updateDescriptorSet();
 }
 
 std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const
@@ -971,7 +889,6 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
     m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, View, Proj, EyePos, EyeDirection);
     if (m_EnableSky)
         m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
-    m_PipelineSet.GuiLines.updateUniformBuffer(vImageIndex, View, Proj);
 }
 
 void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)

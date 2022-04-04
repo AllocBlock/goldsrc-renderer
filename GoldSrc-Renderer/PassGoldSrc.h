@@ -28,7 +28,6 @@ struct SPipelineSet
     CPipelineBlendAdditive BlendAdditive;
     CPipelineSprite Sprite;
     CPipelineSkybox Sky;
-    CPipelineLine GuiLines;
 
     void destroy()
     {
@@ -38,7 +37,6 @@ struct SPipelineSet
         BlendAdditive.destroy();
         Sprite.destroy();
         Sky.destroy();
-        GuiLines.destroy();
     }
 };
 
@@ -48,10 +46,6 @@ public:
     CSceneGoldSrcRenderPass() = default;
     
     void rerecordCommand();
-
-    void setHighlightBoundingBox(S3DBoundingBox vBoundingBox);
-    void removeHighlightBoundingBox();
-    void addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd); 
 
     bool getSkyState() const { return m_EnableSky; }
     bool getCullingState() const { return m_EnableCulling; }
@@ -103,7 +97,7 @@ protected:
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _loadSceneV(ptr<SScene> vScene);
+    virtual void _loadSceneV(ptr<SScene> vScene) override;
 
 private:
     void __createRenderPass();
@@ -128,7 +122,6 @@ private:
     void __renderPointEntities(uint32_t vImageIndex);
     void __renderSprites(uint32_t vImageIndex);
     void __updateAllUniformBuffer(uint32_t vImageIndex);
-    void __recordGuiCommandBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
     bool __isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
@@ -147,7 +140,6 @@ private:
     SPipelineSet m_PipelineSet = SPipelineSet();
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";
-    std::string m_GuiCommandName = "Gui";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
 
     ptr<vk::CBuffer> m_pVertexBuffer;
@@ -167,6 +159,4 @@ private:
     bool m_EnableBSP = false;
     std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
     std::set<uint32_t> m_RenderNodeSet;
-
-    size_t m_NumSwapchainImage = 0;
 };

@@ -2,33 +2,6 @@
 
 #include <glm/glm.hpp>
 
-struct SPositionPointData
-{
-    glm::vec3 Pos;
-
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SPositionPointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return BindingDescription;
-    }
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-    {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(1);
-
-        AttributeDescriptionSet[0].binding = 0;
-        AttributeDescriptionSet[0].location = 0;
-        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[0].offset = offsetof(SPositionPointData, Pos);
-
-        return AttributeDescriptionSet;
-    }
-};
-
 struct SGoldSrcPointData
 {
     glm::vec3 Pos;

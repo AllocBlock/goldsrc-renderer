@@ -21,6 +21,8 @@
  * +- 加快、减慢移动、旋转速度
  */
 
+using MouseCallback_t = std::function<void(GLFWwindow*, int, int)>;
+
 class CInteractor : public IGUI
 {
 public:
@@ -31,6 +33,8 @@ public:
 	void disable() { m_Enabled = false; }
 	void update();
 	void reset();
+
+	void setMouseCallback(MouseCallback_t vCallback) { m_pMouseCallback = vCallback; }
 
 	float getSpeed() { return m_Speed; }
 	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
@@ -68,5 +72,6 @@ private:
 	double m_LastTheta = 0.0;
 
 	std::map<int, std::function<void()>> m_KeyCallbackMap;
+	MouseCallback_t m_pMouseCallback = nullptr;
 };
 

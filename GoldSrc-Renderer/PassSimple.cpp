@@ -43,13 +43,13 @@ void CSceneSimpleRenderPass::_loadSceneV(ptr<SScene> vScene)
 
 void CSceneSimpleRenderPass::rerecordCommand()
 {
-    m_RerecordCommandTimes += m_NumSwapchainImage;
+    m_RerecordCommandTimes += m_AppInfo.ImageNum;
 }
 
 void CSceneSimpleRenderPass::_initV()
 {
     IRenderPass::_initV();
-    m_NumSwapchainImage = m_AppInfo.ImageNum;
+    m_AppInfo.ImageNum = m_AppInfo.ImageNum;
 
     __createRenderPass();
     __createCommandPoolAndBuffers();
@@ -114,8 +114,11 @@ void CSceneSimpleRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_FramebufferSet.empty())
+    if (m_FramebufferSet.empty() || m_pLink->isUpdated())
+    {
         __createFramebuffers();
+        m_pLink->setUpdateState(false);
+    }
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
 
@@ -178,9 +181,12 @@ void CSceneSimpleRenderPass::__createRecreateResources()
 {
     __createGraphicsPipelines(); // extent
     __createDepthResources(); // extent
-    m_PipelineSet.Main.setImageNum(m_NumSwapchainImage);
-    m_PipelineSet.Sky.setImageNum(m_NumSwapchainImage);
+    m_PipelineSet.Main.setImageNum(m_AppInfo.ImageNum);
+    m_PipelineSet.Sky.setImageNum(m_AppInfo.ImageNum);
     __createSceneResources();
+
+    for (int i = 0; i < m_AppInfo.ImageNum; ++i)
+        m_pLink->link("Depth", m_pDepthImage->get(), EPortType::OUTPUT, i);
 }
 
 void CSceneSimpleRenderPass::__destroyRecreateResources()
@@ -293,17 +299,7 @@ void CSceneSimpleRenderPass::__createGraphicsPipelines()
 void CSceneSimpleRenderPass::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
-    m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_NumSwapchainImage), ECommandBufferLevel::PRIMARY);
-
-    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
-    {
-        return m_Command.beginSingleTimeBuffer();
-    };
-    Vulkan::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
-    {
-        m_Command.endSingleTimeBuffer(vCommandBuffer);
-    };
-    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
+    m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CSceneSimpleRenderPass::__createDepthResources()
@@ -314,8 +310,8 @@ void CSceneSimpleRenderPass::__createDepthResources()
 
 void CSceneSimpleRenderPass::__createFramebuffers()
 {
-    m_FramebufferSet.resize(m_NumSwapchainImage);
-    for (size_t i = 0; i < m_NumSwapchainImage; ++i)
+    m_FramebufferSet.resize(m_AppInfo.ImageNum);
+    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {

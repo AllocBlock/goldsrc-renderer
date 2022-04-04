@@ -46,7 +46,12 @@ struct SLink
     EPortType Type;
     size_t Index = 0;
 
-    bool operator==(const SLink& v)
+    bool operator==(const SLink& v) const
+    {
+        return TargetName == v.TargetName && Index == v.Index;
+    }
+
+    bool isMatch(const SLink& v) const
     {
         return TargetName == v.TargetName && Type == v.Type && Index == v.Index;
     }
@@ -61,16 +66,20 @@ public:
     void link(const SLink& vLink);
     void link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
     void unlink(const SLink& vLink);
-    void unlink(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
-    bool hasLink(const SLink& vLink);
-    bool hasLink(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
+    void unlink(std::string vTargetName, EPortType vType, size_t vIndex = 0);
+    bool hasLink(const SLink& vLink) const;
+    bool hasLink(std::string vTargetName, EPortType vType, size_t vIndex = 0) const;
     VkImageView getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0);
     VkImageView getInput(std::string vTargetName, size_t vIndex = 0);
     VkImageView getOutput(std::string vTargetName, size_t vIndex = 0);
 
+    bool isUpdated() { return m_Updated; }
+    void setUpdateState(bool vState) { m_Updated = vState; }
+
 private:
-    bool __findLink(const SLink& vLink, size_t& voIndex);
+    bool __findLink(const SLink& vLink, size_t& voIndex) const;
 
     const CRenderPassPort& m_Ports;
     std::vector<SLink> m_LinkSet;
+    bool m_Updated = false;
 };

@@ -1,7 +1,7 @@
 #pragma once
 #include "Pipeline.h"
 #include "Common.h"
-#include "PointData.h"
+#include "VertexAttributeDescriptor.h"
 #include "Descriptor.h"
 #include "IOImage.h"
 #include "Image.h"
@@ -40,6 +40,28 @@ protected:
     virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
 
 private:
+    struct SPointData
+    {
+        glm::vec3 Pos;
+
+        static VkVertexInputBindingDescription getBindingDescription()
+        {
+            VkVertexInputBindingDescription BindingDescription = {};
+            BindingDescription.binding = 0;
+            BindingDescription.stride = sizeof(SPointData);
+            BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+            return BindingDescription;
+        }
+
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            VertexAttributeDescriptor Descriptor;
+            Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPointData, Pos));
+            return Descriptor.generate();
+        }
+    };
+
     void __updateDescriptorSet();
 
     VkSampler m_TextureSampler = VK_NULL_HANDLE;

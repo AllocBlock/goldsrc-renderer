@@ -87,6 +87,9 @@
     <ClCompile Include="SceneProbe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PassLine.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h">
@@ -151,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="SceneProbe.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PassLine.h">
+      <Filter>头文件\RenderPass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
