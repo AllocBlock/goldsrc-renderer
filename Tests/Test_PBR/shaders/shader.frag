@@ -219,6 +219,7 @@ vec3 shadePBR()
     if (Mat.NormalIdx >= 0 && ubo.UseNormalTexture > 0)
     {
         vec3 Normal = sampleSlot(Mat.NormalIdx, uTextureNormalSet[uint(Mat.NormalIdx)], N).xyz;
+        Normal = Normal * 2.0 - 1.0;
         N = TBNMat * Normal;
     }
     
@@ -265,8 +266,7 @@ vec3 shadePBR()
 
     // HDR tonemapping
     Result = Result / (Result + vec3(1.0));
-    // gamma correct
-    Result = gammaCorrect(Result);
+
     return Result;
 }
 

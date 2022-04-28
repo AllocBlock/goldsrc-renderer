@@ -66,7 +66,6 @@ void CRenderPassFullScreen::_destroyV()
     __destroyRecreateResources();
     if (m_pPipeline) m_pPipeline->destroy();
     m_pVertexBuffer->destroy();
-    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
     IRenderPass::_destroyV();
@@ -74,7 +73,7 @@ void CRenderPassFullScreen::_destroyV()
 
 void CRenderPassFullScreen::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, vk::EImageType::COLOR);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -105,16 +104,7 @@ void CRenderPassFullScreen::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
-}
-
-void CRenderPassFullScreen::__destroyRenderPass()
-{
-    if (m_RenderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
-        m_RenderPass = VK_NULL_HANDLE;
-    }
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
 }
 
 void CRenderPassFullScreen::__createCommandPoolAndBuffers()
@@ -135,7 +125,7 @@ void CRenderPassFullScreen::__createFramebuffers()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
     }
 }
 

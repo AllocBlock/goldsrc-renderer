@@ -26,7 +26,6 @@ protected:
 
 private:
     void __createRenderPass();
-    void __destroyRenderPass();
     void __createGraphicsPipeline();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();

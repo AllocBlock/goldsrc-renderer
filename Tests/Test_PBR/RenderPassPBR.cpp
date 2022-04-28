@@ -92,7 +92,6 @@ void CRenderPassPBR::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertexBuffer->destroy();
-    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
     m_Command.clear();
 
     IRenderPass::_destroyV();
@@ -100,9 +99,9 @@ void CRenderPassPBR::_destroyV()
 
 void CRenderPassPBR::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
+    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, vk::EImageType::COLOR);
     // use own depth
-    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(ERenderPassPos::BEGIN, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
+    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(vk::ERenderPassPos::BEGIN, VkFormat::VK_FORMAT_D32_SFLOAT, vk::EImageType::DEPTH);
 
     VkAttachmentReference ColorAttachmentRef = {};
     ColorAttachmentRef.attachment = 0;
@@ -138,21 +137,12 @@ void CRenderPassPBR::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
-}
-
-void CRenderPassPBR::__destroyRenderPass()
-{
-    if (m_RenderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
-        m_RenderPass = VK_NULL_HANDLE;
-    }
+    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
 }
 
 void CRenderPassPBR::__createGraphicsPipeline()
 {
-    m_Pipeline.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_Pipeline.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_Handle, m_AppInfo.Extent);
 }
 
 void CRenderPassPBR::__createCommandPoolAndBuffers()
@@ -179,7 +169,7 @@ void CRenderPassPBR::__createFramebuffers()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
     }
 }
 

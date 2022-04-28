@@ -51,7 +51,7 @@ void CDevice::destroy()
 {
     if (m_Handle) vkDestroyDevice(m_Handle, nullptr);
     m_Handle = VK_NULL_HANDLE;
-
+     
     m_GraphicsQueueIndex = m_PresentQueueIndex = 0;
     m_GraphicsQueue = m_PresentQueue = VK_NULL_HANDLE;
 }

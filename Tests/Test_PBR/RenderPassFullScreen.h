@@ -37,7 +37,6 @@ protected:
 
 private:
     void __createRenderPass();
-    void __destroyRenderPass();
     void __createCommandPoolAndBuffers();
     void __createFramebuffers();
     void __createVertexBuffer();

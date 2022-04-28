@@ -24,14 +24,24 @@ layout(push_constant) uniform SPushConstant
 	float Opacity;
 } uPushConstant;
 
-float gammaCorrection(float v)
+float srgbToLinear(float v)
 {
 	return pow(v, 1/2.2);
 }
 
-vec3 gammaCorrection(vec3 vColor)
+vec3 srgbToLinear(vec3 vColor)
 {
-	return vec3(gammaCorrection(vColor.r), gammaCorrection(vColor.g), gammaCorrection(vColor.b));
+	return vec3(srgbToLinear(vColor.r), srgbToLinear(vColor.g), srgbToLinear(vColor.b));
+}
+
+float linearToSrgb(float v)
+{
+	return pow(v, 2.2);
+}
+
+vec3 linearToSrgb(vec3 vColor)
+{
+	return vec3(linearToSrgb(vColor.r), linearToSrgb(vColor.g), linearToSrgb(vColor.b));
 }
 
 void main()
@@ -39,6 +49,8 @@ void main()
 	uint TexIndex = inFragTexIndex;
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
 	vec4 TexColor = texture(sampler2D(uTextures[inFragTexIndex], uTexSampler), inFragTexCoord);
+	//TexColor.rgb = srgbToLinear(TexColor.rgb);
+
     if (uPushConstant.UseLightmap)
 	{
 		vec3 LightmapColor = texture(sampler2D(uLightmap, uTexSampler), inFragLightmapCoord).xyz;
@@ -64,6 +76,7 @@ void main()
 		}
 
 		float shadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
-		outColor = vec4(gammaCorrection(TexColor.rgb * shadow), TexColor.a * uPushConstant.Opacity);
+		//outColor = vec4(linearToSrgb(TexColor.rgb * shadow), TexColor.a * uPushConstant.Opacity);
+		outColor = vec4(srgbToLinear(TexColor.rgb) * shadow, TexColor.a * uPushConstant.Opacity);
 	}
 }
