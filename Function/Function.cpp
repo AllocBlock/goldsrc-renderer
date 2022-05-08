@@ -13,7 +13,7 @@ VkFormat toVulkanFormat(EPixelFormat vPixelFormat)
     }
 }
 
-vk::CImage::Ptr Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, ptr<CIOImage> vImage)
+vk::CImage::Ptr Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, ptr<CIOImage> vImage, int vMipLevel)
 {
     _ASSERTE(vImage->getData());
     VkDeviceSize DataSize = vImage->getDataSize();
@@ -24,23 +24,26 @@ vk::CImage::Ptr Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevic
     ImageInfo.extent.width = static_cast<uint32_t>(vImage->getWidth());
     ImageInfo.extent.height = static_cast<uint32_t>(vImage->getHeight());
     ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
+    ImageInfo.mipLevels = vMipLevel;
     ImageInfo.arrayLayers = 1;
     ImageInfo.format = toVulkanFormat(vImage->getPixelFormat());
     ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
     ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (vMipLevel > 1)
+        ImageInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     vk::SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    ptr<vk::CImage> pImage2;
     vk::CImage::Ptr pImage = make<vk::CImage>();
     pImage->create(vPhysicalDevice, vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
-    pImage->stageFill(vImage->getData(), DataSize);
+    pImage->stageFill(vImage->getData(), DataSize, vMipLevel > 1 ? false : true);
+    if (vMipLevel > 1)
+        pImage->generateMipmaps(CommandBuffer);
     Vulkan::endSingleTimeBuffer(CommandBuffer);
 
     return pImage;

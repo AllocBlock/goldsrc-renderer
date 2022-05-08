@@ -54,11 +54,12 @@ public:
 
     void setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer);
     void setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet);
+    void setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::Ptr vSkyIrrImage);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl);
     void destroy();
 
     bool isReady() {
-        return m_pMaterialBuffer && m_TextureColorSet.size() > 0;
+        return m_pMaterialBuffer && m_TextureColorSet.size() > 0 && m_pSkyImage && m_pSkyIrrImage;
     }
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
@@ -78,6 +79,7 @@ private:
     void __destroyResources();
 
     VkSampler m_Sampler = VK_NULL_HANDLE;
+    VkSampler m_MipmapSampler = VK_NULL_HANDLE;
     std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
     std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
     vk::CImage::Ptr m_pPlaceholderImage = nullptr;
@@ -85,5 +87,10 @@ private:
     std::vector<vk::CImage::Ptr> m_TextureColorSet;
     std::vector<vk::CImage::Ptr> m_TextureNormalSet;
     std::vector<vk::CImage::Ptr> m_TextureSpecularSet;
+    vk::CImage::Ptr m_pSkyImage = nullptr;
+    vk::CImage::Ptr m_pSkyIrrImage = nullptr;
+    vk::CImage::Ptr m_pBRDFImage = nullptr;
+
+    const int m_MipmapLevelNum = 8;
 };
 

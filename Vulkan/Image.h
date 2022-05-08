@@ -20,12 +20,16 @@ namespace vk
         void destroy();
         bool isValid();
         void copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
-        void stageFill(const void* vData, VkDeviceSize vSize);
-        void transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout);
+        void stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayout = true);
+        void transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
         void copyToBuffer(VkCommandBuffer vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
+        void generateMipmaps(VkCommandBuffer vCommandBuffer);
+        uint32_t getMipmapLevelNum() { return m_MipmapLevelNum; }
+
+        VkImage getImage() { return m_Image; }
 
     private:
-        void __createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo, VkFormat vFormat, uint32_t vLayerCount);
+        void __createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo);
 
         bool m_IsSet = false;
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
@@ -34,7 +38,8 @@ namespace vk
         VkDeviceMemory m_Memory = VK_NULL_HANDLE;
         uint32_t m_Width = 0, m_Height = 0, m_LayerCount = 0;
         VkFormat m_Format = VkFormat::VK_FORMAT_UNDEFINED;
-        VkImageLayout m_Layout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
+        VkImageLayout m_Layout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED; // TODO: mip can has different layout at different level
+        uint32_t m_MipmapLevelNum = 1;
     };
 
 }

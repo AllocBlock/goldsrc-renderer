@@ -44,8 +44,8 @@ void CRenderPassPBR::_renderUIV()
     {
         UI::indent(20.0f);
         UI::inputColor("Base Color", m_PipelineControl.Material.Albedo);
-        UI::drag("Metallic", m_PipelineControl.Material.OMR.g, 0.01f, 0.0f, 1.0f);
-        UI::drag("Roughness", m_PipelineControl.Material.OMR.b, 0.01f, 0.0f, 1.0f);
+        UI::drag("Metallic", m_PipelineControl.Material.OMR.g, 0.01f, 0.01f, 0.99f);
+        UI::drag("Roughness", m_PipelineControl.Material.OMR.b, 0.01f, 0.01f, 0.99f);
         UI::unindent();
     }
 }
@@ -236,6 +236,12 @@ void CRenderPassPBR::__createRecreateResources()
     m_Pipeline.setImageNum(m_AppInfo.ImageNum);
     m_Pipeline.setMaterialBuffer(m_pMaterialBuffer);
     m_Pipeline.setTextures(m_TextureColorSet, m_TextureNormalSet, m_TextureSpecularSet);
+
+    CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
+    pSkyIOImage->read();
+    CIOImage::Ptr pSkyIrrIOImage = make<CIOImage>("./textures/old_hall_4k_irr.exr");
+    pSkyIrrIOImage->read();
+    m_Pipeline.setSkyTexture(pSkyIOImage, pSkyIrrIOImage);
 }
 
 void CRenderPassPBR::__destroyRecreateResources()

@@ -62,6 +62,18 @@ void CPipelinePBS::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, co
         __updateDescriptorSet();
 }
 
+void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::Ptr vSkyIrrImage)
+{
+    if (m_pSkyImage) m_pSkyImage->destroy();
+    if (m_pSkyIrrImage) m_pSkyIrrImage->destroy();
+    m_pSkyImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSkyImage, m_MipmapLevelNum);
+    m_pSkyIrrImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSkyIrrImage);
+
+    // FIXME: 
+    if (isReady())
+        __updateDescriptorSet();
+}
+
 void CPipelinePBS::__createPlaceholderImage()
 {
     m_pPlaceholderImage = Function::createPlaceholderImage(m_PhysicalDevice, m_Device);
@@ -126,6 +138,24 @@ void CPipelinePBS::__updateDescriptorSet()
         }
 
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageSpecularInfoSet }));
+
+        VkDescriptorImageInfo TexImageSkyInfo = {};
+        TexImageSkyInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        TexImageSkyInfo.imageView = m_pSkyImage->get();
+        TexImageSkyInfo.sampler = m_MipmapSampler;
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {TexImageSkyInfo} }));
+
+        VkDescriptorImageInfo TexImageSkyIrrInfo = {};
+        TexImageSkyIrrInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        TexImageSkyIrrInfo.imageView = m_pSkyIrrImage->get();
+        TexImageSkyIrrInfo.sampler = VK_NULL_HANDLE;
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {TexImageSkyIrrInfo} }));
+
+        VkDescriptorImageInfo TexImageBRDFInfo = {};
+        TexImageBRDFInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        TexImageBRDFInfo.imageView = m_pBRDFImage->get();
+        TexImageBRDFInfo.sampler = VK_NULL_HANDLE;
+        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {TexImageBRDFInfo} }));
 
         m_Descriptor.update(i, DescriptorWriteInfoSet);
     }
@@ -209,7 +239,13 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
 
     Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_Sampler));
 
+    SamplerInfo.maxLod = static_cast<float>(m_MipmapLevelNum);
+    Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_MipmapSampler));
+
     __createPlaceholderImage();
+    CIOImage::Ptr pBRDFIOImage = make<CIOImage>("./textures/brdf.png");
+    pBRDFIOImage->read();
+    m_pBRDFImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pBRDFIOImage);
 }
 
 void CPipelinePBS::_initDescriptorV()
@@ -224,6 +260,9 @@ void CPipelinePBS::_initDescriptorV()
     m_Descriptor.add("TextureColors", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("TextureNormals", 5, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("TextureSpeculars", 6, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureSky", 7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureSkyIrr", 8, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Descriptor.add("TextureBRDF", 9, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_Device);
 }
@@ -246,8 +285,21 @@ void CPipelinePBS::__destroyResources()
         m_Sampler = VK_NULL_HANDLE;
     }
 
+    if (m_MipmapSampler != VK_NULL_HANDLE)
+    {
+        vkDestroySampler(m_Device, m_MipmapSampler, nullptr);
+        m_MipmapSampler = VK_NULL_HANDLE;
+    }
+
     m_TextureColorSet.clear();
     m_TextureNormalSet.clear();
     m_TextureSpecularSet.clear();
+    if (m_pSkyImage) m_pSkyImage->destroy();
+    m_pSkyImage = nullptr;
+    if (m_pSkyIrrImage) m_pSkyIrrImage->destroy();
+    m_pSkyIrrImage = nullptr;
+    if (m_pBRDFImage) m_pBRDFImage->destroy();
+    m_pBRDFImage = nullptr;
+
     m_pMaterialBuffer = nullptr;
 }

@@ -9,15 +9,16 @@ void CApplicationPBR::_initV()
     registerGlobalCommandBuffer(m_pDevice->get(), m_pDevice->getGraphicsQueueIndex());
 
     m_pCamera = make<CCamera>();
-    m_pInteractor = make<CInteractor>();
+    m_pInteractor = make<CInteractor>(); 
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
-    m_pRenderPassFullScreen = make<CRenderPassFullScreen>();
+    m_pRenderPassFullScreen = make<CRenderPassFullScreen>(); 
     m_pRenderPassFullScreen->init(AppInfo, vk::ERenderPassPos::BEGIN);
     m_pPipelineEnv = m_pRenderPassFullScreen->initPipeline<CPipelineEnvironment>();
 
     CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
     pSkyIOImage->read();
+
     m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
     
     m_pRenderPassPBR = make<CRenderPassPBR>();

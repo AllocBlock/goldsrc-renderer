@@ -32,7 +32,7 @@ protected:
     virtual void _initV() override;
     virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override; 
     virtual void _destroyV() override;
 
 private:

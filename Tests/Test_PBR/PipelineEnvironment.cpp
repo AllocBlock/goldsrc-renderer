@@ -5,7 +5,7 @@ struct SUBOVert
 {
     glm::mat4 InverseVP;
     glm::vec4 EyePos;
-};
+}; 
 
 void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
 {

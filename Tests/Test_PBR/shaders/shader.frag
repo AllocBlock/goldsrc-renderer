@@ -2,6 +2,8 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 #define MAX_TEXTURE_NUM 16
+#define M_1_PI  0.318309886183790671538 // 1/pi
+#define M_1_2PI 0.159154943091895335769 // 1/2pi
 
 layout(location = 0) in vec3 inFragPosition;
 layout(location = 1) in vec3 inFragNormal;
@@ -40,6 +42,9 @@ layout(binding = 3) uniform sampler uSampler;
 layout(binding = 4) uniform texture2D uTextureColorSet[MAX_TEXTURE_NUM];
 layout(binding = 5) uniform texture2D uTextureNormalSet[MAX_TEXTURE_NUM];
 layout(binding = 6) uniform texture2D uTextureSpecularSet[MAX_TEXTURE_NUM];
+layout(binding = 7) uniform sampler2D uTextureSky;
+layout(binding = 8) uniform texture2D uTextureSkyIrr;
+layout(binding = 9) uniform texture2D uTextureBRDF;
 
 const int POINT_LIGHT_NUMBER = 2;
 vec3 gPointLightPositions[POINT_LIGHT_NUMBER] = 
@@ -208,7 +213,61 @@ vec3 pbr(vec3 vColor, float vMetallic, float vRoughness, vec3 vPosToLight, vec3 
     return (kD * vColor / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
 }
 
-vec3 shadePBR()
+vec3 Froughness(float NdotV, vec3 F0, float Roughness)
+{
+    float g = 1.0 - Roughness; // glossiness
+    vec3 t = max(vec3(g, g, g), F0);
+    return F0 + (t - F0) * pow(1.0 - NdotV, 5.0);
+}
+
+vec2 worldToLatlongMap(vec3 vDirection)
+{
+    vec3 p = normalize(vDirection);
+    vec2 uv;
+    uv.x = atan(-p.y, p.x) * M_1_2PI + 0.5;
+    uv.y = acos(p.z) * M_1_PI;
+    return uv;
+}
+
+vec3 ibl(vec3 BaseColor, float Metallic, float Roughness, float EnvIntensity)
+{
+    vec2 diffuseUv = worldToLatlongMap(N);
+    vec3 DiffuseColor = texture(sampler2D(uTextureSkyIrr, uSampler), diffuseUv).rgb;
+
+    float MaxMipLevel = 7.0;
+    float MipLevel = MaxMipLevel * Roughness;
+    vec2 specularUv = worldToLatlongMap(R);
+    vec3 SpecularColor = textureLod(uTextureSky, specularUv, MipLevel).rgb;
+
+    vec2 brdfUv = vec2(max(dot(N, V), 0.0), 1.0 - Roughness);
+    vec2 BRDFScaleBias = texture(sampler2D(uTextureBRDF, uSampler), brdfUv).rg;
+
+    float NdotV = max(dot(N, V), 0.0);
+    vec3 F0 = vec3(0.04, 0.04, 0.04);
+    F0 = mix(F0, BaseColor, Metallic);
+   
+    vec3 F = Froughness(NdotV, F0, Roughness);
+    vec3 kD = (vec3(1.0, 1.0, 1.0) - F) * (1.0 - Metallic);
+    vec3 Diffuse = kD * DiffuseColor * BaseColor;
+    vec3 Specular = SpecularColor * (F * BRDFScaleBias.x + BRDFScaleBias.y);
+    vec3 IBLAmbientColor = (Diffuse + Specular) * EnvIntensity;
+    return IBLAmbientColor;
+}
+
+vec3 toAcesFilmic(vec3 _rgb)
+{
+	// Reference(s):
+	// - ACES Filmic Tone Mapping Curve
+	//   https://web.archive.org/web/20191027010704/https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+	float aa = 2.51f;
+	float bb = 0.03f;
+	float cc = 2.43f;
+	float dd = 0.59f;
+	float ee = 0.14f;
+	return clamp( (_rgb*(aa*_rgb + bb) )/(_rgb*(cc*_rgb + dd) + ee), 0.0, 1.0 );
+}
+
+vec3 shade()
 {
     SMaterialPBR Mat = getCurMaterial();
 
@@ -248,29 +307,28 @@ vec3 shadePBR()
     for(int i = 0; i < POINT_LIGHT_NUMBER; ++i)
     {
         vec3 L = normalize(gPointLightPositions[i] - W);
-        LumColor += pbr(BaseColor, Metallic, Roughness, L, gPointLightColors[i], inFragMaterialIndex);
+        LumColor += pbr(BaseColor, Metallic, Roughness, L, gPointLightColors[i], inFragMaterialIndex) * AO;
     }
 
     // directional light
     {
         vec3 L = normalize(-gDirectionLightDir);
-        LumColor += pbr(BaseColor, Metallic, Roughness, L, gDirectionLightColor, inFragMaterialIndex);
+        LumColor += pbr(BaseColor, Metallic, Roughness, L, gDirectionLightColor, inFragMaterialIndex) * AO;
     }
 
-    // Ambient lighting (note that the next IBL tutorial will replace
-    // this Ambient lighting with environment lighting).
-    vec3 Ambient = vec3(0.1, 0.1, 0.1);
-    vec3 AmbientColor = Ambient * BaseColor * AO;
+    // IBL
+    LumColor += ibl(BaseColor, Metallic, Roughness, 1.0) * AO;
 
-    vec3 Result = AmbientColor + LumColor;
+    vec3 Result = LumColor;
 
     // HDR tonemapping
-    Result = Result / (Result + vec3(1.0));
+    //Result = Result / (Result + vec3(1.0));
+    Result = toAcesFilmic(Result);
 
     return Result;
 }
 
 void main()
 {
-    outColor = vec4(shadePBR(), 1.0);
+    outColor = vec4(shade(), 1.0);
 }
