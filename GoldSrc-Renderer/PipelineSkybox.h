@@ -7,6 +7,7 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
+#include "Sampler.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -64,7 +65,7 @@ private:
 
     void __updateDescriptorSet();
 
-    VkSampler m_TextureSampler = VK_NULL_HANDLE;
+    vk::CSampler m_Sampler;
     vk::CImage::Ptr m_pSkyBoxImage; // cubemap
     ptr<vk::CBuffer> m_pVertexBuffer;
     size_t m_VertexNum = 0;

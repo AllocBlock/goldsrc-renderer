@@ -7,6 +7,7 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
+#include "Sampler.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -45,7 +46,7 @@ protected:
 private:
     void __updateDescriptorSet();
 
-    VkSampler m_TextureSampler = VK_NULL_HANDLE;
+    vk::CSampler m_Sampler;
     std::vector<vk::CImage::Ptr> m_SpriteImageSet;
     vk::CImage::Ptr m_pPlaceholderImage;
     std::vector<SSpritePushConstant> m_SpriteSequence;

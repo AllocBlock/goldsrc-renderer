@@ -4,6 +4,7 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
+#include "Sampler.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -64,7 +65,7 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    VkSampler m_TextureSampler = VK_NULL_HANDLE;
+    vk::CSampler m_Sampler;
     std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
     std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
     vk::CImage::Ptr m_pSkyBoxImage = nullptr;

@@ -5,6 +5,7 @@
 #include "UniformBuffer.h"
 #include "IOImage.h"
 #include "FullScreenPoint.h"
+#include "Sampler.h"
 
 class CPipelineEnvironment : public IPipeline
 {
@@ -38,7 +39,7 @@ private:
         glm::vec3 Rotation;
     } m_Control;
 
-    VkSampler m_Sampler = VK_NULL_HANDLE;
+    vk::CSampler m_Sampler;
     std::vector<vk::CUniformBuffer::Ptr> m_FragUBSet;
     vk::CImage::Ptr m_pEnvironmentImage = nullptr;
     vk::CImage::Ptr m_pPlaceholderImage = nullptr;

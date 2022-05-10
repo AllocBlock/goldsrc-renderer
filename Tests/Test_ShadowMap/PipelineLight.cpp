@@ -49,7 +49,7 @@ void CPipelineLight::__updateDescriptorSet()
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         CombinedSamplerInfo.imageView = (m_ShadowMapImageViewSet.empty() ? m_pPlaceholderImage->get() : m_ShadowMapImageViewSet[i]);
-        CombinedSamplerInfo.sampler = m_TextureSampler;
+        CombinedSamplerInfo.sampler = m_Sampler.get();
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 
         m_Descriptor.update(i, DescriptorWriteInfoSet);
@@ -107,24 +107,9 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
     VkPhysicalDeviceProperties Properties = {};
     vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
 
-    VkSamplerCreateInfo SamplerInfo = {};
-    SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    SamplerInfo.magFilter = VK_FILTER_LINEAR;
-    SamplerInfo.minFilter = VK_FILTER_LINEAR;
-    SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.anisotropyEnable = VK_TRUE;
-    SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
-    SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
-    SamplerInfo.compareEnable = VK_FALSE;
-    SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    SamplerInfo.mipLodBias = 0.0f;
-    SamplerInfo.minLod = 0.0f;
-    SamplerInfo.maxLod = 0.0f;
-
+    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
+    );
     Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
 
     __createPlaceholderImage();
@@ -153,10 +138,6 @@ void CPipelineLight::__destroyResources()
     if (m_pPlaceholderImage)
         m_pPlaceholderImage->destroy();
 
-    if (m_TextureSampler != VK_NULL_HANDLE)
-    {
-        vkDestroySampler(m_Device, m_TextureSampler, nullptr);
-        m_TextureSampler = VK_NULL_HANDLE;
-    }
+    m_Sampler.destroy();
 }
 

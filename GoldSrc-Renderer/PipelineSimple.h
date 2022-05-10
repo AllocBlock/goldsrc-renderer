@@ -4,6 +4,7 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
+#include "Sampler.h"
 
 #include <glm/glm.hpp>
 
@@ -27,8 +28,8 @@ protected:
     virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
 private:
     void __destroyResources();
-    
-    VkSampler m_TextureSampler = VK_NULL_HANDLE;
+
+    vk::CSampler m_Sampler;
     std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
     std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
     vk::CImage::Ptr m_pPlaceholderImage;

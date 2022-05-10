@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#define _SHOULD_NOT_GO_HERE throw std::runtime_error("Should not go here")
+
 namespace Common
 {
     float mod(float vVal, float vMax);

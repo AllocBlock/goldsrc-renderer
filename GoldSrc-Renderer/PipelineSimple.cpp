@@ -36,7 +36,7 @@ void CPipelineSimple::updateDescriptorSet(const std::vector<VkImageView>& vTextu
         VkDescriptorImageInfo SamplerInfo = {};
         SamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         SamplerInfo.imageView = VK_NULL_HANDLE;
-        SamplerInfo.sampler = m_TextureSampler;
+        SamplerInfo.sampler = m_Sampler.get();
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {SamplerInfo} }));
 
         //const size_t NumTexture = __getActualTextureNum();
@@ -138,25 +138,10 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
     VkPhysicalDeviceProperties Properties = {};
     vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
 
-    VkSamplerCreateInfo SamplerInfo = {};
-    SamplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    SamplerInfo.magFilter = VK_FILTER_LINEAR;
-    SamplerInfo.minFilter = VK_FILTER_LINEAR;
-    SamplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    SamplerInfo.anisotropyEnable = VK_TRUE;
-    SamplerInfo.maxAnisotropy = Properties.limits.maxSamplerAnisotropy;
-    SamplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-    SamplerInfo.unnormalizedCoordinates = VK_FALSE;
-    SamplerInfo.compareEnable = VK_FALSE;
-    SamplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-    SamplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    SamplerInfo.mipLodBias = 0.0f;
-    SamplerInfo.minLod = 0.0f;
-    SamplerInfo.maxLod = 0.0f;
-
-    Vulkan::checkError(vkCreateSampler(m_Device, &SamplerInfo, nullptr, &m_TextureSampler));
+    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
+    );
+    m_Sampler.destroy();
 
     uint8_t PixelData = 0;
     VkImageCreateInfo ImageInfo = {};
@@ -204,10 +189,5 @@ void CPipelineSimple::__destroyResources()
     m_FragUniformBufferSet.clear();
 
     if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
-
-    if (m_TextureSampler != VK_NULL_HANDLE)
-    {
-        vkDestroySampler(m_Device, m_TextureSampler, nullptr);
-        m_TextureSampler = VK_NULL_HANDLE;
-    }
+    m_Sampler.destroy();
 }

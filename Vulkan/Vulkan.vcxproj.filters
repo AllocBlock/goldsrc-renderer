@@ -51,6 +51,9 @@
     <ClInclude Include="UniformBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vulkan.cpp">
@@ -87,6 +90,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="UniformBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Sampler.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -6,6 +6,7 @@
 #include "UniformBuffer.h"
 #include "MaterialPBR.h"
 #include "VertexAttributeDescriptor.h"
+#include "Sampler.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -78,8 +79,8 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    VkSampler m_Sampler = VK_NULL_HANDLE;
-    VkSampler m_MipmapSampler = VK_NULL_HANDLE;
+    vk::CSampler m_Sampler;
+    vk::CSampler m_MipmapSampler;
     std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
     std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
     vk::CImage::Ptr m_pPlaceholderImage = nullptr;
