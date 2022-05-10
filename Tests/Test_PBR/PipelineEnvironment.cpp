@@ -93,21 +93,12 @@ void CPipelineEnvironment::__updateDescriptorSet()
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_FragUBSet[i]);
+        VkImageView EnvImageView = m_pEnvironmentImage && m_pEnvironmentImage->isValid() ? m_pEnvironmentImage->get() : m_pPlaceholderImage->get();
+        WriteInfo.addWriteImageAndSampler(1, EnvImageView, m_Sampler.get());
 
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_FragUBSet[i]->get();
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUBOVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
-
-        VkDescriptorImageInfo CombinedSamplerInfo = {};
-        CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_pEnvironmentImage && m_pEnvironmentImage->isValid() ? m_pEnvironmentImage->get() : m_pPlaceholderImage->get();
-        CombinedSamplerInfo.sampler = m_Sampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        m_Descriptor.update(i, WriteInfo);
     }
 }
 

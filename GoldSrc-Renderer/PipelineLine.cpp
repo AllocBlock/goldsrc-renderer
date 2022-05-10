@@ -106,15 +106,9 @@ void CPipelineLine::__updateDescriptorSet()
 {
     for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SGuiUniformBufferObjectVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} , {} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        m_Descriptor.update(i, WriteInfo);
     }
 }
 

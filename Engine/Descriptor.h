@@ -1,5 +1,8 @@
 #pragma once
 #include "Common.h"
+#include "UniformBuffer.h"
+#include "Image.h"
+#include "Sampler.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>
@@ -14,10 +17,92 @@ struct SDescriptorInfo
     VkShaderStageFlags Stage;
 };
 
-struct SDescriptorWriteInfo
+struct SDescriptorWriteInfoEntry
 {
+    size_t TargetIndex = std::numeric_limits<size_t>::max();
     std::vector<VkDescriptorBufferInfo> BufferInfoSet;
     std::vector<VkDescriptorImageInfo> ImageInfoSet;
+};
+
+class CDescriptorWriteInfo
+{
+public:
+    const std::vector<SDescriptorWriteInfoEntry>& get() const { return m_WriteInfoSet; }
+
+    void clear()
+    {
+        m_WriteInfoSet.clear();
+    }
+
+    void addWriteBuffer(size_t vTargetIndex, vk::CBuffer::Ptr vBuffer)
+    {
+        _ASSERTE(vTargetIndex != std::numeric_limits<size_t>::max());
+        VkDescriptorBufferInfo VertBufferInfo = {};
+        VertBufferInfo.buffer = vBuffer->get();
+        VertBufferInfo.offset = 0;
+        VertBufferInfo.range = vBuffer->getSize();
+        m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {VertBufferInfo}, {} }));
+    }
+
+    void addWriteSampler(size_t vTargetIndex, VkSampler vSampler)
+    {
+        _ASSERTE(vSampler != VK_NULL_HANDLE);
+
+        VkDescriptorImageInfo Info = {};
+        Info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        Info.imageView =VK_NULL_HANDLE;
+        Info.sampler = vSampler;
+        m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
+    }
+
+    void addWriteImageAndSampler(size_t vTargetIndex, vk::CImage::Ptr vImage = nullptr, VkSampler vSampler = VK_NULL_HANDLE)
+    {
+        _ASSERTE(!((!vImage || !vImage->isValid()) && vSampler == VK_NULL_HANDLE));
+        addWriteImageAndSampler(vTargetIndex, vImage->get(), vSampler);
+    }
+
+    void addWriteImagesAndSampler(size_t vTargetIndex, std::vector<vk::CImage::Ptr> vImageSet, VkSampler vSampler = VK_NULL_HANDLE)
+    {
+        _ASSERTE(!vImageSet.empty());
+
+        std::vector<VkImageView> ImageViewSet(vImageSet.size(), VK_NULL_HANDLE);
+
+        for (size_t i = 0; i < vImageSet.size(); ++i)
+        {
+            ImageViewSet[i] = vImageSet[i]->get();
+        }
+
+        addWriteImagesAndSampler(vTargetIndex, ImageViewSet, vSampler);
+    }
+
+    void addWriteImageAndSampler(size_t vTargetIndex, VkImageView vImageView = VK_NULL_HANDLE, VkSampler vSampler = VK_NULL_HANDLE)
+    {
+        _ASSERTE(!(vImageView == VK_NULL_HANDLE && vSampler == VK_NULL_HANDLE));
+
+        VkDescriptorImageInfo Info = {};
+        Info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        Info.imageView = vImageView;
+        Info.sampler = vSampler;
+        m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
+    }
+
+    void addWriteImagesAndSampler(size_t vTargetIndex, std::vector<VkImageView> vImageViewSet, VkSampler vSampler = VK_NULL_HANDLE)
+    {
+        _ASSERTE(!vImageViewSet.empty());
+
+        std::vector<VkDescriptorImageInfo> InfoSet(vImageViewSet.size());
+        for (size_t i = 0; i < InfoSet.size(); ++i)
+        {
+            _ASSERTE(vImageViewSet[i] != VK_NULL_HANDLE);
+            InfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            InfoSet[i].imageView = vImageViewSet[i];
+            InfoSet[i].sampler = vSampler;
+        }
+        m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, InfoSet }));
+    }
+
+private:
+    std::vector<SDescriptorWriteInfoEntry> m_WriteInfoSet;
 };
 
 class CDescriptor
@@ -30,7 +115,7 @@ public:
     void createLayout(VkDevice vDevice);
     
     const std::vector<VkDescriptorSet>& createDescriptorSetSet(size_t vImageNum);
-    void update(size_t vSetIndex, const std::vector<SDescriptorWriteInfo>& vWriteInfoSet);
+    void update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo);
     void clear();
     VkDescriptorSetLayout getLayout() const;
     const std::vector<VkDescriptorPoolSize>& getPoolSizeSet() const;

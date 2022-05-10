@@ -223,26 +223,10 @@ void CPipelineSkybox::__updateDescriptorSet()
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SSkyUniformBufferObjectVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
-
-        VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
-        FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SSkyUniformBufferObjectFrag);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
-
-        VkDescriptorImageInfo CombinedSamplerInfo = {};
-        CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_pSkyBoxImage->get();
-        CombinedSamplerInfo.sampler = m_Sampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteImageAndSampler(2, m_pSkyBoxImage, m_Sampler.get());
+        m_Descriptor.update(i, WriteInfo);
     }
 }

@@ -56,20 +56,24 @@ const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t v
     return m_DescriptorSetSet;
 }
 
-void CDescriptor::update(size_t vSetIndex, const std::vector<SDescriptorWriteInfo>& vWriteInfoSet)
+void CDescriptor::update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo)
 {
+    const std::vector<SDescriptorWriteInfoEntry>& vWriteInfoSet = vWriteInfo.get();
     if (m_DescriptorInfoSet.size() != vWriteInfoSet.size())
         throw std::runtime_error(u8"错误，写入描述符的数量和描述符不一致");
 
-    std::vector<VkWriteDescriptorSet> DescriptorWrites(m_DescriptorInfoSet.size());
-    for (size_t i = 0; i < m_DescriptorInfoSet.size(); ++i)
+    std::vector<VkWriteDescriptorSet> DescriptorWrites(vWriteInfoSet.size());
+    for (size_t i = 0; i < vWriteInfoSet.size(); ++i)
     {
+        size_t TargetIndex = vWriteInfoSet[i].TargetIndex;
+        const SDescriptorInfo& TargetInfo = m_DescriptorInfoSet[TargetIndex];
+
         DescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         DescriptorWrites[i].dstSet = m_DescriptorSetSet[vSetIndex];
-        DescriptorWrites[i].dstBinding = m_DescriptorInfoSet[i].Index;
+        DescriptorWrites[i].dstBinding = TargetInfo.Index;
         DescriptorWrites[i].dstArrayElement = 0;
-        DescriptorWrites[i].descriptorType = m_DescriptorInfoSet[i].Type;
-        DescriptorWrites[i].descriptorCount = m_DescriptorInfoSet[i].Size;
+        DescriptorWrites[i].descriptorType = TargetInfo.Type;
+        DescriptorWrites[i].descriptorCount = TargetInfo.Size;
         DescriptorWrites[i].pBufferInfo = vWriteInfoSet[i].BufferInfoSet.empty() ? nullptr : vWriteInfoSet[i].BufferInfoSet.data();
         DescriptorWrites[i].pImageInfo = vWriteInfoSet[i].ImageInfoSet.empty() ? nullptr : vWriteInfoSet[i].ImageInfoSet.data();
         _ASSERTE(!vWriteInfoSet[i].BufferInfoSet.empty() || !vWriteInfoSet[i].ImageInfoSet.empty());

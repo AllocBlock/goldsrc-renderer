@@ -84,80 +84,19 @@ void CPipelinePBS::__updateDescriptorSet()
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(2, m_pMaterialBuffer);
+        WriteInfo.addSampler(3, m_Sampler.get());
+        WriteInfo.addWriteImagesAndSampler(4, m_TextureColorSet);
+        WriteInfo.addWriteImagesAndSampler(5, m_TextureNormalSet);
+        WriteInfo.addWriteImagesAndSampler(6, m_TextureSpecularSet);
+        WriteInfo.addWriteImageAndSampler(7, m_pSkyImage, m_MipmapSampler.get());
+        WriteInfo.addWriteImageAndSampler(8, m_pSkyIrrImage);
+        WriteInfo.addWriteImageAndSampler(9, m_pBRDFImage);
 
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUBOVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
-
-        VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
-        FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUBOFrag);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
-
-        VkDescriptorBufferInfo FragMaterialBufferInfo = {};
-        FragMaterialBufferInfo.buffer = m_pMaterialBuffer ? m_pMaterialBuffer->get() : nullptr;
-        FragMaterialBufferInfo.offset = 0;
-        FragMaterialBufferInfo.range = m_pMaterialBuffer->getSize();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ { FragMaterialBufferInfo }, {} }));
-
-        VkDescriptorImageInfo SamplerInfo = {};
-        SamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        SamplerInfo.imageView = VK_NULL_HANDLE;
-        SamplerInfo.sampler = m_Sampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {SamplerInfo} }));
-
-        std::vector<VkDescriptorImageInfo> TexImageColorInfoSet(CPipelinePBS::MaxTextureNum);
-        for (size_t i = 0; i < CPipelinePBS::MaxTextureNum; ++i)
-        {
-            TexImageColorInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            TexImageColorInfoSet[i].imageView = m_TextureColorSet[i]->get();
-            TexImageColorInfoSet[i].sampler = VK_NULL_HANDLE;
-        }
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageColorInfoSet }));
-
-        std::vector<VkDescriptorImageInfo> TexImageNormalInfoSet(CPipelinePBS::MaxTextureNum);
-        for (size_t i = 0; i < CPipelinePBS::MaxTextureNum; ++i)
-        {
-            TexImageNormalInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            TexImageNormalInfoSet[i].imageView = m_TextureNormalSet[i]->get();
-            TexImageNormalInfoSet[i].sampler = VK_NULL_HANDLE;
-        }
-
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageNormalInfoSet }));
-
-        std::vector<VkDescriptorImageInfo> TexImageSpecularInfoSet(CPipelinePBS::MaxTextureNum);
-        for (size_t i = 0; i < CPipelinePBS::MaxTextureNum; ++i)
-        {
-            TexImageSpecularInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            TexImageSpecularInfoSet[i].imageView = m_TextureSpecularSet[i]->get();
-            TexImageSpecularInfoSet[i].sampler = VK_NULL_HANDLE;
-        }
-
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageSpecularInfoSet }));
-
-        VkDescriptorImageInfo TexImageSkyInfo = {};
-        TexImageSkyInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        TexImageSkyInfo.imageView = m_pSkyImage->get();
-        TexImageSkyInfo.sampler = m_MipmapSampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {TexImageSkyInfo} }));
-
-        VkDescriptorImageInfo TexImageSkyIrrInfo = {};
-        TexImageSkyIrrInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        TexImageSkyIrrInfo.imageView = m_pSkyIrrImage->get();
-        TexImageSkyIrrInfo.sampler = VK_NULL_HANDLE;
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {TexImageSkyIrrInfo} }));
-
-        VkDescriptorImageInfo TexImageBRDFInfo = {};
-        TexImageBRDFInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        TexImageBRDFInfo.imageView = m_pBRDFImage->get();
-        TexImageBRDFInfo.sampler = VK_NULL_HANDLE;
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {TexImageBRDFInfo} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        m_Descriptor.update(i, WriteInfo);
     }
 }
 

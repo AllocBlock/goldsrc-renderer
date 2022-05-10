@@ -26,62 +26,32 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteSampler(2, m_Sampler.get());
 
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUBOVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo}, {} }));
-
-        VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
-        FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUBOFrag);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo}, {} }));
-
-        VkDescriptorImageInfo SamplerInfo = {};
-        SamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        SamplerInfo.imageView = VK_NULL_HANDLE;
-        SamplerInfo.sampler = m_Sampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {SamplerInfo} }));
-
-        //const size_t NumTexture = __getActualTextureNum();
         const size_t NumTexture = vTextureSet.size();
 
-        std::vector<VkDescriptorImageInfo> TexImageInfoSet(CPipelineDepthTest::MaxTextureNum);
+        std::vector<VkImageView> TexImageViewSet(CPipelineDepthTest::MaxTextureNum);
         for (size_t i = 0; i < CPipelineDepthTest::MaxTextureNum; ++i)
         {
             // for unused element, fill like the first one (weird method but avoid validation warning)
             if (i >= NumTexture)
             {
                 if (i == 0) // no texture, use default placeholder texture
-                {
-                    TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    TexImageInfoSet[i].imageView = m_pPlaceholderImage->get();
-                    TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
-                }
+                    TexImageViewSet[i] = m_pPlaceholderImage->get();
                 else
-                {
-                    TexImageInfoSet[i] = TexImageInfoSet[0];
-                }
+                    TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-            {
-                TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                TexImageInfoSet[i].imageView = vTextureSet[i];
-                TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
-            }
+                TexImageViewSet[i] = vTextureSet[i];
         }
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageInfoSet }));
+        WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
+        VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? m_pPlaceholderImage->get() : vLightmap;
+        WriteInfo.addWriteImageAndSampler(4, LightmapImageView);
 
-        VkDescriptorImageInfo LightmapImageInfo = {};
-        LightmapImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        LightmapImageInfo.imageView = vLightmap == VK_NULL_HANDLE ? m_pPlaceholderImage->get() : vLightmap;
-        LightmapImageInfo.sampler = VK_NULL_HANDLE;
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {LightmapImageInfo} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        m_Descriptor.update(i, WriteInfo);
     }
 }
 
