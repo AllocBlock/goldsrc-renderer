@@ -1,6 +1,7 @@
 ﻿#include "GUIPass.h"
 #include "Common.h"
 #include "Log.h"
+#include "AppInfo.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -48,9 +49,9 @@ void CGUIRenderPass::_initV()
 
     // init vulkan
     ImGui_ImplVulkan_InitInfo InitInfo = {};
-    InitInfo.Instance = m_AppInfo.Instance;
-    InitInfo.PhysicalDevice = m_AppInfo.PhysicalDevice;
-    InitInfo.Device = m_AppInfo.Device;
+    InitInfo.Instance = *m_AppInfo.pInstance;
+    InitInfo.PhysicalDevice = *m_AppInfo.pPhysicalDevice;
+    InitInfo.Device = *m_AppInfo.pDevice;
     InitInfo.QueueFamily = m_AppInfo.GraphicsQueueIndex;
     InitInfo.Queue = m_AppInfo.GraphicsQueue;
     InitInfo.PipelineCache = VK_NULL_HANDLE;
@@ -59,10 +60,10 @@ void CGUIRenderPass::_initV()
     InitInfo.MinImageCount = NumImage;
     InitInfo.ImageCount = NumImage;
     InitInfo.CheckVkResultFn = nullptr;
-    ImGui_ImplVulkan_Init(&InitInfo, m_Handle);
+    ImGui_ImplVulkan_Init(&InitInfo, get());
 
     // create command pool and buffers
-    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, NumImage, ECommandBufferLevel::PRIMARY);
 
     // upload font
@@ -96,7 +97,7 @@ void CGUIRenderPass::_renderUIV()
 
 void CGUIRenderPass::_destroyV()
 {
-    if (m_AppInfo.Device == VK_NULL_HANDLE) return;
+    if (*m_AppInfo.pDevice == VK_NULL_HANDLE) return;
 
     for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
@@ -130,14 +131,14 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
 
     auto pDrawData = ImGui::GetDrawData();
     if (pDrawData)
         ImGui_ImplVulkan_RenderDrawData(pDrawData, CommandBuffer);
 
     end();
-    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
+    vk::checkError(vkEndCommandBuffer(CommandBuffer));
 
     return { CommandBuffer };
 }
@@ -173,7 +174,7 @@ void CGUIRenderPass::__createRenderPass()
     RenderPassInfo.dependencyCount = 1;
     RenderPassInfo.pDependencies = &SubpassDependency;
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, _getPtr()));
 }
 
 void CGUIRenderPass::__createDescriptorPool()
@@ -199,14 +200,14 @@ void CGUIRenderPass::__createDescriptorPool()
     PoolInfo.pPoolSizes = PoolSizes.data();
     PoolInfo.maxSets = static_cast<uint32_t>(PoolSizes.size() * 1000);
 
-    Vulkan::checkError(vkCreateDescriptorPool(m_AppInfo.Device, &PoolInfo, nullptr, &m_DescriptorPool));
+    vk::checkError(vkCreateDescriptorPool(*m_AppInfo.pDevice, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
 void CGUIRenderPass::__destroyDescriptorPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE)
     {
-        vkDestroyDescriptorPool(m_AppInfo.Device, m_DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(*m_AppInfo.pDevice, m_DescriptorPool, nullptr);
         m_DescriptorPool = VK_NULL_HANDLE;
     }
 }
@@ -224,7 +225,7 @@ void CGUIRenderPass::__createFramebuffer()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 

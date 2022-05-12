@@ -66,8 +66,8 @@ void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::
 {
     if (m_pSkyImage) m_pSkyImage->destroy();
     if (m_pSkyIrrImage) m_pSkyIrrImage->destroy();
-    m_pSkyImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSkyImage, m_MipmapLevelNum);
-    m_pSkyIrrImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSkyIrrImage);
+    m_pSkyImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSkyImage, m_MipmapLevelNum);
+    m_pSkyIrrImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSkyIrrImage);
 
     // FIXME: 
     if (isReady())
@@ -76,7 +76,7 @@ void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::
 
 void CPipelinePBS::__createPlaceholderImage()
 {
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_PhysicalDevice, m_Device);
+    m_pPlaceholderImage = Function::createPlaceholderImage(m_pPhysicalDevice, m_pDevice);
 }
 
 void CPipelinePBS::__updateDescriptorSet()
@@ -88,7 +88,7 @@ void CPipelinePBS::__updateDescriptorSet()
         WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(2, m_pMaterialBuffer);
-        WriteInfo.addSampler(3, m_Sampler.get());
+        WriteInfo.addWriteSampler(3, m_Sampler.get());
         WriteInfo.addWriteImagesAndSampler(4, m_TextureColorSet);
         WriteInfo.addWriteImagesAndSampler(5, m_TextureNormalSet);
         WriteInfo.addWriteImagesAndSampler(6, m_TextureSpecularSet);
@@ -150,31 +150,29 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, FragBufferSize);
     }
 
-    VkPhysicalDeviceProperties Properties = {};
-    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
-
+    const auto& Properties = m_pPhysicalDevice->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    m_Sampler.create(m_Device, SamplerInfo);
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     SamplerInfo.maxLod = static_cast<float>(m_MipmapLevelNum);
-    m_MipmapSampler.create(m_Device, SamplerInfo);
+    m_MipmapSampler.create(m_pDevice, SamplerInfo);
 
     __createPlaceholderImage();
     CIOImage::Ptr pBRDFIOImage = make<CIOImage>("./textures/brdf.png");
     pBRDFIOImage->read();
-    m_pBRDFImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pBRDFIOImage);
+    m_pBRDFImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, pBRDFIOImage);
 }
 
 void CPipelinePBS::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
@@ -188,7 +186,7 @@ void CPipelinePBS::_initDescriptorV()
     m_Descriptor.add("TextureSkyIrr", 8, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("TextureBRDF", 9, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelinePBS::__destroyResources()

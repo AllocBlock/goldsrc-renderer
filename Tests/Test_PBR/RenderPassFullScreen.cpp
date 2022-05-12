@@ -39,15 +39,15 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
-        VkBuffer VertBuffer = m_pVertexBuffer->get();
+        VkBuffer VertBuffer = *m_pVertexBuffer;
         VkDeviceSize Offsets[] = { 0 };
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_pPipeline->bind(CommandBuffer, vImageIndex);
@@ -57,7 +57,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
     }
     
     end();
-    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
+    vk::checkError(vkEndCommandBuffer(CommandBuffer));
     return { CommandBuffer };
 }
 
@@ -104,12 +104,12 @@ void CRenderPassFullScreen::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, _getPtr()));
 }
 
 void CRenderPassFullScreen::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 
@@ -125,7 +125,7 @@ void CRenderPassFullScreen::__createFramebuffers()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 
@@ -138,7 +138,7 @@ void CRenderPassFullScreen::__createVertexBuffer()
     {
         VkDeviceSize BufferSize = sizeof(SFullScreenPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }

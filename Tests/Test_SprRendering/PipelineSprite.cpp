@@ -49,7 +49,7 @@ struct SUniformBufferObjectVert
 
 void CPipelineSprite::destroy()
 {
-    if (m_Device == VK_NULL_HANDLE) return;
+    if (m_pDevice == VK_NULL_HANDLE) return;
 
     m_Sampler.destroy();
 
@@ -77,7 +77,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSpriteImageSet[i].pImage);
+        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -103,7 +103,7 @@ void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImag
 {
     if (m_pVertexDataBuffer->isValid())
     {
-        VkBuffer Buffer = m_pVertexDataBuffer->get();
+        VkBuffer Buffer = *m_pVertexDataBuffer;
         const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
@@ -196,7 +196,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
     m_VertexNum = PointData.size();
     m_pVertexDataBuffer = make<vk::CBuffer>();
-    m_pVertexDataBuffer->create(m_PhysicalDevice, m_Device, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexDataBuffer->create(m_pPhysicalDevice, m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexDataBuffer->stageFill(PointData.data(), DataSize);
 
     // uniform buffer
@@ -206,13 +206,11 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
     }
 
     // sampler
-    VkPhysicalDeviceProperties Properties = {};
-    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
-
+    const auto& Properties = m_pPhysicalDevice->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
@@ -223,19 +221,19 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     auto pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(Data);
-    m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
+    m_pPlaceholderImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, pTinyImage);
 }
 
 void CPipelineSprite::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
     m_Descriptor.add("Sampler", 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("Texture", 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSprite::MaxSpriteNum), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelineSprite::__updateDescriptorSet()
@@ -246,7 +244,7 @@ void CPipelineSprite::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
+        VertBufferInfo.buffer = *m_VertUniformBufferSet[i];
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
@@ -267,7 +265,7 @@ void CPipelineSprite::__updateDescriptorSet()
                 if (i == 0) // no texture, use default placeholder texture
                 {
                     TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    TexImageInfoSet[i].imageView = m_pPlaceholderImage->get();
+                    TexImageInfoSet[i].imageView = *m_pPlaceholderImage;
                     TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
                 }
                 else
@@ -278,7 +276,7 @@ void CPipelineSprite::__updateDescriptorSet()
             else
             {
                 TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                TexImageInfoSet[i].imageView = m_SpriteImageSet[i]->get();
+                TexImageInfoSet[i].imageView = *m_SpriteImageSet[i];
                 TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
             }
         }

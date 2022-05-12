@@ -13,7 +13,7 @@ void CApplicationGoldSrc::_initV()
 {
     m_pCamera = make<CCamera>();
 
-    registerGlobalCommandBuffer(m_pDevice->get(), m_pDevice->getGraphicsQueueIndex());
+    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 }
 
 void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
@@ -44,7 +44,7 @@ void CApplicationGoldSrc::_renderUIV()
 
 void CApplicationGoldSrc::_createOtherResourceV()
 {
-    Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
+    vk::SAppInfo AppInfo = getAppInfo();
 
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
@@ -112,7 +112,7 @@ void CApplicationGoldSrc::_destroyOtherResourceV()
     m_pPassLine->destroy();
     m_pPassGUI->destroy();
 
-    unregisterGlobalCommandBuffer();
+    cleanGlobalCommandBuffer();
 }
 
 void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)

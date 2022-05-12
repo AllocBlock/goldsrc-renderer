@@ -19,13 +19,13 @@ void CPipelineShadowMap::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
+        VertBufferInfo.buffer = *m_VertUniformBufferSet[i];
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUBOVertLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
+        FragBufferInfo.buffer = *m_FragUniformBufferSet[i];
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUBOFragLight);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo} ,{} }));
@@ -78,9 +78,9 @@ void CPipelineShadowMap::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, FragBufferSize);
     }
 
     __updateDescriptorSet();
@@ -88,13 +88,13 @@ void CPipelineShadowMap::_createResourceV(size_t vImageNum)
 
 void CPipelineShadowMap::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
     m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelineShadowMap::__destroyResources()

@@ -75,20 +75,20 @@ std::vector<VkPushConstantRange> IPipeline::getDefaultPushConstantRangeSet()
     return {};
 }
 
-void IPipeline::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
+void IPipeline::create(vk::CPhysicalDevice::CPtr vPhysicalDevice, vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
 {
     destroy();
 
-    m_PhysicalDevice = vPhysicalDevice;
-    m_Device = vDevice;
+    m_pPhysicalDevice = vPhysicalDevice;
+    m_pDevice = vDevice;
 
     _initDescriptorV();
 
     auto VertShaderCode = Common::readFileAsChar(_getVertShaderPathV());
     auto FragShaderCode = Common::readFileAsChar(_getFragShaderPathV());
 
-    VkShaderModule VertShaderModule = Vulkan::createShaderModule(m_Device, VertShaderCode);
-    VkShaderModule FragShaderModule = Vulkan::createShaderModule(m_Device, FragShaderCode);
+    VkShaderModule VertShaderModule = m_pDevice->createShaderModule(VertShaderCode);
+    VkShaderModule FragShaderModule = m_pDevice->createShaderModule(FragShaderCode);
 
     const auto& ShadeInfoSet = _getShadeStageInfoV(VertShaderModule, FragShaderModule);
 
@@ -142,7 +142,7 @@ void IPipeline::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRen
     PipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(PushConstantRangeSet.size());
     PipelineLayoutInfo.pPushConstantRanges = PushConstantRangeSet.data();
 
-    Vulkan::checkError(vkCreatePipelineLayout(m_Device, &PipelineLayoutInfo, nullptr, &m_PipelineLayout));
+    vk::checkError(vkCreatePipelineLayout(*m_pDevice, &PipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
     VkGraphicsPipelineCreateInfo PipelineInfo = {};
     PipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -160,10 +160,9 @@ void IPipeline::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRen
     PipelineInfo.renderPass = vRenderPass;
     PipelineInfo.subpass = vSubpass;
 
-    Vulkan::checkError(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_Pipeline));
-
-    vkDestroyShaderModule(m_Device, FragShaderModule, nullptr);
-    vkDestroyShaderModule(m_Device, VertShaderModule, nullptr);
+    vk::checkError(vkCreateGraphicsPipelines(*m_pDevice, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_Pipeline));
+    m_pDevice->destroyShaderModule(VertShaderModule);
+    m_pDevice->destroyShaderModule(FragShaderModule);
 }
 
 void IPipeline::setImageNum(size_t vImageNum)
@@ -178,15 +177,15 @@ void IPipeline::destroy()
 {
     m_ImageNum = 0;
     
-    if (m_Device == VK_NULL_HANDLE) return;
+    if (m_pDevice == VK_NULL_HANDLE) return;
     m_Descriptor.clear();
 
-    vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
-    vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+    vkDestroyPipeline(*m_pDevice, m_Pipeline, nullptr);
+    vkDestroyPipelineLayout(*m_pDevice, m_PipelineLayout, nullptr);
     m_PipelineLayout = VK_NULL_HANDLE;
     m_Pipeline = VK_NULL_HANDLE;
-    m_Device = VK_NULL_HANDLE;
-    m_PhysicalDevice = VK_NULL_HANDLE;
+    m_pDevice = VK_NULL_HANDLE;
+    m_pPhysicalDevice = VK_NULL_HANDLE;
 }
 
 void IPipeline::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)

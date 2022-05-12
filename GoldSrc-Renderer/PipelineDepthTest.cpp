@@ -40,7 +40,7 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
             if (i >= NumTexture)
             {
                 if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = m_pPlaceholderImage->get();
+                    TexImageViewSet[i] = *m_pPlaceholderImage;
                 else
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
@@ -48,7 +48,7 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
                 TexImageViewSet[i] = vTextureSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
-        VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? m_pPlaceholderImage->get() : vLightmap;
+        VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? *m_pPlaceholderImage : vLightmap;
         WriteInfo.addWriteImageAndSampler(4, LightmapImageView);
 
         m_Descriptor.update(i, WriteInfo);
@@ -148,18 +148,16 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, FragBufferSize);
     }
 
-    VkPhysicalDeviceProperties Properties = {};
-    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
-
+    const auto& Properties = m_pPhysicalDevice->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    m_Sampler.create(m_Device, SamplerInfo);
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     uint8_t PixelData = 0;
     VkImageCreateInfo ImageInfo = {};
@@ -180,12 +178,12 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
     vk::SImageViewInfo ViewInfo;
 
     m_pPlaceholderImage = make<vk::CImage>();
-    m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pPlaceholderImage->create(m_pPhysicalDevice, m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
 void CPipelineDepthTest::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
@@ -194,7 +192,7 @@ void CPipelineDepthTest::_initDescriptorV()
     m_Descriptor.add("Texture", 3, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineDepthTest::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("Lightmap", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelineDepthTest::_initPushConstantV(VkCommandBuffer vCommandBuffer)

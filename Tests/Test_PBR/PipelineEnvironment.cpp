@@ -9,7 +9,7 @@ struct SUBOVert
 
 void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
 {
-    m_pEnvironmentImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSkyImage);
+    m_pEnvironmentImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSkyImage);
     __precalculateIBL(vSkyImage);
     __updateDescriptorSet();
     m_Ready = true;
@@ -53,29 +53,27 @@ void CPipelineEnvironment::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_FragUBSet[i] = make<vk::CUniformBuffer>();
-        m_FragUBSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_FragUBSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
     }
 
-    VkPhysicalDeviceProperties Properties = {};
-    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
-
+    const auto& Properties = m_pPhysicalDevice->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    m_Sampler.create(m_Device, SamplerInfo);
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     __createPlaceholderImage();
 }
 
 void CPipelineEnvironment::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboFrag", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("CombinedSampler", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
@@ -85,7 +83,7 @@ void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
 
 void CPipelineEnvironment::__createPlaceholderImage()
 {
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_PhysicalDevice, m_Device);
+    m_pPlaceholderImage = Function::createPlaceholderImage(m_pPhysicalDevice, m_pDevice);
 }
 
 void CPipelineEnvironment::__updateDescriptorSet()
@@ -95,7 +93,7 @@ void CPipelineEnvironment::__updateDescriptorSet()
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, m_FragUBSet[i]);
-        VkImageView EnvImageView = m_pEnvironmentImage && m_pEnvironmentImage->isValid() ? m_pEnvironmentImage->get() : m_pPlaceholderImage->get();
+        VkImageView EnvImageView = m_pEnvironmentImage && m_pEnvironmentImage->isValid() ? *m_pEnvironmentImage : *m_pPlaceholderImage;
         WriteInfo.addWriteImageAndSampler(1, EnvImageView, m_Sampler.get());
 
         m_Descriptor.update(i, WriteInfo);

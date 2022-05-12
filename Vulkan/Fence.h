@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanHandle.h"
+#include "Device.h"
 
 namespace vk
 {
@@ -8,11 +9,11 @@ namespace vk
     public:
         _DEFINE_PTR(CFence);
 
-        void create(VkDevice vDevice, bool vSigned);
+        void create(CDevice::CPtr vDevice, bool vSigned);
         void destroy();
         void wait(uint64_t vTimeout = std::numeric_limits<uint64_t>::max());
         void reset();
     private:
-        VkDevice m_Device = VK_NULL_HANDLE;
+        CDevice::CPtr m_pDevice = nullptr;
     };
 }

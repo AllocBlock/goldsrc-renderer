@@ -15,7 +15,7 @@ namespace Pointer
 #endif
 
 #ifndef _DEFINE_PTR
-#define _DEFINE_PTR(Class) using Ptr = ptr<Class>
+#define _DEFINE_PTR(Class) using Ptr = ptr<Class>; using CPtr = ptr<const Class>
 #endif
 }
 

@@ -2,25 +2,27 @@
 #include "Vulkan.h"
 #include "Command.h"
 
+using namespace vk;
+
 CCommand gCommand;
 
-void registerGlobalCommandBuffer(VkDevice vDevice, uint32_t vQueueIndex)
+void setupGlobalCommandBuffer(CDevice::CPtr vDevice, uint32_t vQueueIndex)
 {
     gCommand.createPool(vDevice, ECommandType::RESETTABLE, vQueueIndex);
 
-    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = []() -> VkCommandBuffer
+    vk::beginSingleTimeBufferFunc_t BeginFunc = []() -> VkCommandBuffer
     {
         return gCommand.beginSingleTimeBuffer();
     };
-    Vulkan::endSingleTimeBufferFunc_t EndFunc = [](VkCommandBuffer vCommandBuffer)
+    vk::endSingleTimeBufferFunc_t EndFunc = [](VkCommandBuffer vCommandBuffer)
     {
         gCommand.endSingleTimeBuffer(vCommandBuffer);
     };
-    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
+    vk::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
-void unregisterGlobalCommandBuffer()
+void cleanGlobalCommandBuffer()
 {
     gCommand.clear();
-    Vulkan::removeSingleTimeBufferFunc();
+    vk::removeSingleTimeBufferFunc();
 }

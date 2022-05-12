@@ -20,7 +20,7 @@ public:
         if (m_pPipeline) m_pPipeline->destroy();
         ptr<T> pPipeline = make<T>();
         m_pPipeline = pPipeline;
-        m_pPipeline->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+        m_pPipeline->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
         m_pPipeline->setImageNum(m_AppInfo.ImageNum);
         return pPipeline;
     }

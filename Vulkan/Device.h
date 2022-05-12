@@ -1,5 +1,7 @@
 #pragma once
 #include "VulkanHandle.h"
+#include "PhysicalDevice.h"
+#include "Surface.h"
 #include <vector>
 
 namespace vk
@@ -9,13 +11,17 @@ namespace vk
     public:
         _DEFINE_PTR(CDevice);
 
-        void create(VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet);
+        void create(CPhysicalDevice::CPtr vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet);
         void destroy();
-        void waitUntilIdle();
-        uint32_t getGraphicsQueueIndex();
-        uint32_t getPresentQueueIndex();
-        VkQueue getGraphicsQueue();
-        VkQueue getPresentQueue();
+        void waitUntilIdle() const;
+        uint32_t getGraphicsQueueIndex() const;
+        uint32_t getPresentQueueIndex() const;
+        VkQueue getGraphicsQueue() const;
+        VkQueue getPresentQueue() const;
+        VkQueue getQueue(uint32_t vIndex) const;
+
+        VkShaderModule createShaderModule(const std::vector<char>& vShaderCode) const;
+        void destroyShaderModule(VkShaderModule vModule) const;
 
     private:
         uint32_t m_GraphicsQueueIndex = 0, m_PresentQueueIndex = 0;

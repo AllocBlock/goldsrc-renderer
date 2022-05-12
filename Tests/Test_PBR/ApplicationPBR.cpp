@@ -4,9 +4,9 @@
 
 void CApplicationPBR::_initV()
 {
-    Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
+    vk::SAppInfo AppInfo = getAppInfo();
 
-    registerGlobalCommandBuffer(m_pDevice->get(), m_pDevice->getGraphicsQueueIndex());
+    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     m_pCamera = make<CCamera>();
     m_pInteractor = make<CInteractor>(); 
@@ -89,7 +89,7 @@ void CApplicationPBR::_destroyOtherResourceV()
     m_pRenderPassPBR->destroy();
     m_pGUI->destroy();
 
-    unregisterGlobalCommandBuffer();
+    cleanGlobalCommandBuffer();
 }
 
 void CApplicationPBR::__linkPasses()

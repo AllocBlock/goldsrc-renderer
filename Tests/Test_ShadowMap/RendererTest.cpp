@@ -2,10 +2,10 @@
 
 void CRendererTest::exportShadowMapToFile(std::string vFileName)
 {
-    vkDeviceWaitIdle(m_AppInfo.Device);
+    vkDeviceWaitIdle(*m_AppInfo.pDevice);
     VkDeviceSize Size = m_AppInfo.Extent.width * m_AppInfo.Extent.height * 16;
     vk::CBuffer StageBuffer;
-    StageBuffer.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    StageBuffer.create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     VkBufferImageCopy CopyRegion = {};
     CopyRegion.bufferOffset = 0;
@@ -18,9 +18,9 @@ void CRendererTest::exportShadowMapToFile(std::string vFileName)
     CopyRegion.imageOffset = VkOffset3D{ 0, 0, 0 };
     CopyRegion.imageExtent = VkExtent3D{ m_AppInfo.Extent.width, m_AppInfo.Extent.height, 1 };
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
+    VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
     m_ShadowMapImageSet[0]->copyToBuffer(CommandBuffer, CopyRegion, StageBuffer.get());
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    vk::endSingleTimeBuffer(CommandBuffer);
 
     uint8_t* pData = new uint8_t[Size];
     StageBuffer.copyToHost(Size, pData);
@@ -78,12 +78,12 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
     __recordShadowMapRenderPass(CommandBuffer, vImageIndex);
     __recordLightRenderPass(CommandBuffer, vImageIndex);
 
-    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
+    vk::checkError(vkEndCommandBuffer(CommandBuffer));
     return { CommandBuffer };
 }
 
@@ -135,7 +135,7 @@ VkRenderPass CRendererTest::__createRenderPassGeneral(VkAttachmentDescription vC
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
     VkRenderPass RenderPass;
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &RenderPass));
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, &RenderPass));
     return RenderPass;
 }
 
@@ -170,42 +170,42 @@ void CRendererTest::__destroyRenderPasses()
 {
     if (m_RenderPassShadowMap != VK_NULL_HANDLE)
     {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPassShadowMap, nullptr);
+        vkDestroyRenderPass(*m_AppInfo.pDevice, m_RenderPassShadowMap, nullptr);
         m_RenderPassShadowMap = VK_NULL_HANDLE;
     }
     if (m_RenderPassLight != VK_NULL_HANDLE)
     {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPassLight, nullptr);
+        vkDestroyRenderPass(*m_AppInfo.pDevice, m_RenderPassLight, nullptr);
         m_RenderPassLight = VK_NULL_HANDLE;
     }
 }
 
 void CRendererTest::__createGraphicsPipeline()
 {
-    m_PipelineShadowMap.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPassShadowMap, m_AppInfo.Extent);
-    m_PipelineLight.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPassLight, m_AppInfo.Extent);
+    m_PipelineShadowMap.create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_RenderPassShadowMap, m_AppInfo.Extent);
+    m_PipelineLight.create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_RenderPassLight, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(*m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 
-    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
+    vk::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
     {
         return m_Command.beginSingleTimeBuffer();
     };
-    Vulkan::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
+    vk::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
     {
         m_Command.endSingleTimeBuffer(vCommandBuffer);
     };
-    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
+    vk::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
 void CRendererTest::__createDepthResources()
 {
-    m_pLightDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
-    m_pShadowMapDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+    m_pLightDepthImage = vk::createDepthImage(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_AppInfo.Extent);
+    m_pShadowMapDepthImage = vk::createDepthImage(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_AppInfo.Extent, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 }
 
 void CRendererTest::__createLightFramebuffers()
@@ -215,7 +215,7 @@ void CRendererTest::__createLightFramebuffers()
     for (size_t i = 0; i < ImageNum; ++i)
     {
         m_LightFramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_LightFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassLight, { m_AppInfo.TargetImageViewSet[i], m_pLightDepthImage->get() }, m_AppInfo.Extent);
+        m_LightFramebufferSet[i]->create(*m_AppInfo.pDevice, m_RenderPassLight, { m_AppInfo.TargetImageViewSet[i], *m_pLightDepthImage }, m_AppInfo.Extent);
     }
 }
 
@@ -226,7 +226,7 @@ void CRendererTest::__createShadowMapFramebuffers()
     for (size_t i = 0; i < ImageNum; ++i)
     {
         m_ShadowFramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_ShadowFramebufferSet[i]->create(m_AppInfo.Device, m_RenderPassShadowMap, { m_ShadowMapImageSet[i]->get(), m_pShadowMapDepthImage->get() }, m_AppInfo.Extent);
+        m_ShadowFramebufferSet[i]->create(*m_AppInfo.pDevice, m_RenderPassShadowMap, { *m_ShadowMapImageSet[i], *m_pShadowMapDepthImage }, m_AppInfo.Extent);
     }
 }
 
@@ -239,12 +239,12 @@ void CRendererTest::__createVertexBuffer()
     {
         VkDeviceSize ShadowMapVertBufferSize = sizeof(SShadowMapPointData) * VertexNum;
         m_ShadowMapVertBuffer = make<vk::CBuffer>();
-        m_ShadowMapVertBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ShadowMapVertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_ShadowMapVertBuffer->create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, ShadowMapVertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_ShadowMapVertBuffer->stageFill(m_ShadowMapPointDataSet.data(), ShadowMapVertBufferSize);
 
         VkDeviceSize LightVertBufferSize = sizeof(SLightPointData) * VertexNum;
         m_pLightVertBuffer = make<vk::CBuffer>();
-        m_pLightVertBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, LightVertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pLightVertBuffer->create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, LightVertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pLightVertBuffer->stageFill(m_LightPointDataSet.data(), LightVertBufferSize);
     }
 }
@@ -274,10 +274,10 @@ void CRendererTest::__createShadowMapImages()
         ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
         pShadowMapImage = make<vk::CImage>();
-        pShadowMapImage->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-        VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
+        pShadowMapImage->create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+        VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
         pShadowMapImage->transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        Vulkan::endSingleTimeBuffer(CommandBuffer);
+        vk::endSingleTimeBuffer(CommandBuffer);
     }
 }
 
@@ -293,7 +293,7 @@ void CRendererTest::__createRecreateResources()
     std::vector<VkImageView> ShadowMapImageViewSet;
     for (auto pImage : m_ShadowMapImageSet)
     {
-        ShadowMapImageViewSet.emplace_back(pImage->get());
+        ShadowMapImageViewSet.emplace_back(*pImage);
     }
     m_PipelineLight.setShadowMapImageViews(ShadowMapImageViewSet);
     m_PipelineLight.setImageNum(m_AppInfo.ImageNum);
@@ -427,7 +427,7 @@ void CRendererTest::__recordShadowMapRenderPass(VkCommandBuffer vCommandBuffer, 
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass = m_RenderPassShadowMap;
-    RenderPassBeginInfo.framebuffer = m_ShadowFramebufferSet[vImageIndex]->get();
+    RenderPassBeginInfo.framebuffer = *m_ShadowFramebufferSet[vImageIndex];
     RenderPassBeginInfo.renderArea.offset = { 0, 0 };
     RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
     RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
@@ -439,7 +439,7 @@ void CRendererTest::__recordShadowMapRenderPass(VkCommandBuffer vCommandBuffer, 
     {
         VkDeviceSize Offsets[] = { 0 };
         size_t VertexNum = m_ShadowMapPointDataSet.size();
-        VkBuffer VertBuffer = m_ShadowMapVertBuffer->get();
+        VkBuffer VertBuffer = *m_ShadowMapVertBuffer;
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_PipelineShadowMap.bind(vCommandBuffer, vImageIndex);
         vkCmdDraw(vCommandBuffer, VertexNum, 1, 0, 0);
@@ -457,7 +457,7 @@ void CRendererTest::__recordLightRenderPass(VkCommandBuffer vCommandBuffer, uint
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass = m_RenderPassLight;
-    RenderPassBeginInfo.framebuffer = m_LightFramebufferSet[vImageIndex]->get();
+    RenderPassBeginInfo.framebuffer = *m_LightFramebufferSet[vImageIndex];
     RenderPassBeginInfo.renderArea.offset = { 0, 0 };
     RenderPassBeginInfo.renderArea.extent = m_AppInfo.Extent;
     RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(ClearValues.size());
@@ -469,7 +469,7 @@ void CRendererTest::__recordLightRenderPass(VkCommandBuffer vCommandBuffer, uint
     {
         VkDeviceSize Offsets[] = { 0 };
         size_t VertexNum = m_LightPointDataSet.size();
-        VkBuffer VertBuffer = m_pLightVertBuffer->get();
+        VkBuffer VertBuffer = *m_pLightVertBuffer;
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_PipelineLight.bind(vCommandBuffer, vImageIndex);
         vkCmdDraw(vCommandBuffer, VertexNum, 1, 0, 0);

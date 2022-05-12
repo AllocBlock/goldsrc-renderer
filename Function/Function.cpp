@@ -1,6 +1,8 @@
 #include "Function.h"
 #include "Vulkan.h"
 
+using namespace vk;
+
 VkFormat toVulkanFormat(EPixelFormat vPixelFormat)
 {
     switch (vPixelFormat)
@@ -13,7 +15,7 @@ VkFormat toVulkanFormat(EPixelFormat vPixelFormat)
     }
 }
 
-vk::CImage::Ptr Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, ptr<CIOImage> vImage, int vMipLevel)
+CImage::Ptr Function::createImageFromIOImage(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, CIOImage::CPtr vImage, int vMipLevel)
 {
     _ASSERTE(vImage->getData());
     VkDeviceSize DataSize = vImage->getDataSize();
@@ -35,21 +37,21 @@ vk::CImage::Ptr Function::createImageFromIOImage(VkPhysicalDevice vPhysicalDevic
     ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    vk::SImageViewInfo ViewInfo;
+    SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-    vk::CImage::Ptr pImage = make<vk::CImage>();
+    CImage::Ptr pImage = make<CImage>();
     pImage->create(vPhysicalDevice, vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
+    VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
     pImage->stageFill(vImage->getData(), DataSize, vMipLevel > 1 ? false : true);
     if (vMipLevel > 1)
         pImage->generateMipmaps(CommandBuffer);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    vk::endSingleTimeBuffer(CommandBuffer);
 
     return pImage;
 }
 
-vk::CImage::Ptr Function::createPlaceholderImage(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice)
+CImage::Ptr Function::createPlaceholderImage(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice)
 {
     // placeholder image
     uint8_t Data[4] = { 0, 0, 0, 0 };
@@ -57,4 +59,36 @@ vk::CImage::Ptr Function::createPlaceholderImage(VkPhysicalDevice vPhysicalDevic
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(Data);
     return Function::createImageFromIOImage(vPhysicalDevice, vDevice, pTinyImage);
+}
+
+
+CImage::Ptr Function::createDepthImage(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
+{
+    CImage::Ptr pImage = make<CImage>();
+
+    VkImageCreateInfo ImageInfo = {};
+    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+    ImageInfo.extent.width = vExtent.width;
+    ImageInfo.extent.height = vExtent.height;
+    ImageInfo.extent.depth = 1;
+    ImageInfo.mipLevels = 1;
+    ImageInfo.arrayLayers = 1;
+    ImageInfo.format = vFormat;
+    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | vUsage;
+    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    SImageViewInfo ViewInfo;
+    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+    pImage->create(vPhysicalDevice, vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+
+    VkCommandBuffer CommandBuffer = beginSingleTimeBuffer();
+    pImage->transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    endSingleTimeBuffer(CommandBuffer);
+
+    return pImage;
 }

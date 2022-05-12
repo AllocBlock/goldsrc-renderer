@@ -61,7 +61,7 @@ VkAttachmentDescription IRenderPass::createAttachmentDescription(int vRendererPo
     return Attachment;
 }
 
-void IRenderPass::init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField)
+void IRenderPass::init(const vk::SAppInfo& vAppInfo, int vRenderPassPosBitField)
 {
     m_AppInfo = vAppInfo;
     m_RenderPassPosBitField = vRenderPassPosBitField;
@@ -92,10 +92,10 @@ std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers(uint32_t vImageI
 void IRenderPass::destroy()
 {
     _destroyV();
-    if (m_Handle)
+    if (get())
     {
-        vkDestroyRenderPass(m_AppInfo.Device, m_Handle, nullptr);
-        m_Handle = VK_NULL_HANDLE;
+        vkDestroyRenderPass(*m_AppInfo.pDevice, get(), nullptr);
+        _setNull();
     }
     m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;
 }
@@ -106,7 +106,7 @@ void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuff
 
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass = m_Handle;
+    RenderPassBeginInfo.renderPass = get();
     RenderPassBeginInfo.framebuffer = vFrameBuffer;
     RenderPassBeginInfo.renderArea.offset = { 0, 0 };
     RenderPassBeginInfo.renderArea.extent = vRenderExtent;

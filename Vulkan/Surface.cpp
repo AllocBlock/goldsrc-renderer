@@ -1,19 +1,18 @@
 #include "Surface.h"
-
 #include "Vulkan.h"
 
 using namespace vk;
 
-void CSurface::create(VkInstance vInstance, GLFWwindow* vWindow)
+void CSurface::create(CInstance::CPtr vInstance, GLFWwindow* vWindow)
 {
     destroy();
 
     m_Instance = vInstance;
-    Vulkan::checkError(glfwCreateWindowSurface(vInstance, vWindow, nullptr, &m_Handle));
+    vk::checkError(glfwCreateWindowSurface(*vInstance, vWindow, nullptr, _getPtr()));
 }
 
 void CSurface::destroy()
 {
-    if (m_Handle) vkDestroySurfaceKHR(m_Instance, m_Handle, nullptr);
-    m_Handle = VK_NULL_HANDLE;
+    if (get()) vkDestroySurfaceKHR(*m_Instance, get(), nullptr);
+    _setNull();
 }

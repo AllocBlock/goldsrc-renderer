@@ -3,11 +3,11 @@
 
 using namespace vk;
 
-void CFrameBuffer::create(VkDevice vDevice, VkRenderPass vRenderPass, const std::vector<VkImageView>& vAttachmentSet, VkExtent2D vExtent)
+void CFrameBuffer::create(CDevice::CPtr vDevice, VkRenderPass vRenderPass, const std::vector<VkImageView>& vAttachmentSet, VkExtent2D vExtent)
 {
     destroy();
 
-    m_Device = vDevice;
+    m_pDevice = vDevice;
 
     VkFramebufferCreateInfo FramebufferInfo = {};
     FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -18,13 +18,13 @@ void CFrameBuffer::create(VkDevice vDevice, VkRenderPass vRenderPass, const std:
     FramebufferInfo.height = vExtent.height;
     FramebufferInfo.layers = 1;
 
-    Vulkan::checkError(vkCreateFramebuffer(vDevice, &FramebufferInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateFramebuffer(*vDevice, &FramebufferInfo, nullptr, _getPtr()));
 }
 
 void CFrameBuffer::destroy()
 {
-    if (m_Handle) vkDestroyFramebuffer(m_Device, m_Handle, nullptr);
-    m_Handle = VK_NULL_HANDLE;
+    if (get()) vkDestroyFramebuffer(*m_pDevice, get(), nullptr);
+    _setNull();
 
-    m_Device = VK_NULL_HANDLE;
+    m_pDevice = VK_NULL_HANDLE;
 }

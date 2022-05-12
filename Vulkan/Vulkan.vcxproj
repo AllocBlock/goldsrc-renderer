@@ -82,6 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AppInfo.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="DebugMessenger.h" />
     <ClInclude Include="Device.h" />
@@ -89,6 +90,7 @@
     <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Instance.h" />
+    <ClInclude Include="PhysicalDevice.h" />
     <ClInclude Include="Sampler.h" />
     <ClInclude Include="Surface.h" />
     <ClInclude Include="Swapchain.h" />
@@ -98,6 +100,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="PhysicalDevice.cpp" />
     <ClCompile Include="DebugMessenger.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Fence.cpp" />

@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanHandle.h"
+#include "Device.h"
 #include <vector>
 
 namespace vk
@@ -9,10 +10,10 @@ namespace vk
     public:
         _DEFINE_PTR(CFrameBuffer);
 
-        void create(VkDevice vDevice, VkRenderPass vRenderPass, const std::vector<VkImageView>& vAttachmentSet, VkExtent2D vExtent);
+        void create(CDevice::CPtr vDevice, VkRenderPass vRenderPass, const std::vector<VkImageView>& vAttachmentSet, VkExtent2D vExtent);
         void destroy();
     private:
-        VkDevice m_Device = VK_NULL_HANDLE;
+        CDevice::CPtr m_pDevice = nullptr;
     };
 }
 

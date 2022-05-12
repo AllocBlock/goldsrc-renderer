@@ -2,7 +2,7 @@
 
 void CApplicationTest::_initV()
 {
-    Vulkan::SVulkanAppInfo AppInfo = getAppInfo();
+    vk::SAppInfo AppInfo = getAppInfo();
 
     m_pGUI = make<CGUITest>();
     m_pGUI->setWindow(m_pWindow);

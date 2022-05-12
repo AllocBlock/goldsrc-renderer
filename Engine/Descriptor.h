@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "Device.h"
 #include "UniformBuffer.h"
 #include "Image.h"
 #include "Sampler.h"
@@ -38,7 +39,7 @@ public:
     {
         _ASSERTE(vTargetIndex != std::numeric_limits<size_t>::max());
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = vBuffer->get();
+        VertBufferInfo.buffer = *vBuffer;
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = vBuffer->getSize();
         m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {VertBufferInfo}, {} }));
@@ -58,7 +59,7 @@ public:
     void addWriteImageAndSampler(size_t vTargetIndex, vk::CImage::Ptr vImage = nullptr, VkSampler vSampler = VK_NULL_HANDLE)
     {
         _ASSERTE(!((!vImage || !vImage->isValid()) && vSampler == VK_NULL_HANDLE));
-        addWriteImageAndSampler(vTargetIndex, vImage->get(), vSampler);
+        addWriteImageAndSampler(vTargetIndex, *vImage, vSampler);
     }
 
     void addWriteImagesAndSampler(size_t vTargetIndex, std::vector<vk::CImage::Ptr> vImageSet, VkSampler vSampler = VK_NULL_HANDLE)
@@ -69,7 +70,7 @@ public:
 
         for (size_t i = 0; i < vImageSet.size(); ++i)
         {
-            ImageViewSet[i] = vImageSet[i]->get();
+            ImageViewSet[i] = *vImageSet[i];
         }
 
         addWriteImagesAndSampler(vTargetIndex, ImageViewSet, vSampler);
@@ -112,7 +113,7 @@ public:
     ~CDescriptor();
 
     void add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage);
-    void createLayout(VkDevice vDevice);
+    void createLayout(vk::CDevice::CPtr vDevice);
     
     const std::vector<VkDescriptorSet>& createDescriptorSetSet(size_t vImageNum);
     void update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo);
@@ -128,7 +129,7 @@ private:
     void __destroyLayout();
     void __destroySetSet();
 
-    VkDevice m_Device = VK_NULL_HANDLE;
+    vk::CDevice::CPtr m_pDevice = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<SDescriptorInfo> m_DescriptorInfoSet;
     std::vector<VkDescriptorPoolSize> m_PoolSizeSet;

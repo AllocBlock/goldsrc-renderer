@@ -17,7 +17,7 @@ void CInstance::create(std::string vName, const std::vector<const char*>& vValid
     InstanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     InstanceInfo.pApplicationInfo = &AppInfo;
 
-    if (!Vulkan::checkValidationLayerSupport(vValidationLayers))
+    if (!vk::isValidationLayersSupported(vValidationLayers))
         throw std::runtime_error(u8"不支持所需的验证层");
 
     InstanceInfo.enabledLayerCount = static_cast<uint32_t>(vValidationLayers.size());
@@ -28,11 +28,11 @@ void CInstance::create(std::string vName, const std::vector<const char*>& vValid
     if (!vExtensions.empty())
         InstanceInfo.ppEnabledExtensionNames = vExtensions.data();
 
-    Vulkan::checkError(vkCreateInstance(&InstanceInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateInstance(&InstanceInfo, nullptr, _getPtr()));
 }
 
 void CInstance::destroy()
 {
-    if (m_Handle) vkDestroyInstance(m_Handle, nullptr);
-    m_Handle = VK_NULL_HANDLE;
+    if (get()) vkDestroyInstance(get(), nullptr);
+    _setNull();
 }

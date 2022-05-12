@@ -64,17 +64,17 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
     std::vector<VkClearValue> ClearValueSet(2);
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, ClearValueSet);
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
 
     if (m_pVertexBuffer->isValid())
     {
-        VkBuffer VertBuffer = m_pVertexBuffer->get();
+        VkBuffer VertBuffer = *m_pVertexBuffer;
         VkDeviceSize Offsets[] = { 0 };
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_Pipeline.bind(CommandBuffer, vImageIndex);
@@ -84,7 +84,7 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
     }
     
     end();
-    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
+    vk::checkError(vkEndCommandBuffer(CommandBuffer));
     return { CommandBuffer };
 }
 
@@ -137,23 +137,23 @@ void CRenderPassPBR::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, _getPtr()));
 }
 
 void CRenderPassPBR::__createGraphicsPipeline()
 {
-    m_Pipeline.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_Handle, m_AppInfo.Extent);
+    m_Pipeline.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
 void CRenderPassPBR::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 
 void CRenderPassPBR::__createDepthResources()
 {
-    m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
+    m_pDepthImage = Function::createDepthImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, m_AppInfo.Extent);
 }
 
 void CRenderPassPBR::__createFramebuffers()
@@ -165,11 +165,11 @@ void CRenderPassPBR::__createFramebuffers()
         std::vector<VkImageView> AttachmentSet =
         {
             m_pLink->getOutput("Output", i),
-            m_pDepthImage->get()
+            *m_pDepthImage
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 
@@ -182,7 +182,7 @@ void CRenderPassPBR::__createVertexBuffer()
     {
         VkDeviceSize BufferSize = sizeof(SPBSPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }
@@ -191,17 +191,17 @@ void CRenderPassPBR::__createMaterials()
 { 
     CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
-    vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pColorImage);
+    vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, pColorImage);
     m_TextureColorSet.push_back(pColor);
 
     CIOImage::Ptr pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
     pNormalImage->read();
-    vk::CImage::Ptr pNormal = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pNormalImage);
+    vk::CImage::Ptr pNormal = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, pNormalImage);
     m_TextureNormalSet.push_back(pNormal);
 
     CIOImage::Ptr pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
     pSpecularImage->read();
-    vk::CImage::Ptr pSpecular = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pSpecularImage);
+    vk::CImage::Ptr pSpecular = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, pSpecularImage);
     m_TextureSpecularSet.push_back(pSpecular);
 
     _ASSERTE(m_GridSize > 0);
@@ -223,7 +223,7 @@ void CRenderPassPBR::__createMaterials()
 
     VkDeviceSize BufferSize = sizeof(SMaterialPBR) * Num;
     m_pMaterialBuffer = make<vk::CBuffer>();
-    m_pMaterialBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pMaterialBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pMaterialBuffer->stageFill(MaterialSet.data(), BufferSize);
 }
 

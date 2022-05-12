@@ -66,7 +66,7 @@ void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxIm
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
     m_pSkyBoxImage = make<vk::CImage>();
-    m_pSkyBoxImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pSkyBoxImage->create(m_pPhysicalDevice, m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
 
@@ -96,7 +96,7 @@ void CPipelineTest::__createPlaceholderImage()
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
     m_pPlaceholderImage = make<vk::CImage>();
-    m_pPlaceholderImage->create(m_PhysicalDevice, m_Device, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pPlaceholderImage->create(m_pPhysicalDevice, m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
 void CPipelineTest::__updateDescriptorSet()
@@ -107,20 +107,20 @@ void CPipelineTest::__updateDescriptorSet()
         std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
 
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = m_VertUniformBufferSet[i]->get();
+        VertBufferInfo.buffer = *m_VertUniformBufferSet[i];
         VertBufferInfo.offset = 0;
         VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
 
         VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = m_FragUniformBufferSet[i]->get();
+        FragBufferInfo.buffer = *m_FragUniformBufferSet[i];
         FragBufferInfo.offset = 0;
         FragBufferInfo.range = sizeof(SUBOFrag);
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
 
         VkDescriptorImageInfo CombinedSamplerInfo = {};
         CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_pSkyBoxImage->isValid() ? m_pSkyBoxImage->get() : m_pPlaceholderImage->get();
+        CombinedSamplerInfo.imageView = m_pSkyBoxImage->isValid() ? *m_pSkyBoxImage : *m_pPlaceholderImage;
         CombinedSamplerInfo.sampler = m_Sampler.get();
         DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
 
@@ -173,32 +173,30 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, FragBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, FragBufferSize);
     }
 
-    VkPhysicalDeviceProperties Properties = {};
-    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
-
+    const auto& Properties = m_pPhysicalDevice->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    m_Sampler.create(m_Device, SamplerInfo);
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     __createPlaceholderImage();
 }
 
 void CPipelineTest::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
     m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelineTest::__destroyResources()

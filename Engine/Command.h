@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "Device.h"
 
 #include <filesystem>
 #include <optional>
@@ -24,7 +25,7 @@ public:
     CCommand() = default;
     ~CCommand();
 
-    void createPool(VkDevice vDevice, ECommandType vType, uint32_t vQueueIndex);
+    void createPool(vk::CDevice::CPtr vDevice, ECommandType vType, uint32_t vQueueIndex);
     void createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel);
     VkCommandBuffer getCommandBuffer(std::string vName, uint32_t vIndex) const;
     size_t getCommandBufferSize(std::string vName) const;
@@ -38,7 +39,7 @@ private:
     void __freeAllBufferSet();
     void __freeBufferSet(std::vector<VkCommandBuffer>& voBufferSet);
 
-    VkDevice m_Device = VK_NULL_HANDLE;
+    vk::CDevice::CPtr m_pDevice = nullptr;
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     uint32_t m_QueueIndex = std::numeric_limits<uint32_t>::max();
     VkQueue m_Queue = VK_NULL_HANDLE;

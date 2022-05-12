@@ -3,17 +3,17 @@
 
 using namespace vk;
 
-void CSampler::create(VkDevice vDevice, const VkSamplerCreateInfo& vInfo)
+void CSampler::create(CDevice::CPtr vDevice, const VkSamplerCreateInfo& vInfo)
 {
     destroy();
 
-    m_Device = vDevice;
-    Vulkan::checkError(vkCreateSampler(m_Device, &vInfo, nullptr, &m_Handle));
+    m_pDevice = vDevice;
+    vk::checkError(vkCreateSampler(*m_pDevice, &vInfo, nullptr, _getPtr()));
 }
 
 void CSampler::destroy()
 {
-    if (m_Handle) vkDestroySampler(m_Device, m_Handle, nullptr);
-    m_Handle = VK_NULL_HANDLE;
-    m_Device = VK_NULL_HANDLE;
+    if (get()) vkDestroySampler(*m_pDevice, get(), nullptr);
+    _setNull();
+    m_pDevice = VK_NULL_HANDLE;
 }

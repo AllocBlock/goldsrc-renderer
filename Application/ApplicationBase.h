@@ -1,9 +1,11 @@
 #pragma once
 #include "Common.h"
+#include "AppInfo.h"
 #include "Vulkan.h"
 #include "Instance.h"
 #include "DebugMessenger.h"
 #include "Surface.h"
+#include "PhysicalDevice.h"
 #include "Device.h"
 #include "SwapChain.h"
 #include "Fence.h"
@@ -28,7 +30,7 @@ public:
     void render();
     void waitDevice();
     void destroy();
-    Vulkan::SVulkanAppInfo getAppInfo();
+    vk::SAppInfo getAppInfo();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
 
@@ -45,7 +47,7 @@ protected:
     vk::CInstance::Ptr m_pInstance = make<vk::CInstance>();
     ptr<vk::CDebugMessenger> m_pDebugMessenger = make<vk::CDebugMessenger>();
     vk::CSurface::Ptr m_pSurface = make<vk::CSurface>();
-    VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
+    vk::CPhysicalDevice::Ptr m_pPhysicalDevice = nullptr;
     vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
     vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
 
@@ -70,7 +72,6 @@ protected:
 private:
     void __createInstance();
     void __setupDebugMessenger();
-    void __choosePhysicalDevice();
     void __createSemaphores();
     void __createSwapchain();
     void __destroySwapchain();

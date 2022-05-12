@@ -49,7 +49,7 @@ struct SUniformBufferObjectVert
 
 void CPipelineSprite::destroy()
 {
-    if (m_Device == VK_NULL_HANDLE) return;
+    if (m_pDevice == VK_NULL_HANDLE) return;
 
     m_Sampler.destroy();
     for (auto pImage : m_SpriteImageSet)
@@ -78,7 +78,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, vSpriteImageSet[i].pImage);
+        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -103,7 +103,7 @@ void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImag
 {
     if (m_pVertexBuffer->isValid())
     {
-        VkBuffer Buffer = m_pVertexBuffer->get();
+        VkBuffer Buffer = *m_pVertexBuffer;
         const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
@@ -197,7 +197,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     m_VertexNum = PointData.size();
 
     m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_PhysicalDevice, m_Device, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->create(m_pPhysicalDevice, m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(PointData.data(), DataSize);
 
     // uniform buffer
@@ -207,36 +207,34 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
     }
 
     // sampler
-    VkPhysicalDeviceProperties Properties = {};
-    vkGetPhysicalDeviceProperties(m_PhysicalDevice, &Properties);
-
+    const auto& Properties = m_pPhysicalDevice->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    m_Sampler.create(m_Device, SamplerInfo);
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     // placeholder image
     uint8_t Data[4] = { 0, 0, 0, 0 };
     auto pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(Data);
-    m_pPlaceholderImage = Function::createImageFromIOImage(m_PhysicalDevice, m_Device, pTinyImage);
+    m_pPlaceholderImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, pTinyImage);
 }
 
 void CPipelineSprite::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
     m_Descriptor.add("Sampler", 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
     m_Descriptor.add("Texture", 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSprite::MaxSpriteNum), VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelineSprite::__updateDescriptorSet()
@@ -256,12 +254,12 @@ void CPipelineSprite::__updateDescriptorSet()
             if (i >= NumTexture)
             {
                 if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = m_pPlaceholderImage->get();
+                    TexImageViewSet[i] = *m_pPlaceholderImage;
                 else
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = m_SpriteImageSet[i]->get();
+                TexImageViewSet[i] = *m_SpriteImageSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
 

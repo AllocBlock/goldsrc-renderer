@@ -1,6 +1,8 @@
 #include "Descriptor.h"
 #include "Vulkan.h"
 
+using namespace vk;
+
 CDescriptor::~CDescriptor() { clear(); }
 
 void CDescriptor::add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage)
@@ -10,11 +12,11 @@ void CDescriptor::add(std::string vName, uint32_t vIndex, VkDescriptorType vType
     m_PoolSizeSet.emplace_back(VkDescriptorPoolSize({ vType, vSize }));
 }
 
-void CDescriptor::createLayout(VkDevice vDevice)
+void CDescriptor::createLayout(CDevice::CPtr vDevice)
 {
     __destroyLayout();
 
-    m_Device = vDevice;
+    m_pDevice = vDevice;
 
     std::vector<VkDescriptorSetLayoutBinding> Bindings(m_DescriptorInfoSet.size());
     for (size_t i = 0; i < m_DescriptorInfoSet.size(); ++i)
@@ -30,13 +32,13 @@ void CDescriptor::createLayout(VkDevice vDevice)
     LayoutInfo.bindingCount = static_cast<uint32_t>(Bindings.size());
     LayoutInfo.pBindings = Bindings.data();
 
-    Vulkan::checkError(vkCreateDescriptorSetLayout(m_Device, &LayoutInfo, nullptr, &m_DescriptorLayout));
+    vk::checkError(vkCreateDescriptorSetLayout(*m_pDevice, &LayoutInfo, nullptr, &m_DescriptorLayout));
 }
 
 const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t vImageNum)
 {
     _ASSERTE(vImageNum > 0);
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     _ASSERTE(m_DescriptorLayout != VK_NULL_HANDLE);
 
     if (m_DescriptorPool == VK_NULL_HANDLE || m_DescriptorSetSet.size() > vImageNum)
@@ -52,7 +54,7 @@ const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t v
 
     __destroySetSet();
     m_DescriptorSetSet.resize(vImageNum);
-    Vulkan::checkError(vkAllocateDescriptorSets(m_Device, &DescSetAllocInfo, m_DescriptorSetSet.data()));
+    vk::checkError(vkAllocateDescriptorSets(*m_pDevice, &DescSetAllocInfo, m_DescriptorSetSet.data()));
     return m_DescriptorSetSet;
 }
 
@@ -79,7 +81,7 @@ void CDescriptor::update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInf
         _ASSERTE(!vWriteInfoSet[i].BufferInfoSet.empty() || !vWriteInfoSet[i].ImageInfoSet.empty());
     }
 
-    vkUpdateDescriptorSets(m_Device, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
+    vkUpdateDescriptorSets(*m_pDevice, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
 }
 
 void CDescriptor::clear()
@@ -90,7 +92,7 @@ void CDescriptor::clear()
     __destroySetSet();
     __destroyLayout();
     __destroyPool();
-    m_Device = VK_NULL_HANDLE;
+    m_pDevice = VK_NULL_HANDLE;
 }
 
 VkDescriptorSetLayout CDescriptor::getLayout() const 
@@ -116,7 +118,7 @@ size_t CDescriptor::getDescriptorSetNum() const
 
 void CDescriptor::__createPool(size_t vImageNum)
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     __destroyPool();
 
     auto PoolSize = m_PoolSizeSet;
@@ -129,14 +131,14 @@ void CDescriptor::__createPool(size_t vImageNum)
     PoolInfo.pPoolSizes = PoolSize.data();
     PoolInfo.maxSets = static_cast<uint32_t>(vImageNum);
 
-    Vulkan::checkError(vkCreateDescriptorPool(m_Device, &PoolInfo, nullptr, &m_DescriptorPool));
+    vk::checkError(vkCreateDescriptorPool(*m_pDevice, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
 void CDescriptor::__destroyPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE)
     {
-        vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(*m_pDevice, m_DescriptorPool, nullptr);
         m_DescriptorPool = VK_NULL_HANDLE;
     }
 }
@@ -145,7 +147,7 @@ void CDescriptor::__destroyLayout()
 {
     if (m_DescriptorLayout != VK_NULL_HANDLE)
     {
-        vkDestroyDescriptorSetLayout(m_Device, m_DescriptorLayout, nullptr);
+        vkDestroyDescriptorSetLayout(*m_pDevice, m_DescriptorLayout, nullptr);
         m_DescriptorLayout = VK_NULL_HANDLE;
     }
 }

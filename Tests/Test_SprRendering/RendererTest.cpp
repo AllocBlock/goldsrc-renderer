@@ -34,23 +34,23 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
     CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-    Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+    vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
     std::vector<VkClearValue> ClearValueSet(2);
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, ClearValueSet);
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
     m_Pipeline.recordCommand(CommandBuffer, vImageIndex);
     end();
-    Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
+    vk::checkError(vkEndCommandBuffer(CommandBuffer));
     return { CommandBuffer };
 }
 
 void CRendererTest::_destroyV()
 {
     __destroyRecreateResources();
-    vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
+    vkDestroyRenderPass(*m_AppInfo.pDevice, m_RenderPass, nullptr);
     m_Command.clear();
 
     IRenderPass::_destroyV();
@@ -95,42 +95,42 @@ void CRendererTest::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_RenderPass));
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, &m_RenderPass));
 }
 
 void CRendererTest::__destroyRenderPass()
 {
     if (m_RenderPass != VK_NULL_HANDLE)
     {
-        vkDestroyRenderPass(m_AppInfo.Device, m_RenderPass, nullptr);
+        vkDestroyRenderPass(*m_AppInfo.pDevice, m_RenderPass, nullptr);
         m_RenderPass = VK_NULL_HANDLE;
     }
 }
 
 void CRendererTest::__createGraphicsPipeline()
 {
-    m_Pipeline.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_RenderPass, m_AppInfo.Extent);
+    m_Pipeline.create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_RenderPass, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(*m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 
-    Vulkan::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
+    vk::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
     {
         return m_Command.beginSingleTimeBuffer();
     };
-    Vulkan::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
+    vk::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
     {
         m_Command.endSingleTimeBuffer(vCommandBuffer);
     };
-    Vulkan::setSingleTimeBufferFunc(BeginFunc, EndFunc);
+    vk::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
 void CRendererTest::__createDepthResources()
 {
-    m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent);
+    m_pDepthImage = vk::createDepthImage(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createFramebuffers()
@@ -142,11 +142,11 @@ void CRendererTest::__createFramebuffers()
         std::vector<VkImageView> Attachments =
         {
             m_AppInfo.TargetImageViewSet[i],
-            m_pDepthImage->get()
+            *m_pDepthImage
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_RenderPass, Attachments, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(*m_AppInfo.pDevice, m_RenderPass, Attachments, m_AppInfo.Extent);
     }
 }
 

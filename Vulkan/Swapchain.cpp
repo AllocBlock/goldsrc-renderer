@@ -3,13 +3,13 @@
 
 using namespace vk;
 
-void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface, GLFWwindow* vWindow)
+void CSwapchain::create(CDevice::Ptr vDevice, CPhysicalDevice::Ptr vPhysicalDevice, CSurface::Ptr vSurface, GLFWwindow* vWindow)
 {
     destroy();
 
-    m_Device = vDevice;
+    m_pDevice = vDevice;
 
-    Vulkan::SSwapChainSupportDetails SwapChainSupport = Vulkan::getSwapChainSupport(vPhysicalDevice, vSurface);
+    const SSwapChainSupportDetails& SwapChainSupport = vPhysicalDevice->getSwapChainSupportInfo();
     VkSurfaceFormatKHR SurfaceFormat = __chooseSwapSurfaceFormat(SwapChainSupport.Formats);
     VkPresentModeKHR PresentMode = __chooseSwapPresentMode(SwapChainSupport.PresentModes);
     VkExtent2D Extent = __chooseSwapExtent(vWindow, SwapChainSupport.Capabilities);
@@ -23,7 +23,7 @@ void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSu
 
     VkSwapchainCreateInfoKHR SwapChainInfo = {};
     SwapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    SwapChainInfo.surface = vSurface;
+    SwapChainInfo.surface = *vSurface;
     SwapChainInfo.minImageCount = NumImage;
     SwapChainInfo.imageFormat = SurfaceFormat.format;
     SwapChainInfo.imageColorSpace = SurfaceFormat.colorSpace;
@@ -31,7 +31,7 @@ void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSu
     SwapChainInfo.imageArrayLayers = 1;
     SwapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    Vulkan::SQueueFamilyIndices QueueIndices = Vulkan::findQueueFamilies(vPhysicalDevice, vSurface);
+    const SQueueFamilyIndices& QueueIndices = vPhysicalDevice->getQueueFamilyInfo();
     uint32_t QueueFamilyIndices[] = { QueueIndices.GraphicsFamilyIndex.value(), QueueIndices.PresentFamilyIndex.value() };
 
     if (QueueIndices.GraphicsFamilyIndex != QueueIndices.PresentFamilyIndex)
@@ -52,22 +52,22 @@ void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSu
     SwapChainInfo.clipped = VK_TRUE;
     SwapChainInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    Vulkan::checkError(vkCreateSwapchainKHR(vDevice, &SwapChainInfo, nullptr, &m_Handle));
+    checkError(vkCreateSwapchainKHR(*vDevice, &SwapChainInfo, nullptr, _getPtr()));
 
-    vkGetSwapchainImagesKHR(vDevice, m_Handle, &NumImage, nullptr);
+    vkGetSwapchainImagesKHR(*vDevice, get(), &NumImage, nullptr);
     std::vector<VkImage> SwapchainImageSet(NumImage);
-    vkGetSwapchainImagesKHR(vDevice, m_Handle, &NumImage, SwapchainImageSet.data());
+    vkGetSwapchainImagesKHR(*vDevice, get(), &NumImage, SwapchainImageSet.data());
 
-    vk::SImageViewInfo ViewInfo;
+    SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
     m_ImageViewSet.resize(NumImage);
     m_ImageSet.resize(NumImage);
     for (size_t i = 0; i < NumImage; ++i)
     {
-        m_ImageSet[i] = make<vk::CImage>();
+        m_ImageSet[i] = make<CImage>();
         m_ImageSet[i]->setImage(vDevice, SwapchainImageSet[i], SurfaceFormat.format, 1, ViewInfo);
-        m_ImageViewSet[i] = m_ImageSet[i]->get();
+        m_ImageViewSet[i] = *m_ImageSet[i];
     }
     m_ImageFormat = SurfaceFormat.format;
     m_Extent = Extent;
@@ -75,10 +75,10 @@ void CSwapchain::create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSu
 
 void CSwapchain::destroy()
 {
-    if (m_Handle) vkDestroySwapchainKHR(m_Device, m_Handle, nullptr);
-    m_Handle = VK_NULL_HANDLE;
+    if (get()) vkDestroySwapchainKHR(*m_pDevice, get(), nullptr);
+    _setNull();
 
-    m_Device = VK_NULL_HANDLE;
+    m_pDevice = VK_NULL_HANDLE;
     for (auto pImage : m_ImageSet)
         pImage->destroy();
     m_ImageSet.clear();

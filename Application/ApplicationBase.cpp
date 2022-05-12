@@ -1,8 +1,11 @@
 #include "ApplicationBase.h"
 #include "Log.h"
+#include "AppInfo.h"
 
 #include <set>
 #include <iostream>
+
+using namespace vk;
 
 void CApplicationBase::init(GLFWwindow* vWindow)
 {
@@ -10,9 +13,9 @@ void CApplicationBase::init(GLFWwindow* vWindow)
 
     __createInstance();
     if (ENABLE_VALIDATION_LAYERS) __setupDebugMessenger();
-    m_pSurface->create(m_pInstance->get(), m_pWindow);
-    __choosePhysicalDevice();
-    m_pDevice->create(m_PhysicalDevice, m_pSurface->get(), m_DeviceExtensions, m_ValidationLayers);
+    m_pSurface->create(m_pInstance, m_pWindow);
+    m_pPhysicalDevice = CPhysicalDevice::chooseBestDevice(m_pInstance, m_pSurface, m_DeviceExtensions);
+    m_pDevice->create(m_pPhysicalDevice, m_pSurface, m_DeviceExtensions, m_ValidationLayers);
     __createSemaphores();
     __createSwapchain();
 
@@ -28,15 +31,15 @@ void CApplicationBase::waitDevice()
 
 void CApplicationBase::destroy()
 {
-    if (m_pInstance->get() == VK_NULL_HANDLE) return;
+    if (*m_pInstance == VK_NULL_HANDLE) return;
 
     _destroyOtherResourceV();
     __destroySwapchain();
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
-        vkDestroySemaphore(m_pDevice->get(), m_RenderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(m_pDevice->get(), m_ImageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(*m_pDevice, m_RenderFinishedSemaphores[i], nullptr);
+        vkDestroySemaphore(*m_pDevice, m_ImageAvailableSemaphores[i], nullptr);
         m_InFlightFenceSet[i]->destroy();
     }
 
@@ -46,7 +49,7 @@ void CApplicationBase::destroy()
     m_pInstance->destroy();
 
     m_pWindow = nullptr;
-    m_PhysicalDevice = VK_NULL_HANDLE;
+    m_pPhysicalDevice->release();
 
     m_CurrentFrameIndex = 0;
     m_FramebufferResized = false;
@@ -57,7 +60,7 @@ void CApplicationBase::render()
     m_InFlightFenceSet[m_CurrentFrameIndex]->wait();
 
     uint32_t ImageIndex;
-    VkResult Result = vkAcquireNextImageKHR(m_pDevice->get(), m_pSwapchain->get(), std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
+    VkResult Result = vkAcquireNextImageKHR(*m_pDevice, *m_pSwapchain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
     _updateV(ImageIndex);
     _renderUIV();
@@ -90,9 +93,9 @@ void CApplicationBase::render()
     SubmitInfo.pSignalSemaphores = SignalSemaphores;
 
     m_InFlightFenceSet[m_CurrentFrameIndex]->reset();
-    Vulkan::checkError(vkQueueSubmit(m_pDevice->getGraphicsQueue(), 1, &SubmitInfo, m_InFlightFenceSet[m_CurrentFrameIndex]->get()));
+    vk::checkError(vkQueueSubmit(m_pDevice->getGraphicsQueue(), 1, &SubmitInfo, *m_InFlightFenceSet[m_CurrentFrameIndex]));
 
-    VkSwapchainKHR SwapChains[] = { m_pSwapchain->get() };
+    VkSwapchainKHR SwapChains[] = { *m_pSwapchain };
     VkPresentInfoKHR PresentInfo = {};
     PresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     PresentInfo.waitSemaphoreCount = 1;
@@ -115,12 +118,12 @@ void CApplicationBase::render()
     m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
 }
 
-Vulkan::SVulkanAppInfo CApplicationBase::getAppInfo()
+vk::SAppInfo CApplicationBase::getAppInfo()
 {
-    Vulkan::SVulkanAppInfo Info;
-    Info.Instance = m_pInstance->get();
-    Info.PhysicalDevice = m_PhysicalDevice;
-    Info.Device = m_pDevice->get();
+    vk::SAppInfo Info;
+    Info.pInstance = m_pInstance;
+    Info.pPhysicalDevice = m_pPhysicalDevice;
+    Info.pDevice = m_pDevice;
     Info.GraphicsQueueIndex = m_pDevice->getGraphicsQueueIndex();
     Info.GraphicsQueue = m_pDevice->getGraphicsQueue();
     Info.Extent = m_pSwapchain->getExtent();
@@ -170,51 +173,17 @@ void CApplicationBase::__createInstance()
 void CApplicationBase::__setupDebugMessenger()
 {
     m_pDebugMessenger = make<vk::CDebugMessenger>();
-    m_pDebugMessenger->create(m_pInstance->get());
+    m_pDebugMessenger->create(*m_pInstance);
     vk::DebugMessageCallbackFunc_t pCallback = [=](vk::EDebugMessageServerity vServerity, std::string vMessage)
     {
         Common::Log::log(u8"[验证层] " + vMessage);
     };
     m_pDebugMessenger->setCustomCallback(pCallback);
-}
-
-void CApplicationBase::__choosePhysicalDevice()
-{
-    uint32_t NumPhysicalDevice = 0;
-    std::vector<VkPhysicalDevice> PhysicalDevices;
-    Vulkan::checkError(vkEnumeratePhysicalDevices(m_pInstance->get(), &NumPhysicalDevice, nullptr));
-    PhysicalDevices.resize(NumPhysicalDevice);
-    Vulkan::checkError(vkEnumeratePhysicalDevices(m_pInstance->get(), &NumPhysicalDevice, PhysicalDevices.data()));
-
-    for (const auto& PhysicalDevice : PhysicalDevices)
-    {
-        if (Vulkan::isDeviceSuitable(PhysicalDevice, m_pSurface->get(), m_DeviceExtensions))
-        {
-            m_PhysicalDevice = PhysicalDevice;
-            break;
-        }
-    }
-
-    if (m_PhysicalDevice == VK_NULL_HANDLE)
-    {
-        throw std::runtime_error(u8"未找到可用的GPU设备");
-    }
-
-    uint32_t ExtensionNum = 0;
-    std::vector<VkExtensionProperties> ExtensionProperties;
-    vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &ExtensionNum, nullptr);
-    ExtensionProperties.resize(ExtensionNum);
-    vkEnumerateDeviceExtensionProperties(m_PhysicalDevice, nullptr, &ExtensionNum, ExtensionProperties.data());
-
-    for (const VkExtensionProperties& Extension : ExtensionProperties)
-    {
-        Common::Log::log("[扩展] " + std::string(Extension.extensionName) + ", " + std::to_string(Extension.specVersion));
-    }
-}
+} 
 
 void CApplicationBase::__createSwapchain()
 {
-    m_pSwapchain->create(m_pDevice->get(), m_PhysicalDevice, m_pSurface->get(), m_pWindow);
+    m_pSwapchain->create(m_pDevice, m_pPhysicalDevice, m_pSurface, m_pWindow);
 }
 
 void CApplicationBase::__destroySwapchain()
@@ -233,10 +202,10 @@ void CApplicationBase::__createSemaphores()
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
-        Vulkan::checkError(vkCreateSemaphore(m_pDevice->get(), &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
-        Vulkan::checkError(vkCreateSemaphore(m_pDevice->get(), &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
+        vk::checkError(vkCreateSemaphore(*m_pDevice, &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
+        vk::checkError(vkCreateSemaphore(*m_pDevice, &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
         m_InFlightFenceSet[i] = make<vk::CFence>();
-        m_InFlightFenceSet[i]->create(m_pDevice->get(), true);
+        m_InFlightFenceSet[i]->create(m_pDevice, true);
     }
 }
 

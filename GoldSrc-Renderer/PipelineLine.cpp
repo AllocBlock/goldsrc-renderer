@@ -45,7 +45,7 @@ void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
     VkDeviceSize Offsets[] = { 0 };
     if (m_VertexNum > 0)
     {
-        VkBuffer Buffer = m_pVertexBuffer->get();
+        VkBuffer Buffer = *m_pVertexBuffer;
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
         vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
     }
@@ -86,7 +86,7 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_PhysicalDevice, m_Device, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
     }
 
     __updateDescriptorSet();
@@ -94,12 +94,12 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
 
 void CPipelineLine::_initDescriptorV()
 {
-    _ASSERTE(m_Device != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
 
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
 
-    m_Descriptor.createLayout(m_Device);
+    m_Descriptor.createLayout(m_pDevice);
 }
 
 void CPipelineLine::__updateDescriptorSet()
@@ -114,7 +114,7 @@ void CPipelineLine::__updateDescriptorSet()
 
 void CPipelineLine::__updateVertexBuffer()
 {
-    vkDeviceWaitIdle(m_Device);
+    m_pDevice->waitUntilIdle();
     if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 
     m_VertexNum = 0;
@@ -138,7 +138,7 @@ void CPipelineLine::__updateVertexBuffer()
             Offset += DataSize;
         }
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_PhysicalDevice, m_Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(m_pPhysicalDevice, m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(pData, BufferSize);
     }
 }

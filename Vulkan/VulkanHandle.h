@@ -11,13 +11,22 @@ namespace vk
     public:
         virtual ~IVulkanHandle()
         {
-            if (m_Handle)
+            if (get())
                 throw "Vulkan对象在销毁前被析构";
         }
 
-        T get() { return m_Handle; }
+        T get() const { return m_Handle; }
+        const T* getConstPtr() const { return &m_Handle; }
+        bool isValid() const { return get() != VK_NULL_HANDLE; }
+
+        operator T() const { return get(); }
     protected:
-        T m_Handle = VK_NULL_HANDLE;
+        T* _getPtr() { return &m_Handle; }
+        void _set(T vHandle) { m_Handle = vHandle; }
+        void _setNull() { m_Handle = VK_NULL_HANDLE; }
+
+    private:
+        T m_Handle;
     };
 }
 

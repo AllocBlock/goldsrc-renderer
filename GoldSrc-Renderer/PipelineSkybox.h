@@ -22,7 +22,7 @@ public:
     {
         if (m_pVertexBuffer->isValid())
         {
-            VkBuffer VertBuffer = m_pVertexBuffer->get();
+            VkBuffer VertBuffer = *m_pVertexBuffer;
             const VkDeviceSize Offsets[] = { 0 };
             bind(vCommandBuffer, vImageIndex);
             vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);

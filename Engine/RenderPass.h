@@ -4,6 +4,7 @@
 #include "Command.h"
 #include "GUI.h"
 #include "RenderPassPort.h"
+#include "AppInfo.h"
 
 #include <vulkan/vulkan.h>
 #include <string>
@@ -29,7 +30,7 @@ namespace vk
     public:
         IRenderPass() = default;
 
-        void init(const Vulkan::SVulkanAppInfo& vAppInfo, int vRenderPassPosBitField);
+        void init(const vk::SAppInfo& vAppInfo, int vRenderPassPosBitField);
         void recreate(VkFormat vImageFormat, VkExtent2D vExtent, size_t vImageNum);
         void update(uint32_t vImageIndex);
         std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
@@ -52,7 +53,7 @@ namespace vk
         virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
         virtual void _destroyV() {};
 
-        Vulkan::SVulkanAppInfo m_AppInfo;
+        vk::SAppInfo m_AppInfo;
         ptr<CRenderPassLink> m_pLink;
         CRenderPassPort m_Port;
         int m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;

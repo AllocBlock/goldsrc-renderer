@@ -3,6 +3,8 @@
 #include "GUI.h"
 #include "Vulkan.h"
 #include "Descriptor.h"
+#include "PhysicalDevice.h"
+#include "Device.h"
 
 #include <filesystem>
 #include <optional>
@@ -13,7 +15,7 @@ struct IPipeline : public IGUI
 public:
     IPipeline() = default;
 
-    void create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
+    void create(vk::CPhysicalDevice::CPtr vPhysicalDevice, vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void setImageNum(size_t vImageNum);
     void destroy();
     void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
@@ -55,8 +57,8 @@ protected:
 
     CDescriptor m_Descriptor;
 
-    VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-    VkDevice m_Device = VK_NULL_HANDLE;
+    vk::CPhysicalDevice::CPtr m_pPhysicalDevice = VK_NULL_HANDLE;
+    vk::CDevice::CPtr m_pDevice = VK_NULL_HANDLE;
     VkPipeline m_Pipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 };

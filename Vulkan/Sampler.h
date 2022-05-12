@@ -1,6 +1,7 @@
 #pragma once
 #include "VulkanHandle.h"
 #include "Common.h"
+#include "Device.h"
 
 namespace vk
 {
@@ -90,10 +91,10 @@ namespace vk
     public:
         _DEFINE_PTR(CSampler);
 
-        void create(VkDevice vDevice, const VkSamplerCreateInfo& vInfo);
+        void create(CDevice::CPtr vDevice, const VkSamplerCreateInfo& vInfo);
         void destroy();
 
     private:
-        VkDevice m_Device = VK_NULL_HANDLE;
+        CDevice::CPtr m_pDevice = nullptr;
     };
 }

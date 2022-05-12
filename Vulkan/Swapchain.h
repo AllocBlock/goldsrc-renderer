@@ -1,5 +1,8 @@
 #pragma once
 #include "VulkanHandle.h"
+#include "PhysicalDevice.h"
+#include "Device.h"
+#include "Surface.h"
 #include "Image.h"
 #include <vector>
 #include <GLFW/glfw3.h>
@@ -11,7 +14,7 @@ namespace vk
     public:
         _DEFINE_PTR(CSwapchain);
 
-        void create(VkDevice vDevice, VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface, GLFWwindow* vWindow);
+        void create(CDevice::Ptr vDevice, CPhysicalDevice::Ptr vPhysicalDevice, CSurface::Ptr vSurface, GLFWwindow* vWindow);
         void destroy();
         VkExtent2D getExtent();
         VkFormat getImageFormat();
@@ -23,7 +26,7 @@ namespace vk
         VkPresentModeKHR __chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& vAvailablePresentModes);
         VkExtent2D __chooseSwapExtent(GLFWwindow* vWindow, const VkSurfaceCapabilitiesKHR& vCapabilities);
 
-        VkDevice m_Device = VK_NULL_HANDLE;
+        CDevice::Ptr m_pDevice = nullptr;
         std::vector<vk::CImage::Ptr> m_ImageSet;
         std::vector<VkImageView> m_ImageViewSet;
         VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;

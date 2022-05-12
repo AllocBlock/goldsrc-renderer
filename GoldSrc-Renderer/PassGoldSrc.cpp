@@ -13,7 +13,7 @@
 
 void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
 {
-    vkDeviceWaitIdle(m_AppInfo.Device);
+    vkDeviceWaitIdle(*m_AppInfo.pDevice);
     m_pScene = vScene;
     m_ObjectDataPositions.resize(m_pScene->Objects.size());
     if (m_pScene->BspTree.Nodes.empty()) m_EnableBSP = false;
@@ -178,14 +178,14 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+        vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
         // init
         std::vector<VkClearValue> ClearValueSet(2);
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -194,11 +194,11 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         VkDeviceSize Offsets[] = { 0 };
         if (m_pVertexBuffer && m_pVertexBuffer->isValid())
         {
-            VkBuffer VertBuffer = m_pVertexBuffer->get();
+            VkBuffer VertBuffer = *m_pVertexBuffer;
             vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         }
         else if (m_pIndexBuffer && m_pIndexBuffer->isValid())
-            vkCmdBindIndexBuffer(CommandBuffer, m_pIndexBuffer->get(), 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(CommandBuffer, *m_pIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
         else
             Valid = false;
 
@@ -230,7 +230,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
             __recordSpriteRenderCommand(vImageIndex);
 
         end();
-        Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
+        vk::checkError(vkEndCommandBuffer(CommandBuffer));
     }
     return { CommandBuffer };
 }
@@ -249,7 +249,7 @@ void CSceneGoldSrcRenderPass::__createRecreateResources()
     __createSceneResources();
 
     for (int i = 0; i < ImageNum; ++i)
-        m_pLink->link("Depth", m_pDepthImage->get(), EPortType::OUTPUT, i);
+        m_pLink->link("Depth", *m_pDepthImage, EPortType::OUTPUT, i);
 }
 
 void CSceneGoldSrcRenderPass::__destroyRecreateResources()
@@ -561,30 +561,30 @@ void CSceneGoldSrcRenderPass::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, _getPtr()));
 }
 
 void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
 {
-    VkRenderPass RenderPass = m_Handle;
-    m_PipelineSet.Sky.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.DepthTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendTextureAlpha.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendAlphaTest.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendAdditive.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.Sprite.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, RenderPass, m_AppInfo.Extent);
+    VkRenderPass RenderPass = get();
+    m_PipelineSet.Sky.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.DepthTest.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendTextureAlpha.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendAlphaTest.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.BlendAdditive.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
+    m_PipelineSet.Sprite.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
 }
 
 void CSceneGoldSrcRenderPass::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CSceneGoldSrcRenderPass::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
-    m_pDepthImage = Vulkan::createDepthImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_AppInfo.Extent, NULL, DepthFormat);
+    m_pDepthImage = Function::createDepthImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
 }
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()
@@ -595,11 +595,11 @@ void CSceneGoldSrcRenderPass::__createFramebuffers()
         std::vector<VkImageView> AttachmentSet =
         {
             m_pLink->getOutput("Output", i),
-            m_pDepthImage->get()
+            *m_pDepthImage
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 
@@ -611,7 +611,7 @@ void CSceneGoldSrcRenderPass::__createTextureImages()
         m_TextureImageSet.resize(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_pScene->TexImageSet[i]);
+            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
         }
     }
 }
@@ -621,7 +621,7 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
     if (m_pScene && m_pScene->UseLightmap)
     {
         ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
-        m_pLightmapImage = Function::createImageFromIOImage(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pCombinedLightmapImage);
+        m_pLightmapImage = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, pCombinedLightmapImage);
     }
 }
 
@@ -647,12 +647,12 @@ void CSceneGoldSrcRenderPass::__createVertexBuffer()
     for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
     {
         std::vector<SGoldSrcPointData> PointData = __readPointData(pObject);
-        size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->getVertexArray()->size();
+        size_t SubBufferSize = pObject->getVertexArray()->size();
         memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
     m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(pData, BufferSize);
     delete[] pData;
 }
@@ -687,16 +687,16 @@ void CSceneGoldSrcRenderPass::__createIndexBuffer()
         memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    Vulkan::stageFillBuffer(m_AppInfo.PhysicalDevice, m_AppInfo.Device, pData, BufferSize, m_VertexBufferPack->get(), m_VertexBufferPack.Memory);
+    vk::stageFillBuffer(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, pData, BufferSize, *m_VertexBufferPack, m_VertexBufferPack.Memory);
     delete[] pData;*/
 }
 
 void CSceneGoldSrcRenderPass::__updateDescriptorSets()
 {
     std::vector<VkImageView> TextureSet(m_TextureImageSet.size());
-    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_pLightmapImage->get() : VK_NULL_HANDLE;
+    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? *m_pLightmapImage : VK_NULL_HANDLE;
     for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
-        TextureSet[i] = m_TextureImageSet[i]->get();
+        TextureSet[i] = *m_TextureImageSet[i];
     m_PipelineSet.DepthTest.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAlphaTest.updateDescriptorSet(TextureSet, Lightmap);
@@ -746,7 +746,7 @@ VkFormat CSceneGoldSrcRenderPass::__findSupportedFormat(const std::vector<VkForm
     for (VkFormat Format : vCandidates)
     {
         VkFormatProperties Props;
-        vkGetPhysicalDeviceFormatProperties(m_AppInfo.PhysicalDevice, Format, &Props);
+        vkGetPhysicalDeviceFormatProperties(*m_AppInfo.pPhysicalDevice, Format, &Props);
 
         if (vTiling == VK_IMAGE_TILING_LINEAR && 
             (Props.linearTilingFeatures & vFeatures) == vFeatures)

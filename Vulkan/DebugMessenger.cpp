@@ -20,7 +20,7 @@ void CDebugMessenger::create(VkInstance vInstance)
     if (pCreateDebugFunc == nullptr)
         throw std::runtime_error(u8"不支持调试函数");
     else
-        Vulkan::checkError(pCreateDebugFunc(vInstance, &DebugMessengerInfo, nullptr, &m_Handle));
+        vk::checkError(pCreateDebugFunc(vInstance, &DebugMessengerInfo, nullptr, _getPtr()));
 }
 
 void CDebugMessenger::destroy()
@@ -29,8 +29,8 @@ void CDebugMessenger::destroy()
     if (pDestroyDebugFunc == nullptr)
         throw std::runtime_error(u8"不支持调试函数");
     else
-        pDestroyDebugFunc(m_Instance, m_Handle, nullptr);
-    m_Handle = VK_NULL_HANDLE;
+        pDestroyDebugFunc(m_Instance, get(), nullptr);
+    _setNull();
 }
 
 void CDebugMessenger::setCustomCallback(DebugMessageCallbackFunc_t vCallback)

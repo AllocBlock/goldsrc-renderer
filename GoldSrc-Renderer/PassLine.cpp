@@ -124,17 +124,17 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
         CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        Vulkan::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
+        vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
 
         // init
         std::vector<VkClearValue> ClearValueSet(2);
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, m_FramebufferSet[vImageIndex]->get(), m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
         m_PipelineLine.recordCommand(CommandBuffer, vImageIndex);
         end();
-        Vulkan::checkError(vkEndCommandBuffer(CommandBuffer));
+        vk::checkError(vkEndCommandBuffer(CommandBuffer));
     }
     return { CommandBuffer };
 }
@@ -146,7 +146,7 @@ void CLineRenderPass::__rerecordCommand()
 
 void CLineRenderPass::__createRecreateResources()
 {
-    m_PipelineLine.create(m_AppInfo.PhysicalDevice, m_AppInfo.Device, m_Handle, m_AppInfo.Extent);
+    m_PipelineLine.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, get(), m_AppInfo.Extent);
     m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
 }
 
@@ -198,12 +198,12 @@ void CLineRenderPass::__createRenderPass()
     RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
     RenderPassInfo.pDependencies = SubpassDependencies.data();
 
-    Vulkan::checkError(vkCreateRenderPass(m_AppInfo.Device, &RenderPassInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, _getPtr()));
 }
 
 void CLineRenderPass::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.Device, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
     m_Command.createBuffers(m_CommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
@@ -221,6 +221,6 @@ void CLineRenderPass::__createFramebuffers()
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.Device, m_Handle, AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }

@@ -1,15 +1,17 @@
 #include "Image.h"
 #include "Vulkan.h"
 #include "Buffer.h"
+#include "PhysicalDevice.h"
+#include "Device.h"
 
 using namespace vk;
 
-void CImage::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo)
+void CImage::create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo)
 {
     destroy();
 
-    m_PhysicalDevice = vPhysicalDevice;
-    m_Device = vDevice;
+    m_pPhysicalDevice = vPhysicalDevice;
+    m_pDevice = vDevice;
     m_Width = vImageInfo.extent.width;
     m_Height = vImageInfo.extent.height;
     m_LayerCount = vImageInfo.arrayLayers;
@@ -22,19 +24,19 @@ void CImage::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const Vk
         throw std::runtime_error("mipmap texture must has VK_IMAGE_USAGE_TRANSFER_SRC_BIT to generate mip levels");
     }
 
-    Vulkan::checkError(vkCreateImage(vDevice, &vImageInfo, nullptr, &m_Image));
+    vk::checkError(vkCreateImage(*vDevice, &vImageInfo, nullptr, &m_Image));
 
     VkMemoryRequirements MemRequirements;
-    vkGetImageMemoryRequirements(vDevice, m_Image, &MemRequirements);
+    vkGetImageMemoryRequirements(*vDevice, m_Image, &MemRequirements);
 
     VkMemoryAllocateInfo AllocInfo = {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     AllocInfo.allocationSize = MemRequirements.size;
-    AllocInfo.memoryTypeIndex = Vulkan::findMemoryType(vPhysicalDevice, MemRequirements.memoryTypeBits, vProperties);
+    AllocInfo.memoryTypeIndex = vPhysicalDevice->findMemoryTypeIndex(MemRequirements.memoryTypeBits, vProperties);
 
-    Vulkan::checkError(vkAllocateMemory(vDevice, &AllocInfo, nullptr, &m_Memory));
+    vk::checkError(vkAllocateMemory(*vDevice, &AllocInfo, nullptr, &m_Memory));
 
-    Vulkan::checkError(vkBindImageMemory(vDevice, m_Image, m_Memory, 0));
+    vk::checkError(vkBindImageMemory(*vDevice, m_Image, m_Memory, 0));
 
     __createImageView(vDevice, vViewInfo);
 #ifdef _DEBUG
@@ -45,11 +47,11 @@ void CImage::create(VkPhysicalDevice vPhysicalDevice, VkDevice vDevice, const Vk
 #endif
 }
 
-void CImage::setImage(VkDevice vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
+void CImage::setImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
 {
     destroy();
 
-    m_Device = vDevice;
+    m_pDevice = vDevice;
     m_Format = vFormat;
     m_LayerCount = vLayerCount;
 
@@ -63,27 +65,27 @@ void CImage::destroy()
     if (!isValid()) return;
     if (!m_IsSet)
     {
-        vkDestroyImage(m_Device, m_Image, nullptr);
-        vkFreeMemory(m_Device, m_Memory, nullptr);
+        vkDestroyImage(*m_pDevice, m_Image, nullptr);
+        vkFreeMemory(*m_pDevice, m_Memory, nullptr);
     }
-    vkDestroyImageView(m_Device, m_Handle, nullptr);
+    vkDestroyImageView(*m_pDevice, get(), nullptr);
     m_Image = VK_NULL_HANDLE;
     m_Memory = VK_NULL_HANDLE;
-    m_Handle = VK_NULL_HANDLE;
+    _setNull();
     m_Width = m_Height = m_LayerCount = 0;
     m_Format = VkFormat::VK_FORMAT_UNDEFINED;
     m_Layout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
 
-    m_Device = VK_NULL_HANDLE;
-    m_PhysicalDevice = VK_NULL_HANDLE;
+    m_pDevice = VK_NULL_HANDLE;
+    m_pPhysicalDevice = VK_NULL_HANDLE;
 
     m_IsSet = false;
 }
 
 bool CImage::isValid()
 {
-    if (m_IsSet) return m_Image != VK_NULL_HANDLE && m_Handle != VK_NULL_HANDLE;
-    else return m_Image != VK_NULL_HANDLE && m_Memory != VK_NULL_HANDLE && m_Handle != VK_NULL_HANDLE;
+    if (m_IsSet) return m_Image != VK_NULL_HANDLE && get() != VK_NULL_HANDLE;
+    else return m_Image != VK_NULL_HANDLE && m_Memory != VK_NULL_HANDLE && get() != VK_NULL_HANDLE;
 }
 
 void CImage::copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight)
@@ -110,15 +112,15 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     if (!isValid()) throw "Cant fill in NULL handle image";
 
     CBuffer StageBuffer;
-    StageBuffer.create(m_PhysicalDevice, m_Device, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    StageBuffer.create(m_pPhysicalDevice, m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    VkCommandBuffer CommandBuffer = Vulkan::beginSingleTimeBuffer();
+    VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
     transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyFromBuffer(CommandBuffer, StageBuffer.get(), m_Width, m_Height);
     if (vToShaderLayout)
         transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    Vulkan::endSingleTimeBuffer(CommandBuffer);
+    vk::endSingleTimeBuffer(CommandBuffer);
 
     StageBuffer.destroy();
 }
@@ -238,7 +240,7 @@ void CImage::transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNew
     m_Layout = vNewLayout;
 }
 
-void CImage::__createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo)
+void CImage::__createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo)
 {
     VkImageViewCreateInfo ImageViewInfo = {};
     ImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -251,11 +253,11 @@ void CImage::__createImageView(VkDevice vDevice, const SImageViewInfo& vViewInfo
     ImageViewInfo.subresourceRange.baseArrayLayer = 0;
     ImageViewInfo.subresourceRange.layerCount = m_LayerCount;
 
-    Vulkan::checkError(vkCreateImageView(vDevice, &ImageViewInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateImageView(*vDevice, &ImageViewInfo, nullptr, _getPtr()));
 
 #ifdef _DEBUG
     static int Count = 0;
-    std::cout << "create image view[" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_Handle) << std::setbase(10) << std::endl;
+    std::cout << "create image view[" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(get()) << std::setbase(10) << std::endl;
     Count++;
 #endif
 }
@@ -267,7 +269,7 @@ void CImage::generateMipmaps(VkCommandBuffer vCommandBuffer)
 
     // Check if image format supports linear blitting
     VkFormatProperties FormatProperties;
-    vkGetPhysicalDeviceFormatProperties(m_PhysicalDevice, m_Format, &FormatProperties);
+    vkGetPhysicalDeviceFormatProperties(*m_pPhysicalDevice, m_Format, &FormatProperties);
 
     if (!(FormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
     {

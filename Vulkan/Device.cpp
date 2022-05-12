@@ -4,11 +4,11 @@
 
 using namespace vk;
 
-void CDevice::create(VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet)
+void CDevice::create(CPhysicalDevice::CPtr vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet)
 {
     destroy();
 
-    Vulkan::SQueueFamilyIndices QueueIndices = Vulkan::findQueueFamilies(vPhysicalDevice, vSurface);
+    const vk::SQueueFamilyIndices& QueueIndices = vPhysicalDevice->getQueueFamilyInfo();
 
     std::vector<VkDeviceQueueCreateInfo> QueueInfos;
     std::set<uint32_t> UniqueQueueFamilies = { QueueIndices.GraphicsFamilyIndex.value(), QueueIndices.PresentFamilyIndex.value() };
@@ -39,44 +39,71 @@ void CDevice::create(VkPhysicalDevice vPhysicalDevice, VkSurfaceKHR vSurface, co
     DeviceInfo.enabledLayerCount = static_cast<uint32_t>(vValidationLayerSet.size());
     if (!vValidationLayerSet.empty()) DeviceInfo.ppEnabledLayerNames = vValidationLayerSet.data();
 
-    Vulkan::checkError(vkCreateDevice(vPhysicalDevice, &DeviceInfo, nullptr, &m_Handle));
+    vk::checkError(vkCreateDevice(*vPhysicalDevice, &DeviceInfo, nullptr, _getPtr()));
 
     m_GraphicsQueueIndex = QueueIndices.GraphicsFamilyIndex.value();
     m_PresentQueueIndex = QueueIndices.PresentFamilyIndex.value();
-    vkGetDeviceQueue(m_Handle, QueueIndices.GraphicsFamilyIndex.value(), 0, &m_GraphicsQueue);
-    vkGetDeviceQueue(m_Handle, QueueIndices.PresentFamilyIndex.value(), 0, &m_PresentQueue);
+    m_GraphicsQueue = getQueue(m_GraphicsQueueIndex);
+    m_PresentQueue = getQueue(m_PresentQueueIndex);
 }
 
 void CDevice::destroy()
 {
-    if (m_Handle) vkDestroyDevice(m_Handle, nullptr);
-    m_Handle = VK_NULL_HANDLE;
+    if (get()) vkDestroyDevice(get(), nullptr);
+    _setNull();
      
     m_GraphicsQueueIndex = m_PresentQueueIndex = 0;
     m_GraphicsQueue = m_PresentQueue = VK_NULL_HANDLE;
 }
 
-void CDevice::waitUntilIdle()
+void CDevice::waitUntilIdle() const
 {
-    Vulkan::checkError(vkDeviceWaitIdle(m_Handle));
+    vk::checkError(vkDeviceWaitIdle(get()));
 }
 
-uint32_t CDevice::getGraphicsQueueIndex()
+uint32_t CDevice::getGraphicsQueueIndex() const
 {
     return m_GraphicsQueueIndex;
 }
 
-uint32_t CDevice::getPresentQueueIndex()
+uint32_t CDevice::getPresentQueueIndex() const
 {
     return m_PresentQueueIndex;
 }
 
-VkQueue CDevice::getGraphicsQueue()
+VkQueue CDevice::getGraphicsQueue() const
 {
     return m_GraphicsQueue;
 }
 
-VkQueue CDevice::getPresentQueue()
+VkQueue CDevice::getPresentQueue() const
 {
     return m_PresentQueue;
+}
+
+VkQueue CDevice::getQueue(uint32_t vFamilyIndex) const
+{
+    VkQueue Queue;
+    vkGetDeviceQueue(get(), vFamilyIndex, 0, &Queue);
+    return Queue;
+}
+
+VkShaderModule CDevice::createShaderModule(const std::vector<char>& vShaderCode) const
+{
+    _ASSERTE(isValid());
+
+    VkShaderModuleCreateInfo ShaderModuleInfo = {};
+    ShaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    ShaderModuleInfo.codeSize = vShaderCode.size();
+    ShaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(vShaderCode.data());
+
+    VkShaderModule ShaderModule;
+    checkError(vkCreateShaderModule(get(), &ShaderModuleInfo, nullptr, &ShaderModule));
+    return ShaderModule;
+}
+
+void CDevice::destroyShaderModule(VkShaderModule vModule) const
+{
+    _ASSERTE(isValid());
+    vkDestroyShaderModule(get(), vModule, nullptr);
 }
