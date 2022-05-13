@@ -46,3 +46,9 @@ private:
     std::map<std::string, std::vector<VkCommandBuffer>> m_NameToBufferSetMap;
     size_t m_InUseSingleTimeNum = 0;
 };
+
+// TODO: a command instance with all command function
+class CCommandBuffer
+{
+
+};

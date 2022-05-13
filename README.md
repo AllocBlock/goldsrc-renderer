@@ -1,9 +1,9 @@
 # 金源引擎渲染器
 ## 结果对比
 - 游戏截图
-![](./Images/assault_game.jpg)
+![](./Doc/Images/assault_game.jpg)
 - 渲染器截图
-![](./Images/assault_this_renderer.png)
+![](./Doc/Images/assault_this_renderer.png)
 
 ## 基础功能
 - 读取并渲染map文件 ✅已完成
@@ -62,3 +62,9 @@
   ```
   > 注意Vulkan并非下载源码安装，而是回去寻找本地已安装的SDK，因此需要自己下载安装后，配置好VULKAN_SDK环境变量
   > 详见：https://github.com/microsoft/vcpkg/blob/master/ports/vulkan/usage
+
+## 架构图
+- Vulkan调用流程图
+![](./Doc/VulkanReferenceGraph.png)
+- 数据流程图
+![](./Doc/ClassIncludeGraph.png)

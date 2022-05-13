@@ -268,8 +268,7 @@ void CImage::generateMipmaps(VkCommandBuffer vCommandBuffer)
     _ASSERTE(m_Layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     // Check if image format supports linear blitting
-    VkFormatProperties FormatProperties;
-    vkGetPhysicalDeviceFormatProperties(*m_pPhysicalDevice, m_Format, &FormatProperties);
+    VkFormatProperties FormatProperties = m_pPhysicalDevice->getFormatProperty(m_Format);
 
     if (!(FormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
     {

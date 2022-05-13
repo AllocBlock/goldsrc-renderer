@@ -2,7 +2,7 @@
 
 void CRendererTest::exportShadowMapToFile(std::string vFileName)
 {
-    vkDeviceWaitIdle(*m_AppInfo.pDevice);
+    m_AppInfo.pDevice->waitUntilIdle();
     VkDeviceSize Size = m_AppInfo.Extent.width * m_AppInfo.Extent.height * 16;
     vk::CBuffer StageBuffer;
     StageBuffer.create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

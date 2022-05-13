@@ -36,7 +36,7 @@ CPhysicalDevice::Ptr CPhysicalDevice::chooseBestDevice(CInstance::CPtr vInstance
 
     CPhysicalDevice::Ptr pDevice = make<CPhysicalDevice>();
     // get property, queue family info and swapchain support info
-    vkGetPhysicalDeviceProperties(ChosenDevice, &pDevice->m_Property);
+    vkGetPhysicalDeviceProperties(ChosenDevice, &pDevice->m_DeviceProperty);
     pDevice->m_QueueFamilyInfo = __findQueueFamilies(ChosenDevice, vSurface);
     pDevice->m_SwapChainSupportInfo = __getSwapChainSupport(ChosenDevice, vSurface);
     pDevice->_set(ChosenDevice);
@@ -59,13 +59,13 @@ void CPhysicalDevice::printSupportedExtension() const
 
 const VkPhysicalDeviceProperties& CPhysicalDevice::getProperty() const
 {
-    return m_Property;
+    return m_DeviceProperty;
 }
 
 void CPhysicalDevice::release()
 {
     _setNull();
-    m_Property = {};
+    m_DeviceProperty = {};
     m_QueueFamilyInfo = {};
     m_SwapChainSupportInfo = {};
 }
@@ -95,6 +95,34 @@ const SQueueFamilyIndices& CPhysicalDevice::getQueueFamilyInfo() const
 const SSwapChainSupportDetails& CPhysicalDevice::getSwapChainSupportInfo() const
 {
     return m_SwapChainSupportInfo;
+}
+
+VkFormat CPhysicalDevice::chooseSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures) const
+{
+    for (VkFormat Format : vCandidates)
+    {
+        VkFormatProperties Props = getFormatProperty(Format);
+
+        if (vTiling == VK_IMAGE_TILING_LINEAR &&
+            (Props.linearTilingFeatures & vFeatures) == vFeatures)
+        {
+            return Format;
+        }
+        else if (vTiling == VK_IMAGE_TILING_OPTIMAL &&
+            (Props.optimalTilingFeatures & vFeatures) == vFeatures)
+        {
+            return Format;
+        }
+    }
+
+    throw std::runtime_error(u8"未找到适配的vulkan格式");
+}
+
+VkFormatProperties CPhysicalDevice::getFormatProperty(VkFormat vFormat) const
+{
+    VkFormatProperties Props;
+    vkGetPhysicalDeviceFormatProperties(get(), vFormat, &Props);
+    return std::move(Props);
 }
 
 bool CPhysicalDevice::__isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vDeviceExtensions)

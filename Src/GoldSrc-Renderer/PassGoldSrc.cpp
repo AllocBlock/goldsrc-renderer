@@ -13,7 +13,7 @@
 
 void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
 {
-    vkDeviceWaitIdle(*m_AppInfo.pDevice);
+    m_AppInfo.pDevice->waitUntilIdle();
     m_pScene = vScene;
     m_ObjectDataPositions.resize(m_pScene->Objects.size());
     if (m_pScene->BspTree.Nodes.empty()) m_EnableBSP = false;
@@ -735,33 +735,11 @@ std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<C3DO
 
 VkFormat CSceneGoldSrcRenderPass::__findDepthFormat()
 {
-    return __findSupportedFormat(
+    return m_AppInfo.pPhysicalDevice->chooseSupportedFormat(
         { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
     );
-}
-
-VkFormat CSceneGoldSrcRenderPass::__findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures)
-{
-    for (VkFormat Format : vCandidates)
-    {
-        VkFormatProperties Props;
-        vkGetPhysicalDeviceFormatProperties(*m_AppInfo.pPhysicalDevice, Format, &Props);
-
-        if (vTiling == VK_IMAGE_TILING_LINEAR && 
-            (Props.linearTilingFeatures & vFeatures) == vFeatures)
-        {
-            return Format;
-        }
-        else if (vTiling == VK_IMAGE_TILING_OPTIMAL && 
-            (Props.optimalTilingFeatures & vFeatures) == vFeatures)
-        {
-            return Format;
-        }
-    }
-
-    throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
 size_t CSceneGoldSrcRenderPass::__getActualTextureNum()

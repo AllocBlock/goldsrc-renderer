@@ -83,7 +83,6 @@ private:
     void __recordSkyRenderCommand(uint32_t vImageIndex);
 
     VkFormat __findDepthFormat();
-    VkFormat __findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures);
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
 

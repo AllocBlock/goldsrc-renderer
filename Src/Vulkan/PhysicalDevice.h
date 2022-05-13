@@ -22,6 +22,8 @@ namespace vk
         uint32_t findMemoryTypeIndex(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties) const;
         const SQueueFamilyIndices& getQueueFamilyInfo() const;
         const SSwapChainSupportDetails& getSwapChainSupportInfo() const;
+        VkFormat chooseSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures) const;
+        VkFormatProperties getFormatProperty(VkFormat vFormat) const;
 
     private:
         static bool __isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vDeviceExtensions);
@@ -29,7 +31,7 @@ namespace vk
         static SQueueFamilyIndices __findQueueFamilies(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface);
         static SSwapChainSupportDetails __getSwapChainSupport(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface);
 
-        VkPhysicalDeviceProperties m_Property = {};
+        VkPhysicalDeviceProperties m_DeviceProperty = {};
         SQueueFamilyIndices m_QueueFamilyInfo = {};
         SSwapChainSupportDetails m_SwapChainSupportInfo = {};
     };

@@ -5,6 +5,7 @@
 #include "UserInterface.h"
 
 #include <iostream>
+#include <array>
 #include <vector>
 #include <set>
 #include <fstream>
@@ -13,7 +14,7 @@
 
 void CSceneSimpleRenderPass::_loadSceneV(ptr<SScene> vScene)
 {
-    vkDeviceWaitIdle(*m_AppInfo.pDevice);
+    m_AppInfo.pDevice->waitUntilIdle();
     m_pScene = vScene;
     m_ObjectDataPositions.resize(m_pScene->Objects.size());
 
@@ -346,15 +347,15 @@ void CSceneSimpleRenderPass::__createVertexBuffer()
             NumVertex += pObject->getVertexArray()->size();
         if (NumVertex == 0)
         {
-            Common::Log::log(u8"没有顶点数据，跳过索引缓存创建");
+            Common::Log::log(u8"没有顶点数据，跳过顶点缓存创建");
             return;
-        }
+        } 
     }
     else
         return;
 
     VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
-    void* pData = new char[BufferSize];
+    uint8_t* pData = new uint8_t[BufferSize];
     size_t Offset = 0;
     for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
     {
@@ -437,33 +438,11 @@ std::vector<SSimplePointData> CSceneSimpleRenderPass::__readPointData(ptr<C3DObj
 
 VkFormat CSceneSimpleRenderPass::__findDepthFormat()
 {
-    return __findSupportedFormat(
+    return m_AppInfo.pPhysicalDevice->chooseSupportedFormat(
         { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
     );
-}
-
-VkFormat CSceneSimpleRenderPass::__findSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures)
-{
-    for (VkFormat Format : vCandidates)
-    {
-        VkFormatProperties Props;
-        vkGetPhysicalDeviceFormatProperties(*m_AppInfo.pPhysicalDevice, Format, &Props);
-
-        if (vTiling == VK_IMAGE_TILING_LINEAR &&
-            (Props.linearTilingFeatures & vFeatures) == vFeatures)
-        {
-            return Format;
-        }
-        else if (vTiling == VK_IMAGE_TILING_OPTIMAL &&
-            (Props.optimalTilingFeatures & vFeatures) == vFeatures)
-        {
-            return Format;
-        }
-    }
-
-    throw std::runtime_error(u8"未找到适配的vulkan格式");
 }
 
 size_t CSceneSimpleRenderPass::__getActualTextureNum()
