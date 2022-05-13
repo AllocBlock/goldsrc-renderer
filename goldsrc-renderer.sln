@@ -3,45 +3,37 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30517.126
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IO", "IO\IO.vcxproj", "{910218DD-1C85-49C4-BF0B-81CA0BE1B4C2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IO", "Src\IO\IO.vcxproj", "{910218DD-1C85-49C4-BF0B-81CA0BE1B4C2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Engine\Engine.vcxproj", "{1FA794F5-B7FB-431F-8221-77F21034D0D9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Src\Engine\Engine.vcxproj", "{1FA794F5-B7FB-431F-8221-77F21034D0D9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "imgui\imgui.vcxproj", "{355FF34E-0933-40E2-B479-962B2C48CE13}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "Src\imgui\imgui.vcxproj", "{355FF34E-0933-40E2-B479-962B2C48CE13}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scene", "Scene\Scene.vcxproj", "{EB9BA7FD-F347-4886-83BD-D119A929AA39}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scene", "Src\Scene\Scene.vcxproj", "{EB9BA7FD-F347-4886-83BD-D119A929AA39}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GoldSrc-Renderer", "GoldSrc-Renderer\GoldSrc-Renderer.vcxproj", "{513C4028-20CE-4F65-AB41-1701CFBDB14E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GoldSrc-Renderer", "Src\GoldSrc-Renderer\GoldSrc-Renderer.vcxproj", "{513C4028-20CE-4F65-AB41-1701CFBDB14E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{7F241464-4B6B-4226-AABC-869FC3A6473D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Src\Common\Common.vcxproj", "{7F241464-4B6B-4226-AABC-869FC3A6473D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{6AC53CF0-C9ED-43BC-B139-C78119CC740C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Src\Tests", "{6AC53CF0-C9ED-43BC-B139-C78119CC740C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Lightmap", "Tests\Test_Lightmap\Test_Lightmap.vcxproj", "{DF58233A-DF16-474B-B40C-5BF691768A13}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Lightmap", "Src\Tests\Test_Lightmap\Test_Lightmap.vcxproj", "{DF58233A-DF16-474B-B40C-5BF691768A13}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application", "Application\Application.vcxproj", "{6DA54335-FB5B-4ABF-BC32-EE03B73794B5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Application", "Src\Application\Application.vcxproj", "{6DA54335-FB5B-4ABF-BC32-EE03B73794B5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_EnvironmentMap", "Tests\Test_EnvironmentMap\Test_EnvironmentMap.vcxproj", "{74A882ED-ADE6-409E-9E99-1E3E29790DA6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_EnvironmentMap", "Src\Tests\Test_EnvironmentMap\Test_EnvironmentMap.vcxproj", "{74A882ED-ADE6-409E-9E99-1E3E29790DA6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_ShadowMap", "Tests\Test_ShadowMap\Test_ShadowMap.vcxproj", "{BA475F22-F6BC-4FE7-8B7E-5B498FF27A97}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_ShadowMap", "Src\Tests\Test_ShadowMap\Test_ShadowMap.vcxproj", "{BA475F22-F6BC-4FE7-8B7E-5B498FF27A97}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vulkan", "Vulkan\Vulkan.vcxproj", "{117A19EF-C976-4370-B795-B58C27EE4AB0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vulkan", "Src\Vulkan\Vulkan.vcxproj", "{117A19EF-C976-4370-B795-B58C27EE4AB0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_IO", "Tests\Test_IO\Test_IO.vcxproj", "{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_IO", "Src\Tests\Test_IO\Test_IO.vcxproj", "{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_SprRendering", "Tests\Test_SprRendering\Test_SprRendering.vcxproj", "{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_SprRendering", "Src\Tests\Test_SprRendering\Test_SprRendering.vcxproj", "{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lib", "Lib", "{1B306592-C7AE-4A27-BBA0-CFB9B7F9DFA7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Function", "Src\Function\Function.vcxproj", "{E36EBE08-0944-4E1A-86D2-509A565A49A3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stb", "Lib\stb\stb.vcxproj", "{9E505423-95DE-4095-B96B-07B6024714AD}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Function", "Function\Function.vcxproj", "{E36EBE08-0944-4E1A-86D2-509A565A49A3}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_PBR", "Tests\Test_PBR\Test_PBR.vcxproj", "{19498310-A186-4EA4-8268-23AEC051A5BF}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "miniz", "Lib\miniz\miniz.vcxproj", "{9565C307-0B19-43ED-A2FB-E40EED71AC81}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyexr", "Lib\tinyexr\tinyexr.vcxproj", "{559E619A-80C5-4A5B-8DEA-FF9828644DEE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_PBR", "Src\Tests\Test_PBR\Test_PBR.vcxproj", "{19498310-A186-4EA4-8268-23AEC051A5BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

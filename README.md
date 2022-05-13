@@ -28,10 +28,12 @@
 - bsp实体触发机制与效果
 - 解析、播放地图音频
 - 读取并渲染dem文件
-## 库
-- 图形API：vulkan （官网下载安装配置环境变量VK_SDK_PATH为Vulkan根目录）
-- GUI库：glfw（nuget在线包）+imgui（项目包含）
-  - file dialog文件选择框基于 https://github.com/AirGuanZ/imgui-filebrowser
-  	- 进行了重构，删除了不需要的功能
-- 数学库：glm (nuget在线包)
-- 图片IO：stb_image （项目包含）
+## 依赖
+- 所有C++依赖均通过vkpkg安装
+  - 图形API：vulkan （官网下载安装配置环境变量VK_SDK_PATH为Vulkan根目录）
+  - GUI库：glfw+imgui
+    - file dialog文件选择框基于 https://github.com/AirGuanZ/imgui-filebrowser
+    	- 进行了重构，删除了不需要的功能
+  - 数学库：glm
+  - 图片IO：stb_image
+- （可选）Python，编译Shader的脚本，如果要绕过Python实现自动编译详见compileShader.py

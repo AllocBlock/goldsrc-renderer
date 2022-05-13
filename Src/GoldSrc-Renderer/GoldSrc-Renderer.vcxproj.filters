@@ -1,0 +1,200 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\Imgui">
+      <UniqueIdentifier>{ac74e681-1aa0-442b-be8e-e7bb9f1a122e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Imgui">
+      <UniqueIdentifier>{df4c598f-3d30-4888-8ffc-694197a9598b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Pipeline">
+      <UniqueIdentifier>{1f5a51fb-9e66-4c84-96b5-f52fcacfcc53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Pipeline">
+      <UniqueIdentifier>{b13500cf-d416-4d12-8b98-ada45626ea6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\RenderPass">
+      <UniqueIdentifier>{92ce53ab-468e-4aa1-afeb-a69772ec2b10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RenderPass">
+      <UniqueIdentifier>{bbbb4495-fb7b-4504-8213-03987ae03429}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ApplicationGoldSrc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiAlert.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiFGD.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiFrameRate.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiLog.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiMain.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiRenderer.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiSelectFile.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImguiTextureViewer.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineDepthTest.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineLine.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSimple.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSkybox.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSprite.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PassSimple.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="PassGoldSrc.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneProbe.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PassLine.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ApplicationGoldSrc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PointData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiAlert.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiFGD.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiFrameRate.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiLog.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiMain.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiRenderer.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiSelectFile.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiTextureViewer.h">
+      <Filter>头文件\Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBlendAdditive.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBlendAlpha.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBlendAlphaTest.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineDepthTest.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineLine.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSimple.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSkybox.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSprite.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PassGoldSrc.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="PassSimple.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneProbe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PassLine.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\shader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\simpleShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\simpleShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\skyShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\skyShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\sprShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\sprShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\alphaTestShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\alphaTestShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\lineShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\lineShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\shader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+</Project>
