@@ -40,7 +40,7 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
         if (FilePathResult.State == Scene::ERequestResultState::CONTINUE)
         {
             CIOGoldsrcWad Wad;
-            Common::GoldSrc::readWad(FilePathResult.Data, Wad);
+            Common::GoldSrc::readWad(FilePathResult.Data, m_FilePath.parent_path(), Wad);
             m_Wads.emplace_back(std::move(Wad));
         }
         else

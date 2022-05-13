@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
+#include "VertexAttributeDescriptor.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -23,14 +24,9 @@ struct SShadowMapPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(1);
-
-        AttributeDescriptionSet[0].binding = 0;
-        AttributeDescriptionSet[0].location = 0;
-        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[0].offset = offsetof(SShadowMapPointData, Pos);
-
-        return AttributeDescriptionSet;
+        CVertexAttributeDescriptor Descriptor;
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SShadowMapPointData, Pos));
+        return Descriptor.generate();
     }
 };
 

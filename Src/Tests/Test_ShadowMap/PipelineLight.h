@@ -5,6 +5,7 @@
 #include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Sampler.h"
+#include "VertexAttributeDescriptor.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -26,19 +27,10 @@ struct SLightPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(2);
-
-        AttributeDescriptionSet[0].binding = 0;
-        AttributeDescriptionSet[0].location = 0;
-        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[0].offset = offsetof(SLightPointData, Pos);
-
-        AttributeDescriptionSet[1].binding = 0;
-        AttributeDescriptionSet[1].location = 1;
-        AttributeDescriptionSet[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[1].offset = offsetof(SLightPointData, Normal);
-
-        return AttributeDescriptionSet;
+        CVertexAttributeDescriptor Descriptor;
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SLightPointData, Pos));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SLightPointData, Normal));
+        return Descriptor.generate();
     }
 };
 

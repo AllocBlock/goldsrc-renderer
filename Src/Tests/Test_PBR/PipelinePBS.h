@@ -31,7 +31,7 @@ struct SPBSPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        VertexAttributeDescriptor Descriptor;
+        CVertexAttributeDescriptor Descriptor;
         Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Pos));
         Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Normal));
         Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Tangent));

@@ -127,6 +127,7 @@ bool getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection,
 
 bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, float& voNearestDistance, S3DBoundingBox& voBB)
 {
+    // FIXME: must be some bugs... can select object behind camera
 	if (!vScene || vScene->Objects.empty()) return false;
 	// normolize screen coordinate
 	glm::vec4 ClipSpace = glm::vec4(vNDC, 1.0f, 1.0f);

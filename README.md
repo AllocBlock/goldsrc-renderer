@@ -1,6 +1,9 @@
 # 金源引擎渲染器
 ## 结果对比
-- i
+- 游戏截图
+![](./Images/assault_game.jpg)
+- 渲染器截图
+![](./Images/assault_this_renderer.png)
 
 ## 基础功能
 - 读取并渲染map文件 ✅已完成
@@ -29,11 +32,33 @@
 - 解析、播放地图音频
 - 读取并渲染dem文件
 ## 依赖
-- 所有C++依赖均通过vkpkg安装
-  - 图形API：vulkan （官网下载安装配置环境变量VK_SDK_PATH为Vulkan根目录）
+- 所有C++依赖均通过vkpkg安装，使用64位版本
+  - 图形API：vulkan （官网下载安装配置环境变量VULKAN_SDK为Vulkan根目录）
   - GUI库：glfw+imgui
     - file dialog文件选择框基于 https://github.com/AirGuanZ/imgui-filebrowser
     	- 进行了重构，删除了不需要的功能
   - 数学库：glm
-  - 图片IO：stb_image
+  - 图片IO：stb_image (.jpg, .bmp, .png, .tag...), tinyexr (.exr)
 - （可选）Python，编译Shader的脚本，如果要绕过Python实现自动编译详见compileShader.py
+
+- 安装
+  - 首先安装vcpkg https://vcpkg.io/en/getting-started.html 
+  - 添加环境变量VCPKG_DEFAULT_TRIPLET=x64-windows
+    - 修改默认安装64位版，否则默认是32位
+    - 否则每条install末尾要加上:x64-windows，如
+    ```
+    vcpkg install glm:x64-windows
+    ```
+  - 重启控制台，输入
+  ```
+  vcpkg install vulkan
+  vcpkg install glm
+  vcpkg install glfw3
+  vcpkg install imgui[core,vulkan-binding,glfw-binding]
+  vcpkg install stb
+  vcpkg install tinyexr
+
+  vcpkg integrate install
+  ```
+  > 注意Vulkan并非下载源码安装，而是回去寻找本地已安装的SDK，因此需要自己下载安装后，配置好VULKAN_SDK环境变量
+  > 详见：https://github.com/microsoft/vcpkg/blob/master/ports/vulkan/usage

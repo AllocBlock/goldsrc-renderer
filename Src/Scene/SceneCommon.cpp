@@ -130,6 +130,16 @@ bool Scene::findFile(std::filesystem::path vFilePath, std::filesystem::path vSea
     return false;
 }
 
+bool Scene::findFile(std::filesystem::path vFilePath, const std::vector<std::filesystem::path>& vSearchDirs, std::filesystem::path& voFilePath)
+{
+    for (std::filesystem::path SearchDir : vSearchDirs)
+    {
+        if (Scene::findFile(vFilePath, SearchDir, voFilePath))
+            return true;
+    }
+    return false;
+}
+
 ptr<CIOImage> Scene::getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex)
 {
     uint32_t Width = 0, Height = 0;
@@ -176,11 +186,14 @@ void Scene::setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(st
     g_pRequestFilePathFunc = vFunc;
 }
 
-bool Scene::requestFilePathUntilCancel(std::filesystem::path vFilePath, std::string vFilter, std::filesystem::path& voFilePath)
+bool Scene::requestFilePathUntilCancel(std::filesystem::path vFilePath, std::filesystem::path vAdditionalSearchDir, std::string vFilter, std::filesystem::path& voFilePath)
 {
     while (true)
     {
-        if (Scene::findFile(vFilePath, "../data", vFilePath))
+        // TODO: maybe need a search path manager
+        std::vector<std::filesystem::path> SearchDirs = { "./" };
+        if (!vAdditionalSearchDir.empty()) SearchDirs.emplace_back(vAdditionalSearchDir);
+        if (Scene::findFile(vFilePath, SearchDirs, vFilePath))
         {
             voFilePath = vFilePath;
             return true;

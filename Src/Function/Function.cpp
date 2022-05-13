@@ -11,7 +11,8 @@ VkFormat toVulkanFormat(EPixelFormat vPixelFormat)
     case EPixelFormat::RGBA32: return VK_FORMAT_R32G32B32A32_SFLOAT;
     case EPixelFormat::UNKNOWN:
     default:
-        break;
+        throw std::runtime_error(u8"暂未支持的图片格式");
+        return VK_FORMAT_UNDEFINED;
     }
 }
 

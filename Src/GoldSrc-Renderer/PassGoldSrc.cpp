@@ -647,10 +647,11 @@ void CSceneGoldSrcRenderPass::__createVertexBuffer()
     for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
     {
         std::vector<SGoldSrcPointData> PointData = __readPointData(pObject);
-        size_t SubBufferSize = pObject->getVertexArray()->size();
-        memcpy(reinterpret_cast<char*>(pData)+ Offset, PointData.data(), SubBufferSize);
+        size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->getVertexArray()->size();
+        memcpy(reinterpret_cast<char*>(pData) + Offset, PointData.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
+
     m_pVertexBuffer = make<vk::CBuffer>();
     m_pVertexBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(pData, BufferSize);
@@ -780,14 +781,16 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 
     SFrustum Frustum = m_pCamera->getFrustum();
 
-    if ((m_EnableBSP || m_EnableCulling) && m_EnablePVS)
+    bool UsePVS = (m_EnableBSP || m_EnableCulling) && m_EnablePVS;
+
+    if (UsePVS)
         m_CameraNodeIndex = m_pScene->BspTree.getPointLeaf(m_pCamera->getPos());
     else
         m_CameraNodeIndex = std::nullopt;
 
     // calculate PVS
     std::vector<bool> PVS;
-    if (m_EnablePVS)
+    if (UsePVS)
     {
         PVS.resize(m_pScene->Objects.size(), true);
         for (size_t i = 0; i < m_pScene->BspTree.LeafNum; ++i)
@@ -822,7 +825,7 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
                     continue;
 
             // PVS culling
-            if (m_EnablePVS)
+            if (UsePVS)
                 if (!PVS[i])
                     continue;
             

@@ -57,7 +57,7 @@ private:
 
         static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
         {
-            VertexAttributeDescriptor Descriptor;
+            CVertexAttributeDescriptor Descriptor;
             Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPointData, Pos));
             return Descriptor.generate();
         }

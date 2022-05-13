@@ -2,7 +2,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
-class VertexAttributeDescriptor
+class CVertexAttributeDescriptor
 {
 public:
     std::vector<VkVertexInputAttributeDescription> generate();

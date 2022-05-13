@@ -114,7 +114,7 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    m_Sampler.destroy();
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     uint8_t PixelData = 0;
     VkImageCreateInfo ImageInfo = {};

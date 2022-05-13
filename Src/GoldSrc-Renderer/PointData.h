@@ -1,4 +1,5 @@
 #pragma once
+#include "VertexAttributeDescriptor.h"
 
 #include <glm/glm.hpp>
 
@@ -23,39 +24,14 @@ struct SGoldSrcPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(6);
-
-        AttributeDescriptionSet[0].binding = 0;
-        AttributeDescriptionSet[0].location = 0;
-        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[0].offset = offsetof(SGoldSrcPointData, Pos);
-
-        AttributeDescriptionSet[1].binding = 0;
-        AttributeDescriptionSet[1].location = 1;
-        AttributeDescriptionSet[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[1].offset = offsetof(SGoldSrcPointData, Color);
-
-        AttributeDescriptionSet[2].binding = 0;
-        AttributeDescriptionSet[2].location = 2;
-        AttributeDescriptionSet[2].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[2].offset = offsetof(SGoldSrcPointData, Normal);
-
-        AttributeDescriptionSet[3].binding = 0;
-        AttributeDescriptionSet[3].location = 3;
-        AttributeDescriptionSet[3].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptionSet[3].offset = offsetof(SGoldSrcPointData, TexCoord);
-
-        AttributeDescriptionSet[4].binding = 0;
-        AttributeDescriptionSet[4].location = 4;
-        AttributeDescriptionSet[4].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptionSet[4].offset = offsetof(SGoldSrcPointData, LightmapCoord);
-
-        AttributeDescriptionSet[5].binding = 0;
-        AttributeDescriptionSet[5].location = 5;
-        AttributeDescriptionSet[5].format = VK_FORMAT_R32_UINT;
-        AttributeDescriptionSet[5].offset = offsetof(SGoldSrcPointData, TexIndex);
-
-        return AttributeDescriptionSet;
+        CVertexAttributeDescriptor Descriptor;
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SGoldSrcPointData, Pos));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SGoldSrcPointData, Color));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SGoldSrcPointData, Normal));
+        Descriptor.add(VK_FORMAT_R32G32_SFLOAT, offsetof(SGoldSrcPointData, TexCoord));
+        Descriptor.add(VK_FORMAT_R32G32_SFLOAT, offsetof(SGoldSrcPointData, LightmapCoord));
+        Descriptor.add(VK_FORMAT_R32_UINT, offsetof(SGoldSrcPointData, TexIndex));
+        return Descriptor.generate();
     }
 };
 
@@ -78,32 +54,11 @@ struct SSimplePointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(4);
-        uint32_t Index = 0;
-        AttributeDescriptionSet[Index].binding = 0;
-        AttributeDescriptionSet[Index].location = Index;
-        AttributeDescriptionSet[Index].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, Pos);
-        Index++;
-
-        AttributeDescriptionSet[Index].binding = 0;
-        AttributeDescriptionSet[Index].location = Index;
-        AttributeDescriptionSet[Index].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, Normal);
-        Index++;
-
-        AttributeDescriptionSet[Index].binding = 0;
-        AttributeDescriptionSet[Index].location = Index;
-        AttributeDescriptionSet[Index].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, TexCoord);
-        Index++;
-
-        AttributeDescriptionSet[Index].binding = 0;
-        AttributeDescriptionSet[Index].location = Index;
-        AttributeDescriptionSet[Index].format = VK_FORMAT_R32_UINT;
-        AttributeDescriptionSet[Index].offset = offsetof(SSimplePointData, TexIndex);
-        Index++;
-
-        return AttributeDescriptionSet;
+        CVertexAttributeDescriptor Descriptor;
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SSimplePointData, Pos));
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SSimplePointData, Normal));
+        Descriptor.add(VK_FORMAT_R32G32_SFLOAT, offsetof(SSimplePointData, TexCoord));
+        Descriptor.add(VK_FORMAT_R32_UINT, offsetof(SSimplePointData, TexIndex));
+        return Descriptor.generate();
     }
 };

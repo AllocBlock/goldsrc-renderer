@@ -3,10 +3,10 @@
 
 using namespace Common;
 
-bool GoldSrc::readWad(std::filesystem::path vWadPath, CIOGoldsrcWad& voWad)
+bool GoldSrc::readWad(std::filesystem::path vWadPath, std::filesystem::path vAdditionalSearchDir, CIOGoldsrcWad& voWad)
 {
     std::filesystem::path RealWadPath;
-    if (!Scene::requestFilePathUntilCancel(vWadPath, ".wad", RealWadPath))
+    if (!Scene::requestFilePathUntilCancel(vWadPath, vAdditionalSearchDir, ".wad", RealWadPath))
     {
         Common::Log::log(u8"Î´ÕÒµ½WADÎÄ¼þ£º" + vWadPath.u8string());
         return false;
@@ -18,13 +18,13 @@ bool GoldSrc::readWad(std::filesystem::path vWadPath, CIOGoldsrcWad& voWad)
     return true;
 }
 
-std::vector<CIOGoldsrcWad> GoldSrc::readWads(const std::vector<std::filesystem::path>& vWadPaths)
+std::vector<CIOGoldsrcWad> GoldSrc::readWads(const std::vector<std::filesystem::path>& vWadPaths, std::filesystem::path vAdditionalSearchDir)
 {
     std::vector<CIOGoldsrcWad> Wads(vWadPaths.size());
 
     for (size_t i = 0; i < vWadPaths.size(); ++i)
     {
-        readWad(vWadPaths[i], Wads[i]);
+        readWad(vWadPaths[i], vAdditionalSearchDir, Wads[i]);
     }
     return Wads;
 }

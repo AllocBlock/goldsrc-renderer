@@ -58,7 +58,7 @@ void CSceneReaderBsp::__readTextures()
     m_TexNameToIndex.clear();
     // read wads
     const std::vector<std::filesystem::path>& WadPaths = Lumps.m_LumpEntity.WadPaths;
-    std::vector<CIOGoldsrcWad> Wads = GoldSrc::readWads(WadPaths);
+    std::vector<CIOGoldsrcWad> Wads = GoldSrc::readWads(WadPaths, m_FilePath.parent_path());
 
     // load textures
     // iterate each texture in texture lump
@@ -661,7 +661,7 @@ void CSceneReaderBsp::__loadPointEntities()
             std::string Name = (Entity.Properties.find("model") != Entity.Properties.end()) ? Entity.Properties.at("model") : "";
 
             std::filesystem::path RealWadPath;
-            if (Scene::requestFilePathUntilCancel(Name, ".spr", RealWadPath))
+            if (Scene::requestFilePathUntilCancel(Name, m_FilePath.parent_path(), ".spr", RealWadPath))
             {
                 CIOGoldSrcSpr Spr;
                 Spr.read(RealWadPath);

@@ -1,6 +1,7 @@
 #include "PipelineSprite.h"
 #include "Vulkan.h"
 #include "Function.h"
+#include "VertexAttributeDescriptor.h"
 
 #include <glm/ext/matrix_transform.hpp>
 
@@ -23,19 +24,10 @@ struct SPositionUVPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        std::vector<VkVertexInputAttributeDescription> AttributeDescriptionSet(2);
-
-        AttributeDescriptionSet[0].binding = 0;
-        AttributeDescriptionSet[0].location = 0;
-        AttributeDescriptionSet[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        AttributeDescriptionSet[0].offset = offsetof(SPositionUVPointData, Pos);
-
-        AttributeDescriptionSet[1].binding = 0;
-        AttributeDescriptionSet[1].location = 1;
-        AttributeDescriptionSet[1].format = VK_FORMAT_R32G32_SFLOAT;
-        AttributeDescriptionSet[1].offset = offsetof(SPositionUVPointData, TexCoord);
-
-        return AttributeDescriptionSet;
+        CVertexAttributeDescriptor Descriptor;
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPositionUVPointData, Pos));
+        Descriptor.add(VK_FORMAT_R32G32_SFLOAT, offsetof(SPositionUVPointData, TexCoord));
+        return Descriptor.generate();
     }
 };
 

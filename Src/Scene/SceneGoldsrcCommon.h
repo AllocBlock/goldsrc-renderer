@@ -9,7 +9,7 @@ namespace Common
 {
     namespace GoldSrc
     {
-        bool readWad(std::filesystem::path vWadPath, CIOGoldsrcWad& voWad);
-        std::vector<CIOGoldsrcWad> readWads(const std::vector<std::filesystem::path>& vWadPaths);
+        bool readWad(std::filesystem::path vWadPath, std::filesystem::path vAdditionalSearchDir, CIOGoldsrcWad& voWad);
+        std::vector<CIOGoldsrcWad> readWads(const std::vector<std::filesystem::path>& vWadPaths, std::filesystem::path vAdditionalSearchDir = "");
     }
 }

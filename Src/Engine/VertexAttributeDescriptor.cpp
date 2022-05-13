@@ -1,6 +1,6 @@
 #include "VertexAttributeDescriptor.h"
 
-std::vector<VkVertexInputAttributeDescription> VertexAttributeDescriptor::generate()
+std::vector<VkVertexInputAttributeDescription> CVertexAttributeDescriptor::generate()
 {
     _ASSERTE(m_FormatSet.size() == m_OffsetSet.size());
     size_t Size = m_FormatSet.size();
@@ -19,13 +19,13 @@ std::vector<VkVertexInputAttributeDescription> VertexAttributeDescriptor::genera
     return AttributeDescriptionSet;
 }
 
-void VertexAttributeDescriptor::add(VkFormat vFormat, uint32_t vOffset)
+void CVertexAttributeDescriptor::add(VkFormat vFormat, uint32_t vOffset)
 {
     m_FormatSet.emplace_back(vFormat);
     m_OffsetSet.emplace_back(vOffset);
 }
 
-void VertexAttributeDescriptor::clear()
+void CVertexAttributeDescriptor::clear()
 {
     m_FormatSet.clear();
     m_OffsetSet.clear();
