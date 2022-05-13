@@ -40,9 +40,11 @@ bool getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection,
         }
         float T1 = (vBB.Min[MainAxis] - vOrigin[MainAxis]) / vDirection[MainAxis];
         float T2 = (vBB.Max[MainAxis] - vOrigin[MainAxis]) / vDirection[MainAxis];
-        voNearT = std::min<float>(T1, T2);
-        voFarT = std::max<float>(T1, T2);
-        if (voNearT < 0) voNearT = voFarT;
+        float NearT = std::max<float>(T1, T2);
+        float FarT = std::min<float>(T1, T2);
+        if (NearT < 0) return false;
+        voNearT = NearT;
+        voFarT = FarT;
         return true;
     }
     else if (NumZero == 1) // 2D
@@ -83,9 +85,9 @@ bool getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection,
             return false;
         else
         {
+            if (NearT < 0) return false;
             voNearT = NearT;
             voFarT = FarT;
-            if (voNearT < 0) voNearT = voFarT;
             return true;
         }
     }
@@ -117,9 +119,9 @@ bool getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection,
             return false;
         else
         {
+            if (NearT < 0) return false;
             voNearT = NearT;
             voFarT = FarT;
-            if (voNearT < 0) voNearT = voFarT;
             return true;
         }
     }
