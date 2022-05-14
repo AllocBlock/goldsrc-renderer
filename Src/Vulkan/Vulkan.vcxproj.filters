@@ -60,6 +60,9 @@
     <ClInclude Include="AppInfo.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PchVulkan.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vulkan.cpp">
@@ -72,9 +75,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Surface.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanHandle.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Swapchain.cpp">

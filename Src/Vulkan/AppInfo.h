@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include "Image.h"
 #include "PhysicalDevice.h"
 #include "Device.h"

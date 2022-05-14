@@ -1,6 +1,5 @@
 #pragma once
-#include "VulkanHandle.h"
-#include "Common.h"
+#include "PchVulkan.h"
 #include "Device.h"
 
 namespace vk

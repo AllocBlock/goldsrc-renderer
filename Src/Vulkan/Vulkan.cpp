@@ -1,13 +1,8 @@
+#include "PchVulkan.h"
 #include "Vulkan.h"
 
 #include <string>
 #include <fstream>
-
-// DEBUGÊä³ö
-#ifdef _DEBUG
-#include <iostream>
-#include <iomanip>
-#endif
 
 bool vk::isValidationLayersSupported(const std::vector<const char*>& vValidationLayers)
 {

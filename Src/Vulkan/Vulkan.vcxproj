@@ -57,6 +57,10 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>PchVulkan.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>
+      </ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -73,6 +77,10 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <PrecompiledHeaderFile>PchVulkan.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>
+      </ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -90,6 +98,7 @@
     <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Instance.h" />
+    <ClInclude Include="PchVulkan.h" />
     <ClInclude Include="PhysicalDevice.h" />
     <ClInclude Include="Sampler.h" />
     <ClInclude Include="Surface.h" />
@@ -112,7 +121,6 @@
     <ClCompile Include="Swapchain.cpp" />
     <ClCompile Include="UniformBuffer.cpp" />
     <ClCompile Include="Vulkan.cpp" />
-    <ClCompile Include="VulkanHandle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

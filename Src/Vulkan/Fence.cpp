@@ -1,3 +1,4 @@
+#include "PchVulkan.h"
 #include "Fence.h"
 #include "Vulkan.h"
 #include "Device.h"

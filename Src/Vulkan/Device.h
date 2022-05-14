@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanHandle.h"
+#include "PchVulkan.h"
 #include "PhysicalDevice.h"
 #include "Surface.h"
 #include <vector>
@@ -22,6 +22,7 @@ namespace vk
 
         VkShaderModule createShaderModule(const std::vector<char>& vShaderCode) const;
         void destroyShaderModule(VkShaderModule vModule) const;
+        operator VkDevice() const { return get(); }
 
     private:
         uint32_t m_GraphicsQueueIndex = 0, m_PresentQueueIndex = 0;

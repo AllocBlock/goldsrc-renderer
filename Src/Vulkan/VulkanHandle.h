@@ -1,5 +1,7 @@
 #pragma once
-#include <vulkan/vulkan.h>
+#ifndef _VULKAN_HANDLE_H
+#define _VULKAN_HANDLE_H
+
 #include <iostream>
 #include "Pointer.h"
 
@@ -30,4 +32,4 @@ namespace vk
     };
 }
 
-
+#endif
