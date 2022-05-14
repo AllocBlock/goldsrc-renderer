@@ -117,3 +117,18 @@ void CDevice::destroyShaderModule(VkShaderModule vModule) const
     _ASSERTE(isValid());
     vkDestroyShaderModule(get(), vModule, nullptr);
 }
+
+VkSemaphore CDevice::createSemaphore() const
+{
+    VkSemaphoreCreateInfo SemaphoreInfo = {};
+    SemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    VkSemaphore Semaphore;
+    vk::checkError(vkCreateSemaphore(get(), &SemaphoreInfo, nullptr, &Semaphore));
+    return Semaphore;
+}
+
+void CDevice::destroySemaphore(VkSemaphore vSemaphore) const
+{
+    vkDestroySemaphore(get(), vSemaphore, nullptr);
+}

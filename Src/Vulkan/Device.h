@@ -23,7 +23,8 @@ namespace vk
 
         VkShaderModule createShaderModule(const std::vector<char>& vShaderCode) const;
         void destroyShaderModule(VkShaderModule vModule) const;
-        operator VkDevice() const { return get(); }
+        VkSemaphore createSemaphore() const;
+        void destroySemaphore(VkSemaphore vSemaphore) const;
 
     private:
         CPhysicalDevice::CPtr m_pPhysicalDevice = nullptr;

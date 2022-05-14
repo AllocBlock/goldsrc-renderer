@@ -1,4 +1,5 @@
 #include "PipelineLight.h"
+#include "Function.h"
 
 struct SUBOVertLight
 {
@@ -7,31 +8,6 @@ struct SUBOVertLight
     alignas(16) glm::mat4 Model;
     alignas(16) glm::mat4 LightMVP;
 };
-
-void CPipelineLight::__createPlaceholderImage()
-{
-    uint8_t PixelData = 0;
-    VkImageCreateInfo ImageInfo = {};
-    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = 1;
-    ImageInfo.extent.height = 1;
-    ImageInfo.extent.depth = 1;
-    ImageInfo.mipLevels = 1;
-    ImageInfo.arrayLayers = 1;
-    ImageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    vk::SImageViewInfo ViewInfo;
-    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-
-    m_pPlaceholderImage = make<vk::CImage>();
-    m_pPlaceholderImage->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-}
 
 void CPipelineLight::__updateDescriptorSet()
 {
@@ -110,7 +86,7 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
     );
     vk::checkError(vkCreateSampler(m_pDevice, &SamplerInfo, nullptr, &m_TextureSampler));
 
-    __createPlaceholderImage();
+    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
     __updateDescriptorSet();
 }
 

@@ -53,7 +53,6 @@ protected:
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
 
 private:
-    void __createPlaceholderImage();
     void __updateDescriptorSet();
     void __destroyResources();
 

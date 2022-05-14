@@ -38,8 +38,8 @@ void CApplicationBase::destroy()
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
-        vkDestroySemaphore(*m_pDevice, m_RenderFinishedSemaphores[i], nullptr);
-        vkDestroySemaphore(*m_pDevice, m_ImageAvailableSemaphores[i], nullptr);
+        m_pDevice->destroySemaphore(m_RenderFinishedSemaphores[i]);
+        m_pDevice->destroySemaphore(m_ImageAvailableSemaphores[i]);
         m_InFlightFenceSet[i]->destroy();
     }
 
@@ -193,13 +193,10 @@ void CApplicationBase::__createSemaphores()
     m_RenderFinishedSemaphores.resize(m_MaxFrameInFlight);
     m_InFlightFenceSet.resize(m_MaxFrameInFlight);
 
-    VkSemaphoreCreateInfo SemaphoreInfo = {};
-    SemaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
     {
-        vk::checkError(vkCreateSemaphore(*m_pDevice, &SemaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]));
-        vk::checkError(vkCreateSemaphore(*m_pDevice, &SemaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]));
+        m_ImageAvailableSemaphores[i] = m_pDevice->createSemaphore();
+        m_RenderFinishedSemaphores[i] = m_pDevice->createSemaphore();
         m_InFlightFenceSet[i] = make<vk::CFence>();
         m_InFlightFenceSet[i]->create(m_pDevice, true);
     }
