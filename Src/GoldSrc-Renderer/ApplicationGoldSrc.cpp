@@ -153,11 +153,11 @@ void CApplicationGoldSrc::__linkPasses()
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        pLinkScene->link("Output", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkLine->link("Input", ImageViews[i], EPortType::INPUT, i);
-        pLinkLine->link("Depth", pLinkScene->getOutput("Depth", i), EPortType::INPUT, i);
-        pLinkLine->link("Output", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkGui->link("Input", ImageViews[i], EPortType::INPUT, i);
-        pLinkGui->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkScene->linkOutput("Output", ImageViews[i], i);
+        pLinkLine->linkInput("Input", ImageViews[i], i);
+        pLinkLine->linkInput("Depth", pLinkScene->getOutput("Depth", i), i);
+        pLinkLine->linkOutput("Output", ImageViews[i], i);
+        pLinkGui->linkInput("Input", ImageViews[i], i);
+        pLinkGui->linkOutput("Output", ImageViews[i], i);
     }
 }

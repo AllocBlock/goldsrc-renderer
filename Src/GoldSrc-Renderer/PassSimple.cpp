@@ -16,22 +16,6 @@ void CSceneSimpleRenderPass::_loadSceneV(ptr<SScene> vScene)
 {
     m_AppInfo.pDevice->waitUntilIdle();
     m_pScene = vScene;
-    m_ObjectDataPositions.resize(m_pScene->Objects.size());
-
-    size_t IndexOffset = 0;
-    size_t VertexOffset = 0;
-    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
-    {
-        ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[i];
-        if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
-        {
-            m_ObjectDataPositions[i].Offset = VertexOffset;
-            m_ObjectDataPositions[i].Size = pObject->getVertexArray()->size();
-            VertexOffset += m_ObjectDataPositions[i].Size;
-        }
-        else
-            throw std::runtime_error(u8"物体类型错误");
-    }
 
     m_AreObjectsVisable.clear();
     m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
@@ -62,6 +46,7 @@ void CSceneSimpleRenderPass::_initV()
 CRenderPassPort CSceneSimpleRenderPass::_getPortV()
 {
     CRenderPassPort Ports;
+    Ports.addInput("Input", m_AppInfo.ImageFormat, m_AppInfo.Extent);
     Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
     return Ports;
 }
@@ -204,10 +189,9 @@ void CSceneSimpleRenderPass::__destroyRecreateResources()
 
 void CSceneSimpleRenderPass::__createSceneResources()
 {
-    __createTextureImages(); // scene
+    __createTextureImages();
     __updateDescriptorSets();
-    __createVertexBuffer(); // scene
-    __createIndexBuffer(); // scene
+    __createVertexBuffer();
 
     m_EnableSky = m_EnableSky && m_pScene && m_pScene->UseSkyBox;
 
@@ -232,21 +216,7 @@ void CSceneSimpleRenderPass::__destroySceneResources()
 void CSceneSimpleRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
-
-    _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
-    ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
-    SObjectDataPosition DataPosition = m_ObjectDataPositions[vObjectIndex];
-
-    uint32_t Size = static_cast<uint32_t>(DataPosition.Size);
-    uint32_t Offset = static_cast<uint32_t>(DataPosition.Offset);
-    if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::INDEXED_TRIAGNLE_LIST)
-        vkCmdDrawIndexed(CommandBuffer, Size, 1, Offset, 0, 0);
-    else if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
-        vkCmdDraw(CommandBuffer, Size, 1, Offset, 0);
-    else if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_STRIP_LIST)
-        vkCmdDraw(CommandBuffer, Size, 1, Offset, 0);
-    else
-        throw std::runtime_error(u8"物体类型错误");
+    _recordObjectRenderCommand(CommandBuffer, vObjectIndex);
 }
 
 void CSceneSimpleRenderPass::__createRenderPass()
@@ -371,40 +341,6 @@ void CSceneSimpleRenderPass::__createVertexBuffer()
     delete[] pData;
 }
 
-void CSceneSimpleRenderPass::__createIndexBuffer()
-{
-    /*size_t NumIndex = 0;
-    if (m_pScene)
-    {
-        for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
-            NumIndex += pObject->Indices.size();
-
-        if (NumIndex == 0)
-        {
-            Common::Log::log(u8"没有索引数据，跳过索引缓存创建");
-            return;
-        }
-    }
-    else
-        return;
-
-    VkDeviceSize BufferSize = sizeof(uint32_t) * NumIndex;
-    void* pData = new char[BufferSize];
-    size_t Offset = 0;
-    for (ptr<S3DObject> pObject : m_pScene->Objects)
-    {
-        size_t IndexOffset = Offset / sizeof(uint32_t);
-        std::vector<uint32_t> Indices = pObject->Indices;
-        for (uint32_t& Index : Indices)
-            Index += IndexOffset;
-        size_t SubBufferSize = sizeof(uint32_t) * Indices.size();
-        memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
-        Offset += SubBufferSize;
-    }
-    vk::stageFillBuffer(**m_AppInfo.pDevice, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
-    delete[] pData;*/
-}
-
 void CSceneSimpleRenderPass::__updateDescriptorSets()
 {
     std::vector<VkImageView> TextureSet(m_TextureImageSet.size());
@@ -479,48 +415,12 @@ void CSceneSimpleRenderPass::__calculateVisiableObjects()
 
             // frustum culling: don't draw object outside of view (judge by bounding box)
             if (m_EnableFrustumCulling)
-                if (!__isObjectInSight(m_pScene->Objects[i], Frustum))
+                if (!_isObjectInSight(m_pScene->Objects[i], Frustum))
                     continue;
         }
 
         m_AreObjectsVisable[i] = true;
     }
-}
-
-bool CSceneSimpleRenderPass::__isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const
-{
-    // AABB frustum culling
-    const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;
-    std::optional<S3DBoundingBox> BoundingBox = vpObject->getBoundingBox();
-    if (BoundingBox == std::nullopt) return false;
-
-    std::array<glm::vec3, 8> BoundPoints = {};
-    for (int i = 0; i < 8; ++i)
-    {
-        float X = ((i & 1) ? BoundingBox.value().Min.x : BoundingBox.value().Max.x);
-        float Y = ((i & 2) ? BoundingBox.value().Min.y : BoundingBox.value().Max.y);
-        float Z = ((i & 4) ? BoundingBox.value().Min.z : BoundingBox.value().Max.z);
-        BoundPoints[i] = glm::vec3(X, Y, Z);
-    }
-
-    // for each frustum plane
-    for (int i = 0; i < 6; ++i)
-    {
-        glm::vec3 Normal = glm::vec3(FrustumPlanes[i].x, FrustumPlanes[i].y, FrustumPlanes[i].z);
-        float D = FrustumPlanes[i].w;
-        // if all of the vertices in bounding is behind this plane, the object should not be drawn
-        bool NoDraw = true;
-        for (int k = 0; k < 8; ++k)
-        {
-            if (glm::dot(Normal, BoundPoints[k]) + D > 0)
-            {
-                NoDraw = false;
-                break;
-            }
-        }
-        if (NoDraw) return false;
-    }
-    return true;
 }
 
 void CSceneSimpleRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)

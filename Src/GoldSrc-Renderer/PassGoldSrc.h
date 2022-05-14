@@ -20,26 +20,6 @@
 #include <optional>
 #include <set>
 
-struct SPipelineSet
-{
-    CPipelineDepthTest DepthTest;
-    CPipelineBlendAlpha BlendTextureAlpha;
-    CPipelineBlendAlphaTest BlendAlphaTest;
-    CPipelineBlendAdditive BlendAdditive;
-    CPipelineSprite Sprite;
-    CPipelineSkybox Sky;
-
-    void destroy()
-    {
-        DepthTest.destroy();
-        BlendTextureAlpha.destroy();
-        BlendAlphaTest.destroy();
-        BlendAdditive.destroy();
-        Sprite.destroy();
-        Sky.destroy();
-    }
-};
-
 class CSceneGoldSrcRenderPass : public CSceneRenderPass
 {
 public:
@@ -108,7 +88,6 @@ private:
     void __createTextureImages();
     void __createLightmapImage();
     void __createVertexBuffer();
-    void __createIndexBuffer();
     
     void __createRecreateResources();
     void __destroyRecreateResources();
@@ -124,7 +103,6 @@ private:
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
-    bool __isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
     std::vector<size_t> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
@@ -136,7 +114,26 @@ private:
 
     std::vector<SGoldSrcPointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
 
-    SPipelineSet m_PipelineSet = SPipelineSet();
+    struct
+    {
+        CPipelineDepthTest DepthTest;
+        CPipelineBlendAlpha BlendTextureAlpha;
+        CPipelineBlendAlphaTest BlendAlphaTest;
+        CPipelineBlendAdditive BlendAdditive;
+        CPipelineSprite Sprite;
+        CPipelineSkybox Sky;
+
+        void destroy()
+        {
+            DepthTest.destroy();
+            BlendTextureAlpha.destroy();
+            BlendAlphaTest.destroy();
+            BlendAdditive.destroy();
+            Sprite.destroy();
+            Sky.destroy();
+        }
+    } m_PipelineSet;
+
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
@@ -150,7 +147,6 @@ private:
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;
     std::set<size_t> m_RenderedObjectSet;
-    std::vector<SObjectDataPosition> m_ObjectDataPositions;
     bool m_EnableSky = true;
     bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;

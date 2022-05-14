@@ -16,18 +16,6 @@
 #include <array>
 #include <set>
 
-struct SSimplePipelineSet
-{
-    CPipelineSimple Main;
-    CPipelineSkybox Sky;
-
-    void destroy()
-    {
-        Main.destroy();
-        Sky.destroy();
-    }
-};
-
 class CSceneSimpleRenderPass : public CSceneRenderPass
 {
 public:
@@ -68,7 +56,6 @@ private:
     void __createFramebuffers();
     void __createTextureImages();
     void __createVertexBuffer();
-    void __createIndexBuffer();
 
     void __createRecreateResources();
     void __destroyRecreateResources();
@@ -78,7 +65,6 @@ private:
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
-    bool __isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum) const;
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
 
@@ -88,7 +74,18 @@ private:
 
     std::vector<SSimplePointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
 
-    SSimplePipelineSet m_PipelineSet = SSimplePipelineSet();
+    struct
+    {
+        CPipelineSimple Main;
+        CPipelineSkybox Sky;
+
+        void destroy()
+        {
+            Main.destroy();
+            Sky.destroy();
+        }
+    } m_PipelineSet;
+
     CCommand m_Command = CCommand();
     std::string m_SceneCommandName = "Scene";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
@@ -100,7 +97,6 @@ private:
 
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;
-    std::vector<SObjectDataPosition> m_ObjectDataPositions;
     bool m_EnableSky = true;
     bool m_EnableCulling = false;
     bool m_EnableFrustumCulling = false;

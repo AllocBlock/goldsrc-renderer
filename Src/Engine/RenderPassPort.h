@@ -65,6 +65,8 @@ public:
 
     void link(const SLink& vLink);
     void link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
+    void linkInput(std::string vTargetName, VkImageView vImageView, size_t vIndex = 0) { return link(vTargetName, vImageView, EPortType::INPUT, vIndex); }
+    void linkOutput(std::string vTargetName, VkImageView vImageView, size_t vIndex = 0) { return link(vTargetName, vImageView, EPortType::OUTPUT, vIndex); }
     void unlink(const SLink& vLink);
     void unlink(std::string vTargetName, EPortType vType, size_t vIndex = 0);
     bool hasLink(const SLink& vLink) const;
