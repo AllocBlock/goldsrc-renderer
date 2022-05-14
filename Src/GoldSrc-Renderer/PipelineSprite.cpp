@@ -70,7 +70,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSpriteImageSet[i].pImage);
+        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_pDevice, vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -189,7 +189,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     m_VertexNum = PointData.size();
 
     m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_pPhysicalDevice, m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(PointData.data(), DataSize);
 
     // uniform buffer
@@ -199,11 +199,11 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }
 
     // sampler
-    const auto& Properties = m_pPhysicalDevice->getProperty();
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
@@ -214,7 +214,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     auto pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(Data);
-    m_pPlaceholderImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, pTinyImage);
+    m_pPlaceholderImage = Function::createImageFromIOImage(m_pDevice, pTinyImage);
 }
 
 void CPipelineSprite::_initDescriptorV()

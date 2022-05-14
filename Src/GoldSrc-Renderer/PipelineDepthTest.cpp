@@ -148,12 +148,12 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, FragBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
-    const auto& Properties = m_pPhysicalDevice->getProperty();
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
@@ -178,7 +178,7 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
     vk::SImageViewInfo ViewInfo;
 
     m_pPlaceholderImage = make<vk::CImage>();
-    m_pPlaceholderImage->create(m_pPhysicalDevice, m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pPlaceholderImage->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
 void CPipelineDepthTest::_initDescriptorV()

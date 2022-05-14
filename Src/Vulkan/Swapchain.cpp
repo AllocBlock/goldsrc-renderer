@@ -4,13 +4,13 @@
 
 using namespace vk;
 
-void CSwapchain::create(CDevice::Ptr vDevice, CPhysicalDevice::Ptr vPhysicalDevice, CSurface::Ptr vSurface, GLFWwindow* vWindow)
+void CSwapchain::create(CDevice::Ptr vDevice, CSurface::Ptr vSurface, GLFWwindow* vWindow)
 {
     destroy();
 
     m_pDevice = vDevice;
 
-    const SSwapChainSupportDetails& SwapChainSupport = vPhysicalDevice->getSwapChainSupportInfo();
+    const SSwapChainSupportDetails& SwapChainSupport = vDevice->getPhysicalDevice()->getSwapChainSupportInfo();
     VkSurfaceFormatKHR SurfaceFormat = __chooseSwapSurfaceFormat(SwapChainSupport.Formats);
     VkPresentModeKHR PresentMode = __chooseSwapPresentMode(SwapChainSupport.PresentModes);
     VkExtent2D Extent = __chooseSwapExtent(vWindow, SwapChainSupport.Capabilities);
@@ -32,7 +32,7 @@ void CSwapchain::create(CDevice::Ptr vDevice, CPhysicalDevice::Ptr vPhysicalDevi
     SwapChainInfo.imageArrayLayers = 1;
     SwapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    const SQueueFamilyIndices& QueueIndices = vPhysicalDevice->getQueueFamilyInfo();
+    const SQueueFamilyIndices& QueueIndices = vDevice->getPhysicalDevice()->getQueueFamilyInfo();
     uint32_t QueueFamilyIndices[] = { QueueIndices.GraphicsFamilyIndex.value(), QueueIndices.PresentFamilyIndex.value() };
 
     if (QueueIndices.GraphicsFamilyIndex != QueueIndices.PresentFamilyIndex)

@@ -146,7 +146,7 @@ void CLineRenderPass::__rerecordCommand()
 
 void CLineRenderPass::__createRecreateResources()
 {
-    m_PipelineLine.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineLine.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
     m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
 }
 
@@ -203,7 +203,7 @@ void CLineRenderPass::__createRenderPass()
 
 void CLineRenderPass::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_CommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 

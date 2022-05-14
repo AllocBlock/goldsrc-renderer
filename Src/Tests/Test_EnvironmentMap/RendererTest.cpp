@@ -161,7 +161,7 @@ void CRendererTest::__destroyRenderPass()
 
 void CRendererTest::__createGraphicsPipeline()
 {
-    m_Pipeline.create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_RenderPass, m_AppInfo.Extent);
+    m_Pipeline.create(**m_AppInfo.pDevice, m_RenderPass, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createCommandPoolAndBuffers()
@@ -182,7 +182,7 @@ void CRendererTest::__createCommandPoolAndBuffers()
 
 void CRendererTest::__createDepthResources()
 {
-    m_pDepthImage = vk::createDepthImage(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_AppInfo.Extent);
+    m_pDepthImage = vk::createDepthImage(**m_AppInfo.pDevice, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createFramebuffers()
@@ -211,7 +211,7 @@ void CRendererTest::__createVertexBuffer()
     {
         VkDeviceSize BufferSize = sizeof(STestPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(**m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }

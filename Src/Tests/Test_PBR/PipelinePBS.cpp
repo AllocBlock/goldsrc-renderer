@@ -66,8 +66,8 @@ void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::
 {
     if (m_pSkyImage) m_pSkyImage->destroy();
     if (m_pSkyIrrImage) m_pSkyIrrImage->destroy();
-    m_pSkyImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSkyImage, m_MipmapLevelNum);
-    m_pSkyIrrImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSkyIrrImage);
+    m_pSkyImage = Function::createImageFromIOImage(m_pDevice, vSkyImage, m_MipmapLevelNum);
+    m_pSkyIrrImage = Function::createImageFromIOImage(m_pDevice, vSkyIrrImage);
 
     // FIXME: 
     if (isReady())
@@ -76,7 +76,7 @@ void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::
 
 void CPipelinePBS::__createPlaceholderImage()
 {
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_pPhysicalDevice, m_pDevice);
+    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
 }
 
 void CPipelinePBS::__updateDescriptorSet()
@@ -150,9 +150,9 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, FragBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
     const auto& Properties = m_pPhysicalDevice->getProperty();
@@ -167,7 +167,7 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
     __createPlaceholderImage();
     CIOImage::Ptr pBRDFIOImage = make<CIOImage>("./textures/brdf.png");
     pBRDFIOImage->read();
-    m_pBRDFImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, pBRDFIOImage);
+    m_pBRDFImage = Function::createImageFromIOImage(m_pDevice, pBRDFIOImage);
 }
 
 void CPipelinePBS::_initDescriptorV()

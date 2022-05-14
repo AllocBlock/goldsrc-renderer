@@ -16,7 +16,7 @@ VkFormat toVulkanFormat(EPixelFormat vPixelFormat)
     }
 }
 
-CImage::Ptr Function::createImageFromIOImage(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, CIOImage::CPtr vImage, int vMipLevel)
+CImage::Ptr Function::createImageFromIOImage(CDevice::CPtr vDevice, CIOImage::CPtr vImage, int vMipLevel)
 {
     _ASSERTE(vImage->getData());
     VkDeviceSize DataSize = vImage->getDataSize();
@@ -42,7 +42,7 @@ CImage::Ptr Function::createImageFromIOImage(CPhysicalDevice::CPtr vPhysicalDevi
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
     CImage::Ptr pImage = make<CImage>();
-    pImage->create(vPhysicalDevice, vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    pImage->create(vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
     pImage->stageFill(vImage->getData(), DataSize, vMipLevel > 1 ? false : true);
     if (vMipLevel > 1)
@@ -52,18 +52,18 @@ CImage::Ptr Function::createImageFromIOImage(CPhysicalDevice::CPtr vPhysicalDevi
     return pImage;
 }
 
-CImage::Ptr Function::createPlaceholderImage(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice)
+CImage::Ptr Function::createPlaceholderImage(CDevice::CPtr vDevice)
 {
     // placeholder image
     uint8_t Data[4] = { 0, 0, 0, 0 };
     CIOImage::Ptr pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(Data);
-    return Function::createImageFromIOImage(vPhysicalDevice, vDevice, pTinyImage);
+    return Function::createImageFromIOImage(vDevice, pTinyImage);
 }
 
 
-CImage::Ptr Function::createDepthImage(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
+CImage::Ptr Function::createDepthImage(CDevice::CPtr vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
 {
     CImage::Ptr pImage = make<CImage>();
 
@@ -85,7 +85,7 @@ CImage::Ptr Function::createDepthImage(CPhysicalDevice::CPtr vPhysicalDevice, CD
     SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-    pImage->create(vPhysicalDevice, vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    pImage->create(vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 
     VkCommandBuffer CommandBuffer = beginSingleTimeBuffer();
     pImage->transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);

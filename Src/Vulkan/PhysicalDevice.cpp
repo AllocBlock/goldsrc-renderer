@@ -41,6 +41,7 @@ CPhysicalDevice::Ptr CPhysicalDevice::chooseBestDevice(CInstance::CPtr vInstance
     pDevice->m_QueueFamilyInfo = __findQueueFamilies(ChosenDevice, vSurface);
     pDevice->m_SwapChainSupportInfo = __getSwapChainSupport(ChosenDevice, vSurface);
     pDevice->_set(ChosenDevice);
+    pDevice->m_pInstance = vInstance;
     return pDevice;
 }
 
@@ -58,6 +59,11 @@ void CPhysicalDevice::printSupportedExtension() const
     }
 }
 
+CInstance::CPtr CPhysicalDevice::getInstance() const
+{
+    return m_pInstance;
+}
+
 const VkPhysicalDeviceProperties& CPhysicalDevice::getProperty() const
 {
     return m_DeviceProperty;
@@ -66,6 +72,7 @@ const VkPhysicalDeviceProperties& CPhysicalDevice::getProperty() const
 void CPhysicalDevice::release()
 {
     _setNull();
+    m_pInstance = nullptr;
     m_DeviceProperty = {};
     m_QueueFamilyInfo = {};
     m_SwapChainSupportInfo = {};

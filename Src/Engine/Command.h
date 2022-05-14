@@ -25,7 +25,7 @@ public:
     CCommand() = default;
     ~CCommand();
 
-    void createPool(vk::CDevice::CPtr vDevice, ECommandType vType, uint32_t vQueueIndex);
+    void createPool(vk::CDevice::CPtr vDevice, ECommandType vType, uint32_t vQueueIndex = std::numeric_limits<uint32_t>::max());
     void createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel);
     VkCommandBuffer getCommandBuffer(std::string vName, uint32_t vIndex) const;
     size_t getCommandBufferSize(std::string vName) const;

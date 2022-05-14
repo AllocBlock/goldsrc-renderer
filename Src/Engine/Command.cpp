@@ -11,6 +11,9 @@ CCommand::~CCommand()
 void CCommand::createPool(CDevice::CPtr vDevice, ECommandType vType, uint32_t vQueueIndex)
 {
     _ASSERTE(vDevice != VK_NULL_HANDLE);
+    if (vQueueIndex == std::numeric_limits<uint32_t>::max()) // use graphics queue index in device
+        vQueueIndex = vDevice->getGraphicsQueueIndex();
+
     if (m_CommandPool != VK_NULL_HANDLE)
         clear();
 

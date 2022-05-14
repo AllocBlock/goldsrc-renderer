@@ -18,7 +18,7 @@ namespace vk
     public:
         _DEFINE_PTR(CImage);
 
-        void create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo);
+        void create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo);
         void setImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
         void destroy();
         bool isValid();
@@ -35,7 +35,6 @@ namespace vk
         void __createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo);
 
         bool m_IsSet = false;
-        CPhysicalDevice::CPtr m_pPhysicalDevice = nullptr;
         CDevice::CPtr m_pDevice = nullptr;
         VkImage m_Image = VK_NULL_HANDLE;
         VkDeviceMemory m_Memory = VK_NULL_HANDLE;

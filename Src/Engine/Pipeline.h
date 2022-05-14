@@ -15,7 +15,7 @@ struct IPipeline : public IGUI
 public:
     IPipeline() = default;
 
-    void create(vk::CPhysicalDevice::CPtr vPhysicalDevice, vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
+    void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void setImageNum(size_t vImageNum);
     void destroy();
     void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
@@ -57,8 +57,7 @@ protected:
 
     CDescriptor m_Descriptor;
 
-    vk::CPhysicalDevice::CPtr m_pPhysicalDevice = VK_NULL_HANDLE;
-    vk::CDevice::CPtr m_pDevice = VK_NULL_HANDLE;
+    vk::CDevice::CPtr m_pDevice = nullptr;
     VkPipeline m_Pipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 };

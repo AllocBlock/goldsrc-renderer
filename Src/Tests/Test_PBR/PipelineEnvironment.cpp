@@ -9,7 +9,7 @@ struct SUBOVert
 
 void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
 {
-    m_pEnvironmentImage = Function::createImageFromIOImage(m_pPhysicalDevice, m_pDevice, vSkyImage);
+    m_pEnvironmentImage = Function::createImageFromIOImage(m_pDevice, vSkyImage);
     __precalculateIBL(vSkyImage);
     __updateDescriptorSet();
     m_Ready = true;
@@ -53,7 +53,7 @@ void CPipelineEnvironment::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_FragUBSet[i] = make<vk::CUniformBuffer>();
-        m_FragUBSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
+        m_FragUBSet[i]->create(m_pDevice, VertBufferSize);
     }
 
     const auto& Properties = m_pPhysicalDevice->getProperty();
@@ -83,7 +83,7 @@ void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
 
 void CPipelineEnvironment::__createPlaceholderImage()
 {
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_pPhysicalDevice, m_pDevice);
+    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
 }
 
 void CPipelineEnvironment::__updateDescriptorSet()

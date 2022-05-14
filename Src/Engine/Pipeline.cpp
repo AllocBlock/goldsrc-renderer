@@ -75,11 +75,10 @@ std::vector<VkPushConstantRange> IPipeline::getDefaultPushConstantRangeSet()
     return {};
 }
 
-void IPipeline::create(vk::CPhysicalDevice::CPtr vPhysicalDevice, vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
+void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
 {
     destroy();
 
-    m_pPhysicalDevice = vPhysicalDevice;
     m_pDevice = vDevice;
 
     _initDescriptorV();
@@ -185,7 +184,6 @@ void IPipeline::destroy()
     m_PipelineLayout = VK_NULL_HANDLE;
     m_Pipeline = VK_NULL_HANDLE;
     m_pDevice = VK_NULL_HANDLE;
-    m_pPhysicalDevice = VK_NULL_HANDLE;
 }
 
 void IPipeline::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)

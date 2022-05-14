@@ -11,9 +11,10 @@ namespace vk
     public:
         _DEFINE_PTR(CDevice);
 
-        void create(CPhysicalDevice::CPtr vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet);
+        void create(CPhysicalDevice::CPtr vPhysicalDevice, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet);
         void destroy();
         void waitUntilIdle() const;
+        CPhysicalDevice::CPtr getPhysicalDevice() const;
         uint32_t getGraphicsQueueIndex() const;
         uint32_t getPresentQueueIndex() const;
         VkQueue getGraphicsQueue() const;
@@ -25,6 +26,7 @@ namespace vk
         operator VkDevice() const { return get(); }
 
     private:
+        CPhysicalDevice::CPtr m_pPhysicalDevice = nullptr;
         uint32_t m_GraphicsQueueIndex = 0, m_PresentQueueIndex = 0;
         VkQueue m_GraphicsQueue = VK_NULL_HANDLE, m_PresentQueue = VK_NULL_HANDLE;
     };

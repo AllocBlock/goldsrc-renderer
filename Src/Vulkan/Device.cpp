@@ -5,9 +5,11 @@
 
 using namespace vk;
 
-void CDevice::create(CPhysicalDevice::CPtr vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet)
+void CDevice::create(CPhysicalDevice::CPtr vPhysicalDevice, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet)
 {
     destroy();
+
+    m_pPhysicalDevice = vPhysicalDevice;
 
     const vk::SQueueFamilyIndices& QueueIndices = vPhysicalDevice->getQueueFamilyInfo();
 
@@ -55,11 +57,18 @@ void CDevice::destroy()
      
     m_GraphicsQueueIndex = m_PresentQueueIndex = 0;
     m_GraphicsQueue = m_PresentQueue = VK_NULL_HANDLE;
+
+    m_pPhysicalDevice = nullptr;
 }
 
 void CDevice::waitUntilIdle() const
 {
     vk::checkError(vkDeviceWaitIdle(get()));
+}
+
+CPhysicalDevice::CPtr CDevice::getPhysicalDevice() const
+{
+    return m_pPhysicalDevice;
 }
 
 uint32_t CDevice::getGraphicsQueueIndex() const

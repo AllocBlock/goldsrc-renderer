@@ -7,11 +7,10 @@
 
 using namespace vk;
 
-void CImage::create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo)
+void CImage::create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo)
 {
     destroy();
 
-    m_pPhysicalDevice = vPhysicalDevice;
     m_pDevice = vDevice;
     m_Width = vImageInfo.extent.width;
     m_Height = vImageInfo.extent.height;
@@ -33,7 +32,7 @@ void CImage::create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice
     VkMemoryAllocateInfo AllocInfo = {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     AllocInfo.allocationSize = MemRequirements.size;
-    AllocInfo.memoryTypeIndex = vPhysicalDevice->findMemoryTypeIndex(MemRequirements.memoryTypeBits, vProperties);
+    AllocInfo.memoryTypeIndex = vDevice->getPhysicalDevice()->findMemoryTypeIndex(MemRequirements.memoryTypeBits, vProperties);
 
     vk::checkError(vkAllocateMemory(*vDevice, &AllocInfo, nullptr, &m_Memory));
 
@@ -77,8 +76,7 @@ void CImage::destroy()
     m_Format = VkFormat::VK_FORMAT_UNDEFINED;
     m_Layout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
 
-    m_pDevice = VK_NULL_HANDLE;
-    m_pPhysicalDevice = VK_NULL_HANDLE;
+    m_pDevice = nullptr;
 
     m_IsSet = false;
 }
@@ -113,7 +111,7 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     if (!isValid()) throw "Cant fill in NULL handle image";
 
     CBuffer StageBuffer;
-    StageBuffer.create(m_pPhysicalDevice, m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
     VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
@@ -269,13 +267,12 @@ void CImage::generateMipmaps(VkCommandBuffer vCommandBuffer)
     _ASSERTE(m_Layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     // Check if image format supports linear blitting
-    VkFormatProperties FormatProperties = m_pPhysicalDevice->getFormatProperty(m_Format);
+    VkFormatProperties FormatProperties = m_pDevice->getPhysicalDevice()->getFormatProperty(m_Format);
 
     if (!(FormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
     {
         throw std::runtime_error("texture image format does not support linear blitting!");
     }
-
 
     VkImageMemoryBarrier Barrier{};
     Barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;

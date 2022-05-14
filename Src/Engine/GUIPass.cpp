@@ -49,11 +49,11 @@ void CGUIRenderPass::_initV()
 
     // init vulkan
     ImGui_ImplVulkan_InitInfo InitInfo = {};
-    InitInfo.Instance = *m_AppInfo.pInstance;
-    InitInfo.PhysicalDevice = *m_AppInfo.pPhysicalDevice;
+    InitInfo.Instance = *m_AppInfo.pDevice->getPhysicalDevice()->getInstance();
+    InitInfo.PhysicalDevice = *m_AppInfo.pDevice->getPhysicalDevice();
     InitInfo.Device = *m_AppInfo.pDevice;
-    InitInfo.QueueFamily = m_AppInfo.GraphicsQueueIndex;
-    InitInfo.Queue = m_AppInfo.GraphicsQueue;
+    InitInfo.QueueFamily = m_AppInfo.pDevice->getGraphicsQueueIndex();
+    InitInfo.Queue = m_AppInfo.pDevice->getGraphicsQueue();
     InitInfo.PipelineCache = VK_NULL_HANDLE;
     InitInfo.DescriptorPool = m_DescriptorPool;
     InitInfo.Allocator = nullptr;
@@ -63,7 +63,7 @@ void CGUIRenderPass::_initV()
     ImGui_ImplVulkan_Init(&InitInfo, get());
 
     // create command pool and buffers
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_CommandName, NumImage, ECommandBufferLevel::PRIMARY);
 
     // upload font

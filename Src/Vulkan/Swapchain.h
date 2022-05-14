@@ -14,7 +14,7 @@ namespace vk
     public:
         _DEFINE_PTR(CSwapchain);
 
-        void create(CDevice::Ptr vDevice, CPhysicalDevice::Ptr vPhysicalDevice, CSurface::Ptr vSurface, GLFWwindow* vWindow);
+        void create(CDevice::Ptr vDevice, CSurface::Ptr vSurface, GLFWwindow* vWindow);
         void destroy();
         VkExtent2D getExtent();
         VkFormat getImageFormat();

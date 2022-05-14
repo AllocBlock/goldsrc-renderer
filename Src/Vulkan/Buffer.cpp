@@ -4,12 +4,11 @@
 
 using namespace vk;
 
-void CBuffer::create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties)
+void CBuffer::create(CDevice::CPtr vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties)
 {
     destroy();
 
     if (vSize == 0) throw "Size == 0";
-    m_pPhysicalDevice = vPhysicalDevice;
     m_pDevice = vDevice;
     m_Size = vSize;
     VkBufferCreateInfo BufferInfo = {};
@@ -26,7 +25,7 @@ void CBuffer::create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevic
     VkMemoryAllocateInfo AllocInfo = {};
     AllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     AllocInfo.allocationSize = MemRequirements.size;
-    AllocInfo.memoryTypeIndex = vPhysicalDevice->findMemoryTypeIndex(MemRequirements.memoryTypeBits, vProperties);
+    AllocInfo.memoryTypeIndex = vDevice->getPhysicalDevice()->findMemoryTypeIndex(MemRequirements.memoryTypeBits, vProperties);
 
     vk::checkError(vkAllocateMemory(*m_pDevice, &AllocInfo, nullptr, &m_Memory));
     vk::checkError(vkBindBufferMemory(*m_pDevice, get(), m_Memory, 0));
@@ -43,7 +42,6 @@ void CBuffer::destroy()
     m_Size = 0;
 
     m_pDevice = nullptr;
-    m_pPhysicalDevice = nullptr;
 }
 
 bool CBuffer::isValid()
@@ -84,7 +82,7 @@ void CBuffer::stageFill(const void* vData, VkDeviceSize vSize)
     if (!isValid()) throw "Cant fill in NULL handle buffer";
     else if (m_Size < vSize) throw "Cant fill in smaller buffer";
     CBuffer StageBuffer;
-    StageBuffer.create(m_pPhysicalDevice, m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
     VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();

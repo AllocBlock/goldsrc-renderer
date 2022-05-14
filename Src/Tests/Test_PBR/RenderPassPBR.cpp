@@ -142,7 +142,7 @@ void CRenderPassPBR::__createRenderPass()
 
 void CRenderPassPBR::__createGraphicsPipeline()
 {
-    m_Pipeline.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
 void CRenderPassPBR::__createCommandPoolAndBuffers()
@@ -153,7 +153,7 @@ void CRenderPassPBR::__createCommandPoolAndBuffers()
 
 void CRenderPassPBR::__createDepthResources()
 {
-    m_pDepthImage = Function::createDepthImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, m_AppInfo.Extent);
+    m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent);
 }
 
 void CRenderPassPBR::__createFramebuffers()
@@ -182,7 +182,7 @@ void CRenderPassPBR::__createVertexBuffer()
     {
         VkDeviceSize BufferSize = sizeof(SPBSPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }
@@ -191,17 +191,17 @@ void CRenderPassPBR::__createMaterials()
 { 
     CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
-    vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, pColorImage);
+    vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.pDevice, pColorImage);
     m_TextureColorSet.push_back(pColor);
 
     CIOImage::Ptr pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
     pNormalImage->read();
-    vk::CImage::Ptr pNormal = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, pNormalImage);
+    vk::CImage::Ptr pNormal = Function::createImageFromIOImage(m_AppInfo.pDevice, pNormalImage);
     m_TextureNormalSet.push_back(pNormal);
 
     CIOImage::Ptr pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
     pSpecularImage->read();
-    vk::CImage::Ptr pSpecular = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, pSpecularImage);
+    vk::CImage::Ptr pSpecular = Function::createImageFromIOImage(m_AppInfo.pDevice, pSpecularImage);
     m_TextureSpecularSet.push_back(pSpecular);
 
     _ASSERTE(m_GridSize > 0);
@@ -223,7 +223,7 @@ void CRenderPassPBR::__createMaterials()
 
     VkDeviceSize BufferSize = sizeof(SMaterialPBR) * Num;
     m_pMaterialBuffer = make<vk::CBuffer>();
-    m_pMaterialBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pMaterialBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pMaterialBuffer->stageFill(MaterialSet.data(), BufferSize);
 }
 

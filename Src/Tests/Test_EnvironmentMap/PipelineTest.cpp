@@ -66,7 +66,7 @@ void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxIm
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
     m_pSkyBoxImage = make<vk::CImage>();
-    m_pSkyBoxImage->create(m_pPhysicalDevice, m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pSkyBoxImage->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
 
@@ -96,7 +96,7 @@ void CPipelineTest::__createPlaceholderImage()
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
     m_pPlaceholderImage = make<vk::CImage>();
-    m_pPlaceholderImage->create(m_pPhysicalDevice, m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_pPlaceholderImage->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
 void CPipelineTest::__updateDescriptorSet()
@@ -173,9 +173,9 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
     for (size_t i = 0; i < vImageNum; ++i)
     {
         m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_pPhysicalDevice, m_pDevice, FragBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
     const auto& Properties = m_pPhysicalDevice->getProperty();

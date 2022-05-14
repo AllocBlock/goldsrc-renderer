@@ -9,7 +9,7 @@ namespace vk
     public:
         _DEFINE_PTR(CUniformBuffer);
 
-        void create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, VkDeviceSize vSize);
+        void create(CDevice::CPtr vDevice, VkDeviceSize vSize);
         void update(const void* vData);
     };
 }

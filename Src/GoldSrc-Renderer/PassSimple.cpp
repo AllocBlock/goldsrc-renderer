@@ -293,20 +293,20 @@ void CSceneSimpleRenderPass::__createRenderPass()
 
 void CSceneSimpleRenderPass::__createGraphicsPipelines()
 {
-    m_PipelineSet.Sky.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-    m_PipelineSet.Main.create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineSet.Sky.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineSet.Main.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
 void CSceneSimpleRenderPass::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CSceneSimpleRenderPass::__createDepthResources()
 {
     VkFormat DepthFormat = __findDepthFormat();
-    m_pDepthImage = Function::createDepthImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+    m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
 }
 
 void CSceneSimpleRenderPass::__createFramebuffers()
@@ -333,7 +333,7 @@ void CSceneSimpleRenderPass::__createTextureImages()
         m_TextureImageSet.resize(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
+            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
         }
     }
 }
@@ -366,7 +366,7 @@ void CSceneSimpleRenderPass::__createVertexBuffer()
     }
 
     m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_AppInfo.pPhysicalDevice, m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_pVertexBuffer->stageFill(pData, BufferSize);
     delete[] pData;
 }
@@ -401,7 +401,7 @@ void CSceneSimpleRenderPass::__createIndexBuffer()
         memcpy(reinterpret_cast<char*>(pData) + Offset, Indices.data(), SubBufferSize);
         Offset += SubBufferSize;
     }
-    vk::stageFillBuffer(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
+    vk::stageFillBuffer(**m_AppInfo.pDevice, pData, BufferSize, m_VertexBufferPack.Buffer, m_VertexBufferPack.Memory);
     delete[] pData;*/
 }
 
@@ -438,7 +438,7 @@ std::vector<SSimplePointData> CSceneSimpleRenderPass::__readPointData(ptr<C3DObj
 
 VkFormat CSceneSimpleRenderPass::__findDepthFormat()
 {
-    return m_AppInfo.pPhysicalDevice->chooseSupportedFormat(
+    return m_AppInfo.pDevice->getPhysicalDevice()->chooseSupportedFormat(
         { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT

@@ -15,7 +15,7 @@ void CApplicationBase::init(GLFWwindow* vWindow)
     if (ENABLE_VALIDATION_LAYERS) __setupDebugMessenger();
     m_pSurface->create(m_pInstance, m_pWindow);
     m_pPhysicalDevice = CPhysicalDevice::chooseBestDevice(m_pInstance, m_pSurface, m_DeviceExtensions);
-    m_pDevice->create(m_pPhysicalDevice, m_pSurface, m_DeviceExtensions, m_ValidationLayers);
+    m_pDevice->create(m_pPhysicalDevice, m_DeviceExtensions, m_ValidationLayers);
     __createSemaphores();
     __createSwapchain();
 
@@ -121,11 +121,7 @@ void CApplicationBase::render()
 vk::SAppInfo CApplicationBase::getAppInfo()
 {
     vk::SAppInfo Info;
-    Info.pInstance = m_pInstance;
-    Info.pPhysicalDevice = m_pPhysicalDevice;
     Info.pDevice = m_pDevice;
-    Info.GraphicsQueueIndex = m_pDevice->getGraphicsQueueIndex();
-    Info.GraphicsQueue = m_pDevice->getGraphicsQueue();
     Info.Extent = m_pSwapchain->getExtent();
     Info.ImageFormat = m_pSwapchain->getImageFormat();
     Info.ImageNum = m_pSwapchain->getImageNum();
@@ -183,7 +179,7 @@ void CApplicationBase::__setupDebugMessenger()
 
 void CApplicationBase::__createSwapchain()
 {
-    m_pSwapchain->create(m_pDevice, m_pPhysicalDevice, m_pSurface, m_pWindow);
+    m_pSwapchain->create(m_pDevice, m_pSurface, m_pWindow);
 }
 
 void CApplicationBase::__destroySwapchain()

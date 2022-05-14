@@ -109,7 +109,7 @@ void CRendererTest::__destroyRenderPass()
 
 void CRendererTest::__createGraphicsPipeline()
 {
-    m_Pipeline.create(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_RenderPass, m_AppInfo.Extent);
+    m_Pipeline.create(**m_AppInfo.pDevice, m_RenderPass, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createCommandPoolAndBuffers()
@@ -130,7 +130,7 @@ void CRendererTest::__createCommandPoolAndBuffers()
 
 void CRendererTest::__createDepthResources()
 {
-    m_pDepthImage = vk::createDepthImage(*m_AppInfo.pPhysicalDevice, *m_AppInfo.pDevice, m_AppInfo.Extent);
+    m_pDepthImage = vk::createDepthImage(**m_AppInfo.pDevice, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createFramebuffers()

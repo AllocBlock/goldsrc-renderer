@@ -4,10 +4,10 @@
 
 using namespace vk;
 
-void CUniformBuffer::create(CPhysicalDevice::CPtr vPhysicalDevice, CDevice::CPtr vDevice, VkDeviceSize vSize)
+void CUniformBuffer::create(CDevice::CPtr vDevice, VkDeviceSize vSize)
 {
     destroy();
-    CBuffer::create(vPhysicalDevice, vDevice, vSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    CBuffer::create(vDevice, vSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 void CUniformBuffer::update(const void* vData)
