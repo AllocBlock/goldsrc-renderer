@@ -1,5 +1,7 @@
 #include "RendererTest.h"
 #include "SceneCommon.h"
+#include "RenderPassDescriptor.h"
+#include "Function.h"
 
 void CRendererTest::_initV()
 {
@@ -11,6 +13,13 @@ void CRendererTest::_initV()
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
+}
+
+CRenderPassPort CRendererTest::_getPortV()
+{
+    CRenderPassPort Ports;
+    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    return Ports;
 }
 
 void CRendererTest::_recreateV()
@@ -28,6 +37,12 @@ void CRendererTest::_updateV(uint32_t vImageIndex)
 
 std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vImageIndex)
 {
+    if (m_FramebufferSet.empty() || m_pLink->isUpdated())
+    {
+        __createFramebuffers();
+        m_pLink->setUpdateState(false);
+    }
+
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
     VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
@@ -50,7 +65,6 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
 void CRendererTest::_destroyV()
 {
     __destroyRecreateResources();
-    vkDestroyRenderPass(*m_AppInfo.pDevice, m_RenderPass, nullptr);
     m_Command.clear();
 
     IRenderPass::_destroyV();
@@ -58,63 +72,18 @@ void CRendererTest::_destroyV()
 
 void CRendererTest::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, EImageType::COLOR);
-    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, VkFormat::VK_FORMAT_D32_SFLOAT, EImageType::DEPTH);
-
-    VkAttachmentReference ColorAttachmentRef = {};
-    ColorAttachmentRef.attachment = 0;
-    ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference DepthAttachmentRef = {};
-    DepthAttachmentRef.attachment = 1;
-    DepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    std::array<VkSubpassDependency, 1> SubpassDependencies = {};
-    SubpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    SubpassDependencies[0].dstSubpass = 0;
-    SubpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].srcAccessMask = 0;
-    SubpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkSubpassDescription SubpassDesc = {};
-    SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    SubpassDesc.colorAttachmentCount = 1;
-    SubpassDesc.pColorAttachments = &ColorAttachmentRef;
-    SubpassDesc.pDepthStencilAttachment = &DepthAttachmentRef;
-
-    std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc };
-
-    std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttachment };
-    VkRenderPassCreateInfo RenderPassInfo = {};
-    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    RenderPassInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-    RenderPassInfo.pAttachments = Attachments.data();
-    RenderPassInfo.subpassCount = static_cast<uint32_t>(SubpassDescs.size());
-    RenderPassInfo.pSubpasses = SubpassDescs.data();
-    RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
-    RenderPassInfo.pDependencies = SubpassDependencies.data();
-
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, &m_RenderPass));
-}
-
-void CRendererTest::__destroyRenderPass()
-{
-    if (m_RenderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(*m_AppInfo.pDevice, m_RenderPass, nullptr);
-        m_RenderPass = VK_NULL_HANDLE;
-    }
+    auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat, VK_FORMAT_D32_SFLOAT);
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
 }
 
 void CRendererTest::__createGraphicsPipeline()
 {
-    m_Pipeline.create(**m_AppInfo.pDevice, m_RenderPass, m_AppInfo.Extent);
+    m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
 void CRendererTest::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(*m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 
     vk::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
@@ -130,7 +99,7 @@ void CRendererTest::__createCommandPoolAndBuffers()
 
 void CRendererTest::__createDepthResources()
 {
-    m_pDepthImage = vk::createDepthImage(**m_AppInfo.pDevice, m_AppInfo.Extent);
+    m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent);
 }
 
 void CRendererTest::__createFramebuffers()
@@ -141,12 +110,12 @@ void CRendererTest::__createFramebuffers()
     {
         std::vector<VkImageView> Attachments =
         {
-            m_AppInfo.TargetImageViewSet[i],
+            m_pLink->getOutput("Output", i),
             *m_pDepthImage
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(*m_AppInfo.pDevice, m_RenderPass, Attachments, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), Attachments, m_AppInfo.Extent);
     }
 }
 
@@ -154,7 +123,6 @@ void CRendererTest::__createRecreateResources()
 {
     __createGraphicsPipeline();
     __createDepthResources();
-    __createFramebuffers();
     m_Pipeline.setImageNum(m_AppInfo.ImageNum);
 
     std::vector<SGoldSrcSprite> SpriteSet = 

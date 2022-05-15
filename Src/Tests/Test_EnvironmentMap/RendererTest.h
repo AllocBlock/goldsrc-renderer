@@ -15,6 +15,7 @@ public:
 
 protected:
     virtual void _initV() override;
+    virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
@@ -24,7 +25,6 @@ private:
     void __loadSkyBox();
     bool __readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension);
     void __createRenderPass();
-    void __destroyRenderPass();
     void __createGraphicsPipeline();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();
@@ -45,7 +45,7 @@ private:
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     vk::CImage::Ptr m_pDepthImage = nullptr;
 
-    const std::string m_SkyFilePrefix = "../../data/neb6";
+    const std::string m_SkyFilePrefix = "../../../ExampleData/sky-test/neb6";
     ptr<CCamera> m_pCamera = nullptr;
     std::vector<STestPointData> m_PointDataSet;
     std::array<ptr<CIOImage>, 6> m_SkyBoxImageSet;

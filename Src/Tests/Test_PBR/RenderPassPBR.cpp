@@ -100,7 +100,10 @@ void CRenderPassPBR::_destroyV()
 
 void CRenderPassPBR::__createRenderPass()
 {
-    auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat, VK_FORMAT_D32_SFLOAT);
+    CRenderPassDescriptor Desc;
+    Desc.addColorAttachment(m_RenderPassPosBitField, m_AppInfo.ImageFormat);
+    Desc.setDepthAttachment(vk::ERenderPassPos::BEGIN, VK_FORMAT_D32_SFLOAT);
+    auto Info = Desc.generateInfo();
     vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
 }
 
@@ -111,7 +114,7 @@ void CRenderPassPBR::__createGraphicsPipeline()
 
 void CRenderPassPBR::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 

@@ -7,7 +7,8 @@
 #include "Buffer.h"
 #include "Image.h"
 
-class CRendererTest : public IRenderPass
+// FIXME: here are two pass in a single pass class, which require refactor
+class CRendererTest : public vk::IRenderPass
 {
 public:
     CRendererTest() : m_pCamera(make<CCamera>()),
@@ -21,13 +22,13 @@ public:
 
 protected:
     virtual void _initV() override;
+    virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
 private:
-    VkRenderPass __createRenderPassGeneral(VkAttachmentDescription vColorAttachment, VkAttachmentDescription vDepthAttachment);
     void __createRenderPassShadowMap();
     void __createRenderPassLighting();
     void __destroyRenderPasses();

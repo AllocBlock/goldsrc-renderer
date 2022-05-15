@@ -14,6 +14,7 @@ void CSampler::create(CDevice::CPtr vDevice, const VkSamplerCreateInfo& vInfo)
 
 void CSampler::destroy()
 {
+    if (!isValid()) return;
     if (get()) vkDestroySampler(*m_pDevice, get(), nullptr);
     _setNull();
     m_pDevice = VK_NULL_HANDLE;

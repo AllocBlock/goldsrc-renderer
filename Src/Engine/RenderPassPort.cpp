@@ -67,7 +67,7 @@ bool CRenderPassLink::hasLink(std::string vTargetName, EPortType vType, size_t v
     return hasLink({ vTargetName, VK_NULL_HANDLE, vType, vIndex });
 }
 
-VkImageView CRenderPassLink::getImage(std::string vTargetName, EPortType vType, size_t vIndex)
+VkImageView CRenderPassLink::getImage(std::string vTargetName, EPortType vType, size_t vIndex) const
 {
     _ASSERTE(!vTargetName.empty());
     for (const SLink& Link : m_LinkSet)
@@ -76,16 +76,16 @@ VkImageView CRenderPassLink::getImage(std::string vTargetName, EPortType vType, 
         if (Link.TargetName == vTargetName && Link.Index == vIndex)
             return Link.ImageView;
     }
-    throw std::runtime_error(u8"未找到该端口");
+    throw std::runtime_error(u8"未找到该连接，是否忘了指定端口的图像？");
     return nullptr;
 }
 
-VkImageView CRenderPassLink::getInput(std::string vTargetName, size_t vIndex)
+VkImageView CRenderPassLink::getInput(std::string vTargetName, size_t vIndex) const
 {
     return getImage(vTargetName, EPortType::INPUT, vIndex);
 }
 
-VkImageView CRenderPassLink::getOutput(std::string vTargetName, size_t vIndex)
+VkImageView CRenderPassLink::getOutput(std::string vTargetName, size_t vIndex) const
 {
     return getImage(vTargetName, EPortType::OUTPUT, vIndex);
 }

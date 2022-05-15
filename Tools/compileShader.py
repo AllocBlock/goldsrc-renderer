@@ -32,6 +32,15 @@ def getOutputFilePath(InputFilePath):
     FilePathP2 = Ext[1].upper() + Ext[2:] + ".spv"
     return FilePathP1 + FilePathP2
 
+def deleteCompiledShaders(vDir):
+    FileList = os.listdir(ShaderDir)
+    for FileName in FileList:
+        Path = ShaderDir + "/" + FileName
+        if os.path.isdir(Path):
+            continue
+        if os.path.splitext(Path)[1] == '.spv':
+            os.remove(Path)
+
 def compileShader(InputFilePath):
     if not os.path.exists(InputFilePath):
         abort("文件不存在：" + InputFilePath)
@@ -42,15 +51,19 @@ def compileShader(InputFilePath):
     cmd = "start /wait /b %s -V %s -o %s" % (gCompilerExe, InputFilePath, ShaderOutputFile)
     os.system(cmd)
 
-ShaderDir = sys.argv[1] if len(sys.argv) >= 2 else None
-if not ShaderDir:
-    ShaderDir = input("指定文件/文件夹：")
-if not os.path.exists(ShaderDir):
-    abort("文件/文件夹不存在" + ShaderDir)
-if not os.path.isdir(ShaderDir):
-    ShaderDir = [ShaderDir]
+Param = sys.argv[1] if len(sys.argv) >= 2 else None
+if not Param:
+    Param = input("指定文件/文件夹：")
+if not os.path.exists(Param):
+    abort("文件/文件夹不存在" + Param)
+if os.path.isdir(Param):
+    ShaderDir = Param
+    deleteCompiledShaders(ShaderDir)
+    FileList = os.listdir(ShaderDir)
+else:
+    ShaderFile = Param
+    FileList = [ShaderFile]
 
-FileList = os.listdir(ShaderDir)
 for FileName in FileList:
     Path = ShaderDir + "/" + FileName
     if os.path.isdir(Path):

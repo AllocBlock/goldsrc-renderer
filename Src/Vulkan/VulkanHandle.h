@@ -28,7 +28,7 @@ namespace vk
         void _setNull() { m_Handle = VK_NULL_HANDLE; }
 
     private:
-        T m_Handle;
+        T m_Handle = VK_NULL_HANDLE;
     };
 }
 

@@ -33,7 +33,7 @@ namespace vk
         void begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues);
         void end();
 
-        ptr<CRenderPassLink> getLink() { return m_pLink; }
+        CRenderPassLink::Ptr getLink() { return m_pLink; }
         const CRenderPassPort& getPort() const { return m_Port; }
 
     protected:
@@ -46,7 +46,7 @@ namespace vk
         virtual void _destroyV() {};
 
         vk::SAppInfo m_AppInfo;
-        ptr<CRenderPassLink> m_pLink;
+        CRenderPassLink::Ptr m_pLink;
         CRenderPassPort m_Port;
         int m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;
 

@@ -13,6 +13,7 @@ public:
 
 protected:
     virtual void _initV() override;
+    virtual CRenderPassPort _getPortV() override;
     virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
@@ -20,7 +21,6 @@ protected:
 
 private:
     void __createRenderPass();
-    void __destroyRenderPass();
     void __createGraphicsPipeline();
     void __createCommandPoolAndBuffers();
     void __createDepthResources();

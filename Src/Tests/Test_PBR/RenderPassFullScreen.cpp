@@ -80,7 +80,7 @@ void CRenderPassFullScreen::__createRenderPass()
 
 void CRenderPassFullScreen::__createCommandPoolAndBuffers()
 {
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE, m_AppInfo.GraphicsQueueIndex);
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 

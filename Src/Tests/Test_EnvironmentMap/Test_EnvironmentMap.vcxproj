@@ -55,7 +55,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -93,14 +93,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ApplicationTest.cpp" />
-    <ClCompile Include="GUITest.cpp" />
     <ClCompile Include="RendererTest.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PipelineTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h" />
-    <ClInclude Include="GUITest.h" />
     <ClInclude Include="RendererTest.h" />
     <ClInclude Include="PipelineTest.h" />
   </ItemGroup>
@@ -114,8 +112,8 @@
     <ProjectReference Include="..\..\Engine\Engine.vcxproj">
       <Project>{1fa794f5-b7fb-431f-8221-77f21034d0d9}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\GUI\GUI.vcxproj">
-      <Project>{261e72f5-c295-46fe-ba6b-1c0f741b6ab5}</Project>
+    <ProjectReference Include="..\..\Function\Function.vcxproj">
+      <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\imgui\imgui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>

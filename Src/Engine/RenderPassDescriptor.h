@@ -9,6 +9,8 @@ class CRenderPassDescriptor
 public:
     void addColorAttachment(int vRendererPosBitField, VkFormat vImageFormat);
     void setDepthAttachment(int vRendererPosBitField, VkFormat vImageFormat);
+    void addColorAttachment(const VkAttachmentDescription& vDesc);
+    void setDepthAttachment(const VkAttachmentDescription& vDesc);
     void setSubpassNum(uint32_t vNum);
     void clear();
     VkRenderPassCreateInfo generateInfo();
@@ -18,7 +20,7 @@ public:
 private:
     static CRenderPassDescriptor gGlobalDesc;
 
-    VkAttachmentDescription __createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, bool vIsDepth);
+    static VkAttachmentDescription __createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, bool vIsDepth);
     void __generateDependency(); // TODO: this just generates a sequence dependency
     void __generateDescription(); // TODO: this just generates a full reference dependency
 

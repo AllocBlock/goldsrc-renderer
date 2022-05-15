@@ -27,9 +27,6 @@
     <ClCompile Include="RendererTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GUITest.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineShadowMap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -44,18 +41,15 @@
     <ClInclude Include="RendererTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GUITest.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineShadowMap.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shaderShadowMap.frag">
+    <None Include="shaders\shadowMap.frag">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="shaders\shaderShadowMap.vert">
+    <None Include="shaders\shadowMap.vert">
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\shader.frag">

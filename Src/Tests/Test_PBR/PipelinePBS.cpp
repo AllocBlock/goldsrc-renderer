@@ -155,7 +155,7 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
         m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
-    const auto& Properties = m_pPhysicalDevice->getProperty();
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );

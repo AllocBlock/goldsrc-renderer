@@ -55,7 +55,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(SolutionDir)Src/Engine;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(SolutionDir)Src/Engine;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(SolutionDir)Src/Engine;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(SolutionDir)Src/Engine;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -93,7 +93,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ApplicationTest.cpp" />
-    <ClCompile Include="GUITest.cpp" />
     <ClCompile Include="PipelineShadowMap.cpp" />
     <ClCompile Include="RendererTest.cpp" />
     <ClCompile Include="main.cpp" />
@@ -101,7 +100,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h" />
-    <ClInclude Include="GUITest.h" />
     <ClInclude Include="PipelineShadowMap.h" />
     <ClInclude Include="RendererTest.h" />
     <ClInclude Include="PipelineLight.h" />
@@ -116,8 +114,8 @@
     <ProjectReference Include="..\..\Engine\Engine.vcxproj">
       <Project>{1fa794f5-b7fb-431f-8221-77f21034d0d9}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\GUI\GUI.vcxproj">
-      <Project>{261e72f5-c295-46fe-ba6b-1c0f741b6ab5}</Project>
+    <ProjectReference Include="..\..\Function\Function.vcxproj">
+      <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\imgui\imgui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
@@ -129,19 +127,10 @@
   <ItemGroup>
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
-    <None Include="shaders\shaderShadowMap.frag" />
-    <None Include="shaders\shaderShadowMap.vert" />
+    <None Include="shaders\shadowMap.frag" />
+    <None Include="shaders\shadowMap.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\packages\glm.0.9.9.800\build\native\glm.targets" Condition="Exists('..\..\packages\glm.0.9.9.800\build\native\glm.targets')" />
-    <Import Project="..\..\packages\glfw.3.3.6\build\native\glfw.targets" Condition="Exists('..\..\packages\glfw.3.3.6\build\native\glfw.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\glm.0.9.9.800\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\glm.0.9.9.800\build\native\glm.targets'))" />
-    <Error Condition="!Exists('..\..\packages\glfw.3.3.6\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\glfw.3.3.6\build\native\glfw.targets'))" />
-  </Target>
 </Project>

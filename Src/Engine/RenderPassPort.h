@@ -60,8 +60,10 @@ struct SLink
 class CRenderPassLink
 {
 public:
+    _DEFINE_PTR(CRenderPassLink);
+
     CRenderPassLink() = delete;
-    CRenderPassLink(CRenderPassPort vPorts) : m_Ports(vPorts) {}
+    CRenderPassLink(const CRenderPassPort& vPorts) : m_Ports(vPorts) {}
 
     void link(const SLink& vLink);
     void link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
@@ -71,11 +73,11 @@ public:
     void unlink(std::string vTargetName, EPortType vType, size_t vIndex = 0);
     bool hasLink(const SLink& vLink) const;
     bool hasLink(std::string vTargetName, EPortType vType, size_t vIndex = 0) const;
-    VkImageView getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0);
-    VkImageView getInput(std::string vTargetName, size_t vIndex = 0);
-    VkImageView getOutput(std::string vTargetName, size_t vIndex = 0);
+    VkImageView getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0) const;
+    VkImageView getInput(std::string vTargetName, size_t vIndex = 0) const;
+    VkImageView getOutput(std::string vTargetName, size_t vIndex = 0) const;
 
-    bool isUpdated() { return m_Updated; }
+    bool isUpdated() const { return m_Updated; }
     void setUpdateState(bool vState) { m_Updated = vState; }
 
 private:

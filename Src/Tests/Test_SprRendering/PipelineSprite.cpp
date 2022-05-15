@@ -202,11 +202,11 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     }
 
     // sampler
-    const auto& Properties = m_pPhysicalDevice->getProperty();
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    m_Sampler.destroy();
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     // placeholder image
     uint8_t Data[4] = { 0, 0, 0, 0 };
@@ -233,47 +233,28 @@ void CPipelineSprite::__updateDescriptorSet()
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = *m_VertUniformBufferSet[i];
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
-
-        VkDescriptorImageInfo SamplerInfo = {};
-        SamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        SamplerInfo.imageView = nullptr;
-        SamplerInfo.sampler = m_Sampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {SamplerInfo} }));
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteSampler(1, m_Sampler);
 
         const size_t NumTexture = m_SpriteImageSet.size();
-        std::vector<VkDescriptorImageInfo> TexImageInfoSet(CPipelineSprite::MaxSpriteNum);
+        std::vector<VkImageView> TexImageViewSet(CPipelineSprite::MaxSpriteNum);
         for (size_t i = 0; i < CPipelineSprite::MaxSpriteNum; ++i)
         {
             // for unused element, fill like the first one (weird method but avoid validation warning)
             if (i >= NumTexture)
             {
                 if (i == 0) // no texture, use default placeholder texture
-                {
-                    TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    TexImageInfoSet[i].imageView = *m_pPlaceholderImage;
-                    TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
-                }
+                    TexImageViewSet[i] = *m_pPlaceholderImage;
                 else
-                {
-                    TexImageInfoSet[i] = TexImageInfoSet[0];
-                }
+                    TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-            {
-                TexImageInfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                TexImageInfoSet[i].imageView = *m_SpriteImageSet[i];
-                TexImageInfoSet[i].sampler = VK_NULL_HANDLE;
-            }
+                TexImageViewSet[i] = m_SpriteImageSet[i]->get();
         }
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, TexImageInfoSet }));
 
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
+
+        m_Descriptor.update(i, WriteInfo);
     }
 }

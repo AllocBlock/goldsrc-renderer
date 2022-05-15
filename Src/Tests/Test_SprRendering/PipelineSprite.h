@@ -33,7 +33,7 @@ protected:
     virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/sprShaderVert.spv"; }
     virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/sprShaderFrag.spv"; }
 
-    void _initPushConstantV(VkCommandBuffer vCommandBuffer);
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer);
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;

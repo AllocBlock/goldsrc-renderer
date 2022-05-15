@@ -162,6 +162,8 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     vk::checkError(vkCreateGraphicsPipelines(*m_pDevice, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_Pipeline));
     m_pDevice->destroyShaderModule(VertShaderModule);
     m_pDevice->destroyShaderModule(FragShaderModule);
+
+    _createV();
 }
 
 void IPipeline::setImageNum(size_t vImageNum)

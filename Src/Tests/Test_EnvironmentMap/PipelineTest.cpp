@@ -1,4 +1,5 @@
 #include "PipelineTest.h"
+#include "Function.h"
 
 struct SUniformBufferObjectVert
 {
@@ -79,27 +80,11 @@ void CPipelineTest::__updateDescriptorSet()
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = *m_VertUniformBufferSet[i];
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUniformBufferObjectVert);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
-
-        VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = *m_FragUniformBufferSet[i];
-        FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUBOFrag);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo }, {} }));
-
-        VkDescriptorImageInfo CombinedSamplerInfo = {};
-        CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = m_pSkyBoxImage->isValid() ? *m_pSkyBoxImage : *m_pPlaceholderImage;
-        CombinedSamplerInfo.sampler = m_Sampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteImageAndSampler(2, m_pSkyBoxImage->isValid() ? *m_pSkyBoxImage : *m_pPlaceholderImage, m_Sampler);
+        m_Descriptor.update(i, WriteInfo);
     }
 }
 
@@ -153,7 +138,7 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
         m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
-    const auto& Properties = m_pPhysicalDevice->getProperty();
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
@@ -187,5 +172,5 @@ void CPipelineTest::__destroyResources()
     if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
     if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
 
-    m_Sampler.destroy();
+    if (m_Sampler.isValid()) m_Sampler.destroy();
 }

@@ -16,21 +16,10 @@ void CPipelineShadowMap::__updateDescriptorSet()
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = *m_VertUniformBufferSet[i];
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUBOVertLight);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
-
-        VkDescriptorBufferInfo FragBufferInfo = {};
-        FragBufferInfo.buffer = *m_FragUniformBufferSet[i];
-        FragBufferInfo.offset = 0;
-        FragBufferInfo.range = sizeof(SUBOFragLight);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {FragBufferInfo} ,{} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        m_Descriptor.update(i, WriteInfo);
     }
 }
 

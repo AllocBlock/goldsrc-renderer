@@ -4,14 +4,26 @@ CRenderPassDescriptor CRenderPassDescriptor::gGlobalDesc = CRenderPassDescriptor
 
 void CRenderPassDescriptor::addColorAttachment(int vRendererPosBitField, VkFormat vImageFormat)
 {
-    m_ColorAttachmentNum++;
-    m_AttachmentDescSet.emplace_back(__createAttachmentDescription(vRendererPosBitField, vImageFormat, false));
+    addColorAttachment(__createAttachmentDescription(vRendererPosBitField, vImageFormat, false));
 }
 
 void CRenderPassDescriptor::setDepthAttachment(int vRendererPosBitField, VkFormat vImageFormat)
 {
+    setDepthAttachment(__createAttachmentDescription(vRendererPosBitField, vImageFormat, true));
+}
+
+void CRenderPassDescriptor::addColorAttachment(const VkAttachmentDescription& vDesc)
+{
+    _ASSERTE(!m_HasDepthAttachment); // should not set color after depth, so the depth is always the last one
+    m_ColorAttachmentNum++;
+    m_AttachmentDescSet.emplace_back(vDesc);
+}
+
+void CRenderPassDescriptor::setDepthAttachment(const VkAttachmentDescription& vDesc)
+{
+    _ASSERTE(!m_HasDepthAttachment); // should not set depth again
     m_HasDepthAttachment = true;
-    m_AttachmentDescSet.emplace_back(__createAttachmentDescription(vRendererPosBitField, vImageFormat, true));
+    m_AttachmentDescSet.emplace_back(vDesc);
 }
 
 void CRenderPassDescriptor::setSubpassNum(uint32_t vNum)

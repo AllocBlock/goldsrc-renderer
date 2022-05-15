@@ -24,9 +24,6 @@
     <ClCompile Include="RendererTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GUITest.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineSprite.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -36,9 +33,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RendererTest.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GUITest.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineSprite.h">

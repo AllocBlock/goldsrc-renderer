@@ -14,21 +14,10 @@ void CPipelineLight::__updateDescriptorSet()
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        std::vector<SDescriptorWriteInfo> DescriptorWriteInfoSet;
-
-        VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = *m_VertUniformBufferSet[i];
-        VertBufferInfo.offset = 0;
-        VertBufferInfo.range = sizeof(SUBOVertLight);
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {VertBufferInfo} ,{} }));
-
-        VkDescriptorImageInfo CombinedSamplerInfo = {};
-        CombinedSamplerInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        CombinedSamplerInfo.imageView = (m_ShadowMapImageViewSet.empty() ? *m_pPlaceholderImage : m_ShadowMapImageViewSet[i]);
-        CombinedSamplerInfo.sampler = m_Sampler.get();
-        DescriptorWriteInfoSet.emplace_back(SDescriptorWriteInfo({ {}, {CombinedSamplerInfo} }));
-
-        m_Descriptor.update(i, DescriptorWriteInfoSet);
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteImageAndSampler(1, (m_ShadowMapImageViewSet.empty() ? *m_pPlaceholderImage : m_ShadowMapImageViewSet[i]), m_Sampler);
+        m_Descriptor.update(i, WriteInfo);
     }
 }
 
@@ -80,11 +69,11 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
         m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }
 
-    const auto& Properties = m_pPhysicalDevice->getProperty();
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
         VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
     );
-    vk::checkError(vkCreateSampler(m_pDevice, &SamplerInfo, nullptr, &m_TextureSampler));
+    m_Sampler.create(m_pDevice, SamplerInfo);
 
     m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
     __updateDescriptorSet();
