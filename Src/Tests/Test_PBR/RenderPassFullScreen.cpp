@@ -1,6 +1,7 @@
 #include "RenderPassFullScreen.h"
 #include "UserInterface.h"
 #include "Function.h"
+#include "RenderPassDescriptor.h"
 
 void CRenderPassFullScreen::_initV()
 {
@@ -73,38 +74,8 @@ void CRenderPassFullScreen::_destroyV()
 
 void CRenderPassFullScreen::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, vk::EImageType::COLOR);
-
-    VkAttachmentReference ColorAttachmentRef = {};
-    ColorAttachmentRef.attachment = 0;
-    ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    std::array<VkSubpassDependency, 1> SubpassDependencies = {};
-    SubpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    SubpassDependencies[0].dstSubpass = 0;
-    SubpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].srcAccessMask = 0;
-    SubpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkSubpassDescription SubpassDesc = {};
-    SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    SubpassDesc.colorAttachmentCount = 1;
-    SubpassDesc.pColorAttachments = &ColorAttachmentRef;
-
-    std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc };
-
-    std::vector<VkAttachmentDescription> Attachments = { ColorAttachment };
-    VkRenderPassCreateInfo RenderPassInfo = {};
-    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    RenderPassInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-    RenderPassInfo.pAttachments = Attachments.data();
-    RenderPassInfo.subpassCount = static_cast<uint32_t>(SubpassDescs.size());
-    RenderPassInfo.pSubpasses = SubpassDescs.data();
-    RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
-    RenderPassInfo.pDependencies = SubpassDependencies.data();
-
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, _getPtr()));
+    auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat);
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
 }
 
 void CRenderPassFullScreen::__createCommandPoolAndBuffers()

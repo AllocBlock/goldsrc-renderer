@@ -1,6 +1,7 @@
 #include "RenderPassPBR.h"
 #include "UserInterface.h"
 #include "Function.h"
+#include "RenderPassDescriptor.h"
 
 void CRenderPassPBR::_initV()
 {
@@ -99,45 +100,8 @@ void CRenderPassPBR::_destroyV()
 
 void CRenderPassPBR::__createRenderPass()
 {
-    VkAttachmentDescription ColorAttachment = IRenderPass::createAttachmentDescription(m_RenderPassPosBitField, m_AppInfo.ImageFormat, vk::EImageType::COLOR);
-    // use own depth
-    VkAttachmentDescription DepthAttachment = IRenderPass::createAttachmentDescription(vk::ERenderPassPos::BEGIN, VkFormat::VK_FORMAT_D32_SFLOAT, vk::EImageType::DEPTH);
-
-    VkAttachmentReference ColorAttachmentRef = {};
-    ColorAttachmentRef.attachment = 0;
-    ColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference DepthAttachmentRef = {};
-    DepthAttachmentRef.attachment = 1;
-    DepthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    std::array<VkSubpassDependency, 1> SubpassDependencies = {};
-    SubpassDependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    SubpassDependencies[0].dstSubpass = 0;
-    SubpassDependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].srcAccessMask = 0;
-    SubpassDependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    SubpassDependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkSubpassDescription SubpassDesc = {};
-    SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    SubpassDesc.colorAttachmentCount = 1;
-    SubpassDesc.pColorAttachments = &ColorAttachmentRef;
-    SubpassDesc.pDepthStencilAttachment = &DepthAttachmentRef;
-
-    std::vector<VkSubpassDescription> SubpassDescs = { SubpassDesc };
-
-    std::array<VkAttachmentDescription, 2> Attachments = { ColorAttachment, DepthAttachment };
-    VkRenderPassCreateInfo RenderPassInfo = {};
-    RenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    RenderPassInfo.attachmentCount = static_cast<uint32_t>(Attachments.size());
-    RenderPassInfo.pAttachments = Attachments.data();
-    RenderPassInfo.subpassCount = static_cast<uint32_t>(SubpassDescs.size());
-    RenderPassInfo.pSubpasses = SubpassDescs.data();
-    RenderPassInfo.dependencyCount = static_cast<uint32_t>(SubpassDependencies.size());
-    RenderPassInfo.pDependencies = SubpassDependencies.data();
-
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &RenderPassInfo, nullptr, _getPtr()));
+    auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat, VK_FORMAT_D32_SFLOAT);
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
 }
 
 void CRenderPassPBR::__createGraphicsPipeline()

@@ -101,6 +101,7 @@
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="RenderPass.cpp" />
+    <ClCompile Include="RenderPassDescriptor.cpp" />
     <ClCompile Include="RenderPassPort.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
     <ClCompile Include="UserInterface.cpp" />
@@ -121,6 +122,7 @@
     <ClInclude Include="SetupGLFW.h" />
     <ClInclude Include="UserInterface.h" />
     <ClInclude Include="VertexAttributeDescriptor.h" />
+    <ClInclude Include="RenderPassDescriptor.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

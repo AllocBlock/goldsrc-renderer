@@ -19,12 +19,6 @@ namespace vk
         END = 0x02
     };
 
-    enum class EImageType
-    {
-        COLOR,
-        DEPTH
-    };
-
     class IRenderPass : public IVulkanHandle<VkRenderPass>, public IGUI
     {
     public:
@@ -41,8 +35,6 @@ namespace vk
 
         ptr<CRenderPassLink> getLink() { return m_pLink; }
         const CRenderPassPort& getPort() const { return m_Port; }
-
-        static VkAttachmentDescription createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, EImageType vType);
 
     protected:
         virtual void _initV() {}
@@ -64,3 +56,7 @@ namespace vk
     };
 
 }
+
+class rENDERpASS
+{
+};
