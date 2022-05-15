@@ -24,7 +24,7 @@ class CPipelineLine : public IPipeline
 {
 public:
     void destroy();
-    void updateUniformBuffer(uint32_t vImageIndex, ptr<CCamera> vCamera);
+    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
     void setObject(std::string vName, ptr<SGuiObject> vObject);
     void removeObject(std::string vName);

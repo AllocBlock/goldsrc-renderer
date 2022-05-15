@@ -56,16 +56,16 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
     }
 }
 
-void CPipelineDepthTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
+void CPipelineDepthTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
-    UBOVert.View = vView;
-    UBOVert.Proj = vProj;
+    UBOVert.View = vCamera->getViewMat();
+    UBOVert.Proj = vCamera->getProjMat();
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
     SUBOFrag UBOFrag = {};
-    UBOFrag.Eye = vEyePos;
+    UBOFrag.Eye = vCamera->getPos();
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 

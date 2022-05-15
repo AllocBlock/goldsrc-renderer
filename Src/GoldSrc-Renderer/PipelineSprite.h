@@ -8,6 +8,7 @@
 #include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Sampler.h"
+#include "Camera.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -26,7 +27,7 @@ class CPipelineSprite : public IPipeline
 public:
     void destroy();
     void setSprites(const std::vector<SGoldSrcSprite>& vSpriteSet);
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vEyeDirection);
+    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
 
 protected:

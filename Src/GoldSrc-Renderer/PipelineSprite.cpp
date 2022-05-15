@@ -81,13 +81,13 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     __updateDescriptorSet();
 }
 
-void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vEyeDirection)
+void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SUniformBufferObjectVert UBOVert = {};
-    UBOVert.Proj = vProj;
-    UBOVert.View = vView;
-    UBOVert.EyePosition = vEyePos;
-    UBOVert.EyeDirection = vEyeDirection;
+    UBOVert.Proj = vCamera->getProjMat();
+    UBOVert.View = vCamera->getViewMat();
+    UBOVert.EyePosition = vCamera->getPos();
+    UBOVert.EyeDirection = vCamera->getFront();
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 

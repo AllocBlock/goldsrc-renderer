@@ -431,14 +431,9 @@ void CSceneSimpleRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
     m_pCamera->setAspect(Aspect);
 
     glm::mat4 Model = glm::mat4(1.0f);
-    glm::mat4 View = m_pCamera->getViewMat();
-    glm::mat4 Proj = m_pCamera->getProjMat();
-    glm::vec3 EyePos = m_pCamera->getPos();
-    glm::vec3 Up = glm::normalize(m_pCamera->getUp());
-
-    m_PipelineSet.Main.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
+    m_PipelineSet.Main.updateUniformBuffer(vImageIndex, Model, m_pCamera);
     if (m_EnableSky)
-        m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
+        m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
 void CSceneSimpleRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)

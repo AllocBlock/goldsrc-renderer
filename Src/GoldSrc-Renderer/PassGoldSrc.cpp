@@ -756,19 +756,13 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
     m_pCamera->setAspect(Aspect);
 
     glm::mat4 Model = glm::mat4(1.0f);
-    glm::mat4 View = m_pCamera->getViewMat();
-    glm::mat4 Proj = m_pCamera->getProjMat();
-    glm::vec3 EyePos = m_pCamera->getPos();
-    glm::vec3 EyeDirection = m_pCamera->getFront();
-    glm::vec3 Up = glm::normalize(m_pCamera->getUp());
-
-    m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-    m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-    m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-    m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
-    m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, View, Proj, EyePos, EyeDirection);
+    m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, m_pCamera);
     if (m_EnableSky)
-        m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, View, Proj, EyePos, Up);
+        m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
 void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)

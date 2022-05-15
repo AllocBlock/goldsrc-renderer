@@ -5,6 +5,7 @@
 #include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Sampler.h"
+#include "Camera.h"
 
 #include <glm/glm.hpp>
 
@@ -14,7 +15,7 @@ public:
     void setLightmapState(VkCommandBuffer vCommandBuffer, bool vEnable);
     void setOpacity(VkCommandBuffer vCommandBuffer, float vOpacity);
     void updateDescriptorSet(const std::vector<VkImageView>& vTextureSet, VkImageView vLightmap);
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos);
+    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, CCamera::CPtr vCamera);
     void destroy();
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well

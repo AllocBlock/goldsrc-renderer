@@ -8,6 +8,7 @@
 #include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Sampler.h"
+#include "Camera.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -17,7 +18,7 @@ class CPipelineSkybox : public IPipeline
 public:
     void destroy();
     void setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet);
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vUp);
+    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
     {
         if (m_pVertexBuffer->isValid())
@@ -66,7 +67,7 @@ private:
     void __updateDescriptorSet();
 
     vk::CSampler m_Sampler;
-    vk::CImage::Ptr m_pSkyBoxImage; // cubemap
+    vk::CImage::Ptr m_pSkyBoxImage;
     ptr<vk::CBuffer> m_pVertexBuffer;
     size_t m_VertexNum = 0;
     std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;

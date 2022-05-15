@@ -30,7 +30,7 @@ void CPipelineLine::destroy()
     IPipeline::destroy();
 }
 
-void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, ptr<CCamera> vCamera)
+void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SGuiUniformBufferObjectVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();

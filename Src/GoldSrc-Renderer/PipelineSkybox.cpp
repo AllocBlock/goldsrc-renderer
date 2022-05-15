@@ -93,17 +93,17 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBox
     __updateDescriptorSet();
 }
 
-void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, glm::vec3 vUp)
+void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SSkyUniformBufferObjectVert UBOVert = {};
-    UBOVert.Proj = vProj;
-    UBOVert.View = vView;
-    UBOVert.EyePosition = vEyePos;
+    UBOVert.Proj = vCamera->getProjMat();
+    UBOVert.View = vCamera->getViewMat();
+    UBOVert.EyePosition = vCamera->getPos();
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
     SSkyUniformBufferObjectFrag UBOFrag = {};
     glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
-    glm::vec3 Up = glm::normalize(vUp);
+    glm::vec3 Up = glm::normalize(vCamera->getUp());
 
     glm::vec3 RotationAxe = glm::cross(Up, FixUp);
 
