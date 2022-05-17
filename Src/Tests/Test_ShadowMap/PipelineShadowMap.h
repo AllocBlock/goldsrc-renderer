@@ -36,8 +36,6 @@ public:
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLightViewProj, float vLightNear, float vLightFar);
     void destroy();
 
-    static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
-
 protected:
     virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shadowMapVert.spv"; }
     virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shadowMapFrag.spv"; }

@@ -1,4 +1,4 @@
-#include "PipelineLight.h"
+#include "PipelineShade.h"
 #include "Function.h"
 
 struct SUBOVertLight
@@ -9,7 +9,13 @@ struct SUBOVertLight
     alignas(16) glm::mat4 LightMVP;
 };
 
-void CPipelineLight::__updateDescriptorSet()
+void CPipelineShade::setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews)
+{
+    m_ShadowMapImageViewSet = vShadowMapImageViews;
+    __updateDescriptorSet();
+}
+
+void CPipelineShade::__updateDescriptorSet()
 {
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
@@ -21,34 +27,30 @@ void CPipelineLight::__updateDescriptorSet()
     }
 }
 
-void CPipelineLight::setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews)
-{
-    m_ShadowMapImageViewSet = vShadowMapImageViews;
-}
-
-void CPipelineLight::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::mat4 vLightVP, float vShadowMapWidth, float vShadowMapHeight)
+void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera, CCamera::CPtr vLightCamera, uint32_t vShadowMapSize)
 {
     SUBOVertLight UBOVert = {};
-    UBOVert.Model = vModel;
-    UBOVert.View = vView;
-    UBOVert.Proj = vProj;
-    UBOVert.LightMVP = vLightVP;
+    UBOVert.Model = glm::mat4(1.0f);
+    UBOVert.View = vCamera->getViewMat();
+    UBOVert.Proj = vCamera->getProjMat();
+    UBOVert.LightMVP = vLightCamera->getViewProjMat();
+    // FIXME: is shadowmap size needed?
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineLight::destroy()
+void CPipelineShade::destroy()
 {
     __destroyResources();
     IPipeline::destroy();
 }
 
-void CPipelineLight::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+void CPipelineShade::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
     voBinding = SLightPointData::getBindingDescription();
     voAttributeSet = SLightPointData::getAttributeDescriptionSet();
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineLight::_getInputAssemblyStageInfoV()
+VkPipelineInputAssemblyStateCreateInfo CPipelineShade::_getInputAssemblyStageInfoV()
 {
     auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -56,7 +58,7 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineLight::_getInputAssemblyStageInf
     return Info;
 }
 
-void CPipelineLight::_createResourceV(size_t vImageNum)
+void CPipelineShade::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
@@ -79,7 +81,7 @@ void CPipelineLight::_createResourceV(size_t vImageNum)
     __updateDescriptorSet();
 }
 
-void CPipelineLight::_initDescriptorV()
+void CPipelineShade::_initDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
@@ -90,7 +92,7 @@ void CPipelineLight::_initDescriptorV()
     m_Descriptor.createLayout(m_pDevice);
 }
 
-void CPipelineLight::__destroyResources()
+void CPipelineShade::__destroyResources()
 {
     for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
     {

@@ -6,6 +6,7 @@
 #include "UniformBuffer.h"
 #include "Sampler.h"
 #include "VertexAttributeDescriptor.h"
+#include "Camera.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -34,14 +35,12 @@ struct SLightPointData
     }
 };
 
-class CPipelineLight : public IPipeline
+class CPipelineShade : public IPipeline
 {
 public:
     void setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews);
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::mat4 vLightVP, float vShadowMapWidth, float vShadowMapHeight);
+    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera, CCamera::CPtr vLightCamera, uint32_t vShadowMapSize);
     void destroy();
-
-    static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
 
 protected:
     virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shaderVert.spv"; }
@@ -58,7 +57,7 @@ private:
 
     vk::CSampler m_Sampler;
     std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
-    std::vector<VkImageView> m_ShadowMapImageViewSet;
     vk::CImage::Ptr m_pPlaceholderImage;
+    std::vector<VkImageView> m_ShadowMapImageViewSet;
 };
 

@@ -21,13 +21,16 @@
     <ClCompile Include="ApplicationTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineLight.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="RendererTest.cpp">
+    <ClCompile Include="PipelineShade.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PipelineShadowMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PassShadowMap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PassShade.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,13 +38,19 @@
     <ClInclude Include="ApplicationTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineLight.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="RendererTest.h">
+    <ClInclude Include="PipelineShade.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineShadowMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PassShade.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PassShadowMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowMapDefines.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

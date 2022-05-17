@@ -51,6 +51,9 @@ namespace vk
         int m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;
 
     private:
+        void __beginCommand(VkCommandBuffer vCommandBuffer);
+        void __endCommand(VkCommandBuffer vCommandBuffer);
+
         bool m_Begined = false;
         VkCommandBuffer m_CurrentCommandBuffer = VK_NULL_HANDLE;
     };

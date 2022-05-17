@@ -94,15 +94,18 @@
   <ItemGroup>
     <ClCompile Include="ApplicationTest.cpp" />
     <ClCompile Include="PipelineShadowMap.cpp" />
-    <ClCompile Include="RendererTest.cpp" />
+    <ClCompile Include="PassShade.cpp" />
+    <ClCompile Include="PassShadowMap.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PipelineLight.cpp" />
+    <ClCompile Include="PipelineShade.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h" />
     <ClInclude Include="PipelineShadowMap.h" />
-    <ClInclude Include="RendererTest.h" />
-    <ClInclude Include="PipelineLight.h" />
+    <ClInclude Include="PassShade.h" />
+    <ClInclude Include="PassShadowMap.h" />
+    <ClInclude Include="PipelineShade.h" />
+    <ClInclude Include="ShadowMapDefines.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Application\Application.vcxproj">

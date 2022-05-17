@@ -45,12 +45,6 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
-    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-    vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
-
     std::vector<VkClearValue> ClearValueSet(2);
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
@@ -69,7 +63,6 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
     }
     
     end();
-    vk::checkError(vkEndCommandBuffer(CommandBuffer));
     return { CommandBuffer };
 }
 

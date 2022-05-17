@@ -117,12 +117,6 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
     }
     if (RerecordCommand)
     {
-        VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-        CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-
-        vk::checkError(vkBeginCommandBuffer(CommandBuffer, &CommandBufferBeginInfo));
-
         // init
         std::vector<VkClearValue> ClearValueSet(2);
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -159,7 +153,6 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         }
 
         end();
-        vk::checkError(vkEndCommandBuffer(CommandBuffer));
     }
     return { CommandBuffer };
 }

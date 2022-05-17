@@ -45,6 +45,9 @@ void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuff
 {
     _ASSERTE(!m_Begined);
 
+    // only need one command one pass, so begin/end command buffer at same time with renderpass
+    __beginCommand(vCommandBuffer);
+
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass = get();
@@ -64,6 +67,22 @@ void IRenderPass::end()
 {
     _ASSERTE(m_Begined);
     vkCmdEndRenderPass(m_CurrentCommandBuffer);
+    __endCommand(m_CurrentCommandBuffer);
     m_CurrentCommandBuffer = VK_NULL_HANDLE;
     m_Begined = false;
+}
+
+void IRenderPass::__beginCommand(VkCommandBuffer vCommandBuffer)
+{
+    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
+    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // TODO: more flag options?
+
+    vk::checkError(vkBeginCommandBuffer(vCommandBuffer, &CommandBufferBeginInfo));
+}
+
+
+void IRenderPass::__endCommand(VkCommandBuffer vCommandBuffer)
+{
+    vk::checkError(vkEndCommandBuffer(vCommandBuffer));
 }

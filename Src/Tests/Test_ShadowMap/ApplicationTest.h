@@ -1,8 +1,10 @@
 #pragma once
 #include "ApplicationBase.h"
 #include "GUIPass.h"
-#include "RendererTest.h"
+#include "PassShade.h"
+#include "PassShadowMap.h"
 #include "Interactor.h"
+#include "3DObject.h"
 
 class CApplicationTest : public CApplicationBase
 {
@@ -20,9 +22,14 @@ protected:
 
 private:
     void __linkPasses();
+    void __generateScene();
+    static ptr<C3DObject> __createCube(glm::vec3 vCenter, float vSize);
 
     ptr<CGUIRenderPass> m_pGUIPass = nullptr;
-    ptr<CRendererTest> m_pRenderPass = nullptr;
+    ptr<CRenderPassShade> m_pRenderPassShade = nullptr;
+    ptr<CRenderPassShadowMap> m_pRenderPassShadowMap = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
+
+    std::vector<ptr<C3DObject>> m_ObjectSet;
 };
 
