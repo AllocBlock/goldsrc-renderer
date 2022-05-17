@@ -6,6 +6,7 @@
 #include "Buffer.h"
 #include "Image.h"
 #include "3DObject.h"
+#include "ShadowMapDefines.h"
 
 class CRenderPassShadowMap : public vk::IRenderPass
 {
@@ -31,7 +32,6 @@ private:
     void __createRenderPass();
     void __createGraphicsPipeline();
     void __createCommandPoolAndBuffers();
-    void __createDepthResources();
     void __createFramebuffer();
     void __createShadowMapImages();
 
@@ -40,17 +40,18 @@ private:
 
     void __updateUniformBuffer(uint32_t vImageIndex);
    
-    VkRenderPass m_RenderPassShadowMap = VK_NULL_HANDLE;
     CPipelineShadowMap m_PipelineShadowMap;
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     std::vector<vk::CImage::Ptr> m_ShadowMapImageSet;
     ptr<vk::CBuffer> m_pVertBuffer = nullptr;
-    std::vector<SShadowMapPointData> m_ShadowMapPointDataSet;
+    size_t m_VertexNum = 0;
 
     CCommand m_Command = CCommand();
     std::string m_CommandName = "ShadowMap";
-    vk::CImage::Ptr m_pShadowMapDepthImage;
 
     ptr<CCamera> m_pLightCamera = nullptr;
+
+    const VkFormat m_ShadowMapFormat = gShadowMapImageFormat;
+    const VkExtent2D m_ShadowMapExtent = { gShadowMapSize, gShadowMapSize };
 };
 

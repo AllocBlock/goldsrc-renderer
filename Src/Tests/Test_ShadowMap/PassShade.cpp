@@ -17,14 +17,13 @@ std::vector<SLightPointData> readPointData(ptr<C3DObject> pObject)
         PointData[i].Pos = pVertexArray->get(i);
         PointData[i].Normal = pNormalArray->get(i);
     }
-    return std::move(PointData);
+    return PointData;
 }
 
 
-void CRenderPassShade::setShadowMapInfo(std::vector<VkImageView> vShadowMapImageViews, CCamera::CPtr vLightCamera)
+void CRenderPassShade::setShadowMapInfo(CCamera::CPtr vLightCamera)
 {
     _ASSERTE(vLightCamera);
-    m_ShadowMapImageViewSet = vShadowMapImageViews;
     m_pLightCamera = vLightCamera;
 }
 
@@ -39,6 +38,7 @@ void CRenderPassShade::setScene(const std::vector<ptr<C3DObject>>& vObjectSet)
         Common::Log::log(u8"没有顶点数据，跳过顶点缓存创建");
         return;
     }
+    m_VertexNum = NumVertex;
 
     VkDeviceSize BufferSize = sizeof(SLightPointData) * NumVertex;
     uint8_t* pData = new uint8_t[BufferSize];
@@ -119,11 +119,10 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
     if (m_pVertBuffer->isValid())
     {
         VkDeviceSize Offsets[] = { 0 };
-        size_t VertexNum = m_PointDataSet.size();
         VkBuffer VertBuffer = *m_pVertBuffer;
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_Pipeline.bind(CommandBuffer, vImageIndex);
-        vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
+        vkCmdDraw(CommandBuffer, m_VertexNum, 1, 0, 0);
     }
     end();
     return { CommandBuffer };
@@ -193,7 +192,6 @@ void CRenderPassShade::__destroyRecreateResources()
 
 void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    _ASSERTE(m_ShadowMapSize > 0u);
     _ASSERTE(m_pLightCamera);
 
     float Aspect = 1.0;
@@ -201,5 +199,5 @@ void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
         Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
     m_pCamera->setAspect(Aspect);
 
-    m_Pipeline.updateUniformBuffer(vImageIndex, m_pCamera, m_pLightCamera, m_ShadowMapSize);
+    m_Pipeline.updateUniformBuffer(vImageIndex, m_pCamera, m_pLightCamera, gShadowMapSize);
 }

@@ -6,7 +6,7 @@ struct SUBOVertLight
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
     alignas(16) glm::mat4 Model;
-    alignas(16) glm::mat4 LightMVP;
+    alignas(16) glm::mat4 LightVP;
 };
 
 void CPipelineShade::setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews)
@@ -33,7 +33,7 @@ void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCa
     UBOVert.Model = glm::mat4(1.0f);
     UBOVert.View = vCamera->getViewMat();
     UBOVert.Proj = vCamera->getProjMat();
-    UBOVert.LightMVP = vLightCamera->getViewProjMat();
+    UBOVert.LightVP = vLightCamera->getViewProjMat();
     // FIXME: is shadowmap size needed?
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }

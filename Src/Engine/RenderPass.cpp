@@ -44,6 +44,7 @@ void IRenderPass::destroy()
 void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues)
 {
     _ASSERTE(!m_Begined);
+    _ASSERTE(isValid());
 
     // only need one command one pass, so begin/end command buffer at same time with renderpass
     __beginCommand(vCommandBuffer);

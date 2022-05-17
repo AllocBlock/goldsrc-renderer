@@ -55,6 +55,19 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineShadowMap::_getInputAssemblyStag
     return Info;
 }
 
+VkPipelineDepthStencilStateCreateInfo CPipelineShadowMap::_getDepthStencilInfoV()
+{
+    VkPipelineDepthStencilStateCreateInfo Info = {};
+    Info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    Info.depthTestEnable = VK_FALSE;
+    Info.depthWriteEnable = VK_FALSE;
+    Info.depthCompareOp = VkCompareOp::VK_COMPARE_OP_LESS;
+    Info.depthBoundsTestEnable = VK_FALSE;
+    Info.stencilTestEnable = VK_FALSE;
+
+    return Info;
+}
+
 void CPipelineShadowMap::_createResourceV(size_t vImageNum)
 {
     __destroyResources();

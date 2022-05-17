@@ -11,7 +11,7 @@ layout(binding = 1) uniform sampler2D uShadowMapSampler;
 
 float getShadowMapDepth()
 {
-	vec2 UV = vec2(inFragPositionFromLight.x / inFragPositionFromLight.w / 2 + 0.5, inFragPositionFromLight.y / inFragPositionFromLight.w / 2 + 0.5);
+	vec2 UV = (inFragPositionFromLight.xy / inFragPositionFromLight.w) * 0.5 + 0.5;
 	return texture(uShadowMapSampler, UV).x;
 }
 

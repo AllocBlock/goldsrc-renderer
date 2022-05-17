@@ -9,7 +9,7 @@ layout(binding = 0) uniform UniformBufferObject
     mat4 Project;
     mat4 View;
     mat4 Model;
-    mat4 LightMVP;
+    mat4 LightVP;
 } ubo;
 
 layout(location = 0) out vec4 outFragPosition;
@@ -22,5 +22,5 @@ void main()
 
     outFragPosition = (ubo.Model * vec4(inPosition, 1.0));
     outFragNormal = (ubo.Model * vec4(inNormal, 1.0)).xyz;
-    outFragPositionFromLight = (ubo.LightMVP * vec4(inPosition, 1.0));
+    outFragPositionFromLight = (ubo.LightVP * vec4(inPosition, 1.0));
 }

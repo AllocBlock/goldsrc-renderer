@@ -16,8 +16,7 @@ public:
 
     ptr<CCamera> getCamera() { return m_pCamera; }
 
-    void setShadowMapInfo(std::vector<VkImageView> vShadowMapImageViews, CCamera
-        ::CPtr vLightCamera);
+    void setShadowMapInfo(CCamera::CPtr vLightCamera);
     void setScene(const std::vector<ptr<C3DObject>>& vObjectSet);
 
 protected:
@@ -43,7 +42,7 @@ private:
     CPipelineShade m_Pipeline;
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertBuffer;
-    std::vector<SLightPointData> m_PointDataSet;
+    size_t m_VertexNum = 0;
 
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Shade";
@@ -51,7 +50,6 @@ private:
 
     ptr<CCamera> m_pCamera = nullptr;
 
-    std::vector<VkImageView> m_ShadowMapImageViewSet;
     CCamera::CPtr m_pLightCamera = nullptr;
 };
 
