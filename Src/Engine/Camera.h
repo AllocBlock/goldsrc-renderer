@@ -1,7 +1,7 @@
 #pragma once
 #include "Pointer.h"
 #include "Common.h"
-#include "GUI.h"
+#include "IGUI.h"
 
 #include <glm/glm.hpp>
 #include <array>

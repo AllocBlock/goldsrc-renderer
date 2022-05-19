@@ -35,7 +35,6 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
         __createFramebuffers();
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
-    beginCommand(CommandBuffer);
 
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -53,7 +52,6 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
     }
     
     end();
-    endCommand(CommandBuffer);
     return { CommandBuffer };
 }
 

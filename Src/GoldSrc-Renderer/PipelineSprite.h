@@ -1,5 +1,5 @@
 #pragma once
-#include "Pipeline.h"
+#include "IPipeline.h"
 #include "Common.h"
 #include "Descriptor.h"
 #include "IOImage.h"

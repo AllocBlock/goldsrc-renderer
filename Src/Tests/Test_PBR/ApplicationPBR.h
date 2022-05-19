@@ -1,13 +1,13 @@
 #pragma once
-#include "ApplicationBase.h"
-#include "GUI.h"
+#include "IApplication.h"
+#include "IGUI.h"
 #include "GUIPass.h"
 #include "RenderPassPBR.h"
 #include "RenderPassFullScreen.h"
 #include "PipelineEnvironment.h"
 #include "Interactor.h"
 
-class CApplicationPBR : public CApplicationBase
+class CApplicationPBR : public IApplication
 {
 public:
     CApplicationPBR() = default;

@@ -1,6 +1,6 @@
 #pragma once
 #include "Common.h"
-#include "GUI.h"
+#include "IGUI.h"
 #include "Vulkan.h"
 #include "Descriptor.h"
 #include "PhysicalDevice.h"

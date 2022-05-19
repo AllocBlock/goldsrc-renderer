@@ -1,7 +1,7 @@
 #pragma once
 #include "Pointer.h"
 #include "Camera.h"
-#include "GUI.h"
+#include "IGUI.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>

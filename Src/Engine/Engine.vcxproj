@@ -98,9 +98,10 @@
     <ClCompile Include="Descriptor.cpp" />
     <ClCompile Include="GlobalSingleTimeBuffer.cpp" />
     <ClCompile Include="GUIPass.cpp" />
+    <ClCompile Include="IApplication.cpp" />
     <ClCompile Include="Interactor.cpp" />
-    <ClCompile Include="Pipeline.cpp" />
-    <ClCompile Include="RenderPass.cpp" />
+    <ClCompile Include="IPipeline.cpp" />
+    <ClCompile Include="IRenderPass.cpp" />
     <ClCompile Include="RenderPassDescriptor.cpp" />
     <ClCompile Include="RenderPassPort.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
@@ -113,10 +114,11 @@
     <ClInclude Include="Descriptor.h" />
     <ClInclude Include="GlobalSingleTimeBuffer.h" />
     <ClInclude Include="GUIPass.h" />
-    <ClInclude Include="GUI.h" />
+    <ClInclude Include="IGUI.h" />
+    <ClInclude Include="IApplication.h" />
     <ClInclude Include="Interactor.h" />
-    <ClInclude Include="Pipeline.h" />
-    <ClInclude Include="RenderPass.h" />
+    <ClInclude Include="IPipeline.h" />
+    <ClInclude Include="IRenderPass.h" />
     <ClInclude Include="ScenePass.h" />
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />

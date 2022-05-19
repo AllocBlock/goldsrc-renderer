@@ -1,10 +1,10 @@
 #pragma once
-#include "ApplicationBase.h"
+#include "IApplication.h"
 #include "GUIPass.h"
 #include "RendererTest.h"
 #include "Interactor.h"
 
-class CApplicationTest : public CApplicationBase
+class CApplicationTest : public IApplication
 {
 public:
     CApplicationTest() = default;

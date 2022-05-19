@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Pipeline.cpp">
+    <ClCompile Include="IPipeline.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Descriptor.cpp">
@@ -24,7 +24,7 @@
     <ClCompile Include="Command.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass.cpp">
+    <ClCompile Include="IRenderPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SetupGLFW.cpp">
@@ -54,9 +54,12 @@
     <ClCompile Include="RenderPassDescriptor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="IApplication.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Pipeline.h">
+    <ClInclude Include="IPipeline.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Descriptor.h">
@@ -65,7 +68,7 @@
     <ClInclude Include="Command.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass.h">
+    <ClInclude Include="IRenderPass.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ScenePass.h">
@@ -89,7 +92,7 @@
     <ClInclude Include="VertexAttributeDescriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GUI.h">
+    <ClInclude Include="IGUI.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="GlobalSingleTimeBuffer.h">
@@ -99,6 +102,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RenderPassDescriptor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IApplication.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

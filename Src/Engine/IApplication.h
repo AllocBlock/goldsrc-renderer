@@ -21,10 +21,10 @@ const bool ENABLE_VALIDATION_LAYERS = true;
 const bool ENABLE_VALIDATION_LAYERS = false;
 #endif
 
-class CApplicationBase
+class IApplication
 {
 public:
-    CApplicationBase() = default;
+    IApplication() = default;
 
     void init(GLFWwindow* vWindow);
     void render();

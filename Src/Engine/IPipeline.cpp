@@ -1,4 +1,4 @@
-#include "Pipeline.h"
+#include "IPipeline.h"
 
 std::vector<VkPipelineShaderStageCreateInfo> IPipeline::getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule)
 {

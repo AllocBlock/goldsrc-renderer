@@ -1,5 +1,5 @@
 #pragma once
-#include "GUI.h"
+#include "IGUI.h"
 #include "Interactor.h"
 #include "ImguiAlert.h"
 #include "ImguiFrameRate.h"

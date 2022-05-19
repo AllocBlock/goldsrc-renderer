@@ -1,5 +1,5 @@
 #pragma once
-#include "ApplicationBase.h"
+#include "IApplication.h"
 #include "ScenePass.h"
 #include "GUIPass.h"
 #include "PassLine.h"
@@ -7,7 +7,7 @@
 #include "Interactor.h"
 #include "Scene.h"
 
-class CApplicationGoldSrc : public CApplicationBase
+class CApplicationGoldSrc : public IApplication
 {
 public:
     CApplicationGoldSrc() = default;

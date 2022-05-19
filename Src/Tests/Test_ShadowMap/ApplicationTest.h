@@ -1,12 +1,12 @@
 #pragma once
-#include "ApplicationBase.h"
+#include "IApplication.h"
 #include "GUIPass.h"
 #include "PassShade.h"
 #include "PassShadowMap.h"
 #include "Interactor.h"
 #include "3DObject.h"
 
-class CApplicationTest : public CApplicationBase
+class CApplicationTest : public IApplication
 {
 public:
     CApplicationTest() = default;

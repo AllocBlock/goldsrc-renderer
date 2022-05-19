@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderPass.h"
+#include "IRenderPass.h"
 #include "FrameBuffer.h"
 #include "PipelineShadowMap.h"
 #include "Camera.h"

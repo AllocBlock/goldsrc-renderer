@@ -1,10 +1,10 @@
 #pragma once
-#include "RenderPass.h"
+#include "IRenderPass.h"
 #include "FrameBuffer.h"
 #include "Camera.h"
 #include "Image.h"
 #include "Buffer.h"
-#include "Pipeline.h"
+#include "IPipeline.h"
 #include "FullScreenPoint.h"
 
 class CRenderPassFullScreen : public vk::IRenderPass

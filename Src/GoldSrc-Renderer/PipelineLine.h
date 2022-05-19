@@ -1,5 +1,5 @@
 #pragma once
-#include "Pipeline.h"
+#include "IPipeline.h"
 #include "Vulkan.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"

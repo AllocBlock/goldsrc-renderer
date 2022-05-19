@@ -1,5 +1,5 @@
 #pragma once
-#include "Pipeline.h"
+#include "IPipeline.h"
 #include "Common.h"
 #include "VertexAttributeDescriptor.h"
 #include "Descriptor.h"

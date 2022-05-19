@@ -1,6 +1,6 @@
 #pragma once
 #include "Command.h"
-#include "RenderPass.h"
+#include "IRenderPass.h"
 #include "FrameBuffer.h"
 
 #define GLFW_INCLUDE_VULKAN

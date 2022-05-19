@@ -108,9 +108,6 @@
     <ClInclude Include="ShadowMapDefines.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Application\Application.vcxproj">
-      <Project>{6da54335-fb5b-4abf-bc32-ee03b73794b5}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\Common\Common.vcxproj">
       <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
     </ProjectReference>

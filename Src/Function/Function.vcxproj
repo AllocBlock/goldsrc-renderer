@@ -16,6 +16,17 @@
   <ItemGroup>
     <ClCompile Include="Function.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.vcxproj">
+      <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\IO\IO.vcxproj">
+      <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Vulkan\Vulkan.vcxproj">
+      <Project>{117a19ef-c976-4370-b795-b58c27ee4ab0}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

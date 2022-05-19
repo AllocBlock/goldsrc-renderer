@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderPass.h"
+#include "IRenderPass.h"
 #include "vulkan/vulkan.h"
 #include <vector>
 

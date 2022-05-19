@@ -1,4 +1,4 @@
-#include "ApplicationBase.h"
+#include "IApplication.h"
 #include "Log.h"
 #include "AppInfo.h"
 
@@ -7,7 +7,7 @@
 
 using namespace vk;
 
-void CApplicationBase::init(GLFWwindow* vWindow)
+void IApplication::init(GLFWwindow* vWindow)
 {
     m_pWindow = vWindow;
 
@@ -24,12 +24,12 @@ void CApplicationBase::init(GLFWwindow* vWindow)
     _createOtherResourceV();
 }
 
-void CApplicationBase::waitDevice()
+void IApplication::waitDevice()
 {
     m_pDevice->waitUntilIdle();
 }
 
-void CApplicationBase::destroy()
+void IApplication::destroy()
 {
     if (*m_pInstance == VK_NULL_HANDLE) return;
 
@@ -55,7 +55,7 @@ void CApplicationBase::destroy()
     m_FramebufferResized = false;
 }
 
-void CApplicationBase::render()
+void IApplication::render()
 {
     m_InFlightFenceSet[m_CurrentFrameIndex]->wait();
 
@@ -118,7 +118,7 @@ void CApplicationBase::render()
     m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
 }
 
-vk::SAppInfo CApplicationBase::getAppInfo()
+vk::SAppInfo IApplication::getAppInfo()
 {
     vk::SAppInfo Info;
     Info.pDevice = m_pDevice;
@@ -129,32 +129,32 @@ vk::SAppInfo CApplicationBase::getAppInfo()
     return Info;
 }
 
-void CApplicationBase::_initV()
+void IApplication::_initV()
 {
 }
 
-void CApplicationBase::_updateV(uint32_t vImageIndex)
+void IApplication::_updateV(uint32_t vImageIndex)
 {
 }
 
-std::vector<VkCommandBuffer> CApplicationBase::_getCommandBufferSetV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> IApplication::_getCommandBufferSetV(uint32_t vImageIndex)
 {
     return {};
 }
 
-void CApplicationBase::_createOtherResourceV()
+void IApplication::_createOtherResourceV()
 {
 }
 
-void CApplicationBase::_recreateOtherResourceV()
+void IApplication::_recreateOtherResourceV()
 {
 }
 
-void CApplicationBase::_destroyOtherResourceV()
+void IApplication::_destroyOtherResourceV()
 {
 }
 
-void CApplicationBase::__createInstance()
+void IApplication::__createInstance()
 {
     std::vector<const char*> Extensions = __getRequiredExtensions();
 
@@ -166,7 +166,7 @@ void CApplicationBase::__createInstance()
     m_pInstance->create("Base Instance", ValidationLayers, Extensions);
 }
 
-void CApplicationBase::__setupDebugMessenger()
+void IApplication::__setupDebugMessenger()
 {
     m_pDebugMessenger = make<vk::CDebugMessenger>();
     m_pDebugMessenger->create(*m_pInstance);
@@ -177,17 +177,17 @@ void CApplicationBase::__setupDebugMessenger()
     m_pDebugMessenger->setCustomCallback(pCallback);
 } 
 
-void CApplicationBase::__createSwapchain()
+void IApplication::__createSwapchain()
 {
     m_pSwapchain->create(m_pDevice, m_pSurface, m_pWindow);
 }
 
-void CApplicationBase::__destroySwapchain()
+void IApplication::__destroySwapchain()
 {
     m_pSwapchain->destroy();
 }
 
-void CApplicationBase::__createSemaphores()
+void IApplication::__createSemaphores()
 {
     m_ImageAvailableSemaphores.resize(m_MaxFrameInFlight);
     m_RenderFinishedSemaphores.resize(m_MaxFrameInFlight);
@@ -202,7 +202,7 @@ void CApplicationBase::__createSemaphores()
     }
 }
 
-void CApplicationBase::__recreateSwapchain()
+void IApplication::__recreateSwapchain()
 {
     waitDevice();
     __destroySwapchain();
@@ -210,7 +210,7 @@ void CApplicationBase::__recreateSwapchain()
     _recreateOtherResourceV();
 }
 
-std::vector<const char*> CApplicationBase::__getRequiredExtensions()
+std::vector<const char*> IApplication::__getRequiredExtensions()
 {
     // 获取GLFW所需的扩展
     uint32_t GlfwExtensionCount = 0;

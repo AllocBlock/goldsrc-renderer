@@ -103,9 +103,6 @@
     <ClInclude Include="RendererTest.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Application\Application.vcxproj">
-      <Project>{6da54335-fb5b-4abf-bc32-ee03b73794b5}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\Common\Common.vcxproj">
       <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
     </ProjectReference>
@@ -114,9 +111,6 @@
     </ProjectReference>
     <ProjectReference Include="..\..\Function\Function.vcxproj">
       <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\GUI\GUI.vcxproj">
-      <Project>{261e72f5-c295-46fe-ba6b-1c0f741b6ab5}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\imgui\imgui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>

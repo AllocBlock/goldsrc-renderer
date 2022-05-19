@@ -2,7 +2,7 @@
 #include "Vulkan.h"
 #include "VulkanHandle.h"
 #include "Command.h"
-#include "GUI.h"
+#include "IGUI.h"
 #include "RenderPassPort.h"
 #include "AppInfo.h"
 
