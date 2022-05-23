@@ -1,5 +1,6 @@
 #pragma once
 #include "VertexAttributeDescriptor.h"
+#include <glm/glm.hpp>
 
 struct SFullScreenPointData
 {

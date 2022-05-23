@@ -40,28 +40,6 @@ protected:
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
 
 private:
-    struct SPointData
-    {
-        glm::vec3 Pos;
-
-        static VkVertexInputBindingDescription getBindingDescription()
-        {
-            VkVertexInputBindingDescription BindingDescription = {};
-            BindingDescription.binding = 0;
-            BindingDescription.stride = sizeof(SPointData);
-            BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-            return BindingDescription;
-        }
-
-        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-        {
-            CVertexAttributeDescriptor Descriptor;
-            Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPointData, Pos));
-            return Descriptor.generate();
-        }
-    };
-
     void __updateDescriptorSet();
     void __updateVertexBuffer();
 

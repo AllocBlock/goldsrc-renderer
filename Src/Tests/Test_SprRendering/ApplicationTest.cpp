@@ -10,12 +10,12 @@ void CApplicationTest::_initV()
     m_pRenderPass = make<CRendererTest>();
     m_pRenderPass->init(AppInfo, ERenderPassPos::BEGIN);
 
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
+
     m_pGUIPass = make<CGUIRenderPass>();
     m_pGUIPass->setWindow(m_pWindow);
     m_pGUIPass->init(AppInfo, ERenderPassPos::END);
-
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)

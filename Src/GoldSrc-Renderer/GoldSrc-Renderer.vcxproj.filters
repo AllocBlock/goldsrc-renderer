@@ -66,16 +66,7 @@
     <ClCompile Include="PipelineDepthTest.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineLine.cpp">
-      <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineSimple.cpp">
-      <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineSkybox.cpp">
-      <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineSprite.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
     <ClCompile Include="PassSimple.cpp">
@@ -134,16 +125,7 @@
     <ClInclude Include="PipelineDepthTest.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineLine.h">
-      <Filter>头文件\Pipeline</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineSimple.h">
-      <Filter>头文件\Pipeline</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineSkybox.h">
-      <Filter>头文件\Pipeline</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineSprite.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
     <ClInclude Include="PassGoldSrc.h">

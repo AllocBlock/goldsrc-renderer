@@ -1,5 +1,26 @@
-#include "PipelineLine.h"
-#include "PointData.h"
+#include "Pipeline3DGui.h"
+
+struct SPointData
+{
+    glm::vec3 Pos;
+
+    static VkVertexInputBindingDescription getBindingDescription()
+    {
+        VkVertexInputBindingDescription BindingDescription = {};
+        BindingDescription.binding = 0;
+        BindingDescription.stride = sizeof(SPointData);
+        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        return BindingDescription;
+    }
+
+    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+    {
+        CVertexAttributeDescriptor Descriptor;
+        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPointData, Pos));
+        return Descriptor.generate();
+    }
+};
 
 struct SGuiUniformBufferObjectVert
 {
@@ -96,9 +117,7 @@ void CPipelineLine::_initDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_Descriptor.clear();
-
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-
     m_Descriptor.createLayout(m_pDevice);
 }
 
