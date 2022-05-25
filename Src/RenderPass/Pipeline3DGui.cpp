@@ -4,20 +4,13 @@ struct SPointData
 {
     glm::vec3 Pos;
 
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SPointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return BindingDescription;
-    }
+    using PointData_t = SPointData;
+    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
         CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPointData, Pos));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
         return Descriptor.generate();
     }
 };
