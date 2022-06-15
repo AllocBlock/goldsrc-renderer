@@ -5,6 +5,7 @@
 #include "Common.h"
 #include "SceneProbe.h"
 #include "GlobalSingleTimeBuffer.h"
+#include "Gui.h"
 
 #include <iostream>
 #include <set>
@@ -37,9 +38,9 @@ std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t
 
 void CApplicationGoldSrc::_renderUIV()
 {
-    m_pPassGUI->beginFrame();
+    UI::beginFrame();
     m_pMainUI->renderUI();
-    m_pPassGUI->endFrame();
+    UI::endFrame();
 }
 
 void CApplicationGoldSrc::_createOtherResourceV()

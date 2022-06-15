@@ -39,9 +39,6 @@
     <ClCompile Include="Interactor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="UserInterface.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="VertexAttributeDescriptor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -75,9 +72,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SetupGLFW.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="UserInterface.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">

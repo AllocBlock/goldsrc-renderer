@@ -57,7 +57,7 @@
       </SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/imgui;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Gui;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <PrecompiledHeaderFile />
@@ -79,7 +79,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/imgui;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Gui;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -105,7 +105,6 @@
     <ClCompile Include="RenderPassDescriptor.cpp" />
     <ClCompile Include="RenderPassPort.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
-    <ClCompile Include="UserInterface.cpp" />
     <ClCompile Include="VertexAttributeDescriptor.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -122,7 +121,6 @@
     <ClInclude Include="ScenePass.h" />
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />
-    <ClInclude Include="UserInterface.h" />
     <ClInclude Include="VertexAttributeDescriptor.h" />
     <ClInclude Include="RenderPassDescriptor.h" />
   </ItemGroup>

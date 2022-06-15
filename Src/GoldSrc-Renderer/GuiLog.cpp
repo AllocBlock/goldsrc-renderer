@@ -1,8 +1,5 @@
-#include "ImguiLog.h"
-
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
+#include "GuiLog.h"
+#include "Gui.h"
 
 #include <chrono>
 #include <iomanip>
@@ -26,17 +23,17 @@ void CImguiLog::draw()
 {
     if (m_Open)
     {
-        ImGui::Begin(u8"日志");
+        UI::beginWindow(u8"日志");
         for (size_t i = 0; i < m_Logs.size(); ++i)
         {
-            ImGui::TextWrapped(m_Logs[i].c_str());
+            UI::text(m_Logs[i], true);
         }
         if (m_HasNewLog)
         {
-            ImGui::SetScrollHereY(1.0f);
+            UI::setScrollHereY(1.0f);
             m_HasNewLog = false;
         }
-        ImGui::End();
+        UI::endWindow();
     }
 }
 

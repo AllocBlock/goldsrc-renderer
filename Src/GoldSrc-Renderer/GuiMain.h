@@ -1,12 +1,12 @@
 #pragma once
 #include "IGUI.h"
 #include "Interactor.h"
-#include "ImguiAlert.h"
-#include "ImguiFrameRate.h"
-#include "ImguiLog.h"
-#include "ImguiSelectFile.h"
-#include "ImguiRenderer.h"
-#include "ImguiFGD.h"
+#include "GuiAlert.h"
+#include "GuiFrameRate.h"
+#include "GuiLog.h"
+#include "GuiSelectFile.h"
+#include "GuiRenderer.h"
+#include "GuiFGD.h"
 #include "Scene.h"
 
 #include <future>

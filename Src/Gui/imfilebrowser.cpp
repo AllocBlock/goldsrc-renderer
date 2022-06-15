@@ -1,5 +1,11 @@
 #include "imfilebrowser.h"
 
+#include <imgui.h>
+
+#ifndef IMGUI_VERSION
+#   error "include imgui.h before this header"
+#endif
+
 ImGui::FileBrowser::FileBrowser(ImGuiFileBrowserFlags flags)
     : width_(700), height_(450), flags_(flags),
     openFlag_(false), closeFlag_(false), isOpened_(false), ok_(false),

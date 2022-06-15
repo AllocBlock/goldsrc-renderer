@@ -1,4 +1,4 @@
-#include "ImguiRenderer.h"
+#include "GuiRenderer.h"
 
 void CImguiRenderer::setTarget(ptr<CSceneRenderPass> vRenderer)
 {

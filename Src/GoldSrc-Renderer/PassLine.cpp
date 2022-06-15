@@ -2,7 +2,7 @@
 #include "Common.h"
 #include "Descriptor.h"
 #include "Function.h"
-#include "UserInterface.h"
+#include "Gui.h"
 #include "RenderPassDescriptor.h"
 
 #include <iostream>

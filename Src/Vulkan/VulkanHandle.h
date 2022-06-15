@@ -24,6 +24,7 @@ namespace vk
         operator T() const { return get(); }
     protected:
         T* _getPtr() { return &m_Handle; }
+        T& _getRef() { return m_Handle; }
         void _set(T vHandle) { m_Handle = vHandle; }
         void _setNull() { m_Handle = VK_NULL_HANDLE; }
 

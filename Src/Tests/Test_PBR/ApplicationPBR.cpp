@@ -1,6 +1,6 @@
 #include "ApplicationPBR.h"
 #include "GlobalSingleTimeBuffer.h"
-#include "UserInterface.h"
+#include "Gui.h"
 
 void CApplicationPBR::_initV()
 {
@@ -45,12 +45,12 @@ void CApplicationPBR::_updateV(uint32_t vImageIndex)
 
 void CApplicationPBR::_renderUIV()
 {
-    m_pGUI->beginFrame(u8"PBR and IBL");
+    UI::beginFrame(u8"PBR and IBL");
     m_pRenderPassPBR->getCamera()->renderUI();
     m_pInteractor->renderUI();
     m_pRenderPassPBR->renderUI();
     m_pRenderPassFullScreen->renderUI();
-    m_pGUI->endFrame();
+    UI::endFrame();
 }
 
 std::vector<VkCommandBuffer> CApplicationPBR::_getCommandBufferSetV(uint32_t vImageIndex)

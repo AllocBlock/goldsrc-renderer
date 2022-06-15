@@ -5,6 +5,8 @@
 #include <filesystem>
 #include "imfilebrowser.h"
 
+class ImGui::FileBrowser;
+
 class CImguiSelectFile
 {
 public:

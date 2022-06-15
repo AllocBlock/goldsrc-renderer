@@ -1,8 +1,5 @@
-#include "ImguiAlert.h"
-
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
+#include "GuiAlert.h"
+#include "Gui.h"
 
 void CImguiAlert::appendAlert(std::string vText)
 {
@@ -18,18 +15,18 @@ void CImguiAlert::draw()
 {
     if (m_Open)
     {
-        ImGui::OpenPopup(u8"警告");
+        UI::openPopup(u8"警告");
         m_Open = false;
     }
-    ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
-    ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal(u8"警告", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    glm::vec2 Center = UI::getDisplaySize() * 0.5f;
+    UI::setNextWindowPos(Center, UI::ESetVariableCondition::APPEARING, glm::vec2(0.5f));
+    if (UI::beginPopupModal(u8"警告", nullptr, UI::EWindowFlag::ALWAYS_AUTO_RESIZE))
     {
-        ImGui::Text(m_AlertTexts.front().c_str());
+        UI::text(m_AlertTexts.front());
         static bool IgnoreAllAlert = false;
-        ImGui::Checkbox(u8"屏蔽所有警告", &IgnoreAllAlert);
+        UI::toggle(u8"屏蔽所有警告", IgnoreAllAlert);
 
-        if (ImGui::Button(u8"确认"))
+        if (UI::button(u8"确认"))
         {
             if (!IgnoreAllAlert)
             {
@@ -44,13 +41,13 @@ void CImguiAlert::draw()
         }
         else if (!IgnoreAllAlert)
         {
-            ImGui::SameLine();
-            if (ImGui::Button(u8"确认全部"))
+            UI::sameLine();
+            if (UI::button(u8"确认全部"))
             {
                 while (!m_AlertTexts.empty()) m_AlertTexts.pop();
             }
         }
-        if (m_AlertTexts.empty()) ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
+        if (m_AlertTexts.empty()) UI::closeCurrentPopup();
+        UI::endPopup();
     }
 }

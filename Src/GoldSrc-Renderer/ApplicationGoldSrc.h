@@ -3,7 +3,7 @@
 #include "ScenePass.h"
 #include "GUIPass.h"
 #include "PassLine.h"
-#include "ImguiMain.h"
+#include "GuiMain.h"
 #include "Interactor.h"
 #include "Scene.h"
 
