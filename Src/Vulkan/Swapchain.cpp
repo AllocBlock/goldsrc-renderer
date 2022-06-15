@@ -4,16 +4,19 @@
 
 using namespace vk;
 
-void CSwapchain::create(CDevice::Ptr vDevice, CSurface::Ptr vSurface, GLFWwindow* vWindow)
+void CSwapchain::create(CDevice::Ptr vDevice)
 {
     destroy();
 
     m_pDevice = vDevice;
+    auto pPhysicalDevice = vDevice->getPhysicalDevice();
+    auto pSurface = pPhysicalDevice->getSurface();
+    auto pWindow = pSurface->getWindow();
 
-    const SSwapChainSupportDetails& SwapChainSupport = vDevice->getPhysicalDevice()->getSwapChainSupportInfo();
+    const SSwapChainSupportDetails& SwapChainSupport = pPhysicalDevice->getSwapChainSupportInfo();
     VkSurfaceFormatKHR SurfaceFormat = __chooseSwapSurfaceFormat(SwapChainSupport.Formats);
     VkPresentModeKHR PresentMode = __chooseSwapPresentMode(SwapChainSupport.PresentModes);
-    VkExtent2D Extent = __chooseSwapExtent(vWindow, SwapChainSupport.Capabilities);
+    VkExtent2D Extent = __chooseSwapExtent(pWindow, SwapChainSupport.Capabilities);
 
     uint32_t NumImage = SwapChainSupport.Capabilities.minImageCount + 1;
     if (SwapChainSupport.Capabilities.maxImageCount > 0 &&
@@ -24,7 +27,7 @@ void CSwapchain::create(CDevice::Ptr vDevice, CSurface::Ptr vSurface, GLFWwindow
 
     VkSwapchainCreateInfoKHR SwapChainInfo = {};
     SwapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    SwapChainInfo.surface = *vSurface;
+    SwapChainInfo.surface = *pSurface;
     SwapChainInfo.minImageCount = NumImage;
     SwapChainInfo.imageFormat = SurfaceFormat.format;
     SwapChainInfo.imageColorSpace = SurfaceFormat.colorSpace;
