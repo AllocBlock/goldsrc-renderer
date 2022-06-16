@@ -1,11 +1,11 @@
 #include "GuiRenderer.h"
 
-void CImguiRenderer::setTarget(ptr<CSceneRenderPass> vRenderer)
+void CGuiRenderer::setTarget(ptr<CSceneRenderPass> vRenderer)
 {
     _setTargetV(vRenderer);
 }
 
-void CImguiRenderer::draw()
+void CGuiRenderer::draw()
 {
     _drawV();
 }

@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <AppInfo.h>
+#include "Vulkan.h"
 
 namespace UI
 {
@@ -57,6 +58,7 @@ namespace UI
     void endPopup();
     bool treeNode(std::string vName);
     void treePop();
+    void image(vk::CImage::CPtr vImage, const glm::vec2& vSize);
 
     bool beginMenuBar();
     bool beginMenu(std::string vTitle);

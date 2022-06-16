@@ -3,10 +3,16 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include <stdexcept>
+#include <map>
+#include "Sampler.h"
 
 bool gIsFrameBeginned = false;
 bool gIsInitted = false;
 const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
+vk::CSampler gDefaultSampler;
+
+using TextureId_t = VkDescriptorSet;
+std::map<VkImageView, TextureId_t> gTextureIdMap;
 
 void __checkIsInitted()
 {
@@ -103,6 +109,13 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
     // upload font
     ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer);
 
+    // init default sampler
+    const auto& Properties = pDevice->getPhysicalDevice()->getProperty();
+    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+        VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
+    );
+    gDefaultSampler.create(pDevice, SamplerInfo);
+
     gIsInitted = true;
 }
 
@@ -111,6 +124,10 @@ void UI::destory()
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+
+    gDefaultSampler.destroy();
+
+    gIsInitted = false;
 }
 
 void UI::draw(VkCommandBuffer vCommandBuffer)
@@ -214,7 +231,6 @@ bool UI::combo(std::string vName, const std::vector<const char*>& vItemSet, int&
 
 bool UI::collapse(std::string vName, bool vDefaultOpen)
 {
-    __checkIsFrameBeginned();
     return ImGui::CollapsingHeader(vName.c_str(), vDefaultOpen ? ImGuiTreeNodeFlags_DefaultOpen : 0);
 }
 
@@ -230,6 +246,24 @@ void UI::endPopup() { ImGui::EndPopup(); }
 bool UI::isPopupOpen(std::string vTitle) { return ImGui::IsPopupOpen(vTitle.c_str()); }
 bool UI::treeNode(std::string vName) { return ImGui::TreeNode(vName.c_str()); }
 void UI::treePop() { ImGui::TreePop(); }
+void UI::image(vk::CImage::CPtr vImage, const glm::vec2& vSize) 
+{ 
+    TextureId_t TextureId = 0;
+
+    VkImageView ImageView = vImage->get();
+    auto pItem = gTextureIdMap.find(ImageView);
+    if (pItem != gTextureIdMap.end())
+    {
+        TextureId = pItem->second;
+    }
+    else
+    {
+        TextureId = ImGui_ImplVulkan_AddTexture(gDefaultSampler, vImage->get(), vImage->getLayout());
+        gTextureIdMap[ImageView] = TextureId;
+    }
+
+    ImGui::Image(TextureId, __toImguiVec2(vSize));
+}
 
 bool UI::beginMenuBar() { return ImGui::BeginMenuBar(); }
 bool UI::beginMenu(std::string vTitle) { return ImGui::BeginMenu(vTitle.c_str()); }

@@ -3,12 +3,12 @@
 
 #include <string>
 
-CImguiFrameRate::CImguiFrameRate()
+CGuiFrameRate::CGuiFrameRate()
 {
     m_LastTimeStamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 }
 
-void CImguiFrameRate::draw()
+void CGuiFrameRate::draw()
 {
     std::chrono::microseconds CurTimeStamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     double DeltaTimeSecond = static_cast<double>((CurTimeStamp - m_LastTimeStamp).count()) / 1e6;

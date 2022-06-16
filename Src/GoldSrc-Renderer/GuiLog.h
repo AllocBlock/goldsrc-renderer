@@ -3,12 +3,12 @@
 #include <string>
 #include <istream>
 
-class CImguiLog
+class CGuiLog
 {
 public:
     void log(std::string vText);
     void draw();
-    friend std::istream& operator >> (std::istream& vIn, CImguiLog& vGUILog);
+    friend std::istream& operator >> (std::istream& vIn, CGuiLog& vGUILog);
 private:
     std::string __getCurrentTime();
 
@@ -17,5 +17,5 @@ private:
     std::vector<std::string> m_Logs;
 };
 
-std::istream& operator >> (std::istream& vIn, CImguiLog& vGUILog);
+std::istream& operator >> (std::istream& vIn, CGuiLog& vGUILog);
 

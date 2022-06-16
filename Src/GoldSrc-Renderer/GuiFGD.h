@@ -5,10 +5,10 @@
 
 #include <filesystem>
 
-class CImguiFGD
+class CGuiFGD
 {
 public:
-    CImguiFGD();
+    CGuiFGD();
     void draw();
     void open();
     void close();
@@ -16,7 +16,7 @@ public:
 private:
     void __requestFGDFile();
 
-    CImguiSelectFile m_FileSelection;
+    CGuiSelectFile m_FileSelection;
     bool m_IsOpen = true;
     ptr<CIOGoldSrcForgeGameData> m_pIOFGD = nullptr;
     std::future<std::filesystem::path> m_Future;

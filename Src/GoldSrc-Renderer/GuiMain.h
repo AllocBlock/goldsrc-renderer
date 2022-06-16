@@ -63,11 +63,11 @@ protected:
 private:
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    CImguiAlert m_GUIAlert = CImguiAlert();
-    CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();
-    CImguiLog m_GUILog = CImguiLog();
-    CImguiSelectFile m_FileSelection;
-    CImguiFGD m_FGD;
+    CGuiAlert m_GUIAlert = CGuiAlert();
+    CGuiFrameRate m_GUIFrameRate = CGuiFrameRate();
+    CGuiLog m_GUILog = CGuiLog();
+    CGuiSelectFile m_FileSelection;
+    CGuiFGD m_FGD;
 
     struct SControl
     {

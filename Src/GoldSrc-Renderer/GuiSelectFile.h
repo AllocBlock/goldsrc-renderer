@@ -5,9 +5,7 @@
 #include <filesystem>
 #include "imfilebrowser.h"
 
-class ImGui::FileBrowser;
-
-class CImguiSelectFile
+class CGuiSelectFile
 {
 public:
     void draw();
@@ -19,6 +17,6 @@ public:
 
 private:
     bool m_IsSelecting = false;
-    ImGui::FileBrowser m_FileDialog;
+    UI::FileBrowser m_FileDialog;
     std::promise<std::filesystem::path> m_Promise;
 };

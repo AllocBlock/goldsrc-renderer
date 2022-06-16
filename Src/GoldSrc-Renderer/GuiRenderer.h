@@ -6,7 +6,7 @@
 #include <string>
 #include <istream>
 
-class CImguiRenderer
+class CGuiRenderer
 {
 public:
     void setTarget(ptr<CSceneRenderPass> vRenderer);

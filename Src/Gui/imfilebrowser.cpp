@@ -6,7 +6,9 @@
 #   error "include imgui.h before this header"
 #endif
 
-ImGui::FileBrowser::FileBrowser(ImGuiFileBrowserFlags flags)
+using namespace ImGui;
+
+UI::FileBrowser::FileBrowser(ImGuiFileBrowserFlags flags)
     : width_(700), height_(450), flags_(flags),
     openFlag_(false), closeFlag_(false), isOpened_(false), ok_(false),
     inputNameBuf_(std::make_unique<std::array<char, INPUT_NAME_BUF_SIZE>>())
@@ -28,13 +30,13 @@ ImGui::FileBrowser::FileBrowser(ImGuiFileBrowserFlags flags)
 #endif
 }
 
-ImGui::FileBrowser::FileBrowser(const FileBrowser& copyFrom)
+UI::FileBrowser::FileBrowser(const FileBrowser& copyFrom)
     : FileBrowser()
 {
     *this = copyFrom;
 }
 
-ImGui::FileBrowser& ImGui::FileBrowser::operator=(
+UI::FileBrowser& UI::FileBrowser::operator=(
     const FileBrowser& copyFrom)
 {
     flags_ = copyFrom.flags_;
@@ -63,14 +65,14 @@ ImGui::FileBrowser& ImGui::FileBrowser::operator=(
     return *this;
 }
 
-void ImGui::FileBrowser::SetWindowSize(int width, int height) noexcept
+void UI::FileBrowser::SetWindowSize(int width, int height) noexcept
 {
     assert(width > 0 && height > 0);
     width_ = width;
     height_ = height;
 }
 
-void ImGui::FileBrowser::SetTitle(std::string title)
+void UI::FileBrowser::SetTitle(std::string title)
 {
     title_ = std::move(title);
     openLabel_ = title_ + "##filebrowser_" +
@@ -79,7 +81,7 @@ void ImGui::FileBrowser::SetTitle(std::string title)
         std::to_string(reinterpret_cast<size_t>(this));
 }
 
-void ImGui::FileBrowser::Open()
+void UI::FileBrowser::Open()
 {
     ClearSelected();
     statusStr_ = std::string();
@@ -87,7 +89,7 @@ void ImGui::FileBrowser::Open()
     closeFlag_ = false;
 }
 
-void ImGui::FileBrowser::Close()
+void UI::FileBrowser::Close()
 {
     ClearSelected();
     statusStr_ = std::string();
@@ -95,12 +97,12 @@ void ImGui::FileBrowser::Close()
     openFlag_ = false;
 }
 
-bool ImGui::FileBrowser::IsOpened() const noexcept
+bool UI::FileBrowser::IsOpened() const noexcept
 {
     return isOpened_;
 }
 
-void ImGui::FileBrowser::Display()
+void UI::FileBrowser::Display()
 {
     PushID(this);
     ScopeGuard exitThis([this]
@@ -401,12 +403,12 @@ void ImGui::FileBrowser::Display()
     }
 }
 
-bool ImGui::FileBrowser::HasSelected() const noexcept
+bool UI::FileBrowser::HasSelected() const noexcept
 {
     return ok_;
 }
 
-bool ImGui::FileBrowser::SetPwd(const std::filesystem::path& pwd)
+bool UI::FileBrowser::SetPwd(const std::filesystem::path& pwd)
 {
     try
     {
@@ -426,12 +428,12 @@ bool ImGui::FileBrowser::SetPwd(const std::filesystem::path& pwd)
     return false;
 }
 
-const class std::filesystem::path& ImGui::FileBrowser::GetPwd() const noexcept
+const class std::filesystem::path& UI::FileBrowser::GetPwd() const noexcept
 {
     return pwd_;
 }
 
-std::filesystem::path ImGui::FileBrowser::GetSelected() const
+std::filesystem::path UI::FileBrowser::GetSelected() const
 {
     // when ok_ is true, selectedFilenames_ may be empty if SelectDirectory
     // is enabled. return pwd in that case.
@@ -441,7 +443,7 @@ std::filesystem::path ImGui::FileBrowser::GetSelected() const
 }
 
 std::vector<std::filesystem::path>
-ImGui::FileBrowser::GetMultiSelected() const
+UI::FileBrowser::GetMultiSelected() const
 {
     if (selectedFilenames_.empty())
         return { pwd_ };
@@ -452,14 +454,14 @@ ImGui::FileBrowser::GetMultiSelected() const
     return ret;
 }
 
-void ImGui::FileBrowser::ClearSelected()
+void UI::FileBrowser::ClearSelected()
 {
     selectedFilenames_.clear();
     (*inputNameBuf_)[0] = '\0';
     ok_ = false;
 }
 
-void ImGui::FileBrowser::SetTypeFilters(
+void UI::FileBrowser::SetTypeFilters(
     const std::vector<std::string>& _typeFilters)
 {
     typeFilters_.clear();
@@ -489,12 +491,12 @@ void ImGui::FileBrowser::SetTypeFilters(
     typeFilterIndex_ = 0;
 }
 
-void ImGui::FileBrowser::SetCurrentTypeFilterIndex(int index)
+void UI::FileBrowser::SetCurrentTypeFilterIndex(int index)
 {
     typeFilterIndex_ = index;
 }
 
-std::string ImGui::FileBrowser::ToLower(const std::string& s)
+std::string UI::FileBrowser::ToLower(const std::string& s)
 {
     std::string ret = s;
     for (char& c : ret)
@@ -502,7 +504,7 @@ std::string ImGui::FileBrowser::ToLower(const std::string& s)
     return ret;
 }
 
-void ImGui::FileBrowser::SetPwdUncatched(const std::filesystem::path& pwd)
+void UI::FileBrowser::SetPwdUncatched(const std::filesystem::path& pwd)
 {
     fileRecords_ = { FileRecord{ true, "..", "[D] ..", "" } };
 
@@ -539,7 +541,7 @@ void ImGui::FileBrowser::SetPwdUncatched(const std::filesystem::path& pwd)
     (*inputNameBuf_)[0] = '\0';
 }
 
-bool ImGui::FileBrowser::IsExtensionMatched(
+bool UI::FileBrowser::IsExtensionMatched(
     const std::filesystem::path& _extension) const
 {
 #ifdef _WIN32
@@ -565,13 +567,13 @@ bool ImGui::FileBrowser::IsExtensionMatched(
 }
 
 #if defined(__cpp_lib_char8_t)
-std::string ImGui::FileBrowser::u8StrToStr(std::u8string s)
+std::string UI::FileBrowser::u8StrToStr(std::u8string s)
 {
     return std::string(s.begin(), s.end());
 }
 #endif
 
-std::string ImGui::FileBrowser::u8StrToStr(std::string s)
+std::string UI::FileBrowser::u8StrToStr(std::string s)
 {
     return s;
 }
@@ -596,7 +598,7 @@ std::string ImGui::FileBrowser::u8StrToStr(std::string s)
 
 #endif // #ifdef _INC_WINDOWS
 
-std::uint32_t ImGui::FileBrowser::GetDrivesBitMask()
+std::uint32_t UI::FileBrowser::GetDrivesBitMask()
 {
     DWORD mask = GetLogicalDrives();
     uint32_t ret = 0;

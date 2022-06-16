@@ -150,6 +150,7 @@ ptr<CIOImage> Scene::getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex)
     void* pIndices = new uint8_t[static_cast<size_t>(4) * Width * Height];
     vWad.getRawRGBAPixels(vIndex, pIndices);
     pTexImage->setData(pIndices);
+    pTexImage->setName(vWad.getTextureName(vIndex));
     delete[] pIndices;
     return pTexImage;
 }

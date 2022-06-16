@@ -4,7 +4,7 @@
 #include <chrono>
 #include <iomanip>
 
-std::istream& operator >> (std::istream& vIn, CImguiLog& vGUILog)
+std::istream& operator >> (std::istream& vIn, CGuiLog& vGUILog)
 {
     std::string Temp;
     vIn >> Temp;
@@ -12,14 +12,14 @@ std::istream& operator >> (std::istream& vIn, CImguiLog& vGUILog)
     return vIn;
 }
 
-void CImguiLog::log(std::string vText)
+void CGuiLog::log(std::string vText)
 {
     std::string Time = __getCurrentTime();
     m_Logs.emplace_back(Time + vText);
     m_HasNewLog = true;
 }
 
-void CImguiLog::draw()
+void CGuiLog::draw()
 {
     if (m_Open)
     {
@@ -37,7 +37,7 @@ void CImguiLog::draw()
     }
 }
 
-std::string CImguiLog::__getCurrentTime()
+std::string CGuiLog::__getCurrentTime()
 {
     time_t Time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     tm LocalTime;

@@ -3,14 +3,14 @@
 
 #include <string>
 
-CImguiFGD::CImguiFGD()
+CGuiFGD::CGuiFGD()
 {
 }
 
-void CImguiFGD::open() { m_IsOpen = true; }
-void CImguiFGD::close() { m_IsOpen = false; }
+void CGuiFGD::open() { m_IsOpen = true; }
+void CGuiFGD::close() { m_IsOpen = false; }
 
-void CImguiFGD::draw()
+void CGuiFGD::draw()
 {
     // ∂¡»°FGD
     if (m_Future.valid())
@@ -67,7 +67,7 @@ void CImguiFGD::draw()
     UI::endWindow();
 }
 
-void CImguiFGD::__requestFGDFile()
+void CGuiFGD::__requestFGDFile()
 {
     m_FileSelection.setTitle(u8"FGD");
     m_FileSelection.setFilters({ ".fgd" });

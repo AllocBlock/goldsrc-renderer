@@ -27,9 +27,13 @@ namespace vk
         void transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
         void copyToBuffer(VkCommandBuffer vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
         void generateMipmaps(VkCommandBuffer vCommandBuffer);
-        uint32_t getMipmapLevelNum() { return m_MipmapLevelNum; }
+        uint32_t getMipmapLevelNum() const { return m_MipmapLevelNum; }
 
-        VkImage getImage() { return m_Image; }
+        VkImage getImage() const { return m_Image; }
+        VkImageLayout getLayout() const { return m_Layout; }
+        uint32_t getWidth() const { return m_Width; }
+        uint32_t getHeight() const { return m_Height; }
+        uint32_t getLayerCount() const { return m_LayerCount; }
 
     private:
         void __createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo);

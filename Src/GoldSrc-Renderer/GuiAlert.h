@@ -2,7 +2,7 @@
 #include <string>
 #include <queue>
 
-class CImguiAlert
+class CGuiAlert
 {
 public:
     void appendAlert(std::string vText);

@@ -23,7 +23,7 @@ enum ImGuiFileBrowserFlags_
     ImGuiFileBrowserFlags_MultipleSelection = 1 << 7, // allow user to select multiple files. this will hide ImGuiFileBrowserFlags_EnterNewFilename
 };
 
-namespace ImGui
+namespace UI
 {
     class FileBrowser
     {

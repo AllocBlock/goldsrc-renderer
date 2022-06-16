@@ -1,7 +1,7 @@
 #include "GuiAlert.h"
 #include "Gui.h"
 
-void CImguiAlert::appendAlert(std::string vText)
+void CGuiAlert::appendAlert(std::string vText)
 {
     if (!m_IgnoreAll)
     {
@@ -11,7 +11,7 @@ void CImguiAlert::appendAlert(std::string vText)
     }
 }
 
-void CImguiAlert::draw()
+void CGuiAlert::draw()
 {
     if (m_Open)
     {

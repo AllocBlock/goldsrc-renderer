@@ -2,7 +2,7 @@
 #include "Gui.h"
 #include "imfilebrowser.h"
 
-void CImguiSelectFile::draw()
+void CGuiSelectFile::draw()
 {
     m_FileDialog.Display();
     if (m_FileDialog.HasSelected()) // 已选择
@@ -18,7 +18,7 @@ void CImguiSelectFile::draw()
     }
 }
 
-void CImguiSelectFile::start(std::promise<std::filesystem::path> vPromise)
+void CGuiSelectFile::start(std::promise<std::filesystem::path> vPromise)
 {
     if (m_IsSelecting) throw std::runtime_error(u8"重复调用选择文件");
     m_IsSelecting = true;
@@ -26,24 +26,24 @@ void CImguiSelectFile::start(std::promise<std::filesystem::path> vPromise)
     m_FileDialog.Open();
 }
 
-void CImguiSelectFile::abort()
+void CGuiSelectFile::abort()
 {
     m_FileDialog.Close();
     m_IsSelecting = false;
     m_Promise.set_value("");
 }
 
-bool CImguiSelectFile::isOpen()
+bool CGuiSelectFile::isOpen()
 {
     return m_IsSelecting;
 }
 
-void CImguiSelectFile::setTitle(std::string vTitle)
+void CGuiSelectFile::setTitle(std::string vTitle)
 {
     m_FileDialog.SetTitle(vTitle);
 }
 
-void CImguiSelectFile::setFilters(const std::vector<std::string>& vFilterSet)
+void CGuiSelectFile::setFilters(const std::vector<std::string>& vFilterSet)
 {
     m_FileDialog.SetTypeFilters(vFilterSet);
 }

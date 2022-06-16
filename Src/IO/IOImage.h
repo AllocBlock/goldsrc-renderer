@@ -19,6 +19,7 @@ public:
     CIOImage(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
     CIOImage(const CIOImage& vObj)
     {
+        m_Name = vObj.getName();
         m_Width = vObj.getWidth();
         m_Height = vObj.getHeight();
         m_ChannelNum = vObj.getChannelNum();
@@ -26,6 +27,7 @@ public:
     }
     virtual ~CIOImage() { __cleanup(); }
 
+    std::string getName() const { return m_Name; }
     size_t getWidth() const { return m_Width; }
     size_t getHeight() const { return m_Height; }
     size_t getChannelNum() const { return m_ChannelNum; }
@@ -35,6 +37,7 @@ public:
     size_t getDataSize() const { return m_Width * m_Height * getBitPerPixel(); }
     const void* getData() const { return m_Data.data(); }
 
+    void setName(std::string vName) { m_Name = vName; }
     void setSize(size_t vWidth, size_t vHeight) { m_Width = vWidth; m_Height = vHeight; }
     void setChannelNum(size_t vChannels) { m_ChannelNum = vChannels; }
     void setData(const void* vpData);
@@ -51,6 +54,7 @@ private:
     bool __readImageTinyexr();
     void __cleanup();
 
+    std::string m_Name = "";
     size_t m_Width = 0;
     size_t m_Height = 0;
     size_t m_ChannelNum = 4;

@@ -1,9 +1,9 @@
 #include "GuiTextureViewer.h"
 
-void CImguiTextureViewer::draw()
+void CGuiTextureViewer::draw()
 {
     if (m_Open)
     {
-
+        
     }
 }
