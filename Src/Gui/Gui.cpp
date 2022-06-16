@@ -8,7 +8,6 @@
 
 bool gIsFrameBeginned = false;
 bool gIsInitted = false;
-const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 vk::CSampler gDefaultSampler;
 
 using TextureId_t = VkDescriptorSet;
@@ -78,16 +77,13 @@ glm::vec2 __toGlmVec2(ImVec2 vVec)
     return glm::vec2(vVec.x, vVec.y);
 }
 
-void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkCommandBuffer vSingleTimeCommandBuffer,VkRenderPass& voRenderPass)
+void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass& voRenderPass)
 {
     auto pDevice = vAppInfo.pDevice;
 
     // setup context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& IO = ImGui::GetIO();
-    IO.Fonts->AddFontFromFileTTF(gChineseFont.c_str(), 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseFull());
-
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForVulkan(vWindow, true);
 
@@ -106,9 +102,6 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
     InitInfo.CheckVkResultFn = nullptr;
     ImGui_ImplVulkan_Init(&InitInfo, voRenderPass);
 
-    // upload font
-    ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer);
-
     // init default sampler
     const auto& Properties = pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
@@ -117,6 +110,13 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
     gDefaultSampler.create(pDevice, SamplerInfo);
 
     gIsInitted = true;
+}
+
+void UI::addFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer)
+{
+    ImGuiIO& IO = ImGui::GetIO();
+    IO.Fonts->AddFontFromFileTTF(vFontFile.c_str(), 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseFull());
+    ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer);
 }
 
 void UI::destory()

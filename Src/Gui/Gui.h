@@ -28,7 +28,8 @@ namespace UI
         APPEARING
     };
 
-    void init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkCommandBuffer vSingleTimeCommandBuffer, VkRenderPass& voRenderPass);
+    void init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass& voRenderPass);
+    void addFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer);
     void destory();
     void draw(VkCommandBuffer vCommandBuffer);
     void beginFrame(std::string vTitle = u8"Ä¬ÈÏ´°¿Ú");

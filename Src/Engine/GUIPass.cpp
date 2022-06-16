@@ -8,6 +8,8 @@
 #include <iostream>
 #include <set>
 
+const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
+
 void CGUIRenderPass::_initV()
 {
     IRenderPass::_initV();
@@ -23,8 +25,9 @@ void CGUIRenderPass::_initV()
     m_Command.createBuffers(m_CommandName, NumImage, ECommandBufferLevel::PRIMARY);
 
     // upload font
+    UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, _getRef());
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, CommandBuffer, _getRef());
+    UI::addFont(gChineseFont, CommandBuffer);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 
     __createRecreateSources();
