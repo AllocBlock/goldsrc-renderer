@@ -21,13 +21,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -93,6 +93,7 @@
     <ClCompile Include="3DObject.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="SceneInterface.cpp" />
+    <ClCompile Include="SceneObjWriter.cpp" />
     <ClCompile Include="SceneReaderMap.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneCommon.cpp" />
@@ -106,6 +107,7 @@
   <ItemGroup>
     <ClInclude Include="3DObject.h" />
     <ClInclude Include="3DObjectGoldSrc.h" />
+    <ClInclude Include="SceneObjWriter.h" />
     <ClInclude Include="SingleValueDataArray.h" />
     <ClInclude Include="DataArray.h" />
     <ClInclude Include="GeneralDataArray.h" />

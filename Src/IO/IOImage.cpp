@@ -1,7 +1,10 @@
 #include "IOImage.h"
 #include <algorithm>
+#define __STDC_LIB_EXT1__ // _s function
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 #include "tinyexr.h"
 
 void CIOImage::setData(const void* vData)
@@ -49,6 +52,12 @@ void CIOImage::writePPM(std::filesystem::path vFilePath)
         File << std::endl;
     }
     File.close();
+}
+
+void CIOImage::writeBMP(std::filesystem::path vFilePath)
+{
+    _ASSERTE(m_PixelFormat == EPixelFormat::RGBA8);
+    stbi_write_bmp(vFilePath.string().c_str(), m_Width, m_Height, 4, m_Data.data());
 }
 
 bool CIOImage::_readV(std::filesystem::path vFilePath)

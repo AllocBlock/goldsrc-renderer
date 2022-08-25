@@ -149,6 +149,7 @@ ptr<CIOImage> Scene::getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex)
     pTexImage->setSize(static_cast<int>(Width), static_cast<int>(Height));
     void* pIndices = new uint8_t[static_cast<size_t>(4) * Width * Height];
     vWad.getRawRGBAPixels(vIndex, pIndices);
+    pTexImage->setName(vWad.getTextureName(vIndex));
     pTexImage->setData(pIndices);
     delete[] pIndices;
     return pTexImage;
@@ -160,6 +161,7 @@ ptr<CIOImage> Scene::getIOImageFromBspTexture(const SBspTexture& vBspTexture)
     vBspTexture.getRawRGBAPixels(pIndices);
     ptr<CIOImage> pTexImage = make<CIOImage>();
     pTexImage->setSize(vBspTexture.Width, vBspTexture.Height);
+    pTexImage->setName(vBspTexture.Name);
     pTexImage->setData(pIndices);
     delete[] pIndices;
     return pTexImage;

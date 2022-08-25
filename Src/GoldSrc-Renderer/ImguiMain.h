@@ -69,6 +69,8 @@ private:
     CImguiSelectFile m_FileSelection;
     CImguiFGD m_FGD;
 
+    ptr<SScene> m_pCurScene = nullptr;
+
     struct SControl
     {
         bool ShowWidgetFGD = false;

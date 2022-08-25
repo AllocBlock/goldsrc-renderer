@@ -11,6 +11,7 @@
 #include <iostream>
 #include <set>
 #include <future>
+#include "SceneObjWriter.h"
 
 using namespace Common;
 
@@ -128,6 +129,7 @@ void CGUIMain::_renderUIV()
                 // TODO: load scene for renderer
                 _ASSERTE(m_ReadSceneCallback);
                 m_ReadSceneCallback(ResultScene.pScene);
+                m_pCurScene = ResultScene.pScene;
             }
             else
                 showAlert(ResultScene.Message);
@@ -156,6 +158,12 @@ void CGUIMain::_renderUIV()
                     m_FileSelection.setFilters({ ".bsp", ".rmf", ".map", ".obj", ".mdl", ".*" });
                     m_FileSelection.start(std::move(FileSelectionPromise));
                 }
+            }
+            if (m_pCurScene && ImGui::MenuItem(u8"保存"))
+            {
+                CSceneObjWriter Writer;
+                Writer.addScene(m_pCurScene);
+                Writer.writeToFile("F:/scene/test.obj");
             }
             /*if (ImGui::MenuItem(u8"退出"))
             {

@@ -13,8 +13,12 @@ namespace vk
     public:
         virtual ~IVulkanHandle()
         {
+#ifdef _DEBUG
             if (get())
+            {
                 throw "Vulkan对象在销毁前被析构";
+            }
+#endif
         }
 
         T get() const { return m_Handle; }
