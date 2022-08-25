@@ -1,5 +1,6 @@
 #include "GuiFGD.h"
 #include "Gui.h"
+#include "NativeSystem.h"
 
 #include <string>
 
@@ -54,5 +55,5 @@ void CGuiFGD::draw()
             }
         }
     }
-    ImGui::End();
+    UI::endWindow();
 }

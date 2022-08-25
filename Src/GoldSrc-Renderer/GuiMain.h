@@ -4,9 +4,9 @@
 #include "GuiAlert.h"
 #include "GuiFrameRate.h"
 #include "GuiLog.h"
-#include "GuiSelectFile.h"
 #include "GuiRenderer.h"
 #include "GuiFGD.h"
+#include "ImguiRequestPopupModal.h"
 #include "Scene.h"
 
 #include <future>
@@ -66,9 +66,10 @@ private:
     CGuiAlert m_GUIAlert = CGuiAlert();
     CGuiFrameRate m_GUIFrameRate = CGuiFrameRate();
     CGuiLog m_GUILog = CGuiLog();
-    CGuiSelectFile m_FileSelection;
     CGuiFGD m_FGD;
     CImguiRequestPopupModal m_RequestPopupModal;
+
+    SScene::Ptr m_pCurScene = nullptr;
 
     struct SControl
     {

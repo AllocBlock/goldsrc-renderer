@@ -3,11 +3,12 @@
 #include "SceneInterface.h"
 #include "SceneCommon.h"
 #include "Gui.h"
+#include "NativeSystem.h"
+#include "SceneObjWriter.h"
 
 #include <iostream>
 #include <set>
 #include <future>
-#include "SceneObjWriter.h"
 
 using namespace Common;
 
@@ -87,10 +88,10 @@ void CGUIMain::_renderUIV()
     glm::vec2 Center = UI::getDisplaySize() * 0.5f;
 
     // 文件加载信息框
-    if (!m_RequestPopupModal.isShow() && !m_LoadingFilePath.empty() && !ImGui::IsPopupOpen(u8"提示"))
-        ImGui::OpenPopup(u8"提示"); // 打开加载提示
-    ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal(u8"提示", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    if (!m_RequestPopupModal.isShow() && !m_LoadingFilePath.empty() && !UI::isPopupOpen(u8"提示"))
+        UI::openPopup(u8"提示"); // 打开加载提示
+    UI::setNextWindowPos(Center, UI::ESetVariableCondition::APPEARING, glm::vec2(0.5f, 0.5f));
+    if (UI::beginPopupModal(u8"提示", nullptr, UI::EWindowFlag::ALWAYS_AUTO_RESIZE))
     {
         UI::text(u8"加载文件中...");
         UI::text(u8"[ " + m_LoadingFilePath.u8string() + u8" ]");
@@ -123,7 +124,7 @@ void CGUIMain::_renderUIV()
     // 缺少文件操作框
     m_RequestPopupModal.draw();
 
-    ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
+    UI::beginWindow(u8"设置", NULL, UI::EWindowFlag::MENU_BAR);
     // 菜单栏
 
     if (UI::beginMenuBar())
@@ -147,7 +148,7 @@ void CGUIMain::_renderUIV()
                     }
                 }
             }
-            if (m_pCurScene && ImGui::MenuItem(u8"保存"))
+            if (m_pCurScene && UI::menuItem(u8"保存"))
             {
                 auto Result = NativeSystem::createSaveFileDialog("obj");
                 if (Result)

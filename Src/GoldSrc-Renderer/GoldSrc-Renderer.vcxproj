@@ -125,8 +125,8 @@
     <ClCompile Include="GuiLog.cpp" />
     <ClCompile Include="GuiMain.cpp" />
     <ClCompile Include="GuiRenderer.cpp" />
-    <ClCompile Include="GuiSelectFile.cpp" />
     <ClCompile Include="GuiTextureViewer.cpp" />
+    <ClCompile Include="ImguiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassLine.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
@@ -143,8 +143,8 @@
     <ClInclude Include="GuiLog.h" />
     <ClInclude Include="GuiMain.h" />
     <ClInclude Include="GuiRenderer.h" />
-    <ClInclude Include="GuiSelectFile.h" />
     <ClInclude Include="GuiTextureViewer.h" />
+    <ClInclude Include="ImguiRequestPopupModal.h" />
     <ClInclude Include="PassLine.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />
     <ClInclude Include="PipelineBlendAlpha.h" />
