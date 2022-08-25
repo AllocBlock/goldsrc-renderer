@@ -85,9 +85,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Gui.cpp" />
+    <ClCompile Include="NativeSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gui.h" />
+    <ClInclude Include="NativeSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

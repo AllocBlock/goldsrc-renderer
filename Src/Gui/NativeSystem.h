@@ -18,7 +18,7 @@ struct EFileDialogResult
 	}
 };
 
-namespace NativeSystem
+namespace Gui
 {
 	EFileDialogResult createOpenFileDialog(std::string vFilter = "");
 	EFileDialogResult createSaveFileDialog(std::string vFilter = "");

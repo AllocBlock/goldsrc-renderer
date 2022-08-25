@@ -32,7 +32,7 @@ CGUIMain::CGUIMain()
         Scene::ERequestResultState ActionResult = Future.get();
         if (ActionResult == Scene::ERequestResultState::CONTINUE)
         {
-            auto SelectResult = NativeSystem::createOpenFileDialog(vFilter);
+            auto SelectResult = Gui::createOpenFileDialog(vFilter);
             if (SelectResult)
                 return { Scene::ERequestResultState::CONTINUE, SelectResult.FilePath };
             else
@@ -85,7 +85,7 @@ void CGUIMain::log(std::string vText)
 
 void CGUIMain::_renderUIV()
 {
-    glm::vec2 Center = UI::getDisplaySize() * 0.5f;
+    glm::vec2 Center = UI::getDisplayCenter();
 
     // 文件加载信息框
     if (!m_RequestPopupModal.isShow() && !m_LoadingFilePath.empty() && !UI::isPopupOpen(u8"提示"))
@@ -133,7 +133,7 @@ void CGUIMain::_renderUIV()
         {
             if (UI::menuItem(u8"打开"))
             {
-                auto Result = NativeSystem::createOpenFileDialog("bsp;rmf;map;obj;mdl;*");
+                auto Result = Gui::createOpenFileDialog("bsp;rmf;map;obj;mdl;*");
                 if (Result)
                 {
                     auto Path = Result.FilePath;
@@ -150,7 +150,7 @@ void CGUIMain::_renderUIV()
             }
             if (m_pCurScene && UI::menuItem(u8"保存"))
             {
-                auto Result = NativeSystem::createSaveFileDialog("obj");
+                auto Result = Gui::createSaveFileDialog("obj");
                 if (Result)
                 {
                     CSceneObjWriter Writer;

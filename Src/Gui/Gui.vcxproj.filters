@@ -18,9 +18,15 @@
     <ClCompile Include="Gui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="NativeSystem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Gui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NativeSystem.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

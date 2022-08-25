@@ -80,5 +80,6 @@ namespace UI
     bool isUsingKeyboard();
 
     glm::vec2 getDisplaySize();
+    glm::vec2 getDisplayCenter();
 };
 

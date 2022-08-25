@@ -18,7 +18,7 @@ void CGuiFGD::draw()
     UI::beginWindow(u8"FGD");
     if (UI::button(u8"打开FGD文件"))
     {
-        auto Result = NativeSystem::createOpenFileDialog("fgd");
+        auto Result = Gui::createOpenFileDialog("fgd");
         if (Result)
         {
             m_pIOFGD = make<CIOGoldSrcForgeGameData>();

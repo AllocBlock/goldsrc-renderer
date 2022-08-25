@@ -18,7 +18,7 @@ void CGuiAlert::draw()
         UI::openPopup(u8"少御");
         m_Open = false;
     }
-    glm::vec2 Center = UI::getDisplaySize() * 0.5f;
+    glm::vec2 Center = UI::getDisplayCenter();
     UI::setNextWindowPos(Center, UI::ESetVariableCondition::APPEARING, glm::vec2(0.5f));
     if (UI::beginPopupModal(u8"少御", nullptr, UI::EWindowFlag::ALWAYS_AUTO_RESIZE))
     {

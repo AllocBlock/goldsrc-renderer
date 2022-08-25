@@ -303,3 +303,8 @@ glm::vec2 UI::getDisplaySize()
 {
     return __toGlmVec2(ImGui::GetIO().DisplaySize);
 }
+
+glm::vec2 UI::getDisplayCenter()
+{
+    return getDisplaySize() * 0.5f;
+}

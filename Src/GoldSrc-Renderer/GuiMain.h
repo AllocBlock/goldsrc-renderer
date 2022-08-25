@@ -6,7 +6,7 @@
 #include "GuiLog.h"
 #include "GuiRenderer.h"
 #include "GuiFGD.h"
-#include "ImguiRequestPopupModal.h"
+#include "GuiRequestPopupModal.h"
 #include "Scene.h"
 
 #include <future>
@@ -67,7 +67,7 @@ private:
     CGuiFrameRate m_GUIFrameRate = CGuiFrameRate();
     CGuiLog m_GUILog = CGuiLog();
     CGuiFGD m_FGD;
-    CImguiRequestPopupModal m_RequestPopupModal;
+    CGuiRequestPopupModal m_RequestPopupModal;
 
     SScene::Ptr m_pCurScene = nullptr;
 

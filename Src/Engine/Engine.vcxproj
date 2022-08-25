@@ -102,7 +102,6 @@
     <ClCompile Include="Interactor.cpp" />
     <ClCompile Include="IPipeline.cpp" />
     <ClCompile Include="IRenderPass.cpp" />
-    <ClCompile Include="NativeSystem.cpp" />
     <ClCompile Include="RenderPassDescriptor.cpp" />
     <ClCompile Include="RenderPassPort.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
@@ -119,7 +118,6 @@
     <ClInclude Include="Interactor.h" />
     <ClInclude Include="IPipeline.h" />
     <ClInclude Include="IRenderPass.h" />
-    <ClInclude Include="NativeSystem.h" />
     <ClInclude Include="ScenePass.h" />
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />

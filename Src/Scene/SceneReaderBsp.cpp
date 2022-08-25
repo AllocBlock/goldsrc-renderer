@@ -663,7 +663,7 @@ void CSceneReaderBsp::__loadPointEntities()
             std::string Name = (Entity.Properties.find("model") != Entity.Properties.end()) ? Entity.Properties.at("model") : "";
 
             std::filesystem::path RealWadPath;
-            if (Scene::requestFilePathUntilCancel(Name, m_FilePath.parent_path(), ".spr", RealWadPath))
+            if (Scene::requestFilePathUntilCancel(Name, m_FilePath.parent_path(), "spr", RealWadPath))
             {
                 CIOGoldSrcSpr Spr;
                 Spr.read(RealWadPath);

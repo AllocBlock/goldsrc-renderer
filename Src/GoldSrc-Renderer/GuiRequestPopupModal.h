@@ -3,7 +3,7 @@
 #include <future>
 #include <string>
 
-class CImguiRequestPopupModal
+class CGuiRequestPopupModal
 {
 public:
     std::future<Common::Scene::ERequestResultState> show(std::string vTitle = u8"н╢ур╣╫нд╪Ч", std::string vDescription = "");

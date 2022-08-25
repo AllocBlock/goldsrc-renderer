@@ -4,7 +4,7 @@
 std::string gLastLoadPath;
 
 // Filter format: ";" for a new entry, "," to separate in same entry, e.g. "jpg,png,bmp;psd"
-EFileDialogResult NativeSystem::createOpenFileDialog(std::string vFilter)
+EFileDialogResult Gui::createOpenFileDialog(std::string vFilter)
 {
 	nfdchar_t* pOutPath = nullptr;
 	nfdresult_t NfdResult = NFD_OpenDialog(vFilter.empty() ? nullptr : vFilter.data(), gLastLoadPath.empty() ? nullptr : gLastLoadPath.data(), &pOutPath);
@@ -19,7 +19,7 @@ EFileDialogResult NativeSystem::createOpenFileDialog(std::string vFilter)
 }
 
 // Filter format: ";" for a new entry, "," to separate in same entry, e.g. "jpg,png,bmp;psd"
-EFileDialogResult NativeSystem::createSaveFileDialog(std::string vFilter)
+EFileDialogResult Gui::createSaveFileDialog(std::string vFilter)
 {
 	nfdchar_t* pOutPath = nullptr;
 	nfdresult_t NfdResult = NFD_SaveDialog(vFilter.empty() ? nullptr : vFilter.data(), gLastLoadPath.empty() ? nullptr : gLastLoadPath.data(), &pOutPath);

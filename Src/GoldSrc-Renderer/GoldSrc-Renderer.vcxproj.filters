@@ -78,7 +78,7 @@
     <ClCompile Include="PassLine.cpp">
       <Filter>源文件\RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiRequestPopupModal.cpp">
+    <ClCompile Include="GuiRequestPopupModal.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
   </ItemGroup>
@@ -137,7 +137,7 @@
     <ClInclude Include="PassLine.h">
       <Filter>头文件\RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiRequestPopupModal.h">
+    <ClInclude Include="GuiRequestPopupModal.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
   </ItemGroup>

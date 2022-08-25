@@ -126,7 +126,7 @@
     <ClCompile Include="GuiMain.cpp" />
     <ClCompile Include="GuiRenderer.cpp" />
     <ClCompile Include="GuiTextureViewer.cpp" />
-    <ClCompile Include="ImguiRequestPopupModal.cpp" />
+    <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassLine.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
@@ -144,7 +144,7 @@
     <ClInclude Include="GuiMain.h" />
     <ClInclude Include="GuiRenderer.h" />
     <ClInclude Include="GuiTextureViewer.h" />
-    <ClInclude Include="ImguiRequestPopupModal.h" />
+    <ClInclude Include="GuiRequestPopupModal.h" />
     <ClInclude Include="PassLine.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />
     <ClInclude Include="PipelineBlendAlpha.h" />
