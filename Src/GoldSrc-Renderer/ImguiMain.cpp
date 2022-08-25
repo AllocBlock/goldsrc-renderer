@@ -3,10 +3,11 @@
 #include "SceneInterface.h"
 #include "SceneCommon.h"
 #include "UserInterface.h"
+#include "NativeSystem.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 
 #include <iostream>
 #include <set>
@@ -31,17 +32,18 @@ CGUIMain::CGUIMain()
 
     static auto RequestFilePathFunc = [=](std::string vMessage, std::string vFilter) -> Scene::SRequestResultFilePath
     {
-        m_FileSelection.setTitle(vMessage);
-        m_FileSelection.setFilters({ vFilter });
-        std::promise<std::filesystem::path> Promise;
-        auto Future = Promise.get_future();
-        m_FileSelection.start(std::move(Promise));
-        Future.wait();
-        auto Path = Future.get();
-        if (Path.empty())
-            return { Scene::ERequestResultState::CANCEL, "" };
+        auto Future = m_RequestPopupModal.show(u8"未找到文件", vMessage);
+        Scene::ERequestResultState ActionResult = Future.get();
+        if (ActionResult == Scene::ERequestResultState::CONTINUE)
+        {
+            auto SelectResult = NativeSystem::createOpenFileDialog(vFilter);
+            if (SelectResult)
+                return { Scene::ERequestResultState::CONTINUE, SelectResult.FilePath };
+            else
+                return { Scene::ERequestResultState::CANCEL, "" };
+        }
         else
-            return { Scene::ERequestResultState::CONTINUE, Path };
+            return { ActionResult, "" };
     };
 
     Scene::setGlobalRequestFilePathFunc(RequestFilePathFunc);
@@ -89,26 +91,8 @@ void CGUIMain::_renderUIV()
 {
     ImVec2 Center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
 
-    // 文件选择框
-    m_FileSelection.draw();
-    static std::future<std::filesystem::path> FileSelectionFuture;
-    if (FileSelectionFuture.valid() &&
-        FileSelectionFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready)
-    {
-        auto Path = FileSelectionFuture.get();
-        if (!m_ReadSceneCallback)
-        {
-            showAlert(u8"无法载入场景，未给GUI指定载入回调函数");
-        }
-        else if (!Path.empty())
-        {
-            m_LoadingFilePath = Path;
-            m_FileReadingFuture = std::async(readScene, m_LoadingFilePath);
-        }
-    }
-
     // 文件加载信息框
-    if (!m_FileSelection.isOpen() && !m_LoadingFilePath.empty() && !ImGui::IsPopupOpen(u8"提示"))
+    if (!m_RequestPopupModal.isShow() && !m_LoadingFilePath.empty() && !ImGui::IsPopupOpen(u8"提示"))
         ImGui::OpenPopup(u8"提示"); // 打开加载提示
     ImGui::SetNextWindowPos(Center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     if (ImGui::BeginPopupModal(u8"提示", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
@@ -141,6 +125,9 @@ void CGUIMain::_renderUIV()
     // 警告框
     m_GUIAlert.draw();
 
+    // 缺少文件操作框
+    m_RequestPopupModal.draw();
+
     ImGui::Begin(u8"设置", NULL, ImGuiWindowFlags_MenuBar);
     // 菜单栏
 
@@ -150,20 +137,30 @@ void CGUIMain::_renderUIV()
         {
             if (ImGui::MenuItem(u8"打开"))
             {
-                if (!m_FileSelection.isOpen())
+                auto Result = NativeSystem::createOpenFileDialog("bsp;rmf;map;obj;mdl;*");
+                if (Result)
                 {
-                    std::promise<std::filesystem::path> FileSelectionPromise;
-                    FileSelectionFuture = FileSelectionPromise.get_future();
-                    m_FileSelection.setTitle(u8"打开");
-                    m_FileSelection.setFilters({ ".bsp", ".rmf", ".map", ".obj", ".mdl", ".*" });
-                    m_FileSelection.start(std::move(FileSelectionPromise));
+                    auto Path = Result.FilePath;
+                    if (!m_ReadSceneCallback)
+                    {
+                        showAlert(u8"无法载入场景，未给GUI指定载入回调函数");
+                    }
+                    else if (!Path.empty())
+                    {
+                        m_LoadingFilePath = Path;
+                        m_FileReadingFuture = std::async(readScene, m_LoadingFilePath);
+                    }
                 }
             }
             if (m_pCurScene && ImGui::MenuItem(u8"保存"))
             {
-                CSceneObjWriter Writer;
-                Writer.addScene(m_pCurScene);
-                Writer.writeToFile("F:/scene/test.obj");
+                auto Result = NativeSystem::createSaveFileDialog("obj");
+                if (Result)
+                {
+                    CSceneObjWriter Writer;
+                    Writer.addScene(m_pCurScene);
+                    Writer.writeToFile(Result.FilePath);
+                }
             }
             /*if (ImGui::MenuItem(u8"退出"))
             {

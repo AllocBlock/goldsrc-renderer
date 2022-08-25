@@ -23,7 +23,7 @@ namespace Common
         {
             CONTINUE,
             RETRY,
-            IGNORE_, // IGNORE已有默认宏定义
+            IGNORE_, // IGNORE已有默认宏定义，所以加了个下划线
             CANCEL
         };
 
@@ -38,7 +38,7 @@ namespace Common
 
         void reportProgress(std::string vText);
         void setGlobalReportProgressFunc(std::function<void(std::string)> vFunc);
-        SRequestResultFilePath requestFilePath(std::string vMessage, std::string vFilter);
+        SRequestResultFilePath requestFilePath(std::string vMessage, std::string vFilter = "");
         void setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string, std::string)> vFunc);
 
         bool requestFilePathUntilCancel(std::filesystem::path vFilePath, std::filesystem::path vAdditionalSearchDir, std::string vFilter, std::filesystem::path& voFilePath);

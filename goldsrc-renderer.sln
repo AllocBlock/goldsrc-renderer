@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30517.126
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32819.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IO", "Src\IO\IO.vcxproj", "{910218DD-1C85-49C4-BF0B-81CA0BE1B4C2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Src\Engine\Engine.vcxproj", "{1FA794F5-B7FB-431F-8221-77F21034D0D9}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imgui", "Src\imgui\imgui.vcxproj", "{355FF34E-0933-40E2-B479-962B2C48CE13}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scene", "Src\Scene\Scene.vcxproj", "{EB9BA7FD-F347-4886-83BD-D119A929AA39}"
 EndProject
@@ -47,10 +45,6 @@ Global
 		{1FA794F5-B7FB-431F-8221-77F21034D0D9}.Debug|x64.Build.0 = Debug|x64
 		{1FA794F5-B7FB-431F-8221-77F21034D0D9}.Release|x64.ActiveCfg = Release|x64
 		{1FA794F5-B7FB-431F-8221-77F21034D0D9}.Release|x64.Build.0 = Release|x64
-		{355FF34E-0933-40E2-B479-962B2C48CE13}.Debug|x64.ActiveCfg = Debug|x64
-		{355FF34E-0933-40E2-B479-962B2C48CE13}.Debug|x64.Build.0 = Debug|x64
-		{355FF34E-0933-40E2-B479-962B2C48CE13}.Release|x64.ActiveCfg = Release|x64
-		{355FF34E-0933-40E2-B479-962B2C48CE13}.Release|x64.Build.0 = Release|x64
 		{EB9BA7FD-F347-4886-83BD-D119A929AA39}.Debug|x64.ActiveCfg = Debug|x64
 		{EB9BA7FD-F347-4886-83BD-D119A929AA39}.Debug|x64.Build.0 = Debug|x64
 		{EB9BA7FD-F347-4886-83BD-D119A929AA39}.Release|x64.ActiveCfg = Release|x64

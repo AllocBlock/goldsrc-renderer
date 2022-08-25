@@ -57,9 +57,6 @@
     <ClCompile Include="ImguiRenderer.cpp">
       <Filter>源文件\Imgui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiSelectFile.cpp">
-      <Filter>源文件\Imgui</Filter>
-    </ClCompile>
     <ClCompile Include="ImguiTextureViewer.cpp">
       <Filter>源文件\Imgui</Filter>
     </ClCompile>
@@ -90,6 +87,9 @@
     <ClCompile Include="PassLine.cpp">
       <Filter>源文件\RenderPass</Filter>
     </ClCompile>
+    <ClCompile Include="ImguiRequestPopupModal.cpp">
+      <Filter>源文件\Imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h">
@@ -114,9 +114,6 @@
       <Filter>头文件\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="ImguiRenderer.h">
-      <Filter>头文件\Imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="ImguiSelectFile.h">
       <Filter>头文件\Imgui</Filter>
     </ClInclude>
     <ClInclude Include="ImguiTextureViewer.h">
@@ -157,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="PassLine.h">
       <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="ImguiRequestPopupModal.h">
+      <Filter>头文件\Imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

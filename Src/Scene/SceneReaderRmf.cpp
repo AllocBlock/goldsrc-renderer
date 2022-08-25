@@ -36,7 +36,7 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
     while (true)
     {
         Scene::SRequestResultFilePath FilePathResult;
-        FilePathResult = Scene::requestFilePath(u8"添加纹理", ".wad");
+        FilePathResult = Scene::requestFilePath(u8"添加纹理", "wad");
         if (FilePathResult.State == Scene::ERequestResultState::CONTINUE)
         {
             CIOGoldsrcWad Wad;

@@ -177,7 +177,7 @@ void Scene::setGlobalReportProgressFunc(std::function<void(std::string)> vFunc)
     g_pReportProgressFunc = vFunc;
 }
 
-Scene::SRequestResultFilePath Scene::requestFilePath(std::string vMessage, std::string vFilter = ".*")
+Scene::SRequestResultFilePath Scene::requestFilePath(std::string vMessage, std::string vFilter)
 {
     if (g_pRequestFilePathFunc) return g_pRequestFilePathFunc(vMessage, vFilter);
     else return { ERequestResultState::IGNORE_, "" };

@@ -4,9 +4,9 @@
 #include "ImguiAlert.h"
 #include "ImguiFrameRate.h"
 #include "ImguiLog.h"
-#include "ImguiSelectFile.h"
 #include "ImguiRenderer.h"
 #include "ImguiFGD.h"
+#include "ImguiRequestPopupModal.h"
 #include "Scene.h"
 
 #include <future>
@@ -66,8 +66,8 @@ private:
     CImguiAlert m_GUIAlert = CImguiAlert();
     CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();
     CImguiLog m_GUILog = CImguiLog();
-    CImguiSelectFile m_FileSelection;
     CImguiFGD m_FGD;
+    CImguiRequestPopupModal m_RequestPopupModal;
 
     ptr<SScene> m_pCurScene = nullptr;
 

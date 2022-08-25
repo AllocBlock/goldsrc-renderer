@@ -35,8 +35,7 @@
 - 所有C++依赖均通过vkpkg安装，使用64位版本
   - 图形API：vulkan （官网下载安装配置环境变量VULKAN_SDK为Vulkan根目录）
   - GUI库：glfw+imgui
-    - file dialog文件选择框基于 https://github.com/AirGuanZ/imgui-filebrowser
-    	- 进行了重构，删除了不需要的功能
+    - file dialog文件选择框基于nativefiledialog
   - 数学库：glm
   - 图片IO：stb_image (.jpg, .bmp, .png, .tag...), tinyexr (.exr)
 - （可选）Python，编译Shader的脚本，如果要绕过Python实现自动编译详见compileShader.py
@@ -57,6 +56,7 @@
   vcpkg install imgui[core,vulkan-binding,glfw-binding]
   vcpkg install stb
   vcpkg install tinyexr
+  vcpkg install nativefiledialog
 
   vcpkg integrate install
   ```

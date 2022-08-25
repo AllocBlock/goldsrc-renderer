@@ -101,9 +101,6 @@
     <ProjectReference Include="..\Function\Function.vcxproj">
       <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\imgui\imgui.vcxproj">
-      <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
     </ProjectReference>
@@ -122,7 +119,7 @@
     <ClCompile Include="ImguiLog.cpp" />
     <ClCompile Include="ImguiMain.cpp" />
     <ClCompile Include="ImguiRenderer.cpp" />
-    <ClCompile Include="ImguiSelectFile.cpp" />
+    <ClCompile Include="ImguiRequestPopupModal.cpp" />
     <ClCompile Include="ImguiTextureViewer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassLine.cpp" />
@@ -143,7 +140,7 @@
     <ClInclude Include="ImguiLog.h" />
     <ClInclude Include="ImguiMain.h" />
     <ClInclude Include="ImguiRenderer.h" />
-    <ClInclude Include="ImguiSelectFile.h" />
+    <ClInclude Include="ImguiRequestPopupModal.h" />
     <ClInclude Include="ImguiTextureViewer.h" />
     <ClInclude Include="PassLine.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />

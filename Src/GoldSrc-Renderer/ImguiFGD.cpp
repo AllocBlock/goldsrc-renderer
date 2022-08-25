@@ -1,8 +1,9 @@
 #include "ImguiFGD.h"
+#include "NativeSystem.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 #include <string>
 
 CImguiFGD::CImguiFGD()
@@ -14,27 +15,17 @@ void CImguiFGD::close() { m_IsOpen = false; }
 
 void CImguiFGD::draw()
 {
-    // 读取FGD
-    if (m_Future.valid())
-    {
-        m_FileSelection.draw();
-        if (m_Future._Is_ready())
-        {
-            auto Path = m_Future.get();
-            if (!Path.empty())
-            {
-                m_pIOFGD = make<CIOGoldSrcForgeGameData>();
-                m_pIOFGD->read(Path);
-            }
-        }
-    }
-
     if (!m_IsOpen) return;
 
     ImGui::Begin(u8"FGD");
     if (ImGui::Button(u8"打开FGD文件"))
     {
-        __requestFGDFile();
+        auto Result = NativeSystem::createOpenFileDialog("fgd");
+        if (Result)
+        {
+            m_pIOFGD = make<CIOGoldSrcForgeGameData>();
+            m_pIOFGD->read(Result.FilePath);
+        }
     }
     if (m_pIOFGD)
     {
@@ -67,13 +58,4 @@ void CImguiFGD::draw()
         }
     }
     ImGui::End();
-}
-
-void CImguiFGD::__requestFGDFile()
-{
-    m_FileSelection.setTitle(u8"FGD");
-    m_FileSelection.setFilters({ ".fgd" });
-    std::promise<std::filesystem::path> Promise;
-    m_Future = Promise.get_future();
-    m_FileSelection.start(std::move(Promise));
 }

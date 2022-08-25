@@ -6,7 +6,7 @@ using namespace Common;
 bool GoldSrc::readWad(std::filesystem::path vWadPath, std::filesystem::path vAdditionalSearchDir, CIOGoldsrcWad& voWad)
 {
     std::filesystem::path RealWadPath;
-    if (!Scene::requestFilePathUntilCancel(vWadPath, vAdditionalSearchDir, ".wad", RealWadPath))
+    if (!Scene::requestFilePathUntilCancel(vWadPath, vAdditionalSearchDir, "wad", RealWadPath))
     {
         Common::Log::log(u8"Î´ÕÒµ½WADÎÄ¼þ£º" + vWadPath.u8string());
         return false;

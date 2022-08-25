@@ -84,6 +84,7 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBox
     vk::SImageViewInfo ViewInfo;
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
+    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
     m_pSkyBoxImage = make<vk::CImage>();
     m_pSkyBoxImage->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
     m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
