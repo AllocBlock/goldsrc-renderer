@@ -2,7 +2,7 @@
 #include "Common.h"
 #include "Descriptor.h"
 #include "Function.h"
-#include "UserInterface.h"
+#include "Gui.h"
 #include "RenderPassDescriptor.h"
 
 #include <iostream>
@@ -24,6 +24,7 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
 
     __destroySceneResources();
     __createSceneResources();
+    __updateTextureView();
 }
 
 void CSceneGoldSrcRenderPass::rerecordCommand()
@@ -129,6 +130,20 @@ void CSceneGoldSrcRenderPass::_renderUIV()
             }
         }
     }
+
+    UI::beginWindow(u8"纹理");
+
+    if (!m_TextureImageSet.empty())
+    {
+        UI::combo(u8"选择纹理", m_TextureComboNameSet, m_CurTextureIndex);
+        UI::slider(u8"缩放级别", m_TextureScale, 0.5f, 5.0f, "%.1f");
+        auto pImage = m_TextureImageSet[m_CurTextureIndex];
+        UI::image(pImage, glm::vec2(pImage->getWidth() * m_TextureScale, pImage->getHeight() * m_TextureScale));
+    }
+    else
+        UI::text(u8"暂无任何纹理");
+    UI::endWindow();
+    
 }
 
 void CSceneGoldSrcRenderPass::_destroyV()
@@ -595,6 +610,20 @@ void CSceneGoldSrcRenderPass::__updateDescriptorSets()
     m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAlphaTest.updateDescriptorSet(TextureSet, Lightmap);
     m_PipelineSet.BlendAdditive.updateDescriptorSet(TextureSet, Lightmap);
+}
+
+void CSceneGoldSrcRenderPass::__updateTextureView()
+{
+    size_t ImageNum = m_pScene->TexImageSet.size();
+    _ASSERTE(ImageNum == m_TextureImageSet.size());
+    m_CurTextureIndex = std::max<int>(0, std::min<int>(ImageNum, m_CurTextureIndex));
+    m_TextureNameSet.resize(ImageNum);
+    m_TextureComboNameSet.resize(ImageNum);
+    for (size_t i = 0; i < ImageNum; ++i)
+    {
+        m_TextureNameSet[i] = std::to_string(i + 1) + ": " + m_pScene->TexImageSet[i]->getName();
+        m_TextureComboNameSet[i] = m_TextureNameSet[i].c_str();
+    }
 }
 
 std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const

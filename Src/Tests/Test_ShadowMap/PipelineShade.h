@@ -16,21 +16,14 @@ struct SLightPointData
     glm::vec3 Pos;
     glm::vec3 Normal;
 
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SLightPointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return BindingDescription;
-    }
+    using PointData_t = SLightPointData;
+    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
         CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SLightPointData, Pos));
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SLightPointData, Normal));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
         return Descriptor.generate();
     }
 };

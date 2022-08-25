@@ -1,12 +1,12 @@
 #pragma once
 #include "IGUI.h"
 #include "Interactor.h"
-#include "ImguiAlert.h"
-#include "ImguiFrameRate.h"
-#include "ImguiLog.h"
-#include "ImguiRenderer.h"
-#include "ImguiFGD.h"
-#include "ImguiRequestPopupModal.h"
+#include "GuiAlert.h"
+#include "GuiFrameRate.h"
+#include "GuiLog.h"
+#include "GuiSelectFile.h"
+#include "GuiRenderer.h"
+#include "GuiFGD.h"
 #include "Scene.h"
 
 #include <future>
@@ -63,13 +63,12 @@ protected:
 private:
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    CImguiAlert m_GUIAlert = CImguiAlert();
-    CImguiFrameRate m_GUIFrameRate = CImguiFrameRate();
-    CImguiLog m_GUILog = CImguiLog();
-    CImguiFGD m_FGD;
+    CGuiAlert m_GUIAlert = CGuiAlert();
+    CGuiFrameRate m_GUIFrameRate = CGuiFrameRate();
+    CGuiLog m_GUILog = CGuiLog();
+    CGuiSelectFile m_FileSelection;
+    CGuiFGD m_FGD;
     CImguiRequestPopupModal m_RequestPopupModal;
-
-    ptr<SScene> m_pCurScene = nullptr;
 
     struct SControl
     {

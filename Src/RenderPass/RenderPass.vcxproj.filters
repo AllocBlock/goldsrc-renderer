@@ -15,48 +15,40 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ApplicationPBR.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelinePBS.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderPassPBR.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MaterialPBR.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="ApplicationPBR.h">
+    <ClInclude Include="PipelineSkybox.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PipelinePBS.h">
+    <ClInclude Include="PipelineSprite.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPassPBR.h">
+    <ClInclude Include="RenderPassFullScreen.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MaterialPBR.h">
+    <ClInclude Include="PipelineEnvironment.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FullScreenPointData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline3DGui.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\env.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\shader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\shader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\env.frag">
-      <Filter>资源文件</Filter>
-    </None>
+    <ClCompile Include="PipelineSkybox.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSprite.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineEnvironment.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPassFullScreen.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Pipeline3DGui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

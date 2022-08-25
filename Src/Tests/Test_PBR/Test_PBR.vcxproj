@@ -59,7 +59,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -84,7 +84,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -106,18 +106,13 @@
   <ItemGroup>
     <ClCompile Include="ApplicationPBR.cpp" />
     <ClCompile Include="MaterialPBR.cpp" />
-    <ClCompile Include="PipelineEnvironment.cpp" />
-    <ClCompile Include="RenderPassFullScreen.cpp" />
     <ClCompile Include="RenderPassPBR.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PipelinePBS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationPBR.h" />
-    <ClInclude Include="FullScreenPoint.h" />
     <ClInclude Include="MaterialPBR.h" />
-    <ClInclude Include="PipelineEnvironment.h" />
-    <ClInclude Include="RenderPassFullScreen.h" />
     <ClInclude Include="RenderPassPBR.h" />
     <ClInclude Include="PipelinePBS.h" />
   </ItemGroup>
@@ -131,11 +126,14 @@
     <ProjectReference Include="..\..\Function\Function.vcxproj">
       <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\imgui\imgui.vcxproj">
+    <ProjectReference Include="..\..\Gui\Gui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RenderPass\RenderPass.vcxproj">
+      <Project>{920d82f3-c77d-49a8-96d6-0eec00081511}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

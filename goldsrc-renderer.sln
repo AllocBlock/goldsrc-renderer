@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IO", "Src\IO\IO.vcxproj", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Src\Engine\Engine.vcxproj", "{1FA794F5-B7FB-431F-8221-77F21034D0D9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Gui", "Src\Gui\Gui.vcxproj", "{355FF34E-0933-40E2-B479-962B2C48CE13}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scene", "Src\Scene\Scene.vcxproj", "{EB9BA7FD-F347-4886-83BD-D119A929AA39}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GoldSrc-Renderer", "Src\GoldSrc-Renderer\GoldSrc-Renderer.vcxproj", "{513C4028-20CE-4F65-AB41-1701CFBDB14E}"
@@ -30,6 +32,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_PBR", "Src\Tests\Test_PBR\Test_PBR.vcxproj", "{19498310-A186-4EA4-8268-23AEC051A5BF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Function", "Src\Function\Function.vcxproj", "{E36EBE08-0944-4E1A-86D2-509A565A49A3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderPass", "Src\RenderPass\RenderPass.vcxproj", "{920D82F3-C77D-49A8-96D6-0EEC00081511}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +93,10 @@ Global
 		{E36EBE08-0944-4E1A-86D2-509A565A49A3}.Debug|x64.Build.0 = Debug|x64
 		{E36EBE08-0944-4E1A-86D2-509A565A49A3}.Release|x64.ActiveCfg = Release|x64
 		{E36EBE08-0944-4E1A-86D2-509A565A49A3}.Release|x64.Build.0 = Release|x64
+		{920D82F3-C77D-49A8-96D6-0EEC00081511}.Debug|x64.ActiveCfg = Debug|x64
+		{920D82F3-C77D-49A8-96D6-0EEC00081511}.Debug|x64.Build.0 = Debug|x64
+		{920D82F3-C77D-49A8-96D6-0EEC00081511}.Release|x64.ActiveCfg = Release|x64
+		{920D82F3-C77D-49A8-96D6-0EEC00081511}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

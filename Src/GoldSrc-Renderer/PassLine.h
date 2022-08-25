@@ -8,7 +8,7 @@
 #include "Command.h"
 #include "Image.h"
 #include "Buffer.h"
-#include "PipelineLine.h"
+#include "Pipeline3DGui.h"
 
 #include <vulkan/vulkan.h> 
 #include <glm/glm.hpp>

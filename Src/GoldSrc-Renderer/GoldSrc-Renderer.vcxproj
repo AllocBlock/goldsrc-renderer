@@ -56,7 +56,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -77,7 +77,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/imgui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Application;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/GUI;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -101,8 +101,14 @@
     <ProjectReference Include="..\Function\Function.vcxproj">
       <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Gui\Gui.vcxproj">
+      <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\RenderPass\RenderPass.vcxproj">
+      <Project>{920d82f3-c77d-49a8-96d6-0eec00081511}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Scene\Scene.vcxproj">
       <Project>{eb9ba7fd-f347-4886-83bd-d119a929aa39}</Project>
@@ -113,44 +119,38 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ApplicationGoldSrc.cpp" />
-    <ClCompile Include="ImguiAlert.cpp" />
-    <ClCompile Include="ImguiFGD.cpp" />
-    <ClCompile Include="ImguiFrameRate.cpp" />
-    <ClCompile Include="ImguiLog.cpp" />
-    <ClCompile Include="ImguiMain.cpp" />
-    <ClCompile Include="ImguiRenderer.cpp" />
-    <ClCompile Include="ImguiRequestPopupModal.cpp" />
-    <ClCompile Include="ImguiTextureViewer.cpp" />
+    <ClCompile Include="GuiAlert.cpp" />
+    <ClCompile Include="GuiFGD.cpp" />
+    <ClCompile Include="GuiFrameRate.cpp" />
+    <ClCompile Include="GuiLog.cpp" />
+    <ClCompile Include="GuiMain.cpp" />
+    <ClCompile Include="GuiRenderer.cpp" />
+    <ClCompile Include="GuiSelectFile.cpp" />
+    <ClCompile Include="GuiTextureViewer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassLine.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
-    <ClCompile Include="PipelineLine.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
-    <ClCompile Include="PipelineSkybox.cpp" />
-    <ClCompile Include="PipelineSprite.cpp" />
     <ClCompile Include="SceneProbe.cpp" />
     <ClCompile Include="PassSimple.cpp" />
     <ClCompile Include="PassGoldSrc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h" />
-    <ClInclude Include="ImguiAlert.h" />
-    <ClInclude Include="ImguiFGD.h" />
-    <ClInclude Include="ImguiFrameRate.h" />
-    <ClInclude Include="ImguiLog.h" />
-    <ClInclude Include="ImguiMain.h" />
-    <ClInclude Include="ImguiRenderer.h" />
-    <ClInclude Include="ImguiRequestPopupModal.h" />
-    <ClInclude Include="ImguiTextureViewer.h" />
+    <ClInclude Include="GuiAlert.h" />
+    <ClInclude Include="GuiFGD.h" />
+    <ClInclude Include="GuiFrameRate.h" />
+    <ClInclude Include="GuiLog.h" />
+    <ClInclude Include="GuiMain.h" />
+    <ClInclude Include="GuiRenderer.h" />
+    <ClInclude Include="GuiSelectFile.h" />
+    <ClInclude Include="GuiTextureViewer.h" />
     <ClInclude Include="PassLine.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />
     <ClInclude Include="PipelineBlendAlpha.h" />
     <ClInclude Include="PipelineBlendAlphaTest.h" />
     <ClInclude Include="PipelineDepthTest.h" />
-    <ClInclude Include="PipelineLine.h" />
     <ClInclude Include="PipelineSimple.h" />
-    <ClInclude Include="PipelineSkybox.h" />
-    <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PointData.h" />
     <ClInclude Include="SceneProbe.h" />
     <ClInclude Include="PassSimple.h" />

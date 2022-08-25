@@ -65,7 +65,9 @@ void CSceneReaderBsp::__readTextures()
     // if bsp contains its data, load it, otherwise find it in all wads
     // if found, load it, otherwise set mapper to 0
     Scene::reportProgress(u8"整理纹理中");
-    TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    auto pDefaultImage = Scene::generateBlackPurpleGrid(4, 4, 16);
+    pDefaultImage->setName("Default");
+    TexImageSet.push_back(pDefaultImage);
     m_TexNameToIndex["TextureNotFound"] = 0;
     for (size_t i = 0; i < Lumps.m_LumpTexture.Textures.size(); ++i)
     {

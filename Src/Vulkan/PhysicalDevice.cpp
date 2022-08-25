@@ -38,10 +38,9 @@ CPhysicalDevice::Ptr CPhysicalDevice::chooseBestDevice(CInstance::CPtr vInstance
     CPhysicalDevice::Ptr pDevice = make<CPhysicalDevice>();
     // get property, queue family info and swapchain support info
     vkGetPhysicalDeviceProperties(ChosenDevice, &pDevice->m_DeviceProperty);
-    pDevice->m_QueueFamilyInfo = __findQueueFamilies(ChosenDevice, vSurface);
-    pDevice->m_SwapChainSupportInfo = __getSwapChainSupport(ChosenDevice, vSurface);
     pDevice->_set(ChosenDevice);
     pDevice->m_pInstance = vInstance;
+    pDevice->m_pSurface = vSurface;
     return pDevice;
 }
 
@@ -64,6 +63,11 @@ CInstance::CPtr CPhysicalDevice::getInstance() const
     return m_pInstance;
 }
 
+CSurface::CPtr CPhysicalDevice::getSurface() const
+{
+    return m_pSurface;
+}
+
 const VkPhysicalDeviceProperties& CPhysicalDevice::getProperty() const
 {
     return m_DeviceProperty;
@@ -73,9 +77,8 @@ void CPhysicalDevice::release()
 {
     _setNull();
     m_pInstance = nullptr;
+    m_pSurface = VK_NULL_HANDLE;
     m_DeviceProperty = {};
-    m_QueueFamilyInfo = {};
-    m_SwapChainSupportInfo = {};
 }
 
 uint32_t CPhysicalDevice::findMemoryTypeIndex(uint32_t vTypeFilter, VkMemoryPropertyFlags vProperties) const
@@ -95,14 +98,17 @@ uint32_t CPhysicalDevice::findMemoryTypeIndex(uint32_t vTypeFilter, VkMemoryProp
     throw std::runtime_error(u8"未找到合适的存储类别");
 }
 
-const SQueueFamilyIndices& CPhysicalDevice::getQueueFamilyInfo() const
+SQueueFamilyIndices CPhysicalDevice::getQueueFamilyInfo() const
 {
-    return m_QueueFamilyInfo;
+    _ASSERTE(m_pSurface); 
+    return __findQueueFamilies(get(), m_pSurface);
 }
 
-const SSwapChainSupportDetails& CPhysicalDevice::getSwapChainSupportInfo() const
+SSwapChainSupportDetails CPhysicalDevice::getSwapChainSupportInfo() const
 {
-    return m_SwapChainSupportInfo;
+    // 需要每次获取都重新查询，因为Surface可能发生变化，可能导致值改变，如Capability
+    _ASSERTE(m_pSurface);
+    return __getSwapChainSupport(get(), m_pSurface);
 }
 
 VkFormat CPhysicalDevice::chooseSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures) const

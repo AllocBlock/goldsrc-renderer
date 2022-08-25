@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-class CImguiTextureViewer
+class CGuiTextureViewer
 {
 public:
     void draw();

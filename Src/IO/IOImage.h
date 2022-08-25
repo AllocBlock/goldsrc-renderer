@@ -19,6 +19,7 @@ public:
     CIOImage(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
     CIOImage(const CIOImage& vObj)
     {
+        m_Name = vObj.getName();
         m_Width = vObj.getWidth();
         m_Height = vObj.getHeight();
         m_ChannelNum = vObj.getChannelNum();
@@ -54,7 +55,7 @@ private:
     bool __readImageTinyexr();
     void __cleanup();
 
-    std::string m_Name;
+    std::string m_Name = "";
     size_t m_Width = 0;
     size_t m_Height = 0;
     size_t m_ChannelNum = 4;

@@ -1,13 +1,10 @@
-#include "ImguiLog.h"
-
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
+#include "GuiLog.h"
+#include "Gui.h"
 
 #include <chrono>
 #include <iomanip>
 
-std::istream& operator >> (std::istream& vIn, CImguiLog& vGUILog)
+std::istream& operator >> (std::istream& vIn, CGuiLog& vGUILog)
 {
     std::string Temp;
     vIn >> Temp;
@@ -15,32 +12,32 @@ std::istream& operator >> (std::istream& vIn, CImguiLog& vGUILog)
     return vIn;
 }
 
-void CImguiLog::log(std::string vText)
+void CGuiLog::log(std::string vText)
 {
     std::string Time = __getCurrentTime();
     m_Logs.emplace_back(Time + vText);
     m_HasNewLog = true;
 }
 
-void CImguiLog::draw()
+void CGuiLog::draw()
 {
     if (m_Open)
     {
-        ImGui::Begin(u8"日志");
+        UI::beginWindow(u8"日志");
         for (size_t i = 0; i < m_Logs.size(); ++i)
         {
-            ImGui::TextWrapped(m_Logs[i].c_str());
+            UI::text(m_Logs[i], true);
         }
         if (m_HasNewLog)
         {
-            ImGui::SetScrollHereY(1.0f);
+            UI::setScrollHereY(1.0f);
             m_HasNewLog = false;
         }
-        ImGui::End();
+        UI::endWindow();
     }
 }
 
-std::string CImguiLog::__getCurrentTime()
+std::string CGuiLog::__getCurrentTime()
 {
     time_t Time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     tm LocalTime;

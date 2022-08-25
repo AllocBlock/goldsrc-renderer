@@ -2,10 +2,10 @@
 #include <chrono>
 #include <vector>
 
-class CImguiFrameRate
+class CGuiFrameRate
 {
 public:
-    CImguiFrameRate();
+    CGuiFrameRate();
     void draw();
 
 private:

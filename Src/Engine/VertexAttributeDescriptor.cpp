@@ -30,3 +30,13 @@ void CVertexAttributeDescriptor::clear()
     m_FormatSet.clear();
     m_OffsetSet.clear();
 }
+
+VkVertexInputBindingDescription createBindingDescription(size_t vSize)
+{
+    VkVertexInputBindingDescription BindingDescription = {};
+    BindingDescription.binding = 0;
+    BindingDescription.stride = vSize;
+    BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    return BindingDescription;
+}

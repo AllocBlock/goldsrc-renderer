@@ -4,10 +4,10 @@
 
 #include <filesystem>
 
-class CImguiFGD
+class CGuiFGD
 {
 public:
-    CImguiFGD();
+    CGuiFGD();
     void draw();
     void open();
     void close();

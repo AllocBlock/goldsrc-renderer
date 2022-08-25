@@ -7,7 +7,7 @@
 #include "PipelineBlendAlpha.h"
 #include "PipelineBlendAlphaTest.h"
 #include "PipelineBlendAdditive.h"
-#include "PipelineLine.h"
+#include "Pipeline3DGui.h"
 #include "PipelineSprite.h"
 #include "Descriptor.h"
 #include "Command.h"
@@ -111,6 +111,7 @@ private:
     VkFormat __findDepthFormat();
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
+    void __updateTextureView();
 
     std::vector<SGoldSrcPointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
 
@@ -154,4 +155,10 @@ private:
     bool m_EnableBSP = false;
     std::optional<uint32_t> m_CameraNodeIndex = std::nullopt;
     std::set<uint32_t> m_RenderNodeSet;
+
+    // ÎÆÀí²é¿´
+    int m_CurTextureIndex = 0;
+    float m_TextureScale = 1.0f;
+    std::vector<std::string> m_TextureNameSet;
+    std::vector<const char*> m_TextureComboNameSet;
 };

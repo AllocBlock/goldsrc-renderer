@@ -14,9 +14,6 @@ public:
     GLFWwindow* getWindow() { return m_pWindow; }
     void setWindow(GLFWwindow* vWindow) { m_pWindow = vWindow; }
 
-    void beginFrame(std::string vTitle = u8"´°¿Ú");
-    void endFrame();
-
 protected:
     virtual void _initV() override;
     virtual CRenderPassPort _getPortV() override;
@@ -30,8 +27,6 @@ protected:
     CCommand m_Command = CCommand();
     std::string m_CommandName = "Main";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
-
-    bool m_Begined = false;
 
 private:
     void __createRenderPass();

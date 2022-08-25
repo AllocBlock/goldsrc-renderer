@@ -1,5 +1,5 @@
 #include "ApplicationTest.h"
-#include <imgui.h>
+#include "Gui.h"
 
 using namespace vk;
 
@@ -10,12 +10,12 @@ void CApplicationTest::_initV()
     m_pRenderPass = make<CRendererTest>();
     m_pRenderPass->init(AppInfo, ERenderPassPos::BEGIN);
 
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
+
     m_pGUIPass = make<CGUIRenderPass>();
     m_pGUIPass->setWindow(m_pWindow);
     m_pGUIPass->init(AppInfo, ERenderPassPos::END);
-
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)
@@ -27,12 +27,12 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
 
 void CApplicationTest::_renderUIV()
 {
-    m_pGUIPass->beginFrame();
-    ImGui::Begin(u8"SpräÖÈ¾");
-    ImGui::Text(u8"²âÊÔ");
+    UI::beginFrame();
+    UI::beginWindow(u8"SpräÖÈ¾");
+    UI::text(u8"²âÊÔ");
     m_pInteractor->getCamera()->renderUI();
-    ImGui::End();
-    m_pGUIPass->endFrame();
+    UI::endWindow();
+    UI::endFrame();
 }
 
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)

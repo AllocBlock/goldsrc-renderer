@@ -13,8 +13,12 @@ namespace vk
 
         void create(CInstance::CPtr vInstance, GLFWwindow* vWindow);
         void destroy();
+
+        GLFWwindow* getWindow() const { return m_pWindow; }
+
     private:
-        CInstance::CPtr m_Instance = nullptr;
+        CInstance::CPtr m_pInstance = nullptr;
+        GLFWwindow* m_pWindow = nullptr;
     };
 }
 

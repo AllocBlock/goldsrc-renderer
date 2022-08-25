@@ -3,31 +3,12 @@
 #include "Log.h"
 #include "AppInfo.h"
 #include "RenderPassDescriptor.h"
-
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
+#include "Gui.h"
 
 #include <iostream>
 #include <set>
 
-void CGUIRenderPass::beginFrame(std::string vTitle)
-{
-    if (m_Begined) throw "Already in a frame";
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    ImGui::Begin(vTitle.c_str());
-    m_Begined = true;
-}
-
-void CGUIRenderPass::endFrame()
-{
-    if (!m_Begined) throw "Already out of a frame";
-    ImGui::End();
-    ImGui::Render();
-    m_Begined = false;
-}
+const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 
 void CGUIRenderPass::_initV()
 {
@@ -39,37 +20,14 @@ void CGUIRenderPass::_initV()
     __createRenderPass();
     __createDescriptorPool();
 
-    // setup context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& IO = ImGui::GetIO();
-    IO.Fonts->AddFontFromFileTTF("C:/windows/fonts/simhei.ttf", 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseFull());
-
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForVulkan(m_pWindow, true);
-
-    // init vulkan
-    ImGui_ImplVulkan_InitInfo InitInfo = {};
-    InitInfo.Instance = *m_AppInfo.pDevice->getPhysicalDevice()->getInstance();
-    InitInfo.PhysicalDevice = *m_AppInfo.pDevice->getPhysicalDevice();
-    InitInfo.Device = *m_AppInfo.pDevice;
-    InitInfo.QueueFamily = m_AppInfo.pDevice->getGraphicsQueueIndex();
-    InitInfo.Queue = m_AppInfo.pDevice->getGraphicsQueue();
-    InitInfo.PipelineCache = VK_NULL_HANDLE;
-    InitInfo.DescriptorPool = m_DescriptorPool;
-    InitInfo.Allocator = nullptr;
-    InitInfo.MinImageCount = NumImage;
-    InitInfo.ImageCount = NumImage;
-    InitInfo.CheckVkResultFn = nullptr;
-    ImGui_ImplVulkan_Init(&InitInfo, get());
-
     // create command pool and buffers
     m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_CommandName, NumImage, ECommandBufferLevel::PRIMARY);
 
     // upload font
+    UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, _getRef());
     VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    ImGui_ImplVulkan_CreateFontsTexture(CommandBuffer);
+    UI::addFont(gChineseFont, CommandBuffer);
     m_Command.endSingleTimeBuffer(CommandBuffer);
 
     __createRecreateSources();
@@ -93,7 +51,7 @@ void CGUIRenderPass::_recreateV()
 
 void CGUIRenderPass::_renderUIV()
 {
-    ImGui::Text(u8"默认GUI");
+    UI::text(u8"默认GUI");
 }
 
 void CGUIRenderPass::_destroyV()
@@ -104,9 +62,7 @@ void CGUIRenderPass::_destroyV()
         pFramebuffer->destroy();
     m_FramebufferSet.clear();
 
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    UI::destory();
 
     m_Command.clear();
     __destroyDescriptorPool();
@@ -127,11 +83,7 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
 
     begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
-
-    auto pDrawData = ImGui::GetDrawData();
-    if (pDrawData)
-        ImGui_ImplVulkan_RenderDrawData(pDrawData, CommandBuffer);
-
+    UI::draw(CommandBuffer);
     end();
 
     return { CommandBuffer };

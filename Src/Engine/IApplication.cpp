@@ -179,7 +179,7 @@ void IApplication::__setupDebugMessenger()
 
 void IApplication::__createSwapchain()
 {
-    m_pSwapchain->create(m_pDevice, m_pSurface, m_pWindow);
+    m_pSwapchain->create(m_pDevice);
 }
 
 void IApplication::__destroySwapchain()

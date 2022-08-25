@@ -1,5 +1,5 @@
 #include "ApplicationTest.h"
-#include <imgui.h>
+#include "Gui.h"
 
 using namespace vk;
 
@@ -27,11 +27,11 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
 
 void CApplicationTest::_renderUIV()
 {
-    m_pGUIPass->beginFrame();
-    ImGui::Begin(u8"ª∑æ≥Ã˘Õº Environment Mapping");
-    ImGui::Text(u8"≤‚ ‘");
-    ImGui::End();
-    m_pGUIPass->endFrame();
+    UI::beginFrame();
+    UI::beginWindow(u8"ª∑æ≥Ã˘Õº Environment Mapping");
+    UI::text(u8"≤‚ ‘");
+    UI::endWindow();
+    UI::endFrame();
 }
 
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)

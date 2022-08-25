@@ -5,7 +5,7 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "IPipeline.h"
-#include "FullScreenPoint.h"
+#include "FullScreenPointData.h"
 
 class CRenderPassFullScreen : public vk::IRenderPass
 {

@@ -19,24 +19,18 @@ struct SPBSPointData
     glm::vec2 TexCoord;
     uint32_t MaterialIndex;
 
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription BindingDescription = {};
-        BindingDescription.binding = 0;
-        BindingDescription.stride = sizeof(SPBSPointData);
-        BindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    using PointData_t = SPBSPointData;
 
-        return BindingDescription;
-    }
+    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
         CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Pos));
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Normal));
-        Descriptor.add(VK_FORMAT_R32G32B32_SFLOAT, offsetof(SPBSPointData, Tangent));
-        Descriptor.add(VK_FORMAT_R32G32_SFLOAT,    offsetof(SPBSPointData, TexCoord));
-        Descriptor.add(VK_FORMAT_R32_UINT,         offsetof(SPBSPointData, MaterialIndex));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(Tangent));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
+        Descriptor.add(_GET_ATTRIBUTE_INFO(MaterialIndex));
         return Descriptor.generate();
     }
 };

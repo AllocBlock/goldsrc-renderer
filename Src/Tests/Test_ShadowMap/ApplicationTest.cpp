@@ -1,6 +1,6 @@
 #include "ApplicationTest.h"
-#include <imgui.h>
 #include "GlobalSingleTimeBuffer.h"
+#include "Gui.h"
 
 using namespace vk;
 
@@ -38,16 +38,16 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
 
 void CApplicationTest::_renderUIV()
 {
-    m_pGUIPass->beginFrame();
-    ImGui::Begin(u8"ÒõÓ°Ó³Éä Shadow Map");
-    ImGui::Text(u8"²âÊÔ");
+    UI::beginFrame();
+    UI::beginWindow(u8"ÒõÓ°Ó³Éä Shadow Map");
+    UI::text(u8"²âÊÔ");
     m_pInteractor->getCamera()->renderUI();
-    if (ImGui::Button(u8"µ¼³öShadowMapÍ¼Æ¬"))
+    if (UI::button(u8"µ¼³öShadowMapÍ¼Æ¬"))
     {
         m_pRenderPassShadowMap->exportShadowMapToFile("shadowmap.ppm");
     }
-    ImGui::End();
-    m_pGUIPass->endFrame();
+    UI::endWindow();
+    UI::endFrame();
 }
 
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
@@ -72,7 +72,6 @@ void CApplicationTest::_createOtherResourceV()
 
 void CApplicationTest::_recreateOtherResourceV()
 {
-    _recreateOtherResourceV();
 }
 
 void CApplicationTest::_destroyOtherResourceV()

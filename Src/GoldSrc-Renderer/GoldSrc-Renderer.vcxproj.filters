@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="头文件\Imgui">
-      <UniqueIdentifier>{ac74e681-1aa0-442b-be8e-e7bb9f1a122e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="源文件\Imgui">
-      <UniqueIdentifier>{df4c598f-3d30-4888-8ffc-694197a9598b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="源文件\Pipeline">
       <UniqueIdentifier>{1f5a51fb-9e66-4c84-96b5-f52fcacfcc53}</UniqueIdentifier>
     </Filter>
@@ -31,6 +25,12 @@
     <Filter Include="源文件\RenderPass">
       <UniqueIdentifier>{bbbb4495-fb7b-4504-8213-03987ae03429}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\Gui">
+      <UniqueIdentifier>{df4c598f-3d30-4888-8ffc-694197a9598b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Gui">
+      <UniqueIdentifier>{ac74e681-1aa0-442b-be8e-e7bb9f1a122e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -39,40 +39,31 @@
     <ClCompile Include="ApplicationGoldSrc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiAlert.cpp">
-      <Filter>源文件\Imgui</Filter>
+    <ClCompile Include="GuiAlert.cpp">
+      <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiFGD.cpp">
-      <Filter>源文件\Imgui</Filter>
+    <ClCompile Include="GuiFGD.cpp">
+      <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiFrameRate.cpp">
-      <Filter>源文件\Imgui</Filter>
+    <ClCompile Include="GuiFrameRate.cpp">
+      <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiLog.cpp">
-      <Filter>源文件\Imgui</Filter>
+    <ClCompile Include="GuiLog.cpp">
+      <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiMain.cpp">
-      <Filter>源文件\Imgui</Filter>
+    <ClCompile Include="GuiMain.cpp">
+      <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiRenderer.cpp">
-      <Filter>源文件\Imgui</Filter>
+    <ClCompile Include="GuiRenderer.cpp">
+      <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="ImguiTextureViewer.cpp">
-      <Filter>源文件\Imgui</Filter>
+    <ClCompile Include="GuiTextureViewer.cpp">
+      <Filter>源文件\Gui</Filter>
     </ClCompile>
     <ClCompile Include="PipelineDepthTest.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineLine.cpp">
-      <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineSimple.cpp">
-      <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineSkybox.cpp">
-      <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineSprite.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
     <ClCompile Include="PassSimple.cpp">
@@ -98,26 +89,26 @@
     <ClInclude Include="PointData.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiAlert.h">
-      <Filter>头文件\Imgui</Filter>
+    <ClInclude Include="GuiAlert.h">
+      <Filter>头文件\Gui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiFGD.h">
-      <Filter>头文件\Imgui</Filter>
+    <ClInclude Include="GuiFGD.h">
+      <Filter>头文件\Gui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiFrameRate.h">
-      <Filter>头文件\Imgui</Filter>
+    <ClInclude Include="GuiFrameRate.h">
+      <Filter>头文件\Gui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiLog.h">
-      <Filter>头文件\Imgui</Filter>
+    <ClInclude Include="GuiLog.h">
+      <Filter>头文件\Gui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiMain.h">
-      <Filter>头文件\Imgui</Filter>
+    <ClInclude Include="GuiMain.h">
+      <Filter>头文件\Gui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiRenderer.h">
-      <Filter>头文件\Imgui</Filter>
+    <ClInclude Include="GuiRenderer.h">
+      <Filter>头文件\Gui</Filter>
     </ClInclude>
-    <ClInclude Include="ImguiTextureViewer.h">
-      <Filter>头文件\Imgui</Filter>
+    <ClInclude Include="GuiTextureViewer.h">
+      <Filter>头文件\Gui</Filter>
     </ClInclude>
     <ClInclude Include="PipelineBlendAdditive.h">
       <Filter>头文件\Pipeline</Filter>
@@ -131,16 +122,7 @@
     <ClInclude Include="PipelineDepthTest.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineLine.h">
-      <Filter>头文件\Pipeline</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineSimple.h">
-      <Filter>头文件\Pipeline</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineSkybox.h">
-      <Filter>头文件\Pipeline</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineSprite.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
     <ClInclude Include="PassGoldSrc.h">

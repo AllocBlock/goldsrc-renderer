@@ -4,8 +4,8 @@
 #include "Camera.h"
 #include "UniformBuffer.h"
 #include "IOImage.h"
-#include "FullScreenPoint.h"
 #include "Sampler.h"
+#include "FullScreenPointData.h"
 
 class CPipelineEnvironment : public IPipeline
 {

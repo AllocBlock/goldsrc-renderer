@@ -1,16 +1,14 @@
-#include "ImguiFrameRate.h"
+#include "GuiFrameRate.h"
+#include "Gui.h"
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
 #include <string>
 
-CImguiFrameRate::CImguiFrameRate()
+CGuiFrameRate::CGuiFrameRate()
 {
     m_LastTimeStamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 }
 
-void CImguiFrameRate::draw()
+void CGuiFrameRate::draw()
 {
     std::chrono::microseconds CurTimeStamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     double DeltaTimeSecond = static_cast<double>((CurTimeStamp - m_LastTimeStamp).count()) / 1e6;
@@ -22,8 +20,8 @@ void CImguiFrameRate::draw()
         m_SavedFrameRates.erase(m_SavedFrameRates.begin(), m_SavedFrameRates.begin() + 1);
     }
     
-    ImGui::Begin(u8"帧率", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize);
-    ImGui::Text((u8"实时FPS: " + std::to_string(RealtimeFPS)).c_str());
+    UI::beginWindow(u8"帧率", nullptr, UI::EWindowFlag::ALWAYS_AUTO_RESIZE | UI::EWindowFlag::NO_RESIZE);
+    UI::text(u8"实时FPS: " + std::to_string(RealtimeFPS));
     double AverageDeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastAverageTimeStamp).count()) / 1e6;
     static double DisplayedAverageFrameRate = 0.0;
     if (AverageDeltaTimeSecond >= m_AverageFrameRateUpdateInterval)
@@ -34,9 +32,9 @@ void CImguiFrameRate::draw()
             DisplayedAverageFrameRate += m_SavedFrameRates[i];
         DisplayedAverageFrameRate /= std::min<size_t>(m_AverageFrameRateInCountNum, m_SavedFrameRates.size());
     }
-    ImGui::Text((u8"平均FPS: " + std::to_string(DisplayedAverageFrameRate)).c_str());
+    UI::text(u8"平均FPS: " + std::to_string(DisplayedAverageFrameRate));
 
-    ImGui::PlotLines(u8"帧率图", m_SavedFrameRates.data(), m_SavedFrameRates.size());
-    ImGui::End();
+    UI::plotLines(u8"帧率图", m_SavedFrameRates);
+    UI::endWindow();
     m_LastTimeStamp = CurTimeStamp;
 }
