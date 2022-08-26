@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "SceneCommon.h"
 #include "Pointer.h"
+#include "Environment.h"
 
 using namespace Common;
 
@@ -99,47 +100,6 @@ ptr<CIOImage> Scene::generateDiagonalGradientGrid(size_t vWidth, size_t vHeight,
     return pGradient;
 }
 
-bool Scene::findFile(std::filesystem::path vFilePath, std::filesystem::path vSearchDir, std::filesystem::path& voFilePath)
-{
-    std::filesystem::path CurPath(vFilePath);
-
-    std::filesystem::path FullPath = std::filesystem::absolute(vFilePath);
-    std::filesystem::path CurDir = FullPath.parent_path();
-    std::filesystem::path FileName = FullPath.filename();
-    while (!CurDir.empty() && CurDir != CurDir.parent_path())
-    {
-        std::filesystem::path CurPath = CurDir / FileName;
-        if (std::filesystem::exists(CurPath))
-        {
-            voFilePath = CurPath;
-            return true;
-        }
-        CurDir = CurDir.parent_path();
-    }
-    while (!vSearchDir.empty() && vSearchDir != vSearchDir.parent_path())
-    {
-        std::filesystem::path SearchPath = vSearchDir / FileName;
-        if (std::filesystem::exists(SearchPath))
-        {
-            voFilePath = SearchPath;
-            return true;
-        }
-        vSearchDir = vSearchDir.parent_path();
-    }
-
-    return false;
-}
-
-bool Scene::findFile(std::filesystem::path vFilePath, const std::vector<std::filesystem::path>& vSearchDirs, std::filesystem::path& voFilePath)
-{
-    for (std::filesystem::path SearchDir : vSearchDirs)
-    {
-        if (Scene::findFile(vFilePath, SearchDir, voFilePath))
-            return true;
-    }
-    return false;
-}
-
 ptr<CIOImage> Scene::getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex)
 {
     uint32_t Width = 0, Height = 0;
@@ -193,10 +153,7 @@ bool Scene::requestFilePathUntilCancel(std::filesystem::path vFilePath, std::fil
 {
     while (true)
     {
-        // TODO: maybe need a search path manager
-        std::vector<std::filesystem::path> SearchDirs = { "./" };
-        if (!vAdditionalSearchDir.empty()) SearchDirs.emplace_back(vAdditionalSearchDir);
-        if (Scene::findFile(vFilePath, SearchDirs, vFilePath))
+        if (Environment::findFile(vFilePath, vAdditionalSearchDir, true, vFilePath))
         {
             voFilePath = vFilePath;
             return true;

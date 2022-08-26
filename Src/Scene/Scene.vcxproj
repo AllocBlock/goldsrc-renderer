@@ -124,6 +124,9 @@
     <ClInclude Include="SceneReaderRmf.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.vcxproj">
+      <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
     </ProjectReference>

@@ -4,6 +4,7 @@
 #include "IOGoldSrcWad.h"
 #include "SingleValueDataArray.h"
 #include "IOGoldSrcSpr.h"
+#include "Environment.h"
 
 #include <sstream>
 
@@ -600,7 +601,7 @@ bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string
     for (size_t i = 0; i < SkyBoxPostfixes.size(); ++i)
     {
         std::filesystem::path ImagePath;
-        if (Scene::findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, ImagePath))
+        if (Environment::findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, true, ImagePath))
         {
             m_pScene->SkyBoxImages[i] = make<CIOImage>();
             m_pScene->SkyBoxImages[i]->read(ImagePath);
@@ -662,11 +663,11 @@ void CSceneReaderBsp::__loadPointEntities()
             Sprite.Scale = (Entity.Properties.find("scale") != Entity.Properties.end()) ? std::atoi(Entity.Properties.at("scale").c_str()) : 1.0;
             std::string Name = (Entity.Properties.find("model") != Entity.Properties.end()) ? Entity.Properties.at("model") : "";
 
-            std::filesystem::path RealWadPath;
-            if (Scene::requestFilePathUntilCancel(Name, m_FilePath.parent_path(), "spr", RealWadPath))
+            std::filesystem::path RealSprPath;
+            if (Scene::requestFilePathUntilCancel(Name, m_FilePath.parent_path(), "spr", RealSprPath))
             {
                 CIOGoldSrcSpr Spr;
-                Spr.read(RealWadPath);
+                Spr.read(RealSprPath);
                 uint32_t Width = 0, Height = 0;
                 Spr.getFrameSize(0, Width, Height);
                 auto pImage = make<CIOImage>();
