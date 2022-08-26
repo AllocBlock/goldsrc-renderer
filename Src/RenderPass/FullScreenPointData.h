@@ -11,9 +11,6 @@ struct SFullScreenPointData
 
     static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
     {
-        
-
-
         CVertexAttributeDescriptor Descriptor;
         Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
         return Descriptor.generate();

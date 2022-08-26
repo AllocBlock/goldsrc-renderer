@@ -70,3 +70,87 @@
 ![](./Doc/ClassIncludeGraph.png)
 - 模块依赖
 ![](./Doc/ModuleDependency.png)
+
+## 遇到的有价值的问题
+- Renderpass链接的问题
+  - 最初因为pass比较少，pass只有单入单出，不需要关心输入输出的流向在主函数里控制即可，更新也在主函数做
+  - 后来因为pass变多，链接变得很长，重复代码太多了，此外，每次更新（如改变窗口大小）时都要手动重新连接，如果有遗漏也难以发现问题，于是寻求办法解决
+  - 思路是给pass设计输入输出口，类似Falcor的设计，把输入输出口连接起来形成树状结构，更新时按照树状结构传播下去即可，并且输入是否准备好，输出是否指定了端口，更新时可能只需要部分更新（如更换一张纹理）等都可以实现
+  - 因为有Swapchain的存在，每个link还需要好几份....但有的情况下又只需要一份，这种区分也不好做
+  - 还有就是，Vulkan在开启pass时需要指定load状态，这些在没有依赖关系图的情况下很难处理好，因为不知道这张纹理是直接载入还是先清空
+  - 第一版：
+    - 设计Port和Link
+    - Port表示一个Pass的输入输出需求，包括名称、格式、大小
+    - Link代表了一个实际的链接状态，基于Pass的所有Port生成，为每个Port保存连接到它的纹理信息，并存储更新状态
+      - Link是一个状态控制器，一旦有连接信息改变就会要求更新，但是还是没解决如何通知链路上全部节点的问题...
+        - 可以把更新隐藏？要求每次使用前调用接口获取，实时拿到输入输出，下一次迭代准备这样做
+    ```C++
+    struct SPort
+    {
+        std::string Name;
+        VkFormat Format;
+        VkExtent2D Extent;
+    };
+
+    class CRenderPassPort
+    {
+    public:
+        void addInput(std::string vName, VkFormat vFormat, VkExtent2D vExtent);
+        void addOutput(std::string vName, VkFormat vFormat, VkExtent2D vExtent);
+    private:
+        std::vector<SPort> m_InputSet;
+        std::vector<SPort> m_OutputSet;
+    };
+
+    enum class EPortType
+    {
+        INPUT,
+        OUTPUT
+    };
+
+    struct SLink
+    {
+        std::string TargetName;
+        VkImageView ImageView;
+        EPortType Type;
+        size_t Index;
+    };
+
+    class CRenderPassLink
+    {
+    public:
+        CRenderPassLink() = delete;
+        CRenderPassLink(const CRenderPassPort& vPorts) : m_Ports(vPorts) {}
+
+        void link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
+        VkImageView getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0) const;
+
+        bool isUpdated() const { return m_Updated; }
+        void setUpdateState(bool vState) { m_Updated = vState; }
+
+    private:
+        const CRenderPassPort& m_Ports;
+        std::vector<SLink> m_LinkSet;
+        bool m_Updated = false;
+    };
+    ```
+  - 第二版
+    - 为了保证实时，可以把Link改成独立链接，每个Port对应一个Link，每个Link链接一个或多个Port
+      - Link可以只连接一个Port，作为原生输入或输出，此时由Link负责创建一个纹理，或是由用户指定一个纹理（比如交换链那里）
+      - 是否要求Link创建后不可修改？感觉没问题，需要新的link只能重新创建，避免被误改
+      - Pass，Port，Link需要互相知晓吗？如果不，要怎么构造依赖树，从而自动按顺序执行Pass？
+      - 另外注意Pass重建时，Link应该不需要重新生成
+      - 比较复杂的一个问题，交换链图片的流通，两个思路
+        - 思路一：交换链从头开始流转，可以同时作为pass的输入和输出，这样避免创建过渡纹理节约空间，但是如何处理这种情况？输出要怎么知道需要以输入为自己的目标，要怎么知道绘制前先clear还是说直接绘制？
+        - 思路二：交换链只在最后，要么单独一个output节点，要么就多做一次拷贝，这样所有的output（除了交换链output）都自己创建自己的纹理，需要保留原信息的就做一次拷贝（Falcor似乎就是这样的？），开销大但很直观
+        - 
+
+- 如何管理场景
+  - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理
+  - 而渲染时希望保证状态变化少，一劳永逸，需要做一些权衡
+  - 比如目前为了不拆散物体，允许一个物体有多个纹理，这导致一个物体drawcall需要引用多张纹理
+    - 解决方法就是把所有纹理全部传入shader，这个量级其实是比较大的
+    - 可以的做法是分batch，一次引用几张纹理这样，限制传入数量，可以考虑实现
+  - 另外还可以考虑顺便实现static batching，也是现代引擎常用的方法，减少draw call
+  - 还有部分需求是网状结构，很难处理
+    - 比如对于一批物体，一方面希望控制每个物体的可见性，因此不方便拆分物体；另一方面希望实现同一纹理网格的batching，需要拆分物体...

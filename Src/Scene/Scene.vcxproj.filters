@@ -13,12 +13,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\Object">
+      <UniqueIdentifier>{43169b09-415f-4f86-ae55-60bc72372a80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Object">
+      <UniqueIdentifier>{6c1e2454-10c7-43c9-95e0-2efc282c6de0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Reader">
+      <UniqueIdentifier>{dad12290-6740-4d08-be43-7279df601d5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Reader">
+      <UniqueIdentifier>{b1112a5f-1a79-4021-b4a2-b753f3cd14ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Writer">
+      <UniqueIdentifier>{4c41c17a-475a-4f90-a8c6-d20d979ad78f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Writer">
+      <UniqueIdentifier>{b9734235-3aad-45d0-84dd-de57f441aed4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\DataArray">
+      <UniqueIdentifier>{51de61b3-59f8-4a14-8a1c-d9124838e7bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Scene.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneReaderBsp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SceneGoldsrcCommon.cpp">
@@ -27,39 +45,39 @@
     <ClCompile Include="SceneCommon.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SceneReaderBase.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneReaderMap.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneReaderObj.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="SceneInterface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SceneReaderRmf.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SceneReaderMdl.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="3DObject.cpp">
+      <Filter>源文件\Object</Filter>
     </ClCompile>
     <ClCompile Include="Object.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Object</Filter>
     </ClCompile>
-    <ClCompile Include="3DObject.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="SceneReaderBase.cpp">
+      <Filter>源文件\Reader</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderBsp.cpp">
+      <Filter>源文件\Reader</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderMap.cpp">
+      <Filter>源文件\Reader</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderMdl.cpp">
+      <Filter>源文件\Reader</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderObj.cpp">
+      <Filter>源文件\Reader</Filter>
     </ClCompile>
     <ClCompile Include="SceneObjWriter.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Writer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Scene.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneReaderBsp.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SceneInterface.h">
@@ -71,41 +89,44 @@
     <ClInclude Include="SceneCommon.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SceneReaderBase.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneReaderMap.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneReaderObj.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneReaderRmf.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneReaderMdl.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="3DObject.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Object</Filter>
     </ClInclude>
     <ClInclude Include="3DObjectGoldSrc.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Object</Filter>
     </ClInclude>
-    <ClInclude Include="DataArray.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="Object.h">
+      <Filter>头文件\Object</Filter>
     </ClInclude>
-    <ClInclude Include="GeneralDataArray.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="SceneReaderBase.h">
+      <Filter>头文件\Reader</Filter>
     </ClInclude>
-    <ClInclude Include="SingleValueDataArray.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="SceneReaderBsp.h">
+      <Filter>头文件\Reader</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderMap.h">
+      <Filter>头文件\Reader</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderMdl.h">
+      <Filter>头文件\Reader</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderObj.h">
+      <Filter>头文件\Reader</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneReaderRmf.h">
+      <Filter>头文件\Reader</Filter>
     </ClInclude>
     <ClInclude Include="SceneObjWriter.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Writer</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleValueDataArray.h">
+      <Filter>头文件\DataArray</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralDataArray.h">
+      <Filter>头文件\DataArray</Filter>
+    </ClInclude>
+    <ClInclude Include="DataArray.h">
+      <Filter>头文件\DataArray</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

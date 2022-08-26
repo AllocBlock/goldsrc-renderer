@@ -24,6 +24,7 @@ struct S3DBoundingBox
 class C3DObject : public CObject
 {
 public:
+    bool getVisibleState() { return m_IsVisible; }
     ptr<IDataArray<glm::vec3>> getVertexArray() const { return m_pVertexArray; }
     ptr<IDataArray<glm::vec3>> getNormalArray() const { return m_pNormalArray; }
     ptr<IDataArray<glm::vec3>> getColorArray() const { return m_pColorArray; }
@@ -31,6 +32,7 @@ public:
     ptr<IDataArray<uint32_t>> getTexIndexArray() const { return m_pTexIndexArray; }
     E3DObjectPrimitiveType getPrimitiveType() const { return m_PrimitiveType; }
 
+    void setVisibleState(bool vState) { m_IsVisible = vState; }
     void setVertexArray(ptr<IDataArray<glm::vec3>> vVertexArray) { m_pVertexArray = vVertexArray; }
     void setNormalArray(ptr<IDataArray<glm::vec3>> vNormalArray) { m_pNormalArray = vNormalArray; }
     void setColorArray(ptr<IDataArray<glm::vec3>> vColorArray) { m_pColorArray = vColorArray; }
@@ -41,6 +43,7 @@ public:
     std::optional<S3DBoundingBox> getBoundingBox() const;
 
 protected:
+    bool m_IsVisible = true;
     E3DObjectPrimitiveType m_PrimitiveType = E3DObjectPrimitiveType::TRIAGNLE_LIST;
     IDataArray<glm::vec3>::Ptr m_pVertexArray = make<CGeneralDataArray<glm::vec3>>();
     IDataArray<glm::vec3>::Ptr m_pNormalArray = make<CGeneralDataArray<glm::vec3>>();
