@@ -15,7 +15,7 @@ void CRendererTest::_initV()
     __createRecreateResources();
 }
 
-CRenderPassPort CRendererTest::_getPortV()
+SPortDescriptor CRendererTest::_getPortDescV()
 {
     CRenderPassPort Ports;
     Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);

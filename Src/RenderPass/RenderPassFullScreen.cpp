@@ -10,10 +10,10 @@ void CRenderPassFullScreen::_initV()
     __createRecreateResources();
 }
 
-CRenderPassPort CRenderPassFullScreen::_getPortV()
+SPortDescriptor CRenderPassFullScreen::_getPortDescV()
 {
-    CRenderPassPort Ports;
-    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    SPortDescriptor Ports;
+    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
     return Ports;
 }
 
@@ -84,7 +84,7 @@ void CRenderPassFullScreen::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pLink->getOutput("Output", i)
+            m_PortSet.getOutputPort("Output")->getImageV(i)
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();

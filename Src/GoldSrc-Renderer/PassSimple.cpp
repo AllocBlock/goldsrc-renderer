@@ -35,20 +35,25 @@ void CSceneSimpleRenderPass::rerecordCommand()
 void CSceneSimpleRenderPass::_initV()
 {
     IRenderPass::_initV();
-    m_AppInfo.ImageNum = m_AppInfo.ImageNum;
 
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
 
+    m_PortSet.getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_PortSet.getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+
     rerecordCommand();
 }
 
-CRenderPassPort CSceneSimpleRenderPass::_getPortV()
+SPortDescriptor CSceneSimpleRenderPass::_getPortDescV()
 {
-    CRenderPassPort Ports;
-    Ports.addInput("Input", m_AppInfo.ImageFormat, m_AppInfo.Extent);
-    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    SPortDescriptor Ports;
+    Ports.addInput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum }); 
+    
+    VkFormat DepthFormat = __findDepthFormat();
+    Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1 });
     return Ports;
 }
 
@@ -101,10 +106,9 @@ void CSceneSimpleRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_FramebufferSet.empty() || m_pLink->isUpdated())
+    if (m_NeedUpdateFramebuffer)
     {
         __createFramebuffers();
-        m_pLink->setUpdateState(false);
     }
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
@@ -164,9 +168,6 @@ void CSceneSimpleRenderPass::__createRecreateResources()
     m_PipelineSet.Main.setImageNum(m_AppInfo.ImageNum);
     m_PipelineSet.Sky.setImageNum(m_AppInfo.ImageNum);
     __createSceneResources();
-
-    for (int i = 0; i < m_AppInfo.ImageNum; ++i)
-        m_pLink->link("Depth", *m_pDepthImage, EPortType::OUTPUT, i);
 }
 
 void CSceneSimpleRenderPass::__destroyRecreateResources()
@@ -233,8 +234,11 @@ void CSceneSimpleRenderPass::__createCommandPoolAndBuffers()
 
 void CSceneSimpleRenderPass::__createDepthResources()
 {
-    VkFormat DepthFormat = __findDepthFormat();
+    auto pPort = m_PortSet.getOutputPort("Depth");
+    VkFormat DepthFormat = pPort->getFormat().Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+
+    pPort->setImage(*m_pDepthImage);
 }
 
 void CSceneSimpleRenderPass::__createFramebuffers()
@@ -244,7 +248,7 @@ void CSceneSimpleRenderPass::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pLink->getOutput("Output", i),
+            m_PortSet.getOutputPort("Output")->getImageV(i),
             *m_pDepthImage
         };
 

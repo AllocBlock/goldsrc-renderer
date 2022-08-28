@@ -33,12 +33,11 @@ namespace vk
         void begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues);
         void end();
 
-        CRenderPassLink::Ptr getLink() { return m_pLink; }
-        const CRenderPassPort& getPort() const { return m_Port; }
+        const CPortSet& getPortSet() const { return m_PortSet; }
 
     protected:
         virtual void _initV() {}
-        virtual CRenderPassPort _getPortV() = 0;
+        virtual SPortDescriptor _getPortDescV() = 0;
         virtual void _recreateV() {}
         virtual void _updateV(uint32_t vImageIndex) {}
         virtual void _renderUIV() override {}
@@ -46,8 +45,7 @@ namespace vk
         virtual void _destroyV() {};
 
         vk::SAppInfo m_AppInfo;
-        CRenderPassLink::Ptr m_pLink;
-        CRenderPassPort m_Port;
+        CPortSet m_PortSet;
         int m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;
 
     private:
@@ -59,7 +57,3 @@ namespace vk
     };
 
 }
-
-class rENDERpASS
-{
-};

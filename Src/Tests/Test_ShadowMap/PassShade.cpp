@@ -69,7 +69,7 @@ void CRenderPassShade::_initV()
     __createRecreateResources();
 }
 
-CRenderPassPort CRenderPassShade::_getPortV()
+SPortDescriptor CRenderPassShade::_getPortDescV()
 {
     CRenderPassPort Ports;
     // TODO: convertable image format matching

@@ -11,7 +11,7 @@ void CRenderPassPBR::_initV()
     __createRecreateResources();
 }
 
-CRenderPassPort CRenderPassPBR::_getPortV()
+SPortDescriptor CRenderPassPBR::_getPortDescV()
 {
     CRenderPassPort Ports;
     Ports.addInput("Input", m_AppInfo.ImageFormat, m_AppInfo.Extent);

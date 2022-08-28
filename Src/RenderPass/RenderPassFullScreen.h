@@ -10,8 +10,6 @@
 class CRenderPassFullScreen : public vk::IRenderPass
 {
 public:
-    CRenderPassFullScreen() {}
-
     template <typename T>
     ptr<T> initPipeline()
     {
@@ -30,7 +28,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual CRenderPassPort _getPortV() override;
+    virtual SPortDescriptor _getPortDescV() override;
     virtual void _recreateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override; 
     virtual void _destroyV() override;

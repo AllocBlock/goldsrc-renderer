@@ -7,8 +7,8 @@ void IRenderPass::init(const vk::SAppInfo& vAppInfo, int vRenderPassPosBitField)
     m_AppInfo = vAppInfo;
     m_RenderPassPosBitField = vRenderPassPosBitField;
 
-    auto Ports = _getPortV();
-    m_pLink = make<CRenderPassLink>(Ports);
+    auto PortDesc = _getPortDescV();
+    m_PortSet = CPortSet(PortDesc);
     _initV();
 }
 

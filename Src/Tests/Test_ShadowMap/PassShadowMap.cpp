@@ -94,7 +94,7 @@ void CRenderPassShadowMap::_initV()
     __createRecreateResources();
 }
 
-CRenderPassPort CRenderPassShadowMap::_getPortV()
+SPortDescriptor CRenderPassShadowMap::_getPortDescV()
 {
     CRenderPassPort Ports;
     Ports.addOutput("Output", m_ShadowMapFormat, m_ShadowMapExtent);

@@ -39,15 +39,20 @@ void CSceneGoldSrcRenderPass::_initV()
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
+    m_PortSet.getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_PortSet.getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
 
     rerecordCommand();
 }
 
-CRenderPassPort CSceneGoldSrcRenderPass::_getPortV()
+SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
 {
-    CRenderPassPort Ports;
-    Ports.addOutput("Input", m_AppInfo.ImageFormat, m_AppInfo.Extent);
-    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    SPortDescriptor Ports;
+    Ports.addOutput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+
+    VkFormat DepthFormat = __findDepthFormat();
+    Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1 });
     return Ports;
 }
 
@@ -157,10 +162,9 @@ void CSceneGoldSrcRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_FramebufferSet.empty() || m_pLink->isUpdated())
+    if (m_NeedUpdateFramebuffer)
     {
         __createFramebuffers();
-        m_pLink->setUpdateState(false);
     }
 
     m_RenderedObjectSet.clear();
@@ -241,9 +245,6 @@ void CSceneGoldSrcRenderPass::__createRecreateResources()
     m_PipelineSet.Sprite.setImageNum(ImageNum);
     m_PipelineSet.Sky.setImageNum(ImageNum);
     __createSceneResources();
-
-    for (int i = 0; i < ImageNum; ++i)
-        m_pLink->link("Depth", *m_pDepthImage, EPortType::OUTPUT, i);
 }
 
 void CSceneGoldSrcRenderPass::__destroyRecreateResources()
@@ -525,8 +526,11 @@ void CSceneGoldSrcRenderPass::__createCommandPoolAndBuffers()
 
 void CSceneGoldSrcRenderPass::__createDepthResources()
 {
-    VkFormat DepthFormat = __findDepthFormat();
+    auto pPort = m_PortSet.getOutputPort("Depth");
+    VkFormat DepthFormat = pPort->getFormat().Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+
+    pPort->setImage(*m_pDepthImage);
 }
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()
@@ -536,8 +540,8 @@ void CSceneGoldSrcRenderPass::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pLink->getOutput("Output", i),
-            *m_pDepthImage
+            m_PortSet.getOutputPort("Output")->getImageV(i),
+            m_PortSet.getOutputPort("Depth")->getImageV(),
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
