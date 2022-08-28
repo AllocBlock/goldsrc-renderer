@@ -47,7 +47,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
         m_pPipeline->bind(CommandBuffer, vImageIndex);
 
         size_t VertexNum = m_PointDataSet.size();
-        vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
+        vkCmdDraw(CommandBuffer, uint32_t(VertexNum), 1, 0, 0);
     }
     
     end();
@@ -73,7 +73,7 @@ void CRenderPassFullScreen::__createRenderPass()
 void CRenderPassFullScreen::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
+    m_Command.createBuffers(m_CommandName, uint32_t(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CRenderPassFullScreen::__createFramebuffers()
@@ -84,7 +84,7 @@ void CRenderPassFullScreen::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_PortSet.getOutputPort("Output")->getImageV(i)
+            m_pPortSet->getOutputPort("Output")->getImageV(i)
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();

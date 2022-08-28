@@ -1,12 +1,10 @@
 #pragma once
-#include "Vulkan.h"
-#include "VulkanHandle.h"
+#include "PchVulkan.h"
 #include "Command.h"
 #include "IGUI.h"
 #include "RenderPassPort.h"
 #include "AppInfo.h"
 
-#include <vulkan/vulkan.h>
 #include <string>
 #include <vector>
 
@@ -33,7 +31,7 @@ namespace vk
         void begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues);
         void end();
 
-        const CPortSet& getPortSet() const { return m_PortSet; }
+        CPortSet::Ptr getPortSet() const { return m_pPortSet; }
 
     protected:
         virtual void _initV() {}
@@ -45,7 +43,7 @@ namespace vk
         virtual void _destroyV() {};
 
         vk::SAppInfo m_AppInfo;
-        CPortSet m_PortSet;
+        CPortSet::Ptr m_pPortSet;
         int m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;
 
     private:

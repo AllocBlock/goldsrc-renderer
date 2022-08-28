@@ -1,11 +1,10 @@
 #pragma once
-#include "Pointer.h"
-#include "Image.h"
+#include "PchVulkan.h"
 
-#include <vulkan/vulkan.h>
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 
 struct SPortFormat
 {
@@ -89,6 +88,8 @@ class CInputPort : public CPort
 public:
     _DEFINE_PTR(CInputPort);
 
+    CInputPort(const SPortFormat& vFormat) : CPort(vFormat) {}
+
     virtual VkImageView getImageV(size_t vIndex = 0) const override final
     {
         return m_pTargetPort->getImageV(vIndex);
@@ -148,6 +149,8 @@ public:
 class CPortSet
 {
 public:
+    _DEFINE_PTR(CPortSet);
+
     CPortSet() = delete;
     CPortSet(const SPortDescriptor& vDesc)
     {

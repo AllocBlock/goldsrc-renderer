@@ -142,7 +142,7 @@ void CRenderPassDescriptor::__generateDescription()
     SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
     m_StageColorRefSet.resize(m_ColorAttachmentNum);
-    for (size_t i = 0; i < m_ColorAttachmentNum; ++i)
+    for (uint32_t i = 0; i < m_ColorAttachmentNum; ++i)
     {
         m_StageColorRefSet[i].attachment = i;
         m_StageColorRefSet[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;

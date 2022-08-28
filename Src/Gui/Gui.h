@@ -5,6 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <AppInfo.h>
 #include "Vulkan.h"
+#include "Image.h"
 
 namespace UI
 {

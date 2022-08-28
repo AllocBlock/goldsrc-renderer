@@ -60,7 +60,7 @@ void CLineRenderPass::_initV()
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
-    m_PortSet.getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
 
     __rerecordCommand();
 }
@@ -68,6 +68,7 @@ void CLineRenderPass::_initV()
 SPortDescriptor CLineRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
+    Ports.addInput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
     Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1 });
     Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
     return Ports;
@@ -167,6 +168,7 @@ void CLineRenderPass::__createCommandPoolAndBuffers()
 
 void CLineRenderPass::__createFramebuffers()
 {
+    m_AppInfo.pDevice->waitUntilIdle();
     for (auto& pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
     m_FramebufferSet.resize(m_AppInfo.ImageNum);
@@ -174,8 +176,8 @@ void CLineRenderPass::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_PortSet.getOutputPort("Output")->getImageV(i),
-            m_PortSet.getInputPort("Dept")->getImageV(i),
+            m_pPortSet->getOutputPort("Output")->getImageV(i),
+            m_pPortSet->getInputPort("Depth")->getImageV(),
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();

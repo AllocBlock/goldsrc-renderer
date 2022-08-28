@@ -147,19 +147,19 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
 
 void CApplicationGoldSrc::__linkPasses()
 {
-    auto PortScene = m_pPassScene->getPortSet();
-    auto PortLine = m_pPassLine->getPortSet();
-    auto PortGui = m_pPassGUI->getPortSet();
+    auto pPortScene = m_pPassScene->getPortSet();
+    auto pPortLine = m_pPassLine->getPortSet();
+    auto pPortGui = m_pPassGUI->getPortSet();
 
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        PortScene.setOutput("Output", ImageViews[i], i);
-        PortLine.linkTo("Input", PortScene.getOutputPort("Output"));
+        pPortScene->setOutput("Output", ImageViews[i], i);
+        pPortLine->linkTo("Input", pPortScene->getOutputPort("Output"));
         if (i == 0)
-            PortLine.linkTo("Depth", PortScene.getOutputPort("Depth"));
-        PortLine.setOutput("Output", ImageViews[i], i);
-        PortGui.linkTo("Input", PortLine.getOutputPort("Output"));
-        PortGui.setOutput("Output", ImageViews[i], i);
+            pPortLine->linkTo("Depth", pPortScene->getOutputPort("Depth"));
+        pPortLine->setOutput("Output", ImageViews[i], i);
+        pPortGui->linkTo("Input", pPortLine->getOutputPort("Output"));
+        pPortGui->setOutput("Output", ImageViews[i], i);
     }
 }

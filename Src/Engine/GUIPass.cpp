@@ -36,7 +36,7 @@ void CGUIRenderPass::_initV()
 SPortDescriptor CGUIRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addOutput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addInput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
     Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
     return Ports;
 }
@@ -139,7 +139,7 @@ void CGUIRenderPass::__createFramebuffer()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_PortSet.getOutputPort("Output")->getImageV(i),
+            m_pPortSet->getOutputPort("Output")->getImageV(i),
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();

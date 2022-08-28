@@ -8,7 +8,7 @@ void IRenderPass::init(const vk::SAppInfo& vAppInfo, int vRenderPassPosBitField)
     m_RenderPassPosBitField = vRenderPassPosBitField;
 
     auto PortDesc = _getPortDescV();
-    m_PortSet = CPortSet(PortDesc);
+    m_pPortSet = make<CPortSet>(PortDesc);
     _initV();
 }
 

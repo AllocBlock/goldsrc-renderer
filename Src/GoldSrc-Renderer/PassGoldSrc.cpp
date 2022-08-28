@@ -39,8 +39,8 @@ void CSceneGoldSrcRenderPass::_initV()
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
-    m_PortSet.getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
-    m_PortSet.getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
 
     rerecordCommand();
 }
@@ -237,7 +237,7 @@ void CSceneGoldSrcRenderPass::__createRecreateResources()
 {
     __createGraphicsPipelines(); // extent
     __createDepthResources(); // extent
-    uint32_t ImageNum = m_AppInfo.ImageNum;
+    uint32_t ImageNum = uint32_t(m_AppInfo.ImageNum);
     m_PipelineSet.DepthTest.setImageNum(ImageNum);
     m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
     m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
@@ -526,7 +526,7 @@ void CSceneGoldSrcRenderPass::__createCommandPoolAndBuffers()
 
 void CSceneGoldSrcRenderPass::__createDepthResources()
 {
-    auto pPort = m_PortSet.getOutputPort("Depth");
+    auto pPort = m_pPortSet->getOutputPort("Depth");
     VkFormat DepthFormat = pPort->getFormat().Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
 
@@ -535,13 +535,18 @@ void CSceneGoldSrcRenderPass::__createDepthResources()
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()
 {
+    m_AppInfo.pDevice->waitUntilIdle();
+    for (auto pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
+    m_FramebufferSet.clear();
+
     m_FramebufferSet.resize(m_AppInfo.ImageNum);
     for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_PortSet.getOutputPort("Output")->getImageV(i),
-            m_PortSet.getOutputPort("Depth")->getImageV(),
+            m_pPortSet->getOutputPort("Output")->getImageV(i),
+            m_pPortSet->getOutputPort("Depth")->getImageV(),
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
@@ -620,7 +625,7 @@ void CSceneGoldSrcRenderPass::__updateTextureView()
 {
     size_t ImageNum = m_pScene->TexImageSet.size();
     _ASSERTE(ImageNum == m_TextureImageSet.size());
-    m_CurTextureIndex = std::max<int>(0, std::min<int>(ImageNum, m_CurTextureIndex));
+    m_CurTextureIndex = std::max<int>(0, std::min<int>(int(ImageNum), m_CurTextureIndex));
     m_TextureNameSet.resize(ImageNum);
     m_TextureComboNameSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)

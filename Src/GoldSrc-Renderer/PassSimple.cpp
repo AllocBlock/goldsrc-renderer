@@ -40,8 +40,8 @@ void CSceneSimpleRenderPass::_initV()
     __createCommandPoolAndBuffers();
     __createRecreateResources();
 
-    m_PortSet.getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
-    m_PortSet.getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
 
     rerecordCommand();
 }
@@ -234,7 +234,7 @@ void CSceneSimpleRenderPass::__createCommandPoolAndBuffers()
 
 void CSceneSimpleRenderPass::__createDepthResources()
 {
-    auto pPort = m_PortSet.getOutputPort("Depth");
+    auto pPort = m_pPortSet->getOutputPort("Depth");
     VkFormat DepthFormat = pPort->getFormat().Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
 
@@ -248,7 +248,7 @@ void CSceneSimpleRenderPass::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_PortSet.getOutputPort("Output")->getImageV(i),
+            m_pPortSet->getOutputPort("Output")->getImageV(i),
             *m_pDepthImage
         };
 
