@@ -29,7 +29,7 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
 
 void CSceneGoldSrcRenderPass::rerecordCommand()
 {
-    m_RerecordCommandTimes += m_AppInfo.ImageNum;
+    m_RerecordCommandTimes = m_AppInfo.ImageNum;
 }
 
 void CSceneGoldSrcRenderPass::_initV()
@@ -39,6 +39,7 @@ void CSceneGoldSrcRenderPass::_initV()
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
+    __createSceneResources();
     m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
     m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
 
@@ -48,8 +49,8 @@ void CSceneGoldSrcRenderPass::_initV()
 SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addOutput("Input");
-    Ports.addOutput("Output");
+    Ports.addInput("Input");
+    Ports.addInputSrcOutput("Output", "Input");
 
     VkFormat DepthFormat = __findDepthFormat();
     {
@@ -156,6 +157,7 @@ void CSceneGoldSrcRenderPass::_renderUIV()
 void CSceneGoldSrcRenderPass::_destroyV()
 {
     __destroyRecreateResources();
+    __destroySceneResources();
 
     m_Command.clear();
 
@@ -247,7 +249,8 @@ void CSceneGoldSrcRenderPass::__createRecreateResources()
     m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
     m_PipelineSet.Sprite.setImageNum(ImageNum);
     m_PipelineSet.Sky.setImageNum(ImageNum);
-    __createSceneResources();
+
+    __updateDescriptorSets();
 }
 
 void CSceneGoldSrcRenderPass::__destroyRecreateResources()
@@ -258,7 +261,6 @@ void CSceneGoldSrcRenderPass::__destroyRecreateResources()
         pFramebuffer->destroy();
     m_FramebufferSet.clear();
 
-    __destroySceneResources();
     m_PipelineSet.destroy();
 }
 
@@ -266,7 +268,6 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
 {
     __createTextureImages();
     __createLightmapImage();
-    __updateDescriptorSets();
     __createVertexBuffer();
 
     m_EnableSky = m_EnableSky && m_pScene && m_pScene->UseSkyBox;
@@ -281,6 +282,7 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
         m_PipelineSet.Sprite.setSprites(m_pScene->SprSet);
     }
 
+    __updateDescriptorSets();
     rerecordCommand();
 }
 
@@ -533,7 +535,7 @@ void CSceneGoldSrcRenderPass::__createDepthResources()
     VkFormat DepthFormat = pPort->getFormat().Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
 
-    pPort->setImage(*m_pDepthImage);
+    pPort->setImageV(*m_pDepthImage);
 }
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()

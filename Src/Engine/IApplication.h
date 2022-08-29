@@ -9,6 +9,7 @@
 #include "Device.h"
 #include "SwapChain.h"
 #include "Fence.h"
+#include "RenderPassPort.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -50,6 +51,7 @@ protected:
     vk::CPhysicalDevice::Ptr m_pPhysicalDevice = nullptr;
     vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
     vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
+    COutputPort::Ptr m_pSwapchainPort = nullptr;
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;

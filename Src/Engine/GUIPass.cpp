@@ -37,7 +37,7 @@ SPortDescriptor CGUIRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInput("Input");
-    Ports.addOutput("Output");
+    Ports.addInputSrcOutput("Output", "Input");
     return Ports;
 }
 

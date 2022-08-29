@@ -70,7 +70,7 @@ SPortDescriptor CLineRenderPass::_getPortDescV()
     SPortDescriptor Ports;
     Ports.addInput("Input");
     Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1 });
-    Ports.addOutput("Output");
+    Ports.addInputSrcOutput("Output", "Input");
     return Ports;
 }
 

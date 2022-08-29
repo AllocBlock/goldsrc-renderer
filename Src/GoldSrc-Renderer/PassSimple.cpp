@@ -50,7 +50,7 @@ SPortDescriptor CSceneSimpleRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInput("Input");
-    Ports.addOutput("Output"); 
+    Ports.addInputSrcOutput("Output", "Input");
     
     VkFormat DepthFormat = __findDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1 });
@@ -239,7 +239,7 @@ void CSceneSimpleRenderPass::__createDepthResources()
     VkFormat DepthFormat = pPort->getFormat().Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
 
-    pPort->setImage(*m_pDepthImage);
+    pPort->setImageV(*m_pDepthImage);
 }
 
 void CSceneSimpleRenderPass::__createFramebuffers()

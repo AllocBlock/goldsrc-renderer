@@ -63,7 +63,6 @@ void CApplicationGoldSrc::_createOtherResourceV()
     m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
     {
         __recreateRenderer(vMethod);
-        __linkPasses();
     });
 
     m_pMainUI->setReadSceneCallback([this](ptr<SScene> vScene)
@@ -96,15 +95,16 @@ void CApplicationGoldSrc::_createOtherResourceV()
         }
     });
 
+    __recreateRenderer(ERenderMethod::BSP);
+
     _recreateOtherResourceV();
 }
 
 void CApplicationGoldSrc::_recreateOtherResourceV()
 {
-    __recreateRenderer(ERenderMethod::BSP);
+    m_pPassScene->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
     m_pPassLine->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
     m_pPassGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    __linkPasses();
 }
 
 void CApplicationGoldSrc::_destroyOtherResourceV()
@@ -143,6 +143,8 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
     m_pPassScene->setCamera(m_pCamera);
     if (m_pScene)
         m_pPassScene->loadScene(m_pScene);
+
+    __linkPasses();
 }
 
 void CApplicationGoldSrc::__linkPasses()
@@ -156,12 +158,10 @@ void CApplicationGoldSrc::__linkPasses()
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        pPortScene->setOutput("Output", ImageViews[i], SwapchainFormat, i);
+        pPortScene->linkTo("Input", m_pSwapchainPort);
         pPortLine->linkTo("Input", pPortScene->getOutputPort("Output"));
         if (i == 0)
             pPortLine->linkTo("Depth", pPortScene->getOutputPort("Depth"));
-        pPortLine->setOutput("Output", ImageViews[i], SwapchainFormat, i);
         pPortGui->linkTo("Input", pPortLine->getOutputPort("Output"));
-        pPortGui->setOutput("Output", ImageViews[i], SwapchainFormat, i);
     }
 }
