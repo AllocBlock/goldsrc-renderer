@@ -68,9 +68,9 @@ void CLineRenderPass::_initV()
 SPortDescriptor CLineRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addInput("Input");
     Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1 });
-    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addOutput("Output");
     return Ports;
 }
 
@@ -110,6 +110,7 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
     {
         __createFramebuffers();
         __rerecordCommand();
+        m_NeedUpdateFramebuffer = false;
     }
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);

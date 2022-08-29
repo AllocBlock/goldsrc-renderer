@@ -36,8 +36,8 @@ void CGUIRenderPass::_initV()
 SPortDescriptor CGUIRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
-    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addInput("Input");
+    Ports.addOutput("Output");
     return Ports;
 }
 

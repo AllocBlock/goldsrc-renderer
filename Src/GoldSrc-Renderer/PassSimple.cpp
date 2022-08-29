@@ -40,8 +40,8 @@ void CSceneSimpleRenderPass::_initV()
     __createCommandPoolAndBuffers();
     __createRecreateResources();
 
-    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
-    m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
+    m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
 
     rerecordCommand();
 }
@@ -49,8 +49,8 @@ void CSceneSimpleRenderPass::_initV()
 SPortDescriptor CSceneSimpleRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
-    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum }); 
+    Ports.addInput("Input");
+    Ports.addOutput("Output"); 
     
     VkFormat DepthFormat = __findDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1 });
@@ -109,6 +109,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
     if (m_NeedUpdateFramebuffer)
     {
         __createFramebuffers();
+        m_NeedUpdateFramebuffer = false;
     }
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);

@@ -34,6 +34,7 @@ namespace vk
         uint32_t getWidth() const { return m_Width; }
         uint32_t getHeight() const { return m_Height; }
         uint32_t getLayerCount() const { return m_LayerCount; }
+        VkFormat getFormat() const { return m_Format; }
 
     private:
         void __createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo);

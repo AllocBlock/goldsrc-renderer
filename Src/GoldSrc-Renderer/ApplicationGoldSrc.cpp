@@ -151,15 +151,17 @@ void CApplicationGoldSrc::__linkPasses()
     auto pPortLine = m_pPassLine->getPortSet();
     auto pPortGui = m_pPassGUI->getPortSet();
 
+    SPortFormat SwapchainFormat = { m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum() };
+
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        pPortScene->setOutput("Output", ImageViews[i], i);
+        pPortScene->setOutput("Output", ImageViews[i], SwapchainFormat, i);
         pPortLine->linkTo("Input", pPortScene->getOutputPort("Output"));
         if (i == 0)
             pPortLine->linkTo("Depth", pPortScene->getOutputPort("Depth"));
-        pPortLine->setOutput("Output", ImageViews[i], i);
+        pPortLine->setOutput("Output", ImageViews[i], SwapchainFormat, i);
         pPortGui->linkTo("Input", pPortLine->getOutputPort("Output"));
-        pPortGui->setOutput("Output", ImageViews[i], i);
+        pPortGui->setOutput("Output", ImageViews[i], SwapchainFormat, i);
     }
 }

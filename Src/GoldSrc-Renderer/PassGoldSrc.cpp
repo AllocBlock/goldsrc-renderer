@@ -39,8 +39,8 @@ void CSceneGoldSrcRenderPass::_initV()
     __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
-    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
-    m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
+    m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
 
     rerecordCommand();
 }
@@ -48,11 +48,13 @@ void CSceneGoldSrcRenderPass::_initV()
 SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addOutput("Input", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
-    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addOutput("Input");
+    Ports.addOutput("Output");
 
     VkFormat DepthFormat = __findDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1 });
+    {
+        Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1 });
+    }
     return Ports;
 }
 
@@ -165,6 +167,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
     if (m_NeedUpdateFramebuffer)
     {
         __createFramebuffers();
+        m_NeedUpdateFramebuffer = false;
     }
 
     m_RenderedObjectSet.clear();

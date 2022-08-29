@@ -13,7 +13,7 @@ void CRenderPassFullScreen::_initV()
 SPortDescriptor CRenderPassFullScreen::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addOutput("Output", { m_AppInfo.ImageFormat, m_AppInfo.Extent, m_AppInfo.ImageNum });
+    Ports.addOutput("Output");
     return Ports;
 }
 

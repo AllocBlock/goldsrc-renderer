@@ -1,5 +1,6 @@
 #pragma once
 #include "PchVulkan.h"
+#include "Image.h"
 
 #include <string>
 #include <vector>
@@ -8,13 +9,16 @@
 
 struct SPortFormat
 {
-    VkFormat Format = VkFormat::VK_FORMAT_UNDEFINED;
-    VkExtent2D Extent = { 0, 0 };
-    size_t Num = 1;
+    VkFormat Format = VkFormat::VK_FORMAT_UNDEFINED; // VK_FORMAT_UNDEFINED for any
+    VkExtent2D Extent = { 0, 0 }; // (0, 0) for any extent(>0)
+    size_t Num = 1; // 0 for any num (>0)
 
-    bool operator==(const SPortFormat& v)
+    bool isMatch(const SPortFormat& v) const
     {
-        return Format == v.Format && Extent.width == v.Extent.width && Extent.height == v.Extent.height && Num == v.Num;
+        return (Format == v.Format || Format == VkFormat::VK_FORMAT_UNDEFINED || v.Format == VkFormat::VK_FORMAT_UNDEFINED)
+            && (Extent.width == v.Extent.width || Extent.width == 0 || v.Extent.width == 0)
+            && (Extent.height == v.Extent.height || Extent.height == 0 || v.Extent.height == 0)
+            && (Num == v.Num || Num == 0 || v.Num == 0);
     }
 };
 
@@ -31,13 +35,14 @@ public:
 
     bool isMatch(CPort::CPtr vPort)
     {
-        return m_Format == vPort->getFormat();
+        return m_Format.isMatch(vPort->getFormat());
     }
 
     void hookUpdate(std::function<void()> vCallback)
     {
         m_HookSet.emplace_back(vCallback);
     }
+
 protected:
     void _triggerUpdate()
     {
@@ -56,30 +61,25 @@ class COutputPort : public CPort
 public:
     _DEFINE_PTR(COutputPort);
 
-    COutputPort(const SPortFormat& vFormat) : CPort(vFormat) 
-    {
-        m_ImageSet.resize(vFormat.Num, VK_NULL_HANDLE);
-    }
+    COutputPort(const SPortFormat& vFormat) : CPort(vFormat) {}
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final
     {
-        _ASSERTE(vIndex < m_ImageSet.size());
-        _ASSERTE(m_ImageSet[vIndex] != VK_NULL_HANDLE);
-        return m_ImageSet[vIndex];
+        _ASSERTE(m_ImageMap.find(vIndex) != m_ImageMap.end());
+        return m_ImageMap.at(vIndex);
     }
 
     void setImage(VkImageView vImage, size_t vIndex = 0)
     {
-        _ASSERTE(vIndex < m_ImageSet.size());
-        if (m_ImageSet[vIndex] != vImage)
+        if (m_ImageMap.find(vIndex) == m_ImageMap.end() || m_ImageMap[vIndex] != vImage)
         {
-            m_ImageSet[vIndex] = vImage;
+            m_ImageMap[vIndex] = vImage;
             _triggerUpdate();
         }
     }
 
 private:
-    std::vector<VkImageView> m_ImageSet;
+    std::map<size_t, VkImageView> m_ImageMap;
 };
 
 
@@ -98,6 +98,7 @@ public:
     void link(COutputPort::Ptr vPort)
     {
         _ASSERTE(isMatch(vPort));
+        m_Format = vPort->getFormat(); // FIXME: should I do this?
         m_pTargetPort = vPort;
         vPort->hookUpdate([=] { _triggerUpdate(); });
     }
@@ -109,14 +110,14 @@ private:
 class SPortDescriptor
 {
 public:
-    void addInput(std::string vName, const SPortFormat& vFormat)
+    void addInput(std::string vName, const SPortFormat& vFormat = SPortFormat{ VK_FORMAT_UNDEFINED, {0, 0}, 0 })
     {
         _ASSERTE(!hasInput(vName));
         m_InputPortNameSet.emplace_back(vName);
         m_InputPortSet.emplace_back(vFormat);
     }
 
-    void addOutput(std::string vName, const SPortFormat& vFormat)
+    void addOutput(std::string vName, const SPortFormat& vFormat = SPortFormat{ VK_FORMAT_UNDEFINED, {0, 0}, 0 })
     {
         _ASSERTE(!hasOutput(vName));
         m_OutputPortNameSet.emplace_back(vName);
@@ -179,10 +180,23 @@ public:
         return m_OutputPortMap[vName];
     }
 
-    void setOutput(std::string vOutputName, VkImageView vImage, size_t vIndex = 0)
+    void setOutput(std::string vOutputName, VkImageView vImage, const SPortFormat& vFormat, size_t vIndex = 0)
     {
+        // TODO: how to store actual format in port? or is this important?
         auto pPort = getOutputPort(vOutputName);
+        _ASSERTE(vFormat.isMatch(pPort->getFormat()));
         pPort->setImage(vImage, vIndex);
+    }
+
+    void setOutput(std::string vOutputName, vk::CImage::CPtr vImage, size_t vIndex = 0)
+    {
+        SPortFormat Format;
+        Format.Format = vImage->getFormat();
+        Format.Extent.width = vImage->getWidth();
+        Format.Extent.height = vImage->getHeight();
+        Format.Num = 0; // dont care
+
+        setOutput(vOutputName, *vImage, Format, vIndex);
     }
 
     void linkTo(std::string vInputName, COutputPort::Ptr vPort)
