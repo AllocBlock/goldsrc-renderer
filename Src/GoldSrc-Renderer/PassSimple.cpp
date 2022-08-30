@@ -235,11 +235,9 @@ void CSceneSimpleRenderPass::__createCommandPoolAndBuffers()
 
 void CSceneSimpleRenderPass::__createDepthResources()
 {
-    auto pPort = m_pPortSet->getOutputPort("Depth");
-    VkFormat DepthFormat = pPort->getFormat().Format;
+    VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
-
-    pPort->setImageV(*m_pDepthImage);
+    m_pPortSet->setOutput("Depth", m_pDepthImage);
 }
 
 void CSceneSimpleRenderPass::__createFramebuffers()

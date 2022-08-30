@@ -160,6 +160,11 @@
     - Port的设计
       - 输入和输出的Port会有区别，输入依赖输出，输出可以自己指定纹理，或是自动生成纹理
       - 输入和输出如果想相互知晓，就要保持互相的指针，这需要互相知道类型，知道类型也能保证不会错误连接（比如In到In，Out到Out，或者In和Out反了）
+  - 第三版
+    - 好像，InputPort和InputSrcOutputPort基本一样...是不是可以不用那么在意In还是Out，直接把Port定义为链表？
+    - Port只有两种，输出Port和中转Port
+      - 输出Port：保有view，是链表的头，可以表示第二版的OutputPort
+      - 中转Port：依赖另一个port，可以表示第二版的InputPort和InputSrcOutputPort
 
 - 如何管理场景
   - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理

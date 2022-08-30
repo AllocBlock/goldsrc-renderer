@@ -128,7 +128,7 @@
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\imgui\imgui.vcxproj">
+    <ProjectReference Include="..\Gui\Gui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Vulkan\Vulkan.vcxproj">

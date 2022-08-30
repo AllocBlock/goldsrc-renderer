@@ -4,6 +4,10 @@ namespace Pointer
 {
     template <class T>
     using ptr = std::shared_ptr<T>;
+
+    template <class T>
+    using wptr = std::weak_ptr<T>;
+
 #ifndef _MAKE_PTR
 #define _MAKE_PTR
     template <class T, class... _Types>

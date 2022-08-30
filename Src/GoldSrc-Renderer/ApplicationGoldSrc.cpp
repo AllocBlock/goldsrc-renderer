@@ -158,10 +158,10 @@ void CApplicationGoldSrc::__linkPasses()
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        pPortScene->linkTo("Input", m_pSwapchainPort);
-        pPortLine->linkTo("Input", pPortScene->getOutputPort("Output"));
+        CPortSet::link(m_pSwapchainPort, pPortScene, "Input");
+        CPortSet::link(pPortScene, "Output", pPortLine, "Input");
         if (i == 0)
-            pPortLine->linkTo("Depth", pPortScene->getOutputPort("Depth"));
-        pPortGui->linkTo("Input", pPortLine->getOutputPort("Output"));
+            CPortSet::link(pPortScene, "Depth", pPortLine, "Depth");
+        CPortSet::link(pPortLine, "Output", pPortGui, "Input");
     }
 }

@@ -18,7 +18,7 @@ void IApplication::init(GLFWwindow* vWindow)
     m_pDevice->create(m_pPhysicalDevice, m_DeviceExtensions, m_ValidationLayers);
     __createSemaphores();
 
-    m_pSwapchainPort = make<CNormalOutputPort>(SPortFormat::AnyFormat);
+    m_pSwapchainPort = make<CSourcePort>(SPortFormat::AnyFormat);
     __createSwapchain();
 
     _initV();
@@ -184,7 +184,7 @@ void IApplication::__createSwapchain()
     m_pSwapchain->create(m_pDevice);
     const auto& Views = m_pSwapchain->getImageViews();
     for (size_t i = 0; i < m_pSwapchain->getImageNum(); ++i)
-        m_pSwapchainPort->setImageV(Views[i], i);
+        m_pSwapchainPort->setImage(Views[i], i);
 }
 
 void IApplication::__destroySwapchain()
