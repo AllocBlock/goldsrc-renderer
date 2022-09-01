@@ -84,7 +84,6 @@ protected:
 
 private:
     void __createGraphicsPipelines();
-    void __createCommandPoolAndBuffers();
     void __createDepthResources();
     void __createFramebuffers();
     void __createTextureImages();
@@ -137,8 +136,6 @@ private:
         }
     } m_PipelineSet;
 
-    CCommand m_Command = CCommand();
-    std::string m_SceneCommandName = "Scene";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     bool m_NeedUpdateFramebuffer = true;
 

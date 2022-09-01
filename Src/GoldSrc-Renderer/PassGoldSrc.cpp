@@ -36,7 +36,6 @@ void CSceneGoldSrcRenderPass::_initV()
 {
     IRenderPass::_initV();
 
-    __createCommandPoolAndBuffers();
     __createRecreateResources();
     __createSceneResources();
     m_pPortSet->getOutputPort("Main")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
@@ -162,8 +161,6 @@ void CSceneGoldSrcRenderPass::_destroyV()
     __destroyRecreateResources();
     __destroySceneResources();
 
-    m_Command.clear();
-
     IRenderPass::_destroyV();
 }
 
@@ -177,7 +174,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
     m_RenderedObjectSet.clear();
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     bool RerecordCommand = false;
     if (m_EnableBSP || m_EnableCulling || m_RerecordCommandTimes > 0)
@@ -324,7 +321,7 @@ void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeSet.clear();
     if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
 
     __renderTreeNode(vImageIndex, 0);
@@ -335,7 +332,7 @@ void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     m_PipelineSet.DepthTest.setOpacity(CommandBuffer, 1.0f);
 
@@ -376,7 +373,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
 
 void CSceneGoldSrcRenderPass::__renderModels(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     // 这里去看了下Xash3D的源码，xash3d/engine/client/gl_rmain.c
     // 它是按照纹理、叠加和发光的顺序绘制
@@ -458,7 +455,7 @@ std::vector<size_t> CSceneGoldSrcRenderPass::__sortModelRenderSequence()
 
 void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     _ASSERTE(vModelIndex < m_pScene->BspTree.ModelInfos.size());
 
@@ -509,7 +506,7 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
 
 void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
 
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
@@ -522,7 +519,7 @@ void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     _recordObjectRenderCommand(CommandBuffer, vObjectIndex);
 }
 
@@ -535,12 +532,6 @@ void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
     m_PipelineSet.BlendAlphaTest.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
     m_PipelineSet.BlendAdditive.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
     m_PipelineSet.Sprite.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-}
-
-void CSceneGoldSrcRenderPass::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CSceneGoldSrcRenderPass::__createDepthResources()
@@ -782,11 +773,11 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
 }
 void CSceneGoldSrcRenderPass::__recordSpriteRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     m_PipelineSet.Sprite.recordCommand(CommandBuffer, vImageIndex);
 }

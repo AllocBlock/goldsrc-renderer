@@ -20,21 +20,24 @@ void IRenderPass::init(const vk::SAppInfo& vAppInfo)
             if (NewDesc != m_CurPassDesc) // change happens
             {
                 m_CurPassDesc = NewDesc;
-                __destroyRenderpass();
                 __createRenderpass();
             }
         }
     );
 
+    __createCommandPoolAndBuffers();
     __createRenderpass();
     _initV();
 }
 
 void IRenderPass::recreate(VkFormat vImageFormat, VkExtent2D vExtent, size_t vImageNum)
 {
+    bool RecreateCommandBuffer = (m_AppInfo.ImageNum != vImageNum);
     m_AppInfo.ImageFormat = vImageFormat;
     m_AppInfo.Extent = vExtent;
     m_AppInfo.ImageNum = vImageNum;
+    if (RecreateCommandBuffer) __createCommandPoolAndBuffers(); // TODO: how to invoke update?
+
     _recreateV();
 }
 
@@ -56,6 +59,7 @@ void IRenderPass::destroy()
 {
     _destroyV();
     __destroyRenderpass();
+    __destroyCommandPoolAndBuffers();
 }
 
 void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues)
@@ -90,8 +94,22 @@ void IRenderPass::end()
     m_Begined = false;
 }
 
+void IRenderPass::__createCommandPoolAndBuffers()
+{
+    __destroyCommandPoolAndBuffers();
+    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
+    m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
+}
+
+void IRenderPass::__destroyCommandPoolAndBuffers()
+{
+    m_Command.clear();
+}
+
 void IRenderPass::__createRenderpass()
 {
+    __destroyRenderpass();
+
     if (!m_CurPassDesc.isValid()) return;
 
     auto Info = m_CurPassDesc.generateInfo();
@@ -103,7 +121,7 @@ void IRenderPass::__createRenderpass()
 
 void IRenderPass::__destroyRenderpass()
 {
-    if (get())
+    if (isValid())
     {
         vkDestroyRenderPass(*m_AppInfo.pDevice, get(), nullptr);
         _setNull();

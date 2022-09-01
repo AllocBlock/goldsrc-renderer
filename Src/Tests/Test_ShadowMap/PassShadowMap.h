@@ -31,7 +31,6 @@ protected:
 private:
     void __createRenderPass();
     void __createGraphicsPipeline();
-    void __createCommandPoolAndBuffers();
     void __createFramebuffer();
     void __createShadowMapImages();
 
@@ -45,9 +44,6 @@ private:
     std::vector<vk::CImage::Ptr> m_ShadowMapImageSet;
     ptr<vk::CBuffer> m_pVertBuffer = nullptr;
     size_t m_VertexNum = 0;
-
-    CCommand m_Command = CCommand();
-    std::string m_CommandName = "ShadowMap";
 
     ptr<CCamera> m_pLightCamera = nullptr;
 

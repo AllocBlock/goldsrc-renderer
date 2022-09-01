@@ -10,7 +10,6 @@ void CRendererTest::_initV()
 
     __loadSkyBox();
     __createRenderPass();
-    __createCommandPoolAndBuffers();
     __createVertexBuffer();
     __createRecreateResources();
 }
@@ -70,7 +69,7 @@ void CRendererTest::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertexBuffer->destroy();
-    m_Command.clear();
+    m_pVertexBuffer = nullptr;
 
     IRenderPass::_destroyV();
 }
@@ -123,22 +122,6 @@ bool CRendererTest::__readSkyboxImages(std::string vSkyFilePrefix, std::string v
 void CRendererTest::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-}
-
-void CRendererTest::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
-
-    vk::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
-    {
-        return m_Command.beginSingleTimeBuffer();
-    };
-    vk::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
-    {
-        m_Command.endSingleTimeBuffer(vCommandBuffer);
-    };
-    vk::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
 void CRendererTest::__createDepthResources()

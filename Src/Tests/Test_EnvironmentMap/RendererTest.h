@@ -26,7 +26,6 @@ private:
     bool __readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension);
     void __createRenderPass();
     void __createGraphicsPipeline();
-    void __createCommandPoolAndBuffers();
     void __createDepthResources();
     void __createFramebuffers();
     void __createVertexBuffer();
@@ -39,8 +38,6 @@ private:
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth);
    
     CPipelineTest m_Pipeline;
-    CCommand m_Command = CCommand();
-    std::string m_CommandName = "Test";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     vk::CImage::Ptr m_pDepthImage = nullptr;

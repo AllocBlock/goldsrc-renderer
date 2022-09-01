@@ -30,7 +30,6 @@ protected:
 private:
     void __createRenderPass();
     void __createGraphicsPipeline();
-    void __createCommandPoolAndBuffers();
     void __createDepthResources();
     void __createLightFramebuffers();
 
@@ -44,8 +43,6 @@ private:
     ptr<vk::CBuffer> m_pVertBuffer;
     size_t m_VertexNum = 0;
 
-    CCommand m_Command = CCommand();
-    std::string m_CommandName = "Shade";
     vk::CImage::Ptr m_pDepthImage = nullptr;
 
     ptr<CCamera> m_pCamera = nullptr;

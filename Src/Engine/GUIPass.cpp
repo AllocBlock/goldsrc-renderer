@@ -19,10 +19,6 @@ void CGUIRenderPass::_initV()
     uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
     __createDescriptorPool();
 
-    // create command pool and buffers
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, NumImage, ECommandBufferLevel::PRIMARY);
-
     __createRecreateSources();
 }
 
@@ -61,7 +57,6 @@ void CGUIRenderPass::_destroyV()
 
     UI::destory();
 
-    m_Command.clear();
     __destroyDescriptorPool();
 
     m_pWindow = nullptr;
@@ -88,7 +83,7 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
     UI::draw(CommandBuffer);

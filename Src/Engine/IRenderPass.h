@@ -43,7 +43,12 @@ namespace vk
         CPortSet::Ptr m_pPortSet;
         bool m_IsUpdated = false; // temp design for framebuffer recreate
 
+        CCommand m_Command = CCommand();
+        std::string m_DefaultCommandName = "Default";
+
     private:
+        void __createCommandPoolAndBuffers();
+        void __destroyCommandPoolAndBuffers();
         void __createRenderpass();
         void __destroyRenderpass();
         void __beginCommand(VkCommandBuffer vCommandBuffer);

@@ -27,8 +27,6 @@ protected:
 
     GLFWwindow* m_pWindow = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-    CCommand m_Command = CCommand();
-    std::string m_CommandName = "Main";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
 
 private:

@@ -40,15 +40,12 @@ protected:
 
 private:
     void __rerecordCommand();
-    void __createCommandPoolAndBuffers();
     void __createFramebuffers();
 
     void __createRecreateResources();
     void __destroyRecreateResources();
 
     CPipelineLine m_PipelineLine;
-    CCommand m_Command = CCommand();
-    std::string m_CommandName = "Gui";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     bool m_NeedUpdateFramebuffer = true;
 

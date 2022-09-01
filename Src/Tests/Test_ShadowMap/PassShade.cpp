@@ -65,7 +65,6 @@ void CRenderPassShade::_initV()
     m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
 
     __createRenderPass();
-    __createCommandPoolAndBuffers();
     __createRecreateResources();
 }
 
@@ -132,7 +131,7 @@ void CRenderPassShade::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertBuffer->destroy();
-    m_Command.clear();
+    m_pVertexBuffer = nullptr;
 
     IRenderPass::_destroyV();
 }
@@ -146,12 +145,6 @@ void CRenderPassShade::__createRenderPass()
 void CRenderPassShade::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-}
-
-void CRenderPassShade::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 
 void CRenderPassShade::__createDepthResources()

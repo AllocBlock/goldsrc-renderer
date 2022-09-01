@@ -36,7 +36,6 @@ void CSceneSimpleRenderPass::_initV()
 {
     IRenderPass::_initV();
 
-    __createCommandPoolAndBuffers();
     __createRecreateResources();
 
     m_pPortSet->getOutputPort("Main")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
@@ -103,8 +102,6 @@ void CSceneSimpleRenderPass::_destroyV()
 {
     __destroyRecreateResources();
 
-    m_Command.clear();
-
     IRenderPass::_destroyV();
 }
 
@@ -116,7 +113,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         m_NeedUpdateFramebuffer = false;
     }
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     bool RerecordCommand = false;
     if (m_EnableCulling || m_RerecordCommandTimes > 0)
@@ -226,7 +223,7 @@ void CSceneSimpleRenderPass::__destroySceneResources()
 
 void CSceneSimpleRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     _recordObjectRenderCommand(CommandBuffer, vObjectIndex);
 }
 
@@ -234,12 +231,6 @@ void CSceneSimpleRenderPass::__createGraphicsPipelines()
 {
     m_PipelineSet.Sky.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
     m_PipelineSet.Main.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-}
-
-void CSceneSimpleRenderPass::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_SceneCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CSceneSimpleRenderPass::__createDepthResources()
@@ -410,6 +401,6 @@ void CSceneSimpleRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 
 void CSceneSimpleRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_SceneCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
 }

@@ -4,7 +4,6 @@
 
 void CRenderPassFullScreen::_initV()
 {
-    __createCommandPoolAndBuffers();
     __createVertexBuffer();
     __createRecreateResources();
 }
@@ -37,7 +36,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
     if (m_FramebufferSet.empty() || m_IsUpdated)
         __createFramebuffers();
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -63,15 +62,9 @@ void CRenderPassFullScreen::_destroyV()
     __destroyRecreateResources();
     if (m_pPipeline) m_pPipeline->destroy();
     m_pVertexBuffer->destroy();
-    m_Command.clear();
+    m_pVertexBuffer = nullptr;
 
     IRenderPass::_destroyV();
-}
-
-void CRenderPassFullScreen::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, uint32_t(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CRenderPassFullScreen::__createFramebuffers()

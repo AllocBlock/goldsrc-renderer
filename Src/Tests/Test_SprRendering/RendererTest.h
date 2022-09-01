@@ -22,7 +22,6 @@ protected:
 private:
     void __createRenderPass();
     void __createGraphicsPipeline();
-    void __createCommandPoolAndBuffers();
     void __createDepthResources();
     void __createFramebuffers();
 
@@ -32,8 +31,6 @@ private:
     void __updateUniformBuffer(uint32_t vImageIndex);
 
     CPipelineSprite m_Pipeline;
-    CCommand m_Command = CCommand();
-    std::string m_CommandName = "Test";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     vk::CImage::Ptr m_pDepthImage;
 

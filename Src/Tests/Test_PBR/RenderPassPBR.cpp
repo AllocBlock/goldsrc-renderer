@@ -6,7 +6,6 @@
 void CRenderPassPBR::_initV()
 {
     __createRenderPass();
-    __createCommandPoolAndBuffers();
     __createVertexBuffer();
     __createRecreateResources();
 }
@@ -86,7 +85,7 @@ void CRenderPassPBR::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertexBuffer->destroy();
-    m_Command.clear();
+    m_pVertexBuffer = nullptr;
 
     IRenderPass::_destroyV();
 }
@@ -103,12 +102,6 @@ void CRenderPassPBR::__createRenderPass()
 void CRenderPassPBR::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-}
-
-void CRenderPassPBR::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 
 void CRenderPassPBR::__createDepthResources()

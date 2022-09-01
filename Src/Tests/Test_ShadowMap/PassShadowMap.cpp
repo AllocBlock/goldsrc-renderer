@@ -90,7 +90,6 @@ void CRenderPassShadowMap::_initV()
     m_pLightCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
 
     __createRenderPass();
-    __createCommandPoolAndBuffers();
     __createRecreateResources();
 }
 
@@ -147,7 +146,7 @@ void CRenderPassShadowMap::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertBuffer->destroy();
-    m_Command.clear();
+    m_pVertexBuffer = nullptr;
 
     IRenderPass::_destroyV();
 }
@@ -175,12 +174,6 @@ void CRenderPassShadowMap::__createRenderPass()
 void CRenderPassShadowMap::__createGraphicsPipeline()
 {
     m_PipelineShadowMap.create(m_AppInfo.pDevice, get(), m_ShadowMapExtent);
-}
-
-void CRenderPassShadowMap::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
 }
 
 void CRenderPassShadowMap::__createFramebuffer()

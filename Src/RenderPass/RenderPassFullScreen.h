@@ -35,7 +35,6 @@ protected:
     virtual void _destroyV() override;
 
 private:
-    void __createCommandPoolAndBuffers();
     void __createFramebuffers();
     void __createVertexBuffer();
 
@@ -45,8 +44,6 @@ private:
     void __generateScene();
    
     ptr<IPipeline> m_pPipeline = nullptr;
-    CCommand m_Command = CCommand();
-    std::string m_CommandName = "FullScreen";
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 

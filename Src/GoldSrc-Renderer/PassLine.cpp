@@ -57,7 +57,6 @@ void CLineRenderPass::_initV()
 {
     IRenderPass::_initV();
 
-    __createCommandPoolAndBuffers();
     __createRecreateResources();
     m_pPortSet->getOutputPort("Main")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; });
 
@@ -103,8 +102,6 @@ void CLineRenderPass::_destroyV()
 {
     __destroyRecreateResources();
 
-    m_Command.clear();
-
     IRenderPass::_destroyV();
 }
 
@@ -117,7 +114,7 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
         m_NeedUpdateFramebuffer = false;
     }
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     bool RerecordCommand = false;
     if (m_RerecordCommandTimes > 0)
@@ -167,12 +164,6 @@ void CLineRenderPass::__destroyRecreateResources()
     m_FramebufferSet.clear();
 
     m_PipelineLine.destroy();
-}
-
-void CLineRenderPass::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void CLineRenderPass::__createFramebuffers()

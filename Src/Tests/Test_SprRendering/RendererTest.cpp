@@ -11,7 +11,6 @@ void CRendererTest::_initV()
     m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
 
     __createRenderPass();
-    __createCommandPoolAndBuffers();
     __createRecreateResources();
 }
 
@@ -58,7 +57,6 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
 void CRendererTest::_destroyV()
 {
     __destroyRecreateResources();
-    m_Command.clear();
 
     IRenderPass::_destroyV();
 }
@@ -72,22 +70,6 @@ void CRendererTest::__createRenderPass()
 void CRendererTest::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-}
-
-void CRendererTest::__createCommandPoolAndBuffers()
-{
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_CommandName, m_AppInfo.ImageNum, ECommandBufferLevel::PRIMARY);
-
-    vk::beginSingleTimeBufferFunc_t BeginFunc = [this]() -> VkCommandBuffer
-    {
-        return m_Command.beginSingleTimeBuffer();
-    };
-    vk::endSingleTimeBufferFunc_t EndFunc = [this](VkCommandBuffer vCommandBuffer)
-    {
-        m_Command.endSingleTimeBuffer(vCommandBuffer);
-    };
-    vk::setSingleTimeBufferFunc(BeginFunc, EndFunc);
 }
 
 void CRendererTest::__createDepthResources()
