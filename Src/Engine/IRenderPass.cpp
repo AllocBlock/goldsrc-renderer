@@ -2,13 +2,31 @@
 
 using namespace vk;
 
-void IRenderPass::init(const vk::SAppInfo& vAppInfo, int vRenderPassPosBitField)
+IRenderPass::IRenderPass()
+{
+}
+
+void IRenderPass::init(const vk::SAppInfo& vAppInfo)
 {
     m_AppInfo = vAppInfo;
-    m_RenderPassPosBitField = vRenderPassPosBitField;
 
     auto PortDesc = _getPortDescV();
     m_pPortSet = make<CPortSet>(PortDesc);
+    m_CurPassDesc = _getRenderPassDescV();
+
+    m_pPortSet->hookLinkUpdate([this]()
+        {
+            CRenderPassDescriptor NewDesc = _getRenderPassDescV();
+            if (NewDesc != m_CurPassDesc) // change happens
+            {
+                m_CurPassDesc = NewDesc;
+                __destroyRenderpass();
+                __createRenderpass();
+            }
+        }
+    );
+
+    __createRenderpass();
     _initV();
 }
 
@@ -27,18 +45,17 @@ void IRenderPass::update(uint32_t vImageIndex)
 
 std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers(uint32_t vImageIndex)
 {
-    return _requestCommandBuffersV(vImageIndex);
+    //return _requestCommandBuffersV(vImageIndex);
+    // FIXME: temp design!
+    const auto& Res = _requestCommandBuffersV(vImageIndex);
+    m_IsUpdated = false;
+    return Res;
 }
 
 void IRenderPass::destroy()
 {
     _destroyV();
-    if (get())
-    {
-        vkDestroyRenderPass(*m_AppInfo.pDevice, get(), nullptr);
-        _setNull();
-    }
-    m_RenderPassPosBitField = (int)ERenderPassPos::MIDDLE;
+    __destroyRenderpass();
 }
 
 void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues)
@@ -71,6 +88,26 @@ void IRenderPass::end()
     __endCommand(m_CurrentCommandBuffer);
     m_CurrentCommandBuffer = VK_NULL_HANDLE;
     m_Begined = false;
+}
+
+void IRenderPass::__createRenderpass()
+{
+    if (!m_CurPassDesc.isValid()) return;
+
+    auto Info = m_CurPassDesc.generateInfo();
+    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
+    m_CurPassDesc.clearStage(); // free stage data to save memory
+
+    _onRenderPassRecreateV();
+}
+
+void IRenderPass::__destroyRenderpass()
+{
+    if (get())
+    {
+        vkDestroyRenderPass(*m_AppInfo.pDevice, get(), nullptr);
+        _setNull();
+    }
 }
 
 void IRenderPass::__beginCommand(VkCommandBuffer vCommandBuffer)

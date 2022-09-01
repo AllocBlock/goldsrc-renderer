@@ -17,18 +17,11 @@ void CGUIRenderPass::_initV()
     _ASSERTE(m_pWindow);
 
     uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
-    __createRenderPass();
     __createDescriptorPool();
 
     // create command pool and buffers
     m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_CommandName, NumImage, ECommandBufferLevel::PRIMARY);
-
-    // upload font
-    UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, _getRef());
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    UI::addFont(gChineseFont, CommandBuffer);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
 
     __createRecreateSources();
 }
@@ -36,9 +29,13 @@ void CGUIRenderPass::_initV()
 SPortDescriptor CGUIRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Input");
-    Ports.addInputSrcOutput("Output", "Input");
+    Ports.addInputOutput("Main");
     return Ports;
+}
+
+CRenderPassDescriptor CGUIRenderPass::_getRenderPassDescV()
+{
+    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
 }
 
 void CGUIRenderPass::_recreateV()
@@ -72,6 +69,17 @@ void CGUIRenderPass::_destroyV()
     IRenderPass::_destroyV();
 }
 
+void CGUIRenderPass::_onRenderPassRecreateV()
+{
+    IRenderPass::_onRenderPassRecreateV();
+
+    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
+    UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, get());
+    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
+    UI::addFont(gChineseFont, CommandBuffer);
+    m_Command.endSingleTimeBuffer(CommandBuffer);
+}
+
 std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     if (m_FramebufferSet.empty())
@@ -87,12 +95,6 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
     end();
 
     return { CommandBuffer };
-}
-
-void CGUIRenderPass::__createRenderPass()
-{
-    auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat);
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
 }
 
 void CGUIRenderPass::__createDescriptorPool()
@@ -139,7 +141,7 @@ void CGUIRenderPass::__createFramebuffer()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pPortSet->getOutputPort("Output")->getImageV(i),
+            m_pPortSet->getOutputPort("Main")->getImageV(i),
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();

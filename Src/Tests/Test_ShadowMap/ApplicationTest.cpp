@@ -93,9 +93,9 @@ void CApplicationTest::__linkPasses()
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
         pLinkShade->linkInput("ShadowMap", pLinkShadowMap->getOutput("ShadowMap", i), i);
-        pLinkShade->linkOutput("Output", ImageViews[i], i);
-        pLinkGui->linkInput("Input", ImageViews[i], i);
-        pLinkGui->linkOutput("Output", ImageViews[i], i);
+        pLinkShade->linkOutput("Main", ImageViews[i], i);
+        pLinkGui->linkInput("Main", ImageViews[i], i);
+        pLinkGui->linkOutput("Main", ImageViews[i], i);
     }
 
     m_pRenderPassShade->setShadowMapInfo(m_pRenderPassShadowMap->getLightCamera());

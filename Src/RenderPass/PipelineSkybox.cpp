@@ -14,24 +14,6 @@ struct SSkyUniformBufferObjectFrag
     alignas(16) glm::mat4 UpCorrection;
 };
 
-void CPipelineSkybox::destroy()
-{
-    if (m_pDevice == VK_NULL_HANDLE) return;
-
-    m_Sampler.destroy();
-    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
-    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-        m_FragUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
-    m_FragUniformBufferSet.clear();
-
-    IPipeline::destroy();
-}
-
 void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
@@ -215,6 +197,24 @@ void CPipelineSkybox::_initDescriptorV()
     m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_pDevice);
+}
+
+void CPipelineSkybox::_destroyV()
+{
+    if (m_pDevice == VK_NULL_HANDLE) return;
+
+    m_Sampler.destroy();
+    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
+    m_pSkyBoxImage = nullptr;
+    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
+    m_pVertexBuffer = nullptr;
+    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
+    {
+        m_VertUniformBufferSet[i]->destroy();
+        m_FragUniformBufferSet[i]->destroy();
+    }
+    m_VertUniformBufferSet.clear();
+    m_FragUniformBufferSet.clear();
 }
 
 void CPipelineSkybox::__updateDescriptorSet()

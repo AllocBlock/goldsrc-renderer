@@ -64,8 +64,8 @@ void CApplicationTest::__linkPasses()
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        pLinkMain->link("Output", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkGui->link("Input", ImageViews[i], EPortType::INPUT, i);
-        pLinkGui->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkMain->link("Main", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkGui->link("Main", ImageViews[i], EPortType::INPUT, i);
+        pLinkGui->link("Main", ImageViews[i], EPortType::OUTPUT, i);
     }
 }

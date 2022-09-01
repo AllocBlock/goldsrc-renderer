@@ -165,6 +165,23 @@
     - Port只有两种，输出Port和中转Port
       - 输出Port：保有view，是链表的头，可以表示第二版的OutputPort
       - 中转Port：依赖另一个port，可以表示第二版的InputPort和InputSrcOutputPort
+    - 这样依赖关系很明确形成了，不过还不能单输出连接多输入...做成树状比较好
+    - 也能解决掉renderpassPos
+      - 一个问题，如何判断是否clear和toPresent？
+        - clear的话，如果是自己新建的，就需要clear，自己新建的对应了SourceOutput
+        - 但对于swapchain image，他也是需要clear的，但他的SourceOutput不属于任何一个pass，只能是第一个pass的输入来clear它...需要单独判断
+        - 但这也会导致attachment依赖port，要创建attachment必须有port...想起Falcor的处理，可以创建internal，也许也可用这个思路，不过暂时没啥影响
+        - 问题....目前是init->attachement description ->create render pass，link是在全部init后做的....
+          - 好像port和link可以最早做，但是先全部创建、link、然后再init会有个问题，目前scenepass有两个不同的实现，可以动态切换，也就是说整个渲染图会改变，这个怎么处理？
+          - 也就是说，怎么实现动态的连接呢？目前通过是否是head、tail的方法好像不太合适
+          - 这样，首先init和link需要分开，init需要确认link是否有效，无效则暂时不创建attachment
+            - 随后如果link有更新，hook更新，（在下一个loop，还是立刻？立刻的话有可能太频繁了，或者保存一下状态，如果状态未改变则无需重新创建）重新创建attachment
+            - 判断状态是否改变，是在PortSet里做，还是renderpass自己检查？
+            - 构造函数不应该调虚函数，所以虚函数获取port布局是不可的...那么link必须要在init后了
+        - 问题...改成不区分In/Out了，怎么判断是不是begin？
+          - 因为获取input和output都可以，不能只通过判断父节点是不是swapchain...
+          - 要不要引入changeflag？还是区分input和inputsrcoutput，但是change本身和port无关的....
+          - 或者...这类IO不用两个Port，用同一个Port！这样就是统一的了！！！！
 
 - 如何管理场景
   - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理
@@ -190,3 +207,15 @@
     - 事件列表的设计，是全局通用，还是GUI自己定义
     - hook和trigger
     - 事件参数如何传递？
+
+- renderpass重建
+  - 第一版：
+    - 用recreate虚函数表示，主要处理swapchain的变化，比如大小改变
+    - 但现在引入了renderpass自身的变化，如果还是用recreate，不好区分谁变化了，导致多余的重建
+    - 可以改成事件形式，或者加入参数告诉它是什么发生了变化，pass自己判断是否需要重建
+
+- TODO:
+  - shader，只编译更新了的shader
+  - pipeline的重构
+    - destroy也用虚函数吧，销毁得不干净的问题也是，能不能自动处理掉？
+  - Tiling，CS的纹理多但小，可以组装成多张大的纹理

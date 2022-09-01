@@ -33,17 +33,6 @@ VkPipelineDepthStencilStateCreateInfo CPipelineLine::_getDepthStencilInfoV()
     return DepthStencilInfo;
 }
 
-void CPipelineLine::destroy()
-{
-    m_VertexNum = 0;
-    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
-    for (auto pBuffer : m_VertUniformBufferSet)
-        pBuffer->destroy();
-    m_VertUniformBufferSet.clear();
-
-    IPipeline::destroy();
-}
-
 void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SGuiUniformBufferObjectVert UBOVert = {};
@@ -112,6 +101,15 @@ void CPipelineLine::_initDescriptorV()
     m_Descriptor.clear();
     m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
     m_Descriptor.createLayout(m_pDevice);
+}
+
+void CPipelineLine::_destroyV()
+{
+    m_VertexNum = 0;
+    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
+    for (auto pBuffer : m_VertUniformBufferSet)
+        pBuffer->destroy();
+    m_VertUniformBufferSet.clear();
 }
 
 void CPipelineLine::__updateDescriptorSet()

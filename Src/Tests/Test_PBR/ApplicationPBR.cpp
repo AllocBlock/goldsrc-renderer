@@ -101,10 +101,10 @@ void CApplicationPBR::__linkPasses()
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        pLinkEnv->link("Output", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkPBR->link("Input", ImageViews[i], EPortType::INPUT, i);
-        pLinkPBR->link("Output", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkGui->link("Input", ImageViews[i], EPortType::INPUT, i);
-        pLinkGui->link("Output", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkEnv->link("Main", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkPBR->link("Main", ImageViews[i], EPortType::INPUT, i);
+        pLinkPBR->link("Main", ImageViews[i], EPortType::OUTPUT, i);
+        pLinkGui->link("Main", ImageViews[i], EPortType::INPUT, i);
+        pLinkGui->link("Main", ImageViews[i], EPortType::OUTPUT, i);
     }
 }

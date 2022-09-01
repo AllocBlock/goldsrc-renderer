@@ -77,7 +77,7 @@ glm::vec2 __toGlmVec2(ImVec2 vVec)
     return glm::vec2(vVec.x, vVec.y);
 }
 
-void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass& voRenderPass)
+void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass)
 {
     auto pDevice = vAppInfo.pDevice;
 
@@ -100,14 +100,17 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
     InitInfo.MinImageCount = vImageNum;
     InitInfo.ImageCount = vImageNum;
     InitInfo.CheckVkResultFn = nullptr;
-    ImGui_ImplVulkan_Init(&InitInfo, voRenderPass);
+    ImGui_ImplVulkan_Init(&InitInfo, vRenderPass);
 
     // init default sampler
-    const auto& Properties = pDevice->getPhysicalDevice()->getProperty();
-    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
-        VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
-    );
-    gDefaultSampler.create(pDevice, SamplerInfo);
+    if (!gDefaultSampler.isValid())
+    {
+        const auto& Properties = pDevice->getPhysicalDevice()->getProperty();
+        VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+            VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
+        );
+        gDefaultSampler.create(pDevice, SamplerInfo);
+    }
 
     gIsInitted = true;
 }

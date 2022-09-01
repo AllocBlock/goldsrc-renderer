@@ -29,12 +29,12 @@ public:
 protected:
     virtual void _initV() override;
     virtual SPortDescriptor _getPortDescV() override;
+    virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _recreateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override; 
     virtual void _destroyV() override;
 
 private:
-    void __createRenderPass();
     void __createCommandPoolAndBuffers();
     void __createFramebuffers();
     void __createVertexBuffer();

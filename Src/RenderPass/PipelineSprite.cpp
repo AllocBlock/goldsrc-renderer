@@ -32,27 +32,6 @@ struct SUniformBufferObjectVert
     alignas(16) glm::vec3 EyeDirection;
 };
 
-void CPipelineSprite::destroy()
-{
-    if (m_pDevice == VK_NULL_HANDLE) return;
-
-    m_Sampler.destroy();
-    for (auto pImage : m_SpriteImageSet)
-        pImage->destroy();
-    m_SpriteImageSet.clear();
-
-    m_pPlaceholderImage->destroy();
-
-    m_pVertexBuffer->destroy();
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
-
-    IPipeline::destroy();
-}
-
 void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImageSet)
 {
     _ASSERTE(vSpriteImageSet.size() <= CPipelineSprite::MaxSpriteNum);
@@ -97,7 +76,6 @@ void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImag
             vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &PushConstant);
             vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
         }
-
     }
 }
 
@@ -167,47 +145,52 @@ void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 void CPipelineSprite::_createResourceV(size_t vImageNum)
 {
     // create unit square facing positive x-axis
-    // À≥ ±’Î
-    const std::vector<SPositionUVPointData> PointData =
+    if (!m_pVertexBuffer)
     {
-        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
-        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
-        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
-        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
-        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
-        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
-    };
+        // À≥ ±’Î
+        const std::vector<SPositionUVPointData> PointData =
+        {
+            {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
+            {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
+            {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
+            {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
+            {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
+            {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
+        };
 
-    VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
-    m_VertexNum = PointData.size();
+        VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
+        m_VertexNum = PointData.size();
 
-    m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    m_pVertexBuffer->stageFill(PointData.data(), DataSize);
+        m_pVertexBuffer = make<vk::CBuffer>();
+        m_pVertexBuffer->create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->stageFill(PointData.data(), DataSize);
 
-    // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
-    m_VertUniformBufferSet.resize(vImageNum);
+        // uniform buffer
+        VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
+        m_VertUniformBufferSet.resize(vImageNum);
 
-    for (size_t i = 0; i < vImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        for (size_t i = 0; i < vImageNum; ++i)
+        {
+            m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
+            m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        }
     }
 
     // sampler
-    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
-    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
-        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
-    );
-    m_Sampler.create(m_pDevice, SamplerInfo);
+    if (!m_Sampler.isValid())
+    {
+        const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
+        VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+            VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
+        );
+        m_Sampler.create(m_pDevice, SamplerInfo);
+    }
 
     // placeholder image
-    uint8_t Data[4] = { 0, 0, 0, 0 };
-    auto pTinyImage = make<CIOImage>();
-    pTinyImage->setSize(1, 1);
-    pTinyImage->setData(Data);
-    m_pPlaceholderImage = Function::createImageFromIOImage(m_pDevice, pTinyImage);
+    if (!m_pPlaceholderImage)
+    {
+        m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
+    }
 }
 
 void CPipelineSprite::_initDescriptorV()
@@ -220,6 +203,34 @@ void CPipelineSprite::_initDescriptorV()
     m_Descriptor.add("Texture", 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSprite::MaxSpriteNum), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_pDevice);
+}
+
+void CPipelineSprite::_destroyV()
+{
+    if (m_pDevice == VK_NULL_HANDLE) return;
+
+    m_Sampler.destroy();
+    for (auto pImage : m_SpriteImageSet)
+        pImage->destroy();
+    m_SpriteImageSet.clear();
+
+    if (m_pPlaceholderImage)
+    {
+        m_pPlaceholderImage->destroy();
+        m_pPlaceholderImage = nullptr;
+    }
+
+    if (m_pVertexBuffer)
+    {
+        m_pVertexBuffer->destroy();
+        m_pVertexBuffer = nullptr;
+    }
+
+    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
+    {
+        m_VertUniformBufferSet[i]->destroy();
+    }
+    m_VertUniformBufferSet.clear();
 }
 
 void CPipelineSprite::__updateDescriptorSet()

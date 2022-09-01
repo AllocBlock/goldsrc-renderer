@@ -25,7 +25,6 @@ struct SSpritePushConstant
 class CPipelineSprite : public IPipeline
 {
 public:
-    void destroy();
     void setSprites(const std::vector<SGoldSrcSprite>& vSpriteSet);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
@@ -37,6 +36,7 @@ protected:
     void _initPushConstantV(VkCommandBuffer vCommandBuffer);
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;
+    virtual void _destroyV() override;
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
     virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;

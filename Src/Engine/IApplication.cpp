@@ -19,6 +19,7 @@ void IApplication::init(GLFWwindow* vWindow)
     __createSemaphores();
 
     m_pSwapchainPort = make<CSourcePort>(SPortFormat::AnyFormat);
+    m_pSwapchainPort->markAsSwapchainSource();
     __createSwapchain();
 
     _initV();
@@ -185,6 +186,8 @@ void IApplication::__createSwapchain()
     const auto& Views = m_pSwapchain->getImageViews();
     for (size_t i = 0; i < m_pSwapchain->getImageNum(); ++i)
         m_pSwapchainPort->setImage(Views[i], i);
+
+    m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent());
 }
 
 void IApplication::__destroySwapchain()

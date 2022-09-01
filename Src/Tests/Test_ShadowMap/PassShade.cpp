@@ -75,7 +75,7 @@ SPortDescriptor CRenderPassShade::_getPortDescV()
     // TODO: convertable image format matching
     VkExtent2D ShadowMapExtent = { gShadowMapSize, gShadowMapSize };
     Ports.addInput("ShadowMap", gShadowMapImageFormat, ShadowMapExtent);
-    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    Ports.addOutput("Main", m_AppInfo.ImageFormat, m_AppInfo.Extent);
     return Ports;
 }
 
@@ -168,7 +168,7 @@ void CRenderPassShade::__createLightFramebuffers()
     for (size_t i = 0; i < ImageNum; ++i)
     {
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), { m_pLink->getOutput("Output", i), *m_pDepthImage}, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), { m_pLink->getOutput("Main", i), *m_pDepthImage}, m_AppInfo.Extent);
 
         ShadowMapImageViews.emplace_back(m_pLink->getInput("ShadowMap", i));
     }

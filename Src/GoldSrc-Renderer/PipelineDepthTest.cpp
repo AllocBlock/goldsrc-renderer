@@ -89,12 +89,6 @@ void CPipelineDepthTest::setOpacity(VkCommandBuffer vCommandBuffer, float vOpaci
     }
 }
 
-void CPipelineDepthTest::destroy()
-{
-    __destroyResources();
-    IPipeline::destroy();
-}
-
 void CPipelineDepthTest::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
     voBinding = SGoldSrcPointData::getBindingDescription();
@@ -182,6 +176,11 @@ void CPipelineDepthTest::_initPushConstantV(VkCommandBuffer vCommandBuffer)
     m_EnableLightmap = false;
     m_Opacity = 1.0;
     __updatePushConstant(vCommandBuffer, m_EnableLightmap, m_Opacity);
+}
+
+void CPipelineDepthTest::_destroyV()
+{
+    __destroyResources();
 }
 
 void CPipelineDepthTest::__destroyResources()

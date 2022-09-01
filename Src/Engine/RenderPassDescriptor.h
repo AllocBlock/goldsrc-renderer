@@ -1,36 +1,78 @@
 #pragma once
-#include "IRenderPass.h"
+#include "RenderPassPort.h"
 #include "vulkan/vulkan.h"
 #include <vector>
+
+struct SAttachementInfo
+{
+    VkFormat Format = VkFormat::VK_FORMAT_UNDEFINED;
+    bool IsBegin = false;
+    bool IsEnd = false;
+
+    bool operator == (const SAttachementInfo& vInfo) const
+    {
+        return Format == vInfo.Format && IsBegin == vInfo.IsBegin && IsEnd == vInfo.IsEnd;
+    }
+
+    bool operator != (const SAttachementInfo& vInfo) const
+    {
+        return !(*this == vInfo);
+    }
+};
 
 // TIPS: before create with generated info, you should not release this descriptor as it contains data pointed in renderpass create info
 class CRenderPassDescriptor
 {
 public:
-    void addColorAttachment(int vRendererPosBitField, VkFormat vImageFormat);
-    void setDepthAttachment(int vRendererPosBitField, VkFormat vImageFormat);
-    void addColorAttachment(const VkAttachmentDescription& vDesc);
-    void setDepthAttachment(const VkAttachmentDescription& vDesc);
+    void addColorAttachment(CPort::Ptr vPort);
+    void setDepthAttachment(CPort::Ptr vPort);
+    void addColorAttachment(const SAttachementInfo& vInfo);
+    void setDepthAttachment(const SAttachementInfo& vInfo);
     void setSubpassNum(uint32_t vNum);
+
+    bool isValid() const { return m_IsValid; }
+    void clearStage(); // you can clear stage data after create renderpass to save memory
     void clear();
     VkRenderPassCreateInfo generateInfo();
 
-    // FIXME: cant create many pass info then use them all, as prev data will be erased
-    static VkRenderPassCreateInfo generateSingleSubpassInfo(int vRendererPosBitField, VkFormat vColorImageFormat, VkFormat vDepthImageFormat = VK_FORMAT_UNDEFINED);
+    bool operator == (const CRenderPassDescriptor& vDesc) const
+    {
+        if (m_ColorAttachmentInfoSet.size() != vDesc.m_ColorAttachmentInfoSet.size()) return false;
+        if (m_DepthAttachmentInfo.has_value() != vDesc.m_DepthAttachmentInfo.has_value()) return false;
+        size_t ColorNum = m_ColorAttachmentInfoSet.size();
+        for (size_t i = 0; i < ColorNum; ++i)
+        {
+            if (m_ColorAttachmentInfoSet[i] != vDesc.m_ColorAttachmentInfoSet[i]) return false;
+        }
+
+        if (m_DepthAttachmentInfo.has_value())
+            if (m_DepthAttachmentInfo.value() != vDesc.m_DepthAttachmentInfo.value()) return false;
+        return true;
+    }
+
+    bool operator != (const CRenderPassDescriptor& vDesc) const
+    {
+        return !(*this == vDesc);
+    }
+
+    static CRenderPassDescriptor generateSingleSubpassDesc(CPort::Ptr vColorPort, CPort::Ptr vDepthPort = nullptr);
 private:
-    static CRenderPassDescriptor gGlobalDesc;
+    SAttachementInfo __getAttachmentInfo(CPort::Ptr vPort);
 
-    static VkAttachmentDescription __createAttachmentDescription(int vRendererPosBitField, VkFormat vImageFormat, bool vIsDepth);
+    static VkAttachmentDescription __createAttachmentDescription(const SAttachementInfo& vInfo, bool vIsDepth);
+    void __generateAttachmentDescription();
+    void __generateSubpassDescription(); // TODO: this just generates a full reference dependency
     void __generateDependency(); // TODO: this just generates a sequence dependency
-    void __generateDescription(); // TODO: this just generates a full reference dependency
 
-    uint32_t m_ColorAttachmentNum = 0;
-    bool m_HasDepthAttachment = false;
-    std::vector<VkAttachmentDescription> m_AttachmentDescSet;
+    std::vector<SAttachementInfo> m_ColorAttachmentInfoSet;
+    std::optional<SAttachementInfo> m_DepthAttachmentInfo = std::nullopt;
     uint32_t m_SubPassNum = 1u;
+    bool m_IsValid = true;
 
-    std::vector<VkAttachmentReference> m_StageColorRefSet; // avoid local point problem
+    // avoid local point problem
+    std::vector<VkAttachmentDescription> m_StageAttachmentDescSet;
+    std::vector<VkAttachmentReference> m_StageColorRefSet;
     VkAttachmentReference m_StageDepthRef;
-    std::vector<VkSubpassDescription> m_StageDescSet;
+    std::vector<VkSubpassDescription> m_StageSubpassDescSet;
     std::vector<VkSubpassDependency> m_StageDepedencySet;
 };

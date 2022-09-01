@@ -61,12 +61,6 @@ void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineSimple::destroy()
-{
-    __destroyResources();
-    IPipeline::destroy();
-}
-
 void CPipelineSimple::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
     voBinding = SSimplePointData::getBindingDescription();
@@ -131,6 +125,11 @@ void CPipelineSimple::_initDescriptorV()
     m_Descriptor.add("Texture", 3, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSimple::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_pDevice);
+}
+
+void CPipelineSimple::_destroyV()
+{
+    __destroyResources();
 }
 
 void CPipelineSimple::__destroyResources()

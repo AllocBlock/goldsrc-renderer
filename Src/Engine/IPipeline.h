@@ -17,7 +17,7 @@ public:
 
     void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void setImageNum(size_t vImageNum);
-    void destroy();
+    virtual void destroy() final;
     void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
 
     template <typename T>
@@ -46,6 +46,7 @@ protected:
     virtual void _getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment);
     virtual std::vector<VkDynamicState> _getEnabledDynamicSetV();
     virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV();
+    virtual void _destroyV() {};
 
     static std::vector<VkPipelineShaderStageCreateInfo>          getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule);
     static VkPipelineInputAssemblyStateCreateInfo   getDefaultInputAssemblyStageInfo();

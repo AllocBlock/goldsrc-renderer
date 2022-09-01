@@ -23,12 +23,6 @@ void CPipelineEnvironment::updateUniformBuffer(uint32_t vImageIndex, CCamera::Pt
     m_FragUBSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineEnvironment::destroy()
-{
-    __destroyResources();
-    IPipeline::destroy();
-}
-
 void CPipelineEnvironment::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
     voBinding = SFullScreenPointData::getBindingDescription();
@@ -74,6 +68,12 @@ void CPipelineEnvironment::_initDescriptorV()
     m_Descriptor.add("CombinedSampler", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Descriptor.createLayout(m_pDevice);
+}
+
+void CPipelineEnvironment::_destroyV()
+{
+    __destroyResources();
+    IPipeline::destroy();
 }
 
 void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)

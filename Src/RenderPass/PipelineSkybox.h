@@ -16,7 +16,6 @@
 class CPipelineSkybox : public IPipeline
 {
 public:
-    void destroy();
     void setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
@@ -37,6 +36,7 @@ protected:
 
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initDescriptorV() override;
+    virtual void _destroyV() override;
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
     virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;

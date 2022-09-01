@@ -14,8 +14,8 @@ void CRenderPassPBR::_initV()
 SPortDescriptor CRenderPassPBR::_getPortDescV()
 {
     CRenderPassPort Ports;
-    Ports.addInput("Input", m_AppInfo.ImageFormat, m_AppInfo.Extent);
-    Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    Ports.addInput("Main", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    Ports.addOutput("Main", m_AppInfo.ImageFormat, m_AppInfo.Extent);
     return Ports;
 }
 
@@ -118,13 +118,15 @@ void CRenderPassPBR::__createDepthResources()
 
 void CRenderPassPBR::__createFramebuffers()
 {
+    _ASSERTE(isValid());
+
     size_t ImageNum = m_AppInfo.ImageNum;
     m_FramebufferSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pLink->getOutput("Output", i),
+            m_pLink->getOutput("Main", i),
             *m_pDepthImage
         };
 

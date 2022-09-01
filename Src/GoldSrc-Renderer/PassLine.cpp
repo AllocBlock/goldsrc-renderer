@@ -57,10 +57,9 @@ void CLineRenderPass::_initV()
 {
     IRenderPass::_initV();
 
-    __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
-    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; });
+    m_pPortSet->getOutputPort("Main")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; });
 
     __rerecordCommand();
 }
@@ -68,10 +67,15 @@ void CLineRenderPass::_initV()
 SPortDescriptor CLineRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Input");
+    Ports.addInputOutput("Main");
     Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1 });
-    Ports.addInputSrcOutput("Output", "Input");
     return Ports;
+}
+
+CRenderPassDescriptor CLineRenderPass::_getRenderPassDescV()
+{
+    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
+                                                            m_pPortSet->getInputPort("Depth"));
 }
 
 void CLineRenderPass::_recreateV()
@@ -106,7 +110,7 @@ void CLineRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_NeedUpdateFramebuffer)
+    if (m_NeedUpdateFramebuffer || m_IsUpdated)
     {
         __createFramebuffers();
         __rerecordCommand();
@@ -135,6 +139,13 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
     return { CommandBuffer };
 }
 
+// FIXME: better solution exist
+void CLineRenderPass::_onRenderPassRecreateV()
+{
+    m_PipelineLine.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
+}
+
 void CLineRenderPass::__rerecordCommand()
 {
     m_RerecordCommandTimes += m_AppInfo.ImageNum;
@@ -142,8 +153,11 @@ void CLineRenderPass::__rerecordCommand()
 
 void CLineRenderPass::__createRecreateResources()
 {
-    m_PipelineLine.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-    m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
+    if (isValid())
+    {
+        m_PipelineLine.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+        m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
+    }
 }
 
 void CLineRenderPass::__destroyRecreateResources()
@@ -155,12 +169,6 @@ void CLineRenderPass::__destroyRecreateResources()
     m_PipelineLine.destroy();
 }
 
-void CLineRenderPass::__createRenderPass()
-{
-    auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat, VK_FORMAT_D32_SFLOAT);
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
-}
-
 void CLineRenderPass::__createCommandPoolAndBuffers()
 {
     m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
@@ -169,6 +177,8 @@ void CLineRenderPass::__createCommandPoolAndBuffers()
 
 void CLineRenderPass::__createFramebuffers()
 {
+    _ASSERTE(isValid());
+
     m_AppInfo.pDevice->waitUntilIdle();
     for (auto& pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
@@ -177,7 +187,7 @@ void CLineRenderPass::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pPortSet->getOutputPort("Output")->getImageV(i),
+            m_pPortSet->getOutputPort("Main")->getImageV(i),
             m_pPortSet->getInputPort("Depth")->getImageV(),
         };
 

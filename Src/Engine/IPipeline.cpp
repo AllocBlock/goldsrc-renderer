@@ -176,6 +176,8 @@ void IPipeline::setImageNum(size_t vImageNum)
 
 void IPipeline::destroy()
 {
+    _destroyV();
+
     m_ImageNum = 0;
     
     if (m_pDevice == VK_NULL_HANDLE) return;

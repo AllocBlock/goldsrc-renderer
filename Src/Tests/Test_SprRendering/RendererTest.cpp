@@ -37,7 +37,7 @@ void CRendererTest::_updateV(uint32_t vImageIndex)
 
 std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_FramebufferSet.empty() || m_pLink->isUpdated())
+    if (m_FramebufferSet.empty() || m_pLink->isUpdated() || m_IsUpdated)
     {
         __createFramebuffers();
         m_pLink->setUpdateState(false);
@@ -97,6 +97,8 @@ void CRendererTest::__createDepthResources()
 
 void CRendererTest::__createFramebuffers()
 {
+    _ASSERTE(isValid());
+
     size_t ImageNum = m_AppInfo.ImageNum;
     m_FramebufferSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)

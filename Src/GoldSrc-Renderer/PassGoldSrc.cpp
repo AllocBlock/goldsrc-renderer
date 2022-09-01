@@ -36,12 +36,11 @@ void CSceneGoldSrcRenderPass::_initV()
 {
     IRenderPass::_initV();
 
-    __createRenderPass();
     __createCommandPoolAndBuffers();
     __createRecreateResources();
     __createSceneResources();
-    m_pPortSet->getOutputPort("Output")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
-    m_pPortSet->getOutputPort("Depth")->hookUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
+    m_pPortSet->getOutputPort("Main")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
+    m_pPortSet->getOutputPort("Depth")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
 
     rerecordCommand();
 }
@@ -49,14 +48,18 @@ void CSceneGoldSrcRenderPass::_initV()
 SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Input");
-    Ports.addInputSrcOutput("Output", "Input");
+    Ports.addInputOutput("Main");
 
     VkFormat DepthFormat = __findDepthFormat();
-    {
-        Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1 });
-    }
+    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1 });
+    
     return Ports;
+}
+
+CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()
+{
+    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
+                                                            m_pPortSet->getOutputPort("Depth"));
 }
 
 void CSceneGoldSrcRenderPass::_recreateV()
@@ -166,7 +169,7 @@ void CSceneGoldSrcRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_NeedUpdateFramebuffer)
+    if (m_NeedUpdateFramebuffer || m_IsUpdated)
     {
         __createFramebuffers();
         m_NeedUpdateFramebuffer = false;
@@ -238,10 +241,9 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
     return { CommandBuffer };
 }
 
-void CSceneGoldSrcRenderPass::__createRecreateResources()
+void CSceneGoldSrcRenderPass::_onRenderPassRecreateV()
 {
     __createGraphicsPipelines(); // extent
-    __createDepthResources(); // extent
     uint32_t ImageNum = uint32_t(m_AppInfo.ImageNum);
     m_PipelineSet.DepthTest.setImageNum(ImageNum);
     m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
@@ -251,6 +253,24 @@ void CSceneGoldSrcRenderPass::__createRecreateResources()
     m_PipelineSet.Sky.setImageNum(ImageNum);
 
     __updateDescriptorSets();
+}
+
+void CSceneGoldSrcRenderPass::__createRecreateResources()
+{
+    __createDepthResources(); // extent
+    if (isValid())
+    {
+        __createGraphicsPipelines(); // extent
+        uint32_t ImageNum = uint32_t(m_AppInfo.ImageNum);
+        m_PipelineSet.DepthTest.setImageNum(ImageNum);
+        m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
+        m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
+        m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
+        m_PipelineSet.Sprite.setImageNum(ImageNum);
+        m_PipelineSet.Sky.setImageNum(ImageNum);
+
+        __updateDescriptorSets();
+    }
 }
 
 void CSceneGoldSrcRenderPass::__destroyRecreateResources()
@@ -506,12 +526,6 @@ void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, 
     _recordObjectRenderCommand(CommandBuffer, vObjectIndex);
 }
 
-void CSceneGoldSrcRenderPass::__createRenderPass()
-{
-    auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat, VK_FORMAT_D32_SFLOAT);
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
-}
-
 void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
 {
     VkRenderPass RenderPass = get();
@@ -538,6 +552,8 @@ void CSceneGoldSrcRenderPass::__createDepthResources()
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()
 {
+    _ASSERTE(isValid());
+
     m_AppInfo.pDevice->waitUntilIdle();
     for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
@@ -548,7 +564,7 @@ void CSceneGoldSrcRenderPass::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pPortSet->getOutputPort("Output")->getImageV(i),
+            m_pPortSet->getOutputPort("Main")->getImageV(i),
             m_pPortSet->getOutputPort("Depth")->getImageV(),
         };
 

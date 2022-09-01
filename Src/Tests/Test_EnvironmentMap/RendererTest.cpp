@@ -148,6 +148,8 @@ void CRendererTest::__createDepthResources()
 
 void CRendererTest::__createFramebuffers()
 {
+    _ASSERTE(isValid());
+
     size_t ImageNum = m_AppInfo.ImageNum;
     m_FramebufferSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)

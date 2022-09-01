@@ -52,10 +52,10 @@ void CApplicationGoldSrc::_createOtherResourceV()
 
     m_pPassGUI = make<CGUIRenderPass>();
     m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo, vk::ERenderPassPos::END);
+    m_pPassGUI->init(AppInfo);
 
     m_pPassLine = make<CLineRenderPass>();
-    m_pPassLine->init(AppInfo, vk::ERenderPassPos::MIDDLE);
+    m_pPassLine->init(AppInfo);
     m_pPassLine->setCamera(m_pCamera);
 
     m_pMainUI = make<CGUIMain>();
@@ -139,7 +139,7 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
         return;
     }
 
-    m_pPassScene->init(AppInfo, vk::ERenderPassPos::BEGIN);
+    m_pPassScene->init(AppInfo);
     m_pPassScene->setCamera(m_pCamera);
     if (m_pScene)
         m_pPassScene->loadScene(m_pScene);
@@ -158,10 +158,10 @@ void CApplicationGoldSrc::__linkPasses()
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
     {
-        CPortSet::link(m_pSwapchainPort, pPortScene, "Input");
-        CPortSet::link(pPortScene, "Output", pPortLine, "Input");
+        CPortSet::link(m_pSwapchainPort, pPortScene, "Main");
+        CPortSet::link(pPortScene, "Main", pPortLine, "Main");
         if (i == 0)
             CPortSet::link(pPortScene, "Depth", pPortLine, "Depth");
-        CPortSet::link(pPortLine, "Output", pPortGui, "Input");
+        CPortSet::link(pPortLine, "Main", pPortGui, "Main");
     }
 }
