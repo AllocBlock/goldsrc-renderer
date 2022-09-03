@@ -54,11 +54,11 @@ void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel
     UBOVert.Model = vModel;
     UBOVert.View = vCamera->getViewMat();
     UBOVert.Proj = vCamera->getProjMat();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
 
     SUBOFrag UBOFrag = {};
     UBOFrag.Eye = vCamera->getPos();
-    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
+    m_FragUniformBufferSet[vImageIndex].update(&UBOFrag);
 }
 
 void CPipelineSimple::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -94,15 +94,13 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
 
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
     VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
-    m_VertUniformBufferSet.resize(vImageNum);
-    m_FragUniformBufferSet.resize(vImageNum);
+    m_VertUniformBufferSet.init(vImageNum);
+    m_FragUniformBufferSet.init(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
+        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
+        m_FragUniformBufferSet[i].create(m_pDevice, FragBufferSize);
     }
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -134,14 +132,6 @@ void CPipelineSimple::_destroyV()
 
 void CPipelineSimple::__destroyResources()
 {
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-        m_FragUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
-    m_FragUniformBufferSet.clear();
-
     if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
     m_Sampler.destroy();
 }

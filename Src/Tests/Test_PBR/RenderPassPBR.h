@@ -40,7 +40,7 @@ private:
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth);
    
     CPipelinePBS m_Pipeline;
-    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
+    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
     vk::CImage::Ptr m_pDepthImage = nullptr; 

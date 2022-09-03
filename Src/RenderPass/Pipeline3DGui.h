@@ -45,6 +45,6 @@ private:
 
     std::map<std::string, ptr<SGuiObject>> m_NameObjectMap;
     size_t m_VertexNum = 0;
-    ptr<vk::CBuffer> m_pVertexBuffer;
-    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    vk::CBuffer m_VertexBuffer;
+    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
 };

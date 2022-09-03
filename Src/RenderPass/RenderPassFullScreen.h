@@ -39,13 +39,10 @@ private:
     void __createFramebuffers();
     void __createVertexBuffer();
 
-    void __createRecreateResources();
-    void __destroyRecreateResources();
-
     void __generateScene();
    
     ptr<IPipeline> m_pPipeline = nullptr;
-    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
+    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
     std::vector<SFullScreenPointData> m_PointDataSet;

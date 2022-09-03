@@ -105,9 +105,7 @@ void CSceneSimpleRenderPass::_destroyV()
     if (m_pDepthImage) m_pDepthImage->destroy();
     m_pDepthImage = nullptr;
 
-    for (auto pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
+    m_FramebufferSet.destroyAndClearAll();
 
     m_PipelineSet.destroy();
 
@@ -132,7 +130,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -218,7 +216,9 @@ void CSceneSimpleRenderPass::__createFramebuffers()
 {
     if (!isValid()) return;
 
-    m_FramebufferSet.resize(m_AppInfo.ImageNum);
+    m_FramebufferSet.destroyAndClearAll();
+
+    m_FramebufferSet.init(m_AppInfo.ImageNum);
     for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
@@ -227,8 +227,7 @@ void CSceneSimpleRenderPass::__createFramebuffers()
             *m_pDepthImage
         };
 
-        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 

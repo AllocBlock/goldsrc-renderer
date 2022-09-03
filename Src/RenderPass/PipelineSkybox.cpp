@@ -82,7 +82,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
     UBOVert.EyePosition = vCamera->getPos();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
 
     SSkyUniformBufferObjectFrag UBOFrag = {};
     glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
@@ -105,7 +105,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
         float RotationRad = glm::acos(glm::dot(FixUp, Up));
         UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
     }
-    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
+    m_FragUniformBufferSet[vImageIndex].update(&UBOFrag);
 }
 
 void CPipelineSkybox::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -162,22 +162,19 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
     VkDeviceSize DataSize = sizeof(SPointData) * PointData.size();
     m_VertexNum = PointData.size();
 
-    m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    m_pVertexBuffer->stageFill(PointData.data(), DataSize);
+    m_VertexBuffer.create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_VertexBuffer.stageFill(PointData.data(), DataSize);
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
     VkDeviceSize FragBufferSize = sizeof(SSkyUniformBufferObjectFrag);
-    m_VertUniformBufferSet.resize(vImageNum);
-    m_FragUniformBufferSet.resize(vImageNum);
+    m_VertUniformBufferSet.init(vImageNum);
+    m_FragUniformBufferSet.init(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
+        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
+        m_FragUniformBufferSet[i].create(m_pDevice, FragBufferSize);
     }
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -206,15 +203,9 @@ void CPipelineSkybox::_destroyV()
     m_Sampler.destroy();
     if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
     m_pSkyBoxImage = nullptr;
-    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
-    m_pVertexBuffer = nullptr;
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-        m_FragUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
-    m_FragUniformBufferSet.clear();
+    m_VertexBuffer.destroy();
+    m_VertUniformBufferSet.destroyAndClearAll();
+    m_FragUniformBufferSet.destroyAndClearAll();
 }
 
 void CPipelineSkybox::__updateDescriptorSet()

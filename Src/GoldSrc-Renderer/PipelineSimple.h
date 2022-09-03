@@ -31,7 +31,7 @@ private:
     void __destroyResources();
 
     vk::CSampler m_Sampler;
-    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
-    std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
     vk::CImage::Ptr m_pPlaceholderImage;
 };

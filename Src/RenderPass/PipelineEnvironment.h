@@ -40,7 +40,7 @@ private:
     } m_Control;
 
     vk::CSampler m_Sampler;
-    std::vector<vk::CUniformBuffer::Ptr> m_FragUBSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_FragUBSet;
     vk::CImage::Ptr m_pEnvironmentImage = nullptr;
     vk::CImage::Ptr m_pPlaceholderImage = nullptr;
 };

@@ -12,12 +12,12 @@ namespace vk
 
         void create(CDevice::CPtr vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties);
         void destroy();
-        bool isValid();
+        bool isValid() const override;
         void copyFrom(VkCommandBuffer vCommandBuffer, VkBuffer vSrcBuffer, VkDeviceSize vSize);
         void copyToHost(VkDeviceSize vSize, void* pPtr);
         void fill(const void* vData, VkDeviceSize vSize);
         void stageFill(const void* vData, VkDeviceSize vSize);
-        VkDeviceSize getSize();
+        VkDeviceSize getSize() const;
 
     private:
         CDevice::CPtr m_pDevice = nullptr;

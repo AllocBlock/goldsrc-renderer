@@ -241,6 +241,12 @@
       - 完成，全部改成onUpdate
       - 问题。onUpdate需要recreate，需要先判断销毁，而真正destroy又要判断一遍..
 
+- destroy和recreate的问题
+  - 目前是IVulkanHandle+智能指针解决
+    - 这样必须先创建一个实例，还要判断指针是否存在
+    - 可以抛弃掉指针否？引用的时候也不要填指针对象，而是直接存handle，保持vulkan原生
+    - 对于一组类似的实例，也提供一个解决方案吧，免得全部都要维护
+
 - TODO:
   - shader，只编译更新了的shader
   - 销毁得不干净的问题，能不能自动处理掉？

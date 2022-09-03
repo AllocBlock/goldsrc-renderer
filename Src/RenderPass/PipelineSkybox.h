@@ -20,9 +20,9 @@ public:
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
     {
-        if (m_pVertexBuffer->isValid())
+        if (m_VertexBuffer.isValid())
         {
-            VkBuffer VertBuffer = *m_pVertexBuffer;
+            VkBuffer VertBuffer = m_VertexBuffer;
             const VkDeviceSize Offsets[] = { 0 };
             bind(vCommandBuffer, vImageIndex);
             vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);
@@ -61,9 +61,9 @@ private:
 
     vk::CSampler m_Sampler;
     vk::CImage::Ptr m_pSkyBoxImage;
-    ptr<vk::CBuffer> m_pVertexBuffer;
+    vk::CBuffer m_VertexBuffer;
     size_t m_VertexNum = 0;
-    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
-    std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
 };
 

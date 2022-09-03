@@ -42,7 +42,7 @@ private:
     void __createFramebuffers();
 
     CPipelineLine m_PipelineLine;
-    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
+    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
 
     size_t m_RerecordCommandTimes = 0;
 };

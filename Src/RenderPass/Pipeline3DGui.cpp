@@ -38,7 +38,7 @@ void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCam
     SGuiUniformBufferObjectVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
 }
 
 void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
@@ -48,7 +48,7 @@ void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
     VkDeviceSize Offsets[] = { 0 };
     if (m_VertexNum > 0)
     {
-        VkBuffer Buffer = *m_pVertexBuffer;
+        VkBuffer Buffer = m_VertexBuffer;
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
         vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
     }
@@ -82,14 +82,15 @@ void CPipelineLine::_getVertexInputInfoV(VkVertexInputBindingDescription& voBind
 
 void CPipelineLine::_createResourceV(size_t vImageNum)
 {
+    m_VertUniformBufferSet.destroyAndClearAll();
+
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SGuiUniformBufferObjectVert);
-    m_VertUniformBufferSet.resize(vImageNum);
+    m_VertUniformBufferSet.init(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
     }
 
     __updateDescriptorSet();
@@ -106,10 +107,8 @@ void CPipelineLine::_initDescriptorV()
 void CPipelineLine::_destroyV()
 {
     m_VertexNum = 0;
-    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
-    for (auto pBuffer : m_VertUniformBufferSet)
-        pBuffer->destroy();
-    m_VertUniformBufferSet.clear();
+    m_VertexBuffer.destroy();
+    m_VertUniformBufferSet.destroyAndClearAll();
 }
 
 void CPipelineLine::__updateDescriptorSet()
@@ -125,7 +124,7 @@ void CPipelineLine::__updateDescriptorSet()
 void CPipelineLine::__updateVertexBuffer()
 {
     m_pDevice->waitUntilIdle();
-    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
+    m_VertexBuffer.destroy();
 
     m_VertexNum = 0;
     for (const auto& Pair : m_NameObjectMap)
@@ -147,8 +146,8 @@ void CPipelineLine::__updateVertexBuffer()
             memcpy(reinterpret_cast<char*>(pData) + Offset, pObject->Data.data(), DataSize);
             Offset += DataSize;
         }
-        m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        m_pVertexBuffer->stageFill(pData, BufferSize);
+
+        m_VertexBuffer.create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_VertexBuffer.stageFill(pData, BufferSize);
     }
 }

@@ -26,7 +26,7 @@ protected:
 
     GLFWwindow* m_pWindow = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
+    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
 
 private:
     void __createDescriptorPool();

@@ -133,7 +133,7 @@ private:
         }
     } m_PipelineSet;
 
-    std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
+    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
 
     ptr<vk::CBuffer> m_pVertexBuffer;
     ptr<vk::CBuffer> m_pIndexBuffer;

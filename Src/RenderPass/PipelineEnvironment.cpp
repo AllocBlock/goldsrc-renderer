@@ -20,7 +20,7 @@ void CPipelineEnvironment::updateUniformBuffer(uint32_t vImageIndex, CCamera::Pt
     SUBOVert UBOVert = {};
     UBOVert.InverseVP = glm::inverse(vCamera->getViewProjMat());
     UBOVert.EyePos = glm::vec4(vCamera->getPos(), 1.0);
-    m_FragUBSet[vImageIndex]->update(&UBOVert);
+    m_FragUBSet[vImageIndex].update(&UBOVert);
 }
 
 void CPipelineEnvironment::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -42,12 +42,11 @@ void CPipelineEnvironment::_createResourceV(size_t vImageNum)
     __destroyResources();
 
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_FragUBSet.resize(vImageNum);
+    m_FragUBSet.init(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_FragUBSet[i] = make<vk::CUniformBuffer>();
-        m_FragUBSet[i]->create(m_pDevice, VertBufferSize);
+        m_FragUBSet[i].create(m_pDevice, VertBufferSize);
     }
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -102,11 +101,7 @@ void CPipelineEnvironment::__updateDescriptorSet()
 
 void CPipelineEnvironment::__destroyResources()
 {
-    for (size_t i = 0; i < m_FragUBSet.size(); ++i)
-    {
-        m_FragUBSet[i]->destroy();
-    }
-    m_FragUBSet.clear();
+    m_FragUBSet.destroyAndClearAll();
 
     if (m_pEnvironmentImage) m_pEnvironmentImage->destroy();
     if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();

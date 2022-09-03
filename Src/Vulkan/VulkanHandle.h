@@ -2,8 +2,9 @@
 #ifndef _VULKAN_HANDLE_H
 #define _VULKAN_HANDLE_H
 
-#include <iostream>
 #include "Pointer.h"
+#include <iostream>
+#include <vector>
 
 namespace vk
 {
@@ -23,7 +24,7 @@ namespace vk
 
         T get() const { return m_Handle; }
         const T* getConstPtr() const { return &m_Handle; }
-        bool isValid() const { return get() != VK_NULL_HANDLE; }
+        virtual bool isValid() const { return get() != VK_NULL_HANDLE; }
 
         operator T() const { return get(); }
     protected:
@@ -34,6 +35,53 @@ namespace vk
 
     private:
         T m_Handle = VK_NULL_HANDLE;
+    };
+
+    template <typename T>
+    struct CHandleSet
+    {
+    public:
+        T& operator [](size_t vIndex)
+        {
+            return m_Set[vIndex];
+        }
+
+        // auto destroy before init
+        void init(size_t vNum)
+        {
+            destroyAndClearAll();
+            m_Set.clear();
+            m_Set.resize(vNum);
+        }
+
+        size_t size() { return m_Set.size(); }
+
+        bool isValid(size_t vIndex)
+        {
+            if (vIndex >= m_Set.size()) return false;
+            return m_Set[vIndex].isValid();
+        }
+
+        bool isAllValid()
+        {
+            for (const T& Handle : m_Set)
+            {
+                if (!Handle.isValid()) return false;
+            }
+            return true;
+        }
+
+        void destroyAndClearAll()
+        {
+            for (T& Handle : m_Set)
+            {
+                Handle.destroy();
+            }
+            m_Set.clear();
+        }
+
+    private:
+        std::vector<T> m_Set;
     };
 }
 

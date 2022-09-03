@@ -35,13 +35,13 @@ public:
         m_WriteInfoSet.clear();
     }
 
-    void addWriteBuffer(size_t vTargetIndex, vk::CBuffer::Ptr vBuffer)
+    void addWriteBuffer(size_t vTargetIndex, const vk::CBuffer& vBuffer)
     {
         _ASSERTE(vTargetIndex != std::numeric_limits<size_t>::max());
         VkDescriptorBufferInfo VertBufferInfo = {};
-        VertBufferInfo.buffer = *vBuffer;
+        VertBufferInfo.buffer = vBuffer;
         VertBufferInfo.offset = 0;
-        VertBufferInfo.range = vBuffer->getSize();
+        VertBufferInfo.range = vBuffer.getSize();
         m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {VertBufferInfo}, {} }));
     }
 

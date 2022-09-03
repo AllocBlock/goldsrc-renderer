@@ -51,8 +51,8 @@ private:
     std::vector<vk::CImage::Ptr> m_SpriteImageSet;
     vk::CImage::Ptr m_pPlaceholderImage;
     std::vector<SSpritePushConstant> m_SpriteSequence;
-    ptr<vk::CBuffer> m_pVertexBuffer;
+    vk::CBuffer m_VertexBuffer;
     size_t m_VertexNum = 0;
-    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
 };
 

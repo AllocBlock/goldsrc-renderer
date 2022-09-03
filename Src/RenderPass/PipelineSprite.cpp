@@ -60,14 +60,14 @@ void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     UBOVert.View = vCamera->getViewMat();
     UBOVert.EyePosition = vCamera->getPos();
     UBOVert.EyeDirection = vCamera->getFront();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
 }
 
 void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
 {
-    if (m_pVertexBuffer->isValid())
+    if (m_VertexBuffer.isValid())
     {
-        VkBuffer Buffer = *m_pVertexBuffer;
+        VkBuffer Buffer = m_VertexBuffer;
         const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
         vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
@@ -145,52 +145,42 @@ void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 void CPipelineSprite::_createResourceV(size_t vImageNum)
 {
     // create unit square facing positive x-axis
-    if (!m_pVertexBuffer)
+
+    // À≥ ±’Î
+    const std::vector<SPositionUVPointData> PointData =
     {
-        // À≥ ±’Î
-        const std::vector<SPositionUVPointData> PointData =
-        {
-            {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
-            {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
-            {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
-            {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
-            {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
-            {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
-        };
+        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
+        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
+        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
+        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
+        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
+        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
+    };
 
-        VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
-        m_VertexNum = PointData.size();
+    VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
+    m_VertexNum = PointData.size();
 
-        m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        m_pVertexBuffer->stageFill(PointData.data(), DataSize);
+    m_VertexBuffer.create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_VertexBuffer.stageFill(PointData.data(), DataSize);
 
-        // uniform buffer
-        VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
-        m_VertUniformBufferSet.resize(vImageNum);
+    // uniform buffer
+    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
+    m_VertUniformBufferSet.init(vImageNum);
 
-        for (size_t i = 0; i < vImageNum; ++i)
-        {
-            m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-            m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-        }
+    for (size_t i = 0; i < vImageNum; ++i)
+    {
+        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
     }
-
+    
     // sampler
-    if (!m_Sampler.isValid())
-    {
-        const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
-        VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
-            VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
-        );
-        m_Sampler.create(m_pDevice, SamplerInfo);
-    }
-
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
+    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
+    );
+    m_Sampler.create(m_pDevice, SamplerInfo);
+    
     // placeholder image
-    if (!m_pPlaceholderImage)
-    {
-        m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
-    }
+    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
 }
 
 void CPipelineSprite::_initDescriptorV()
@@ -220,17 +210,8 @@ void CPipelineSprite::_destroyV()
         m_pPlaceholderImage = nullptr;
     }
 
-    if (m_pVertexBuffer)
-    {
-        m_pVertexBuffer->destroy();
-        m_pVertexBuffer = nullptr;
-    }
-
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
+    m_VertexBuffer.destroy();
+    m_VertUniformBufferSet.destroyAndClearAll();
 }
 
 void CPipelineSprite::__updateDescriptorSet()

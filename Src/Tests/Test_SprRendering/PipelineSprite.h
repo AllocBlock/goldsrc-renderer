@@ -52,6 +52,6 @@ private:
     std::vector<SSpritePushConstant> m_SpriteSequence;
     ptr<vk::CBuffer> m_pVertexDataBuffer;
     size_t m_VertexNum = 0;
-    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
 };
 

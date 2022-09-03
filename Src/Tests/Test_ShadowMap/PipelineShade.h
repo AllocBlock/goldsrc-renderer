@@ -49,7 +49,7 @@ private:
     void __destroyResources();
 
     vk::CSampler m_Sampler;
-    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CImage::Ptr m_pPlaceholderImage;
     std::vector<VkImageView> m_ShadowMapImageViewSet;
 };

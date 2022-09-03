@@ -43,7 +43,7 @@ private:
     void __updateDescriptorSet();
     void __destroyResources();
 
-    std::vector<ptr<vk::CUniformBuffer>> m_VertUniformBufferSet;
-    std::vector<ptr<vk::CUniformBuffer>> m_FragUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+    vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
 };
 

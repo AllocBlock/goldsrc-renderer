@@ -5,7 +5,6 @@
 void CRenderPassFullScreen::_initV()
 {
     __createVertexBuffer();
-    __createRecreateResources();
 }
 
 SPortDescriptor CRenderPassFullScreen::_getPortDescV()
@@ -25,8 +24,9 @@ void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     if (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated)
     {
         __createFramebuffers();
-        __destroyRecreateResources();
-        __createRecreateResources();
+
+        if (m_pPipeline)
+            m_pPipeline->setImageNum(m_AppInfo.ImageNum);
     }
 }
 
@@ -34,14 +34,14 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
 {
     _ASSERTE(m_pPipeline);
     //_ASSERTE(m_pPipeline->isReady());
-    _ASSERTE(!m_FramebufferSet.empty());
+    _ASSERTE(!m_FramebufferSet.isValid(vImageIndex));
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = *m_pVertexBuffer;
@@ -59,7 +59,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
 
 void CRenderPassFullScreen::_destroyV()
 {
-    __destroyRecreateResources();
+    m_FramebufferSet.destroyAndClearAll();
     if (m_pPipeline) m_pPipeline->destroy();
     m_pVertexBuffer->destroy();
     m_pVertexBuffer = nullptr;
@@ -71,8 +71,10 @@ void CRenderPassFullScreen::__createFramebuffers()
 {
     if (!isValid()) return;
 
+    m_FramebufferSet.destroyAndClearAll();
+
     size_t ImageNum = m_AppInfo.ImageNum;
-    m_FramebufferSet.resize(ImageNum);
+    m_FramebufferSet.init(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
@@ -80,8 +82,7 @@ void CRenderPassFullScreen::__createFramebuffers()
             m_pPortSet->getOutputPort("Output")->getImageV(i)
         };
 
-        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 
@@ -97,19 +98,6 @@ void CRenderPassFullScreen::__createVertexBuffer()
         m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
-}
-
-void CRenderPassFullScreen::__createRecreateResources()
-{
-    if (m_pPipeline)
-        m_pPipeline->setImageNum(m_AppInfo.ImageNum);
-}
-
-void CRenderPassFullScreen::__destroyRecreateResources()
-{
-    for (auto pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
 }
 
 void CRenderPassFullScreen::__generateScene()

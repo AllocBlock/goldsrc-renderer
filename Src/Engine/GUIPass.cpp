@@ -61,9 +61,7 @@ void CGUIRenderPass::_destroyV()
 {
     if (*m_AppInfo.pDevice == VK_NULL_HANDLE) return;
 
-    for (auto pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
+    m_FramebufferSet.destroyAndClearAll();
 
     UI::destory();
 
@@ -81,7 +79,7 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
     UI::draw(CommandBuffer);
     end();
 
@@ -127,13 +125,11 @@ void CGUIRenderPass::__createFramebuffer()
 {
     if (!isValid()) return;
 
-    for (auto pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
+    m_FramebufferSet.destroyAndClearAll();
 
     uint32_t ImageNum = static_cast<uint32_t>(m_AppInfo.ImageNum);
 
-    m_FramebufferSet.resize(ImageNum);
+    m_FramebufferSet.init(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
@@ -141,7 +137,6 @@ void CGUIRenderPass::__createFramebuffer()
             m_pPortSet->getOutputPort("Main")->getImageV(i),
         };
 
-        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }

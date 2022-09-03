@@ -44,7 +44,7 @@ void CBuffer::destroy()
     m_pDevice = nullptr;
 }
 
-bool CBuffer::isValid()
+bool CBuffer::isValid() const
 {
     return IVulkanHandle::isValid() && m_Memory != VK_NULL_HANDLE;
 }
@@ -92,7 +92,7 @@ void CBuffer::stageFill(const void* vData, VkDeviceSize vSize)
     StageBuffer.destroy();
 }
 
-VkDeviceSize CBuffer::getSize()
+VkDeviceSize CBuffer::getSize() const
 {
     return m_Size;
 }
