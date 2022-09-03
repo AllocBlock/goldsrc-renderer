@@ -177,7 +177,7 @@ void CRenderPassShade::__createRecreateResources()
 void CRenderPassShade::__destroyRecreateResources()
 {
     m_pDepthImage->destroy();
-    for (auto& pFramebuffer : m_FramebufferSet)
+    for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
     m_FramebufferSet.clear();
     m_Pipeline.destroy();

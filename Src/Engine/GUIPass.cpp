@@ -18,8 +18,6 @@ void CGUIRenderPass::_initV()
 
     uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
     __createDescriptorPool();
-
-    __createRecreateSources();
 }
 
 SPortDescriptor CGUIRenderPass::_getPortDescV()
@@ -34,12 +32,24 @@ CRenderPassDescriptor CGUIRenderPass::_getRenderPassDescV()
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
 }
 
-void CGUIRenderPass::_recreateV()
+void CGUIRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    IRenderPass::_recreateV();
+    if (vUpdateState.RenderpassUpdated || vUpdateState.CommandUpdated || vUpdateState.ImageNum.IsUpdated)
+    {
+        if (isValid())
+        {
+            uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
+            UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, get());
+            VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
+            UI::addFont(gChineseFont, CommandBuffer);
+            m_Command.endSingleTimeBuffer(CommandBuffer);
+        }
+    }
 
-    __destroyRecreateSources();
-    __createRecreateSources();
+    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
+    {
+        __createFramebuffer();
+    }
 }
 
 void CGUIRenderPass::_renderUIV()
@@ -64,22 +74,8 @@ void CGUIRenderPass::_destroyV()
     IRenderPass::_destroyV();
 }
 
-void CGUIRenderPass::_onRenderPassRecreateV()
-{
-    IRenderPass::_onRenderPassRecreateV();
-
-    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
-    UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, get());
-    VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-    UI::addFont(gChineseFont, CommandBuffer);
-    m_Command.endSingleTimeBuffer(CommandBuffer);
-}
-
 std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_FramebufferSet.empty())
-        __createFramebuffer();
-
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
@@ -129,6 +125,12 @@ void CGUIRenderPass::__destroyDescriptorPool()
 
 void CGUIRenderPass::__createFramebuffer()
 {
+    if (!isValid()) return;
+
+    for (auto pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
+    m_FramebufferSet.clear();
+
     uint32_t ImageNum = static_cast<uint32_t>(m_AppInfo.ImageNum);
 
     m_FramebufferSet.resize(ImageNum);
@@ -142,15 +144,4 @@ void CGUIRenderPass::__createFramebuffer()
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
         m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
-}
-
-void CGUIRenderPass::__createRecreateSources()
-{
-}
-
-void CGUIRenderPass::__destroyRecreateSources()
-{
-    for (auto& pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
 }

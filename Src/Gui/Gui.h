@@ -36,6 +36,8 @@ namespace UI
     void beginFrame(std::string vTitle = u8"Ä¬ÈÏ´°¿Ú");
     void endFrame();
 
+    bool isInited();
+
     void beginWindow(std::string vTitle, bool* vIsOpen = nullptr, int vFlags = 0);
     void endWindow();
     void text(std::string vName, bool vWarp = false);

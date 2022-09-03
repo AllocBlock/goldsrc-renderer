@@ -22,23 +22,30 @@ void IRenderPass::init(const vk::SAppInfo& vAppInfo)
                 m_CurPassDesc = NewDesc;
                 __createRenderpass();
             }
+            __triggerRenderpassUpdate();
         }
     );
 
+    // FIXME: init first or create pass/command first
+    _initV();
+
     __createCommandPoolAndBuffers();
     __createRenderpass();
-    _initV();
 }
 
-void IRenderPass::recreate(VkFormat vImageFormat, VkExtent2D vExtent, size_t vImageNum)
+void IRenderPass::updateImageInfo(VkFormat vImageFormat, VkExtent2D vImageExtent, size_t vImageNum)
 {
-    bool RecreateCommandBuffer = (m_AppInfo.ImageNum != vImageNum);
-    m_AppInfo.ImageFormat = vImageFormat;
-    m_AppInfo.Extent = vExtent;
-    m_AppInfo.ImageNum = vImageNum;
-    if (RecreateCommandBuffer) __createCommandPoolAndBuffers(); // TODO: how to invoke update?
+    VkFormat OldImageFormat = m_AppInfo.ImageFormat;
+    VkExtent2D OldImageExtent = m_AppInfo.Extent;
+    size_t OldImageNum = m_AppInfo.ImageNum;
 
-    _recreateV();
+    bool ShouldCommandBufferUpdate = (m_AppInfo.ImageNum != vImageNum);
+    m_AppInfo.ImageFormat = vImageFormat;
+    m_AppInfo.Extent = vImageExtent;
+    m_AppInfo.ImageNum = vImageNum;
+    if (ShouldCommandBufferUpdate) __createCommandPoolAndBuffers();
+
+    __triggerImageUpdate(OldImageFormat, OldImageExtent, OldImageNum);
 }
 
 void IRenderPass::update(uint32_t vImageIndex)
@@ -48,11 +55,8 @@ void IRenderPass::update(uint32_t vImageIndex)
 
 std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers(uint32_t vImageIndex)
 {
-    //return _requestCommandBuffersV(vImageIndex);
-    // FIXME: temp design!
-    const auto& Res = _requestCommandBuffersV(vImageIndex);
-    m_IsUpdated = false;
-    return Res;
+    _ASSERTE(isValid());
+    return _requestCommandBuffersV(vImageIndex);
 }
 
 void IRenderPass::destroy()
@@ -99,6 +103,7 @@ void IRenderPass::__createCommandPoolAndBuffers()
     __destroyCommandPoolAndBuffers();
     m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
     m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
+    __triggerCommandUpdate();
 }
 
 void IRenderPass::__destroyCommandPoolAndBuffers()
@@ -116,7 +121,7 @@ void IRenderPass::__createRenderpass()
     vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
     m_CurPassDesc.clearStage(); // free stage data to save memory
 
-    _onRenderPassRecreateV();
+    __triggerRenderpassUpdate();
 }
 
 void IRenderPass::__destroyRenderpass()

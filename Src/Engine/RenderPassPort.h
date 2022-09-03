@@ -126,7 +126,7 @@ public:
 
     const SPortFormat& getFormat() const { return m_Format; }
     virtual bool hasActualFormatV() const = 0;
-    virtual const SPortFormat& getActualFormatV() const = 0;
+    virtual SPortFormat getActualFormatV() const = 0;
     virtual VkImageView getImageV(size_t vIndex = 0) const = 0;
 
     bool isMatch(CPort::CPtr vPort)
@@ -167,10 +167,10 @@ public:
         return m_IsActualFormatSet;
     }
 
-    virtual const SPortFormat& getActualFormatV() const override final
+    virtual SPortFormat getActualFormatV() const override final
     {
         _ASSERTE(m_IsActualFormatSet);
-        return { m_ActualFormat, m_ActualExtent, m_ImageMap.size()};
+        return { m_ActualFormat, m_ActualExtent, m_ImageMap.size() };
     }
 
     virtual bool isReadyV() const override final
@@ -221,7 +221,7 @@ public:
         else return m_pParent.lock()->hasActualFormatV();
     }
 
-    virtual const SPortFormat& getActualFormatV() const override final
+    virtual SPortFormat getActualFormatV() const override final
     {
         _ASSERTE(!m_pParent.expired());
         return m_pParent.lock()->getActualFormatV();

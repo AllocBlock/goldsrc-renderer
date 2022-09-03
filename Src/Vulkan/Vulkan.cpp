@@ -4,6 +4,16 @@
 #include <string>
 #include <fstream>
 
+bool vk::operator == (const VkExtent2D& v1, const VkExtent2D& v2)
+{
+    return v1.width == v2.width && v1.height == v2.height;
+}
+
+bool vk::operator != (const VkExtent2D& v1, const VkExtent2D& v2)
+{
+    return !(v1 == v2);
+}
+
 bool vk::isValidationLayersSupported(const std::vector<const char*>& vValidationLayers)
 {
     uint32_t LayerCount;

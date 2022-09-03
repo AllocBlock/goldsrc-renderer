@@ -30,9 +30,10 @@ protected:
     virtual void _initV() override;
     virtual SPortDescriptor _getPortDescV() override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
-    virtual void _recreateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override; 
     virtual void _destroyV() override;
+
+    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
 private:
     void __createFramebuffers();

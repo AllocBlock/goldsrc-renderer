@@ -74,7 +74,7 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 
 void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
-    if (UI::isUsingMouse()) return;
+    if (UI::isInited() && UI::isUsingMouse()) return;
 
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled || !pInteractor->m_IsMoving) return;

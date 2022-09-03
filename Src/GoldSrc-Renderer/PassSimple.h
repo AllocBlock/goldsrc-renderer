@@ -41,13 +41,12 @@ protected:
     virtual void _initV() override;
     virtual SPortDescriptor _getPortDescV() override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
-    virtual void _recreateV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _onRenderPassRecreateV() override;
+    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
     virtual void _loadSceneV(ptr<SScene> vScene) override;
 
@@ -58,8 +57,6 @@ private:
     void __createTextureImages();
     void __createVertexBuffer();
 
-    void __createRecreateResources();
-    void __destroyRecreateResources();
     void __createSceneResources();
     void __destroySceneResources();
 
@@ -88,7 +85,6 @@ private:
     } m_PipelineSet;
 
     std::vector<ptr<vk::CFrameBuffer>> m_FramebufferSet;
-    bool m_NeedUpdateFramebuffer = true;
 
     ptr<vk::CBuffer> m_pVertexBuffer;
     ptr<vk::CBuffer> m_pIndexBuffer;

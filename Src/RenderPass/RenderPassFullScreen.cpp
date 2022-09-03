@@ -20,21 +20,21 @@ CRenderPassDescriptor CRenderPassFullScreen::_getRenderPassDescV()
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Output"));
 }
 
-void CRenderPassFullScreen::_recreateV()
+void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    IRenderPass::_recreateV();
-
-    __destroyRecreateResources();
-    __createRecreateResources();
+    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated)
+    {
+        __createFramebuffers();
+        __destroyRecreateResources();
+        __createRecreateResources();
+    }
 }
 
 std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(m_pPipeline);
     //_ASSERTE(m_pPipeline->isReady());
-
-    if (m_FramebufferSet.empty() || m_IsUpdated)
-        __createFramebuffers();
+    _ASSERTE(!m_FramebufferSet.empty());
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
@@ -69,7 +69,7 @@ void CRenderPassFullScreen::_destroyV()
 
 void CRenderPassFullScreen::__createFramebuffers()
 {
-    _ASSERTE(isValid());
+    if (!isValid()) return;
 
     size_t ImageNum = m_AppInfo.ImageNum;
     m_FramebufferSet.resize(ImageNum);
@@ -107,7 +107,7 @@ void CRenderPassFullScreen::__createRecreateResources()
 
 void CRenderPassFullScreen::__destroyRecreateResources()
 {
-    for (auto& pFramebuffer : m_FramebufferSet)
+    for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
     m_FramebufferSet.clear();
 }

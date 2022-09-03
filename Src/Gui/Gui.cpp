@@ -81,13 +81,22 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
 {
     auto pDevice = vAppInfo.pDevice;
 
-    // setup context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForVulkan(vWindow, true);
+    if (!gIsInitted)
+    {
+        // setup context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGui::StyleColorsDark();
 
-    // init vulkan
+        // init vulkan
+        ImGui_ImplGlfw_InitForVulkan(vWindow, true);
+    }
+
+    if (gIsInitted)
+    {
+        ImGui_ImplVulkan_Shutdown();
+    }
+
     ImGui_ImplVulkan_InitInfo InitInfo = {};
     InitInfo.Instance = *pDevice->getPhysicalDevice()->getInstance();
     InitInfo.PhysicalDevice = *pDevice->getPhysicalDevice();
@@ -102,14 +111,17 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
     InitInfo.CheckVkResultFn = nullptr;
     ImGui_ImplVulkan_Init(&InitInfo, vRenderPass);
 
-    // init default sampler
-    if (!gDefaultSampler.isValid())
+    if (!gIsInitted)
     {
-        const auto& Properties = pDevice->getPhysicalDevice()->getProperty();
-        VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
-            VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
-        );
-        gDefaultSampler.create(pDevice, SamplerInfo);
+        // init default sampler
+        if (!gDefaultSampler.isValid())
+        {
+            const auto& Properties = pDevice->getPhysicalDevice()->getProperty();
+            VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+                VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
+            );
+            gDefaultSampler.create(pDevice, SamplerInfo);
+        }
     }
 
     gIsInitted = true;
@@ -125,6 +137,7 @@ void UI::addFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer
 void UI::destory()
 {
     ImGui_ImplVulkan_Shutdown();
+
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
@@ -158,6 +171,8 @@ void UI::endFrame()
     ImGui::Render();
     gIsFrameBeginned = false;
 }
+
+bool UI::isInited() { return isInited; }
 
 void UI::beginWindow(std::string vTitle, bool* vIsOpen, int vWindowFlags)
 {

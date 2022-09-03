@@ -57,9 +57,6 @@ void CLineRenderPass::_initV()
 {
     IRenderPass::_initV();
 
-    __createRecreateResources();
-    m_pPortSet->getOutputPort("Main")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; });
-
     __rerecordCommand();
 }
 
@@ -77,13 +74,19 @@ CRenderPassDescriptor CLineRenderPass::_getRenderPassDescV()
                                                             m_pPortSet->getInputPort("Depth"));
 }
 
-void CLineRenderPass::_recreateV()
+void CLineRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    IRenderPass::_recreateV();
+    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
+    {
+        __createFramebuffers();
+        if (isValid())
+        {
+            m_PipelineLine.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+            m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
+        }
 
-    __destroyRecreateResources();
-    __createRecreateResources();
-    __rerecordCommand();
+        __rerecordCommand();
+    }
 }
 
 void CLineRenderPass::_updateV(uint32_t vImageIndex)
@@ -100,19 +103,18 @@ void CLineRenderPass::_renderUIV()
 
 void CLineRenderPass::_destroyV()
 {
-    __destroyRecreateResources();
+    for (auto pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
+    m_FramebufferSet.clear();
+
+    m_PipelineLine.destroy();
 
     IRenderPass::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_NeedUpdateFramebuffer || m_IsUpdated)
-    {
-        __createFramebuffers();
-        __rerecordCommand();
-        m_NeedUpdateFramebuffer = false;
-    }
+    _ASSERTE(!m_FramebufferSet.empty());
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
@@ -136,42 +138,17 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
     return { CommandBuffer };
 }
 
-// FIXME: better solution exist
-void CLineRenderPass::_onRenderPassRecreateV()
-{
-    m_PipelineLine.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-    m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
-}
-
 void CLineRenderPass::__rerecordCommand()
 {
     m_RerecordCommandTimes += m_AppInfo.ImageNum;
 }
 
-void CLineRenderPass::__createRecreateResources()
-{
-    if (isValid())
-    {
-        m_PipelineLine.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-        m_PipelineLine.setImageNum(m_AppInfo.ImageNum);
-    }
-}
-
-void CLineRenderPass::__destroyRecreateResources()
-{
-    for (auto& pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
-
-    m_PipelineLine.destroy();
-}
-
 void CLineRenderPass::__createFramebuffers()
 {
-    _ASSERTE(isValid());
+    if (!isValid()) return;
 
     m_AppInfo.pDevice->waitUntilIdle();
-    for (auto& pFramebuffer : m_FramebufferSet)
+    for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
     m_FramebufferSet.resize(m_AppInfo.ImageNum);
     for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)

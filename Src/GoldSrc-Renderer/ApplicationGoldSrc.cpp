@@ -102,9 +102,9 @@ void CApplicationGoldSrc::_createOtherResourceV()
 
 void CApplicationGoldSrc::_recreateOtherResourceV()
 {
-    m_pPassScene->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pPassLine->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pPassGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    m_pPassScene->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    m_pPassLine->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    m_pPassGUI->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
 }
 
 void CApplicationGoldSrc::_destroyOtherResourceV()

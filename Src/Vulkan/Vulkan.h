@@ -9,6 +9,9 @@
 
 namespace vk
 {
+    bool operator == (const VkExtent2D& v1, const VkExtent2D& v2);
+    bool operator != (const VkExtent2D& v1, const VkExtent2D& v2);
+
     struct SQueueFamilyIndices
     {
         std::optional<uint32_t> GraphicsFamilyIndex;

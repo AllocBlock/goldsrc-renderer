@@ -36,10 +36,7 @@ void CSceneGoldSrcRenderPass::_initV()
 {
     IRenderPass::_initV();
 
-    __createRecreateResources();
     __createSceneResources();
-    m_pPortSet->getOutputPort("Main")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
-    m_pPortSet->getOutputPort("Depth")->hookImageUpdate([=] { m_NeedUpdateFramebuffer = true; rerecordCommand(); });
 
     rerecordCommand();
 }
@@ -61,13 +58,33 @@ CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()
                                                             m_pPortSet->getOutputPort("Depth"));
 }
 
-void CSceneGoldSrcRenderPass::_recreateV()
+void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    IRenderPass::_recreateV();
+    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
+    {
+        __createDepthResources(); // extent
+        if (isValid())
+        {
+            __createGraphicsPipelines(); // extent
+            uint32_t ImageNum = uint32_t(m_AppInfo.ImageNum);
+            m_PipelineSet.DepthTest.setImageNum(ImageNum);
+            m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
+            m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
+            m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
+            m_PipelineSet.Sprite.setImageNum(ImageNum);
+            m_PipelineSet.Sky.setImageNum(ImageNum);
 
-    __destroyRecreateResources();
-    __createRecreateResources();
-    rerecordCommand();
+            __updateDescriptorSets();
+        }
+        __createFramebuffers();
+
+        rerecordCommand();
+    }
+
+    if (vUpdateState.CommandUpdated)
+    {
+        rerecordCommand();
+    }
 }
 
 void CSceneGoldSrcRenderPass::_updateV(uint32_t vImageIndex)
@@ -158,7 +175,16 @@ void CSceneGoldSrcRenderPass::_renderUIV()
 
 void CSceneGoldSrcRenderPass::_destroyV()
 {
-    __destroyRecreateResources();
+    if (m_pDepthImage) m_pDepthImage->destroy();
+    m_pDepthImage = nullptr;
+
+    m_AppInfo.pDevice->waitUntilIdle();
+    for (auto pFramebuffer : m_FramebufferSet)
+        pFramebuffer->destroy();
+    m_FramebufferSet.clear();
+
+    m_PipelineSet.destroy();
+
     __destroySceneResources();
 
     IRenderPass::_destroyV();
@@ -166,11 +192,8 @@ void CSceneGoldSrcRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    if (m_NeedUpdateFramebuffer || m_IsUpdated)
-    {
-        __createFramebuffers();
-        m_NeedUpdateFramebuffer = false;
-    }
+    _ASSERTE(isValid());
+    _ASSERTE(!m_FramebufferSet.empty());
 
     m_RenderedObjectSet.clear();
 
@@ -236,49 +259,6 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         end();
     }
     return { CommandBuffer };
-}
-
-void CSceneGoldSrcRenderPass::_onRenderPassRecreateV()
-{
-    __createGraphicsPipelines(); // extent
-    uint32_t ImageNum = uint32_t(m_AppInfo.ImageNum);
-    m_PipelineSet.DepthTest.setImageNum(ImageNum);
-    m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
-    m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
-    m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
-    m_PipelineSet.Sprite.setImageNum(ImageNum);
-    m_PipelineSet.Sky.setImageNum(ImageNum);
-
-    __updateDescriptorSets();
-}
-
-void CSceneGoldSrcRenderPass::__createRecreateResources()
-{
-    __createDepthResources(); // extent
-    if (isValid())
-    {
-        __createGraphicsPipelines(); // extent
-        uint32_t ImageNum = uint32_t(m_AppInfo.ImageNum);
-        m_PipelineSet.DepthTest.setImageNum(ImageNum);
-        m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
-        m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
-        m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
-        m_PipelineSet.Sprite.setImageNum(ImageNum);
-        m_PipelineSet.Sky.setImageNum(ImageNum);
-
-        __updateDescriptorSets();
-    }
-}
-
-void CSceneGoldSrcRenderPass::__destroyRecreateResources()
-{
-    m_pDepthImage->destroy();
-
-    for (auto& pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
-
-    m_PipelineSet.destroy();
 }
 
 void CSceneGoldSrcRenderPass::__createSceneResources()
@@ -536,6 +516,8 @@ void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
 
 void CSceneGoldSrcRenderPass::__createDepthResources()
 {
+    if (m_pDepthImage) m_pDepthImage->destroy();
+
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
     m_pPortSet->setOutput("Depth", m_pDepthImage);
@@ -543,7 +525,7 @@ void CSceneGoldSrcRenderPass::__createDepthResources()
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()
 {
-    _ASSERTE(isValid());
+    if (!isValid()) return;
 
     m_AppInfo.pDevice->waitUntilIdle();
     for (auto pFramebuffer : m_FramebufferSet)

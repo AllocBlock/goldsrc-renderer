@@ -18,12 +18,11 @@ protected:
     virtual void _initV() override;
     virtual SPortDescriptor _getPortDescV() override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
-    virtual void _recreateV() override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _onRenderPassRecreateV() override;
+    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
     GLFWwindow* m_pWindow = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
@@ -33,6 +32,4 @@ private:
     void __createDescriptorPool();
     void __destroyDescriptorPool();
     void __createFramebuffer();
-    void __createRecreateSources();
-    void __destroyRecreateSources();
 };

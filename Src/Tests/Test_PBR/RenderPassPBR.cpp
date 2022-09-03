@@ -215,7 +215,7 @@ void CRenderPassPBR::__destroyRecreateResources()
 
     m_pMaterialBuffer->destroy();
 
-    for (auto& pFramebuffer : m_FramebufferSet)
+    for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
     m_FramebufferSet.clear();
     m_Pipeline.destroy();
