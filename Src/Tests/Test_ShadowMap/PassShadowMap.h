@@ -41,7 +41,7 @@ private:
    
     CPipelineShadowMap m_PipelineShadowMap;
     vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
-    std::vector<vk::CImage::Ptr> m_ShadowMapImageSet;
+    vk::CHandleSet<vk::CImage> m_ShadowMapImageSet;
     ptr<vk::CBuffer> m_pVertBuffer = nullptr;
     size_t m_VertexNum = 0;
 

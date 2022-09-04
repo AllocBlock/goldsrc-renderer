@@ -146,17 +146,17 @@ void CRenderPassPBR::__createMaterials()
 { 
     CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
-    vk::CImage::Ptr pColor = Function::createImageFromIOImage(m_AppInfo.pDevice, pColorImage);
+    vk::CImage pColor = Function::createImageFromIOImage(m_AppInfo.pDevice, pColorImage);
     m_TextureColorSet.push_back(pColor);
 
     CIOImage::Ptr pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
     pNormalImage->read();
-    vk::CImage::Ptr pNormal = Function::createImageFromIOImage(m_AppInfo.pDevice, pNormalImage);
+    vk::CImage pNormal = Function::createImageFromIOImage(m_AppInfo.pDevice, pNormalImage);
     m_TextureNormalSet.push_back(pNormal);
 
     CIOImage::Ptr pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
     pSpecularImage->read();
-    vk::CImage::Ptr pSpecular = Function::createImageFromIOImage(m_AppInfo.pDevice, pSpecularImage);
+    vk::CImage pSpecular = Function::createImageFromIOImage(m_AppInfo.pDevice, pSpecularImage);
     m_TextureSpecularSet.push_back(pSpecular);
 
     _ASSERTE(m_GridSize > 0);

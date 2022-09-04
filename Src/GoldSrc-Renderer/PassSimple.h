@@ -88,8 +88,8 @@ private:
 
     ptr<vk::CBuffer> m_pVertexBuffer;
     ptr<vk::CBuffer> m_pIndexBuffer;
-    std::vector<vk::CImage::Ptr> m_TextureImageSet;
-    vk::CImage::Ptr m_pDepthImage;
+    vk::CHandleSet<vk::CImage> m_TextureImageSet;
+    vk::CImage m_DepthImage;
 
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;

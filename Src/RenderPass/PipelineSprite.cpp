@@ -36,13 +36,13 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
 {
     _ASSERTE(vSpriteImageSet.size() <= CPipelineSprite::MaxSpriteNum);
     // 为图标创建vkimage
-    for (auto pImage : m_SpriteImageSet)
-        pImage->destroy();
-    m_SpriteImageSet.resize(vSpriteImageSet.size());
+    m_SpriteImageSet.destroyAndClearAll();
+    m_SpriteImageSet.init(vSpriteImageSet.size());
+
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_pDevice, vSpriteImageSet[i].pImage);
+        Function::createImageFromIOImage(m_SpriteImageSet[i], m_pDevice, vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -180,7 +180,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
     
     // placeholder image
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
+    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelineSprite::_initDescriptorV()
@@ -200,16 +200,8 @@ void CPipelineSprite::_destroyV()
     if (m_pDevice == VK_NULL_HANDLE) return;
 
     m_Sampler.destroy();
-    for (auto pImage : m_SpriteImageSet)
-        pImage->destroy();
-    m_SpriteImageSet.clear();
-
-    if (m_pPlaceholderImage)
-    {
-        m_pPlaceholderImage->destroy();
-        m_pPlaceholderImage = nullptr;
-    }
-
+    m_SpriteImageSet.destroyAndClearAll();
+    m_PlaceholderImage.destroy();
     m_VertexBuffer.destroy();
     m_VertUniformBufferSet.destroyAndClearAll();
 }
@@ -231,12 +223,12 @@ void CPipelineSprite::__updateDescriptorSet()
             if (i >= NumTexture)
             {
                 if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = *m_pPlaceholderImage;
+                    TexImageViewSet[i] = m_PlaceholderImage;
                 else
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = *m_SpriteImageSet[i];
+                TexImageViewSet[i] = m_SpriteImageSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
 

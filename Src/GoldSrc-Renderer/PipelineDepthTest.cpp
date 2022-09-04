@@ -22,7 +22,7 @@ struct SUBOFrag
     alignas(16) glm::vec3 Eye;
 };
 
-void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTextureSet, VkImageView vLightmap)
+void CPipelineDepthTest::updateDescriptorSet(const vk::CHandleSet<vk::CImage>& vTextureSet, VkImageView vLightmap)
 {
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
@@ -41,7 +41,7 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
             if (i >= NumTexture)
             {
                 if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = *m_pPlaceholderImage;
+                    TexImageViewSet[i] = m_PlaceholderImage;
                 else
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
@@ -49,7 +49,7 @@ void CPipelineDepthTest::updateDescriptorSet(const std::vector<VkImageView>& vTe
                 TexImageViewSet[i] = vTextureSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
-        VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? *m_pPlaceholderImage : vLightmap;
+        VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? m_PlaceholderImage : vLightmap;
         WriteInfo.addWriteImageAndSampler(4, LightmapImageView);
 
         m_Descriptor.update(i, WriteInfo);
@@ -152,7 +152,7 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
     );
     m_Sampler.create(m_pDevice, SamplerInfo);
 
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
+    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelineDepthTest::_initDescriptorV()
@@ -186,7 +186,7 @@ void CPipelineDepthTest::__destroyResources()
     m_VertUniformBufferSet.destroyAndClearAll();
     m_FragUniformBufferSet.destroyAndClearAll();
 
-    if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
+    m_PlaceholderImage.destroy();
     m_Sampler.destroy();
 }
 

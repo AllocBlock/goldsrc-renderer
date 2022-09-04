@@ -48,7 +48,7 @@ public:
     };
 
     void setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer);
-    void setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet);
+    void setTextures(const vk::CHandleSet<vk::CImage>& vColorSet, const vk::CHandleSet<vk::CImage>& vNormalSet, const vk::CHandleSet<vk::CImage>& vSpecularSet);
     void setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::Ptr vSkyIrrImage);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl);
     void destroy();
@@ -77,14 +77,14 @@ private:
     vk::CSampler m_MipmapSampler;
     vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
-    vk::CImage::Ptr m_pPlaceholderImage = nullptr;
+    vk::CImage m_PlaceholderImage = nullptr;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
-    std::vector<vk::CImage::Ptr> m_TextureColorSet;
-    std::vector<vk::CImage::Ptr> m_TextureNormalSet;
-    std::vector<vk::CImage::Ptr> m_TextureSpecularSet;
-    vk::CImage::Ptr m_pSkyImage = nullptr;
-    vk::CImage::Ptr m_pSkyIrrImage = nullptr;
-    vk::CImage::Ptr m_pBRDFImage = nullptr;
+    vk::CHandleSet<vk::CImage> m_TextureColorSet;
+    vk::CHandleSet<vk::CImage> m_TextureNormalSet;
+    vk::CHandleSet<vk::CImage> m_TextureSpecularSet;
+    vk::CImage m_SkyImage = nullptr;
+    vk::CImage m_SkyIrrImage = nullptr;
+    vk::CImage m_BRDFImage = nullptr;
 
     const int m_MipmapLevelNum = 8;
 };

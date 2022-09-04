@@ -12,7 +12,7 @@
 class CPipelineSimple : public IPipeline
 {
 public:
-    void updateDescriptorSet(const std::vector<VkImageView>& vTextureSet);
+    void updateDescriptorSet(const vk::CHandleSet<vk::CImage>& vTextureSet);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, CCamera::CPtr vCamera);
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
@@ -33,5 +33,5 @@ private:
     vk::CSampler m_Sampler;
     vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
-    vk::CImage::Ptr m_pPlaceholderImage;
+    vk::CImage m_PlaceholderImage;
 };

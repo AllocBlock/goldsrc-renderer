@@ -52,7 +52,7 @@ private:
     vk::CSampler m_Sampler;
     vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
-    vk::CImage::Ptr m_pSkyBoxImage = nullptr;
-    vk::CImage::Ptr m_pPlaceholderImage = nullptr;
+    vk::CImage m_SkyBoxImage = nullptr;
+    vk::CImage m_PlaceholderImage = nullptr;
 };
 

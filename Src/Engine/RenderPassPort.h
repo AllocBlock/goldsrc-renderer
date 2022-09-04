@@ -376,9 +376,9 @@ public:
         pSourcePort->setImage(vImage, vIndex);
     }
 
-    void setOutput(const std::string& vOutputName, vk::CImage::CPtr vImage, size_t vIndex = 0)
+    void setOutput(const std::string& vOutputName, const vk::CImage& vImage, size_t vIndex = 0)
     {
-        setOutput(vOutputName, *vImage, vImage->getFormat(), { vImage->getWidth(), vImage->getHeight() }, vIndex);
+        setOutput(vOutputName, vImage, vImage.getFormat(), vImage.getExtent(), vIndex);
     }
 
     void append(const std::string& vInputName, CPort::Ptr vPort)

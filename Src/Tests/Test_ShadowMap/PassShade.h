@@ -43,7 +43,7 @@ private:
     ptr<vk::CBuffer> m_pVertBuffer;
     size_t m_VertexNum = 0;
 
-    vk::CImage::Ptr m_pDepthImage = nullptr;
+    vk::CImage m_DepthImage = nullptr;
 
     ptr<CCamera> m_pCamera = nullptr;
 

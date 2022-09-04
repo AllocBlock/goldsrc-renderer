@@ -62,7 +62,7 @@ namespace UI
     void endPopup();
     bool treeNode(std::string vName);
     void treePop();
-    void image(vk::CImage::CPtr vImage, const glm::vec2& vSize);
+    void image(const vk::CImage& vImage, const glm::vec2& vSize);
 
     bool beginMenuBar();
     bool beginMenu(std::string vTitle);

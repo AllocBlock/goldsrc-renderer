@@ -40,7 +40,7 @@ private:
     CPipelineTest m_Pipeline;
     vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
-    vk::CImage::Ptr m_pDepthImage = nullptr;
+    vk::CImage m_DepthImage = nullptr;
 
     const std::string m_SkyFilePrefix = "../../../ExampleData/sky-test/neb6";
     ptr<CCamera> m_pCamera = nullptr;

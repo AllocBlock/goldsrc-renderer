@@ -164,8 +164,8 @@ void CSceneGoldSrcRenderPass::_renderUIV()
     {
         UI::combo(u8"选择纹理", m_TextureComboNameSet, m_CurTextureIndex);
         UI::slider(u8"缩放级别", m_TextureScale, 0.5f, 5.0f, "%.1f");
-        auto pImage = m_TextureImageSet[m_CurTextureIndex];
-        UI::image(pImage, glm::vec2(pImage->getWidth() * m_TextureScale, pImage->getHeight() * m_TextureScale));
+        const vk::CImage& Image = m_TextureImageSet[m_CurTextureIndex];
+        UI::image(Image, glm::vec2(Image.getWidth() * m_TextureScale, Image.getHeight() * m_TextureScale));
     }
     else
         UI::text(u8"暂无任何纹理");
@@ -175,8 +175,7 @@ void CSceneGoldSrcRenderPass::_renderUIV()
 
 void CSceneGoldSrcRenderPass::_destroyV()
 {
-    if (m_pDepthImage) m_pDepthImage->destroy();
-    m_pDepthImage = nullptr;
+    m_DepthImage.destroy();
 
     m_AppInfo.pDevice->waitUntilIdle();
     m_FramebufferSet.destroyAndClearAll();
@@ -283,13 +282,9 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
 
 void CSceneGoldSrcRenderPass::__destroySceneResources()
 {
-    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
-    {
-        m_TextureImageSet[i]->destroy();
-    }
-    m_TextureImageSet.clear();
+    m_TextureImageSet.destroyAndClearAll();
+    m_LightmapImage.destroy();
 
-    if (m_pLightmapImage) m_pLightmapImage->destroy();
     if (m_pIndexBuffer) m_pIndexBuffer->destroy();
     if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 }
@@ -514,11 +509,11 @@ void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
 
 void CSceneGoldSrcRenderPass::__createDepthResources()
 {
-    if (m_pDepthImage) m_pDepthImage->destroy();
+    m_DepthImage.destroy();
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
-    m_pPortSet->setOutput("Depth", m_pDepthImage);
+    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+    m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
 void CSceneGoldSrcRenderPass::__createFramebuffers()
@@ -546,10 +541,10 @@ void CSceneGoldSrcRenderPass::__createTextureImages()
     size_t NumTexture = __getActualTextureNum();
     if (NumTexture > 0)
     {
-        m_TextureImageSet.resize(NumTexture);
+        m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
+            Function::createImageFromIOImage(m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
         }
     }
 }
@@ -559,7 +554,7 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
     if (m_pScene && m_pScene->UseLightmap)
     {
         ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
-        m_pLightmapImage = Function::createImageFromIOImage(m_AppInfo.pDevice, pCombinedLightmapImage);
+        Function::createImageFromIOImage(m_LightmapImage, m_AppInfo.pDevice, pCombinedLightmapImage);
     }
 }
 
@@ -598,14 +593,11 @@ void CSceneGoldSrcRenderPass::__createVertexBuffer()
 
 void CSceneGoldSrcRenderPass::__updateDescriptorSets()
 {
-    std::vector<VkImageView> TextureSet(m_TextureImageSet.size());
-    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? *m_pLightmapImage : VK_NULL_HANDLE;
-    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
-        TextureSet[i] = *m_TextureImageSet[i];
-    m_PipelineSet.DepthTest.updateDescriptorSet(TextureSet, Lightmap);
-    m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(TextureSet, Lightmap);
-    m_PipelineSet.BlendAlphaTest.updateDescriptorSet(TextureSet, Lightmap);
-    m_PipelineSet.BlendAdditive.updateDescriptorSet(TextureSet, Lightmap);
+    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
+    m_PipelineSet.DepthTest.updateDescriptorSet(m_TextureImageSet, Lightmap);
+    m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(m_TextureImageSet, Lightmap);
+    m_PipelineSet.BlendAlphaTest.updateDescriptorSet(m_TextureImageSet, Lightmap);
+    m_PipelineSet.BlendAdditive.updateDescriptorSet(m_TextureImageSet, Lightmap);
 }
 
 void CSceneGoldSrcRenderPass::__updateTextureView()

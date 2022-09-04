@@ -41,8 +41,8 @@ private:
 
     vk::CSampler m_Sampler;
     vk::CHandleSet<vk::CUniformBuffer> m_FragUBSet;
-    vk::CImage::Ptr m_pEnvironmentImage = nullptr;
-    vk::CImage::Ptr m_pPlaceholderImage = nullptr;
+    vk::CImage m_EnvironmentImage;
+    vk::CImage m_PlaceholderImage;
 };
 
 

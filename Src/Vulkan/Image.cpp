@@ -38,6 +38,7 @@ void CImage::create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, 
 
     vk::checkError(vkBindImageMemory(*vDevice, m_Image, m_Memory, 0));
 
+    m_IsOuterImage = false;
     __createImageView(vDevice, vViewInfo);
 #ifdef _DEBUG
     static int Count = 0;
@@ -47,7 +48,7 @@ void CImage::create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, 
 #endif
 }
 
-void CImage::setImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
+void CImage::createFromImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
 {
     destroy();
 
@@ -55,7 +56,7 @@ void CImage::setImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, u
     m_Format = vFormat;
     m_LayerCount = vLayerCount;
 
-    m_IsSet = true;
+    m_IsOuterImage = true;
     m_Image = vImage;
     __createImageView(vDevice, vViewInfo);
 }
@@ -63,7 +64,7 @@ void CImage::setImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, u
 void CImage::destroy()
 {
     if (!isValid()) return;
-    if (!m_IsSet)
+    if (!m_IsOuterImage)
     {
         vkDestroyImage(*m_pDevice, m_Image, nullptr);
         vkFreeMemory(*m_pDevice, m_Memory, nullptr);
@@ -78,12 +79,12 @@ void CImage::destroy()
 
     m_pDevice = nullptr;
 
-    m_IsSet = false;
+    m_IsOuterImage = false;
 }
 
-bool CImage::isValid()
+bool CImage::isValid() const
 {
-    if (m_IsSet) return m_Image != VK_NULL_HANDLE && get() != VK_NULL_HANDLE;
+    if (m_IsOuterImage) return m_Image != VK_NULL_HANDLE && get() != VK_NULL_HANDLE;
     else return m_Image != VK_NULL_HANDLE && m_Memory != VK_NULL_HANDLE && get() != VK_NULL_HANDLE;
 }
 

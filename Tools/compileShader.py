@@ -12,8 +12,46 @@
 import os
 import sys
 import time
+import json
 
 gVulkanDir = os.getenv('VULKAN_SDK')
+gSourceShaderExtensions = ['.vert', '.frag']
+gCacheFilename = "shaderCompileCache.json"
+
+def getChangeTime(file):
+    return time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(os.path.getmtime(file)))
+
+class CompileCache():
+    def __init__(self):
+        self.compileInfos = dict()
+
+    def load(self, file):
+        self.compileInfos = dict()
+        if (os.path.exists(file)):
+            with open(file, "r") as f:
+                infos = json.loads(f.read())
+                for entry in infos:
+                    self.compileInfos[entry['file']] = entry['changeTime']
+
+    def doesNeedRecompile(self, file):
+        file = os.path.abspath(file)
+        changeTime = getChangeTime(file)
+        if file in self.compileInfos:
+            return self.compileInfos[file] != changeTime
+        else:
+            return True
+    
+    def add(self, file):
+        file = os.path.abspath(file)
+        self.compileInfos[file] = getChangeTime(file)
+
+    def save(self, file):
+        with open(file, "w") as f:
+            data = []
+            for file in self.compileInfos:
+                data.append({"file": file, "changeTime": self.compileInfos[file]})
+            f.write(json.dumps(data, indent=4))
+
 
 if not gVulkanDir:
     raise 'no vulkan found'
@@ -26,49 +64,73 @@ def abort(err = None):
     time.sleep(5)
 
 # x:/project/shaders/test.vert -> x:/project/shaders/testVert.spv
-def getOutputFilePath(InputFilePath):
-    FilePathP1 = os.path.splitext(InputFilePath)[0] # dir + name prefix
-    Ext = os.path.splitext(InputFilePath)[1]
-    FilePathP2 = Ext[1].upper() + Ext[2:] + ".spv"
-    return FilePathP1 + FilePathP2
+def get_compiled_shader_path(sourceShaderPath):
+    filePathP1 = os.path.splitext(sourceShaderPath)[0] # dir + name prefix
+    ext = os.path.splitext(sourceShaderPath)[1]
+    filePathP2 = ext[1].upper() + ext[2:] + ".spv"
+    return filePathP1 + filePathP2
 
-def deleteCompiledShaders(vDir):
-    FileList = os.listdir(ShaderDir)
-    for FileName in FileList:
-        Path = ShaderDir + "/" + FileName
-        if os.path.isdir(Path):
-            continue
-        if os.path.splitext(Path)[1] == '.spv':
-            os.remove(Path)
+# def delete_compiled_shaders(dir):
+#     fileList = os.listdir(dir)
+#     for fileName in fileList:
+#         path = dir + "/" + fileName
+#         if os.path.isdir(path):
+#             continue
+#         if os.path.splitext(path)[1] == '.spv':
+#             os.remove(path)
 
-def compileShader(InputFilePath):
-    if not os.path.exists(InputFilePath):
-        abort("文件不存在：" + InputFilePath)
+def delete_compiled_shader_of_source(sourceShaderFile):
+    path = get_compiled_shader_path(sourceShaderFile)
+    if os.path.exists(path):
+        os.remove(path)
 
-    ShaderOutputFile = getOutputFilePath(InputFilePath)
+def compile_shader(sourceShaderFile):
+    if not os.path.exists(sourceShaderFile):
+        abort("文件不存在：" + sourceShaderFile)
 
-    print("编译 [" + os.path.split(InputFilePath)[-1] + " -> " + os.path.split(ShaderOutputFile)[-1] + "]")
-    cmd = "start /wait /b %s -V %s -o %s" % (gCompilerExe, InputFilePath, ShaderOutputFile)
+    compiledFile = get_compiled_shader_path(sourceShaderFile)
+
+    print("编译 [" + os.path.split(sourceShaderFile)[-1] + " -> " + os.path.split(compiledFile)[-1] + "]")
+    cmd = "start /wait /b %s -V %s -o %s" % (gCompilerExe, sourceShaderFile, compiledFile)
     os.system(cmd)
 
-Param = sys.argv[1] if len(sys.argv) >= 2 else None
-if not Param:
-    Param = input("指定文件/文件夹：")
-if not os.path.exists(Param):
-    abort("文件/文件夹不存在" + Param)
-if os.path.isdir(Param):
-    ShaderDir = Param
-    deleteCompiledShaders(ShaderDir)
-    FileList = os.listdir(ShaderDir)
-else:
-    ShaderFile = Param
-    FileList = [ShaderFile]
+param = sys.argv[1] if len(sys.argv) >= 2 else None
+if not param:
+    param = input("指定文件/文件夹：")
+if not os.path.exists(param):
+    abort("文件/文件夹不存在" + param)
 
-for FileName in FileList:
-    Path = ShaderDir + "/" + FileName
-    if os.path.isdir(Path):
-        continue
-    elif os.path.splitext(Path)[1] == '.spv':
-        continue
-    compileShader(os.path.normpath(Path))
+cache = None
+toProcessList = []
+alreadyCompiledNum = 0
+
+if os.path.isdir(param):
+    shaderDir = param
+
+    cache = CompileCache()
+    cacheFilePath = os.path.join(shaderDir, gCacheFilename)
+    cache.load(cacheFilePath)
+
+    files = os.listdir(shaderDir)
+    for file in files:
+        path = shaderDir + "/" + file
+        if os.path.isdir(path):
+            continue
+        elif os.path.splitext(path)[1] not in gSourceShaderExtensions:
+            continue
+        elif cache.doesNeedRecompile(path):
+            toProcessList.append(path)
+        else:
+            alreadyCompiledNum += 1
+else:
+    toProcessList.append(param)
+
+for sourceShaderPath in toProcessList:
+    compile_shader(sourceShaderPath)
+    cache.add(sourceShaderPath)
+
+if cache:
+    cache.save(cacheFilePath)
+
+print(f"已编译数量：{len(toProcessList)}\n无需编译数量：{alreadyCompiledNum}")
 abort()

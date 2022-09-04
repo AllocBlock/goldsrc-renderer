@@ -60,7 +60,7 @@ private:
     void __updateDescriptorSet();
 
     vk::CSampler m_Sampler;
-    vk::CImage::Ptr m_pSkyBoxImage;
+    vk::CImage m_SkyBoxImage;
     vk::CBuffer m_VertexBuffer;
     size_t m_VertexNum = 0;
     vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;

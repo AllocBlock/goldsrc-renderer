@@ -56,24 +56,10 @@ public:
         m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
     }
 
-    void addWriteImageAndSampler(size_t vTargetIndex, vk::CImage::Ptr vImage = nullptr, VkSampler vSampler = VK_NULL_HANDLE)
+    void addWriteImagesAndSampler(size_t vTargetIndex, vk::CHandleSet<vk::CImage> vImageSet, VkSampler vSampler = VK_NULL_HANDLE)
     {
-        _ASSERTE(!((!vImage || !vImage->isValid()) && vSampler == VK_NULL_HANDLE));
-        addWriteImageAndSampler(vTargetIndex, *vImage, vSampler);
-    }
-
-    void addWriteImagesAndSampler(size_t vTargetIndex, std::vector<vk::CImage::Ptr> vImageSet, VkSampler vSampler = VK_NULL_HANDLE)
-    {
-        _ASSERTE(!vImageSet.empty());
-
-        std::vector<VkImageView> ImageViewSet(vImageSet.size(), VK_NULL_HANDLE);
-
-        for (size_t i = 0; i < vImageSet.size(); ++i)
-        {
-            ImageViewSet[i] = *vImageSet[i];
-        }
-
-        addWriteImagesAndSampler(vTargetIndex, ImageViewSet, vSampler);
+        _ASSERTE(vImageSet.isAllValid());
+        addWriteImagesAndSampler(vTargetIndex, vImageSet, vSampler);
     }
 
     void addWriteImageAndSampler(size_t vTargetIndex, VkImageView vImageView = VK_NULL_HANDLE, VkSampler vSampler = VK_NULL_HANDLE)
@@ -87,7 +73,7 @@ public:
         m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
     }
 
-    void addWriteImagesAndSampler(size_t vTargetIndex, std::vector<VkImageView> vImageViewSet, VkSampler vSampler = VK_NULL_HANDLE)
+    void addWriteImagesAndSampler(size_t vTargetIndex, const std::vector<VkImageView>& vImageViewSet, VkSampler vSampler = VK_NULL_HANDLE)
     {
         _ASSERTE(!vImageViewSet.empty());
 

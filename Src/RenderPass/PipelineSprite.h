@@ -48,8 +48,8 @@ private:
     void __updateDescriptorSet();
 
     vk::CSampler m_Sampler;
-    std::vector<vk::CImage::Ptr> m_SpriteImageSet;
-    vk::CImage::Ptr m_pPlaceholderImage;
+    vk::CHandleSet<vk::CImage> m_SpriteImageSet;
+    vk::CImage m_PlaceholderImage;
     std::vector<SSpritePushConstant> m_SpriteSequence;
     vk::CBuffer m_VertexBuffer;
     size_t m_VertexNum = 0;

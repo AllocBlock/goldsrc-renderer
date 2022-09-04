@@ -32,7 +32,7 @@ private:
 
     CPipelineSprite m_Pipeline;
     vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
-    vk::CImage::Ptr m_pDepthImage;
+    vk::CImage m_DepthImage;
 
     ptr<CCamera> m_pCamera = nullptr;
 };

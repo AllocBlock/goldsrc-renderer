@@ -66,10 +66,8 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBox
     vk::SImageViewInfo ViewInfo;
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
 
-    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
-    m_pSkyBoxImage = make<vk::CImage>();
-    m_pSkyBoxImage->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-    m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
+    m_SkyBoxImage.create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_SkyBoxImage.stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
 
     // the sky image changed, so descriptor need to be updated
@@ -201,8 +199,7 @@ void CPipelineSkybox::_destroyV()
     if (m_pDevice == VK_NULL_HANDLE) return;
 
     m_Sampler.destroy();
-    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
-    m_pSkyBoxImage = nullptr;
+    m_SkyBoxImage.destroy();
     m_VertexBuffer.destroy();
     m_VertUniformBufferSet.destroyAndClearAll();
     m_FragUniformBufferSet.destroyAndClearAll();
@@ -216,7 +213,7 @@ void CPipelineSkybox::__updateDescriptorSet()
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
-        WriteInfo.addWriteImageAndSampler(2, m_pSkyBoxImage, m_Sampler.get());
+        WriteInfo.addWriteImageAndSampler(2, m_SkyBoxImage, m_Sampler.get());
         m_Descriptor.update(i, WriteInfo);
     }
 }

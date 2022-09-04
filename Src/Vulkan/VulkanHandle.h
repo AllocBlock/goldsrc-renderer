@@ -21,6 +21,11 @@ namespace vk
             }
 #endif
         }
+        IVulkanHandle() = default;
+
+        // forbid copy
+        //IVulkanHandle(IVulkanHandle<T>&) = delete;
+        //IVulkanHandle<T>& operator=(IVulkanHandle<T>&) = delete;
 
         T get() const { return m_Handle; }
         const T* getConstPtr() const { return &m_Handle; }
@@ -46,6 +51,11 @@ namespace vk
             return m_Set[vIndex];
         }
 
+        const T& operator [](size_t vIndex) const
+        {
+            return m_Set[vIndex];
+        }
+
         // auto destroy before init
         void init(size_t vNum)
         {
@@ -54,15 +64,16 @@ namespace vk
             m_Set.resize(vNum);
         }
 
-        size_t size() { return m_Set.size(); }
+        size_t size() const { return m_Set.size(); }
+        bool empty() const { return m_Set.empty(); }
 
-        bool isValid(size_t vIndex)
+        bool isValid(size_t vIndex) const
         {
             if (vIndex >= m_Set.size()) return false;
             return m_Set[vIndex].isValid();
         }
 
-        bool isAllValid()
+        bool isAllValid() const
         {
             for (const T& Handle : m_Set)
             {

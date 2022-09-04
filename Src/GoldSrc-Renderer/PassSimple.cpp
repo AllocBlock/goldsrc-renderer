@@ -65,6 +65,11 @@ void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState
             __createGraphicsPipelines(); // extent
             m_PipelineSet.Main.setImageNum(m_AppInfo.ImageNum);
             m_PipelineSet.Sky.setImageNum(m_AppInfo.ImageNum);
+
+            if (m_pScene && m_pScene->UseSkyBox)
+            {
+                m_PipelineSet.Sky.setSkyBoxImage(m_pScene->SkyBoxImages);
+            }
         }
         __createFramebuffers();
         rerecordCommand();
@@ -102,8 +107,7 @@ void CSceneSimpleRenderPass::_renderUIV()
 
 void CSceneSimpleRenderPass::_destroyV()
 {
-    if (m_pDepthImage) m_pDepthImage->destroy();
-    m_pDepthImage = nullptr;
+    m_DepthImage.destroy();
 
     m_FramebufferSet.destroyAndClearAll();
 
@@ -173,7 +177,7 @@ void CSceneSimpleRenderPass::__createSceneResources()
 
     m_EnableSky = m_EnableSky && m_pScene && m_pScene->UseSkyBox;
 
-    if (m_pScene && m_pScene->UseSkyBox)
+    if (m_pScene && m_pScene->UseSkyBox && m_PipelineSet.Sky.isValid())
     {
         m_PipelineSet.Sky.setSkyBoxImage(m_pScene->SkyBoxImages);
     }
@@ -181,11 +185,7 @@ void CSceneSimpleRenderPass::__createSceneResources()
 
 void CSceneSimpleRenderPass::__destroySceneResources()
 {
-    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
-    {
-        m_TextureImageSet[i]->destroy();
-    }
-    m_TextureImageSet.clear();
+    m_TextureImageSet.destroyAndClearAll();
 
     if (m_pIndexBuffer) m_pIndexBuffer->destroy();
     if (m_pVertexBuffer) m_pVertexBuffer->destroy();
@@ -205,11 +205,11 @@ void CSceneSimpleRenderPass::__createGraphicsPipelines()
 
 void CSceneSimpleRenderPass::__createDepthResources()
 {
-    if (m_pDepthImage) m_pDepthImage->destroy();
+    m_DepthImage.destroy();
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
-    m_pPortSet->setOutput("Depth", m_pDepthImage);
+    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+    m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
 void CSceneSimpleRenderPass::__createFramebuffers()
@@ -224,7 +224,7 @@ void CSceneSimpleRenderPass::__createFramebuffers()
         std::vector<VkImageView> AttachmentSet =
         {
             m_pPortSet->getOutputPort("Main")->getImageV(i),
-            *m_pDepthImage
+            m_DepthImage
         };
 
         m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
@@ -236,10 +236,10 @@ void CSceneSimpleRenderPass::__createTextureImages()
     size_t NumTexture = __getActualTextureNum();
     if (NumTexture > 0)
     {
-        m_TextureImageSet.resize(NumTexture);
+        m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            m_TextureImageSet[i] = Function::createImageFromIOImage(m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
+             Function::createImageFromIOImage(m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
         }
     }
 }
@@ -279,10 +279,7 @@ void CSceneSimpleRenderPass::__createVertexBuffer()
 
 void CSceneSimpleRenderPass::__updateDescriptorSets()
 {
-    std::vector<VkImageView> TextureSet(m_TextureImageSet.size());
-    for (size_t i = 0; i < m_TextureImageSet.size(); ++i)
-        TextureSet[i] = *m_TextureImageSet[i];
-    m_PipelineSet.Main.updateDescriptorSet(TextureSet);
+    m_PipelineSet.Main.updateDescriptorSet(m_TextureImageSet);
 }
 
 std::vector<SSimplePointData> CSceneSimpleRenderPass::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const

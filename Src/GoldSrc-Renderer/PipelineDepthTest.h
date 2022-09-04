@@ -14,7 +14,7 @@ class CPipelineDepthTest : public IPipeline
 public:
     void setLightmapState(VkCommandBuffer vCommandBuffer, bool vEnable);
     void setOpacity(VkCommandBuffer vCommandBuffer, float vOpacity);
-    void updateDescriptorSet(const std::vector<VkImageView>& vTextureSet, VkImageView vLightmap);
+    void updateDescriptorSet(const vk::CHandleSet<vk::CImage>& vTextureSet, VkImageView vLightmap);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, CCamera::CPtr vCamera);
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
@@ -42,5 +42,5 @@ private:
     vk::CSampler m_Sampler;
     vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
-    vk::CImage::Ptr m_pPlaceholderImage;
+    vk::CImage m_PlaceholderImage;
 };

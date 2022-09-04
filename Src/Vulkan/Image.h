@@ -19,9 +19,9 @@ namespace vk
         _DEFINE_PTR(CImage);
 
         void create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo);
-        void setImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
+        void createFromImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
         void destroy();
-        bool isValid();
+        bool isValid() const override;
         void copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
         void stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayout = true);
         void transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
@@ -33,13 +33,14 @@ namespace vk
         VkImageLayout getLayout() const { return m_Layout; }
         uint32_t getWidth() const { return m_Width; }
         uint32_t getHeight() const { return m_Height; }
+        VkExtent2D getExtent() const { return { m_Width, m_Height }; }
         uint32_t getLayerCount() const { return m_LayerCount; }
         VkFormat getFormat() const { return m_Format; }
 
     private:
         void __createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo);
 
-        bool m_IsSet = false;
+        bool m_IsOuterImage = false;
         CDevice::CPtr m_pDevice = nullptr;
         VkImage m_Image = VK_NULL_HANDLE;
         VkDeviceMemory m_Memory = VK_NULL_HANDLE;

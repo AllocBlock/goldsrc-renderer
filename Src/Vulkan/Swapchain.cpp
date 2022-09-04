@@ -66,12 +66,11 @@ void CSwapchain::create(CDevice::Ptr vDevice)
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
     m_ImageViewSet.resize(NumImage);
-    m_ImageSet.resize(NumImage);
+    m_ImageSet.init(NumImage);
     for (size_t i = 0; i < NumImage; ++i)
     {
-        m_ImageSet[i] = make<CImage>();
-        m_ImageSet[i]->setImage(vDevice, SwapchainImageSet[i], SurfaceFormat.format, 1, ViewInfo);
-        m_ImageViewSet[i] = *m_ImageSet[i];
+        m_ImageSet[i].createFromImage(vDevice, SwapchainImageSet[i], SurfaceFormat.format, 1, ViewInfo);
+        m_ImageViewSet[i] = m_ImageSet[i];
     }
     m_ImageFormat = SurfaceFormat.format;
     m_Extent = Extent;
@@ -83,9 +82,7 @@ void CSwapchain::destroy()
     _setNull();
 
     m_pDevice = VK_NULL_HANDLE;
-    for (auto pImage : m_ImageSet)
-        pImage->destroy();
-    m_ImageSet.clear();
+    m_ImageSet.destroyAndClearAll();
     m_ImageViewSet.clear();
     m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
     m_Extent = { 0, 0 };

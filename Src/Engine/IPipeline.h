@@ -19,6 +19,7 @@ public:
     void setImageNum(size_t vImageNum);
     virtual void destroy() final;
     void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
+    bool isValid() const { return m_Pipeline != VK_NULL_HANDLE; }
 
     template <typename T>
     void pushConstant(VkCommandBuffer vCommandBuffer, VkShaderStageFlags vState, T vPushConstant)

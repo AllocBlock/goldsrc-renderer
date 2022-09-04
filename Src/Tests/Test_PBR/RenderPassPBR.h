@@ -43,7 +43,7 @@ private:
     vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
-    vk::CImage::Ptr m_pDepthImage = nullptr; 
+    vk::CImage m_DepthImage = nullptr; 
 
     ptr<CCamera> m_pCamera = nullptr;
     std::vector<SPBSPointData> m_PointDataSet;
@@ -51,8 +51,8 @@ private:
     uint32_t m_GridSize = 8;
      
     CPipelinePBS::SControl m_PipelineControl; 
-    std::vector<vk::CImage::Ptr> m_TextureColorSet;
-    std::vector<vk::CImage::Ptr> m_TextureNormalSet;
-    std::vector<vk::CImage::Ptr> m_TextureSpecularSet;
+    vk::CHandleSet<vk::CImage> m_TextureColorSet;
+    vk::CHandleSet<vk::CImage> m_TextureNormalSet;
+    vk::CHandleSet<vk::CImage> m_TextureSpecularSet;
 };
 

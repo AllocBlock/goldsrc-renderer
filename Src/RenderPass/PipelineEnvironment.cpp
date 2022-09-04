@@ -9,7 +9,7 @@ struct SUBOVert
 
 void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
 {
-    m_pEnvironmentImage = Function::createImageFromIOImage(m_pDevice, vSkyImage);
+    Function::createImageFromIOImage(m_EnvironmentImage, m_pDevice, vSkyImage);
     __precalculateIBL(vSkyImage);
     __updateDescriptorSet();
     m_Ready = true;
@@ -82,7 +82,7 @@ void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
 
 void CPipelineEnvironment::__createPlaceholderImage()
 {
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
+    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelineEnvironment::__updateDescriptorSet()
@@ -92,7 +92,7 @@ void CPipelineEnvironment::__updateDescriptorSet()
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, m_FragUBSet[i]);
-        VkImageView EnvImageView = m_pEnvironmentImage && m_pEnvironmentImage->isValid() ? *m_pEnvironmentImage : *m_pPlaceholderImage;
+        VkImageView EnvImageView = m_EnvironmentImage.isValid() ? m_EnvironmentImage : m_PlaceholderImage;
         WriteInfo.addWriteImageAndSampler(1, EnvImageView, m_Sampler.get());
 
         m_Descriptor.update(i, WriteInfo);
@@ -103,8 +103,8 @@ void CPipelineEnvironment::__destroyResources()
 {
     m_FragUBSet.destroyAndClearAll();
 
-    if (m_pEnvironmentImage) m_pEnvironmentImage->destroy();
-    if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
+    m_EnvironmentImage.destroy();
+    m_PlaceholderImage.destroy();
 
     m_Sampler.destroy();
 }

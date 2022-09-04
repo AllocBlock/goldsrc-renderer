@@ -31,7 +31,7 @@ void CPipelinePBS::setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer)
         __updateDescriptorSet();
 }
 
-void CPipelinePBS::setTextures(const std::vector<vk::CImage::Ptr>& vColorSet, const std::vector<vk::CImage::Ptr>& vNormalSet, const std::vector<vk::CImage::Ptr>& vSpecularSet)
+void CPipelinePBS::setTextures(const vk::CHandleSet<vk::CImage>& vColorSet, const vk::CHandleSet<vk::CImage>& vNormalSet, const vk::CHandleSet<vk::CImage>& vSpecularSet)
 {
     _ASSERTE(m_pPlaceholderImage);
     _ASSERTE(vColorSet.size() <= CPipelinePBS::MaxTextureNum);

@@ -264,11 +264,11 @@ void UI::endPopup() { ImGui::EndPopup(); }
 bool UI::isPopupOpen(std::string vTitle) { return ImGui::IsPopupOpen(vTitle.c_str()); }
 bool UI::treeNode(std::string vName) { return ImGui::TreeNode(vName.c_str()); }
 void UI::treePop() { ImGui::TreePop(); }
-void UI::image(vk::CImage::CPtr vImage, const glm::vec2& vSize) 
+void UI::image(const vk::CImage& vImage, const glm::vec2& vSize) 
 { 
     TextureId_t TextureId = 0;
 
-    VkImageView ImageView = vImage->get();
+    VkImageView ImageView = vImage;
     auto pItem = gTextureIdMap.find(ImageView);
     if (pItem != gTextureIdMap.end())
     {
@@ -276,7 +276,7 @@ void UI::image(vk::CImage::CPtr vImage, const glm::vec2& vSize)
     }
     else
     {
-        TextureId = ImGui_ImplVulkan_AddTexture(gDefaultSampler, vImage->get(), vImage->getLayout());
+        TextureId = ImGui_ImplVulkan_AddTexture(gDefaultSampler, vImage, vImage.getLayout());
         gTextureIdMap[ImageView] = TextureId;
     }
 
