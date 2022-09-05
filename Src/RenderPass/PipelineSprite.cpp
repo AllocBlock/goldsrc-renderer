@@ -42,7 +42,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        Function::createImageFromIOImage(m_SpriteImageSet[i], m_pDevice, vSpriteImageSet[i].pImage);
+        Function::createImageFromIOImage(*m_SpriteImageSet[i], m_pDevice, vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -60,7 +60,7 @@ void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     UBOVert.View = vCamera->getViewMat();
     UBOVert.EyePosition = vCamera->getPos();
     UBOVert.EyeDirection = vCamera->getFront();
-    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
 void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
@@ -169,7 +169,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }
     
     // sampler
@@ -212,7 +212,7 @@ void CPipelineSprite::__updateDescriptorSet()
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
         WriteInfo.addWriteSampler(1, m_Sampler.get());
 
         const size_t NumTexture = m_SpriteImageSet.size();
@@ -228,7 +228,7 @@ void CPipelineSprite::__updateDescriptorSet()
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = m_SpriteImageSet[i];
+                TexImageViewSet[i] = *m_SpriteImageSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
 

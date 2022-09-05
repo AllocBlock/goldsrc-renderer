@@ -40,7 +40,7 @@ private:
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth);
    
     CPipelinePBS m_Pipeline;
-    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
     vk::CImage m_DepthImage = nullptr; 
@@ -51,8 +51,8 @@ private:
     uint32_t m_GridSize = 8;
      
     CPipelinePBS::SControl m_PipelineControl; 
-    vk::CHandleSet<vk::CImage> m_TextureColorSet;
-    vk::CHandleSet<vk::CImage> m_TextureNormalSet;
-    vk::CHandleSet<vk::CImage> m_TextureSpecularSet;
+    vk::CPointerSet<vk::CImage> m_TextureColorSet;
+    vk::CPointerSet<vk::CImage> m_TextureNormalSet;
+    vk::CPointerSet<vk::CImage> m_TextureSpecularSet;
 };
 

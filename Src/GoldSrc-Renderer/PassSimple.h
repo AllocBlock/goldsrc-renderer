@@ -84,11 +84,11 @@ private:
         }
     } m_PipelineSet;
 
-    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
     ptr<vk::CBuffer> m_pVertexBuffer;
     ptr<vk::CBuffer> m_pIndexBuffer;
-    vk::CHandleSet<vk::CImage> m_TextureImageSet;
+    vk::CPointerSet<vk::CImage> m_TextureImageSet;
     vk::CImage m_DepthImage;
 
     size_t m_RerecordCommandTimes = 0;

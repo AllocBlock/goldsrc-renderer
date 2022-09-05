@@ -80,7 +80,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
     UBOVert.EyePosition = vCamera->getPos();
-    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
     SSkyUniformBufferObjectFrag UBOFrag = {};
     glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
@@ -103,7 +103,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
         float RotationRad = glm::acos(glm::dot(FixUp, Up));
         UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
     }
-    m_FragUniformBufferSet[vImageIndex].update(&UBOFrag);
+    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
 void CPipelineSkybox::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -171,8 +171,8 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i].create(m_pDevice, FragBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -211,8 +211,8 @@ void CPipelineSkybox::__updateDescriptorSet()
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
         WriteInfo.addWriteImageAndSampler(2, m_SkyBoxImage, m_Sampler.get());
         m_Descriptor.update(i, WriteInfo);
     }

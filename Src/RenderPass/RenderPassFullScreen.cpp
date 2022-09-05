@@ -41,7 +41,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = *m_pVertexBuffer;
@@ -82,7 +82,7 @@ void CRenderPassFullScreen::__createFramebuffers()
             m_pPortSet->getOutputPort("Output")->getImageV(i)
         };
 
-        m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 

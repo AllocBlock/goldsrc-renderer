@@ -17,7 +17,8 @@ namespace vk
 #ifdef _DEBUG
             if (get())
             {
-                throw "Vulkan对象在销毁前被析构";
+                //throw "Vulkan对象在销毁前被析构";
+                _ASSERT(false);
             }
 #endif
         }
@@ -43,15 +44,15 @@ namespace vk
     };
 
     template <typename T>
-    struct CHandleSet
+    struct CPointerSet
     {
     public:
-        T& operator [](size_t vIndex)
+        ptr<T>& operator [](size_t vIndex)
         {
             return m_Set[vIndex];
         }
 
-        const T& operator [](size_t vIndex) const
+        const ptr<T>& operator [](size_t vIndex) const
         {
             return m_Set[vIndex];
         }
@@ -62,6 +63,8 @@ namespace vk
             destroyAndClearAll();
             m_Set.clear();
             m_Set.resize(vNum);
+            for (auto& pV : m_Set)
+                pV = make<T>();
         }
 
         size_t size() const { return m_Set.size(); }
@@ -70,29 +73,29 @@ namespace vk
         bool isValid(size_t vIndex) const
         {
             if (vIndex >= m_Set.size()) return false;
-            return m_Set[vIndex].isValid();
+            return m_Set[vIndex]->isValid();
         }
 
         bool isAllValid() const
         {
-            for (const T& Handle : m_Set)
+            for (auto pHandle : m_Set)
             {
-                if (!Handle.isValid()) return false;
+                if (!pHandle->isValid()) return false;
             }
             return true;
         }
 
         void destroyAndClearAll()
         {
-            for (T& Handle : m_Set)
+            for (auto pHandle : m_Set)
             {
-                Handle.destroy();
+                pHandle->destroy();
             }
             m_Set.clear();
         }
 
     private:
-        std::vector<T> m_Set;
+        std::vector<ptr<T>> m_Set;
     };
 }
 

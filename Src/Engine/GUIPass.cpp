@@ -79,7 +79,7 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
     UI::draw(CommandBuffer);
     end();
 
@@ -137,6 +137,6 @@ void CGUIRenderPass::__createFramebuffer()
             m_pPortSet->getOutputPort("Main")->getImageV(i),
         };
 
-        m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }

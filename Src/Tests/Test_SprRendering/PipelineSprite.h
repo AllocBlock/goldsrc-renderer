@@ -47,11 +47,11 @@ private:
     void __updateDescriptorSet();
 
     vk::CSampler m_Sampler;
-    vk::CHandleSet<vk::CImage> m_SpriteImageSet;
+    vk::CPointerSet<vk::CImage> m_SpriteImageSet;
     vk::CImage m_PlaceholderImage;
     std::vector<SSpritePushConstant> m_SpriteSequence;
     ptr<vk::CBuffer> m_pVertexDataBuffer;
     size_t m_VertexNum = 0;
-    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+    vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
 };
 

@@ -42,7 +42,7 @@ private:
     void __generateScene();
    
     ptr<IPipeline> m_pPipeline = nullptr;
-    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
     std::vector<SFullScreenPointData> m_PointDataSet;

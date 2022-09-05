@@ -40,7 +40,7 @@ private:
     } m_Control;
 
     vk::CSampler m_Sampler;
-    vk::CHandleSet<vk::CUniformBuffer> m_FragUBSet;
+    vk::CPointerSet<vk::CUniformBuffer> m_FragUBSet;
     vk::CImage m_EnvironmentImage;
     vk::CImage m_PlaceholderImage;
 };

@@ -1,4 +1,6 @@
 #include <memory>
+#ifndef _POINTER_H
+#define _POINTER_H
 
 namespace Pointer
 {
@@ -17,6 +19,28 @@ namespace Pointer
 #ifndef _DEFINE_PTR
 #define _DEFINE_PTR(Class) using Ptr = ptr<Class>; using CPtr = ptr<const Class>
 #endif
+
+    class IPointerOnly
+    {
+    protected:
+        IPointerOnly() = default;
+
+        template <class T, class... _Types>
+        friend ptr<T> make(_Types&&... _Args);
+    };
+
+    template <typename T>
+    void destroyAndClear(ptr<T>& vPointer) 
+    { 
+        if (vPointer)
+        {
+            vPointer->destroy();
+            vPointer = nullptr;
+
+        }
+    }
 }
 
 using namespace Pointer;
+
+#endif

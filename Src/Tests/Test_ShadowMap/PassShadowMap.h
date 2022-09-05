@@ -40,8 +40,8 @@ private:
     void __updateUniformBuffer(uint32_t vImageIndex);
    
     CPipelineShadowMap m_PipelineShadowMap;
-    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
-    vk::CHandleSet<vk::CImage> m_ShadowMapImageSet;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
+    vk::CPointerSet<vk::CImage> m_ShadowMapImageSet;
     ptr<vk::CBuffer> m_pVertBuffer = nullptr;
     size_t m_VertexNum = 0;
 

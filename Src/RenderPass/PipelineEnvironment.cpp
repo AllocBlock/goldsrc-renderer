@@ -20,7 +20,7 @@ void CPipelineEnvironment::updateUniformBuffer(uint32_t vImageIndex, CCamera::Pt
     SUBOVert UBOVert = {};
     UBOVert.InverseVP = glm::inverse(vCamera->getViewProjMat());
     UBOVert.EyePos = glm::vec4(vCamera->getPos(), 1.0);
-    m_FragUBSet[vImageIndex].update(&UBOVert);
+    m_FragUBSet[vImageIndex]->update(&UBOVert);
 }
 
 void CPipelineEnvironment::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -46,7 +46,7 @@ void CPipelineEnvironment::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_FragUBSet[i].create(m_pDevice, VertBufferSize);
+        m_FragUBSet[i]->create(m_pDevice, VertBufferSize);
     }
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -91,7 +91,7 @@ void CPipelineEnvironment::__updateDescriptorSet()
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_FragUBSet[i]);
+        WriteInfo.addWriteBuffer(0, *m_FragUBSet[i]);
         VkImageView EnvImageView = m_EnvironmentImage.isValid() ? m_EnvironmentImage : m_PlaceholderImage;
         WriteInfo.addWriteImageAndSampler(1, EnvImageView, m_Sampler.get());
 

@@ -15,14 +15,14 @@ struct SUBOFrag
     alignas(16) glm::vec3 Eye;
 };
 
-void CPipelineSimple::updateDescriptorSet(const vk::CHandleSet<vk::CImage>& vTextureSet)
+void CPipelineSimple::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vTextureSet)
 {
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
         WriteInfo.addWriteSampler(2, m_Sampler.get());
 
         //const size_t NumTexture = __getActualTextureNum();
@@ -40,7 +40,7 @@ void CPipelineSimple::updateDescriptorSet(const vk::CHandleSet<vk::CImage>& vTex
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = vTextureSet[i];
+                TexImageViewSet[i] = *vTextureSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
 
@@ -54,11 +54,11 @@ void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel
     UBOVert.Model = vModel;
     UBOVert.View = vCamera->getViewMat();
     UBOVert.Proj = vCamera->getProjMat();
-    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
     SUBOFrag UBOFrag = {};
     UBOFrag.Eye = vCamera->getPos();
-    m_FragUniformBufferSet[vImageIndex].update(&UBOFrag);
+    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
 void CPipelineSimple::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -99,8 +99,8 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i].create(m_pDevice, FragBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();

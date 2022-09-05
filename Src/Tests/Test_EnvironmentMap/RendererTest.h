@@ -38,7 +38,7 @@ private:
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth);
    
     CPipelineTest m_Pipeline;
-    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     vk::CImage m_DepthImage = nullptr;
 

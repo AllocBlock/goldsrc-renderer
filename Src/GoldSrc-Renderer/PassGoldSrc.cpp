@@ -164,7 +164,7 @@ void CSceneGoldSrcRenderPass::_renderUIV()
     {
         UI::combo(u8"选择纹理", m_TextureComboNameSet, m_CurTextureIndex);
         UI::slider(u8"缩放级别", m_TextureScale, 0.5f, 5.0f, "%.1f");
-        const vk::CImage& Image = m_TextureImageSet[m_CurTextureIndex];
+        const vk::CImage& Image = *m_TextureImageSet[m_CurTextureIndex];
         UI::image(Image, glm::vec2(Image.getWidth() * m_TextureScale, Image.getHeight() * m_TextureScale));
     }
     else
@@ -209,7 +209,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -532,7 +532,7 @@ void CSceneGoldSrcRenderPass::__createFramebuffers()
             m_pPortSet->getOutputPort("Depth")->getImageV(),
         };
 
-        m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 
@@ -544,7 +544,7 @@ void CSceneGoldSrcRenderPass::__createTextureImages()
         m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            Function::createImageFromIOImage(m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
+            Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
         }
     }
 }

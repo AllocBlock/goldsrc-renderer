@@ -31,7 +31,7 @@ private:
     void __updateUniformBuffer(uint32_t vImageIndex);
 
     CPipelineSprite m_Pipeline;
-    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     vk::CImage m_DepthImage;
 
     ptr<CCamera> m_pCamera = nullptr;

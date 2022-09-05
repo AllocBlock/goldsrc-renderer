@@ -22,14 +22,14 @@ struct SUBOFrag
     alignas(16) glm::vec3 Eye;
 };
 
-void CPipelineDepthTest::updateDescriptorSet(const vk::CHandleSet<vk::CImage>& vTextureSet, VkImageView vLightmap)
+void CPipelineDepthTest::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vTextureSet, VkImageView vLightmap)
 {
     size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
         WriteInfo.addWriteSampler(2, m_Sampler.get());
 
         const size_t NumTexture = vTextureSet.size();
@@ -46,7 +46,7 @@ void CPipelineDepthTest::updateDescriptorSet(const vk::CHandleSet<vk::CImage>& v
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = vTextureSet[i];
+                TexImageViewSet[i] = *vTextureSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
         VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? m_PlaceholderImage : vLightmap;
@@ -62,11 +62,11 @@ void CPipelineDepthTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vMo
     UBOVert.Model = vModel;
     UBOVert.View = vCamera->getViewMat();
     UBOVert.Proj = vCamera->getProjMat();
-    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
     SUBOFrag UBOFrag = {};
     UBOFrag.Eye = vCamera->getPos();
-    m_FragUniformBufferSet[vImageIndex].update(&UBOFrag);
+    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
 void CPipelineDepthTest::setLightmapState(VkCommandBuffer vCommandBuffer, bool vEnable)
@@ -142,8 +142,8 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i].create(m_pDevice, FragBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();

@@ -63,7 +63,7 @@ private:
     vk::CImage m_SkyBoxImage;
     vk::CBuffer m_VertexBuffer;
     size_t m_VertexNum = 0;
-    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
-    vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
+    vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+    vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
 };
 

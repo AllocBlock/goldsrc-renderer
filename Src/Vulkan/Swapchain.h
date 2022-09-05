@@ -27,7 +27,7 @@ namespace vk
         VkExtent2D __chooseSwapExtent(GLFWwindow* vWindow, const VkSurfaceCapabilitiesKHR& vCapabilities);
 
         CDevice::Ptr m_pDevice = nullptr;
-        vk::CHandleSet<vk::CImage> m_ImageSet;
+        vk::CPointerSet<vk::CImage> m_ImageSet;
         std::vector<VkImageView> m_ImageViewSet;
         VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
         VkExtent2D m_Extent = { 0, 0 };

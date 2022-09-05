@@ -134,7 +134,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -227,7 +227,7 @@ void CSceneSimpleRenderPass::__createFramebuffers()
             m_DepthImage
         };
 
-        m_FramebufferSet[i].create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 
@@ -239,7 +239,7 @@ void CSceneSimpleRenderPass::__createTextureImages()
         m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-             Function::createImageFromIOImage(m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
+             Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
         }
     }
 }

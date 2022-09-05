@@ -69,8 +69,8 @@ void CSwapchain::create(CDevice::Ptr vDevice)
     m_ImageSet.init(NumImage);
     for (size_t i = 0; i < NumImage; ++i)
     {
-        m_ImageSet[i].createFromImage(vDevice, SwapchainImageSet[i], SurfaceFormat.format, 1, ViewInfo);
-        m_ImageViewSet[i] = m_ImageSet[i];
+        m_ImageSet[i]->createFromImage(vDevice, SwapchainImageSet[i], SurfaceFormat.format, 1, ViewInfo);
+        m_ImageViewSet[i] = *m_ImageSet[i];
     }
     m_ImageFormat = SurfaceFormat.format;
     m_Extent = Extent;

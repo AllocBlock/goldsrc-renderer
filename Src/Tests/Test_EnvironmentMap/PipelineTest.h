@@ -50,8 +50,8 @@ private:
     void __destroyResources();
 
     vk::CSampler m_Sampler;
-    vk::CHandleSet<vk::CUniformBuffer> m_VertUniformBufferSet;
-    vk::CHandleSet<vk::CUniformBuffer> m_FragUniformBufferSet;
+    vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+    vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
     vk::CImage m_SkyBoxImage = nullptr;
     vk::CImage m_PlaceholderImage = nullptr;
 };

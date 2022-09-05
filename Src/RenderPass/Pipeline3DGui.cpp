@@ -38,7 +38,7 @@ void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCam
     SGuiUniformBufferObjectVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
-    m_VertUniformBufferSet[vImageIndex].update(&UBOVert);
+    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
 void CPipelineLine::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
@@ -90,7 +90,7 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i].create(m_pDevice, VertBufferSize);
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }
 
     __updateDescriptorSet();
@@ -116,7 +116,7 @@ void CPipelineLine::__updateDescriptorSet()
     for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
         m_Descriptor.update(i, WriteInfo);
     }
 }

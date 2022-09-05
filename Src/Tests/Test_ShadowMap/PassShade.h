@@ -39,7 +39,7 @@ private:
     void __updateUniformBuffer(uint32_t vImageIndex);
 
     CPipelineShade m_Pipeline;
-    vk::CHandleSet<vk::CFrameBuffer> m_FramebufferSet;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertBuffer;
     size_t m_VertexNum = 0;
 

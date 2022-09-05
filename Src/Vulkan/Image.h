@@ -13,7 +13,7 @@ namespace vk
         VkImageViewType ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
     };
 
-    class CImage : public IVulkanHandle<VkImageView>
+    class CImage : public IVulkanHandle<VkImageView>, public IPointerOnly
     {
     public:
         _DEFINE_PTR(CImage);
