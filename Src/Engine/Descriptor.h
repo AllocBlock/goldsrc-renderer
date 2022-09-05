@@ -56,7 +56,7 @@ public:
         m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
     }
 
-    void addWriteImagesAndSampler(size_t vTargetIndex, vk::CHandleSet<vk::CImage> vImageSet, VkSampler vSampler = VK_NULL_HANDLE)
+    void addWriteImagesAndSampler(size_t vTargetIndex, const vk::CHandleSet<vk::CImage>& vImageSet, VkSampler vSampler = VK_NULL_HANDLE)
     {
         _ASSERTE(vImageSet.isAllValid());
         addWriteImagesAndSampler(vTargetIndex, vImageSet, vSampler);
