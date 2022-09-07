@@ -87,7 +87,7 @@ namespace vk
     private:
         void __createCommandPoolAndBuffers();
         void __destroyCommandPoolAndBuffers();
-        void __createRenderpass();
+        bool __createRenderpass();
         void __destroyRenderpass();
         void __beginCommand(VkCommandBuffer vCommandBuffer);
         void __endCommand(VkCommandBuffer vCommandBuffer);

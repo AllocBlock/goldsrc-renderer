@@ -154,6 +154,7 @@ void CApplicationGoldSrc::__linkPasses()
     auto pPortGui = m_pPassGUI->getPortSet();
 
     SPortFormat SwapchainFormat = { m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum() };
+    m_pSwapchainPort->setForceNotReady(true);
 
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
@@ -164,4 +165,9 @@ void CApplicationGoldSrc::__linkPasses()
             CPortSet::link(pPortScene, "Depth", pPortLine, "Depth");
         CPortSet::link(pPortLine, "Main", pPortGui, "Main");
     }
+    m_pSwapchainPort->setForceNotReady(false);
+
+    _ASSERTE(m_pPassScene->isValid());
+    _ASSERTE(m_pPassLine->isValid());
+    _ASSERTE(m_pPassGUI->isValid());
 }

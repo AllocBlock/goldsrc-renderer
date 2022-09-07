@@ -14,7 +14,7 @@ void IRenderPass::init(const vk::SAppInfo& vAppInfo)
     m_pPortSet = make<CPortSet>(PortDesc);
     m_CurPassDesc = _getRenderPassDescV();
 
-    m_pPortSet->hookLinkUpdate([this]()
+    m_pPortSet->hookLinkUpdate([this](ILinkEvent::EventId_t vEventId, ILinkEvent::CPtr vFrom)
         {
             CRenderPassDescriptor NewDesc = _getRenderPassDescV();
             if (NewDesc != m_CurPassDesc) // change happens
@@ -111,15 +111,21 @@ void IRenderPass::__destroyCommandPoolAndBuffers()
     m_Command.clear();
 }
 
-void IRenderPass::__createRenderpass()
+bool IRenderPass::__createRenderpass()
 {
     __destroyRenderpass();
 
-    if (!m_CurPassDesc.isValid()) return;
+    if (!m_CurPassDesc.isValid()) return false;
 
     auto Info = m_CurPassDesc.generateInfo();
     vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
     m_CurPassDesc.clearStage(); // free stage data to save memory
+
+#ifdef _DEBUG
+    static int Count = 0;
+    std::cout << "create renderpass [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(get()) << std::setbase(10) << std::endl;
+    Count++;
+#endif
 
     __triggerRenderpassUpdate();
 }

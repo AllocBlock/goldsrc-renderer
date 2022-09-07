@@ -7,6 +7,7 @@
 #include <map>
 #include <functional>
 #include <set>
+#include <chrono>
 
 struct SPortFormat
 {
@@ -25,9 +26,21 @@ struct SPortFormat
     static const SPortFormat& AnyFormat;
 };
 
-class CLinkEvent
+class ILinkEvent
 {
 public:
+    _DEFINE_PTR(ILinkEvent);
+
+    using EventId_t = std::string;
+
+    static EventId_t generateEventId(std::string vPrefix)
+    {
+        auto Now = std::chrono::system_clock::now();
+        auto NowMs = std::chrono::duration_cast<std::chrono::milliseconds>(Now.time_since_epoch());
+        std::string Timestamp = std::to_string(NowMs.count());
+        return vPrefix + "_" + Timestamp;
+    }
+
     size_t hookImageUpdate(std::function<void()> vCallback)
     {
         m_ImageHookMap[m_CurImageHookId] = vCallback;
@@ -40,7 +53,7 @@ public:
             m_ImageHookMap.erase(vHookId);
     }
 
-    size_t hookLinkUpdate(std::function<void()> vCallback)
+    size_t hookLinkUpdate(std::function<void(EventId_t, ILinkEvent::CPtr)> vCallback)
     {
         m_LinkHookMap[m_CurLinkHookId] = vCallback;
         return m_CurLinkHookId++;
@@ -60,26 +73,26 @@ protected:
         _onImageUpdateExtendV();
     }
 
-    void _onLinkUpdate()
+    void _onLinkUpdate(EventId_t vEventId, ILinkEvent::CPtr vFrom)
     {
         for (const auto& Pair : m_LinkHookMap)
-            Pair.second();
+            Pair.second(vEventId, vFrom);
 
-        _onLinkUpdateExtendV();
+        _onLinkUpdateExtendV(vEventId, vFrom);
     }
 
     virtual void _onImageUpdateExtendV() {}
-    virtual void _onLinkUpdateExtendV() {}
+    virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) {}
 
 private:
 
     size_t m_CurImageHookId = 1;
     size_t m_CurLinkHookId = 1;
     std::map<size_t, std::function<void()>> m_ImageHookMap;
-    std::map<size_t, std::function<void()>> m_LinkHookMap;
+    std::map<size_t, std::function<void(EventId_t, ILinkEvent::CPtr)>> m_LinkHookMap;
 };
 
-class CPort : public CLinkEvent, public std::enable_shared_from_this<CPort>
+class CPort : public ILinkEvent, public std::enable_shared_from_this<CPort>
 {
 public:
     _DEFINE_PTR(CPort);
@@ -115,14 +128,26 @@ public:
     {
         _ASSERTE(isMatch(vPort));
 
-        m_pParent = vPort;
-        vPort->m_ChildSet.emplace_back(shared_from_this());
+        auto pThis = shared_from_this();
 
-        _onLinkUpdate();
-        vPort->_onLinkUpdate();
+        m_pParent = vPort;
+        vPort->m_ChildSet.emplace_back(pThis);
+
+        _onLinkUpdate(generateEventId("LinkUpdate"), nullptr);
     }
 
-    virtual bool isReadyV() const = 0; // if the link of this port is ready, which means it has a source port as head
+    // if the link of this port is ready, means it has a source port as head and no in valid port before it
+    virtual bool isReadyV() const { return !m_ForceNotReady; }
+    void setForceNotReady(bool vForceNotReady) 
+    { 
+        if (m_ForceNotReady != vForceNotReady)
+        {
+            m_ForceNotReady = vForceNotReady;
+            _onImageUpdate();
+            _onLinkUpdate(generateEventId("LinkUpdate"), nullptr);
+        }
+    }
+    bool isForceNotReady() { return m_ForceNotReady; }
 
     const SPortFormat& getFormat() const { return m_Format; }
     virtual bool hasActualFormatV() const = 0;
@@ -135,10 +160,25 @@ public:
     }
 
 protected:
+    // image update propagates to tail
     virtual void _onImageUpdateExtendV() override final
     {
         for (const auto& pChild : m_ChildSet)
             pChild->_onImageUpdate();
+    }
+
+    // link update propagates to whole link
+    virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) override final
+    {
+        auto pThis = shared_from_this();
+        if (!m_pParent.expired() && m_pParent.lock() != vFrom)
+            m_pParent.lock()->_onLinkUpdate(vEventId, pThis);
+
+        for (auto pChild : m_ChildSet)
+        {
+            if (pChild != vFrom)
+                pChild->_onLinkUpdate(vEventId, pThis);
+        }
     }
 
     bool m_isSwapchainSource = false;
@@ -147,6 +187,9 @@ protected:
 
     wptr<CPort> m_pParent;
     std::vector<CPort::Ptr> m_ChildSet;
+
+private:
+    bool m_ForceNotReady = false;
 };
 
 class CSourcePort : public CPort
@@ -175,7 +218,7 @@ public:
 
     virtual bool isReadyV() const override final
     {
-        return true;
+        return CPort::isReadyV();
     }
 
     void setImage(VkImageView vImage, size_t vIndex = 0)
@@ -230,7 +273,7 @@ public:
     virtual bool isReadyV() const override final
     {
         if (m_pParent.expired()) return false;
-        else return m_pParent.lock()->isReadyV();
+        else return CPort::isReadyV() && m_pParent.lock()->isReadyV();
     }
 };
 
@@ -296,7 +339,7 @@ public:
     std::vector<SPortFormat> m_InputOutputPortSet;
 };
 
-class CPortSet : public CLinkEvent
+class CPortSet : public ILinkEvent
 {
 public:
     _DEFINE_PTR(CPortSet);
@@ -443,7 +486,16 @@ private:
     }
 
     std::function<void()> m_pImageUpdateCallbackFunc = [this]() { _onImageUpdate(); };
-    std::function<void()> m_pLinkUpdateCallbackFunc = [this]() { _onLinkUpdate(); };
+    std::function<void(EventId_t, ILinkEvent::CPtr)> m_pLinkUpdateCallbackFunc = [this](EventId_t vEventId, ILinkEvent::CPtr vFrom)
+    {
+        if (m_LastEventId != vEventId) // only once
+        {
+            m_LastEventId = vEventId;
+            _onLinkUpdate(vEventId, vFrom);
+        }
+    };
     std::map<std::string, CPort::Ptr> m_InputPortMap;
     std::map<std::string, CPort::Ptr> m_OutputPortMap;
+
+    std::string m_LastEventId = "";
 };

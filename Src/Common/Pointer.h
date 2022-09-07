@@ -20,14 +20,11 @@ namespace Pointer
 #define _DEFINE_PTR(Class) using Ptr = ptr<Class>; using CPtr = ptr<const Class>
 #endif
 
-    class IPointerOnly
+    template <typename T>
+    void isValid(ptr<const T> vPointer)
     {
-    protected:
-        IPointerOnly() = default;
-
-        template <class T, class... _Types>
-        friend ptr<T> make(_Types&&... _Args);
-    };
+        return vPointer && vPointer->isValid();
+    }
 
     template <typename T>
     void destroyAndClear(ptr<T>& vPointer) 
@@ -36,7 +33,6 @@ namespace Pointer
         {
             vPointer->destroy();
             vPointer = nullptr;
-
         }
     }
 }
