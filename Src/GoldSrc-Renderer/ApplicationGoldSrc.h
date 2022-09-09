@@ -2,7 +2,8 @@
 #include "IApplication.h"
 #include "ScenePass.h"
 #include "GUIPass.h"
-#include "PassLine.h"
+#include "PassOutlineMask.h"
+#include "PassOutlineEdge.h"
 #include "GuiMain.h"
 #include "Interactor.h"
 #include "Scene.h"
@@ -27,7 +28,8 @@ private:
 
     ptr<CSceneRenderPass> m_pPassScene = nullptr;
     ptr<CGUIRenderPass> m_pPassGUI = nullptr;
-    ptr<CLineRenderPass> m_pPassLine = nullptr;
+    ptr<COutlineMaskRenderPass> m_pPassOutlineMask = nullptr;
+    ptr<COutlineEdgeRenderPass> m_pPassOutlineEdge = nullptr;
     ptr<CGUIMain> m_pMainUI = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
     ptr<CCamera> m_pCamera = nullptr;

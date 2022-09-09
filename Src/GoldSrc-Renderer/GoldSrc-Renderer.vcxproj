@@ -130,6 +130,8 @@
     <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassLine.cpp" />
+    <ClCompile Include="PassOutlineMask.cpp" />
+    <ClCompile Include="PassOutlineEdge.cpp" />
     <ClCompile Include="PipelineDepthTest.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
     <ClCompile Include="SceneProbe.cpp" />
@@ -147,6 +149,8 @@
     <ClInclude Include="GuiTextureViewer.h" />
     <ClInclude Include="GuiRequestPopupModal.h" />
     <ClInclude Include="PassLine.h" />
+    <ClInclude Include="PassOutlineMask.h" />
+    <ClInclude Include="PassOutlineEdge.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />
     <ClInclude Include="PipelineBlendAlpha.h" />
     <ClInclude Include="PipelineBlendAlphaTest.h" />
@@ -162,6 +166,10 @@
     <None Include="shaders\alphaTestShader.vert" />
     <None Include="shaders\lineShader.frag" />
     <None Include="shaders\lineShader.vert" />
+    <None Include="shaders\outlineEdgeShader.frag" />
+    <None Include="shaders\outlineEdgeShader.vert" />
+    <None Include="shaders\outlineMaskShader.frag" />
+    <None Include="shaders\outlineMaskShader.vert" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
     <None Include="shaders\simpleShader.frag" />

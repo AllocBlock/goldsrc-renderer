@@ -22,16 +22,20 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
     m_pPassScene->update(vImageIndex);
-    m_pPassLine->update(vImageIndex);
+    m_pPassOutlineMask->update(vImageIndex);
+    m_pPassOutlineEdge->update(vImageIndex);
 }
 
 std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t vImageIndex)
 {
+    // FIXME: auto process
     std::vector<VkCommandBuffer> SceneBuffers = m_pPassScene->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> LineBuffers = m_pPassLine->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> OutlineMaskBuffers = m_pPassOutlineMask->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> OutlineEdgeBuffers = m_pPassOutlineEdge->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> Result = SceneBuffers;
-    Result.insert(Result.end(), LineBuffers.begin(), LineBuffers.end());
+    Result.insert(Result.end(), OutlineMaskBuffers.begin(), OutlineMaskBuffers.end());
+    Result.insert(Result.end(), OutlineEdgeBuffers.begin(), OutlineEdgeBuffers.end());
     Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
     return Result;
 }
@@ -54,9 +58,12 @@ void CApplicationGoldSrc::_createOtherResourceV()
     m_pPassGUI->setWindow(m_pWindow);
     m_pPassGUI->init(AppInfo);
 
-    m_pPassLine = make<CLineRenderPass>();
-    m_pPassLine->init(AppInfo);
-    m_pPassLine->setCamera(m_pCamera);
+    m_pPassOutlineMask = make<COutlineMaskRenderPass>();
+    m_pPassOutlineMask->init(AppInfo);
+    m_pPassOutlineMask->setCamera(m_pCamera);
+
+    m_pPassOutlineEdge = make<COutlineEdgeRenderPass>();
+    m_pPassOutlineEdge->init(AppInfo);
 
     m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
@@ -74,7 +81,8 @@ void CApplicationGoldSrc::_createOtherResourceV()
     {
         if (m_pCamera) m_pCamera->renderUI();
         if (m_pInteractor) m_pInteractor->renderUI();
-        if (m_pPassLine) m_pPassLine->renderUI();
+        if (m_pPassOutlineMask) m_pPassOutlineMask->renderUI();
+        if (m_pPassOutlineEdge) m_pPassOutlineEdge->renderUI();
         if (m_pPassScene) m_pPassScene->renderUI();
     });
 
@@ -86,12 +94,12 @@ void CApplicationGoldSrc::_createOtherResourceV()
         glfwGetFramebufferSize(vWindow, &WindowWidth, &WindowHeight);
         glm::vec2 NDC = glm::vec2(XPos / WindowWidth * 2 - 1.0, YPos / WindowHeight * 2 - 1.0);
 
+        ptr<C3DObjectGoldSrc> pNearestObject = nullptr;
         float NearestIntersection = 0.0f;
         S3DBoundingBox BB;
-        if (SceneProbe::select(NDC, m_pCamera, m_pScene, NearestIntersection, BB))
+        if (SceneProbe::select(NDC, m_pCamera, m_pScene, pNearestObject, NearestIntersection, BB))
         {
-            m_pPassLine->setHighlightBoundingBox(BB);
-            m_pPassLine->addGuiLine("Direction", m_pCamera->getPos(), m_pCamera->getPos() + m_pCamera->getFront());
+            m_pPassOutlineMask->setHighlightObject(pNearestObject);
         }
     });
 
@@ -103,15 +111,17 @@ void CApplicationGoldSrc::_createOtherResourceV()
 void CApplicationGoldSrc::_recreateOtherResourceV()
 {
     m_pPassScene->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pPassLine->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    m_pPassOutlineMask->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    m_pPassOutlineEdge->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
     m_pPassGUI->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
 }
 
 void CApplicationGoldSrc::_destroyOtherResourceV()
 {
-    m_pPassScene->destroy();
-    m_pPassLine->destroy();
-    m_pPassGUI->destroy();
+    destroyAndClear(m_pPassScene);
+    destroyAndClear(m_pPassOutlineMask);
+    destroyAndClear(m_pPassOutlineEdge);
+    destroyAndClear(m_pPassGUI);
 
     cleanGlobalCommandBuffer();
 }
@@ -150,24 +160,21 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
 void CApplicationGoldSrc::__linkPasses()
 {
     auto pPortScene = m_pPassScene->getPortSet();
-    auto pPortLine = m_pPassLine->getPortSet();
+    auto pPortOutlineMask = m_pPassOutlineMask->getPortSet();
+    auto pPortOutlineEdge = m_pPassOutlineEdge->getPortSet();
     auto pPortGui = m_pPassGUI->getPortSet();
 
     SPortFormat SwapchainFormat = { m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum() };
     m_pSwapchainPort->setForceNotReady(true);
-
-    const auto& ImageViews = m_pSwapchain->getImageViews();
-    for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
-    {
-        CPortSet::link(m_pSwapchainPort, pPortScene, "Main");
-        CPortSet::link(pPortScene, "Main", pPortLine, "Main");
-        if (i == 0)
-            CPortSet::link(pPortScene, "Depth", pPortLine, "Depth");
-        CPortSet::link(pPortLine, "Main", pPortGui, "Main");
-    }
+    CPortSet::link(m_pSwapchainPort, pPortScene, "Main");
+    CPortSet::link(pPortScene, "Depth", pPortOutlineMask, "Depth");
+    CPortSet::link(pPortOutlineMask, "Mask", pPortOutlineEdge, "Mask");
+    CPortSet::link(pPortScene, "Main", pPortOutlineEdge, "Main");
+    CPortSet::link(pPortOutlineEdge, "Main", pPortGui, "Main");
     m_pSwapchainPort->setForceNotReady(false);
 
     _ASSERTE(m_pPassScene->isValid());
-    _ASSERTE(m_pPassLine->isValid());
+    _ASSERTE(m_pPassOutlineMask->isValid());
+    _ASSERTE(m_pPassOutlineEdge->isValid());
     _ASSERTE(m_pPassGUI->isValid());
 }

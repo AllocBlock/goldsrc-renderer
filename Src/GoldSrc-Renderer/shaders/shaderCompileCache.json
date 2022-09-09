@@ -50,5 +50,21 @@
     {
         "file": "D:\\project\\goldsrc-renderer\\Src\\GoldSrc-Renderer\\shaders\\shaderCompileCache.json",
         "changeTime": "2022-09-04 23:03:49"
+    },
+    {
+        "file": "D:\\project\\goldsrc-renderer\\Src\\GoldSrc-Renderer\\shaders\\outlineEdgeShader.frag",
+        "changeTime": "2022-09-10 00:29:54"
+    },
+    {
+        "file": "D:\\project\\goldsrc-renderer\\Src\\GoldSrc-Renderer\\shaders\\outlineEdgeShader.vert",
+        "changeTime": "2022-09-09 21:11:15"
+    },
+    {
+        "file": "D:\\project\\goldsrc-renderer\\Src\\GoldSrc-Renderer\\shaders\\outlineMaskShader.frag",
+        "changeTime": "2022-09-09 21:48:21"
+    },
+    {
+        "file": "D:\\project\\goldsrc-renderer\\Src\\GoldSrc-Renderer\\shaders\\outlineMaskShader.vert",
+        "changeTime": "2022-09-09 21:48:26"
     }
 ]

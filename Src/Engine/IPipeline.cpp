@@ -80,6 +80,7 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     destroy();
 
     m_pDevice = vDevice;
+    m_Extent = vExtent;
 
     _initDescriptorV();
 

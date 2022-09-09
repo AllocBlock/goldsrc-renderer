@@ -127,7 +127,7 @@ bool getIntersectionOfRayAndBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection,
     }
 }
 
-bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, float& voNearestDistance, S3DBoundingBox& voBB)
+bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, ptr<C3DObjectGoldSrc>& voObject, float& voNearestDistance, S3DBoundingBox& voBB)
 {
     // FIXME: must be some bugs... can select object behind camera
 	if (!vScene || vScene->Objects.empty()) return false;
@@ -148,6 +148,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene
 
 	float NearestDistance = INFINITY;
 	std::optional<S3DBoundingBox> NearestBoundingBox = std::nullopt;
+    ptr<C3DObjectGoldSrc> pNearestObject = nullptr;
 
 	for (const auto& pObject : vScene->Objects)
 	{
@@ -162,6 +163,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene
 		{
 			NearestDistance = NearT;
 			NearestBoundingBox = BB;
+            pNearestObject = pObject;
 		}
 	}
 
@@ -169,6 +171,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene
     {
         voNearestDistance = NearestDistance;
         voBB = NearestBoundingBox.value();
+        voObject = pNearestObject;
         return true;
     }
     else

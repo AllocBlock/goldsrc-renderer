@@ -81,6 +81,12 @@
     <ClCompile Include="GuiRequestPopupModal.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
+    <ClCompile Include="PassOutlineMask.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="PassOutlineEdge.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h">
@@ -140,6 +146,12 @@
     <ClInclude Include="GuiRequestPopupModal.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
+    <ClInclude Include="PassOutlineMask.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="PassOutlineEdge.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.vert">
@@ -176,6 +188,18 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\shader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\outlineEdgeShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\outlineEdgeShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\outlineMaskShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\outlineMaskShader.vert">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

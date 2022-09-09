@@ -5,5 +5,5 @@
 
 namespace SceneProbe
 {
-	bool select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, float& voNearestDistance, S3DBoundingBox& voBB);
+	bool select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, ptr<C3DObjectGoldSrc>& voObject, float& voNearestDistance, S3DBoundingBox& voBB);
 };

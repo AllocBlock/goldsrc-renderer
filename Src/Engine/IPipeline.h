@@ -17,7 +17,7 @@ public:
 
     void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void setImageNum(size_t vImageNum);
-    virtual void destroy() final;
+    void destroy();
     void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
     bool isValid() const { return m_Pipeline != VK_NULL_HANDLE; }
 
@@ -57,6 +57,7 @@ protected:
     static std::vector<VkPushConstantRange>         getDefaultPushConstantRangeSet();
 
     size_t m_ImageNum = 0;
+    VkExtent2D m_Extent = VkExtent2D{ 0, 0 };
 
     CDescriptor m_Descriptor;
 
