@@ -1,10 +1,11 @@
 #include "Gui.h"
+#include "Sampler.h"
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 #include <stdexcept>
 #include <map>
-#include "Sampler.h"
 
 bool gIsFrameBeginned = false;
 bool gIsInitted = false;

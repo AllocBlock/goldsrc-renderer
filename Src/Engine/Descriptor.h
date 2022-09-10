@@ -1,9 +1,7 @@
 #pragma once
-#include "Common.h"
 #include "Device.h"
 #include "UniformBuffer.h"
 #include "Image.h"
-#include "Sampler.h"
 
 #include <vulkan/vulkan.h>
 #include <vector>

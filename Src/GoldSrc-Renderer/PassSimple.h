@@ -1,20 +1,15 @@
 #pragma once
+#include "PointData.h"
 #include "ScenePass.h"
-#include "Common.h"
 #include "FrameBuffer.h"
 #include "Scene.h"
 #include "Camera.h"
 #include "PipelineSkybox.h"
 #include "PipelineSimple.h"
-#include "Descriptor.h"
-#include "Command.h"
 #include "Image.h"
 #include "Buffer.h"
 
-#include <vulkan/vulkan.h> 
-#include <glm/glm.hpp>
-#include <array>
-#include <set>
+#include <vulkan/vulkan.h>
 
 class CSceneSimpleRenderPass : public CSceneRenderPass
 {

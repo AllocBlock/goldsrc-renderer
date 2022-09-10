@@ -285,3 +285,7 @@
   - 新问题，layout的转换...
     - pass1有一个output，输入是attachment_optimized，而输出应该是什么？要看后续的使用，可以是attachment_optimized（继续写入），也可以是shader_read_optimized（读取）...
     - 有点复杂，暂时不管
+    - outline整理
+    - 自动排列commandbuffer
+    - 更准确的raycast（per triangle）
+    - wad第一次搜寻找不到，重试后找到的问题

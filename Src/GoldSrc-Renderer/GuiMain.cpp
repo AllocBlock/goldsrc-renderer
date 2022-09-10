@@ -1,13 +1,11 @@
 ﻿#include "GuiMain.h"
-#include "Common.h"
 #include "SceneInterface.h"
 #include "SceneCommon.h"
 #include "Gui.h"
 #include "NativeSystem.h"
 #include "SceneObjWriter.h"
+#include "Log.h"
 
-#include <iostream>
-#include <set>
 #include <future>
 
 using namespace Common;

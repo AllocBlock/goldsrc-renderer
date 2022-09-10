@@ -5,9 +5,6 @@
 #include "RenderPassDescriptor.h"
 #include "Gui.h"
 
-#include <iostream>
-#include <set>
-
 const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 
 void CGUIRenderPass::_initV()

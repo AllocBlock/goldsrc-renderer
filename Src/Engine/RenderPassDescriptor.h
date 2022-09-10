@@ -1,6 +1,5 @@
 #pragma once
 #include "RenderPassPort.h"
-#include "vulkan/vulkan.h"
 #include <vector>
 
 struct SAttachementInfo

@@ -1,8 +1,6 @@
 #pragma once
 #include "IPipeline.h"
-#include "PointData.h"
 #include "Image.h"
-#include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Sampler.h"
 #include "Camera.h"

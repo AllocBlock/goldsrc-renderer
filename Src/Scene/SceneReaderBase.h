@@ -1,10 +1,6 @@
 #pragma once
 #include "Scene.h"
 
-#include <string>
-#include <functional>
-#include <future>
-
 class CSceneReaderBase
 {
 public:

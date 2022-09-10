@@ -1,13 +1,10 @@
 #pragma once
-#include "Common.h"
 #include "IGUI.h"
 #include "Vulkan.h"
 #include "Descriptor.h"
-#include "PhysicalDevice.h"
 #include "Device.h"
 
 #include <filesystem>
-#include <optional>
 #include <vulkan/vulkan.h> 
 
 struct IPipeline : public IGUI

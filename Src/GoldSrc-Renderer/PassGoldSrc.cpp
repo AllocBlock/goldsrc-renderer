@@ -1,16 +1,13 @@
 #include "PassGoldSrc.h"
 #include "Common.h"
-#include "Descriptor.h"
 #include "Function.h"
 #include "Gui.h"
 #include "RenderPassDescriptor.h"
+#include "Log.h"
 
-#include <iostream>
 #include <vector>
 #include <set>
 #include <fstream>
-#include <chrono>
-#include <glm/ext/matrix_transform.hpp>
 
 void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
 {

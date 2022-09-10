@@ -1,6 +1,7 @@
 #include "PipelineDepthTest.h"
 #include "Sampler.h"
 #include "Function.h"
+#include "PointData.h"
 
 size_t CPipelineDepthTest::MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
 

@@ -3,20 +3,16 @@
 #include "Common.h"
 #include "FrameBuffer.h"
 #include "Scene.h"
-#include "Camera.h"
 #include "Descriptor.h"
-#include "Command.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "Sampler.h"
 #include "IPipeline.h"
 #include "UniformBuffer.h"
 #include "VertexAttributeDescriptor.h"
 #include "IRenderPass.h"
 #include "Function.h"
 
-#include <array>
-#include <set>
-#include <map>
 #include <glm/glm.hpp>
 
 class CPipelineEdge : public IPipeline

@@ -1,9 +1,7 @@
 #pragma once
-#include "Common.h"
 #include "Device.h"
 
 #include <filesystem>
-#include <optional>
 #include <map>
 #include <vulkan/vulkan.h> 
 

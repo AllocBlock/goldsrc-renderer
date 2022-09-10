@@ -5,7 +5,6 @@
 #include "UniformBuffer.h"
 #include "IOImage.h"
 #include "Sampler.h"
-#include "FullScreenPointData.h"
 
 class CPipelineEnvironment : public IPipeline
 {

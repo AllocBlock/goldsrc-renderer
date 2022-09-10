@@ -1,5 +1,6 @@
 #include "PipelineEnvironment.h"
 #include "Function.h"
+#include "FullScreenPointData.h"
 
 struct SUBOVert
 {

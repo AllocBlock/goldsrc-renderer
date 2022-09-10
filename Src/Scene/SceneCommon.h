@@ -1,10 +1,10 @@
 #pragma once
-
-#include <memory>
-#include <vector>
 #include "IOImage.h"
 #include "IOGoldsrcWad.h"
 #include "IOGoldsrcBsp.h"
+
+#include <memory>
+#include <functional>
 
 namespace Common
 {

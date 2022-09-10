@@ -1,7 +1,6 @@
 #include "IOGoldSrcMdl.h"
 
 #include <vector>
-#include <array>
 
 //
 //struct SMdlBoundingBox

@@ -1,5 +1,6 @@
 #include "IOCommon.h"
 #include "IOGoldSrcRmf.h"
+#include "Log.h"
 
 #include <fstream>
 

@@ -1,9 +1,8 @@
 ﻿#include "Scene.h"
 #include "SceneCommon.h"
-#include "IOGoldSrcMap.h"
 #include "IOGoldsrcWad.h"
-#include "IOGoldSrcBsp.h"
 #include "IOObj.h"
+#include "Log.h"
 
 #include <filesystem>
 

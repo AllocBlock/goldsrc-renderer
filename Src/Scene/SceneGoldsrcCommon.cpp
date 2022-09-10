@@ -1,5 +1,6 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
+#include "Log.h"
 
 using namespace Common;
 

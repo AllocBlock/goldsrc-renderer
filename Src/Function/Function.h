@@ -1,7 +1,6 @@
 #pragma once
 #include "IOImage.h"
 #include "Image.h"
-#include <vulkan/vulkan.h>
 
 namespace Function
 {

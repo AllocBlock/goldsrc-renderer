@@ -1,11 +1,7 @@
 #pragma once
-#include "Log.h"
-
 #include <string>
 #include <vector>
-#include <fstream>
 #include <filesystem>
-#include <functional>
 
 const size_t MAX_LINE_SIZE = 1024;
 

@@ -1,7 +1,7 @@
 #include "IOGoldsrcWad.h"
+#include "Log.h"
 
 #include <fstream>
-#include <algorithm>
 
 using namespace Common;
 

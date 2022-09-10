@@ -1,5 +1,4 @@
 #pragma once
-#include "Common.h"
 #include "AppInfo.h"
 #include "Vulkan.h"
 #include "Instance.h"

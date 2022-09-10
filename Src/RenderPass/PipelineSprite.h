@@ -1,8 +1,5 @@
 #pragma once
 #include "IPipeline.h"
-#include "Common.h"
-#include "Descriptor.h"
-#include "IOImage.h"
 #include "Scene.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -11,7 +8,6 @@
 #include "Camera.h"
 
 #include <glm/glm.hpp>
-#include <array>
 
 struct SSpritePushConstant
 {

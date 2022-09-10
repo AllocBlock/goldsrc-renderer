@@ -1,4 +1,6 @@
 #include "IOGoldSrcMap.h"
+#include "Common.h"
+#include "Log.h"
 
 #include <fstream>
 #include <regex>

@@ -1,5 +1,4 @@
 #include "PipelineSprite.h"
-#include "Vulkan.h"
 #include "Function.h"
 #include "VertexAttributeDescriptor.h"
 

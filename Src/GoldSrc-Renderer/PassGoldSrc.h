@@ -1,6 +1,6 @@
 #pragma once
+#include "PointData.h"
 #include "ScenePass.h"
-#include "Common.h"
 #include "FrameBuffer.h"
 #include "PipelineSkybox.h"
 #include "PipelineDepthTest.h"
@@ -9,14 +9,10 @@
 #include "PipelineBlendAdditive.h"
 #include "Pipeline3DGui.h"
 #include "PipelineSprite.h"
-#include "Descriptor.h"
-#include "Command.h"
 #include "Image.h"
 #include "Buffer.h"
 
-#include <vulkan/vulkan.h> 
-#include <glm/glm.hpp>
-#include <array>
+#include <vulkan/vulkan.h>
 #include <optional>
 #include <set>
 

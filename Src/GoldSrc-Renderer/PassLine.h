@@ -1,19 +1,12 @@
 #pragma once
 #include "ScenePass.h"
-#include "Common.h"
 #include "FrameBuffer.h"
 #include "Scene.h"
 #include "Camera.h"
-#include "Descriptor.h"
-#include "Command.h"
-#include "Image.h"
-#include "Buffer.h"
 #include "Pipeline3DGui.h"
 
 #include <vulkan/vulkan.h> 
 #include <glm/glm.hpp>
-#include <array>
-#include <set>
 
 class CLineRenderPass : public CSceneRenderPass
 {

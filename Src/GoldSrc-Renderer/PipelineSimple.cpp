@@ -1,5 +1,6 @@
 #include "PipelineSimple.h"
 #include "Function.h"
+#include "PointData.h"
 
 size_t CPipelineSimple::MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
 

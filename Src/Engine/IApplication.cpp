@@ -2,9 +2,6 @@
 #include "Log.h"
 #include "AppInfo.h"
 
-#include <set>
-#include <iostream>
-
 using namespace vk;
 
 void IApplication::init(GLFWwindow* vWindow)

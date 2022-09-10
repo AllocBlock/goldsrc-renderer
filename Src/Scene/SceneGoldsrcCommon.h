@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <filesystem>
-#include <functional>
 
 namespace Common
 {

@@ -1,17 +1,11 @@
 #include "PassSimple.h"
-#include "Common.h"
-#include "Descriptor.h"
 #include "Function.h"
 #include "Gui.h"
 #include "RenderPassDescriptor.h"
+#include "Log.h"
 
-#include <iostream>
-#include <array>
 #include <vector>
-#include <set>
 #include <fstream>
-#include <chrono>
-#include <glm/ext/matrix_transform.hpp>
 
 void CSceneSimpleRenderPass::_loadSceneV(ptr<SScene> vScene)
 {

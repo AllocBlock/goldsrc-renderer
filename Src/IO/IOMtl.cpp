@@ -1,5 +1,7 @@
 #include "IOMtl.h"
+#include "Log.h"
 
+#include <fstream>
 #include <sstream>
 
 using namespace Common;

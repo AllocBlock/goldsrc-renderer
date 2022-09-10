@@ -1,6 +1,5 @@
 #include "Common.h"
 #include "SceneCommon.h"
-#include "Pointer.h"
 #include "Environment.h"
 
 using namespace Common;

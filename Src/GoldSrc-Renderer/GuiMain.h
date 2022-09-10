@@ -4,7 +4,6 @@
 #include "GuiAlert.h"
 #include "GuiFrameRate.h"
 #include "GuiLog.h"
-#include "GuiRenderer.h"
 #include "GuiFGD.h"
 #include "GuiRequestPopupModal.h"
 #include "Scene.h"

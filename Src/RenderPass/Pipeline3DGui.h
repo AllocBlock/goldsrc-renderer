@@ -1,6 +1,5 @@
 #pragma once
 #include "IPipeline.h"
-#include "Vulkan.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Camera.h"

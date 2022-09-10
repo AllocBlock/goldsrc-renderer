@@ -2,10 +2,6 @@
 #include "PassGoldSrc.h"
 #include "ScenePass.h"
 
-#include <vector>
-#include <string>
-#include <istream>
-
 class CGuiRenderer
 {
 public:

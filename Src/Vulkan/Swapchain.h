@@ -1,8 +1,6 @@
 #pragma once
 #include "PchVulkan.h"
-#include "PhysicalDevice.h"
 #include "Device.h"
-#include "Surface.h"
 #include "Image.h"
 #include <vector>
 #include <GLFW/glfw3.h>

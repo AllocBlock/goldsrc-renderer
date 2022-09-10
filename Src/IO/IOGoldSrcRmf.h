@@ -2,7 +2,6 @@
 
 #include "IOCommon.h"
 #include "IOBase.h"
-#include "IOGoldSrcMap.h"
 #include "Pointer.h"
 #include <vector>
 

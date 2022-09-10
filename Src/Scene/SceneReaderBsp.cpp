@@ -5,6 +5,7 @@
 #include "SingleValueDataArray.h"
 #include "IOGoldSrcSpr.h"
 #include "Environment.h"
+#include "Log.h"
 
 #include <sstream>
 

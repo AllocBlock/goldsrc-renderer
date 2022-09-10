@@ -1,9 +1,9 @@
 #pragma once
+#include "Pointer.h"
 #include "Object.h"
 #include "GeneralDataArray.h"
 
 #include <glm/glm.hpp>
-#include <vector>
 #include <optional>
 #include <memory>
 

@@ -1,11 +1,11 @@
 #include "IOImage.h"
-#include <algorithm>
 #define __STDC_LIB_EXT1__ // _s function
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-#include "tinyexr.h"
+#include <stb_image_write.h>
+#include <tinyexr.h>
+#include <fstream>
 
 void CIOImage::setData(const void* vData)
 {

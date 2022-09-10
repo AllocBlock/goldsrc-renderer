@@ -1,8 +1,6 @@
 #pragma once
 #include "IPipeline.h"
-#include "Common.h"
 #include "VertexAttributeDescriptor.h"
-#include "Descriptor.h"
 #include "IOImage.h"
 #include "Image.h"
 #include "Buffer.h"

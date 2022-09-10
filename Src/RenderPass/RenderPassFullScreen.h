@@ -1,8 +1,6 @@
 #pragma once
 #include "IRenderPass.h"
 #include "FrameBuffer.h"
-#include "Camera.h"
-#include "Image.h"
 #include "Buffer.h"
 #include "IPipeline.h"
 #include "FullScreenPointData.h"
