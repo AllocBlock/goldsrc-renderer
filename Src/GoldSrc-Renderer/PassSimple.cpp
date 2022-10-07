@@ -36,10 +36,10 @@ void CSceneSimpleRenderPass::_initV()
 SPortDescriptor CSceneSimpleRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInputOutput("Main");
+    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
     
     VkFormat DepthFormat = __findDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1 });
+    Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1, EUsage::WRITE });
     return Ports;
 }
 

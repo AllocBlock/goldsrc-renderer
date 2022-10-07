@@ -10,7 +10,7 @@ void CRenderPassFullScreen::_initV()
 SPortDescriptor CRenderPassFullScreen::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addOutput("Output");
+    Ports.addOutput("Output", SPortFormat::createAnyOfUsage(EUsage::WRITE));
     return Ports;
 }
 

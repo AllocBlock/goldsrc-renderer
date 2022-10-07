@@ -41,10 +41,10 @@ void CSceneGoldSrcRenderPass::_initV()
 SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInputOutput("Main");
+    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 
     VkFormat DepthFormat = __findDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1 });
+    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
     
     return Ports;
 }

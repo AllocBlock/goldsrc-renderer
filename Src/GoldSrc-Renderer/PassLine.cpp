@@ -63,8 +63,8 @@ void CLineRenderPass::_initV()
 SPortDescriptor CLineRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInputOutput("Main");
-    Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1 });
+    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1, EUsage::READ });
     return Ports;
 }
 

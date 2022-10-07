@@ -74,7 +74,6 @@
 - 模块依赖
 ![](./Doc/ModuleDependency.png)
 
-
 - TODO: Renderpass, pipeline 生命周期图
 
 ## 遇到的有价值的问题
@@ -200,6 +199,7 @@
   - **image layout如何管理**
     - 一个image可做多种用途（采样输入，渲染目标），在使用时最好是对应的layout，layout可以手动在command里转换，在renderpass渲染时也会指定一次layout转换，确认每个attachment输入和输出的layout
     - **解决方法：在PortFormat里加入Usage的信息，并在renderpass里做相应的转换**
+      - **问题：在Renderpass里转换layout，说明输出的layout是固定的，如果一个port输出连接到了多个输入，而这几个输入所需格式各不相同怎么办？**
 
 ### 问题：如何管理场景
   - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理
@@ -270,7 +270,7 @@
         - 但是不太好实现..
           - 尝试定义父类，私有构造函数，make为友元，但是每个子类都要自己定义一下友元，不方便..
           - 暂时放着吧，但还是都改回指针
-  - **解决方法：依旧使用智能指针，引入HandleSet便于数组集体销毁，引入模板函数辅助销毁和置空（destroyAndClear）**
+  - **解决方法：依旧使用智能指针，引入HandleSet便于数组集体销毁，引入模板函数辅助销毁和置空（destroyAndClear），模板函数判断有效（同时判断为空以及isValid函数返回值**
 
 
 ### 问题：link上update的传递方向
@@ -290,6 +290,13 @@
 
 ### 暂时不考虑重构了，实现功能优先，然后过程里考虑重构！
 
+## 一些用到的技术、算法
+### 算法：光线与三角形求交
+1. 平面交点+重心坐标
+   - https://blog.csdn.net/air_liang1212/article/details/118075126
+
+### 技术：物理模拟
+#### 人物走动
 ---
 ## TODO
   - Debug scope功能

@@ -1,6 +1,6 @@
 #include "RenderPassDescriptor.h"
 
-SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort)
+SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth)
 {
     if (!vPort->isReadyV() || !vPort->hasActualFormatV())
     {
@@ -9,20 +9,40 @@ SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort)
         return SAttachementInfo();
     }
 
-    bool isBegin = (vPort->isRoot() || (vPort->hasParent() && vPort->getParent()->isSwapchainSource()));
-    bool isEnd = vPort->isTail();
+    bool IsBegin = (vPort->isRoot() || (vPort->hasParent() && vPort->getParent()->isSwapchainSource()));
+    bool IsEnd = vPort->isTail();
 
-    return { vPort->getActualFormatV().Format, isBegin, isEnd };
+    EUsage CurUsage = EUsage::UNDEFINED;
+    if (!IsBegin)
+    {
+        CurUsage = vPort->getFormat().Usage;
+    }
+
+    EUsage NextUsage = EUsage::PRESENTATION;
+    if (!IsEnd)
+    {
+        _ASSERTE(vPort->getChildNum() > 0);
+        NextUsage = vPort->getChild(0)->getFormat().Usage;
+        for (size_t i = 1; i < vPort->getChildNum(); ++i)
+        {
+            if (NextUsage != vPort->getChild(i)->getFormat().Usage)
+            {
+                throw std::runtime_error("Error: Output port connects to multiple ports with different layout requirments!");
+            }
+        }
+    }
+
+    return { vPort->getActualFormatV().Format, toLayout(CurUsage, vIsDepth), toLayout(NextUsage, vIsDepth), IsBegin, IsEnd };
 }
 
 void CRenderPassDescriptor::addColorAttachment(CPort::Ptr vPort)
 {
-    addColorAttachment(__getAttachmentInfo(vPort));
+    addColorAttachment(__getAttachmentInfo(vPort, false));
 }
 
 void CRenderPassDescriptor::setDepthAttachment(CPort::Ptr vPort)
 {
-    setDepthAttachment(__getAttachmentInfo(vPort));
+    setDepthAttachment(__getAttachmentInfo(vPort, true));
 }
 
 void CRenderPassDescriptor::addColorAttachment(const SAttachementInfo& vInfo)
@@ -87,47 +107,13 @@ CRenderPassDescriptor CRenderPassDescriptor::generateSingleSubpassDesc(CPort::Pt
 
 VkAttachmentDescription CRenderPassDescriptor::__createAttachmentDescription(const SAttachementInfo& vInfo, bool vIsDepth)
 {
-    // TODO: handle loadop to match render pass port, or always use load? but how to clear?
-    VkAttachmentStoreOp StoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
-    VkImageLayout OptimalLayout;
-
-    if (!vIsDepth)
-    {
-        OptimalLayout = VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        StoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
-    }
-    else
-    {
-        OptimalLayout = VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        StoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    }
-
-    VkAttachmentLoadOp LoadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
-
-    VkImageLayout InitImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
-    VkImageLayout FinalImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    VkAttachmentStoreOp StoreOp = vIsDepth ? VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE : VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
 
     // if it's begin clear it, otherwise load it
-    if (vInfo.IsBegin)
-    {
-        LoadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
-        InitImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
-    }
-    else
-    {
-        LoadOp = VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_LOAD;
-        InitImageLayout = OptimalLayout;
-    }
+    VkAttachmentLoadOp LoadOp = vInfo.IsBegin ? VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR : VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_LOAD;
 
-    // if it's end to present layout, otherwise too optimized layout
-    if (vInfo.IsEnd)
-    {
-        FinalImageLayout = VkImageLayout::VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-    }
-    else
-    {
-        FinalImageLayout = OptimalLayout;
-    }
+    VkImageLayout InitImageLayout = vInfo.InitLayout;
+    VkImageLayout FinalImageLayout = vInfo.FinalLayout;
 
     // create renderpass
     VkAttachmentDescription Attachment = {};

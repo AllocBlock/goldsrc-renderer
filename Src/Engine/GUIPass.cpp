@@ -20,7 +20,7 @@ void CGUIRenderPass::_initV()
 SPortDescriptor CGUIRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInputOutput("Main");
+    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
     return Ports;
 }
 

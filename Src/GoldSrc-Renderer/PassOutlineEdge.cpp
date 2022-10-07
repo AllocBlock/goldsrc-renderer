@@ -14,8 +14,8 @@ void COutlineEdgeRenderPass::_initV()
 SPortDescriptor COutlineEdgeRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInputOutput("Main");
-    Ports.addInput("Mask");
+    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    Ports.addInput("Mask", SPortFormat::createAnyOfUsage(EUsage::READ));
     return Ports;
 }
 

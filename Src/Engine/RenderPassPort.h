@@ -9,11 +9,24 @@
 #include <set>
 #include <chrono>
 
+enum class EUsage
+{
+    DONT_CARE,
+    UNDEFINED,
+    READ, // for sampling
+    WRITE, // as render target
+    PRESENTATION
+};
+
+VkImageLayout toLayout(EUsage vUsage, bool isDepth = false);
+
 struct SPortFormat
 {
     VkFormat Format = VkFormat::VK_FORMAT_UNDEFINED; // VK_FORMAT_UNDEFINED for any
     VkExtent2D Extent = { 0, 0 }; // (0, 0) for any extent(>0)
     size_t Num = 1; // 0 for any num (>0)
+
+    EUsage Usage = EUsage::DONT_CARE;
 
     bool isMatch(const SPortFormat& v) const
     {
@@ -21,6 +34,11 @@ struct SPortFormat
             && (Extent.width == v.Extent.width || Extent.width == 0 || v.Extent.width == 0)
             && (Extent.height == v.Extent.height || Extent.height == 0 || v.Extent.height == 0)
             && (Num == v.Num || Num == 0 || v.Num == 0);
+    }
+
+    static SPortFormat createAnyOfUsage(EUsage vUsage)
+    {
+        return { VkFormat::VK_FORMAT_UNDEFINED, {0, 0}, 0, vUsage };
     }
 
     static const SPortFormat& AnyFormat;
@@ -479,7 +497,7 @@ private:
     {
         _ASSERTE(!hasOutput(vName));
         _ASSERTE(!hasInput(vName));
-        CRelayPort::Ptr pPort = make<CRelayPort>(SPortFormat::AnyFormat);
+        CRelayPort::Ptr pPort = make<CRelayPort>(vFormat);
         pPort->hookImageUpdate(m_pImageUpdateCallbackFunc);
         pPort->hookLinkUpdate(m_pLinkUpdateCallbackFunc);
         m_InputPortMap[vName] = m_OutputPortMap[vName] = pPort;

@@ -35,9 +35,9 @@ void COutlineMaskRenderPass::_initV()
 SPortDescriptor COutlineMaskRenderPass::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Main"); // FIXME: only need extent and update trigger, but not overwrite
-    Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1 });
-    Ports.addOutput("Mask", { VK_FORMAT_R8G8B8A8_UNORM, {0, 0}, 0});
+    Ports.addInput("Main", SPortFormat::createAnyOfUsage(EUsage::READ));
+    Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1, EUsage::WRITE });
+    Ports.addOutput("Mask", { VK_FORMAT_R8G8B8A8_UNORM, {0, 0}, 0, EUsage::WRITE });
     return Ports;
 }
 

@@ -164,7 +164,6 @@ void CApplicationGoldSrc::__linkPasses()
     auto pPortOutlineEdge = m_pPassOutlineEdge->getPortSet();
     auto pPortGui = m_pPassGUI->getPortSet();
 
-    SPortFormat SwapchainFormat = { m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum() };
     m_pSwapchainPort->setForceNotReady(true);
     CPortSet::link(m_pSwapchainPort, pPortScene, "Main");
     CPortSet::link(pPortScene, "Depth", pPortOutlineMask, "Depth");

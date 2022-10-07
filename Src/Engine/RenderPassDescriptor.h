@@ -5,12 +5,14 @@
 struct SAttachementInfo
 {
     VkFormat Format = VkFormat::VK_FORMAT_UNDEFINED;
+    VkImageLayout InitLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
+    VkImageLayout FinalLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
     bool IsBegin = false;
     bool IsEnd = false;
 
     bool operator == (const SAttachementInfo& vInfo) const
     {
-        return Format == vInfo.Format && IsBegin == vInfo.IsBegin && IsEnd == vInfo.IsEnd;
+        return Format == vInfo.Format && InitLayout == vInfo.InitLayout && FinalLayout == vInfo.FinalLayout;
     }
 
     bool operator != (const SAttachementInfo& vInfo) const
@@ -56,7 +58,7 @@ public:
 
     static CRenderPassDescriptor generateSingleSubpassDesc(CPort::Ptr vColorPort, CPort::Ptr vDepthPort = nullptr);
 private:
-    SAttachementInfo __getAttachmentInfo(CPort::Ptr vPort);
+    SAttachementInfo __getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth);
 
     static VkAttachmentDescription __createAttachmentDescription(const SAttachementInfo& vInfo, bool vIsDepth);
     void __generateAttachmentDescription();
