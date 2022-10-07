@@ -78,7 +78,7 @@
 - TODO: Renderpass, pipeline 生命周期图
 
 ## 遇到的有价值的问题
-- Renderpass链接的问题
+### 问题：Renderpass之间的连接
   - 最初因为pass比较少，pass只有单入单出，不需要关心输入输出的流向在主函数里控制即可，更新也在主函数做
   - 后来因为pass变多，链接变得很长，重复代码太多了，此外，每次更新（如改变窗口大小）时都要手动重新连接，如果有遗漏也难以发现问题，于是寻求办法解决
   - 思路是给pass设计输入输出口，类似Falcor的设计，把输入输出口连接起来形成树状结构，更新时按照树状结构传播下去即可，并且输入是否准备好，输出是否指定了端口，更新时可能只需要部分更新（如更换一张纹理）等都可以实现
@@ -166,34 +166,42 @@
   - 第三版
     - 好像，InputPort和InputSrcOutputPort基本一样...是不是可以不用那么在意In还是Out，直接把Port定义为链表？
     - Port只有两种，输出Port和中转Port
-      - 输出Port：保有view，是链表的头，可以表示第二版的OutputPort
-      - 中转Port：依赖另一个port，可以表示第二版的InputPort和InputSrcOutputPort
-    - 这样依赖关系很明确形成了，不过还不能单输出连接多输入...做成树状比较好
-    - 也能解决掉renderpassPos
-      - 一个问题，如何判断是否clear和toPresent？
-        - clear的话，如果是自己新建的，就需要clear，自己新建的对应了SourceOutput
-        - 但对于swapchain image，他也是需要clear的，但他的SourceOutput不属于任何一个pass，只能是第一个pass的输入来clear它...需要单独判断
-        - 但这也会导致attachment依赖port，要创建attachment必须有port...想起Falcor的处理，可以创建internal，也许也可用这个思路，不过暂时没啥影响
-        - 问题....目前是init->attachement description ->create render pass，link是在全部init后做的....
-          - 好像port和link可以最早做，但是先全部创建、link、然后再init会有个问题，目前scenepass有两个不同的实现，可以动态切换，也就是说整个渲染图会改变，这个怎么处理？
-          - 也就是说，怎么实现动态的连接呢？目前通过是否是head、tail的方法好像不太合适
-          - 这样，首先init和link需要分开，init需要确认link是否有效，无效则暂时不创建attachment
-            - 随后如果link有更新，hook更新，（在下一个loop，还是立刻？立刻的话有可能太频繁了，或者保存一下状态，如果状态未改变则无需重新创建）重新创建attachment
-            - 判断状态是否改变，是在PortSet里做，还是renderpass自己检查？
-            - 构造函数不应该调虚函数，所以虚函数获取port布局是不可的...那么link必须要在init后了
-        - 问题...改成不区分In/Out了，怎么判断是不是begin？
-          - 因为获取input和output都可以，不能只通过判断父节点是不是swapchain...
-          - 要不要引入changeflag？还是区分input和inputsrcoutput，但是change本身和port无关的....
-          - 或者...这类IO不用两个Port，用同一个Port！这样就是统一的了！！！！
-          - 解决！
-    - 问题，就算引入状态保存，也有冗余的重建...
+      - **输出Port**：保有view，是链表的头，可以表示第二版的OutputPort
+      - **中转Port**：依赖另一个port，可以表示第二版的InputPort和InputSrcOutputPort
+      - 这样依赖关系很明确形成了，不过还不能单输出连接多输入...做成树状比较好
+      - 也能解决掉renderpassPos
+    - **问题：如何判断是否clear和toPresent？**
+      - clear的话，如果是自己新建的，就需要clear，自己新建的对应了SourceOutput
+      - 但对于swapchain image，他也是需要clear的，但他的SourceOutput不属于任何一个pass，只能是第一个pass的输入来clear它...需要单独判断
+      - 但这也会导致attachment依赖port，要创建attachment必须有port...想起Falcor的处理，可以创建internal，也许也可用这个思路，不过暂时没啥影响
+      - **解决方法：给swapchain image单独设计一个mark，每个source节点都可以调用接口判断是否是swapchain image**
+    - **问题：目前是init->attachement description ->create render pass，link是在全部init后做的....**
+      - 好像port和link可以最早做，但是先全部创建、link、然后再init会有个问题，目前scenepass有两个不同的实现，可以动态切换，也就是说整个渲染图会改变，这个怎么处理？
+      - 也就是说，怎么实现动态的连接呢？目前通过是否是head、tail的方法好像不太合适
+      - 这样，首先init和link需要分开，init需要确认link是否有效，无效则暂时不创建attachment
+        - 随后如果link有更新，hook更新，（在下一个loop，还是立刻？立刻的话有可能太频繁了，或者保存一下状态，如果状态未改变则无需重新创建）重新创建attachment
+        - 判断状态是否改变，是在PortSet里做，还是renderpass自己检查？
+        - 构造函数不应该调虚函数，所以虚函数获取port布局是不可的...那么link必须要在init后了
+        - **解决方法：暂时没想到很好的方法，等后面把调用顺序理清楚后再来处理**
+    - **问题：改成不区分In/Out了，怎么处理同时做输入和输出的情况？**
+      - 此时input和output对应了同一个image，该使用哪一个？不能只通过判断父节点是不是swapchain...
+      - 要不要引入changeflag？还是区分input和inputsrcoutput，但是change本身和port无关的....
+      - 或者...这类IO不用两个Port，用同一个Port！这样就是统一的了！！！！
+      - **解决方法：这类同时输入输出的情况，合并为一个port来处理**
+    - **问题：再renderpass构建过程中，存在冗余的重建**
+      - **解决方法1：引入状态保存，每次更新时检查哪些发生了变化，针对变化的地方更新**
+        - 但这样依然存在冗余重建，比如多次重复调用了更新，但也许可以等全部调用完后统一用一次更新
       - 方案一：在批量设置时，提供暂时屏蔽更新的指令；问题是什么时候恢复更新很难确定...不好
       - 方案二：收到更新状态后延迟更新；问题是延迟到什么时候，谁来触发？
       - **暂时放着吧，后面统计下多余重建的数量，然后把renderpass的流程画一下，看看怎么处理最好**
       - 引入下PresentPort，用于确定一个link是否完整，presentport只在最后定义（或者mark也可以），这样可以避免冗余重建！
       - 或者也不需要PresentPort，给SourcePort加一个暂时无效化，等创建完后再置为有效就行了
+      - **解决方法2：在批量更新状态时，暂时禁用节点更新（具体方法是让swapchain无效化，这样整个链条无效，链条无效时不会重建renderpass），最后做一个恢复与重建即可**
+  - **image layout如何管理**
+    - 一个image可做多种用途（采样输入，渲染目标），在使用时最好是对应的layout，layout可以手动在command里转换，在renderpass渲染时也会指定一次layout转换，确认每个attachment输入和输出的layout
+    - **解决方法：在PortFormat里加入Usage的信息，并在renderpass里做相应的转换**
 
-- 如何管理场景
+### 问题：如何管理场景
   - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理
   - 而渲染时希望保证状态变化少，一劳永逸，需要做一些权衡
   - 比如目前为了不拆散物体，允许一个物体有多个纹理，这导致一个物体drawcall需要引用多张纹理
@@ -203,7 +211,7 @@
   - 还有部分需求是网状结构，很难处理
     - 比如对于一批物体，一方面希望控制每个物体的可见性，因此不方便拆分物体；另一方面希望实现同一纹理网格的batching，需要拆分物体...
 
-- 如何管理渲染流程
+### 问题：如何管理渲染流程，自动串联pass
   - Command buffer的顺序管理
   - command buffer的更新
     - 场景、设置的变化导致重录
@@ -213,11 +221,11 @@
       - 第一版用于renderpass，定义一个更新结构体，每次更新穿这个结构体，虚函数自己根据状态判断
       - 要不要也改成hook的形式
 
-- Framebuffer的创建
+### 问题：Framebuffer的创建和更新
   - framebuffer目前需要到request前创建，它的更新怎么实现？
   - 要不要单独抽象一层，控制framebuffer的状态
 
-- GUI事件处理
+### 问题：GUI事件处理
   - 部分事件需要全局的信息，需要在主函数处理，否则就需要把全局信息传入，产生耦合
   - 引入回调函数可以解决这个问题，但是大量的回调函数需要很多接口...
   - 可以引入事件系统，这需要涉及到
@@ -225,7 +233,7 @@
     - hook和trigger
     - **事件参数如何传递？**
 
-- renderpass重建
+### 问题：renderpass重建，在何时？如何触发？
   - 第一版：
     - 用recreate虚函数表示，主要处理swapchain的变化，比如大小改变
     - 但现在引入了renderpass自身的变化，如果还是用recreate，不好区分谁变化了，导致多余的重建
@@ -246,7 +254,7 @@
       - 完成，全部改成onUpdate
       - 问题。onUpdate需要recreate，需要先判断销毁，而真正destroy又要判断一遍..
 
-- destroy和recreate的问题
+### 问题：destroy和recreate如何方便的处理，指针置空的问题
   - 目前是IVulkanHandle+智能指针解决
     - 这样必须先创建一个实例，还要判断指针是否存在
     - 可以抛弃掉指针否？引用的时候也不要填指针对象，而是直接存handle，保持vulkan原生
@@ -262,10 +270,12 @@
         - 但是不太好实现..
           - 尝试定义父类，私有构造函数，make为友元，但是每个子类都要自己定义一下友元，不方便..
           - 暂时放着吧，但还是都改回指针
+  - **解决方法：依旧使用智能指针，引入HandleSet便于数组集体销毁，引入模板函数辅助销毁和置空（destroyAndClear）**
 
-- link上update的传递
+
+### 问题：link上update的传递方向
   - image update向尾部传递
-  - link upate向整条链传递
+  - link update向整条链传递
     - 如何保证不重复传递？
       - 告诉port是前方还是后方传递的，避免重复
     - 对外界而言，link update只触发一次要怎么实现？
@@ -276,10 +286,12 @@
       - 这里还有个触发顺序的问题，先触发邻接的update，还是先触发hook的update？
         - 最佳时先全部port的update，再全部hook的update...但是每个函数里的邻接与hook是顺序的，不可拆分
         - 暂时先邻接吧
+  - **解决方法：目前link是树状的，image update向子节点传播，link update向父节点和子节点传递（参数带有传播来源节点，从而避免重复触发）**
 
-- 暂时不考虑重构了，实现功能优先，然后过程里考虑重构！
+### 暂时不考虑重构了，实现功能优先，然后过程里考虑重构！
 
-- TODO
+---
+## TODO
   - Debug scope功能
   - 目前swapchain的extent变化是renderpass在做，而不是port在做....会不会不太好
   - 新问题，layout的转换...
