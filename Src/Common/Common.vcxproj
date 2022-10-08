@@ -14,11 +14,13 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="Maths.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Log.cpp" />
+    <ClCompile Include="Maths.cpp" />
     <ClCompile Include="Pointer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

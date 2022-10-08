@@ -12,7 +12,7 @@
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 
-void CLineRenderPass::setHighlightBoundingBox(S3DBoundingBox vBoundingBox)
+void CLineRenderPass::setHighlightBoundingBox(Math::S3DBoundingBox vBoundingBox)
 {
     auto pObject = make<SGuiObject>();
 

@@ -13,7 +13,7 @@ class CLineRenderPass : public CSceneRenderPass
 public:
     CLineRenderPass() = default;
 
-    void setHighlightBoundingBox(S3DBoundingBox vBoundingBox);
+    void setHighlightBoundingBox(Math::S3DBoundingBox vBoundingBox);
     void removeHighlightBoundingBox();
     void addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd);
 

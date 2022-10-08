@@ -252,14 +252,14 @@ void CSceneReaderBsp::__loadBspTree()
         // load entities data and calculate bounding box
         std::vector<ptr<C3DObjectGoldSrc>> ModelObjects = __loadEntity(i);
         std::vector<size_t> ObjectIndices;
-        S3DBoundingBox TotalBoundingBox =
+        Math::S3DBoundingBox TotalBoundingBox =
         {
             {INFINITY, INFINITY, INFINITY},
             {-INFINITY, -INFINITY, -INFINITY},
         };
         for (ptr<C3DObjectGoldSrc> pModelObject : ModelObjects)
         {
-            std::optional<S3DBoundingBox> BoundingBox = pModelObject->getBoundingBox();
+            std::optional<Math::S3DBoundingBox> BoundingBox = pModelObject->getBoundingBox();
             if (BoundingBox == std::nullopt) continue;
             TotalBoundingBox.Min.x = std::min<float>(TotalBoundingBox.Min.x, BoundingBox.value().Min.x);
             TotalBoundingBox.Min.y = std::min<float>(TotalBoundingBox.Min.y, BoundingBox.value().Min.y);

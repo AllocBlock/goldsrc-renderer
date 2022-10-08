@@ -96,8 +96,7 @@ void CApplicationGoldSrc::_createOtherResourceV()
 
         ptr<C3DObjectGoldSrc> pNearestObject = nullptr;
         float NearestIntersection = 0.0f;
-        S3DBoundingBox BB;
-        if (SceneProbe::select(NDC, m_pCamera, m_pScene, pNearestObject, NearestIntersection, BB))
+        if (SceneProbe::select(NDC, m_pCamera, m_pScene, pNearestObject, NearestIntersection))
         {
             m_pPassOutlineMask->setHighlightObject(pNearestObject);
         }

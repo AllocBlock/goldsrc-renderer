@@ -2,6 +2,7 @@
 #include "Pointer.h"
 #include "Object.h"
 #include "GeneralDataArray.h"
+#include "Maths.h"
 
 #include <glm/glm.hpp>
 #include <optional>
@@ -12,13 +13,6 @@ enum class E3DObjectPrimitiveType
     TRIAGNLE_LIST,
     TRIAGNLE_STRIP_LIST,
     INDEXED_TRIAGNLE_LIST,
-};
-
-// AABB
-struct S3DBoundingBox
-{
-    glm::vec3 Min;
-    glm::vec3 Max;
 };
 
 class C3DObject : public CObject
@@ -40,7 +34,7 @@ public:
     void setTexIndexArray(ptr<IDataArray<uint32_t>> vTexIndexArray) { m_pTexIndexArray = vTexIndexArray; }
     void setPrimitiveType(E3DObjectPrimitiveType vType) { m_PrimitiveType = vType; }
 
-    std::optional<S3DBoundingBox> getBoundingBox() const;
+    std::optional<Math::S3DBoundingBox> getBoundingBox() const;
 
 protected:
     bool m_IsVisible = true;

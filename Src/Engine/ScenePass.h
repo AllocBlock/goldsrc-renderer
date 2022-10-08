@@ -2,6 +2,7 @@
 #include "IRenderPass.h"
 #include "Camera.h"
 #include "Scene.h"
+#include "Maths.h"
 
 struct SObjectDataPosition
 {
@@ -62,7 +63,7 @@ protected:
     {
         // AABB frustum culling
         const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;
-        std::optional<S3DBoundingBox> BoundingBox = vpObject->getBoundingBox();
+        std::optional<Math::S3DBoundingBox> BoundingBox = vpObject->getBoundingBox();
         if (BoundingBox == std::nullopt) return false;
 
         std::array<glm::vec3, 8> BoundPoints = {};

@@ -1,12 +1,12 @@
 #include "3DObject.h"
 
-std::optional<S3DBoundingBox> C3DObject::getBoundingBox() const
+std::optional<Math::S3DBoundingBox> C3DObject::getBoundingBox() const
 {
-    std::optional<S3DBoundingBox> CachedBoundingBox = std::nullopt;
+    std::optional<Math::S3DBoundingBox> CachedBoundingBox = std::nullopt;
     if (CachedBoundingBox.has_value()) return CachedBoundingBox.value();
     if (m_pVertexArray->empty()) return std::nullopt;
 
-    S3DBoundingBox BoundingBox;
+    Math::S3DBoundingBox BoundingBox;
     BoundingBox.Min = glm::vec3(INFINITY, INFINITY, INFINITY);
     BoundingBox.Max = glm::vec3(-INFINITY, -INFINITY, -INFINITY);
     for (size_t i = 0; i < m_pVertexArray->size(); ++i)

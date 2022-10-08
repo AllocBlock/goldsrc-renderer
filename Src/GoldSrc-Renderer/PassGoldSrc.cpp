@@ -393,7 +393,7 @@ std::vector<size_t> CSceneGoldSrcRenderPass::__sortModelRenderSequence()
     for (size_t i = 0; i < m_pScene->BspTree.ModelNum; ++i)
     {
         const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[i];
-        S3DBoundingBox BoundingBox = ModelInfo.BoundingBox;
+        Math::S3DBoundingBox BoundingBox = ModelInfo.BoundingBox;
         glm::vec3 Center = (BoundingBox.Min + BoundingBox.Max) * 0.5f;
         float Distance = glm::distance(Center, CameraPos);
 

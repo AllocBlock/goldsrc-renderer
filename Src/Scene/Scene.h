@@ -1,6 +1,7 @@
 #pragma once
 #include "IOImage.h"
 #include "3DObjectGoldSrc.h"
+#include "Maths.h"
 
 #include <vector>
 #include <functional>
@@ -20,7 +21,7 @@ enum class EGoldSrcRenderMode
 
 struct SModelInfo
 {
-    S3DBoundingBox BoundingBox;
+    Math::S3DBoundingBox BoundingBox;
     EGoldSrcRenderMode RenderMode = EGoldSrcRenderMode::NORMAL;
     float Opacity = 1.0f;
 };
