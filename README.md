@@ -288,6 +288,12 @@
         - 暂时先邻接吧
   - **解决方法：目前link是树状的，image update向子节点传播，link update向父节点和子节点传递（参数带有传播来源节点，从而避免重复触发）**
 
+### 问题：错误定位
+  - 只靠Handle ID难以定位对应Vulkan对象的位置
+  - **预想解决方法：每个对象创建和销毁之间为一个Scope，通过Scope可以形成一个树状图，可以打印出来，从而找到对象在何处创建的**
+    - 需要考虑反射，物体知道自己的名称
+    - 如何自动构造Scope？
+
 ### 暂时不考虑重构了，实现功能优先，然后过程里考虑重构！
 
 ## 一些用到的技术、算法
@@ -307,10 +313,5 @@
 ## TODO
   - Debug scope功能
   - 目前swapchain的extent变化是renderpass在做，而不是port在做....会不会不太好
-  - 新问题，layout的转换...
-    - pass1有一个output，输入是attachment_optimized，而输出应该是什么？要看后续的使用，可以是attachment_optimized（继续写入），也可以是shader_read_optimized（读取）...
-    - 有点复杂，暂时不管
-    - outline整理
-    - 自动排列commandbuffer
-    - 更准确的raycast（per triangle）
-    - wad第一次搜寻找不到，重试后找到的问题
+  - 自动排列commandbuffer
+  - wad第一次搜寻找不到，重试后找到的问题
