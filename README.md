@@ -13,19 +13,21 @@
   - 解析mdl文件 ⏸暂停，完成部分
 - 读取并渲染bsp文件(固体+实体) ✅已完成
   - 实现实体特殊渲染
-    - 点实体渲染为方块 
+    - 点实体渲染为方块 ✅已完成
     - 特殊点实体渲染
-      - 图标渲染 ✅已完成
+      - Sprite图标渲染 ✅已完成
+      - 应用到场景中 ⏸暂停
     - 模型渲染 ⏸暂停
 - 编辑器
   - 物体选取
     - 高亮显示 
-      - bounding box ✅已完成
-      - 外轮廓 🚀开发中
+      - bounding box ❌已弃用
+      - 外轮廓 ✅已完成
   - 物体变换
   - 实体设置
     - FGD配置 ⏸暂停
   - 保存文件
+    - 导出obj ✅已完成
 ## 其他功能（画🍕）
 - 高级渲染效果 ⏸暂停
   - PBR
@@ -40,14 +42,15 @@
   - GUI库：glfw+imgui
     - file dialog文件选择框基于nativefiledialog
   - 数学库：glm
-  - 图片IO：stb_image (.jpg, .bmp, .png, .tag...), tinyexr (.exr)
+  - 图片IO：stb_image (.jpg, .bmp, .png, .tga...), tinyexr (.exr)
 - （可选）Python，编译Shader的脚本，如果要绕过Python实现自动编译详见compileShader.py
 
 - 安装
-  - 首先安装vcpkg https://vcpkg.io/en/getting-started.html 
+  - 首先下载安装Vulkan https://github.com/microsoft/vcpkg/blob/master/ports/vulkan/usage
+  - 然后安装vcpkg https://vcpkg.io/en/getting-started.html 
   - 添加环境变量VCPKG_DEFAULT_TRIPLET=x64-windows
-    - 修改默认安装64位版，否则默认是32位
-    - 否则每条install末尾要加上:x64-windows，如
+    - 这样会变成默认安装64位版，否则默认是32位
+    - 不添加环境变量的话，需要每条install末尾要加上:x64-windows来下载64位版本，如
     ```
     vcpkg install glm:x64-windows
     ```
@@ -63,8 +66,8 @@
 
   vcpkg integrate install
   ```
-  > 注意Vulkan并非下载源码安装，而是回去寻找本地已安装的SDK，因此需要自己下载安装后，配置好VULKAN_SDK环境变量
-  > 详见：https://github.com/microsoft/vcpkg/blob/master/ports/vulkan/usage
+  > 注意因为Vulkan并非下载源码安装，而是会去寻找本地已安装的SDK，所以才需要自己下载安装，此外安装后需要检查VULKAN_SDK环境变量是否正确
+  
 
 ## 架构图
 - Vulkan调用流程图
