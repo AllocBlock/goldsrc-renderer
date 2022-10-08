@@ -35,6 +35,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Function", "Src\Function\Fu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderPass", "Src\RenderPass\RenderPass.vcxproj", "{920D82F3-C77D-49A8-96D6-0EEC00081511}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test_Physics", "Src\Tests\Test_Physics\Test_Physics.vcxproj", "{C7A78ACB-69C8-456B-8B2F-822FACF9B0B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -101,6 +103,10 @@ Global
 		{920D82F3-C77D-49A8-96D6-0EEC00081511}.Debug|x64.Build.0 = Debug|x64
 		{920D82F3-C77D-49A8-96D6-0EEC00081511}.Release|x64.ActiveCfg = Release|x64
 		{920D82F3-C77D-49A8-96D6-0EEC00081511}.Release|x64.Build.0 = Release|x64
+		{C7A78ACB-69C8-456B-8B2F-822FACF9B0B4}.Debug|x64.ActiveCfg = Debug|x64
+		{C7A78ACB-69C8-456B-8B2F-822FACF9B0B4}.Debug|x64.Build.0 = Debug|x64
+		{C7A78ACB-69C8-456B-8B2F-822FACF9B0B4}.Release|x64.ActiveCfg = Release|x64
+		{C7A78ACB-69C8-456B-8B2F-822FACF9B0B4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,6 +118,7 @@ Global
 		{FF7628D7-0ECD-4A94-B7D9-2B614EBAFE1B} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
 		{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
 		{19498310-A186-4EA4-8268-23AEC051A5BF} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
+		{C7A78ACB-69C8-456B-8B2F-822FACF9B0B4} = {6AC53CF0-C9ED-43BC-B139-C78119CC740C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8B46BA88-79F5-429F-9E71-8FF7423CA028}

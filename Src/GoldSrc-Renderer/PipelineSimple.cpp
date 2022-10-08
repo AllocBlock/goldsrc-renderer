@@ -133,6 +133,8 @@ void CPipelineSimple::_destroyV()
 
 void CPipelineSimple::__destroyResources()
 {
+    m_VertUniformBufferSet.destroyAndClearAll();
+    m_FragUniformBufferSet.destroyAndClearAll();
     m_PlaceholderImage.destroy();
     m_Sampler.destroy();
 }

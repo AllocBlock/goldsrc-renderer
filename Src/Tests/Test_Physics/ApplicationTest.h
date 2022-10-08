@@ -2,7 +2,6 @@
 #include "IApplication.h"
 #include "GUIPass.h"
 #include "PassShade.h"
-#include "PassShadowMap.h"
 #include "Interactor.h"
 #include "3DObject.h"
 
@@ -25,9 +24,11 @@ private:
     void __generateScene();
     static ptr<C3DObject> __createCube(glm::vec3 vCenter, float vSize);
 
+    ptr<CCamera> m_pCamera = nullptr;
+
     ptr<CGUIRenderPass> m_pPassGUI = nullptr;
     ptr<CRenderPassShade> m_pPassShade = nullptr;
-    ptr<CRenderPassShadowMap> m_pRenderPassShadowMap = nullptr;
+
     ptr<CInteractor> m_pInteractor = nullptr;
 
     std::vector<ptr<C3DObject>> m_ObjectSet;

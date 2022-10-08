@@ -50,6 +50,7 @@ void IRenderPass::updateImageInfo(VkFormat vImageFormat, VkExtent2D vImageExtent
 
 void IRenderPass::update(uint32_t vImageIndex)
 {
+    _ASSERTE(isValid());
     _updateV(vImageIndex);
 } 
 

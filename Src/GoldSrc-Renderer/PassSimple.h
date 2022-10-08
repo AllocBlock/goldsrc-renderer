@@ -60,8 +60,7 @@ private:
     void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
-
-    VkFormat __findDepthFormat();
+    
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
 

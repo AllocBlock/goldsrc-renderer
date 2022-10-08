@@ -20,7 +20,7 @@ protected:
 private:
     void __linkPasses();
 
-    ptr<CGUIRenderPass> m_pGUIPass = nullptr;
+    ptr<CGUIRenderPass> m_pPassGUI = nullptr;
     ptr<CRendererTest> m_pRenderPass = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };

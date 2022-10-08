@@ -68,14 +68,60 @@ namespace vk
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
 
     protected:
-        virtual void _initV() {}
+        /*
+         * _getPortDescV:
+         * triggers only once
+         * setup port info for PortSet
+         */
         virtual SPortDescriptor _getPortDescV() = 0;
-        virtual CRenderPassDescriptor _getRenderPassDescV() = 0;
-        virtual void _updateV(uint32_t vImageIndex) {}
-        virtual void _renderUIV() override {}
-        virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
-        virtual void _destroyV() {};
 
+        /*
+         * _initV: 
+         * triggers only once
+         * AppInfo and PortSet is ready before trigger
+         */
+        virtual void _initV() {}
+        
+        /*
+         * _getRenderPassDescV:
+         * can trigger multiple times
+         * return renderpass attachment info, require every time then renderpass need recreate
+         */
+        virtual CRenderPassDescriptor _getRenderPassDescV() = 0;
+
+        /*
+         * _updateV:
+         * triggers each frame
+         * update function each frame/tick
+         */
+        virtual void _updateV(uint32_t vImageIndex) {}
+        
+        /*
+         * _renderUIV:
+         * triggers each frame
+         * draw ui
+         */
+        virtual void _renderUIV() override {}
+        
+        /*
+         * _requestCommandBuffersV:
+         * trigger each frame
+         * get command buffer each frame
+         */
+        virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
+
+        /*
+         * _destroyV:
+         * trigger only once
+         * destory everything
+         */
+        virtual void _destroyV() {}
+
+        /*
+         * _onUpdateV:
+         * can trigger multiple times
+         * trigger when something updated
+         */
         virtual void _onUpdateV(const SPassUpdateState& vUpdateState) {}
 
         vk::SAppInfo m_AppInfo;

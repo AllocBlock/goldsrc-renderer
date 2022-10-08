@@ -1,6 +1,6 @@
 #include "PipelineShadowMap.h"
 
-struct SUBOVertLight
+struct SUBOVert
 {
     alignas(16) glm::mat4 MVP;
 };
@@ -25,7 +25,7 @@ void CPipelineShadowMap::__updateDescriptorSet()
 
 void CPipelineShadowMap::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLightViewProj, float vLightNear, float vLightFar)
 {
-    SUBOVertLight UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.MVP = vLightViewProj;
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
@@ -72,7 +72,7 @@ void CPipelineShadowMap::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
-    VkDeviceSize VertBufferSize = sizeof(SUBOVertLight);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
     VkDeviceSize FragBufferSize = sizeof(SUBOFragLight);
     m_VertUniformBufferSet.resize(vImageNum);
     m_FragUniformBufferSet.resize(vImageNum);

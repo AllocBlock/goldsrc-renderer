@@ -139,6 +139,20 @@ VkFormatProperties CPhysicalDevice::getFormatProperty(VkFormat vFormat) const
     return std::move(Props);
 }
 
+VkFormat vk::CPhysicalDevice::getBestDepthFormat() const
+{
+    static VkFormat DepthFormat = VkFormat::VK_FORMAT_UNDEFINED;
+    if (DepthFormat == VkFormat::VK_FORMAT_UNDEFINED)
+    {
+        DepthFormat = chooseSupportedFormat(
+            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
+    }
+    return DepthFormat;
+}
+
 bool CPhysicalDevice::__isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vDeviceExtensions)
 {
     SQueueFamilyIndices QueueIndices = CPhysicalDevice::__findQueueFamilies(vPhysicalDevice, vSurface);

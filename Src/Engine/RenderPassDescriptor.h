@@ -38,6 +38,7 @@ public:
 
     bool operator == (const CRenderPassDescriptor& vDesc) const
     {
+        if (isValid() != vDesc.isValid()) return false;
         if (m_ColorAttachmentInfoSet.size() != vDesc.m_ColorAttachmentInfoSet.size()) return false;
         if (m_DepthAttachmentInfo.has_value() != vDesc.m_DepthAttachmentInfo.has_value()) return false;
         size_t ColorNum = m_ColorAttachmentInfoSet.size();

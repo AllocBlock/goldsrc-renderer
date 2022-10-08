@@ -13,15 +13,15 @@ void CApplicationTest::_initV()
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
 
-    m_pGUIPass = make<CGUIRenderPass>();
-    m_pGUIPass->setWindow(m_pWindow);
-    m_pGUIPass->init(AppInfo, ERenderPassPos::END);
+    m_pPassGUI = make<CGUIRenderPass>();
+    m_pPassGUI->setWindow(m_pWindow);
+    m_pPassGUI->init(AppInfo, ERenderPassPos::END);
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
-    m_pGUIPass->update(vImageIndex);
+    m_pPassGUI->update(vImageIndex);
     m_pRenderPass->update(vImageIndex);
 }
 
@@ -40,14 +40,14 @@ std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vI
     std::vector<VkCommandBuffer> BufferSet;
     std::vector<VkCommandBuffer> RendererBufferSet = m_pRenderPass->requestCommandBuffers(vImageIndex);
     BufferSet.insert(BufferSet.end(), RendererBufferSet.begin(), RendererBufferSet.end());
-    std::vector<VkCommandBuffer> GUIBufferSet = m_pGUIPass->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> GUIBufferSet = m_pPassGUI->requestCommandBuffers(vImageIndex);
     BufferSet.insert(BufferSet.end(), GUIBufferSet.begin(), GUIBufferSet.end());
     return BufferSet;
 }
 
 void CApplicationTest::_createOtherResourceV()
 {
-    m_pGUIPass->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    m_pPassGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
     m_pRenderPass->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
     __linkPasses();
 }
@@ -59,14 +59,14 @@ void CApplicationTest::_recreateOtherResourceV()
 
 void CApplicationTest::_destroyOtherResourceV()
 {
-    m_pGUIPass->destroy();
+    m_pPassGUI->destroy();
     m_pRenderPass->destroy();
 }
 
 void CApplicationTest::__linkPasses()
 {
     auto pLinkMain = m_pRenderPass->getLink();
-    auto pLinkGui = m_pGUIPass->getLink();
+    auto pLinkGui = m_pPassGUI->getLink();
 
     const auto& ImageViews = m_pSwapchain->getImageViews();
     for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)

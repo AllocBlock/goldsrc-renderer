@@ -6,18 +6,25 @@
 ![](./Doc/Images/assault_this_renderer.png)
 
 ## 基础功能
-- 读取并渲染map文件 ✅已完成
-- 读取并渲染rmf文件
-  - 解析wad文件 ✅已完成
-  - 解析spr文件 ✅已完成
-  - 解析mdl文件 ⏸暂停，完成部分
-- 读取并渲染bsp文件(固体+实体) ✅已完成
-  - 实现实体特殊渲染
-    - 点实体渲染为方块 ✅已完成
-    - 特殊点实体渲染
-      - Sprite图标渲染 ✅已完成
-      - 应用到场景中 ⏸暂停
-    - 模型渲染 ⏸暂停
+- 渲染
+  - 读取并渲染map文件 ✅已完成
+  - 读取并渲染rmf文件
+    - 解析wad文件 ✅已完成
+    - 解析spr文件 ✅已完成
+    - 解析mdl文件 ⏸暂停，完成部分
+  - 读取并渲染bsp文件(固体+实体) ✅已完成
+    - 实现实体特殊渲染
+      - 点实体渲染为方块 ✅已完成
+      - 特殊点实体渲染
+        - Sprite图标渲染 ✅已完成
+        - 应用到场景中 ⏸暂停
+      - 模型渲染 ⏸暂停
+- 物理
+  - 实现物理demo
+    - 基础形状的定义
+    - 刚体定义
+    - 运动模拟
+    - 碰撞检测与处理
 - 编辑器
   - 物体选取
     - 高亮显示 
@@ -198,7 +205,7 @@
       - **暂时放着吧，后面统计下多余重建的数量，然后把renderpass的流程画一下，看看怎么处理最好**
       - 引入下PresentPort，用于确定一个link是否完整，presentport只在最后定义（或者mark也可以），这样可以避免冗余重建！
       - 或者也不需要PresentPort，给SourcePort加一个暂时无效化，等创建完后再置为有效就行了
-      - **解决方法2：在批量更新状态时，暂时禁用节点更新（具体方法是让swapchain无效化，这样整个链条无效，链条无效时不会重建renderpass），最后做一个恢复与重建即可**
+      - **解决方法2：在批量更新状态时，暂时禁用节点更新（具体方法是让swapchain无效化，这样整个链条无效，链条无效时不会重建renderpass），最后做一个恢复与重建即可；重复触发的问题，PortSet自己记录EventId，重复的Id不触发**
   - **image layout如何管理**
     - 一个image可做多种用途（采样输入，渲染目标），在使用时最好是对应的layout，layout可以手动在command里转换，在renderpass渲染时也会指定一次layout转换，确认每个attachment输入和输出的layout
     - **解决方法：在PortFormat里加入Usage的信息，并在renderpass里做相应的转换**
@@ -311,7 +318,111 @@
    - 联立可得变量t,u,v的三元一次方程组，求解
 
 ### 技术：物理模拟
-#### 人物走动
+#### 物体分类
+- 静态：不会移动
+- 动态：可以移动，受力影响
+- Trigger：用于触发，不会阻挡
+- Kinematic：不遵守动力学，由游戏玩法逻辑控制
+
+#### 物体形状
+- 球
+- 胶囊
+- 盒子
+- 凸多面体（凸包、水密）
+- 三角面（水密，一般只能静态）
+- 高度场
+
+#### 属性/物理材质
+- 质量/密度
+- 质心
+- 摩擦力Friction与弹性Restitution
+
+#### 力Force、冲量Impulse
+- 显式欧拉，隐式欧拉，半隐式欧拉（推荐、稳定易算）
+
+#### 刚体动力学Rigid body Dynamics
+- 姿态 Orientation 矩阵、四元数
+- 角速度 Angular velocity
+  - 三维，同时表示轴向和大小
+- 角加速度 Angular acceleration
+- 转动惯量 Inertia tensor
+- 角动量 Angular momentum
+- 力矩 Torque
+
+#### 碰撞检测
+- Broad Phase + Narrow Phase
+  - 包围盒粗检测+精确计算与交点信息
+  - Broad Phase
+    - BVH
+      - 更新成本低
+    - Sort and Sweep
+      - AABB，直接判断三轴区间是否重叠
+      - 所有AABB整体排序，可以局部更新
+  - Narrow Phase
+    - 基本形状
+      - 球与球：省略
+      - 球与胶囊：两端半球+球与圆柱
+      - 胶囊与胶囊：类似
+    - Minkwski Difference-based methods
+      - Minkwski Sum：空间中给定点集A和B，两集合内点两两相加得到的集合
+        - 几何意义：参考 [104动画，【10.游戏引擎中物理系统的基础理论和算法 | GAMES104-现代游戏引擎：从入门到实践】 【精准空降到 1:22:46】](https://www.bilibili.com/video/BV16U4y117VU?share_source=copy_web&vd_source=b22720ef0ca41a79a4e3eb477a2fa563&t=4966)
+        - 对凸多面体，其和等价于两个多面体顶点和的集合的凸包
+      - Minkwski Difference
+        - A+(-B)
+        - 如果两个凸多面体有重叠，则A-B一定过原点！
+      - GJK Algorithm
+        - 基本思想：通过迭代，先寻找最有可能的三角形，随后继续迭代，从而加速，无需遍历整个物体
+        - 一定程度能表示穿越厚度
+    - Separating Axis Theorem (SAT) 分离轴
+      - 2D
+        - 对空间上的不相交的两个凸多面体，能找到一根轴，两个物体在轴上的投影是不重叠的
+        - 由此，遍历A上每条边作为分离轴，测试是否分离，一旦找到一个满足条件，则说明不相交；如果A上未找到，再遍历B找一次
+      - 3D
+        - 遍历投影面
+        - 只判断A、B自己的面不完善，还需要测试A的每条边叉乘B的每条边形成的面
+
+#### 碰撞处理
+- 分离重叠
+  - Penalty Force
+    - 很少用于游戏
+    - 力度大、时间小的力
+- 求解约束
+  - 拉格朗日
+  - 迭代
+    - 给定冲量
+    - 计算约束，是否满足
+    - 如果不满足，计算新的冲量
+    - 继续计算约束...
+
+#### Scene Query
+- Raycast
+  - 光线与物体求交
+  - Multiple hits
+  - Closest hit
+  - Any hit
+- Sweep
+  - 类似Raycast，用一个体来扫描
+- Overlap
+  - 给定一个形状，判断哪些有碰撞
+
+#### 优化
+- Collision Group：分组管理
+- Island
+  - 每个Island可以单独处理，其他Island直接Sleep
+- Continuous Collision Detection (CCD)
+  - 连续碰撞检测
+  - 两帧之间直接穿过物体：tunnelling
+  - 可以加厚物体来避免...
+  - CCD
+    - 检测“安全”步长，动态调整模拟步长
+- Deterministic Simulation
+  - 联网游戏，需要保证现象相同
+    - 同步物理状态
+  - same old+same input=same new
+  - 固定物理模拟步长
+  - 固定求解方法
+  - 浮点精度问题
+
 ---
 ## TODO
   - Debug scope功能

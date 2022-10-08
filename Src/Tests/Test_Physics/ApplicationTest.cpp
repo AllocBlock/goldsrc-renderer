@@ -8,65 +8,59 @@ void CApplicationTest::_initV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
-    vk::SAppInfo AppInfo = getAppInfo();
+    auto AppInfo = getAppInfo();
 
-    m_pRenderPassShadowMap = make<CRenderPassShadowMap>();
-    m_pRenderPassShadowMap->init(AppInfo, ERenderPassPos::BEGIN);
-
-    m_pPassShade = make<CRenderPassShade>();
-    m_pPassShade->init(AppInfo, ERenderPassPos::BEGIN);
-
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pPassShade->getCamera());
-
-    m_pPassGUI = make<CGUIRenderPass>();
-    m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo, ERenderPassPos::END);
-
-    __generateScene();
-    m_pPassShade->setScene(m_ObjectSet);
-    m_pRenderPassShadowMap->setScene(m_ObjectSet);
+    m_pCamera = make<CCamera>();
+    m_pCamera->setFov(90);
+    m_pCamera->setAspect(AppInfo.Extent.width / AppInfo.Extent.height);
+    m_pCamera->setPos(glm::vec3(10.0, 10.0, 10.0));
+    m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
-    m_pRenderPassShadowMap->update(vImageIndex);
     m_pPassShade->update(vImageIndex);
 }
 
 void CApplicationTest::_renderUIV()
 {
     UI::beginFrame();
-    UI::beginWindow(u8"阴影映射 Shadow Map");
+    UI::beginWindow(u8"物理系统 Physics");
     UI::text(u8"测试");
     m_pInteractor->getCamera()->renderUI();
-    if (UI::button(u8"导出ShadowMap图片"))
-    {
-        m_pRenderPassShadowMap->exportShadowMapToFile("shadowmap.ppm");
-    }
     UI::endWindow();
     UI::endFrame();
 }
 
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
 {
-    std::vector<VkCommandBuffer> ShadowMapBuffers = m_pRenderPassShadowMap->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> ShadeBuffers = m_pPassShade->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> Result = ShadowMapBuffers;
-    Result.insert(Result.end(), ShadeBuffers.begin(), ShadeBuffers.end());
+    std::vector<VkCommandBuffer> Result = ShadeBuffers;
     Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
     return Result;
 }
 
 void CApplicationTest::_createOtherResourceV()
 {
-    m_pPassGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pRenderPassShadowMap->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pPassShade->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    vk::SAppInfo AppInfo = getAppInfo();
 
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
+
+    m_pPassGUI = make<CGUIRenderPass>();
+    m_pPassGUI->setWindow(m_pWindow);
+    m_pPassGUI->init(AppInfo);
+
+    m_pPassShade = make<CRenderPassShade>();
+    m_pPassShade->init(AppInfo);
+    m_pPassShade->setCamera(m_pCamera);
+    
+    __generateScene();
+    m_pPassShade->setScene(m_ObjectSet);
+    
     __linkPasses();
 }
 
@@ -76,29 +70,21 @@ void CApplicationTest::_recreateOtherResourceV()
 
 void CApplicationTest::_destroyOtherResourceV()
 {
-    m_pPassGUI->destroy();
-    m_pRenderPassShadowMap->destroy();
-    m_pPassShade->destroy();
+    destroyAndClear(m_pPassGUI);
+    destroyAndClear(m_pPassShade);
 
     cleanGlobalCommandBuffer();
 }
 
 void CApplicationTest::__linkPasses()
 {
-    auto pLinkShadowMap = m_pRenderPassShadowMap->getLink();
-    auto pLinkShade = m_pPassShade->getLink();
-    auto pLinkGui = m_pPassGUI->getLink();
+    auto pPortShade = m_pPassShade->getPortSet();
+    auto pPortGui = m_pPassGUI->getPortSet();
 
-    const auto& ImageViews = m_pSwapchain->getImageViews();
-    for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
-    {
-        pLinkShade->linkInput("ShadowMap", pLinkShadowMap->getOutput("ShadowMap", i), i);
-        pLinkShade->linkOutput("Main", ImageViews[i], i);
-        pLinkGui->linkInput("Main", ImageViews[i], i);
-        pLinkGui->linkOutput("Main", ImageViews[i], i);
-    }
-
-    m_pPassShade->setShadowMapInfo(m_pRenderPassShadowMap->getLightCamera());
+    m_pSwapchainPort->setForceNotReady(true);
+    CPortSet::link(m_pSwapchainPort, pPortShade, "Main");;
+    CPortSet::link(pPortShade,  "Main", pPortGui, "Main");
+    m_pSwapchainPort->setForceNotReady(false);
 }
 
 void CApplicationTest::__generateScene()
@@ -172,7 +158,7 @@ ptr<C3DObject> CApplicationTest::__createCube(glm::vec3 vCenter, float vSize)
     {
         glm::vec3(0, 0, 1),
         glm::vec3(0, 0, -1),
-        glm::vec3(0, 1, 0),
+        glm::vec3(0, 1, 0), 
         glm::vec3(0, -1, 0),
         glm::vec3(-1, 0, 0),
         glm::vec3(1, 0, 0),
@@ -180,10 +166,11 @@ ptr<C3DObject> CApplicationTest::__createCube(glm::vec3 vCenter, float vSize)
 
     auto pVertexArray = make<CGeneralDataArray<glm::vec3>>();
     auto pNormalArray = make<CGeneralDataArray<glm::vec3>>();
-    for (size_t Index : IndexSet)
+    for (size_t i = 0; i < IndexSet.size(); ++i)
     {
+        size_t Index = IndexSet[i];
         pVertexArray->append(VertexSet[Index]);
-        pNormalArray->append(NormalSet[Index / 6]);
+        pNormalArray->append(NormalSet[i / 6]);
     }
 
     auto pObject = make<C3DObject>();

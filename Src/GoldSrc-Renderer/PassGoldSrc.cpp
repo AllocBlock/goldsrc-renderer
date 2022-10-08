@@ -43,7 +43,7 @@ SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 
-    VkFormat DepthFormat = __findDepthFormat();
+    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
     
     return Ports;
@@ -638,15 +638,6 @@ std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<C3DO
         PointData[i].TexIndex = pTexIndexArray->get(i);
     }
     return PointData;
-}
-
-VkFormat CSceneGoldSrcRenderPass::__findDepthFormat()
-{
-    return m_AppInfo.pDevice->getPhysicalDevice()->chooseSupportedFormat(
-        { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-        VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-    );
 }
 
 size_t CSceneGoldSrcRenderPass::__getActualTextureNum()

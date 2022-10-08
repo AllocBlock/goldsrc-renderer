@@ -27,6 +27,8 @@ namespace vk
         VkFormat chooseSupportedFormat(const std::vector<VkFormat>& vCandidates, VkImageTiling vTiling, VkFormatFeatureFlags vFeatures) const;
         VkFormatProperties getFormatProperty(VkFormat vFormat) const;
 
+        VkFormat getBestDepthFormat() const;
+
     private:
         static bool __isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vDeviceExtensions);
         static bool __isDeviceExtensionsSupported(VkPhysicalDevice vPhysicalDevice, const std::vector<const char*>& vDeviceExtensions);
