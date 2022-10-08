@@ -6,13 +6,13 @@
 #define ENABLE_IN_BOX_INTERSECTION
 
 bool Math::intersectRayTriangle(
-    const glm::vec3& O, const glm::vec3& D,
-    const glm::vec3& A, const glm::vec3& B, const glm::vec3& C,
-    float& t, float& u, float& v)
+    const glm::vec3& vOrigin, const glm::vec3& vDirection,
+    const glm::vec3& vA, const glm::vec3& vB, const glm::vec3& vC,
+    float& voT, float& voU, float& voV)
 {
-    glm::vec3 E1 = C - A;
-    glm::vec3 E2 = B - A;
-    glm::vec3 P = glm::cross(D, E2);
+    glm::vec3 E1 = vC - vA;
+    glm::vec3 E2 = vB - vA;
+    glm::vec3 P = glm::cross(vDirection, E2);
     float det = glm::dot(E1, P);
 #ifdef ENABLE_BACK_FACE_CULLING
     // if the determinant is negative the triangle is backfacing
@@ -24,19 +24,18 @@ bool Math::intersectRayTriangle(
 #endif
     float invDet = 1 / det;
 
-    glm::vec3 T = O - A;
-    u = glm::dot(T, P) * invDet;
-    if (u < 0 || u > 1) return false;
+    glm::vec3 T = vOrigin - vA;
+    voU = glm::dot(T, P) * invDet;
+    if (voU < 0 || voU > 1) return false;
 
     glm::vec3 Q = glm::cross(T, E1);
-    v = glm::dot(D, Q) * invDet;
-    if (v < 0 || u + v > 1) return false;
+    voV = glm::dot(vDirection, Q) * invDet;
+    if (voV < 0 || voU + voV > 1) return false;
 
-    t = glm::dot(E2, Q) * invDet;
+    voT = glm::dot(E2, Q) * invDet;
 
     return true;
 }
-
 
 bool Math::intersectRayBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT)
 {
