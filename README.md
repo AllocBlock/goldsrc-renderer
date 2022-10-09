@@ -93,123 +93,124 @@
   - 思路是给pass设计输入输出口，类似Falcor的设计，把输入输出口连接起来形成树状结构，更新时按照树状结构传播下去即可，并且输入是否准备好，输出是否指定了端口，更新时可能只需要部分更新（如更换一张纹理）等都可以实现
   - 因为有Swapchain的存在，每个link还需要好几份....但有的情况下又只需要一份，这种区分也不好做
   - 还有就是，Vulkan在开启pass时需要指定load状态，这些在没有依赖关系图的情况下很难处理好，因为不知道这张纹理是直接载入还是先清空
-  - 第一版：
-    - 设计Port和Link
-    - Port表示一个Pass的输入输出需求，包括名称、格式、大小
-    - Link代表了一个实际的链接状态，基于Pass的所有Port生成，为每个Port保存连接到它的纹理信息，并存储更新状态
-      - Link是一个状态控制器，一旦有连接信息改变就会要求更新，但是还是没解决如何通知链路上全部节点的问题...
-        - 可以把更新隐藏？要求每次使用前调用接口获取，实时拿到输入输出，下一次迭代准备这样做
-    ```C++
-    struct SPort
-    {
-        std::string Name;
-        VkFormat Format;
-        VkExtent2D Extent;
-    };
+#### 第一版：
+  - 设计Port和Link
+  - Port表示一个Pass的输入输出需求，包括名称、格式、大小
+  - Link代表了一个实际的链接状态，基于Pass的所有Port生成，为每个Port保存连接到它的纹理信息，并存储更新状态
+    - Link是一个状态控制器，一旦有连接信息改变就会要求更新，但是还是没解决如何通知链路上全部节点的问题...
+      - 可以把更新隐藏？要求每次使用前调用接口获取，实时拿到输入输出，下一次迭代准备这样做
+  ```C++
+  struct SPort
+  {
+      std::string Name;
+      VkFormat Format;
+      VkExtent2D Extent;
+  };
 
-    class CRenderPassPort
-    {
-    public:
-        void addInput(std::string vName, VkFormat vFormat, VkExtent2D vExtent);
-        void addOutput(std::string vName, VkFormat vFormat, VkExtent2D vExtent);
-    private:
-        std::vector<SPort> m_InputSet;
-        std::vector<SPort> m_OutputSet;
-    };
+  class CRenderPassPort
+  {
+  public:
+      void addInput(std::string vName, VkFormat vFormat, VkExtent2D vExtent);
+      void addOutput(std::string vName, VkFormat vFormat, VkExtent2D vExtent);
+  private:
+      std::vector<SPort> m_InputSet;
+      std::vector<SPort> m_OutputSet;
+  };
 
-    enum class EPortType
-    {
-        INPUT,
-        OUTPUT
-    };
+  enum class EPortType
+  {
+      INPUT,
+      OUTPUT
+  };
 
-    struct SLink
-    {
-        std::string TargetName;
-        VkImageView ImageView;
-        EPortType Type;
-        size_t Index;
-    };
+  struct SLink
+  {
+      std::string TargetName;
+      VkImageView ImageView;
+      EPortType Type;
+      size_t Index;
+  };
 
-    class CRenderPassLink
-    {
-    public:
-        CRenderPassLink() = delete;
-        CRenderPassLink(const CRenderPassPort& vPorts) : m_Ports(vPorts) {}
+  class CRenderPassLink
+  {
+  public:
+      CRenderPassLink() = delete;
+      CRenderPassLink(const CRenderPassPort& vPorts) : m_Ports(vPorts) {}
 
-        void link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
-        VkImageView getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0) const;
+      void link(std::string vTargetName, VkImageView vImageView, EPortType vType, size_t vIndex = 0);
+      VkImageView getImage(std::string vTargetName, EPortType vType, size_t vIndex = 0) const;
 
-        bool isUpdated() const { return m_Updated; }
-        void setUpdateState(bool vState) { m_Updated = vState; }
+      bool isUpdated() const { return m_Updated; }
+      void setUpdateState(bool vState) { m_Updated = vState; }
 
-    private:
-        const CRenderPassPort& m_Ports;
-        std::vector<SLink> m_LinkSet;
-        bool m_Updated = false;
-    };
-    ```
-  - 第二版
-    - 为了保证实时，可以把Link改成独立链接，每个Port对应一个Link，每个Link链接一个或多个Port
-      - Link可以只连接一个Port，作为原生输入或输出，此时由Link负责创建一个纹理，或是由用户指定一个纹理（比如交换链那里）
-      - 是否要求Link创建后不可修改？感觉没问题，需要新的link只能重新创建，避免被误改
-      - Pass，Port，Link需要互相知晓吗？如果不，要怎么构造依赖树，从而自动按顺序执行Pass？
-        - 连接Port：在主程序完成，理论上可以保存为一个有向图
-        - 更新Port：如何通知依赖这个Port的input port？
-        - 如何处理Present image？下面单独讨论下
-      - 另外注意Pass重建时，Link应该不需要重新生成
-      - 比较复杂的一个问题，交换链图片的流通，两个思路
-        - 思路一：交换链从头开始流转，可以同时作为pass的输入和输出，这样避免创建过渡纹理节约空间，但是如何处理这种情况？输出要怎么知道需要以输入为自己的目标，要怎么知道绘制前先clear还是说直接绘制？
-          - 这类port单独处理，叫做InputSrcOutput
-        - 思路二：交换链只在最后，要么单独一个output节点，要么就多做一次拷贝，这样所有的output（除了交换链output）都自己创建自己的纹理，需要保留原信息的就做一次拷贝（Falcor似乎就是这样的？），开销大但很直观
-      - 另一个问题，如何通知发生了更新，以及如何消除更新状态？
-        - 通知发生了更新，要么自己存储更新状态，外部不断查询，发现更新然后处理；要么引入hook，每次更新后调用hook..
-        - 消除更新状态，因为同一个port可能被多个地方使用，不能随意清除更新状态
-          - 第一个通知方法：可以存储更新时间戳，每个依赖自己存储当前使用的时间戳，对比时间戳来判断是否更新
-          - 第二个通知方法：hook天生支持多个依赖，不需要修改什么，不过hook的方式是异步的，不一定好处理
-      - 还有就是，一些特殊大小，如窗口大小怎么表示，怎么更新？
-        - 通用匹配
-    - Port的设计
-      - 输入和输出的Port会有区别，输入依赖输出，输出可以自己指定纹理，或是自动生成纹理
-      - 输入和输出如果想相互知晓，就要保持互相的指针，这需要互相知道类型，知道类型也能保证不会错误连接（比如In到In，Out到Out，或者In和Out反了）
-  - 第三版
-    - 好像，InputPort和InputSrcOutputPort基本一样...是不是可以不用那么在意In还是Out，直接把Port定义为链表？
-    - Port只有两种，输出Port和中转Port
-      - **输出Port**：保有view，是链表的头，可以表示第二版的OutputPort
-      - **中转Port**：依赖另一个port，可以表示第二版的InputPort和InputSrcOutputPort
-      - 这样依赖关系很明确形成了，不过还不能单输出连接多输入...做成树状比较好
-      - 也能解决掉renderpassPos
-    - **问题：如何判断是否clear和toPresent？**
-      - clear的话，如果是自己新建的，就需要clear，自己新建的对应了SourceOutput
-      - 但对于swapchain image，他也是需要clear的，但他的SourceOutput不属于任何一个pass，只能是第一个pass的输入来clear它...需要单独判断
-      - 但这也会导致attachment依赖port，要创建attachment必须有port...想起Falcor的处理，可以创建internal，也许也可用这个思路，不过暂时没啥影响
-      - **解决方法：给swapchain image单独设计一个mark，每个source节点都可以调用接口判断是否是swapchain image**
-    - **问题：目前是init->attachement description ->create render pass，link是在全部init后做的....**
-      - 好像port和link可以最早做，但是先全部创建、link、然后再init会有个问题，目前scenepass有两个不同的实现，可以动态切换，也就是说整个渲染图会改变，这个怎么处理？
+  private:
+      const CRenderPassPort& m_Ports;
+      std::vector<SLink> m_LinkSet;
+      bool m_Updated = false;
+  };
+  ```
+#### 第二版
+  - 为了保证实时，可以把Link改成独立链接，每个Port对应一个Link，每个Link链接一个或多个Port
+    - Link可以只连接一个Port，作为原生输入或输出，此时由Link负责创建一个纹理，或是由用户指定一个纹理（比如交换链那里）
+    - 是否要求Link创建后不可修改？感觉没问题，需要新的link只能重新创建，避免被误改
+    - Pass，Port，Link需要互相知晓吗？如果不，要怎么构造依赖树，从而自动按顺序执行Pass？
+      - 连接Port：在主程序完成，理论上可以保存为一个有向图
+      - 更新Port：如何通知依赖这个Port的input port？
+      - 如何处理Present image？下面单独讨论下
+    - 另外注意Pass重建时，Link应该不需要重新生成
+    - 比较复杂的一个问题，交换链图片的流通，两个思路
+      - 思路一：交换链从头开始流转，可以同时作为pass的输入和输出，这样避免创建过渡纹理节约空间，但是如何处理这种情况？输出要怎么知道需要以输入为自己的目标，要怎么知道绘制前先clear还是说直接绘制？
+        - 这类port单独处理，叫做InputSrcOutput
+      - 思路二：交换链只在最后，要么单独一个output节点，要么就多做一次拷贝，这样所有的output（除了交换链output）都自己创建自己的纹理，需要保留原信息的就做一次拷贝（Falcor似乎就是这样的？），开销大但很直观
+    - 另一个问题，如何通知发生了更新，以及如何消除更新状态？
+      - 通知发生了更新，要么自己存储更新状态，外部不断查询，发现更新然后处理；要么引入hook，每次更新后调用hook..
+      - 消除更新状态，因为同一个port可能被多个地方使用，不能随意清除更新状态
+        - 第一个通知方法：可以存储更新时间戳，每个依赖自己存储当前使用的时间戳，对比时间戳来判断是否更新
+        - 第二个通知方法：hook天生支持多个依赖，不需要修改什么，不过hook的方式是异步的，不一定好处理
+    - 还有就是，一些特殊大小，如窗口大小怎么表示，怎么更新？
+      - 通用匹配
+  - Port的设计
+    - 输入和输出的Port会有区别，输入依赖输出，输出可以自己指定纹理，或是自动生成纹理
+    - 输入和输出如果想相互知晓，就要保持互相的指针，这需要互相知道类型，知道类型也能保证不会错误连接（比如In到In，Out到Out，或者In和Out反了）
+#### 第三版
+  - 好像，InputPort和InputSrcOutputPort基本一样...是不是可以不用那么在意In还是Out，直接把Port定义为链表？
+  - Port只有两种，输出Port和中转Port
+    - **输出Port**：保有view，是链表的头，可以表示第二版的OutputPort
+    - **中转Port**：依赖另一个port，可以表示第二版的InputPort和InputSrcOutputPort
+    - 这样依赖关系很明确形成了，不过还不能单输出连接多输入...做成树状比较好
+    - 也能解决掉renderpassPos
+  - **问题：如何判断是否clear和toPresent？**
+    - clear的话，如果是自己新建的，就需要clear，自己新建的对应了SourceOutput
+    - 但对于swapchain image，他也是需要clear的，但他的SourceOutput不属于任何一个pass，只能是第一个pass的输入来clear它...需要单独判断
+    - 但这也会导致attachment依赖port，要创建attachment必须有port...想起Falcor的处理，可以创建internal，也许也可用这个思路，不过暂时没啥影响
+    - **解决方法：给swapchain image单独设计一个mark，每个source节点都可以调用接口判断是否是swapchain image**
+  - **问题：目前是init->attachement description ->create render pass，link是在全部init后做的....**
+    - 好像port和link可以最早做，但是先全部创建、link、然后再init会有个问题，目前scenepass有两个不同的实现，可以动态切换，也就是说整个渲染图会改变，这个怎么处理？
       - 也就是说，怎么实现动态的连接呢？目前通过是否是head、tail的方法好像不太合适
       - 这样，首先init和link需要分开，init需要确认link是否有效，无效则暂时不创建attachment
         - 随后如果link有更新，hook更新，（在下一个loop，还是立刻？立刻的话有可能太频繁了，或者保存一下状态，如果状态未改变则无需重新创建）重新创建attachment
         - 判断状态是否改变，是在PortSet里做，还是renderpass自己检查？
         - 构造函数不应该调虚函数，所以虚函数获取port布局是不可的...那么link必须要在init后了
         - **解决方法：暂时没想到很好的方法，等后面把调用顺序理清楚后再来处理**
-    - **问题：改成不区分In/Out了，怎么处理同时做输入和输出的情况？**
-      - 此时input和output对应了同一个image，该使用哪一个？不能只通过判断父节点是不是swapchain...
-      - 要不要引入changeflag？还是区分input和inputsrcoutput，但是change本身和port无关的....
-      - 或者...这类IO不用两个Port，用同一个Port！这样就是统一的了！！！！
-      - **解决方法：这类同时输入输出的情况，合并为一个port来处理**
-    - **问题：再renderpass构建过程中，存在冗余的重建**
-      - **解决方法1：引入状态保存，每次更新时检查哪些发生了变化，针对变化的地方更新**
+  - **问题：改成不区分In/Out了，怎么处理同时做输入和输出的情况？**
+    - 此时input和output对应了同一个image，该使用哪一个？不能只通过判断父节点是不是swapchain...
+    - 要不要引入changeflag？还是区分input和inputsrcoutput，但是change本身和port无关的....
+    - 或者...这类IO不用两个Port，用同一个Port！这样就是统一的了！！！！
+    - **解决方法：这类同时输入输出的情况，合并为一个port来处理**
+  - **问题：再renderpass构建过程中，存在冗余的重建**
+    - **解决方法1：引入状态保存，每次更新时检查哪些发生了变化，针对变化的地方更新**
         - 但这样依然存在冗余重建，比如多次重复调用了更新，但也许可以等全部调用完后统一用一次更新
-      - 方案一：在批量设置时，提供暂时屏蔽更新的指令；问题是什么时候恢复更新很难确定...不好
-      - 方案二：收到更新状态后延迟更新；问题是延迟到什么时候，谁来触发？
-      - **暂时放着吧，后面统计下多余重建的数量，然后把renderpass的流程画一下，看看怎么处理最好**
-      - 引入下PresentPort，用于确定一个link是否完整，presentport只在最后定义（或者mark也可以），这样可以避免冗余重建！
-      - 或者也不需要PresentPort，给SourcePort加一个暂时无效化，等创建完后再置为有效就行了
-      - **解决方法2：在批量更新状态时，暂时禁用节点更新（具体方法是让swapchain无效化，这样整个链条无效，链条无效时不会重建renderpass），最后做一个恢复与重建即可；重复触发的问题，PortSet自己记录EventId，重复的Id不触发**
-  - **image layout如何管理**
-    - 一个image可做多种用途（采样输入，渲染目标），在使用时最好是对应的layout，layout可以手动在command里转换，在renderpass渲染时也会指定一次layout转换，确认每个attachment输入和输出的layout
-    - **解决方法：在PortFormat里加入Usage的信息，并在renderpass里做相应的转换**
-      - **问题：在Renderpass里转换layout，说明输出的layout是固定的，如果一个port输出连接到了多个输入，而这几个输入所需格式各不相同怎么办？**
+    - 方案一：在批量设置时，提供暂时屏蔽更新的指令；问题是什么时候恢复更新很难确定...不好
+    - 方案二：收到更新状态后延迟更新；问题是延迟到什么时候，谁来触发？
+    - **暂时放着吧，后面统计下多余重建的数量，然后把renderpass的流程画一下，看看怎么处理最好**
+    - 引入下PresentPort，用于确定一个link是否完整，presentport只在最后定义（或者mark也可以），这样可以避免冗余重建！
+    - 或者也不需要PresentPort，给SourcePort加一个暂时无效化，等创建完后再置为有效就行了
+    - **解决方法2：在批量更新状态时，暂时禁用节点更新（具体方法是让swapchain无效化，这样整个链条无效，链条无效时不会重建renderpass），最后做一个恢复与重建即可；重复触发的问题，PortSet自己记录EventId，重复的Id不触发**
+
+#### image layout如何管理
+  - 一个image可做多种用途（采样输入，渲染目标），在使用时最好是对应的layout，layout可以手动在command里转换，在renderpass渲染时也会指定一次layout转换，确认每个attachment输入和输出的layout
+  - **解决方法：在PortFormat里加入Usage的信息，并在renderpass里做相应的转换**
+    - **问题：在Renderpass里转换layout，说明输出的layout是固定的，如果一个port输出连接到了多个输入，而这几个输入所需格式各不相同怎么办？**
 
 ### 问题：如何管理场景
   - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理

@@ -29,15 +29,16 @@ CTempScene::Ptr __generateScene()
     m_pScene->addActor(pGroundActor);
 
     // cubes
-    auto pCubeMesh1 = make<CMeshBasicCube>(glm::vec3(0.0, 0.0, 0.0), 5.0f);
+    auto pCubeMesh1 = make<CMeshBasicCube>();
     auto pCubeActor1 = make<CActor>("Cube1");
     pCubeActor1->setMesh(pCubeMesh1);
+    pCubeActor1->setTransform(STransform(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f), 5.0f));
     m_pScene->addActor(pCubeActor1);
-
-
-    auto pCubeMesh2 = make<CMeshBasicCube>(glm::vec3(0.0, 3.0, 0.0), 1.0f);
+    
+    auto pCubeMesh2 = make<CMeshBasicCube>();
     auto pCubeActor2 = make<CActor>("Cube2");
     pCubeActor2->setMesh(pCubeMesh2);
+    pCubeActor2->setTransform(STransform(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 1.0f));
     m_pScene->addActor(pCubeActor2);
 
     return m_pScene;
@@ -84,7 +85,7 @@ void CApplicationTest::_renderUIV()
                     UI::indent(20.0f);
                     STransform Transform = pActor->getTransform();
                     UI::drag(u8"位置##" + ActorName + u8"_Scene", Transform.Translate);
-                    UI::drag(u8"旋转##" + ActorName + u8"_Scene", Transform.Rotate);
+                    UI::drag(u8"旋转##" + ActorName + u8"_Scene", Transform.Rotate, 0.1f);
                     UI::drag(u8"缩放##" + ActorName + u8"_Scene", Transform.Scale);
                     pActor->setTransform(Transform);
                     UI::unindent();
