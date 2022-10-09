@@ -15,7 +15,7 @@ enum class E3DObjectPrimitiveType
     INDEXED_TRIAGNLE_LIST,
 };
 
-class C3DObject : public CObject
+class CGeneralMeshData : public IMeshData
 {
 public:
     bool getVisibleState() { return m_IsVisible; }

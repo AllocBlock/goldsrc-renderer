@@ -104,16 +104,16 @@ void CSceneReaderBsp::__readTextures()
     m_pScene->TexImageSet = std::move(TexImageSet);
 }
 
-std::vector<ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
+std::vector<ptr<CMeshDataGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     _ASSERTE(vLeafIndex < Lumps.m_LumpLeaf.Leaves.size());
     const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
 
-    auto pObjectNormalPart = make<C3DObjectGoldSrc>();
+    auto pObjectNormalPart = make<CMeshDataGoldSrc>();
     pObjectNormalPart->setMark("brush");
-    auto pObjectSkyPart = make<C3DObjectGoldSrc>();
+    auto pObjectSkyPart = make<CMeshDataGoldSrc>();
     pObjectSkyPart->setMark("sky");
 
     size_t TexWidth, TexHeight;
@@ -135,7 +135,7 @@ std::vector<ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex
         }
     }
 
-    std::vector<ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<CMeshDataGoldSrc>> Objects;
     if (pObjectNormalPart->getVertexArray()->size() > 0)
         Objects.emplace_back(std::move(pObjectNormalPart));
     if (pObjectSkyPart->getVertexArray()->size() > 0)
@@ -143,13 +143,13 @@ std::vector<ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex
     return Objects;
 }
 
-std::vector<ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+std::vector<ptr<CMeshDataGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    auto pObjectNormalPart = make<C3DObjectGoldSrc>();
+    auto pObjectNormalPart = make<CMeshDataGoldSrc>();
     pObjectNormalPart->setMark("entity");
-    auto pObjectSkyPart = make<C3DObjectGoldSrc>();
+    auto pObjectSkyPart = make<CMeshDataGoldSrc>();
     pObjectSkyPart->setMark("sky");
     
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
@@ -165,7 +165,7 @@ std::vector<ptr<C3DObjectGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIn
             __appendBspFaceToObject(pObjectNormalPart, FaceIndex);
     }
 
-    std::vector<ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<CMeshDataGoldSrc>> Objects;
     Objects.emplace_back(std::move(pObjectNormalPart));
     Objects.emplace_back(std::move(pObjectSkyPart));
     return Objects;
@@ -176,7 +176,7 @@ void CSceneReaderBsp::__loadBspTree()
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     SBspTree BspTree;
-    std::vector<ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<CMeshDataGoldSrc>> Objects;
 
     // read node and PVS data
     Scene::reportProgress(u8"‘ÿ»ÎBSP ˝æ›");
@@ -206,9 +206,9 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[0]);
             Node.Front = NodeNum + LeafIndex;
-            std::vector<ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<ptr<CMeshDataGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (ptr<C3DObjectGoldSrc> LeafObject : LeafObjects)
+            for (ptr<CMeshDataGoldSrc> LeafObject : LeafObjects)
             {
                 ObjectIndices.emplace_back(Objects.size());
                 Objects.emplace_back(LeafObject);
@@ -221,9 +221,9 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[1]);
             Node.Back = NodeNum + LeafIndex;
-            std::vector<ptr<C3DObjectGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
+            std::vector<ptr<CMeshDataGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (ptr<C3DObjectGoldSrc> pLeafObject : LeafObjects)
+            for (ptr<CMeshDataGoldSrc> pLeafObject : LeafObjects)
             {
                 ObjectIndices.emplace_back(Objects.size());
                 Objects.emplace_back(pLeafObject);
@@ -250,14 +250,14 @@ void CSceneReaderBsp::__loadBspTree()
         }
 
         // load entities data and calculate bounding box
-        std::vector<ptr<C3DObjectGoldSrc>> ModelObjects = __loadEntity(i);
+        std::vector<ptr<CMeshDataGoldSrc>> ModelObjects = __loadEntity(i);
         std::vector<size_t> ObjectIndices;
         Math::S3DBoundingBox TotalBoundingBox =
         {
             {INFINITY, INFINITY, INFINITY},
             {-INFINITY, -INFINITY, -INFINITY},
         };
-        for (ptr<C3DObjectGoldSrc> pModelObject : ModelObjects)
+        for (ptr<CMeshDataGoldSrc> pModelObject : ModelObjects)
         {
             std::optional<Math::S3DBoundingBox> BoundingBox = pModelObject->getBoundingBox();
             if (BoundingBox == std::nullopt) continue;
@@ -489,7 +489,7 @@ void CSceneReaderBsp::__getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& 
     voName = BspTexture.Name;
 }
 
-void CSceneReaderBsp::__appendBspFaceToObject(ptr<C3DObjectGoldSrc> pObject, uint32_t vFaceIndex)
+void CSceneReaderBsp::__appendBspFaceToObject(ptr<CMeshDataGoldSrc> pObject, uint32_t vFaceIndex)
 {
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -683,7 +683,7 @@ void CSceneReaderBsp::__loadPointEntities()
             }
         }
 
-        auto pEntityCube = make<C3DObjectGoldSrc>();
+        auto pEntityCube = make<CMeshDataGoldSrc>();
         pEntityCube->setMark("point_entity");
         if (!Name.empty())
         {
@@ -697,7 +697,7 @@ void CSceneReaderBsp::__loadPointEntities()
     }
 }
 
-void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, ptr<C3DObjectGoldSrc> voObject)
+void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, ptr<CMeshDataGoldSrc> voObject)
 {
     // create plane and vertex buffer
     std::vector<glm::vec3> VertexSet =

@@ -48,7 +48,7 @@ ptr<SScene> CSceneReaderMap::_readV()
     m_pScene->Objects.resize(UsedTextureNames.size());
     for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
     {
-        m_pScene->Objects[i] = make<C3DObjectGoldSrc>();
+        m_pScene->Objects[i] = make<CMeshDataGoldSrc>();
     }
 
     std::vector<SMapPolygon> Polygons = Map.getAllPolygons();
@@ -58,7 +58,7 @@ ptr<SScene> CSceneReaderMap::_readV()
         uint32_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
         size_t TexWidth = m_pScene->TexImageSet[TexIndex]->getWidth();
         size_t TexHeight = m_pScene->TexImageSet[TexIndex]->getHeight();
-        ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[TexIndex];
+        ptr<CMeshDataGoldSrc> pObject = m_pScene->Objects[TexIndex];
         uint32_t IndexStart = static_cast<uint32_t>(pObject->getVertexArray()->size());
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);

@@ -3,7 +3,7 @@
 #include "GUIPass.h"
 #include "PassShade.h"
 #include "Interactor.h"
-#include "3DObject.h"
+#include "TempScene.h"
 
 class CApplicationTest : public IApplication
 {
@@ -21,8 +21,6 @@ protected:
 
 private:
     void __linkPasses();
-    void __generateScene();
-    static ptr<C3DObject> __createCube(glm::vec3 vCenter, float vSize);
 
     ptr<CCamera> m_pCamera = nullptr;
 
@@ -31,6 +29,6 @@ private:
 
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    std::vector<ptr<C3DObject>> m_ObjectSet;
+    CTempScene::Ptr m_pScene = nullptr;
 };
 

@@ -11,6 +11,7 @@ public:
     std::vector<VkVertexInputAttributeDescription> generate();
     void add(VkFormat vFormat, uint32_t vOffset);
     void clear();
+    bool isEmpty() { return m_FormatSet.empty(); }
 
     _DEFINE_GET_FORMAT_FUNC(float, VK_FORMAT_R32_SFLOAT);
     _DEFINE_GET_FORMAT_FUNC(glm::vec2, VK_FORMAT_R32G32_SFLOAT);

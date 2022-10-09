@@ -3,51 +3,9 @@
 #include "RenderPassDescriptor.h"
 #include "Log.h"
 
-std::vector<CPipelineShade::SPointData> readPointData(ptr<C3DObject> pObject)
+void CRenderPassShade::setScene(CTempScene::Ptr vScene)
 {
-    auto pVertexArray = pObject->getVertexArray();
-    auto pNormalArray = pObject->getNormalArray();
-
-    size_t NumPoint = pVertexArray->size();
-    _ASSERTE(NumPoint == pNormalArray->size());
-
-    std::vector<CPipelineShade::SPointData> PointData(NumPoint);
-    for (size_t i = 0; i < NumPoint; ++i)
-    {
-        PointData[i].Pos = pVertexArray->get(i);
-        PointData[i].Normal = pNormalArray->get(i);
-    }
-    return PointData;
-}
-
-void CRenderPassShade::setScene(const std::vector<ptr<C3DObject>>& vObjectSet)
-{
-    size_t NumVertex = 0;
-
-    for (ptr<const C3DObject> pObject : vObjectSet)
-        NumVertex += pObject->getVertexArray()->size();
-    if (NumVertex == 0)
-    {
-        Common::Log::log(u8"没有顶点数据，跳过顶点缓存创建");
-        return;
-    }
-    m_VertexNum = NumVertex;
-
-    VkDeviceSize BufferSize = sizeof(CPipelineShade::SPointData) * NumVertex;
-    uint8_t* pData = new uint8_t[BufferSize];
-    size_t Offset = 0;
-    for (ptr<C3DObject> pObject : vObjectSet)
-    {
-        std::vector<CPipelineShade::SPointData> PointData = readPointData(pObject);
-        size_t SubBufferSize = sizeof(CPipelineShade::SPointData) * pObject->getVertexArray()->size();
-        memcpy(reinterpret_cast<char*>(pData) + Offset, PointData.data(), SubBufferSize);
-        Offset += SubBufferSize;
-    }
-
-    m_pVertBuffer = make<vk::CBuffer>();
-    m_pVertBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    m_pVertBuffer->stageFill(pData, BufferSize);
-    delete[] pData;
+   m_pVertBuffer = vScene->generateVertexBuffer<CPipelineShade::SPointData>(m_AppInfo.pDevice, m_VertexNum);
 }
 
 void CRenderPassShade::_initV()
@@ -84,7 +42,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
 
     begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValues);
 
-    if (m_pVertBuffer->isValid())
+    if (isNonEmptyAndValid(m_pVertBuffer))
     {
         VkDeviceSize Offsets[] = { 0 };
         VkBuffer VertBuffer = *m_pVertBuffer;

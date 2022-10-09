@@ -263,14 +263,15 @@ __pycache__/
 *.pyc
 /Visualization/packages.config
 
-# compiled shader
+# Project
+/data
+/Ignored
+
+imgui.ini
+shaderCompileCache.json
+
 *.spv
 *.txt
 *.rmx
 *.max
 *.ppm
-imgui.ini
-
-/data
-/Ignored
-shaderCompileCache.json

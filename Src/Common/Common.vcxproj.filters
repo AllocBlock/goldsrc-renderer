@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\DataArray">
+      <UniqueIdentifier>{5ad38fdb-6351-49b1-bfe4-59e50d4e9d9e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -26,6 +29,15 @@
     </ClInclude>
     <ClInclude Include="Maths.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DataArray.h">
+      <Filter>头文件\DataArray</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneralDataArray.h">
+      <Filter>头文件\DataArray</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleValueDataArray.h">
+      <Filter>头文件\DataArray</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

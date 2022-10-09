@@ -4,6 +4,45 @@
 
 using namespace vk;
 
+CTempScene::Ptr __generateScene()
+{
+    CTempScene::Ptr m_pScene = make<CTempScene>();
+
+    // ground
+    glm::vec3 Normal = glm::vec3(0.0, 0.0, 1.0);
+    std::vector<glm::vec3> VertexSet =
+    {
+        glm::vec3(10,  10, 0),
+        glm::vec3(10, -10, 0),
+        glm::vec3(-10, -10, 0),
+        glm::vec3(10,  10, 0),
+        glm::vec3(-10, -10, 0),
+        glm::vec3(-10,  10, 0),
+    };
+
+    auto pGroundMesh = make<CMeshTriangleList>();
+    pGroundMesh->addTriangles(VertexSet, { Normal, Normal, Normal, Normal, Normal, Normal });
+
+    auto pGroundActor = make<CActor>("Ground");
+    pGroundActor->setMesh(pGroundMesh);
+
+    m_pScene->addActor(pGroundActor);
+
+    // cubes
+    auto pCubeMesh1 = make<CMeshBasicCube>(glm::vec3(0.0, 0.0, 0.0), 5.0f);
+    auto pCubeActor1 = make<CActor>("Cube1");
+    pCubeActor1->setMesh(pCubeMesh1);
+    m_pScene->addActor(pCubeActor1);
+
+
+    auto pCubeMesh2 = make<CMeshBasicCube>(glm::vec3(0.0, 3.0, 0.0), 1.0f);
+    auto pCubeActor2 = make<CActor>("Cube2");
+    pCubeActor2->setMesh(pCubeMesh2);
+    m_pScene->addActor(pCubeActor2);
+
+    return m_pScene;
+}
+
 void CApplicationTest::_initV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
@@ -30,6 +69,30 @@ void CApplicationTest::_renderUIV()
     UI::beginWindow(u8"物理系统 Physics");
     UI::text(u8"测试");
     m_pInteractor->getCamera()->renderUI();
+
+    // scene
+    {
+        if (UI::collapse(u8"场景", true))
+        {
+            UI::indent(20.0f);
+            for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
+            {
+                auto pActor = m_pScene->getActor(i);
+                std::string ActorName = pActor->getName();
+                if (UI::collapse(ActorName + "###Scene"))
+                {
+                    UI::indent(20.0f);
+                    auto Transform = pActor->getTransform();
+                    UI::drag(u8"位置###" + ActorName + u8"_scene", Transform.Translate);
+                    UI::drag(u8"旋转###" + ActorName + u8"_scene", Transform.Rotate);
+                    UI::drag(u8"缩放###" + ActorName + u8"_scene", Transform.Scale);
+                    pActor->setTransform(Transform);
+                    UI::unindent();
+                }
+            }
+            UI::unindent();
+        }
+    }
     UI::endWindow();
     UI::endFrame();
 }
@@ -58,8 +121,8 @@ void CApplicationTest::_createOtherResourceV()
     m_pPassShade->init(AppInfo);
     m_pPassShade->setCamera(m_pCamera);
     
-    __generateScene();
-    m_pPassShade->setScene(m_ObjectSet);
+    m_pScene = __generateScene();
+    m_pPassShade->setScene(m_pScene);
     
     __linkPasses();
 }
@@ -85,96 +148,4 @@ void CApplicationTest::__linkPasses()
     CPortSet::link(m_pSwapchainPort, pPortShade, "Main");;
     CPortSet::link(pPortShade,  "Main", pPortGui, "Main");
     m_pSwapchainPort->setForceNotReady(false);
-}
-
-void CApplicationTest::__generateScene()
-{
-    // ground
-    glm::vec3 Normal = glm::vec3(0.0, 0.0, 1.0);
-    std::array<glm::vec3, 6> VertexSet =
-    {
-        glm::vec3(10,  10, 0),
-        glm::vec3(10, -10, 0),
-        glm::vec3(-10, -10, 0),
-        glm::vec3(10,  10, 0),
-        glm::vec3(-10, -10, 0),
-        glm::vec3(-10,  10, 0),
-    };
-
-    auto pVertexArray = make<CGeneralDataArray<glm::vec3>>();
-    auto pNormalArray = make<CGeneralDataArray<glm::vec3>>();
-    for (auto& Vertex : VertexSet)
-    {
-        pVertexArray->append(Vertex);
-        pNormalArray->append(Normal);
-    }
-
-    auto pObject = make<C3DObject>();
-    pObject->setVertexArray(pVertexArray);
-    pObject->setNormalArray(pNormalArray);
-    m_ObjectSet.emplace_back(pObject);
-
-    // objects
-    m_ObjectSet.emplace_back(__createCube(glm::vec3(0.0, 0.0, 0.0), 5.0f));
-    m_ObjectSet.emplace_back(__createCube(glm::vec3(0.0, 3.0, 0.0), 1.0f));
-}
-
-ptr<C3DObject> CApplicationTest::__createCube(glm::vec3 vCenter, float vSize)
-{
-    /*
-     *   4------5      y
-     *  /|     /|      |
-     * 0------1 |      |
-     * | 7----|-6      -----x
-     * |/     |/      /
-     * 3------2      z
-     */
-    std::array<glm::vec3, 8> VertexSet =
-    {
-        glm::vec3(-1,  1,  1),
-        glm::vec3(1,  1,  1),
-        glm::vec3(1, -1,  1),
-        glm::vec3(-1, -1,  1),
-        glm::vec3(-1,  1, -1),
-        glm::vec3(1,  1, -1),
-        glm::vec3(1, -1, -1),
-        glm::vec3(-1, -1, -1),
-    };
-
-    for (auto& Vertex : VertexSet)
-        Vertex = vCenter + Vertex * vSize * 0.5f;
-
-    const std::array<size_t, 36> IndexSet =
-    {
-        0, 1, 2, 0, 2, 3, // front
-        5, 4, 7, 5, 7, 6, // back
-        4, 5, 1, 4, 1, 0, // up
-        3, 2, 6, 3, 6, 7, // down
-        4, 0, 3, 4, 3, 7, // left
-        1, 5, 6, 1, 6, 2  // right
-    };
-
-    std::array<glm::vec3, 6> NormalSet =
-    {
-        glm::vec3(0, 0, 1),
-        glm::vec3(0, 0, -1),
-        glm::vec3(0, 1, 0), 
-        glm::vec3(0, -1, 0),
-        glm::vec3(-1, 0, 0),
-        glm::vec3(1, 0, 0),
-    };
-
-    auto pVertexArray = make<CGeneralDataArray<glm::vec3>>();
-    auto pNormalArray = make<CGeneralDataArray<glm::vec3>>();
-    for (size_t i = 0; i < IndexSet.size(); ++i)
-    {
-        size_t Index = IndexSet[i];
-        pVertexArray->append(VertexSet[Index]);
-        pNormalArray->append(NormalSet[i / 6]);
-    }
-
-    auto pObject = make<C3DObject>();
-    pObject->setVertexArray(pVertexArray);
-    pObject->setNormalArray(pNormalArray);
-    return pObject;
 }

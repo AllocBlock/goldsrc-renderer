@@ -7,7 +7,7 @@
 
 #include <vector>
 
-void COutlineMaskRenderPass::setHighlightObject(ptr<C3DObjectGoldSrc> vObject)
+void COutlineMaskRenderPass::setHighlightObject(ptr<CMeshDataGoldSrc> vObject)
 {
     m_PipelineMask.setObject(vObject);
     __rerecordCommand();

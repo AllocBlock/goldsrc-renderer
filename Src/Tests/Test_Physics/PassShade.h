@@ -5,14 +5,14 @@
 #include "Camera.h"
 #include "Buffer.h"
 #include "Image.h"
-#include "3DObject.h"
+#include "TempScene.h"
 
 class CRenderPassShade : public vk::IRenderPass
 {
 public:
     CRenderPassShade() = default;
 
-    void setScene(const std::vector<ptr<C3DObject>>& vObjectSet);
+    void setScene(CTempScene::Ptr vScene);
     void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; } 
 
 protected:

@@ -99,14 +99,16 @@ struct SScene
 {
     using Ptr = ptr<SScene>;
 
-    std::vector<ptr<C3DObjectGoldSrc>> Objects;
+    std::vector<ptr<CMeshDataGoldSrc>> Objects;
     std::vector<ptr<CIOImage>> TexImageSet;
 
     std::vector<SGoldSrcSprite> SprSet;
 
+    // for bsp
     bool UseLightmap = false;
     ptr<CLightmap> pLightmap = nullptr;
 
+    // for bsp
     bool UsePVS = false;
     SBspTree BspTree;
     SBspPvs BspPvs;

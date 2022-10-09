@@ -12,9 +12,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
+    <ClInclude Include="DataArray.h" />
     <ClInclude Include="Environment.h" />
+    <ClInclude Include="GeneralDataArray.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Maths.h" />
+    <ClInclude Include="SingleValueDataArray.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />

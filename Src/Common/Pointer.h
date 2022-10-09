@@ -21,7 +21,13 @@ namespace Pointer
 #endif
 
     template <typename T>
-    void isValid(ptr<const T> vPointer)
+    bool isNonEmptyAndValid(const ptr<const T>& vPointer)
+    {
+        return vPointer && vPointer->isValid();
+    }
+
+    template <typename T>
+    bool isNonEmptyAndValid(const ptr<T>& vPointer)
     {
         return vPointer && vPointer->isValid();
     }

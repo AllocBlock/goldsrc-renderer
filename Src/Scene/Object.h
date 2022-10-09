@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-class CObject
+class IMeshData
 {
 public:
     void setName(std::string vName) { m_Name = vName; }

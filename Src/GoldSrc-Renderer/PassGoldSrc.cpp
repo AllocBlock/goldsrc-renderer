@@ -560,7 +560,7 @@ void CSceneGoldSrcRenderPass::__createVertexBuffer()
     size_t NumVertex = 0;
     if (m_pScene)
     {
-        for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+        for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
             NumVertex += pObject->getVertexArray()->size();
         if (NumVertex == 0)
         {
@@ -574,7 +574,7 @@ void CSceneGoldSrcRenderPass::__createVertexBuffer()
     VkDeviceSize BufferSize = sizeof(SGoldSrcPointData) * NumVertex;
     void* pData = new char[BufferSize];
     size_t Offset = 0;
-    for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+    for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
     {
         std::vector<SGoldSrcPointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->getVertexArray()->size();
@@ -611,7 +611,7 @@ void CSceneGoldSrcRenderPass::__updateTextureView()
     }
 }
 
-std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const
+std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<CMeshDataGoldSrc> vpObject) const
 {
     auto pVertexArray = vpObject->getVertexArray();
     auto pColorArray = vpObject->getColorArray();

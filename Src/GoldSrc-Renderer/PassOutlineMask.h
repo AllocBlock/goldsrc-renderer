@@ -59,7 +59,7 @@ public:
         }
     }
 
-    void setObject(ptr<C3DObjectGoldSrc> vObject)
+    void setObject(ptr<CMeshDataGoldSrc> vObject)
     {
         __updateVertexBuffer(vObject);
     }
@@ -142,7 +142,7 @@ private:
         }
     }
 
-    void __updateVertexBuffer(ptr<C3DObjectGoldSrc> vObject)
+    void __updateVertexBuffer(ptr<CMeshDataGoldSrc> vObject)
     {
         m_pDevice->waitUntilIdle();
         m_VertexBuffer.destroy();
@@ -181,7 +181,7 @@ public:
     ptr<CCamera> getCamera() { return m_pCamera; }
     void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; }
 
-    void setHighlightObject(ptr<C3DObjectGoldSrc> vObject);
+    void setHighlightObject(ptr<CMeshDataGoldSrc> vObject);
     void removeHighlight();
 
 protected:

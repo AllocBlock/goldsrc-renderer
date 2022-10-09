@@ -31,9 +31,6 @@
     <Filter Include="头文件\Writer">
       <UniqueIdentifier>{b9734235-3aad-45d0-84dd-de57f441aed4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\DataArray">
-      <UniqueIdentifier>{51de61b3-59f8-4a14-8a1c-d9124838e7bf}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Scene.cpp">
@@ -118,15 +115,6 @@
     </ClInclude>
     <ClInclude Include="SceneObjWriter.h">
       <Filter>头文件\Writer</Filter>
-    </ClInclude>
-    <ClInclude Include="SingleValueDataArray.h">
-      <Filter>头文件\DataArray</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneralDataArray.h">
-      <Filter>头文件\DataArray</Filter>
-    </ClInclude>
-    <ClInclude Include="DataArray.h">
-      <Filter>头文件\DataArray</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

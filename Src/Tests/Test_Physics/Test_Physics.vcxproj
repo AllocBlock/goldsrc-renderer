@@ -102,6 +102,7 @@
     <ClInclude Include="ApplicationTest.h" />
     <ClInclude Include="PassShade.h" />
     <ClInclude Include="PipelineShade.h" />
+    <ClInclude Include="TempScene.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.vcxproj">

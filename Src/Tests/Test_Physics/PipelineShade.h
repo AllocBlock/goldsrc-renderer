@@ -5,6 +5,7 @@
 #include "Sampler.h"
 #include "VertexAttributeDescriptor.h"
 #include "Camera.h"
+#include "Mesh.h"
 
 class CPipelineShade : public IPipeline
 {
@@ -19,10 +20,32 @@ public:
 
         static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
         {
-            CVertexAttributeDescriptor Descriptor;
-            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-            Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
-            return Descriptor.generate();
+            static std::vector<VkVertexInputAttributeDescription> Result;
+            if (Result.empty())
+            {
+                CVertexAttributeDescriptor Descriptor;
+                Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+                Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
+                Result = Descriptor.generate();
+            }
+            return Result;
+        }
+
+        static std::vector<SPointData> extractFromMeshData(const CGeneralMeshDataTest& vMeshData)
+        {
+            auto pVertexArray = vMeshData.getVertexArray();
+            auto pNormalArray = vMeshData.getNormalArray();
+
+            size_t NumPoint = pVertexArray->size();
+            _ASSERTE(NumPoint == pNormalArray->size());
+
+            std::vector<CPipelineShade::SPointData> PointData(NumPoint);
+            for (size_t i = 0; i < NumPoint; ++i)
+            {
+                PointData[i].Pos = pVertexArray->get(i);
+                PointData[i].Normal = pNormalArray->get(i);
+            }
+            return PointData;
         }
     };
 

@@ -16,7 +16,7 @@ private:
     void __readWadsAndInitTextures();
     void __readObject(ptr<SRmfObject> vpObject);
     void __readSolid(ptr<SRmfSolid> vpSolid);
-    void __readSolidFace(const SRmfFace& vFace, ptr<C3DObjectGoldSrc> vopObject);
+    void __readSolidFace(const SRmfFace& vFace, ptr<CMeshDataGoldSrc> vopObject);
     uint32_t __requestTextureIndex(std::string vTextureName);
     glm::vec2 __getTexCoord(SRmfFace vFace, glm::vec3 vVertex);
 

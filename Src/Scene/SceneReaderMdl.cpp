@@ -30,9 +30,9 @@ ptr<SScene> CSceneReaderMdl::_readV()
     return pScene;
 }
 
-ptr<C3DObjectGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
+ptr<CMeshDataGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
 {
-    auto pObject = make<C3DObjectGoldSrc>();
+    auto pObject = make<CMeshDataGoldSrc>();
     pObject->setPrimitiveType(E3DObjectPrimitiveType::TRIAGNLE_LIST);
 
     for (const auto& Model : vBodyPart.ModelSet)
@@ -43,7 +43,7 @@ ptr<C3DObjectGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyP
     return pObject;
 }
 
-void CSceneReaderMdl::__readModel(const SMdlModel& vModel, ptr<C3DObjectGoldSrc> voObject)
+void CSceneReaderMdl::__readModel(const SMdlModel& vModel, ptr<CMeshDataGoldSrc> voObject)
 {
     auto pVertexArray = voObject->getVertexArray();
     auto pColorArray = voObject->getColorArray();

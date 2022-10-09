@@ -94,7 +94,7 @@ void CApplicationGoldSrc::_createOtherResourceV()
         glfwGetFramebufferSize(vWindow, &WindowWidth, &WindowHeight);
         glm::vec2 NDC = glm::vec2(XPos / WindowWidth * 2 - 1.0, YPos / WindowHeight * 2 - 1.0);
 
-        ptr<C3DObjectGoldSrc> pNearestObject = nullptr;
+        ptr<CMeshDataGoldSrc> pNearestObject = nullptr;
         float NearestIntersection = 0.0f;
         if (SceneProbe::select(NDC, m_pCamera, m_pScene, pNearestObject, NearestIntersection))
         {

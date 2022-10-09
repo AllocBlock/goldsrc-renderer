@@ -26,7 +26,7 @@ public:
         size_t VertexOffset = 0;
         for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
         {
-            ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[i];
+            ptr<CMeshDataGoldSrc> pObject = m_pScene->Objects[i];
             if (pObject->getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST)
             {
                 m_ObjectDataPositionSet[i].Offset = VertexOffset;
@@ -44,7 +44,7 @@ protected:
     void _recordObjectRenderCommand(VkCommandBuffer vCommandBuffer, size_t vObjectIndex)
     {
         _ASSERTE(vObjectIndex >= 0 && vObjectIndex < m_pScene->Objects.size());
-        ptr<C3DObjectGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
+        ptr<CMeshDataGoldSrc> pObject = m_pScene->Objects[vObjectIndex];
         SObjectDataPosition DataPosition = m_ObjectDataPositionSet[vObjectIndex];
 
         uint32_t Size = static_cast<uint32_t>(DataPosition.Size);
@@ -59,7 +59,7 @@ protected:
             throw std::runtime_error(u8"物体类型错误");
     }
 
-    static bool _isObjectInSight(ptr<C3DObject> vpObject, const SFrustum& vFrustum)
+    static bool _isObjectInSight(ptr<CGeneralMeshData> vpObject, const SFrustum& vFrustum)
     {
         // AABB frustum culling
         const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;

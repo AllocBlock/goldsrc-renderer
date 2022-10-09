@@ -89,14 +89,14 @@ void CSceneReaderRmf::__readObject(ptr<SRmfObject> vpObject)
 
 void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
 {
-    auto pObject = make<C3DObjectGoldSrc>();
+    auto pObject = make<CMeshDataGoldSrc>();
     for (const SRmfFace& Face : vpSolid->Faces)
         __readSolidFace(Face, pObject);
 
     m_pScene->Objects.emplace_back(std::move(pObject));
 }
 
-void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, ptr<C3DObjectGoldSrc> vopObject)
+void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, ptr<CMeshDataGoldSrc> vopObject)
 {
     uint32_t TexIndex = __requestTextureIndex(vFace.TextureName);
 

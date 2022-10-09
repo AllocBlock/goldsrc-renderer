@@ -106,7 +106,7 @@ private:
     void __updateDescriptorSets();
     void __updateTextureView();
 
-    std::vector<SGoldSrcPointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
+    std::vector<SGoldSrcPointData> __readPointData(ptr<CMeshDataGoldSrc> vpObject) const;
 
     struct
     {

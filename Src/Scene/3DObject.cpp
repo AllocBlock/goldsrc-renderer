@@ -1,6 +1,6 @@
 #include "3DObject.h"
 
-std::optional<Math::S3DBoundingBox> C3DObject::getBoundingBox() const
+std::optional<Math::S3DBoundingBox> CGeneralMeshData::getBoundingBox() const
 {
     std::optional<Math::S3DBoundingBox> CachedBoundingBox = std::nullopt;
     if (CachedBoundingBox.has_value()) return CachedBoundingBox.value();

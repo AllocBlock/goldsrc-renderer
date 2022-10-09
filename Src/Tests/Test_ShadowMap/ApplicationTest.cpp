@@ -123,7 +123,7 @@ void CApplicationTest::__generateScene()
         pNormalArray->append(Normal);
     }
 
-    auto pObject = make<C3DObject>();
+    auto pObject = make<CGeneralMeshData>();
     pObject->setVertexArray(pVertexArray);
     pObject->setNormalArray(pNormalArray);
     m_ObjectSet.emplace_back(pObject);
@@ -133,7 +133,7 @@ void CApplicationTest::__generateScene()
     m_ObjectSet.emplace_back(__createCube(glm::vec3(0.0, 3.0, 0.0), 1.0f));
 }
 
-ptr<C3DObject> CApplicationTest::__createCube(glm::vec3 vCenter, float vSize)
+ptr<CGeneralMeshData> CApplicationTest::__createCube(glm::vec3 vCenter, float vSize)
 {
     /*
      *   4------5      y
@@ -186,7 +186,7 @@ ptr<C3DObject> CApplicationTest::__createCube(glm::vec3 vCenter, float vSize)
         pNormalArray->append(NormalSet[Index / 6]);
     }
 
-    auto pObject = make<C3DObject>();
+    auto pObject = make<CGeneralMeshData>();
     pObject->setVertexArray(pVertexArray);
     pObject->setNormalArray(pNormalArray);
     return pObject;

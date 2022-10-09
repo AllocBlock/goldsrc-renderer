@@ -1,7 +1,7 @@
 #pragma once
 #include "3DObject.h"
 
-class C3DObjectGoldSrc : public C3DObject
+class CMeshDataGoldSrc : public CGeneralMeshData
 {
 public:
     bool getLightMapState() { return m_EnableLightmap; }
@@ -17,4 +17,3 @@ protected:
     IDataArray<std::optional<size_t>>::Ptr m_LightmapIndexArray = make<CGeneralDataArray<std::optional<size_t>>>();
     IDataArray<glm::vec2>::Ptr m_LightmapTexCoordArray = make<CGeneralDataArray<glm::vec2>>();
 };
-

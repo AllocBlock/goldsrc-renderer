@@ -16,7 +16,7 @@ public:
         
     }
 
-    void setScene(const std::vector<ptr<C3DObject>>& vObjectSet);
+    void setScene(const std::vector<ptr<CGeneralMeshData>>& vObjectSet);
     ptr<CCamera> getLightCamera() { return m_pLightCamera; }
     void exportShadowMapToFile(std::string vFileName);
 

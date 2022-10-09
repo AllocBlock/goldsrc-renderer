@@ -2,7 +2,7 @@
 #include <glm/matrix.hpp>
 #include <optional>
 
-bool __intersectRayObject(glm::vec3 vOrigin, glm::vec3 vDirection, ptr<C3DObjectGoldSrc> vObject, float& voNearT)
+bool __intersectRayObject(glm::vec3 vOrigin, glm::vec3 vDirection, ptr<CMeshDataGoldSrc> vObject, float& voNearT)
 {
 	// check bounding box first
 	if (!vObject->getBoundingBox().has_value()) return false;
@@ -31,7 +31,7 @@ bool __intersectRayObject(glm::vec3 vOrigin, glm::vec3 vDirection, ptr<C3DObject
 	return Hit;
 }
 
-bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, ptr<C3DObjectGoldSrc>& voObject, float& voNearestDistance)
+bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, ptr<CMeshDataGoldSrc>& voObject, float& voNearestDistance)
 {
     // FIXME: must be some bugs... can select object behind camera
 	if (!vScene || vScene->Objects.empty()) return false;
@@ -51,7 +51,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene
 	glm::vec3 Direction = glm::normalize(WorldPos - EyePos);
 
 	float NearestDistance = INFINITY;
-    ptr<C3DObjectGoldSrc> pNearestObject = nullptr;
+    ptr<CMeshDataGoldSrc> pNearestObject = nullptr;
 
 	for (const auto& pObject : vScene->Objects)
 	{

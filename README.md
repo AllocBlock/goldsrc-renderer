@@ -304,6 +304,52 @@
     - 需要考虑反射，物体知道自己的名称
     - 如何自动构造Scope？
 
+### 问题：碰撞体设计
+  - 一个碰撞体可以是多种类型，包括基本形状、凸包、三角形面片
+    - 还可以是几个碰撞体的组合
+  - 碰撞体可以影响物体的Transform
+    - 似乎有必要引入Actor的概念了
+
+### 问题：Actor设计
+  - 目前场景中的物体包含了多个属性（变换、网格、物理），这些属性之间有引用，有必要引入Actor的概念了
+#### 1 Actor属性
+  - 在Unity中，变换是Actor的原生组件，必须包含；而在Unreal中，变换组件非必须，但大多数Actor自带
+    - Unity没有根组件，而Unreal有
+  - Actor
+    - Transform
+      - Translate
+      - Rotate
+      - Scale
+    - Mesh (BasicShape/TriangleList)
+      - MeshData (静态或动态生成)
+    - Collider
+#### 2 Actor嵌套的变换，以及世界坐标、局部坐标的区分
+#### 3 Actor渲染
+  - 还没有抽象出材质，暂时是Renderpass遍历所有Actor，固定渲染流程
+  - 网格数据管理，应该统一上传到一个Buffer，按需获取，也许需要一个ActorDataBuffer来方便管理，可以集成到Scene里
+    - 不对，每种pass对物体数据需求不同（如：有的需要法线，有的不需要），不能统一buffer
+
+### 问题：通用网格设计
+  - 原始几何体（任意格式，面片或解析）、网格数据（三角形面片）、VertexBuffer之间的转换
+  - 原始几何体可以生成一个网格数据，在内部实现
+    - 网格数据是通用的，包含各类数据接口，如果原始几何体不包含某些数据，不填入即可
+    - 每个属性对应一个数组
+  - 网格数据到VertexBuffer
+    - 问题1：两者结构不同，前者块存储，后者点存储，且后者只需要前者的部分数据
+      - 如何把需求从pass传到scene，让scene帮忙完成？
+        - PointData能否自动生成布局？目前只有内存布局，没有语义（每块内存对应了什么）
+          - **目前是在PointData内部实现转换**
+    - 问题2：多个网格数据可能需要合并到一个VertexBuffer
+
+### 问题：网格和物理的对应关系
+  - 网格和碰撞体分离，一个网格可以包含一个碰撞体
+
+### 问题：模型矩阵的更新
+  - https://stackoverflow.com/questions/54103399/how-to-repeatedly-update-a-uniform-data-for-number-of-objects-inside-a-single-vu
+  - 每个物体有不同的模型矩阵，而Uniform不能在pass begin后更新
+  - 方案1：每个物体分配一个Uniform...
+  - 方案2：Push constant，很方便
+
 ### 暂时不考虑重构了，实现功能优先，然后过程里考虑重构！
 
 ## 一些用到的技术、算法

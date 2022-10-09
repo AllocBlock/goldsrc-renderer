@@ -243,7 +243,7 @@ void CSceneSimpleRenderPass::__createVertexBuffer()
     size_t NumVertex = 0;
     if (m_pScene)
     {
-        for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+        for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
             NumVertex += pObject->getVertexArray()->size();
         if (NumVertex == 0)
         {
@@ -257,7 +257,7 @@ void CSceneSimpleRenderPass::__createVertexBuffer()
     VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
     uint8_t* pData = new uint8_t[BufferSize];
     size_t Offset = 0;
-    for (ptr<C3DObjectGoldSrc> pObject : m_pScene->Objects)
+    for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
     {
         std::vector<SSimplePointData> PointData = __readPointData(pObject);
         size_t SubBufferSize = sizeof(SSimplePointData) * pObject->getVertexArray()->size();
@@ -276,7 +276,7 @@ void CSceneSimpleRenderPass::__updateDescriptorSets()
     m_PipelineSet.Main.updateDescriptorSet(m_TextureImageSet);
 }
 
-std::vector<SSimplePointData> CSceneSimpleRenderPass::__readPointData(ptr<C3DObjectGoldSrc> vpObject) const
+std::vector<SSimplePointData> CSceneSimpleRenderPass::__readPointData(ptr<CMeshDataGoldSrc> vpObject) const
 {
     auto pVertexArray = vpObject->getVertexArray();
     auto pNormalArray = vpObject->getNormalArray();

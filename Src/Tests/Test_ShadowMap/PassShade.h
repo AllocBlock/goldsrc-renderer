@@ -17,7 +17,7 @@ public:
     ptr<CCamera> getCamera() { return m_pCamera; }
 
     void setShadowMapInfo(CCamera::CPtr vLightCamera);
-    void setScene(const std::vector<ptr<C3DObject>>& vObjectSet);
+    void setScene(const std::vector<ptr<CGeneralMeshData>>& vObjectSet);
 
 protected:
     virtual void _initV() override;

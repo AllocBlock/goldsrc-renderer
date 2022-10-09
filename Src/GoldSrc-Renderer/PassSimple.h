@@ -64,7 +64,7 @@ private:
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
 
-    std::vector<SSimplePointData> __readPointData(ptr<C3DObjectGoldSrc> vpObject) const;
+    std::vector<SSimplePointData> __readPointData(ptr<CMeshDataGoldSrc> vpObject) const;
 
     struct
     {

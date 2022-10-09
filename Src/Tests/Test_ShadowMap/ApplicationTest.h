@@ -23,13 +23,13 @@ protected:
 private:
     void __linkPasses();
     void __generateScene();
-    static ptr<C3DObject> __createCube(glm::vec3 vCenter, float vSize);
+    static ptr<CGeneralMeshData> __createCube(glm::vec3 vCenter, float vSize);
 
     ptr<CGUIRenderPass> m_pPassGUI = nullptr;
     ptr<CRenderPassShade> m_pPassShade = nullptr;
     ptr<CRenderPassShadowMap> m_pRenderPassShadowMap = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    std::vector<ptr<C3DObject>> m_ObjectSet;
+    std::vector<ptr<CGeneralMeshData>> m_ObjectSet;
 };
 

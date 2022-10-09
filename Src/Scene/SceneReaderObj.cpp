@@ -11,7 +11,7 @@ ptr<SScene> CSceneReaderObj::_readV()
     Obj.read(m_FilePath);
 
     Scene::reportProgress(u8"∂¡»°≥°æ∞÷–");
-    ptr<C3DObjectGoldSrc> pObjObject = make<C3DObjectGoldSrc>();
+    ptr<CMeshDataGoldSrc> pObjObject = make<CMeshDataGoldSrc>();
     const uint32_t TexIndex = 0;
 
     auto pVertexArray = pObjObject->getVertexArray();

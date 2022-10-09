@@ -3,7 +3,7 @@
 #include "RenderPassDescriptor.h"
 #include "ShadowMapDefines.h"
 
-std::vector<SPointData> readPointData(ptr<C3DObject> pObject)
+std::vector<SPointData> readPointData(ptr<CGeneralMeshData> pObject)
 {
     auto pVertexArray = pObject->getVertexArray();
     auto pNormalArray = pObject->getNormalArray();
@@ -27,11 +27,11 @@ void CRenderPassShade::setShadowMapInfo(CCamera::CPtr vLightCamera)
     m_pLightCamera = vLightCamera;
 }
 
-void CRenderPassShade::setScene(const std::vector<ptr<C3DObject>>& vObjectSet)
+void CRenderPassShade::setScene(const std::vector<ptr<CGeneralMeshData>>& vObjectSet)
 {
     size_t NumVertex = 0;
 
-    for (ptr<const C3DObject> pObject : vObjectSet)
+    for (ptr<const CGeneralMeshData> pObject : vObjectSet)
         NumVertex += pObject->getVertexArray()->size();
     if (NumVertex == 0)
     {
@@ -43,7 +43,7 @@ void CRenderPassShade::setScene(const std::vector<ptr<C3DObject>>& vObjectSet)
     VkDeviceSize BufferSize = sizeof(SPointData) * NumVertex;
     uint8_t* pData = new uint8_t[BufferSize];
     size_t Offset = 0;
-    for (ptr<C3DObject> pObject : vObjectSet)
+    for (ptr<CGeneralMeshData> pObject : vObjectSet)
     {
         std::vector<SPointData> PointData = readPointData(pObject);
         size_t SubBufferSize = sizeof(SPointData) * pObject->getVertexArray()->size();
