@@ -4,7 +4,6 @@ struct SUBOVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
-    alignas(16) glm::mat4 Model;
 };
 
 void CPipelineShade::__updateDescriptorSet()
@@ -21,10 +20,15 @@ void CPipelineShade::__updateDescriptorSet()
 void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
-    UBOVert.Model = glm::mat4(1.0f);
     UBOVert.View = vCamera->getViewMat();
     UBOVert.Proj = vCamera->getProjMat();
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+}
+
+void CPipelineShade::updatePushConstant(VkCommandBuffer vCommandBuffer, const glm::mat4& vModelMatrix)
+{
+    SPushConstant Constant = { vModelMatrix, glm::transpose(glm::inverse(vModelMatrix)) };
+    pushConstant(vCommandBuffer, VK_SHADER_STAGE_VERTEX_BIT, Constant);
 }
 
 void CPipelineShade::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
@@ -39,6 +43,16 @@ VkPipelineInputAssemblyStateCreateInfo CPipelineShade::_getInputAssemblyStageInf
     Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
     return Info;
+}
+
+std::vector<VkPushConstantRange> CPipelineShade::_getPushConstantRangeSetV()
+{
+    VkPushConstantRange PushConstantInfo = {};
+    PushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    PushConstantInfo.offset = 0;
+    PushConstantInfo.size = sizeof(SPushConstant);
+
+    return { PushConstantInfo };
 }
 
 void CPipelineShade::_createResourceV(size_t vImageNum)

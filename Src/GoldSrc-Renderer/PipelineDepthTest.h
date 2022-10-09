@@ -18,7 +18,7 @@ public:
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
 
 protected:
-    void _initPushConstantV(VkCommandBuffer vCommandBuffer);
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override;
     virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shaderVert.spv"; }
     virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shaderFrag.spv"; }
 

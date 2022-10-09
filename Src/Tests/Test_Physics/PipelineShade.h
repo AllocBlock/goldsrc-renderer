@@ -7,6 +7,8 @@
 #include "Camera.h"
 #include "Mesh.h"
 
+#include <glm/ext/matrix_transform.hpp>
+
 class CPipelineShade : public IPipeline
 {
 public:
@@ -49,9 +51,20 @@ public:
         }
     };
 
+    struct SPushConstant
+    {
+        glm::mat4 Model;
+        glm::mat4 NormalModel;
+    };
+
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
+    void updatePushConstant(VkCommandBuffer vCommandBuffer, const glm::mat4& vModelMatrix);
 
 protected:
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override
+    {
+        updatePushConstant(vCommandBuffer, glm::identity<glm::mat4>());
+    }
     virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shaderVert.spv"; }
     virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shaderFrag.spv"; }
 
@@ -59,6 +72,7 @@ protected:
     virtual void _initDescriptorV() override;
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
+    virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;
 
     virtual void _destroyV() override;
 

@@ -10,6 +10,12 @@ enum class EAttributeType
     NORMAL
 };
 
+struct SActorDataInfo
+{
+    VkDeviceSize First;
+    VkDeviceSize Num;
+};
+
 class CTempScene
 {
 public:
@@ -33,16 +39,18 @@ public:
     }
 
     template <typename PointData_t>
-    vk::CBuffer::Ptr generateVertexBuffer(vk::CDevice::CPtr vDevice, size_t& voVertexNum)
+    vk::CBuffer::Ptr generateVertexBuffer(vk::CDevice::CPtr vDevice, std::vector<SActorDataInfo>& voPositionSet, size_t& voVertexNum)
     {
         size_t NumVertex = 0;
         std::vector<std::vector<PointData_t>> DataSet;
+        std::vector<SActorDataInfo> PositionSet;
         for (auto pActor : m_ActorSet)
         {
             auto pMesh = pActor->getMesh();
             auto MeshData = pMesh->getMeshData();
             const auto& Data = PointData_t::extractFromMeshData(MeshData);
             DataSet.emplace_back(Data);
+            PositionSet.push_back({ NumVertex, Data.size() });
             NumVertex += Data.size();
         }
 
@@ -67,6 +75,7 @@ public:
         pVertBuffer->stageFill(pData, BufferSize);
         delete[] pData;
 
+        voPositionSet = PositionSet;
         voVertexNum = NumVertex;
         return pVertBuffer;
     }

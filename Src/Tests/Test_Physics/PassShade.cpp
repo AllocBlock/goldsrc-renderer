@@ -5,7 +5,9 @@
 
 void CRenderPassShade::setScene(CTempScene::Ptr vScene)
 {
-   m_pVertBuffer = vScene->generateVertexBuffer<CPipelineShade::SPointData>(m_AppInfo.pDevice, m_VertexNum);
+    m_pScene = vScene;
+    m_ActorDataPositionSet.clear();
+    m_pVertBuffer = vScene->generateVertexBuffer<CPipelineShade::SPointData>(m_AppInfo.pDevice, m_ActorDataPositionSet, m_VertexNum);
 }
 
 void CRenderPassShade::_initV()
@@ -48,7 +50,13 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
         VkBuffer VertBuffer = *m_pVertBuffer;
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_Pipeline.bind(CommandBuffer, vImageIndex);
-        vkCmdDraw(CommandBuffer, m_VertexNum, 1, 0, 0);
+
+        _ASSERTE(m_pScene->getActorNum() == m_ActorDataPositionSet.size());
+        for (size_t i = 0; i < m_ActorDataPositionSet.size(); ++i)
+        {
+            m_Pipeline.updatePushConstant(CommandBuffer, m_pScene->getActor(i)->getTransform().getModelMat());
+            vkCmdDraw(CommandBuffer, m_ActorDataPositionSet[i].Num, 1, m_ActorDataPositionSet[i].First, 0);
+        }
     }
     end();
     return { CommandBuffer };

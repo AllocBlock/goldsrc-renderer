@@ -79,13 +79,13 @@ void CApplicationTest::_renderUIV()
             {
                 auto pActor = m_pScene->getActor(i);
                 std::string ActorName = pActor->getName();
-                if (UI::collapse(ActorName + "###Scene"))
+                if (UI::collapse(ActorName + "##Scene"))
                 {
                     UI::indent(20.0f);
-                    auto Transform = pActor->getTransform();
-                    UI::drag(u8"位置###" + ActorName + u8"_scene", Transform.Translate);
-                    UI::drag(u8"旋转###" + ActorName + u8"_scene", Transform.Rotate);
-                    UI::drag(u8"缩放###" + ActorName + u8"_scene", Transform.Scale);
+                    STransform Transform = pActor->getTransform();
+                    UI::drag(u8"位置##" + ActorName + u8"_Scene", Transform.Translate);
+                    UI::drag(u8"旋转##" + ActorName + u8"_Scene", Transform.Rotate);
+                    UI::drag(u8"缩放##" + ActorName + u8"_Scene", Transform.Scale);
                     pActor->setTransform(Transform);
                     UI::unindent();
                 }

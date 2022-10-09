@@ -37,7 +37,10 @@ private:
 
     CPipelineShade m_Pipeline;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
+
+    CTempScene::Ptr m_pScene = nullptr;
     ptr<vk::CBuffer> m_pVertBuffer;
+    std::vector<SActorDataInfo> m_ActorDataPositionSet;
     size_t m_VertexNum = 0;
 
     vk::CImage m_DepthImage;
