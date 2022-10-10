@@ -89,6 +89,22 @@ void CApplicationTest::_renderUIV()
     UI::text(u8"测试");
     m_pInteractor->getCamera()->renderUI();
 
+    // physics engine
+    {
+        if (UI::collapse(u8"物理引擎", true))
+        {
+            bool Paused = m_pPhysicsEngine->isPaused();
+            UI::toggle(u8"暂停模拟", Paused);
+            if (Paused != m_pPhysicsEngine->isPaused())
+                if (Paused) m_pPhysicsEngine->pause();
+                else m_pPhysicsEngine->resume();
+
+            float Speed = m_pPhysicsEngine->getSimulateSpeed();
+            UI::drag(u8"模拟速度", Speed, 0.01f, 0.01f, 2.0f);
+            m_pPhysicsEngine->setSimulateSpeed(Speed);
+        }
+    }
+
     // scene
     {
         if (UI::collapse(u8"场景", true))

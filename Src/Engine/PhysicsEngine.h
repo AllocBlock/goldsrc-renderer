@@ -13,6 +13,10 @@ public:
     _DEFINE_GETTER_SETTER(GravityAcceleration, float)
     _DEFINE_GETTER_SETTER(SimulateSpeed, float)
 
+    void resume() { m_Paused = false; }
+    void pause() { m_Paused = true; }
+    bool isPaused() { return m_Paused; }
+
     void add(ptr<SPhysicsStateRigidBody> vRigid)
     {
         _ASSERTE(vRigid);
@@ -21,6 +25,8 @@ public:
     void clear() { m_RigidBodySet.clear(); }
     void update(float vDeltaTime)
     {
+        if (m_Paused) return;
+
         float dt = m_SimulateSpeed * vDeltaTime;
 
         for (ptr<SPhysicsStateRigidBody> pRigid : m_RigidBodySet)
@@ -56,6 +62,7 @@ public:
 private:
     std::vector<ptr<SPhysicsStateRigidBody>> m_RigidBodySet;
 
+    bool m_Paused = false;
     float m_SimulateSpeed = 1.0f; // time speed
     float m_GravityAcceleration = 9.8f;
 };
