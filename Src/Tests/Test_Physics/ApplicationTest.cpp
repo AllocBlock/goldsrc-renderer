@@ -1,6 +1,7 @@
 #include "ApplicationTest.h"
 #include "GlobalSingleTimeBuffer.h"
 #include "Gui.h"
+#include "Ticker.h"
 
 using namespace vk;
 
@@ -25,6 +26,7 @@ CTempScene::Ptr __generateScene()
 
     auto pGroundActor = make<CActor>("Ground");
     pGroundActor->setMesh(pGroundMesh);
+    pGroundActor->getPhysicsState()->IsStatic = true;
 
     m_pScene->addActor(pGroundActor);
 
@@ -32,13 +34,12 @@ CTempScene::Ptr __generateScene()
     auto pCubeMesh1 = make<CMeshBasicCube>();
     auto pCubeActor1 = make<CActor>("Cube1");
     pCubeActor1->setMesh(pCubeMesh1);
-    pCubeActor1->setTransform(STransform(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f), 5.0f));
+    pCubeActor1->setScale(3.0f);
     m_pScene->addActor(pCubeActor1);
     
     auto pCubeMesh2 = make<CMeshBasicCube>();
     auto pCubeActor2 = make<CActor>("Cube2");
     pCubeActor2->setMesh(pCubeMesh2);
-    pCubeActor2->setTransform(STransform(glm::vec3(0.0f, 3.0f, 0.0f), glm::vec3(0.0f), 1.0f));
     m_pScene->addActor(pCubeActor2);
 
     return m_pScene;
@@ -55,6 +56,8 @@ void CApplicationTest::_initV()
     m_pCamera->setAspect(AppInfo.Extent.width / AppInfo.Extent.height);
     m_pCamera->setPos(glm::vec3(10.0, 10.0, 10.0));
     m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
+
+    m_pPhysicsEngine = make<CPhysicsEngine>();
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)
@@ -62,6 +65,11 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
     m_pPassShade->update(vImageIndex);
+
+    // FIXME: move static to member? or global?
+    static CTicker Ticker;
+    float DeltaTime = Ticker.update();
+    m_pPhysicsEngine->update(DeltaTime);
 }
 
 void CApplicationTest::_renderUIV()
@@ -76,6 +84,9 @@ void CApplicationTest::_renderUIV()
         if (UI::collapse(u8"场景", true))
         {
             UI::indent(20.0f);
+            if (UI::button(u8"重置场景"))
+                __resetActors();
+
             for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
             {
                 auto pActor = m_pScene->getActor(i);
@@ -83,11 +94,10 @@ void CApplicationTest::_renderUIV()
                 if (UI::collapse(ActorName + "##Scene"))
                 {
                     UI::indent(20.0f);
-                    STransform Transform = pActor->getTransform();
-                    UI::drag(u8"位置##" + ActorName + u8"_Scene", Transform.Translate);
-                    UI::drag(u8"旋转##" + ActorName + u8"_Scene", Transform.Rotate, 0.1f);
-                    UI::drag(u8"缩放##" + ActorName + u8"_Scene", Transform.Scale);
-                    pActor->setTransform(Transform);
+                    auto pTransform = pActor->getTransform();
+                    UI::drag(u8"位置##" + ActorName + u8"_Scene", pTransform->Translate);
+                    UI::drag(u8"旋转##" + ActorName + u8"_Scene", pTransform->Rotate, 0.1f);
+                    UI::drag(u8"缩放##" + ActorName + u8"_Scene", pTransform->Scale);
                     UI::unindent();
                 }
             }
@@ -123,6 +133,8 @@ void CApplicationTest::_createOtherResourceV()
     m_pPassShade->setCamera(m_pCamera);
     
     m_pScene = __generateScene();
+    __resetActors();
+    __initPhysicsEngine();
     m_pPassShade->setScene(m_pScene);
     
     __linkPasses();
@@ -138,6 +150,25 @@ void CApplicationTest::_destroyOtherResourceV()
     destroyAndClear(m_pPassShade);
 
     cleanGlobalCommandBuffer();
+}
+
+void CApplicationTest::__initPhysicsEngine()
+{
+    for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
+    {
+        auto pActor = m_pScene->getActor(i);
+        m_pPhysicsEngine->add(pActor->getPhysicsState());
+    }
+}
+
+void CApplicationTest::__resetActors()
+{
+    auto pCube1 = m_pScene->findActor("Cube1");
+    pCube1->setTranslate(glm::vec3(0.0f, 0.0f, 8.0f));
+    pCube1->clearMoveState();
+    auto pCube2 = m_pScene->findActor("Cube2");
+    pCube2->setTranslate(glm::vec3(0.0f, 3.0f, 10.0f));
+    pCube2->clearMoveState();
 }
 
 void CApplicationTest::__linkPasses()

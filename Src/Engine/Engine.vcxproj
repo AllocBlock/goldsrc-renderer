@@ -105,9 +105,13 @@
     <ClCompile Include="IPipeline.cpp" />
     <ClCompile Include="IRenderPass.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="PhysicsEngine.cpp" />
+    <ClCompile Include="PhysicsState.cpp" />
     <ClCompile Include="RenderPassDescriptor.cpp" />
     <ClCompile Include="RenderPassPort.cpp" />
     <ClCompile Include="SetupGLFW.cpp" />
+    <ClCompile Include="Ticker.cpp" />
+    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="VertexAttributeDescriptor.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -124,9 +128,13 @@
     <ClInclude Include="IPipeline.h" />
     <ClInclude Include="IRenderPass.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="PhysicsEngine.h" />
+    <ClInclude Include="PhysicsState.h" />
     <ClInclude Include="ScenePass.h" />
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />
+    <ClInclude Include="Ticker.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="VertexAttributeDescriptor.h" />
     <ClInclude Include="RenderPassDescriptor.h" />
   </ItemGroup>

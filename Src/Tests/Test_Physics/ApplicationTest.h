@@ -4,6 +4,7 @@
 #include "PassShade.h"
 #include "Interactor.h"
 #include "TempScene.h"
+#include "PhysicsEngine.h"
 
 class CApplicationTest : public IApplication
 {
@@ -20,6 +21,8 @@ protected:
     virtual void _destroyOtherResourceV() override;
 
 private:
+    void __initPhysicsEngine();
+    void __resetActors();
     void __linkPasses();
 
     ptr<CCamera> m_pCamera = nullptr;
@@ -30,5 +33,5 @@ private:
     ptr<CInteractor> m_pInteractor = nullptr;
 
     CTempScene::Ptr m_pScene = nullptr;
+    CPhysicsEngine::Ptr m_pPhysicsEngine = nullptr;
 };
-

@@ -43,6 +43,8 @@ class CMesh
 {
 public:
 	_DEFINE_PTR(CMesh);
+    virtual ~CMesh() = default;
+
     _DEFINE_GETTER_SETTER(Name, std::string)
 
     virtual CGeneralMeshDataTest getMeshData() const = 0; // FIXME: use pointer or not? which mean will the data be updated after returned?

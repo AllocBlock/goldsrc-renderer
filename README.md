@@ -283,7 +283,6 @@
           - 暂时放着吧，但还是都改回指针
   - **解决方法：依旧使用智能指针，引入HandleSet便于数组集体销毁，引入模板函数辅助销毁和置空（destroyAndClear），模板函数判断有效（同时判断为空以及isValid函数返回值**
 
-
 ### 问题：link上update的传递方向
   - image update向尾部传递
   - link update向整条链传递
@@ -304,12 +303,6 @@
   - **预想解决方法：每个对象创建和销毁之间为一个Scope，通过Scope可以形成一个树状图，可以打印出来，从而找到对象在何处创建的**
     - 需要考虑反射，物体知道自己的名称
     - 如何自动构造Scope？
-
-### 问题：碰撞体设计
-  - 一个碰撞体可以是多种类型，包括基本形状、凸包、三角形面片
-    - 还可以是几个碰撞体的组合
-  - 碰撞体可以影响物体的Transform
-    - 似乎有必要引入Actor的概念了
 
 ### 问题：Actor设计
   - 目前场景中的物体包含了多个属性（变换、网格、物理），这些属性之间有引用，有必要引入Actor的概念了
@@ -342,14 +335,43 @@
           - **目前是在PointData内部实现转换**
     - 问题2：多个网格数据可能需要合并到一个VertexBuffer
 
-### 问题：网格和物理的对应关系
-  - 网格和碰撞体分离，一个网格可以包含一个碰撞体
+~~### 问题：网格和物理的对应关系~~
+~~- 网格和碰撞体分离，一个网格可以包含一个碰撞体~~
 
 ### 问题：模型矩阵的更新
   - https://stackoverflow.com/questions/54103399/how-to-repeatedly-update-a-uniform-data-for-number-of-objects-inside-a-single-vu
   - 每个物体有不同的模型矩阵，而Uniform不能在pass begin后更新
   - 方案1：每个物体分配一个Uniform...
-  - 方案2：Push constant，很方便
+  - **方案2：Push constant，很方便**
+
+### 问题：物理引擎设计
+#### 问题：要保证物理引擎的稳定，可以使用固定间隔更新
+  - 但需要单独的线程来处理，同时要同步渲染和物理之间的状态
+  - **暂时先不独立更新，物理和渲染在同一个循环里更新**
+#### 问题：碰撞体设计
+  - 一个碰撞体可以是多种类型，包括基本形状、凸包、三角形面片
+    - 还可以是几个碰撞体的组合
+  - 碰撞体可以影响物体的Transform
+    - 似乎有必要引入Actor的概念了
+#### 问题：如何统一管理和更新场景物理状态
+  - 每个物体有物理状态、材质和碰撞体
+    - 物理状态表述物体的内在属性，如质量、质点
+    - 材质表述和其他物体交互时的作用大小
+    - 碰撞体表示其他物体交互时作用力的方向
+    - 可以参考Unity(rigidbody, [unity物理引擎介绍](https://blog.csdn.net/qq_43545653/article/details/109700388))或Unreal的设计
+      - Unity
+        - Gameobject
+          - Rigidbody
+            - Mass...
+          - Collider
+            - Shape
+            - Physical Material
+              - friction
+              - bounce...
+    - 目前的结构
+      - PhysicalState
+        - PhysicalMaterial
+        - Collider 暂时只允许一个
 
 ### 暂时不考虑重构了，实现功能优先，然后过程里考虑重构！
 
@@ -368,111 +390,120 @@
 - 结论$$M=\text{inverse}(\text{Model})^T$$
 
 ### 技术：物理模拟
-#### 物体分类
-- 静态：不会移动
-- 动态：可以移动，受力影响
-- Trigger：用于触发，不会阻挡
-- Kinematic：不遵守动力学，由游戏玩法逻辑控制
+#### 概念
+  ##### 物体分类
+  - 静态：不会移动
+  - 动态：可以移动，受力影响
+  - Trigger：用于触发，不会阻挡
+  - Kinematic：不遵守动力学，由游戏玩法逻辑控制
 
-#### 物体形状
-- 球
-- 胶囊
-- 盒子
-- 凸多面体（凸包、水密）
-- 三角面（水密，一般只能静态）
-- 高度场
+  ##### 物体形状
+  - 球
+  - 胶囊
+  - 盒子
+  - 凸多面体（凸包、水密）
+  - 三角面（水密，一般只能静态）
+  - 高度场
 
-#### 属性/物理材质
-- 质量/密度
-- 质心
-- 摩擦力Friction与弹性Restitution
+  ##### 属性/物理材质
+  - 质量/密度
+  - 质心
+  - 摩擦力Friction与弹性Restitution
 
-#### 力Force、冲量Impulse
-- 显式欧拉，隐式欧拉，半隐式欧拉（推荐、稳定易算）
+  ##### 力Force、冲量Impulse
+  - 显式欧拉，隐式欧拉，半隐式欧拉（推荐、稳定易算）
 
-#### 刚体动力学Rigid body Dynamics
-- 姿态 Orientation 矩阵、四元数
-- 角速度 Angular velocity
-  - 三维，同时表示轴向和大小
-- 角加速度 Angular acceleration
-- 转动惯量 Inertia tensor
-- 角动量 Angular momentum
-- 力矩 Torque
+  ##### 刚体动力学Rigid body Dynamics
+  - 姿态 Orientation 矩阵、四元数
+  - 角速度 Angular velocity
+    - 三维，同时表示轴向和大小
+  - 角加速度 Angular acceleration
+  - 转动惯量 Inertia tensor
+  - 角动量 Angular momentum
+  - 力矩 Torque
 
-#### 碰撞检测
-- Broad Phase + Narrow Phase
-  - 包围盒粗检测+精确计算与交点信息
-  - Broad Phase
-    - BVH
-      - 更新成本低
-    - Sort and Sweep
-      - AABB，直接判断三轴区间是否重叠
-      - 所有AABB整体排序，可以局部更新
-  - Narrow Phase
-    - 基本形状
-      - 球与球：省略
-      - 球与胶囊：两端半球+球与圆柱
-      - 胶囊与胶囊：类似
-    - Minkwski Difference-based methods
-      - Minkwski Sum：空间中给定点集A和B，两集合内点两两相加得到的集合
-        - 几何意义：参考 [104动画，【10.游戏引擎中物理系统的基础理论和算法 | GAMES104-现代游戏引擎：从入门到实践】 【精准空降到 1:22:46】](https://www.bilibili.com/video/BV16U4y117VU?share_source=copy_web&vd_source=b22720ef0ca41a79a4e3eb477a2fa563&t=4966)
-        - 对凸多面体，其和等价于两个多面体顶点和的集合的凸包
-      - Minkwski Difference
-        - A+(-B)
-        - 如果两个凸多面体有重叠，则A-B一定过原点！
-      - GJK Algorithm
-        - 基本思想：通过迭代，先寻找最有可能的三角形，随后继续迭代，从而加速，无需遍历整个物体
-        - 一定程度能表示穿越厚度
-    - Separating Axis Theorem (SAT) 分离轴
-      - 2D
-        - 对空间上的不相交的两个凸多面体，能找到一根轴，两个物体在轴上的投影是不重叠的
-        - 由此，遍历A上每条边作为分离轴，测试是否分离，一旦找到一个满足条件，则说明不相交；如果A上未找到，再遍历B找一次
-      - 3D
-        - 遍历投影面
-        - 只判断A、B自己的面不完善，还需要测试A的每条边叉乘B的每条边形成的面
+  ##### 碰撞检测
+  - Broad Phase + Narrow Phase
+    - 包围盒粗检测+精确计算与交点信息
+    - Broad Phase
+      - BVH
+        - 更新成本低
+      - Sort and Sweep
+        - AABB，直接判断三轴区间是否重叠
+        - 所有AABB整体排序，可以局部更新
+    - Narrow Phase
+      - 基本形状
+        - 球与球：省略
+        - 球与胶囊：两端半球+球与圆柱
+        - 胶囊与胶囊：类似
+      - Minkwski Difference-based methods
+        - Minkwski Sum：空间中给定点集A和B，两集合内点两两相加得到的集合
+          - 几何意义：参考 [104动画，【10.游戏引擎中物理系统的基础理论和算法 | GAMES104-现代游戏引擎：从入门到实践】 【精准空降到 1:22:46】](https://www.bilibili.com/video/BV16U4y117VU?share_source=copy_web&vd_source=b22720ef0ca41a79a4e3eb477a2fa563&t=4966)
+          - 对凸多面体，其和等价于两个多面体顶点和的集合的凸包
+        - Minkwski Difference
+          - A+(-B)
+          - 如果两个凸多面体有重叠，则A-B一定过原点！
+        - GJK Algorithm
+          - 基本思想：通过迭代，先寻找最有可能的三角形，随后继续迭代，从而加速，无需遍历整个物体
+          - 一定程度能表示穿越厚度
+      - Separating Axis Theorem (SAT) 分离轴
+        - 2D
+          - 对空间上的不相交的两个凸多面体，能找到一根轴，两个物体在轴上的投影是不重叠的
+          - 由此，遍历A上每条边作为分离轴，测试是否分离，一旦找到一个满足条件，则说明不相交；如果A上未找到，再遍历B找一次
+        - 3D
+          - 遍历投影面
+          - 只判断A、B自己的面不完善，还需要测试A的每条边叉乘B的每条边形成的面
 
-#### 碰撞处理
-- 分离重叠
-  - Penalty Force
-    - 很少用于游戏
-    - 力度大、时间小的力
-- 求解约束
-  - 拉格朗日
-  - 迭代
-    - 给定冲量
-    - 计算约束，是否满足
-    - 如果不满足，计算新的冲量
-    - 继续计算约束...
+  ##### 碰撞处理
+  - 分离重叠
+    - Penalty Force
+      - 很少用于游戏
+      - 力度大、时间小的力
+  - 求解约束
+    - 拉格朗日
+    - 迭代
+      - 给定冲量
+      - 计算约束，是否满足
+      - 如果不满足，计算新的冲量
+      - 继续计算约束...
 
-#### Scene Query
-- Raycast
-  - 光线与物体求交
-  - Multiple hits
-  - Closest hit
-  - Any hit
-- Sweep
-  - 类似Raycast，用一个体来扫描
-- Overlap
-  - 给定一个形状，判断哪些有碰撞
+  ##### Scene Query
+  - Raycast
+    - 光线与物体求交
+    - Multiple hits
+    - Closest hit
+    - Any hit
+  - Sweep
+    - 类似Raycast，用一个体来扫描
+  - Overlap
+    - 给定一个形状，判断哪些有碰撞
 
-#### 优化
-- Collision Group：分组管理
-- Island
-  - 每个Island可以单独处理，其他Island直接Sleep
-- Continuous Collision Detection (CCD)
-  - 连续碰撞检测
-  - 两帧之间直接穿过物体：tunnelling
-  - 可以加厚物体来避免...
-  - CCD
-    - 检测“安全”步长，动态调整模拟步长
-- Deterministic Simulation
-  - 联网游戏，需要保证现象相同
-    - 同步物理状态
-  - same old+same input=same new
-  - 固定物理模拟步长
-  - 固定求解方法
-  - 浮点精度问题
+  ##### 优化
+  - Collision Group：分组管理
+  - Island
+    - 每个Island可以单独处理，其他Island直接Sleep
+  - Continuous Collision Detection (CCD)
+    - 连续碰撞检测
+    - 两帧之间直接穿过物体：tunnelling
+    - 可以加厚物体来避免...
+    - CCD
+      - 检测“安全”步长，动态调整模拟步长
+  - Deterministic Simulation
+    - 联网游戏，需要保证现象相同
+      - 同步物理状态
+    - same old+same input=same new
+    - 固定物理模拟步长
+    - 固定求解方法
+    - 浮点精度问题
 
+#### 实现
+- https://zhuanlan.zhihu.com/p/109532468
+- 循环
+  - 分析受力
+  - 更新速度和位置
+  - 碰撞检测
+  - 解决约束
+  - 渲染
 ---
 ## TODO
   - Debug scope功能

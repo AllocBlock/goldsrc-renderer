@@ -33,6 +33,15 @@ public:
         return m_ActorSet[vIndex];
     }
 
+    // return first found actor
+    CActor::Ptr findActor(std::string vName)
+    {
+        for (auto pActor : m_ActorSet)
+            if (pActor->getName() == vName)
+                return pActor;
+        return nullptr;
+    }
+
     void clear()
     {
         m_ActorSet.clear();
