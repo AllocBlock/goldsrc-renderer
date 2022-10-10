@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\Scene">
+      <UniqueIdentifier>{ef39a3cd-c7d9-4d1f-a1ef-2d67ffab2630}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Scene">
+      <UniqueIdentifier>{f10fa41c-b2e4-44d8-a890-7bf638015afb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Physics">
+      <UniqueIdentifier>{4b6c9131-3e51-4aaf-80c7-8b6d5f611c68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Physics">
+      <UniqueIdentifier>{105377ca-b5f6-437e-aa0a-8e3de60fe372}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IPipeline.cpp">
@@ -30,13 +42,7 @@
     <ClCompile Include="SetupGLFW.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="GUIPass.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Interactor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="VertexAttributeDescriptor.cpp">
@@ -54,26 +60,32 @@
     <ClCompile Include="IApplication.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Actor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Collider.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysicsEngine.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysicsState.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Ticker.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor.cpp">
+      <Filter>源文件\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>源文件\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Interactor.cpp">
+      <Filter>源文件\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsEngine.cpp">
+      <Filter>源文件\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsState.cpp">
+      <Filter>源文件\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>源文件\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>源文件\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>源文件\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -95,13 +107,7 @@
     <ClInclude Include="SetupGLFW.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="GUIPass.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Interactor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="VertexAttributeDescriptor.h">
@@ -122,26 +128,32 @@
     <ClInclude Include="IApplication.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Actor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Collider.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysicsEngine.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysicsState.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Ticker.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor.h">
+      <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Interactor.h">
+      <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
+      <Filter>头文件\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsEngine.h">
+      <Filter>头文件\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsState.h">
+      <Filter>头文件\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>头文件\Scene</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

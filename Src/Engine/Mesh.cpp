@@ -61,3 +61,28 @@ CGeneralMeshDataTest __createCube()
 }
 
 CGeneralMeshDataTest CMeshBasicCube::MeshData = __createCube();
+
+CGeneralMeshDataTest CMeshTriangleList::getMeshData() const
+{
+    return m_Data;
+}
+
+void CMeshTriangleList::addTriangles(std::vector<glm::vec3> vPosSet, std::vector<glm::vec3> vNormalSet)
+{
+    size_t VertexNum = vPosSet.size();
+    _ASSERTE(VertexNum % 3 == 0);
+    _ASSERTE(VertexNum == vNormalSet.size());
+        
+    auto pVertexArray = m_Data.getVertexArray();
+    auto pNormalArray = m_Data.getNormalArray();
+    for (size_t i = 0; i < VertexNum; ++i)
+    {
+        pVertexArray->append(vPosSet[i]);
+        pNormalArray->append(vNormalSet[i]);
+    }
+}
+
+CGeneralMeshDataTest CMeshBasicCube::getMeshData() const
+{
+    return CMeshBasicCube::MeshData;
+}

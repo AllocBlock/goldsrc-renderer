@@ -58,25 +58,9 @@ class CMeshTriangleList : public CMesh
 public:
     _DEFINE_PTR(CMeshTriangleList);
 
-    virtual CGeneralMeshDataTest getMeshData() const override
-    {
-        return m_Data;
-    }
+    virtual CGeneralMeshDataTest getMeshData() const override;
 
-    void addTriangles(std::vector<glm::vec3> vPosSet, std::vector<glm::vec3> vNormalSet)
-    {
-        size_t VertexNum = vPosSet.size();
-        _ASSERTE(VertexNum % 3 == 0);
-        _ASSERTE(VertexNum == vNormalSet.size());
-        
-        auto pVertexArray = m_Data.getVertexArray();
-        auto pNormalArray = m_Data.getNormalArray();
-        for (size_t i = 0; i < VertexNum; ++i)
-        {
-            pVertexArray->append(vPosSet[i]);
-            pNormalArray->append(vNormalSet[i]);
-        }
-    }
+    void addTriangles(std::vector<glm::vec3> vPosSet, std::vector<glm::vec3> vNormalSet);
 
 private:
     CGeneralMeshDataTest m_Data;
@@ -90,8 +74,5 @@ public:
 
     static CGeneralMeshDataTest MeshData;
 
-    virtual CGeneralMeshDataTest getMeshData() const override
-    {
-        return CMeshBasicCube::MeshData;
-    }
+    virtual CGeneralMeshDataTest getMeshData() const override;
 };
