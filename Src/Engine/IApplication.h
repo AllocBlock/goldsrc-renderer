@@ -25,6 +25,7 @@ class IApplication
 {
 public:
     IApplication() = default;
+    virtual ~IApplication() = default;
 
     void init(GLFWwindow* vWindow);
     void render();

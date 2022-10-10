@@ -26,7 +26,7 @@ void CPipelinePBS::setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer)
     _ASSERTE(vMaterialBuffer);
     m_pMaterialBuffer = vMaterialBuffer;
 
-    // FIXME: 
+    // FIXME: how to update in a better way?
     if (isReady())
         __updateDescriptorSet();
 }
@@ -57,7 +57,8 @@ void CPipelinePBS::setTextures(const vk::CPointerSet<vk::CImage>& vColorSet, con
         else
             m_TextureSpecularSet[i] = m_pPlaceholderImage;
     }
-    // FIXME: 
+
+    // FIXME: how to update in a better way?
     if (isReady())
         __updateDescriptorSet();
 }
@@ -69,7 +70,7 @@ void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::
     m_pSkyImage = Function::createImageFromIOImage(m_pDevice, vSkyImage, m_MipmapLevelNum);
     m_pSkyIrrImage = Function::createImageFromIOImage(m_pDevice, vSkyIrrImage);
 
-    // FIXME: 
+    // FIXME: how to update in a better way?
     if (isReady())
         __updateDescriptorSet();
 }

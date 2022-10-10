@@ -117,8 +117,7 @@ public:
 
     CPort() = delete;
     CPort(const SPortFormat& vFormat): m_Format(vFormat) {}
-
-    // FIXME: better solution?
+    
     bool isSwapchainSource() { return m_isSwapchainSource; }
     void markAsSwapchainSource() { m_isSwapchainSource = true; }
 

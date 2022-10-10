@@ -104,7 +104,6 @@ void CGUIMain::_renderUIV()
             const SResultReadScene& ResultScene = m_FileReadingFuture.get();
             if (ResultScene.Succeed)
             {
-                // TODO: load scene for renderer
                 _ASSERTE(m_ReadSceneCallback);
                 m_ReadSceneCallback(ResultScene.pScene);
                 m_pCurScene = ResultScene.pScene;

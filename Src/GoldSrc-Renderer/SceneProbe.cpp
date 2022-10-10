@@ -33,7 +33,6 @@ bool __intersectRayObject(glm::vec3 vOrigin, glm::vec3 vDirection, ptr<CMeshData
 
 bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene, ptr<CMeshDataGoldSrc>& voObject, float& voNearestDistance)
 {
-    // FIXME: must be some bugs... can select object behind camera
 	if (!vScene || vScene->Objects.empty()) return false;
 	// normolize screen coordinate
 	glm::vec4 ClipSpace = glm::vec4(vNDC, 1.0f, 1.0f);
@@ -57,9 +56,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, SScene::Ptr vScene
 	{
 		std::optional<Math::S3DBoundingBox> BB = pObject->getBoundingBox();
 		if (BB == std::nullopt) continue;
-		// TODO: get intersection of ray and bounding box
-		// get distance, compare with currert neareset
-		// save nearest bounding box
+		// find neareset
 		float t = 0;
 		bool HasIntersection = __intersectRayObject(EyePos, Direction, pObject, t);
 		if (HasIntersection && t < NearestDistance)

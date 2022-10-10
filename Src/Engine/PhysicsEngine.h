@@ -15,7 +15,7 @@ public:
 
     void resume() { m_Paused = false; }
     void pause() { m_Paused = true; }
-    bool isPaused() { return m_Paused; }
+    bool isPaused() const { return m_Paused; }
 
     void add(ptr<SPhysicsStateRigidBody> vRigid)
     {
@@ -23,7 +23,7 @@ public:
         m_RigidBodySet.emplace_back(vRigid);
     }
     void clear() { m_RigidBodySet.clear(); }
-    void update(float vDeltaTime)
+    void update(float vDeltaTime) const
     {
         if (m_Paused) return;
 

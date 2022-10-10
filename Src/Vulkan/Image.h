@@ -45,7 +45,7 @@ namespace vk
         VkDeviceMemory m_Memory = VK_NULL_HANDLE;
         uint32_t m_Width = 0, m_Height = 0, m_LayerCount = 0;
         VkFormat m_Format = VkFormat::VK_FORMAT_UNDEFINED;
-        VkImageLayout m_Layout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED; // TODO: mip can has different layout at different level
+        VkImageLayout m_Layout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED; // TODO: mip can has different layout at different level, so only one layout info can not handle this
         uint32_t m_MipmapLevelNum = 1;
     };
 
