@@ -28,11 +28,13 @@ public:
             if (pRigid->IsStatic) continue;
 
             // 1. calculate force
-            glm::vec3 F = glm::vec3(0.0f);
+            glm::vec3 F = pRigid->FrameForce;
             if (pRigid->HasGravity)
             {
                 F += glm::vec3(0.0, 0.0, -1.0) * m_GravityAcceleration * pRigid->Mass;
             }
+
+            pRigid->clearForce();
 
             // 2. update velocity and position
             // explicit euler

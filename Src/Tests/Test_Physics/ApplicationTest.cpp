@@ -1,4 +1,7 @@
 #include "ApplicationTest.h"
+
+#include <random>
+
 #include "GlobalSingleTimeBuffer.h"
 #include "Gui.h"
 #include "Ticker.h"
@@ -45,6 +48,13 @@ CTempScene::Ptr __generateScene()
     return m_pScene;
 }
 
+glm::vec3 __generateRandomUpForce(float vIntensity = 20000.0f)
+{
+    static std::default_random_engine e;
+    static std::uniform_real_distribution<float> u(-1, 1);
+    return glm::normalize(glm::vec3(u(e), u(e), abs(u(e)))) * vIntensity;
+}
+
 void CApplicationTest::_initV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
@@ -86,6 +96,13 @@ void CApplicationTest::_renderUIV()
             UI::indent(20.0f);
             if (UI::button(u8"重置场景"))
                 __resetActors();
+            if (UI::button(u8"随机力"))
+            {
+                auto pCube1 = m_pScene->findActor("Cube1");
+                pCube1->getPhysicsState()->addForce(__generateRandomUpForce());
+                auto pCube2 = m_pScene->findActor("Cube2");
+                pCube2->getPhysicsState()->addForce(__generateRandomUpForce());
+            }
 
             for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
             {

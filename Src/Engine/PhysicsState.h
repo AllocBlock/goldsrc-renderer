@@ -17,6 +17,16 @@ struct IPhysicsState
     ptr<STransform> pTargetTransform = nullptr;
     SPhysicsMaterial Material;
     ICollider::Ptr Collider;
+
+    glm::vec3 FrameForce = glm::vec3(0.0f);
+
+    // TODO: add force apply position, for rotation change
+    void addForce(glm::vec3 vForce)
+    {
+        FrameForce += vForce;
+    }
+
+    void clearForce() { FrameForce = glm::vec3(0.0f); }
 };
 
 
