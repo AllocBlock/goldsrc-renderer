@@ -129,7 +129,9 @@ void CApplicationTest::_renderUIV()
                     UI::indent(20.0f);
                     auto pTransform = pActor->getTransform();
                     UI::drag(u8"位置##" + ActorName + u8"_Scene", pTransform->Translate);
-                    UI::drag(u8"旋转##" + ActorName + u8"_Scene", pTransform->Rotate, 0.1f);
+                    glm::vec3 Euler = pTransform->Rotate.getEulerDegrees();
+                    UI::drag(u8"旋转##" + ActorName + u8"_Scene", Euler, 0.1f);
+                    pTransform->Rotate.setEulerDegrees(Euler);
                     UI::drag(u8"缩放##" + ActorName + u8"_Scene", pTransform->Scale);
                     UI::unindent();
                 }

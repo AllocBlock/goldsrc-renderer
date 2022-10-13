@@ -1,10 +1,12 @@
 #pragma once
+#include "Rotator.h"
+
 #include <glm/glm.hpp>
 
 struct STransform
 {
 	glm::vec3 Translate = glm::vec3(0.0f);
-	glm::vec3 Rotate = glm::vec3(0.0f);
+	CRotator Rotate = CRotator();
 	glm::vec3 Scale = glm::vec3(1.0f);
 
 	STransform() = default;

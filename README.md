@@ -505,8 +505,104 @@
     - 固定求解方法
     - 浮点精度问题
 
+#### 刚体
+- 刚体：刚体:在外力作用下，形状和大小都不发生变化的物体
+  - 刚体即看作任意两质点间距离保持不变的特殊质点组
+  - 理想模型
+
+##### 刚体运动学
+- [Bilibili: 刚体运动学和动力学](https://www.bilibili.com/video/BV1RW411L7MB)
+- 刚体运动可拆分为平动和转动
+- 转动
+  - 定轴转动：如风扇
+  - 非定轴转动：如陀螺
+- 定轴转动
+  - 每一质点均作圆周运动，圆面为转动平面
+  - 任一质点运动 $\Delta \theta, \vec{\omega} ,\vec{\alpha}$ （角位移、角速度、角加速度）均相同，但 $\vec{v} ,\vec{a}$ （速度、加速度）不同;
+  - 运动描述仅需一个坐标，每个质点统一
+  - 角坐标 $\theta=\theta(t)$ 
+    - 标量逆时针为正
+  - 角位移 $\Delta\theta=\theta(t+\Delta t) - \theta(t)$ 
+  - 角速度矢量 $$\omega=\lim_{\Delta t\to 0}\frac{\Delta \theta}{\Delta t}=\frac{\mathrm{d}\theta}{\mathrm{d}t}$$
+    - 方向：右手螺旋，与旋转轴平行
+    - 有正负
+  - 角加速度：$\vec{\alpha}=\frac{\mathrm{d}\omega}{\mathrm{d}t}$ 
+  - 分析质点
+    - 线速度：$\vec{v}=r\omega\vec{e_t}$
+    - 加速度分为两个方向
+      - $a_t=r\alpha$
+      - $a_n=\omega v=r\omega^2$
+
+##### 刚体动力学
+- 力矩：转动的原因
+  - =力臂叉乘力
+  - 若力在转动平面内
+    - 过作用点P作PO垂直转轴，O成为转点，$\vec{r}=\overrightarrow{OP}$
+    - $\vec{M}=\vec{r}\times \vec{F}$
+      - $M=Fr\sin\theta=Fd$，d是力臂
+  - 否则分解为$\vec{F}=\vec{F_z}+\vec{F_\perp}$
+    - $\vec{M_z}=\vec{r}\times \vec{F_\perp}$
+
+- 转动定律
+  - 简单情况：只分析单个质元
+    - 在$\vec{F}$的作用下，得到力矩$\vec{M}$
+    - 可得到$M=mr^2\alpha$，可见F产生的是角加速度
+  - 放大到整体：
+    - 每个质元受外力矩和内力矩影响
+    - 整个刚体的力矩等于这些质元所受力矩的和
+    - 注意刚体整体内力矩相互抵消，可以消除，得到
+      - $$M=(\sum{\Delta m_jr_j^2})\alpha$$
+      - 定义$J=(\sum{\Delta m_jr_j^2})$，它与外力无关，是刚体的内在属性，称为**转动惯量**或**惯性矩**
+  - **转动定律：$M=J\alpha$，连接了受力和运动**
+    - 单位$\mathrm{kg\cdot m^2}$
+    - 转动惯量和刚体本身、转动轴有关
+    - 刚体定轴转动的角加速度与它所受的合外力矩成正比，与刚体的转动惯量成反比.
+    - 和牛顿第二定律类比
+
+  - 平行轴定理
+    - 质量为m的刚体，如果对其**质心轴**的转动惯量为$J_C$,则对任与该轴平行，相距为d的转轴的转动惯量为 $$J_O=J_C+md^2$$
+    - 这也说明，沿质心旋转转动惯量最小
+
+- 角动量/动量矩
+  - [【科普】两分钟告诉你角动量是什么？](https://www.bilibili.com/video/BV19b41157u2)
+  - 类似动量
+  - $L=mvr$
+  - 类似动量守恒，也有角动量守恒：物体所受合外力矩为零时，角动量守恒
+  - 质量和半径变小时，速度增加
+
+- 惯性张量
+  - 刚体对固定轴有一个**转动惯量**，对固定点有一个**惯量张量**
+  - 3D下，惯性张量是一个3x3矩阵，对应三根惯量主轴
+  - 沿任意轴旋转可以分解到惯量主轴上处理？
+
+
+##### 四元数
+- 资料
+  - [3Blue1Brown：四元数的可视化](https://www.bilibili.com/video/BV1SW411y7W1)
+  - [四元数和三维转动，可互动的探索式视频（请看链接）](https://www.bilibili.com/video/BV1Lt411U7og)
+- 概念
+  - 复数的扩展
+  - 一个实部+三个虚部
+  - 当实部=0时，三个虚部称为vector，是vector的由来
+- 乘法
+  - 计算：分配率
+  - 几何意义：缩放+旋转
+  - 不满足交换律
+- 旋转
+  - 对点$P$，旋转轴$\mathrm{a}i+\mathrm{b}j+\mathrm{c}k$，旋转角为α
+  - 构造$q=\cos(\frac{\alpha}{2}) + \sin(\frac{\alpha}{2})(\mathrm{a}i+\mathrm{b}j+\mathrm{c}k)$
+  - $$P'=q\cdot p\cdot q^{-1}$$
+  - $q^{-1}$是 $q$的共轭
+    - $q=w+\mathrm{a}i+\mathrm{b}j+\mathrm{c}k, q^{-1}=w-\mathrm{a}i-\mathrm{b}j-\mathrm{c}k$
+    - $q=\cos(\frac{\alpha}{2}) + \sin(\frac{\alpha}{2})(\mathrm{a}i+\mathrm{b}j+\mathrm{c}k), q^{-1}=\cos(-\frac{\alpha}{2}) + \sin(-\frac{\alpha}{2})(\mathrm{a}i+\mathrm{b}j+\mathrm{c}k), $
+    - 消除实部变化带来的扭曲？
+
 #### 实现
-- https://zhuanlan.zhihu.com/p/109532468
+- 资料
+  - [游戏物理引擎(一) 刚体动力学](https://zhuanlan.zhihu.com/p/109532468)
+  - [Video Game Physics Tutorial - Part I: An Introduction to Rigid Body Dynamics](https://www.toptal.com/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics)
+  - [刚体姿态的数学表达(一)：有限转动张量](https://blog.sciencenet.cn/blog-3452605-1303738.html)
+  - [震惊! 转动惯量张量和一个刚体运动的结论竟做出这种事⋯](https://zhuanlan.zhihu.com/p/52915086)
 - 循环
   - 分析受力
     - 重力
@@ -517,6 +613,7 @@
   - 碰撞检测
   - 解决约束
   - 渲染
+
 ---
 ## TODO
   - Debug scope功能
@@ -524,3 +621,4 @@
   - 自动排列commandbuffer
   - wad第一次搜寻找不到，重试后找到的问题
   - 绘制port相关的流程图
+  - 最小化时，extent=(0,0)的处理

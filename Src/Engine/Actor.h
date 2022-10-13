@@ -24,11 +24,11 @@ public:
     _DEFINE_GETTER_POINTER(PhysicsState, ptr<SPhysicsStateRigidBody>)
 
 	glm::vec3 getTranslate() const { return m_pTransform->Translate; }
-	glm::vec3 getRotate() const { return m_pTransform->Rotate; }
+	const CRotator& getRotate() const { return m_pTransform->Rotate; }
 	glm::vec3 getScale() const { return m_pTransform->Scale; }
 
 	void setTranslate(glm::vec3 v) { m_pTransform->Translate = v; }
-	void setRotate(glm::vec3 v) { m_pTransform->Rotate = v; }
+	void setRotate(const CRotator& v) { m_pTransform->Rotate = v; }
 	void setScale(glm::vec3 v) { m_pTransform->Scale = v; }
 	void setScale(float v) { m_pTransform->Scale = glm::vec3(v); }
 
