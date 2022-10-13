@@ -27,6 +27,7 @@ public:
 	const CRotator& getRotate() const { return m_pTransform->Rotate; }
 	glm::vec3 getScale() const { return m_pTransform->Scale; }
 
+	void resetTransform() { m_pTransform->reset(); }
 	void setTranslate(glm::vec3 v) { m_pTransform->Translate = v; }
 	void setRotate(const CRotator& v) { m_pTransform->Rotate = v; }
 	void setScale(glm::vec3 v) { m_pTransform->Scale = v; }
@@ -51,7 +52,9 @@ public:
 	void clearMoveState()
 	{
 		m_pPhysicsState->Velocity = glm::vec3(0.0f);
-		// TODO: more state like rotating
+		m_pPhysicsState->AngularVelocity = glm::vec3(0.0f);
+		m_pPhysicsState->clearForce();
+		m_pPhysicsState->clearAlpha();
 	}
 
 private:

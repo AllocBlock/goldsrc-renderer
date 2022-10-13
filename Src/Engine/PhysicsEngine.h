@@ -25,10 +25,15 @@ public:
     void clear() { m_RigidBodySet.clear(); }
     void update(float vDeltaTime) const;
 
+    bool isGravityEnabled() const { return m_EnableGravity; }
+    void setGravityState(bool vEnable) { m_EnableGravity = vEnable; }
+
 private:
     std::vector<ptr<SPhysicsStateRigidBody>> m_RigidBodySet;
 
     bool m_Paused = false;
     float m_SimulateSpeed = 1.0f; // time speed
+
+    bool m_EnableGravity = true;
     float m_GravityAcceleration = 9.8f;
 };

@@ -37,7 +37,6 @@ CTempScene::Ptr __generateScene()
     auto pCubeMesh1 = make<CMeshBasicCube>();
     auto pCubeActor1 = make<CActor>("Cube1");
     pCubeActor1->setMesh(pCubeMesh1);
-    pCubeActor1->setScale(3.0f);
     m_pScene->addActor(pCubeActor1);
     
     auto pCubeMesh2 = make<CMeshBasicCube>();
@@ -53,6 +52,14 @@ glm::vec3 __generateRandomUpForce(float vIntensity = 20000.0f)
     static std::default_random_engine e;
     static std::uniform_real_distribution<float> u(-1, 1);
     return glm::normalize(glm::vec3(u(e), u(e), abs(u(e)))) * vIntensity;
+}
+
+glm::vec3 __generateRandomAlpha()
+{
+    static std::default_random_engine e;
+    static std::uniform_real_distribution<float> u(-1, 1);
+    float Speed = 2000.0f * (u(e) * 0.5 + 0.5);
+    return glm::normalize(glm::vec3(u(e), u(e), u(e))) * Speed;
 }
 
 void CApplicationTest::_initV()
@@ -102,6 +109,10 @@ void CApplicationTest::_renderUIV()
             float Speed = m_pPhysicsEngine->getSimulateSpeed();
             UI::drag(u8"模拟速度", Speed, 0.01f, 0.01f, 2.0f);
             m_pPhysicsEngine->setSimulateSpeed(Speed);
+
+            bool EnableGravity = m_pPhysicsEngine->isGravityEnabled();
+            UI::toggle(u8"开启重力", EnableGravity);
+            m_pPhysicsEngine->setGravityState(EnableGravity);
         }
     }
 
@@ -120,6 +131,14 @@ void CApplicationTest::_renderUIV()
                 pCube2->getPhysicsState()->addForce(__generateRandomUpForce());
             }
 
+            if (UI::button(u8"随机角加速度"))
+            {
+                auto pCube1 = m_pScene->findActor("Cube1");
+                pCube1->getPhysicsState()->addAlpha(__generateRandomAlpha());
+                auto pCube2 = m_pScene->findActor("Cube2");
+                pCube2->getPhysicsState()->addAlpha(__generateRandomAlpha());
+            }
+
             for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
             {
                 auto pActor = m_pScene->getActor(i);
@@ -133,6 +152,13 @@ void CApplicationTest::_renderUIV()
                     UI::drag(u8"旋转##" + ActorName + u8"_Scene", Euler, 0.1f);
                     pTransform->Rotate.setEulerDegrees(Euler);
                     UI::drag(u8"缩放##" + ActorName + u8"_Scene", pTransform->Scale);
+
+
+                    UI::toggle(u8"为静态物体##" + ActorName + u8"_Scene", pActor->getPhysicsState()->IsStatic);
+                    UI::toggle(u8"开启重力##" + ActorName + u8"_Scene", pActor->getPhysicsState()->HasGravity);
+                    UI::drag(u8"质量##" + ActorName + u8"_Scene", pActor->getPhysicsState()->Mass, 0.01f, 0.01f);
+                    UI::drag(u8"速度##" + ActorName + u8"_Scene", pActor->getPhysicsState()->Velocity);
+                    UI::drag(u8"角速度##" + ActorName + u8"_Scene", pActor->getPhysicsState()->AngularVelocity);
                     UI::unindent();
                 }
             }
@@ -199,9 +225,12 @@ void CApplicationTest::__initPhysicsEngine()
 void CApplicationTest::__resetActors()
 {
     auto pCube1 = m_pScene->findActor("Cube1");
+    pCube1->resetTransform();
     pCube1->setTranslate(glm::vec3(0.0f, 0.0f, 8.0f));
+    pCube1->setScale(3.0f);
     pCube1->clearMoveState();
     auto pCube2 = m_pScene->findActor("Cube2");
+    pCube2->resetTransform();
     pCube2->setTranslate(glm::vec3(0.0f, 3.0f, 10.0f));
     pCube2->clearMoveState();
 }
