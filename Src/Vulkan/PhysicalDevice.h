@@ -11,7 +11,6 @@ namespace vk
     {
     public:
         _DEFINE_PTR(CPhysicalDevice);
-
         ~CPhysicalDevice();
 
         static CPhysicalDevice::Ptr chooseBestDevice(CInstance::CPtr vInstance, CSurface::CPtr vSurface, const std::vector<const char*>& vExtensions);
@@ -35,8 +34,11 @@ namespace vk
         static SQueueFamilyIndices __findQueueFamilies(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface);
         static SSwapChainSupportDetails __getSwapChainSupport(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface);
 
+        void __initBestDepthFormat();
+
         CInstance::CPtr m_pInstance = nullptr;
         CSurface::CPtr m_pSurface = VK_NULL_HANDLE;
         VkPhysicalDeviceProperties m_DeviceProperty = {};
+        VkFormat m_BestDepthFormat = VkFormat::VK_FORMAT_UNDEFINED;
     };
 }

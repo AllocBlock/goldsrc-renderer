@@ -41,6 +41,7 @@ CPhysicalDevice::Ptr CPhysicalDevice::chooseBestDevice(CInstance::CPtr vInstance
     pDevice->_set(ChosenDevice);
     pDevice->m_pInstance = vInstance;
     pDevice->m_pSurface = vSurface;
+    pDevice->__initBestDepthFormat();
     return pDevice;
 }
 
@@ -141,16 +142,7 @@ VkFormatProperties CPhysicalDevice::getFormatProperty(VkFormat vFormat) const
 
 VkFormat vk::CPhysicalDevice::getBestDepthFormat() const
 {
-    static VkFormat DepthFormat = VkFormat::VK_FORMAT_UNDEFINED;
-    if (DepthFormat == VkFormat::VK_FORMAT_UNDEFINED)
-    {
-        DepthFormat = chooseSupportedFormat(
-            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-        );
-    }
-    return DepthFormat;
+    return m_BestDepthFormat;
 }
 
 bool CPhysicalDevice::__isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vDeviceExtensions)
@@ -250,4 +242,13 @@ SSwapChainSupportDetails CPhysicalDevice::__getSwapChainSupport(VkPhysicalDevice
     }
 
     return Details;
+}
+
+void CPhysicalDevice::__initBestDepthFormat()
+{
+    m_BestDepthFormat = chooseSupportedFormat(
+        { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
 }
