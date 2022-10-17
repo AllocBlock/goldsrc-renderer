@@ -516,6 +516,7 @@
 
 ##### 刚体运动学
 - [Bilibili: 刚体运动学和动力学](https://www.bilibili.com/video/BV1RW411L7MB)
+- [GAMES103-基于物理的计算机动画入门](https://www.bilibili.com/video/BV12Q4y1S73g)
 - 刚体运动可拆分为平动和转动
 - 转动
   - 定轴转动：如风扇
@@ -620,6 +621,14 @@
 - 插值 Slerp
 - 混合
   - [四元数应用——顺序无关的旋转混合](https://zhuanlan.zhihu.com/p/28330428)
+
+
+#### 碰撞处理
+- Penalty Force
+  - Quadratic
+  - Log
+- Impulse
+- Constraint
 
 #### 实现
 - 资料

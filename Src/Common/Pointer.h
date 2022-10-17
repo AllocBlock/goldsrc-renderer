@@ -8,6 +8,9 @@ namespace Pointer
     using ptr = std::shared_ptr<T>;
 
     template <class T>
+    using cptr = std::shared_ptr<const T>;
+
+    template <class T>
     using wptr = std::weak_ptr<T>;
 
 #ifndef _MAKE_PTR

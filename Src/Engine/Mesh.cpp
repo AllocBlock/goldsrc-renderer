@@ -22,9 +22,6 @@ CGeneralMeshDataTest __createCube()
         glm::vec3(-1, -1, -1),
     };
 
-    for (auto& Vertex : VertexSet)
-        Vertex = Vertex * 0.5f;
-
     const std::array<size_t, 36> IndexSet =
     {
         0, 1, 2, 0, 2, 3, // front

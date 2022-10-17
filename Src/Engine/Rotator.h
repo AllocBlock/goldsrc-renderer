@@ -5,7 +5,7 @@
 class CRotator
 {
 public:
-    CRotator() {}
+    CRotator() = default;
     CRotator(glm::quat v) { setByQuaternion(v); }
     CRotator(glm::vec3 v) { setByEulerRadians(v); }
     CRotator(glm::mat4 v) { setByRotationMatrix(v); }
@@ -19,6 +19,11 @@ public:
     void setByEulerRadians(glm::vec3 v) { m_Rotation = glm::quat(v); }
     void setEulerDegrees(glm::vec3 v) { m_Rotation = glm::quat(v * glm::pi<float>() / 180.0f); }
     void setByRotationMatrix(glm::mat4 v) { m_Rotation = glm::quat_cast(v); }
+
+    CRotator operator * (const CRotator& v2) const
+    {
+        return CRotator(getQuaternion() * v2.getQuaternion());
+    }
 
 private:
     glm::quat m_Rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);

@@ -9,7 +9,7 @@ struct SPhysicsMaterial
 {
     float StaticFriction = 0.5f;
     float Friction = 0.3f;
-    float AirResistance = 0.3f;
+    float AirResistance = 0.1f;
 };
 
 struct IPhysicsState
@@ -17,7 +17,7 @@ struct IPhysicsState
     bool IsStatic = false;
     ptr<STransform> pTargetTransform = nullptr;
     SPhysicsMaterial Material;
-    ICollider::Ptr Collider;
+    ICollider::Ptr pCollider = nullptr;
 
     glm::vec3 FrameForce = glm::vec3(0.0f);
     
