@@ -36,4 +36,6 @@ private:
 
     bool m_EnableGravity = true;
     float m_GravityAcceleration = 9.8f;
+
+    bool m_CollisionDetection = false;
 };

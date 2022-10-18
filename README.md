@@ -468,6 +468,8 @@
           - 只判断A、B自己的面不完善，还需要测试A的每条边叉乘B的每条边形成的面
 
   ##### 碰撞处理
+  - 资料
+    - [3D collision detection 提供很多场景的碰撞检测方法](http://www.miguelcasillas.com/?mcportfolio=collision-detection-c)
   - 分离重叠
     - Penalty Force
       - 很少用于游戏
@@ -655,3 +657,4 @@
   - wad第一次搜寻找不到，重试后找到的问题
   - 绘制port相关的流程图
   - 最小化时，extent=(0,0)的处理
+  - 动态shader编译

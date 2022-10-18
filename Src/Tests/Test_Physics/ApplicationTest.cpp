@@ -12,7 +12,7 @@ CTempScene::Ptr __generateScene()
 {
     CTempScene::Ptr m_pScene = make<CTempScene>();
 
-    // ground
+    // Ground
     glm::vec3 Normal = glm::vec3(0.0, 0.0, 1.0);
     std::vector<glm::vec3> VertexSet =
     {
@@ -24,41 +24,37 @@ CTempScene::Ptr __generateScene()
         glm::vec3(-20,  20, 0),
     };
 
-    auto pGroundMesh = make<CMeshTriangleList>();
-    pGroundMesh->addTriangles(VertexSet, { Normal, Normal, Normal, Normal, Normal, Normal });
+    {
+        auto pGroundMesh = make<CMeshTriangleList>();
+        pGroundMesh->addTriangles(VertexSet, { Normal, Normal, Normal, Normal, Normal, Normal });
 
-    auto pGroundActor = make<CActor>("Ground");
-    pGroundActor->setMesh(pGroundMesh);
-    pGroundActor->getPhysicsState()->IsStatic = true;
-    pGroundActor->getPhysicsState()->pCollider = make<CColliderBasic>(pGroundActor->getTransform(), EBasicColliderType::PLANE);
+        auto pGroundActor = make<CActor>("Ground");
+        pGroundActor->setMesh(pGroundMesh);
+        pGroundActor->getPhysicsState()->IsStatic = true;
+        pGroundActor->getPhysicsState()->pCollider = make<CColliderBasic>(pGroundActor->getTransform(), EBasicColliderType::PLANE);
 
-    m_pScene->addActor(pGroundActor);
+        m_pScene->addActor(pGroundActor);
+    }
 
-    //// cubes
-    //auto pCubeMesh1 = make<CMeshBasicCube>();
-    //auto pCubeActor1 = make<CActor>("Cube1");
-    //pCubeActor1->setMesh(pCubeMesh1);
-    //pCubeActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pCubeActor1->getTransform(), EBasicColliderType::CUBE);
-    //m_pScene->addActor(pCubeActor1);
-    //
-    //auto pCubeMesh2 = make<CMeshBasicCube>();
-    //auto pCubeActor2 = make<CActor>("Cube2");
-    //pCubeActor2->setMesh(pCubeMesh2);
-    //pCubeActor2->getPhysicsState()->pCollider = make<CColliderBasic>(pCubeActor2->getTransform(), EBasicColliderType::CUBE);
-    //m_pScene->addActor(pCubeActor2);
+    // Cubes
+    {
+        auto pCubeMesh1 = make<CMeshBasicCube>();
+        auto pCubeActor1 = make<CActor>("Cube1");
+        pCubeActor1->setMesh(pCubeMesh1);
+        pCubeActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pCubeActor1->getTransform(), EBasicColliderType::CUBE);
 
-    // Sphere
-    auto pCubeMesh1 = make<CMeshBasicCube>();
-    auto pCubeActor1 = make<CActor>("Cube1");
-    pCubeActor1->setMesh(pCubeMesh1);
-    pCubeActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pCubeActor1->getTransform(), EBasicColliderType::SPHERE);
-    m_pScene->addActor(pCubeActor1);
+        m_pScene->addActor(pCubeActor1);
+    }
 
-    auto pCubeMesh2 = make<CMeshBasicCube>();
-    auto pCubeActor2 = make<CActor>("Cube2");
-    pCubeActor2->setMesh(pCubeMesh2);
-    pCubeActor2->getPhysicsState()->pCollider = make<CColliderBasic>(pCubeActor2->getTransform(), EBasicColliderType::SPHERE);
-    m_pScene->addActor(pCubeActor2);
+    // Spheres
+    {
+        auto pSphereMesh1 = make<CMeshBasicSphere>();
+        auto pSphereActor1 = make<CActor>("Sphere1");
+        pSphereActor1->setMesh(pSphereMesh1);
+        pSphereActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pSphereActor1->getTransform(), EBasicColliderType::SPHERE);
+
+        m_pScene->addActor(pSphereActor1);
+    }
 
     return m_pScene;
 }
@@ -241,14 +237,17 @@ void CApplicationTest::__initPhysicsEngine()
 void CApplicationTest::__resetActors()
 {
     auto pCube1 = m_pScene->findActor("Cube1");
+    _ASSERTE(pCube1);
     pCube1->resetTransform();
     pCube1->setTranslate(glm::vec3(0.0f, 0.0f, 16.0f));
     pCube1->setScale(3.0f);
     pCube1->clearMoveState();
-    auto pCube2 = m_pScene->findActor("Cube2");
-    pCube2->resetTransform();
-    pCube2->setTranslate(glm::vec3(0.0f, 6.0f, 20.0f));
-    pCube2->clearMoveState();
+
+    auto pSphere1 = m_pScene->findActor("Sphere1");
+    _ASSERTE(pSphere1);
+    pSphere1->resetTransform();
+    pSphere1->setTranslate(glm::vec3(0.0f, 6.0f, 20.0f));
+    pSphere1->clearMoveState();
 }
 
 void CApplicationTest::__linkPasses()

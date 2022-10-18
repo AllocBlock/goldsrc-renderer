@@ -76,3 +76,14 @@ public:
 
     virtual CGeneralMeshDataTest getMeshData() const override;
 };
+
+// TODO: move to basic shape, which provide mesh and collider generation
+class CMeshBasicSphere : public CMesh
+{
+public:
+    _DEFINE_PTR(CMeshBasicCube);
+
+    static CGeneralMeshDataTest MeshData;
+
+    virtual CGeneralMeshDataTest getMeshData() const override;
+};

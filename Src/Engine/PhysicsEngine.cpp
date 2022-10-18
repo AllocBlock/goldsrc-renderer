@@ -23,24 +23,27 @@ void CPhysicsEngine::update(float vDeltaTime) const
     std::vector<std::vector<glm::vec3>> CollideAlphaSet(RigidNum);
 
     // TODO: use accelerate data struct too speed up
-    for (size_t i = 0; i < RigidNum; ++i)
+    if (m_CollisionDetection)
     {
-        for (size_t k = i + 1; k < RigidNum; ++k)
+        for (size_t i = 0; i < RigidNum; ++i)
         {
-            glm::vec3 Pos, Normal;
-            float Depth;
-            if (collide(m_RigidBodySet[i]->pCollider, m_RigidBodySet[k]->pCollider, Pos, Normal, Depth))
+            for (size_t k = i + 1; k < RigidNum; ++k)
             {
-                std::cout << "Hit " << i << " with " << k << "\n";
-                // 2. solve constraints
-                // TODO: Penalty Force method, use solving constraint later
-                float PenaltyForceIntensity = 40.0f * pow(Depth, 2);
-                CollideForceSet[i].emplace_back(Normal * PenaltyForceIntensity);
-                CollideForceSet[k].emplace_back(-Normal * PenaltyForceIntensity);
+                glm::vec3 Pos, Normal;
+                float Depth;
+                if (collide(m_RigidBodySet[i]->pCollider, m_RigidBodySet[k]->pCollider, Pos, Normal, Depth))
+                {
+                    std::cout << "Hit " << i << " with " << k << "\n";
+                    // 2. solve constraints
+                    // TODO: Penalty Force method, use solving constraint later
+                    float PenaltyForceIntensity = 40.0f * pow(Depth, 2);
+                    CollideForceSet[i].emplace_back(Normal * PenaltyForceIntensity);
+                    CollideForceSet[k].emplace_back(-Normal * PenaltyForceIntensity);
 
-                float J = 1.0; // FIXME: use real inertia tensor
-                CollideAlphaSet[i].emplace_back(__calcTorque(m_RigidBodySet[i]->pTargetTransform->getAbsoluteTranslate(), Normal * PenaltyForceIntensity, Pos) / J);
-                CollideAlphaSet[k].emplace_back(__calcTorque(m_RigidBodySet[k]->pTargetTransform->getAbsoluteTranslate(), -Normal * PenaltyForceIntensity, Pos) / J);
+                    float J = 1.0; // FIXME: use real inertia tensor
+                    CollideAlphaSet[i].emplace_back(__calcTorque(m_RigidBodySet[i]->pTargetTransform->getAbsoluteTranslate(), Normal * PenaltyForceIntensity, Pos) / J);
+                    CollideAlphaSet[k].emplace_back(__calcTorque(m_RigidBodySet[k]->pTargetTransform->getAbsoluteTranslate(), -Normal * PenaltyForceIntensity, Pos) / J);
+                }
             }
         }
     }
@@ -72,8 +75,7 @@ void CPhysicsEngine::update(float vDeltaTime) const
         // air resistance, F = 1/2C¦ÑSV^2
         F += -__normalizeSafe(pRigid->Velocity) * glm::pow(glm::length(pRigid->Velocity), 2.0f) * pRigid->Material.AirResistance;
         Alpha += -__normalizeSafe(pRigid->AngularVelocity) * glm::pow(glm::length(pRigid->AngularVelocity), 2.0f) * pRigid->Material.AirResistance;
-
-
+        
         // 4. update velocity, position
         // FIXME: now it's explicit euler, replace by mixed euler later
 

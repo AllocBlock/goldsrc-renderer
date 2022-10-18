@@ -103,7 +103,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
             ShadowMapImageViewSet.emplace_back(m_pLink->getInput("ShadowMap", i));
         }
 
-        m_Pipeline.setShadowMapImageViews(ShadowMapImageViewSet);
+        m_PipelineShade.setShadowMapImageViews(ShadowMapImageViewSet);
         m_pLink->setUpdateState(false);
     }
 
@@ -120,7 +120,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
         VkDeviceSize Offsets[] = { 0 };
         VkBuffer VertBuffer = *m_pVertBuffer;
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
-        m_Pipeline.bind(CommandBuffer, vImageIndex);
+        m_PipelineShade.bind(CommandBuffer, vImageIndex);
         vkCmdDraw(CommandBuffer, m_VertexNum, 1, 0, 0);
     }
     end();
@@ -142,9 +142,9 @@ void CRenderPassShade::__createRenderPass()
     vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
 }
 
-void CRenderPassShade::__createGraphicsPipeline()
+void CRenderPassShade::__createGraphicsPipelines()
 {
-    m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineShade.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
 void CRenderPassShade::__createDepthResources()
@@ -169,9 +169,9 @@ void CRenderPassShade::__createLightFramebuffers()
 
 void CRenderPassShade::__createRecreateResources()
 {
-    __createGraphicsPipeline();
+    __createGraphicsPipelines();
     __createDepthResources();
-    m_Pipeline.setImageNum(m_AppInfo.ImageNum);
+    m_PipelineShade.setImageNum(m_AppInfo.ImageNum);
 }
 
 void CRenderPassShade::__destroyRecreateResources()
@@ -180,7 +180,7 @@ void CRenderPassShade::__destroyRecreateResources()
     for (auto pFramebuffer : m_FramebufferSet)
         pFramebuffer->destroy();
     m_FramebufferSet.clear();
-    m_Pipeline.destroy();
+    m_PipelineShade.destroy();
 }
 
 void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
@@ -192,5 +192,5 @@ void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
         Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
     m_pCamera->setAspect(Aspect);
 
-    m_Pipeline.updateUniformBuffer(vImageIndex, m_pCamera, m_pLightCamera, gShadowMapSize);
+    m_PipelineShade.updateUniformBuffer(vImageIndex, m_pCamera, m_pLightCamera, gShadowMapSize);
 }

@@ -33,6 +33,9 @@
     <ClInclude Include="Pipeline3DGui.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineVisCollider.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PipelineSkybox.cpp">
@@ -48,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Pipeline3DGui.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineVisCollider.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

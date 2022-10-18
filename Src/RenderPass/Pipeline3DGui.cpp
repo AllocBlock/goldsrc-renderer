@@ -15,7 +15,7 @@ struct SPointData
     }
 };
 
-struct SGuiUniformBufferObjectVert
+struct SUBOVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
@@ -35,7 +35,7 @@ VkPipelineDepthStencilStateCreateInfo CPipelineLine::_getDepthStencilInfoV()
 
 void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
-    SGuiUniformBufferObjectVert UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
@@ -85,7 +85,7 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
     m_VertUniformBufferSet.destroyAndClearAll();
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SGuiUniformBufferObjectVert);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
     m_VertUniformBufferSet.init(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)

@@ -44,20 +44,31 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
 
     begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValues);
 
+    // shade
     if (isNonEmptyAndValid(m_pVertBuffer))
     {
         VkDeviceSize Offsets[] = { 0 };
         VkBuffer VertBuffer = *m_pVertBuffer;
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
-        m_Pipeline.bind(CommandBuffer, vImageIndex);
+        m_PipelineShade.bind(CommandBuffer, vImageIndex);
 
         _ASSERTE(m_pScene->getActorNum() == m_ActorDataPositionSet.size());
         for (size_t i = 0; i < m_ActorDataPositionSet.size(); ++i)
         {
-            m_Pipeline.updatePushConstant(CommandBuffer, m_pScene->getActor(i)->getTransform()->getAbsoluteModelMat());
+            m_PipelineShade.updatePushConstant(CommandBuffer, m_pScene->getActor(i)->getTransform()->getAbsoluteModelMat());
             vkCmdDraw(CommandBuffer, m_ActorDataPositionSet[i].Num, 1, m_ActorDataPositionSet[i].First, 0);
         }
     }
+
+    // visualize collider
+    m_PipelineVisCollider.startRecord(CommandBuffer, vImageIndex); // TIPS: contain bind
+    for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
+    {
+        auto pActor = m_pScene->getActor(i);
+        m_PipelineVisCollider.draw(pActor->getPhysicsState()->pCollider);
+    }
+    m_PipelineVisCollider.endRecord();
+
     end();
     return { CommandBuffer };
 }
@@ -76,9 +87,10 @@ void CRenderPassShade::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     __createRecreateResources();
 }
 
-void CRenderPassShade::__createGraphicsPipeline()
+void CRenderPassShade::__createGraphicsPipelines()
 {
-    m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineShade.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineVisCollider.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
 void CRenderPassShade::__createDepthResources()
@@ -113,8 +125,9 @@ void CRenderPassShade::__createRecreateResources()
     __createDepthResources();
     if (isValid())
     {
-        __createGraphicsPipeline();
-        m_Pipeline.setImageNum(m_AppInfo.ImageNum);
+        __createGraphicsPipelines();
+        m_PipelineShade.setImageNum(m_AppInfo.ImageNum);
+        m_PipelineVisCollider.setImageNum(m_AppInfo.ImageNum);
         __createFramebuffers();
     }
 }
@@ -123,7 +136,8 @@ void CRenderPassShade::__destroyRecreateResources()
 {
     m_DepthImage.destroy();
     m_FramebufferSet.destroyAndClearAll();
-    m_Pipeline.destroy();
+    m_PipelineShade.destroy();
+    m_PipelineVisCollider.destroy();
 }
 
 void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
@@ -133,5 +147,6 @@ void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
         Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
     m_pCamera->setAspect(Aspect);
 
-    m_Pipeline.updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineShade.updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineVisCollider.updateUniformBuffer(vImageIndex, m_pCamera);
 }

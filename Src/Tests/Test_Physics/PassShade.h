@@ -2,6 +2,7 @@
 #include "IRenderPass.h"
 #include "FrameBuffer.h"
 #include "PipelineShade.h"
+#include "PipelineVisCollider.h"
 #include "Camera.h"
 #include "Buffer.h"
 #include "Image.h"
@@ -26,7 +27,7 @@ protected:
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
 private:
-    void __createGraphicsPipeline();
+    void __createGraphicsPipelines();
     void __createDepthResources();
     void __createFramebuffers();
 
@@ -35,7 +36,8 @@ private:
 
     void __updateUniformBuffer(uint32_t vImageIndex);
 
-    CPipelineShade m_Pipeline;
+    CPipelineShade m_PipelineShade;
+    CPipelineVisCollider m_PipelineVisCollider;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
     CTempScene::Ptr m_pScene = nullptr;

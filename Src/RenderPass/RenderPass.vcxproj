@@ -36,6 +36,7 @@
     <ClInclude Include="PipelineEnvironment.h" />
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PipelineSprite.h" />
+    <ClInclude Include="PipelineVisCollider.h" />
     <ClInclude Include="RenderPassFullScreen.h" />
   </ItemGroup>
   <ItemGroup>
@@ -43,6 +44,7 @@
     <ClCompile Include="PipelineEnvironment.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />
+    <ClCompile Include="PipelineVisCollider.cpp" />
     <ClCompile Include="RenderPassFullScreen.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -29,7 +29,7 @@ protected:
 
 private:
     void __createRenderPass();
-    void __createGraphicsPipeline();
+    void __createGraphicsPipelines();
     void __createDepthResources();
     void __createLightFramebuffers();
 
@@ -38,7 +38,7 @@ private:
 
     void __updateUniformBuffer(uint32_t vImageIndex);
 
-    CPipelineShade m_Pipeline;
+    CPipelineShade m_PipelineShade;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertBuffer;
     size_t m_VertexNum = 0;

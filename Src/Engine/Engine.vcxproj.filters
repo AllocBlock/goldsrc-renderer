@@ -90,6 +90,9 @@
     <ClCompile Include="Rotator.cpp">
       <Filter>源文件\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="BasicMesh.cpp">
+      <Filter>源文件\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IPipeline.h">
@@ -159,6 +162,9 @@
       <Filter>头文件\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Rotator.h">
+      <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicMesh.h">
       <Filter>头文件\Scene</Filter>
     </ClInclude>
   </ItemGroup>

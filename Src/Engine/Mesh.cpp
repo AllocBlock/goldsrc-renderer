@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+#include "BasicMesh.h"
+
 CGeneralMeshDataTest __createCube()
 {
     /*
@@ -57,7 +59,24 @@ CGeneralMeshDataTest __createCube()
     return MeshData;
 }
 
+CGeneralMeshDataTest __createSphere()
+{
+    auto pVertexArray = make<CGeneralDataArray<glm::vec3>>();
+    auto pNormalArray = make<CGeneralDataArray<glm::vec3>>();
+    for (const auto& Vertex : BasicMesh::getUnitSphereFaceSet())
+    {
+        pVertexArray->append(Vertex.Pos);
+        pNormalArray->append(Vertex.Normal);
+    }
+
+    auto MeshData = CGeneralMeshDataTest();
+    MeshData.setVertexArray(pVertexArray);
+    MeshData.setNormalArray(pNormalArray);
+    return MeshData;
+}
+
 CGeneralMeshDataTest CMeshBasicCube::MeshData = __createCube();
+CGeneralMeshDataTest CMeshBasicSphere::MeshData = __createSphere();
 
 CGeneralMeshDataTest CMeshTriangleList::getMeshData() const
 {
@@ -82,4 +101,9 @@ void CMeshTriangleList::addTriangles(std::vector<glm::vec3> vPosSet, std::vector
 CGeneralMeshDataTest CMeshBasicCube::getMeshData() const
 {
     return CMeshBasicCube::MeshData;
+}
+
+CGeneralMeshDataTest CMeshBasicSphere::getMeshData() const
+{
+    return CMeshBasicSphere::MeshData;
 }
