@@ -67,6 +67,17 @@ private:
 };
 
 // TODO: move to basic shape, which provide mesh and collider generation
+class CMeshBasicQuad : public CMesh
+{
+public:
+    _DEFINE_PTR(CMeshBasicQuad);
+
+    static CGeneralMeshDataTest MeshData;
+
+    virtual CGeneralMeshDataTest getMeshData() const override;
+};
+
+// TODO: move to basic shape, which provide mesh and collider generation
 class CMeshBasicCube : public CMesh
 {
 public:

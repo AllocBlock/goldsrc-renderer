@@ -73,6 +73,7 @@ protected:
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
     virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;
+    virtual VkPipelineRasterizationStateCreateInfo _getRasterizationStageInfoV() override; // TIPS: counter-clockwise!
 
     virtual void _destroyV() override;
 

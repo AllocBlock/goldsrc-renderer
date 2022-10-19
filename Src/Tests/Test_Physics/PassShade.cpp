@@ -1,7 +1,7 @@
 #include "PassShade.h"
 #include "Function.h"
 #include "RenderPassDescriptor.h"
-#include "Log.h"
+#include "Gui.h"
 
 void CRenderPassShade::setScene(CTempScene::Ptr vScene)
 {
@@ -61,13 +61,16 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
     }
 
     // visualize collider
-    m_PipelineVisCollider.startRecord(CommandBuffer, vImageIndex); // TIPS: contain bind
-    for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
+    if (m_ShowCollider)
     {
-        auto pActor = m_pScene->getActor(i);
-        m_PipelineVisCollider.draw(pActor->getPhysicsState()->pCollider);
+        m_PipelineVisCollider.startRecord(CommandBuffer, vImageIndex); // TIPS: contain bind
+        for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
+        {
+            auto pActor = m_pScene->getActor(i);
+            m_PipelineVisCollider.draw(pActor->getPhysicsState()->pCollider);
+        }
+        m_PipelineVisCollider.endRecord();
     }
-    m_PipelineVisCollider.endRecord();
 
     end();
     return { CommandBuffer };
@@ -85,6 +88,11 @@ void CRenderPassShade::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     __destroyRecreateResources();
     __createRecreateResources();
+}
+
+void CRenderPassShade::_renderUIV()
+{
+    UI::toggle(u8"ÏÔÊ¾Åö×²Ìå", m_ShowCollider);
 }
 
 void CRenderPassShade::__createGraphicsPipelines()

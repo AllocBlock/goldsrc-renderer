@@ -55,6 +55,13 @@ std::vector<VkPushConstantRange> CPipelineShade::_getPushConstantRangeSetV()
     return { PushConstantInfo };
 }
 
+VkPipelineRasterizationStateCreateInfo CPipelineShade::_getRasterizationStageInfoV()
+{
+    auto StageInfo = IPipeline::getDefaultRasterizationStageInfo();
+    StageInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    return StageInfo;
+}
+
 void CPipelineShade::_createResourceV(size_t vImageNum)
 {
     __destroyResources();

@@ -25,6 +25,8 @@ protected:
     virtual void _destroyV() override;
     
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+    
+    virtual void _renderUIV() override;
 
 private:
     void __createGraphicsPipelines();
@@ -48,5 +50,7 @@ private:
     vk::CImage m_DepthImage;
 
     ptr<CCamera> m_pCamera = nullptr;
+
+    bool m_ShowCollider = false;
 };
 

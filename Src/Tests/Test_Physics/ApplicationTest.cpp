@@ -13,21 +13,8 @@ CTempScene::Ptr __generateScene()
     CTempScene::Ptr m_pScene = make<CTempScene>();
 
     // Ground
-    glm::vec3 Normal = glm::vec3(0.0, 0.0, 1.0);
-    std::vector<glm::vec3> VertexSet =
     {
-        glm::vec3(20,  20, 0),
-        glm::vec3(20, -20, 0),
-        glm::vec3(-20, -20, 0),
-        glm::vec3(20,  20, 0),
-        glm::vec3(-20, -20, 0),
-        glm::vec3(-20,  20, 0),
-    };
-
-    {
-        auto pGroundMesh = make<CMeshTriangleList>();
-        pGroundMesh->addTriangles(VertexSet, { Normal, Normal, Normal, Normal, Normal, Normal });
-
+        auto pGroundMesh = make<CMeshBasicQuad>();
         auto pGroundActor = make<CActor>("Ground");
         pGroundActor->setMesh(pGroundMesh);
         pGroundActor->getPhysicsState()->IsStatic = true;
@@ -107,6 +94,8 @@ void CApplicationTest::_renderUIV()
     UI::beginWindow(u8"物理系统 Physics");
     UI::text(u8"测试");
     m_pInteractor->getCamera()->renderUI();
+
+    m_pPassShade->renderUI();
 
     // physics engine
     {
@@ -236,6 +225,10 @@ void CApplicationTest::__initPhysicsEngine()
 
 void CApplicationTest::__resetActors()
 {
+    auto pGround = m_pScene->findActor("Ground");
+    _ASSERTE(pGround);
+    pGround->setScale(20.0f);
+
     auto pCube1 = m_pScene->findActor("Cube1");
     _ASSERTE(pCube1);
     pCube1->resetTransform();

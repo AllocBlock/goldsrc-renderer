@@ -116,6 +116,13 @@ std::vector<VkPushConstantRange> CPipelineVisCollider::_getPushConstantRangeSetV
     return { PushConstantInfo };
 }
 
+VkPipelineRasterizationStateCreateInfo CPipelineVisCollider::_getRasterizationStageInfoV()
+{
+    auto StageInfo = IPipeline::getDefaultRasterizationStageInfo();
+    StageInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    return StageInfo;
+}
+
 void CPipelineVisCollider::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
 {
     voBinding = SPointData::getBindingDescription();
@@ -172,8 +179,6 @@ void CPipelineVisCollider::__updateDescriptorSet()
         m_Descriptor.update(i, WriteInfo);
     }
 }
-
-
 
 void CPipelineVisCollider::__initVertexBuffer()
 {
