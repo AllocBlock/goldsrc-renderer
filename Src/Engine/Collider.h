@@ -22,6 +22,7 @@ enum class EBasicColliderType
 {
 	PLANE,
     SPHERE,
+	QUAD,
 	CUBE
 };
 

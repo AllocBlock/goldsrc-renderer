@@ -85,7 +85,7 @@ void CPipelineVisCollider::draw(ICollider::CPtr vCollider)
         throw std::runtime_error("Unsupported collider type");
 
     SPushConstant Constant;
-    Constant.Model = pBasicCollider->getTransform()->getAbsoluteModelMat();
+    Constant.Model = pBasicCollider->getTransform()->getAbsoluteModelMat4();
     Constant.NormalModel = glm::transpose(glm::inverse(Constant.Model));
 
     const auto& DataPos = m_TypeVertexDataPosMap.at(Type);

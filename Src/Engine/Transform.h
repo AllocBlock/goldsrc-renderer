@@ -32,6 +32,13 @@ struct STransform
 	CRotator getAbsoluteRotate() const;
 	glm::vec3 getAbsoluteScale() const;
 
-	glm::mat4 getRelativeModelMat() const;
-	glm::mat4 getAbsoluteModelMat() const;
+	glm::mat4 getRelativeModelMat4() const;
+	glm::mat4 getAbsoluteModelMat4() const;
+	glm::vec3 applyRelativeOnPoint(glm::vec3 vPoint) const;
+	glm::vec3 applyRelativeOnVector(glm::vec3 vVector) const;
+	glm::vec3 applyAbsoluteOnPoint(glm::vec3 vPoint) const;
+	glm::vec3 applyAbsoluteOnVector(glm::vec3 vVector) const;
+private:
+	glm::vec4 __applyRelative(glm::vec4 vValue) const;
+	glm::vec4 __applyAbsolute(glm::vec4 vValue) const;
 };

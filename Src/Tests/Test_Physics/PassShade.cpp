@@ -55,7 +55,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
         _ASSERTE(m_pScene->getActorNum() == m_ActorDataPositionSet.size());
         for (size_t i = 0; i < m_ActorDataPositionSet.size(); ++i)
         {
-            m_PipelineShade.updatePushConstant(CommandBuffer, m_pScene->getActor(i)->getTransform()->getAbsoluteModelMat());
+            m_PipelineShade.updatePushConstant(CommandBuffer, m_pScene->getActor(i)->getTransform()->getAbsoluteModelMat4());
             vkCmdDraw(CommandBuffer, m_ActorDataPositionSet[i].Num, 1, m_ActorDataPositionSet[i].First, 0);
         }
     }

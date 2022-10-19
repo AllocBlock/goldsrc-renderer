@@ -1,4 +1,7 @@
 #include "Collider.h"
+#include "BasicMesh.h"
+
+const float gAcc = 1e-5;
 
 bool __collideSphereToSphere(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
@@ -47,6 +50,79 @@ bool __collideSphereToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, gl
 		throw std::runtime_error("Unsupported collider type");
 }
 
+bool __isPointOnPlane(const glm::vec3& vPlaneCenter, const glm::vec3& vPlaneNormal, const glm::vec3& vPoint)
+{
+	return glm::abs(glm::dot(vPoint - vPlaneCenter, vPlaneNormal)) < gAcc;
+}
+
+bool __collideEdgeToPlane(const glm::vec3& vPlaneCenter, const glm::vec3& vPlaneNormal, const glm::vec3& vEdgeStart, const glm::vec3& vEdgeEnd, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
+{
+	glm::vec3 D = glm::normalize(vEdgeEnd - vEdgeStart);
+	const float MaxT = glm::distance(vEdgeStart, vEdgeEnd);
+	if (__isPointOnPlane(vPlaneCenter, vPlaneNormal, vEdgeStart) && __isPointOnPlane(vPlaneCenter, vPlaneNormal, vEdgeEnd)) // inside
+	{
+		voPosition = (vEdgeStart + vEdgeEnd) * 0.5f;
+		voNormal = vPlaneNormal;
+		voDepth = glm::abs(glm::dot(vPlaneNormal, voPosition - vPlaneCenter));
+		return true;
+	}
+
+	float t = glm::dot(vPlaneNormal, vPlaneCenter - vEdgeStart) / glm::dot(vPlaneNormal, D);
+	if (t < -gAcc || t > MaxT + gAcc) return false;
+
+	voPosition = vEdgeStart + t * D;
+	voNormal = vPlaneNormal;
+	voDepth = (MaxT - t) * glm::abs(glm::dot(vPlaneNormal, D));
+}
+
+bool __collideQuadToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
+{
+	if (vA->getType() == EBasicColliderType::QUAD && vB->getType() == EBasicColliderType::PLANE)
+	{
+		const glm::vec3 PlaneCenter = vB->getTransform()->Translate;
+		const glm::vec3 PlaneNormal = vB->getTransform()->Rotate.getOrientation();
+
+		glm::vec3 SumPosition = glm::vec3(0.0f);
+		glm::vec3 SumNormal = glm::vec3(0.0f);
+		float SumDepth = 0.0f;
+		int Num = 0;
+
+		glm::vec3 Position, Normal;
+		float Depth;
+
+		auto QuadEdgeSet = BasicMesh::getUnitQuadEdgeSet();
+		for (size_t i = 0; i < QuadEdgeSet.size(); i += 2)
+		{
+			glm::vec3 Start = vA->getTransform()->applyAbsoluteOnPoint(QuadEdgeSet[i].Pos);
+			glm::vec3 End = vA->getTransform()->applyAbsoluteOnPoint(QuadEdgeSet[i + 1].Pos);
+			if (__collideEdgeToPlane(PlaneCenter, PlaneNormal, Start, End, Position, Normal, Depth))
+			{
+				SumPosition += Position;
+				SumNormal += Normal;
+				SumDepth += Depth;
+				Num++;
+			}
+		}
+
+		if (Num > 0)
+		{
+			voPosition = SumPosition / static_cast<float>(Num);
+			voNormal = SumNormal / static_cast<float>(Num);
+			voDepth = SumDepth / static_cast<float>(Num);
+			return true;
+		}
+		else return false;
+	}
+	else if (vA->getType() == EBasicColliderType::PLANE && vB->getType() == EBasicColliderType::QUAD)
+	{
+		bool Res = __collideQuadToPlane(vB, vA, voPosition, voNormal, voDepth);
+		if (Res) voNormal = -voNormal;
+		return Res;
+	}
+	else
+		throw std::runtime_error("Unsupported collider type");
+}
+
 bool collide(ICollider::CPtr vA, ICollider::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
 	if (!vA || !vB) return false;
@@ -62,6 +138,9 @@ bool collide(ICollider::CPtr vA, ICollider::CPtr vB, glm::vec3& voPosition, glm:
 	else if ((pA->getType() == EBasicColliderType::SPHERE && pB->getType() == EBasicColliderType::PLANE) ||
 		(pA->getType() == EBasicColliderType::PLANE && pB->getType() == EBasicColliderType::SPHERE))
 		return __collideSphereToPlane(pA, pB, voPosition, voNormal, voDepth);
+	else if ((pA->getType() == EBasicColliderType::QUAD && pB->getType() == EBasicColliderType::PLANE) ||
+		(pA->getType() == EBasicColliderType::PLANE && pB->getType() == EBasicColliderType::QUAD))
+		return __collideQuadToPlane(pA, pB, voPosition, voNormal, voDepth);
 	else
 		throw std::runtime_error("Unsupported collider type");
 }

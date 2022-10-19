@@ -1,10 +1,9 @@
 #include "ApplicationTest.h"
-
-#include <random>
-
 #include "GlobalSingleTimeBuffer.h"
 #include "Gui.h"
 #include "Ticker.h"
+
+#include <random>
 
 using namespace vk;
 
@@ -23,25 +22,35 @@ CTempScene::Ptr __generateScene()
         m_pScene->addActor(pGroundActor);
     }
 
-    // Cubes
-    {
-        auto pCubeMesh1 = make<CMeshBasicCube>();
-        auto pCubeActor1 = make<CActor>("Cube1");
-        pCubeActor1->setMesh(pCubeMesh1);
-        pCubeActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pCubeActor1->getTransform(), EBasicColliderType::CUBE);
+    //// Cubes
+    //{
+    //    auto pCubeMesh1 = make<CMeshBasicCube>();
+    //    auto pCubeActor1 = make<CActor>("Cube1");
+    //    pCubeActor1->setMesh(pCubeMesh1);
+    //    pCubeActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pCubeActor1->getTransform(), EBasicColliderType::CUBE);
 
-        m_pScene->addActor(pCubeActor1);
+    //    m_pScene->addActor(pCubeActor1);
+    //}
+
+    // Quad
+    {
+        auto pQuadMesh1 = make<CMeshBasicQuad>();
+        auto pQuadActor1 = make<CActor>("Quad1");
+        pQuadActor1->setMesh(pQuadMesh1);
+        pQuadActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pQuadActor1->getTransform(), EBasicColliderType::QUAD);
+
+        m_pScene->addActor(pQuadActor1);
     }
 
     // Spheres
-    {
+    /*{
         auto pSphereMesh1 = make<CMeshBasicSphere>();
         auto pSphereActor1 = make<CActor>("Sphere1");
         pSphereActor1->setMesh(pSphereMesh1);
         pSphereActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pSphereActor1->getTransform(), EBasicColliderType::SPHERE);
 
         m_pScene->addActor(pSphereActor1);
-    }
+    }*/
 
     return m_pScene;
 }
@@ -126,18 +135,14 @@ void CApplicationTest::_renderUIV()
                 __resetActors();
             if (UI::button(u8"随机力"))
             {
-                auto pCube1 = m_pScene->findActor("Cube1");
-                pCube1->getPhysicsState()->addForce(__generateRandomUpForce());
-                auto pCube2 = m_pScene->findActor("Cube2");
-                pCube2->getPhysicsState()->addForce(__generateRandomUpForce());
+                for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
+                    m_pScene->getActor(i)->getPhysicsState()->addForce(__generateRandomUpForce());
             }
 
             if (UI::button(u8"随机角加速度"))
             {
-                auto pCube1 = m_pScene->findActor("Cube1");
-                pCube1->getPhysicsState()->addAlpha(__generateRandomAlpha());
-                auto pCube2 = m_pScene->findActor("Cube2");
-                pCube2->getPhysicsState()->addAlpha(__generateRandomAlpha());
+                for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
+                    m_pScene->getActor(i)->getPhysicsState()->addAlpha(__generateRandomAlpha());
             }
 
             for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
@@ -153,8 +158,7 @@ void CApplicationTest::_renderUIV()
                     UI::drag(u8"旋转##" + ActorName + u8"_Scene", Euler, 0.1f);
                     pTransform->Rotate.setEulerDegrees(Euler);
                     UI::drag(u8"缩放##" + ActorName + u8"_Scene", pTransform->Scale);
-
-
+                    
                     UI::toggle(u8"为静态物体##" + ActorName + u8"_Scene", pActor->getPhysicsState()->IsStatic);
                     UI::toggle(u8"开启重力##" + ActorName + u8"_Scene", pActor->getPhysicsState()->HasGravity);
                     UI::drag(u8"质量##" + ActorName + u8"_Scene", pActor->getPhysicsState()->Mass, 0.01f, 0.01f);
@@ -229,18 +233,26 @@ void CApplicationTest::__resetActors()
     _ASSERTE(pGround);
     pGround->setScale(20.0f);
 
-    auto pCube1 = m_pScene->findActor("Cube1");
+    /*auto pCube1 = m_pScene->findActor("Cube1");
     _ASSERTE(pCube1);
     pCube1->resetTransform();
     pCube1->setTranslate(glm::vec3(0.0f, 0.0f, 16.0f));
     pCube1->setScale(3.0f);
-    pCube1->clearMoveState();
+    pCube1->clearMoveState();*/
 
-    auto pSphere1 = m_pScene->findActor("Sphere1");
+    auto pQuad1 = m_pScene->findActor("Quad1");
+    _ASSERTE(pQuad1);
+    pQuad1->resetTransform();
+    pQuad1->setTranslate(glm::vec3(0.0f, 0.0f, 16.0f));
+    pQuad1->setScale(2.0f);
+    pQuad1->setRotate(CRotator(glm::vec3(50, 30, 0)));
+    pQuad1->clearMoveState();
+
+ /*   auto pSphere1 = m_pScene->findActor("Sphere1");
     _ASSERTE(pSphere1);
     pSphere1->resetTransform();
     pSphere1->setTranslate(glm::vec3(0.0f, 6.0f, 20.0f));
-    pSphere1->clearMoveState();
+    pSphere1->clearMoveState();*/
 }
 
 void CApplicationTest::__linkPasses()

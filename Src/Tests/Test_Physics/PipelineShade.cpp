@@ -58,6 +58,7 @@ std::vector<VkPushConstantRange> CPipelineShade::_getPushConstantRangeSetV()
 VkPipelineRasterizationStateCreateInfo CPipelineShade::_getRasterizationStageInfoV()
 {
     auto StageInfo = IPipeline::getDefaultRasterizationStageInfo();
+    StageInfo.cullMode = VK_CULL_MODE_NONE;
     StageInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     return StageInfo;
 }
