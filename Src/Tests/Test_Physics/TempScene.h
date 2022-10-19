@@ -3,6 +3,7 @@
 #include "Device.h"
 #include "Log.h"
 #include "Actor.h"
+#include "Buffer.h"
 
 enum class EAttributeType
 {
@@ -69,12 +70,12 @@ public:
             return nullptr;
         }
 
-        VkDeviceSize BufferSize = sizeof(CPipelineShade::SPointData) * NumVertex;
+        VkDeviceSize BufferSize = sizeof(PointData_t) * NumVertex;
         uint8_t* pData = new uint8_t[BufferSize];
         size_t Offset = 0;
         for (const auto& Data : DataSet)
         {
-            size_t SubBufferSize = sizeof(CPipelineShade::SPointData) * Data.size();
+            size_t SubBufferSize = sizeof(PointData_t) * Data.size();
             memcpy(reinterpret_cast<char*>(pData) + Offset, Data.data(), SubBufferSize);
             Offset += SubBufferSize;
         }

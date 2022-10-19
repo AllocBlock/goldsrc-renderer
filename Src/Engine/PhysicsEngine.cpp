@@ -33,6 +33,9 @@ void CPhysicsEngine::update(float vDeltaTime) const
                 float Depth;
                 if (collide(m_RigidBodySet[i]->pCollider, m_RigidBodySet[k]->pCollider, Pos, Normal, Depth))
                 {
+                    for (const auto& Func : m_CollisionCallbackSet)
+                        Func(Pos, Normal);
+
                     std::cout << "Hit " << i << " with " << k << "\n";
                     // 2. solve constraints
                     // TODO: Penalty Force method, use solving constraint later

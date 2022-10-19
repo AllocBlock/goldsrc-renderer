@@ -11,6 +11,7 @@ struct IPipeline : public IGUI
 {
 public:
     IPipeline() = default;
+    virtual ~IPipeline() = default;
 
     void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void setImageNum(size_t vImageNum);

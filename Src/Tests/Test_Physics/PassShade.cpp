@@ -60,18 +60,6 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
         }
     }
 
-    // visualize collider
-    if (m_ShowCollider)
-    {
-        m_PipelineVisCollider.startRecord(CommandBuffer, vImageIndex); // TIPS: contain bind
-        for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
-        {
-            auto pActor = m_pScene->getActor(i);
-            m_PipelineVisCollider.draw(pActor->getPhysicsState()->pCollider);
-        }
-        m_PipelineVisCollider.endRecord();
-    }
-
     end();
     return { CommandBuffer };
 }
@@ -89,16 +77,9 @@ void CRenderPassShade::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     __destroyRecreateResources();
     __createRecreateResources();
 }
-
-void CRenderPassShade::_renderUIV()
-{
-    UI::toggle(u8"ÏÔÊ¾Åö×²Ìå", m_ShowCollider);
-}
-
 void CRenderPassShade::__createGraphicsPipelines()
 {
     m_PipelineShade.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-    m_PipelineVisCollider.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
 void CRenderPassShade::__createDepthResources()
@@ -135,7 +116,6 @@ void CRenderPassShade::__createRecreateResources()
     {
         __createGraphicsPipelines();
         m_PipelineShade.setImageNum(m_AppInfo.ImageNum);
-        m_PipelineVisCollider.setImageNum(m_AppInfo.ImageNum);
         __createFramebuffers();
     }
 }
@@ -145,7 +125,6 @@ void CRenderPassShade::__destroyRecreateResources()
     m_DepthImage.destroy();
     m_FramebufferSet.destroyAndClearAll();
     m_PipelineShade.destroy();
-    m_PipelineVisCollider.destroy();
 }
 
 void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
@@ -156,5 +135,4 @@ void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
     m_pCamera->setAspect(Aspect);
 
     m_PipelineShade.updateUniformBuffer(vImageIndex, m_pCamera);
-    m_PipelineVisCollider.updateUniformBuffer(vImageIndex, m_pCamera);
 }

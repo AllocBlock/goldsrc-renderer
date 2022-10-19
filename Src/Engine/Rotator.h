@@ -1,4 +1,5 @@
 #pragma once
+#include "Common.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -25,6 +26,8 @@ public:
     {
         return CRotator(getQuaternion() * v2.getQuaternion());
     }
+
+    static CRotator createVectorToVector(glm::vec3 vStart, glm::vec3 vTarget);
 
 private:
     glm::quat m_Quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);

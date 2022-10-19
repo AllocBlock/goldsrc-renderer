@@ -27,6 +27,9 @@
     <ClCompile Include="PassShade.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PassVisPhysics.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h">
@@ -41,12 +44,27 @@
     <ClInclude Include="TempScene.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PassVisPhysics.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.frag">
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\shader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visColliderShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visColliderShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visCollidePointShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visCollidePointShader.vert">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

@@ -1,10 +1,11 @@
 #pragma once
 #include "IApplication.h"
-#include "GUIPass.h"
-#include "PassShade.h"
 #include "Interactor.h"
 #include "TempScene.h"
 #include "PhysicsEngine.h"
+#include "PassShade.h"
+#include "PassVisPhysics.h"
+#include "GUIPass.h"
 
 class CApplicationTest : public IApplication
 {
@@ -29,6 +30,7 @@ private:
 
     ptr<CGUIRenderPass> m_pPassGUI = nullptr;
     ptr<CRenderPassShade> m_pPassShade = nullptr;
+    ptr<CRenderPassVisPhysics> m_pPassVisPhysics = nullptr;
 
     ptr<CInteractor> m_pInteractor = nullptr;
 

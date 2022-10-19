@@ -3,6 +3,8 @@ class IGUI
 {
 public:
     IGUI() = default;
+    virtual ~IGUI() = default;
+
     void renderUI() { _renderUIV(); }
 
 protected:

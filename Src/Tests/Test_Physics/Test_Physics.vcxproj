@@ -96,11 +96,13 @@
     <ClCompile Include="ApplicationTest.cpp" />
     <ClCompile Include="PassShade.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PassVisPhysics.cpp" />
     <ClCompile Include="PipelineShade.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationTest.h" />
     <ClInclude Include="PassShade.h" />
+    <ClInclude Include="PassVisPhysics.h" />
     <ClInclude Include="PipelineShade.h" />
     <ClInclude Include="TempScene.h" />
   </ItemGroup>
@@ -127,6 +129,10 @@
   <ItemGroup>
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
+    <None Include="shaders\visCollidePointShader.frag" />
+    <None Include="shaders\visCollidePointShader.vert" />
+    <None Include="shaders\visColliderShader.frag" />
+    <None Include="shaders\visColliderShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

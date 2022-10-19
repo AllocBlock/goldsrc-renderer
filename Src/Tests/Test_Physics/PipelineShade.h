@@ -84,4 +84,3 @@ private:
     vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CImage m_PlaceholderImage;
 };
-

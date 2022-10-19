@@ -1,18 +1,17 @@
 #pragma once
 #include "IRenderPass.h"
 #include "FrameBuffer.h"
-#include "PipelineShade.h"
 #include "Camera.h"
-#include "Buffer.h"
-#include "Image.h"
-#include "TempScene.h"
+#include "PhysicsEngine.h"
+#include "PipelineVisCollider.h"
+#include "PipelineVisCollidePoint.h"
 
-class CRenderPassShade : public vk::IRenderPass
+class CRenderPassVisPhysics : public vk::IRenderPass
 {
 public:
-    CRenderPassShade() = default;
+    CRenderPassVisPhysics() = default;
 
-    void setScene(CTempScene::Ptr vScene);
+    void setPhysicsEngine(CPhysicsEngine::Ptr vEngine);
     void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; } 
 
 protected:
@@ -24,27 +23,24 @@ protected:
     virtual void _destroyV() override;
     
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+    
+    virtual void _renderUIV() override;
 
 private:
     void __createGraphicsPipelines();
-    void __createDepthResources();
     void __createFramebuffers();
 
     void __createRecreateResources();
     void __destroyRecreateResources();
 
     void __updateUniformBuffer(uint32_t vImageIndex);
-
-    CPipelineShade m_PipelineShade;
+    
+    CPipelineVisCollider m_PipelineVisCollider;
+    CPipelineVisCollidePoint m_PipelineVisCollidePoint;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
-    CTempScene::Ptr m_pScene = nullptr;
-    ptr<vk::CBuffer> m_pVertBuffer;
-    std::vector<SActorDataInfo> m_ActorDataPositionSet;
-    size_t m_VertexNum = 0;
-
-    vk::CImage m_DepthImage;
-
+    CPhysicsEngine::Ptr m_pEngine = nullptr;
     ptr<CCamera> m_pCamera = nullptr;
-};
 
+    bool m_ShowCollider = true;
+};

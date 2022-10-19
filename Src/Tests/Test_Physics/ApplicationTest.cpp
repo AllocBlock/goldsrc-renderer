@@ -90,6 +90,7 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
     m_pPassShade->update(vImageIndex);
+    m_pPassVisPhysics->update(vImageIndex);
 
     // FIXME: move static to member? or global?
     static CTicker Ticker;
@@ -105,6 +106,7 @@ void CApplicationTest::_renderUIV()
     m_pInteractor->getCamera()->renderUI();
 
     m_pPassShade->renderUI();
+    m_pPassVisPhysics->renderUI();
 
     // physics engine
     {
@@ -177,8 +179,10 @@ void CApplicationTest::_renderUIV()
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
 {
     std::vector<VkCommandBuffer> ShadeBuffers = m_pPassShade->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> VisPhysicsBuffers = m_pPassVisPhysics->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> Result = ShadeBuffers;
+    Result.insert(Result.end(), VisPhysicsBuffers.begin(), VisPhysicsBuffers.end());
     Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
     return Result;
 }
@@ -197,10 +201,15 @@ void CApplicationTest::_createOtherResourceV()
     m_pPassShade = make<CRenderPassShade>();
     m_pPassShade->init(AppInfo);
     m_pPassShade->setCamera(m_pCamera);
+
+    m_pPassVisPhysics = make<CRenderPassVisPhysics>();
+    m_pPassVisPhysics->init(AppInfo);
+    m_pPassVisPhysics->setCamera(m_pCamera);
     
     m_pScene = __generateScene();
     __resetActors();
     __initPhysicsEngine();
+    m_pPassVisPhysics->setPhysicsEngine(m_pPhysicsEngine);
     m_pPassShade->setScene(m_pScene);
     
     __linkPasses();
@@ -214,6 +223,8 @@ void CApplicationTest::_destroyOtherResourceV()
 {
     destroyAndClear(m_pPassGUI);
     destroyAndClear(m_pPassShade);
+    destroyAndClear(m_pPassVisPhysics);
+    m_pPhysicsEngine = nullptr;
 
     cleanGlobalCommandBuffer();
 }
@@ -223,7 +234,7 @@ void CApplicationTest::__initPhysicsEngine()
     for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
     {
         auto pActor = m_pScene->getActor(i);
-        m_pPhysicsEngine->add(pActor->getPhysicsState());
+        m_pPhysicsEngine->addRigidBody(pActor->getPhysicsState());
     }
 }
 
@@ -258,10 +269,12 @@ void CApplicationTest::__resetActors()
 void CApplicationTest::__linkPasses()
 {
     auto pPortShade = m_pPassShade->getPortSet();
+    auto pPortVisPhysics = m_pPassVisPhysics->getPortSet();
     auto pPortGui = m_pPassGUI->getPortSet();
 
     m_pSwapchainPort->setForceNotReady(true);
     CPortSet::link(m_pSwapchainPort, pPortShade, "Main");;
-    CPortSet::link(pPortShade,  "Main", pPortGui, "Main");
+    CPortSet::link(pPortShade,  "Main", pPortVisPhysics, "Main");
+    CPortSet::link(pPortVisPhysics,  "Main", pPortGui, "Main");
     m_pSwapchainPort->setForceNotReady(false);
 }

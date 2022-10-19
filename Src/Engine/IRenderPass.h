@@ -99,7 +99,7 @@ namespace vk
         /*
          * _renderUIV:
          * triggers each frame
-         * draw ui
+         * drawCollider ui
          */
         virtual void _renderUIV() override {}
         

@@ -2,39 +2,43 @@
 #include "VertexAttributeDescriptor.h"
 #include "BasicMesh.h"
 
-struct SPointData
+namespace PipelineVisCollider
 {
-    glm::vec3 Pos;
-    glm::vec3 Normal;
-
-    using PointData_t = SPointData;
-    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+    struct SPointData
     {
-        CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
-        return Descriptor.generate();
-    }
-};
+        glm::vec3 Pos;
+        glm::vec3 Normal;
 
-struct SUBOVert
-{
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-};
+        using PointData_t = SPointData;
+        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
 
-struct SUBOFrag
-{
-    alignas(16) glm::vec3 EyePos;
-};
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            CVertexAttributeDescriptor Descriptor;
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
+            return Descriptor.generate();
+        }
+    };
 
-struct SPushConstant
-{
-    glm::mat4 Model;
-    glm::mat4 NormalModel;
-};
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+    };
+
+    struct SUBOFrag
+    {
+        alignas(16) glm::vec3 EyePos;
+    };
+
+    struct SPushConstant
+    {
+        glm::mat4 Model;
+        glm::mat4 NormalModel;
+    };
+}
+using namespace PipelineVisCollider;
 
 VkPipelineDepthStencilStateCreateInfo CPipelineVisCollider::_getDepthStencilInfoV()
 {
@@ -70,7 +74,7 @@ void CPipelineVisCollider::startRecord(VkCommandBuffer vCommandBuffer, size_t vI
     vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
 }
 
-void CPipelineVisCollider::draw(ICollider::CPtr vCollider)
+void CPipelineVisCollider::drawCollider(ICollider::CPtr vCollider)
 {
     _ASSERTE(m_CurCommandBuffer);
 
@@ -191,6 +195,7 @@ void CPipelineVisCollider::__initVertexBuffer()
     const std::vector<std::pair<EBasicColliderType, std::vector<BasicMesh::SVertex>>> BasicColliderLineSet =
     {
         {EBasicColliderType::PLANE, BasicMesh::getUnitQuadEdgeSet()},
+        {EBasicColliderType::QUAD, BasicMesh::getUnitQuadEdgeSet()},
         {EBasicColliderType::CUBE, BasicMesh::getUnitCubeEdgeSet()},
         {EBasicColliderType::SPHERE, BasicMesh::getUnitSphereEdgeSet()},
     };

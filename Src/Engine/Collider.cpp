@@ -1,7 +1,6 @@
 #include "Collider.h"
 #include "BasicMesh.h"
-
-const float gAcc = 1e-5;
+#include "Common.h"
 
 bool __collideSphereToSphere(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
@@ -52,7 +51,7 @@ bool __collideSphereToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, gl
 
 bool __isPointOnPlane(const glm::vec3& vPlaneCenter, const glm::vec3& vPlaneNormal, const glm::vec3& vPoint)
 {
-	return glm::abs(glm::dot(vPoint - vPlaneCenter, vPlaneNormal)) < gAcc;
+	return glm::abs(glm::dot(vPoint - vPlaneCenter, vPlaneNormal)) < Common::Acc;
 }
 
 bool __collideEdgeToPlane(const glm::vec3& vPlaneCenter, const glm::vec3& vPlaneNormal, const glm::vec3& vEdgeStart, const glm::vec3& vEdgeEnd, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
@@ -68,7 +67,7 @@ bool __collideEdgeToPlane(const glm::vec3& vPlaneCenter, const glm::vec3& vPlane
 	}
 
 	float t = glm::dot(vPlaneNormal, vPlaneCenter - vEdgeStart) / glm::dot(vPlaneNormal, D);
-	if (t < -gAcc || t > MaxT + gAcc) return false;
+	if (t < -Common::Acc || t > MaxT + Common::Acc) return false;
 
 	voPosition = vEdgeStart + t * D;
 	voNormal = vPlaneNormal;

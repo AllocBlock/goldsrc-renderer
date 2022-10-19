@@ -22,4 +22,6 @@ namespace Common
     {
         return static_cast<T>(vA * vFactor + vB * (1 - vFactor));
     }
+
+    constexpr float Acc = 1e-5f;
 }
