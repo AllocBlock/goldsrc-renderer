@@ -77,6 +77,7 @@ void CRenderPassShade::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     __destroyRecreateResources();
     __createRecreateResources();
 }
+
 void CRenderPassShade::__createGraphicsPipelines()
 {
     m_PipelineShade.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);

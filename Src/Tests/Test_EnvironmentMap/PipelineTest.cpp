@@ -1,17 +1,20 @@
 #include "PipelineTest.h"
 #include "Function.h"
 
-struct SUBOVert
+namespace
 {
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::mat4 Model;
-};
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+        alignas(16) glm::mat4 Model;
+    };
 
-struct SUBOFrag
-{
-    alignas(16) glm::vec3 Eye;
-};
+    struct SUBOFrag
+    {
+        alignas(16) glm::vec3 Eye;
+    };
+}
 
 void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
@@ -65,27 +68,13 @@ void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxIm
     vk::SImageViewInfo ViewInfo;
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
     ViewInfo.ViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE;
-
-    m_pSkyBoxImage = make<vk::CImage>();
-    m_pSkyBoxImage->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-    m_pSkyBoxImage->stageFill(pPixelData, TotalImageSize);
+    
+    m_SkyBoxImage.create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+    m_SkyBoxImage.stageFill(pPixelData, TotalImageSize);
     delete[] pPixelData;
 
     // the sky image changed, so descriptor need to be updated
     __updateDescriptorSet();
-}
-
-void CPipelineTest::__updateDescriptorSet()
-{
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
-        WriteInfo.addWriteImageAndSampler(2, m_pSkyBoxImage->isValid() ? *m_pSkyBoxImage : *m_pPlaceholderImage, m_Sampler);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
 }
 
 void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
@@ -101,52 +90,6 @@ void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, 
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineTest::destroy()
-{
-    __destroyResources();
-    IPipeline::destroy();
-}
-
-void CPipelineTest::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
-{
-    voBinding = STestPointData::getBindingDescription();
-    voAttributeSet = STestPointData::getAttributeDescriptionSet();
-}
-
-VkPipelineInputAssemblyStateCreateInfo CPipelineTest::_getInputAssemblyStageInfoV()
-{
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-    return Info;
-}
-
-void CPipelineTest::_createResourceV(size_t vImageNum)
-{
-    __destroyResources();
-
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
-    m_VertUniformBufferSet.resize(vImageNum);
-    m_FragUniformBufferSet.resize(vImageNum);
-
-    for (size_t i = 0; i < vImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
-    }
-
-    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
-    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
-        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
-    );
-    m_Sampler.create(m_pDevice, SamplerInfo);
-
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
-}
-
 void CPipelineTest::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
@@ -159,18 +102,67 @@ void CPipelineTest::_initShaderResourceDescriptorV()
     m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
+CPipelineDescriptor CPipelineTest::_getPipelineDescriptionV()
+{
+    CPipelineDescriptor Descriptor;
+
+    Descriptor.setVertShaderPath("shaders/shaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/shaderFrag.spv");
+
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
+
+    return Descriptor;
+}
+
+void CPipelineTest::_createResourceV(size_t vImageNum)
+{
+    __destroyResources();
+
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
+    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
+    m_VertUniformBufferSet.init(vImageNum);
+    m_FragUniformBufferSet.init(vImageNum);
+
+    for (size_t i = 0; i < vImageNum; ++i)
+    {
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
+    }
+
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
+    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
+    );
+    m_Sampler.create(m_pDevice, SamplerInfo);
+
+    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+}
+
+void CPipelineTest::_destroyV()
+{
+    __destroyResources();
+}
+
+void CPipelineTest::__updateDescriptorSet()
+{
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
+    for (size_t i = 0; i < DescriptorNum; ++i)
+    {
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteImageAndSampler(2, m_SkyBoxImage.isValid() ? m_SkyBoxImage : m_PlaceholderImage, m_Sampler);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
+    }
+}
+
 void CPipelineTest::__destroyResources()
 {
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-        m_FragUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
-    m_FragUniformBufferSet.clear();
+    m_VertUniformBufferSet.destroyAndClearAll();
+    m_FragUniformBufferSet.destroyAndClearAll();
 
-    if (m_pSkyBoxImage) m_pSkyBoxImage->destroy();
-    if (m_pPlaceholderImage) m_pPlaceholderImage->destroy();
-
-    if (m_Sampler.isValid()) m_Sampler.destroy();
+    m_SkyBoxImage.destroy();
+    m_PlaceholderImage.destroy();
+    m_Sampler.destroy();
 }

@@ -3,7 +3,7 @@
 #include "RenderPassDescriptor.h"
 #include "Function.h"
 
-void CRendererTest::_initV()
+void CRenderPassTest::_initV()
 {
     m_pCamera->setFov(90);
     m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
@@ -14,14 +14,14 @@ void CRendererTest::_initV()
     __createRecreateResources();
 }
 
-SPortDescriptor CRendererTest::_getPortDescV()
+SPortDescriptor CRenderPassTest::_getPortDescV()
 {
     CRenderPassPort Ports;
     Ports.addOutput("Output", m_AppInfo.ImageFormat, m_AppInfo.Extent);
     return Ports;
 }
 
-void CRendererTest::_recreateV()
+void CRenderPassTest::_recreateV()
 {
     IRenderPass::_recreateV();
 
@@ -29,12 +29,12 @@ void CRendererTest::_recreateV()
     __createRecreateResources();
 }
 
-void CRendererTest::_updateV(uint32_t vImageIndex)
+void CRenderPassTest::_updateV(uint32_t vImageIndex)
 {
     __updateUniformBuffer(vImageIndex);
 }
 
-std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassTest::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     if (m_FramebufferSet.empty() || m_pLink->isUpdated() || m_IsUpdated)
     {
@@ -54,30 +54,30 @@ std::vector<VkCommandBuffer> CRendererTest::_requestCommandBuffersV(uint32_t vIm
     return { CommandBuffer };
 }
 
-void CRendererTest::_destroyV()
+void CRenderPassTest::_destroyV()
 {
     __destroyRecreateResources();
 
     IRenderPass::_destroyV();
 }
 
-void CRendererTest::__createRenderPass()
+void CRenderPassTest::__createRenderPass()
 {
     auto Info = CRenderPassDescriptor::generateSingleSubpassInfo(m_RenderPassPosBitField, m_AppInfo.ImageFormat, VK_FORMAT_D32_SFLOAT);
     vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
 }
 
-void CRendererTest::__createGraphicsPipeline()
+void CRenderPassTest::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
-void CRendererTest::__createDepthResources()
+void CRenderPassTest::__createDepthResources()
 {
     m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent);
 }
 
-void CRendererTest::__createFramebuffers()
+void CRenderPassTest::__createFramebuffers()
 {
     _ASSERTE(isValid());
 
@@ -96,7 +96,7 @@ void CRendererTest::__createFramebuffers()
     }
 }
 
-void CRendererTest::__createRecreateResources()
+void CRenderPassTest::__createRecreateResources()
 {
     __createGraphicsPipeline();
     __createDepthResources();
@@ -155,7 +155,7 @@ void CRendererTest::__createRecreateResources()
     m_Pipeline.setSprites(SpriteSet);
 }
 
-void CRendererTest::__destroyRecreateResources()
+void CRenderPassTest::__destroyRecreateResources()
 {
     m_pDepthImage->destroy();
 
@@ -165,7 +165,7 @@ void CRendererTest::__destroyRecreateResources()
     m_Pipeline.destroy();
 }
 
-void CRendererTest::__updateUniformBuffer(uint32_t vImageIndex)
+void CRenderPassTest::__updateUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
     if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)

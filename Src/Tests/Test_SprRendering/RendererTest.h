@@ -4,10 +4,10 @@
 #include "Camera.h"
 #include "FrameBuffer.h"
 
-class CRendererTest : public vk::IRenderPass
+class CRenderPassTest : public vk::IRenderPass
 {
 public:
-    CRendererTest() : m_pCamera(make<CCamera>()) {}
+    CRenderPassTest() : m_pCamera(make<CCamera>()) {}
 
     ptr<CCamera> getCamera() { return m_pCamera; }
 

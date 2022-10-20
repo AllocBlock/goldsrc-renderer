@@ -7,11 +7,11 @@ void CApplicationTest::_initV()
 {
     vk::SAppInfo AppInfo = getAppInfo();
 
-    m_pRenderPass = make<CRendererTest>();
-    m_pRenderPass->init(AppInfo, ERenderPassPos::BEGIN);
+    m_pPassMain = make<CRenderPassTest>();
+    m_pPassMain->init(AppInfo, ERenderPassPos::BEGIN);
 
     m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
+    m_pInteractor->bindEvent(m_pWindow, m_pPassMain->getCamera());
 
     m_pPassGUI = make<CGUIRenderPass>();
     m_pPassGUI->setWindow(m_pWindow);
@@ -22,7 +22,7 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
-    m_pRenderPass->update(vImageIndex);
+    m_pPassMain->update(vImageIndex);
 }
 
 void CApplicationTest::_renderUIV()
@@ -38,7 +38,7 @@ void CApplicationTest::_renderUIV()
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
 {
     std::vector<VkCommandBuffer> BufferSet;
-    std::vector<VkCommandBuffer> RendererBufferSet = m_pRenderPass->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> RendererBufferSet = m_pPassMain->requestCommandBuffers(vImageIndex);
     BufferSet.insert(BufferSet.end(), RendererBufferSet.begin(), RendererBufferSet.end());
     std::vector<VkCommandBuffer> GUIBufferSet = m_pPassGUI->requestCommandBuffers(vImageIndex);
     BufferSet.insert(BufferSet.end(), GUIBufferSet.begin(), GUIBufferSet.end());
@@ -48,7 +48,7 @@ std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vI
 void CApplicationTest::_createOtherResourceV()
 {
     m_pPassGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pRenderPass->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    m_pPassMain->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
     __linkPasses();
 }
 
@@ -60,12 +60,12 @@ void CApplicationTest::_recreateOtherResourceV()
 void CApplicationTest::_destroyOtherResourceV()
 {
     m_pPassGUI->destroy();
-    m_pRenderPass->destroy();
+    m_pPassMain->destroy();
 }
 
 void CApplicationTest::__linkPasses()
 {
-    auto pLinkMain = m_pRenderPass->getLink();
+    auto pLinkMain = m_pPassMain->getLink();
     auto pLinkGui = m_pPassGUI->getLink();
 
     const auto& ImageViews = m_pSwapchain->getImageViews();

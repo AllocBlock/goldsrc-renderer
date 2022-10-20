@@ -1,8 +1,8 @@
 #pragma once
 #include "Application.h"
-#include "GUIPass.h"
-#include "RendererTest.h"
 #include "Interactor.h"
+#include "PassGUI.h"
+#include "PassTest.h"
 
 class CApplicationTest : public IApplication
 {
@@ -20,8 +20,8 @@ protected:
 private:
     void __linkPasses();
 
-    ptr<CGUIRenderPass> m_pPassGUI = nullptr;
-    ptr<CRendererTest> m_pRenderPass = nullptr;
+    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
+    ptr<CRenderPassTest> m_pPassMain = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };
 

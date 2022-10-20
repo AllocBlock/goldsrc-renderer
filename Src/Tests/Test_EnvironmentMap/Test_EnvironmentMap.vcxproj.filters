@@ -24,7 +24,7 @@
     <ClCompile Include="PipelineTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RendererTest.cpp">
+    <ClCompile Include="PassTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,7 +35,7 @@
     <ClInclude Include="PipelineTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RendererTest.h">
+    <ClInclude Include="PassTest.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

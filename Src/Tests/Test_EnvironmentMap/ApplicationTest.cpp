@@ -1,27 +1,19 @@
 #include "ApplicationTest.h"
+
+#include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
 
 using namespace vk;
 
 void CApplicationTest::_initV()
 {
-    vk::SAppInfo AppInfo = getAppInfo();
-
-    m_pRenderPass = make<CRendererTest>();
-    m_pRenderPass->init(AppInfo, ERenderPassPos::BEGIN);
-
-    m_pPassGUI = make<CGUIRenderPass>();
-    m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo, ERenderPassPos::END);
-
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pRenderPass->getCamera());
+    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 }
 
 void CApplicationTest::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
-    m_pRenderPass->update(vImageIndex);
+    m_pPassMain->update(vImageIndex);
     m_pPassGUI->update(vImageIndex);
 }
 
@@ -36,7 +28,7 @@ void CApplicationTest::_renderUIV()
 
 std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
 {
-    std::vector<VkCommandBuffer> SceneBuffers = m_pRenderPass->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> SceneBuffers = m_pPassMain->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> Result = SceneBuffers;
     Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
@@ -45,27 +37,35 @@ std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vI
 
 void CApplicationTest::_createOtherResourceV()
 {
-    m_pPassGUI->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pRenderPass->recreate(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
+    vk::SAppInfo AppInfo = getAppInfo();
+
+    m_pPassMain = make<CRenderPassTest>();
+    m_pPassMain->init(AppInfo);
+
+    m_pPassGUI = make<CRenderPassGUI>();
+    m_pPassGUI->setWindow(m_pWindow);
+    m_pPassGUI->init(AppInfo);
+
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pPassMain->getCamera());
+
     __linkPasses();
 }
 
 void CApplicationTest::_destroyOtherResourceV()
 {
-    m_pPassGUI->destroy();
-    m_pRenderPass->destroy();
+    destroyAndClear(m_pPassGUI);
+    destroyAndClear(m_pPassMain);
+    cleanGlobalCommandBuffer();
 }
 
 void CApplicationTest::__linkPasses()
 {
-    auto pLinkMain = m_pRenderPass->getLink();
-    auto pLinkGui = m_pPassGUI->getLink();
+    auto pPortMain = m_pPassMain->getPortSet();
+    auto pPortGui = m_pPassGUI->getPortSet();
 
-    const auto& ImageViews = m_pSwapchain->getImageViews();
-    for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
-    {
-        pLinkMain->link("Main", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkGui->link("Main", ImageViews[i], EPortType::INPUT, i);
-        pLinkGui->link("Main", ImageViews[i], EPortType::OUTPUT, i);
-    }
+    m_pSwapchainPort->setForceNotReady(true);
+    CPortSet::link(m_pSwapchainPort, pPortMain, "Main");;
+    CPortSet::link(pPortMain, "Main", pPortGui, "Main");
+    m_pSwapchainPort->setForceNotReady(false);
 }

@@ -1,30 +1,31 @@
 #pragma once
 #include "RenderPass.h"
 #include "FrameBuffer.h"
-#include "PipelineTest.h"
 #include "Camera.h"
 #include "Image.h"
 #include "Buffer.h"
+#include "PipelineTest.h"
 
-class CRendererTest : public vk::IRenderPass
+class CRenderPassTest : public vk::IRenderPass
 {
 public:
-    CRendererTest() : m_pCamera(make<CCamera>()) {}
+    CRenderPassTest() : m_pCamera(make<CCamera>()) {}
 
     ptr<CCamera> getCamera() { return m_pCamera; }
 
 protected:
     virtual void _initV() override;
     virtual SPortDescriptor _getPortDescV() override;
-    virtual void _recreateV() override;
+    virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
+    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+
 private:
     void __loadSkyBox();
     bool __readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension);
-    void __createRenderPass();
     void __createGraphicsPipeline();
     void __createDepthResources();
     void __createFramebuffers();
@@ -40,11 +41,11 @@ private:
     CPipelineTest m_Pipeline;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
-    vk::CImage m_DepthImage = nullptr;
+    vk::CImage m_DepthImage;
 
     const std::string m_SkyFilePrefix = "../../../ExampleData/sky-test/neb6";
     ptr<CCamera> m_pCamera = nullptr;
-    std::vector<STestPointData> m_PointDataSet;
+    std::vector<CPipelineTest::SPointData> m_PointDataSet;
     std::array<ptr<CIOImage>, 6> m_SkyBoxImageSet;
 };
 

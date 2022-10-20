@@ -22,7 +22,7 @@ private:
     void __linkPasses();
 
     ptr<CGUIRenderPass> m_pPassGUI = nullptr;
-    ptr<CRendererTest> m_pRenderPass = nullptr;
+    ptr<CRenderPassTest> m_pPassMain = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };
 
