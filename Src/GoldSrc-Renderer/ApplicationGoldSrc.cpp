@@ -1,14 +1,9 @@
 #include "ApplicationGoldSrc.h"
-#include "ApplicationGoldSrc.h"
 #include "PassGoldSrc.h"
 #include "PassSimple.h"
-#include "Common.h"
 #include "SceneProbe.h"
 #include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
-
-#include <iostream>
-#include <set>
 
 void CApplicationGoldSrc::_initV()
 {

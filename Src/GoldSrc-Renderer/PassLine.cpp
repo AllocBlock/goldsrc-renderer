@@ -1,16 +1,8 @@
 #include "PassLine.h"
-#include "Common.h"
-#include "ShaderResourceDescriptor.h"
-#include "Function.h"
 #include "InterfaceUI.h"
 #include "RenderPassDescriptor.h"
 
-#include <iostream>
 #include <vector>
-#include <set>
-#include <fstream>
-#include <chrono>
-#include <glm/ext/matrix_transform.hpp>
 
 void CLineRenderPass::setHighlightBoundingBox(Math::S3DBoundingBox vBoundingBox)
 {

@@ -1,4 +1,5 @@
 #include "Rotator.h"
+#include "Common.h"
 
 CRotator CRotator::createVectorToVector(glm::vec3 vStart, glm::vec3 vTarget)
 {

@@ -2,7 +2,6 @@
 #include "Pipeline.h"
 #include "IOImage.h"
 #include "Image.h"
-#include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Sampler.h"
 #include "VertexAttributeDescriptor.h"

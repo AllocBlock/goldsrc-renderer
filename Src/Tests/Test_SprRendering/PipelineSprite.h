@@ -1,7 +1,5 @@
 #pragma once
 #include "Pipeline.h"
-#include "Common.h"
-#include "ShaderResourceDescriptor.h"
 #include "IOImage.h"
 #include "Scene.h"
 #include "Image.h"
@@ -10,7 +8,6 @@
 #include "Sampler.h"
 
 #include <glm/glm.hpp>
-#include <array>
 
 struct SSpritePushConstant
 {

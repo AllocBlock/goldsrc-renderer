@@ -4,7 +4,6 @@
 #include "GeneralDataArray.h"
 
 #include <string>
-#include <array>
 #include <glm/glm.hpp>
 
 enum class E3DObjectPrimitiveType

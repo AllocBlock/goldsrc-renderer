@@ -1,5 +1,4 @@
 #pragma once
-#include "Common.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 

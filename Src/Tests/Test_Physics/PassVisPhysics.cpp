@@ -1,5 +1,4 @@
 #include "PassVisPhysics.h"
-#include "Function.h"
 #include "RenderPassDescriptor.h"
 #include "InterfaceUI.h"
 

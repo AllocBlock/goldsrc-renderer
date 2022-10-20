@@ -1,15 +1,12 @@
 #pragma once
 #include "Pipeline.h"
-#include "IOImage.h"
 #include "Image.h"
-#include "Buffer.h"
 #include "UniformBuffer.h"
 #include "Sampler.h"
 #include "VertexAttributeDescriptor.h"
 #include "Camera.h"
 
 #include <glm/glm.hpp>
-#include <array>
 
 struct SPointData
 {

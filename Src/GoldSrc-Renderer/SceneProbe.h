@@ -1,8 +1,6 @@
 #pragma once
 #include "Scene.h"
 #include "Camera.h"
-#include "3DObject.h"
-#include "Maths.h"
 
 namespace SceneProbe
 {

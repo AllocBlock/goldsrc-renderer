@@ -7,7 +7,6 @@
 #include "PipelineBlendAlpha.h"
 #include "PipelineBlendAlphaTest.h"
 #include "PipelineBlendAdditive.h"
-#include "Pipeline3DGui.h"
 #include "PipelineSprite.h"
 #include "Image.h"
 #include "Buffer.h"

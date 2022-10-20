@@ -2,7 +2,6 @@
 #include "InterfaceUI.h"
 
 #include <chrono>
-#include <iomanip>
 
 std::istream& operator >> (std::istream& vIn, CGuiLog& vGUILog)
 {

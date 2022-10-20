@@ -1,12 +1,9 @@
 #pragma once
 #include "Pipeline.h"
-#include "Camera.h"
-#include "Buffer.h"
 #include "UniformBuffer.h"
 #include "VertexAttributeDescriptor.h"
 
 #include <glm/glm.hpp>
-#include <array>
 
 struct SShadowMapPointData
 {

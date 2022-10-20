@@ -9,7 +9,6 @@
 #include "Sampler.h"
 
 #include <glm/glm.hpp>
-#include <array>
 
 struct SPBSPointData
 {
