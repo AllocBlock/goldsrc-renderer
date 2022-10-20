@@ -21,8 +21,6 @@ public:
         return pPipeline;
     }
     ptr<IPipeline> getPipeline() { return m_pPipeline; }
-    
-    //VkRenderPass getRenderPass() { return m_RenderPass; }
 
 protected:
     virtual void _initV() override;

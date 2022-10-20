@@ -1,4 +1,4 @@
-﻿#include "GUIPass.h"
+﻿#include "PassGUI.h"
 #include "Common.h"
 #include "Log.h"
 #include "AppInfo.h"
@@ -7,29 +7,28 @@
 
 const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 
-void CGUIRenderPass::_initV()
+void CRenderPassGUI::_initV()
 {
     IRenderPass::_initV();
 
     _ASSERTE(m_pWindow);
-
-    uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
+    
     __createDescriptorPool();
 }
 
-SPortDescriptor CGUIRenderPass::_getPortDescV()
+SPortDescriptor CRenderPassGUI::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
     return Ports;
 }
 
-CRenderPassDescriptor CGUIRenderPass::_getRenderPassDescV()
+CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
 }
 
-void CGUIRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
+void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     if (vUpdateState.RenderpassUpdated || vUpdateState.CommandUpdated || vUpdateState.ImageNum.IsUpdated)
     {
@@ -49,27 +48,22 @@ void CGUIRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     }
 }
 
-void CGUIRenderPass::_renderUIV()
+void CRenderPassGUI::_renderUIV()
 {
     UI::text(u8"默认GUI");
 }
 
-void CGUIRenderPass::_destroyV()
+void CRenderPassGUI::_destroyV()
 {
     if (*m_AppInfo.pDevice == VK_NULL_HANDLE) return;
 
     m_FramebufferSet.destroyAndClearAll();
-
     UI::destory();
-
     __destroyDescriptorPool();
-
     m_pWindow = nullptr;
-
-    IRenderPass::_destroyV();
 }
 
-std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -83,7 +77,7 @@ std::vector<VkCommandBuffer> CGUIRenderPass::_requestCommandBuffersV(uint32_t vI
     return { CommandBuffer };
 }
 
-void CGUIRenderPass::__createDescriptorPool()
+void CRenderPassGUI::__createDescriptorPool()
 {
     std::vector<VkDescriptorPoolSize> PoolSizes =
     {
@@ -109,7 +103,7 @@ void CGUIRenderPass::__createDescriptorPool()
     vk::checkError(vkCreateDescriptorPool(*m_AppInfo.pDevice, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
-void CGUIRenderPass::__destroyDescriptorPool()
+void CRenderPassGUI::__destroyDescriptorPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE)
     {
@@ -118,7 +112,7 @@ void CGUIRenderPass::__destroyDescriptorPool()
     }
 }
 
-void CGUIRenderPass::__createFramebuffer()
+void CRenderPassGUI::__createFramebuffer()
 {
     if (!isValid()) return;
 

@@ -644,9 +644,12 @@
       - 可以开关
     - 瞬时力
       - 很多引擎中的addForce接口，这个力只应用一帧
+    - 瞬时角加速度
+      - 角速度和角加速度可以叠加
   - 更新速度和位置
   - 碰撞检测
   - 解决约束
+    - Penalty force效果不好
   - 渲染
 
 ---
@@ -655,11 +658,10 @@
   - 目前swapchain的extent变化是renderpass在做，而不是port在做....会不会不太好
   - 自动排列commandbuffer
   - wad第一次搜寻找不到，重试后找到的问题
-  - 绘制port相关的流程图
   - 最小化时，extent=(0,0)的处理
   - 动态shader编译
   - 三角形全部改为逆时针！
-  - 可视化碰撞点、力度、法向
   - 碰撞分board和narrow
   - 公用shader的管理（放置、查找、编译）
   - pipeline生命周期、renderpass生命周期
+    - 绘制port相关的流程图

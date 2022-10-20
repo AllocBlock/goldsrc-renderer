@@ -5,7 +5,7 @@
 #include "PhysicsEngine.h"
 #include "PassShade.h"
 #include "PassVisPhysics.h"
-#include "GUIPass.h"
+#include "PassGUI.h"
 
 class CApplicationTest : public IApplication
 {
@@ -28,7 +28,7 @@ private:
 
     ptr<CCamera> m_pCamera = nullptr;
 
-    ptr<CGUIRenderPass> m_pPassGUI = nullptr;
+    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
     ptr<CRenderPassShade> m_pPassShade = nullptr;
     ptr<CRenderPassVisPhysics> m_pPassVisPhysics = nullptr;
 

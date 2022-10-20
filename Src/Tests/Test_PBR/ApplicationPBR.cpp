@@ -25,7 +25,7 @@ void CApplicationPBR::_initV()
     m_pRenderPassPBR->init(AppInfo, vk::ERenderPassPos::MIDDLE);
     m_pRenderPassPBR->setCamera(m_pCamera);
 
-    m_pGUI = make<CGUIRenderPass>();
+    m_pGUI = make<CRenderPassGUI>();
     m_pGUI->setWindow(m_pWindow);
     m_pGUI->init(AppInfo, vk::ERenderPassPos::END);
 

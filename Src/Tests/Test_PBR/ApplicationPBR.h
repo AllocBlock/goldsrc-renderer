@@ -1,7 +1,7 @@
 #pragma once
 #include "Application.h"
 #include "DrawableUI.h"
-#include "GUIPass.h"
+#include "PassGUI.h"
 #include "RenderPassPBR.h"
 #include "RenderPassFullScreen.h"
 #include "PipelineEnvironment.h"
@@ -25,7 +25,7 @@ private:
     void __linkPasses();
 
     ptr<CCamera> m_pCamera = nullptr;
-    ptr<CGUIRenderPass> m_pGUI = nullptr;
+    ptr<CRenderPassGUI> m_pGUI = nullptr;
     ptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
     ptr<CRenderPassFullScreen> m_pRenderPassFullScreen = nullptr;
     ptr<CPipelineEnvironment> m_pPipelineEnv = nullptr;

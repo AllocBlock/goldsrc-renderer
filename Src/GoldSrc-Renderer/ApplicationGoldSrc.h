@@ -1,7 +1,7 @@
 #pragma once
 #include "Application.h"
 #include "ScenePass.h"
-#include "GUIPass.h"
+#include "PassGUI.h"
 #include "PassOutlineMask.h"
 #include "PassOutlineEdge.h"
 #include "GuiMain.h"
@@ -27,7 +27,7 @@ private:
     void __linkPasses();
 
     ptr<CSceneRenderPass> m_pPassScene = nullptr;
-    ptr<CGUIRenderPass> m_pPassGUI = nullptr;
+    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
     ptr<COutlineMaskRenderPass> m_pPassOutlineMask = nullptr;
     ptr<COutlineEdgeRenderPass> m_pPassOutlineEdge = nullptr;
     ptr<CGUIMain> m_pMainUI = nullptr;

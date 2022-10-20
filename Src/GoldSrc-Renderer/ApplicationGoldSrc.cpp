@@ -54,7 +54,7 @@ void CApplicationGoldSrc::_createOtherResourceV()
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
-    m_pPassGUI = make<CGUIRenderPass>();
+    m_pPassGUI = make<CRenderPassGUI>();
     m_pPassGUI->setWindow(m_pWindow);
     m_pPassGUI->init(AppInfo);
 

@@ -6,10 +6,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class CGUIRenderPass : public vk::IRenderPass
+class CRenderPassGUI final : public vk::IRenderPass
 {
 public:
-    CGUIRenderPass() = default;
+    CRenderPassGUI() = default;
 
     GLFWwindow* getWindow() { return m_pWindow; }
     void setWindow(GLFWwindow* vWindow) { m_pWindow = vWindow; }
@@ -24,12 +24,12 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
-    GLFWwindow* m_pWindow = nullptr;
-    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
-
 private:
     void __createDescriptorPool();
     void __destroyDescriptorPool();
     void __createFramebuffer();
+
+    GLFWwindow* m_pWindow = nullptr;
+    VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 };

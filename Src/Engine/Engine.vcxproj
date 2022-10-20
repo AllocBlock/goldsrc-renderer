@@ -99,7 +99,6 @@
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="ShaderResourceDescriptor.cpp" />
     <ClCompile Include="GlobalSingleTimeBuffer.cpp" />
-    <ClCompile Include="GUIPass.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="Interactor.cpp" />
@@ -123,7 +122,6 @@
     <ClInclude Include="Command.h" />
     <ClInclude Include="ShaderResourceDescriptor.h" />
     <ClInclude Include="GlobalSingleTimeBuffer.h" />
-    <ClInclude Include="GUIPass.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="DrawableUI.h" />
     <ClInclude Include="Application.h" />
