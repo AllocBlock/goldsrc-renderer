@@ -1,5 +1,5 @@
 #pragma once
-#include "IApplication.h"
+#include "Application.h"
 #include "ScenePass.h"
 #include "GUIPass.h"
 #include "PassOutlineMask.h"

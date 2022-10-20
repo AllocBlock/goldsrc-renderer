@@ -1,7 +1,7 @@
 #pragma once
 #include "Pointer.h"
 #include "Camera.h"
-#include "IGUI.h"
+#include "DrawableUI.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -23,7 +23,7 @@
 
 using MouseCallback_t = std::function<void(GLFWwindow*, int, int)>;
 
-class CInteractor : public IGUI
+class CInteractor : public IDrawableUI
 {
 public:
 	CInteractor() = default;

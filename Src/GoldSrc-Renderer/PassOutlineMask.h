@@ -7,10 +7,10 @@
 #include "ShaderResourceDescriptor.h"
 #include "Image.h"
 #include "Buffer.h"
-#include "IPipeline.h"
+#include "Pipeline.h"
 #include "UniformBuffer.h"
 #include "VertexAttributeDescriptor.h"
-#include "IRenderPass.h"
+#include "RenderPass.h"
 
 #include <glm/glm.hpp>
 

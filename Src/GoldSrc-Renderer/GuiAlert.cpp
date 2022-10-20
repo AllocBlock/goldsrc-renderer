@@ -1,5 +1,5 @@
 #include "GuiAlert.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 
 void CGuiAlert::appendAlert(std::string vText)
 {

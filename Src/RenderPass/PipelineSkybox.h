@@ -1,6 +1,5 @@
 #pragma once
-#include "IPipeline.h"
-#include "VertexAttributeDescriptor.h"
+#include "Pipeline.h"
 #include "IOImage.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -8,7 +7,6 @@
 #include "Sampler.h"
 #include "Camera.h"
 
-#include <glm/glm.hpp>
 #include <array>
 
 class CPipelineSkybox : public IPipeline

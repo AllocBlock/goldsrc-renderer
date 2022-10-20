@@ -1,7 +1,7 @@
 #pragma once
 #include "Pointer.h"
 #include "Common.h"
-#include "IGUI.h"
+#include "DrawableUI.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -11,7 +11,7 @@ struct SFrustum
 	std::array<glm::vec4, 6> Planes = { glm::vec4(), glm::vec4(), glm::vec4(), glm::vec4() };
 };
 
-class CCamera : public IGUI
+class CCamera : public IDrawableUI
 {
 public:
 	_DEFINE_PTR(CCamera);

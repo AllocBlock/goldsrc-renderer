@@ -662,3 +662,4 @@
   - 可视化碰撞点、力度、法向
   - 碰撞分board和narrow
   - 公用shader的管理（放置、查找、编译）
+  - pipeline生命周期、renderpass生命周期

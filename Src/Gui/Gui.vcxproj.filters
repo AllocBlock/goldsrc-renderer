@@ -23,7 +23,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Gui.h">
+    <ClInclude Include="InterfaceUI.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="NativeSystem.h">

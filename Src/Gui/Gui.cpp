@@ -1,4 +1,4 @@
-#include "Gui.h"
+#include "InterfaceUI.h"
 #include "Sampler.h"
 
 #include <imgui.h>

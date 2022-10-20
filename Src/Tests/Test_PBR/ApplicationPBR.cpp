@@ -1,6 +1,6 @@
 #include "ApplicationPBR.h"
 #include "GlobalSingleTimeBuffer.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 
 void CApplicationPBR::_initV()
 {

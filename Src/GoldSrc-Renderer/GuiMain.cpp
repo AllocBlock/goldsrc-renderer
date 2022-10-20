@@ -1,7 +1,7 @@
 ﻿#include "GuiMain.h"
 #include "SceneInterface.h"
 #include "SceneCommon.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 #include "NativeSystem.h"
 #include "SceneObjWriter.h"
 #include "Log.h"

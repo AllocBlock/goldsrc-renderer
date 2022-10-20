@@ -1,7 +1,7 @@
 #pragma once
 #include "PchVulkan.h"
 #include "Command.h"
-#include "IGUI.h"
+#include "DrawableUI.h"
 #include "RenderPassPort.h"
 #include "RenderPassDescriptor.h"
 #include "AppInfo.h"
@@ -50,7 +50,7 @@ namespace vk
         bool CommandUpdated = false;
     };
 
-    class IRenderPass : public IVulkanHandle<VkRenderPass>, public IGUI
+    class IRenderPass : public IVulkanHandle<VkRenderPass>, public IDrawableUI
     {
     public:
         IRenderPass();

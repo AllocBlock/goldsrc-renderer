@@ -2,7 +2,7 @@
 #include "VertexAttributeDescriptor.h"
 #include "BasicMesh.h"
 
-namespace PipelineVisCollider
+namespace
 {
     struct SPointData
     {
@@ -38,7 +38,6 @@ namespace PipelineVisCollider
         glm::mat4 NormalModel;
     };
 }
-using namespace PipelineVisCollider;
 
 void CPipelineVisCollider::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {

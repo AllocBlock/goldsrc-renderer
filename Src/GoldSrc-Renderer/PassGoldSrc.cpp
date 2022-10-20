@@ -1,7 +1,7 @@
 #include "PassGoldSrc.h"
 #include "Common.h"
 #include "Function.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 #include "RenderPassDescriptor.h"
 #include "Log.h"
 

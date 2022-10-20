@@ -1,10 +1,13 @@
 #include "PipelineShade.h"
 
-struct SUBOVert
+namespace
 {
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-};
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+    };
+}
 
 void CPipelineShade::__updateDescriptorSet()
 {

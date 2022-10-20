@@ -1,5 +1,5 @@
 #pragma once
-#include "IGUI.h"
+#include "DrawableUI.h"
 #include "Vulkan.h"
 #include "ShaderResourceDescriptor.h"
 #include "Device.h"
@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <vulkan/vulkan.h> 
 
-struct IPipeline : public IGUI
+struct IPipeline : public IDrawableUI
 {
 public:
     IPipeline() = default;

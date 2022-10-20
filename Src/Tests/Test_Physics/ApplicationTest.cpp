@@ -1,6 +1,6 @@
 #include "ApplicationTest.h"
 #include "GlobalSingleTimeBuffer.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 #include "Ticker.h"
 
 #include <random>

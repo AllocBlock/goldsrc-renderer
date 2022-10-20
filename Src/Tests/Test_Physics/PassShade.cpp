@@ -1,7 +1,7 @@
 #include "PassShade.h"
 #include "Function.h"
 #include "RenderPassDescriptor.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 
 void CRenderPassShade::setScene(CTempScene::Ptr vScene)
 {

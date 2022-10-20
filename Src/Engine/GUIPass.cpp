@@ -3,7 +3,7 @@
 #include "Log.h"
 #include "AppInfo.h"
 #include "RenderPassDescriptor.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 
 const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 

@@ -89,7 +89,7 @@
     <ClCompile Include="NativeSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Gui.h" />
+    <ClInclude Include="InterfaceUI.h" />
     <ClInclude Include="NativeSystem.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 #include "PassVisPhysics.h"
 #include "Function.h"
 #include "RenderPassDescriptor.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 
 void CRenderPassVisPhysics::setPhysicsEngine(CPhysicsEngine::Ptr vEngine)
 {
@@ -78,7 +78,7 @@ void CRenderPassVisPhysics::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CRenderPassVisPhysics::_renderUIV()
 {
-    UI::toggle(u8"ÏÔÊ¾Åö×²Ìå", m_ShowCollider);
+    UI::toggle(u8"ï¿½ï¿½Ê¾ï¿½ï¿½×²ï¿½ï¿½", m_ShowCollider);
 }
 
 void CRenderPassVisPhysics::__createGraphicsPipelines()

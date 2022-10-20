@@ -1,5 +1,5 @@
 #pragma once
-#include "IGUI.h"
+#include "DrawableUI.h"
 #include "Interactor.h"
 #include "GuiAlert.h"
 #include "GuiFrameRate.h"
@@ -27,7 +27,7 @@ struct SResultReadScene
 using ReadSceneCallbackFunc_T = std::function<void(ptr<SScene>)>;
 using ChangeRenderMethodCallbackFunc_T = std::function<void(ERenderMethod)>;
 
-class CGUIMain : public IGUI
+class CGUIMain : public IDrawableUI
 {
 public:
     CGUIMain();

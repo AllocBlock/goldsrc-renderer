@@ -1,6 +1,6 @@
 #pragma once
-#include "IApplication.h"
-#include "IGUI.h"
+#include "Application.h"
+#include "DrawableUI.h"
 #include "GUIPass.h"
 #include "RenderPassPBR.h"
 #include "RenderPassFullScreen.h"

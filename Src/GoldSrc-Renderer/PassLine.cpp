@@ -2,7 +2,7 @@
 #include "Common.h"
 #include "ShaderResourceDescriptor.h"
 #include "Function.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 #include "RenderPassDescriptor.h"
 
 #include <iostream>

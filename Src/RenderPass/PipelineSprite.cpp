@@ -8,7 +8,7 @@
 
 const size_t CPipelineSprite::MaxSpriteNum = 2048;
 
-namespace PipelineSprite
+namespace
 {
     struct SPointData
     {
@@ -35,8 +35,6 @@ namespace PipelineSprite
         alignas(16) glm::vec3 EyeDirection;
     };
 }
-
-using namespace PipelineSprite;
 
 void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImageSet)
 {

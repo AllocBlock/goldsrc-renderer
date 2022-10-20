@@ -1,5 +1,5 @@
 #pragma once
-#include "IPipeline.h"
+#include "Pipeline.h"
 #include <glm/glm.hpp>
 #include "Camera.h"
 #include "UniformBuffer.h"

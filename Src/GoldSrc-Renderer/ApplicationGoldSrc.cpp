@@ -5,7 +5,7 @@
 #include "Common.h"
 #include "SceneProbe.h"
 #include "GlobalSingleTimeBuffer.h"
-#include "Gui.h"
+#include "InterfaceUI.h"
 
 #include <iostream>
 #include <set>

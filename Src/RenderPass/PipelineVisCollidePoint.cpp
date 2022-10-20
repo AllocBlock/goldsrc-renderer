@@ -1,7 +1,7 @@
 #include "PipelineVisCollidePoint.h"
 #include "VertexAttributeDescriptor.h"
 
-namespace PipelineVisCollidePoint
+namespace
 {
     struct SPointData
     {
@@ -29,7 +29,6 @@ namespace PipelineVisCollidePoint
         glm::mat4 Model;
     };
 }
-using namespace PipelineVisCollidePoint;
 
 void CPipelineVisCollidePoint::addCollidePoint(glm::vec3 vPos, glm::vec3 vNormal, float vShowTime)
 {

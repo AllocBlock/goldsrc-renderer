@@ -7,10 +7,10 @@
 #include "Image.h"
 #include "Buffer.h"
 #include "Sampler.h"
-#include "IPipeline.h"
+#include "Pipeline.h"
 #include "UniformBuffer.h"
 #include "VertexAttributeDescriptor.h"
-#include "IRenderPass.h"
+#include "RenderPass.h"
 #include "Function.h"
 
 #include <glm/glm.hpp>

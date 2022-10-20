@@ -1,25 +1,28 @@
 #include "Pipeline3DGui.h"
 
-struct SPointData
+namespace
 {
-    glm::vec3 Pos;
-
-    using PointData_t = SPointData;
-    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+    struct SPointData
     {
-        CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-        return Descriptor.generate();
-    }
-};
+        glm::vec3 Pos;
 
-struct SUBOVert
-{
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-};
+        using PointData_t = SPointData;
+        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
+
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            CVertexAttributeDescriptor Descriptor;
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+            return Descriptor.generate();
+        }
+    };
+
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+    };
+}
 
 void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {

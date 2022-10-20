@@ -1,4 +1,4 @@
-#include "IRenderPass.h"
+#include "RenderPass.h"
 
 using namespace vk;
 

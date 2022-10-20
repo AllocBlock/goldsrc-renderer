@@ -1,8 +1,10 @@
 #include "PipelineSkybox.h"
+#include "VertexAttributeDescriptor.h"
 
+#include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-namespace PipelineSkybox
+namespace
 {
 
     struct SPointData
@@ -32,8 +34,6 @@ namespace PipelineSkybox
         alignas(16) glm::mat4 UpCorrection;
     };
 }
-
-using namespace PipelineSkybox;
 
 void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {

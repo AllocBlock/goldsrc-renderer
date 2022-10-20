@@ -1,9 +1,9 @@
 #pragma once
-class IGUI
+class IDrawableUI
 {
 public:
-    IGUI() = default;
-    virtual ~IGUI() = default;
+    IDrawableUI() = default;
+    virtual ~IDrawableUI() = default;
 
     void renderUI() { _renderUIV(); }
 
