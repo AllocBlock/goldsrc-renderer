@@ -1,7 +1,7 @@
 #pragma once
 #include "IPipeline.h"
 #include "Common.h"
-#include "Descriptor.h"
+#include "ShaderResourceDescriptor.h"
 #include "IOImage.h"
 #include "Scene.h"
 #include "Image.h"
@@ -35,7 +35,7 @@ protected:
 
     virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer);
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initDescriptorV() override;
+    virtual void _initShaderResourceDescriptorV() override;
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
     virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;

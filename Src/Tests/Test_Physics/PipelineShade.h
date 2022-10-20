@@ -61,20 +61,10 @@ public:
     void updatePushConstant(VkCommandBuffer vCommandBuffer, const glm::mat4& vModelMatrix);
 
 protected:
-    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override
-    {
-        updatePushConstant(vCommandBuffer, glm::identity<glm::mat4>());
-    }
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shaderFrag.spv"; }
-
+    virtual void _initShaderResourceDescriptorV() override;
+    virtual CPipelineDescriptor _getPipelineDescriptionV() override;
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initDescriptorV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
-    virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;
-    virtual VkPipelineRasterizationStateCreateInfo _getRasterizationStageInfoV() override; // TIPS: counter-clockwise!
-
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override;
     virtual void _destroyV() override;
 
 private:

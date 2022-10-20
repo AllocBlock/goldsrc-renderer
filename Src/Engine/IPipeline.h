@@ -1,8 +1,9 @@
 #pragma once
 #include "IGUI.h"
 #include "Vulkan.h"
-#include "Descriptor.h"
+#include "ShaderResourceDescriptor.h"
 #include "Device.h"
+#include "PipelineDescriptor.h"
 
 #include <filesystem>
 #include <vulkan/vulkan.h> 
@@ -25,39 +26,62 @@ public:
         vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, vState, 0, sizeof(vPushConstant), &vPushConstant);
     }
 
-    const CDescriptor& getDescriptor() const { return m_Descriptor; }
+    const CShaderResourceDescriptor& getDescriptor() const { return m_ShaderResourceDescriptor; }
 
 protected:
-    virtual void _createV() {};
-    virtual void _renderUIV() override {};
-    virtual std::filesystem::path _getVertShaderPathV() = 0;
-    virtual std::filesystem::path _getFragShaderPathV() = 0;
-    virtual void _createResourceV(size_t vImageNum) = 0;
-    virtual void _initDescriptorV() = 0;
-    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer);
-    virtual std::vector<VkPipelineShaderStageCreateInfo> _getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule);
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) = 0;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV();
-    virtual void _getViewportStageInfoV(VkExtent2D vExtent, VkViewport& voViewport, VkRect2D& voScissor);
-    virtual VkPipelineRasterizationStateCreateInfo _getRasterizationStageInfoV();
-    virtual VkPipelineMultisampleStateCreateInfo _getMultisampleStageInfoV();
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV();
-    virtual void _getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment);
-    virtual std::vector<VkDynamicState> _getEnabledDynamicSetV();
-    virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV();
-    virtual void _destroyV() {};
+    /*
+    * _initShaderResourceDescriptorV:
+    * triggers only once
+    * trigger at beginning of creation to get shader param layout
+    */
+    virtual void _initShaderResourceDescriptorV() = 0;
 
-    static std::vector<VkPipelineShaderStageCreateInfo>          getDefaultShadeStageInfo(VkShaderModule vVertModule, VkShaderModule vFragModule);
-    static VkPipelineInputAssemblyStateCreateInfo   getDefaultInputAssemblyStageInfo();
-    static VkPipelineRasterizationStateCreateInfo   getDefaultRasterizationStageInfo();
-    static VkPipelineMultisampleStateCreateInfo     getDefaultMultisampleStageInfo();
-    static VkPipelineDepthStencilStateCreateInfo    getDefaultDepthStencilInfo();
-    static std::vector<VkPushConstantRange>         getDefaultPushConstantRangeSet();
+    /*
+    * _renderUIV:
+    * triggers only once
+    * trigger in creation, after _initShaderResourceDescriptorV and before _createV
+    */
+    virtual CPipelineDescriptor _getPipelineDescriptionV() = 0;
+
+    /*
+    * _createV:
+    * triggers only once
+    * trigger when create
+    */
+    virtual void _createV() {};
+    
+    /*
+    * _renderUIV:
+    * triggers each frame
+    * for ui drawing
+    */
+    virtual void _renderUIV() override {};
+
+    /*
+    * _createResourceV:
+    * triggers multiple times
+    * for ui drawing
+    */
+    virtual void _createResourceV(size_t vImageNum) = 0;
+
+    /*
+    * _initPushConstantV:
+    * triggers multiple times
+    * trigger after each bind action to give the push constant initial data
+    */
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) {}
+
+    /*
+    * _destroyV:
+    * triggers only once
+    * trigger when destroy
+    */
+    virtual void _destroyV() {};
 
     size_t m_ImageNum = 0;
     VkExtent2D m_Extent = VkExtent2D{ 0, 0 };
 
-    CDescriptor m_Descriptor;
+    CShaderResourceDescriptor m_ShaderResourceDescriptor;
 
     vk::CDevice::CPtr m_pDevice = nullptr;
     VkPipeline m_Pipeline = VK_NULL_HANDLE;

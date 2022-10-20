@@ -20,7 +20,7 @@ protected:
     virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/simpleShaderFrag.spv"; }
 
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initDescriptorV() override;
+    virtual void _initShaderResourceDescriptorV() override;
     virtual void _destroyV() override;
     virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
     virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;

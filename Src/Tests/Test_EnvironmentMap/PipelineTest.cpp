@@ -1,7 +1,7 @@
 #include "PipelineTest.h"
 #include "Function.h"
 
-struct SUniformBufferObjectVert
+struct SUBOVert
 {
     alignas(16) glm::mat4 Proj;
     alignas(16) glm::mat4 View;
@@ -77,20 +77,20 @@ void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxIm
 
 void CPipelineTest::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
         WriteInfo.addWriteImageAndSampler(2, m_pSkyBoxImage->isValid() ? *m_pSkyBoxImage : *m_pPlaceholderImage, m_Sampler);
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 
 void CPipelineTest::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos)
 {
-    SUniformBufferObjectVert UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
     UBOVert.View = vView;
     UBOVert.Proj = vProj;
@@ -125,7 +125,7 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
 {
     __destroyResources();
 
-    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
     VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
     m_VertUniformBufferSet.resize(vImageNum);
     m_FragUniformBufferSet.resize(vImageNum);
@@ -147,16 +147,16 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
     m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
 }
 
-void CPipelineTest::_initDescriptorV()
+void CPipelineTest::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
+    m_ShaderResourceDescriptor.clear();
 
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_pDevice);
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelineTest::__destroyResources()

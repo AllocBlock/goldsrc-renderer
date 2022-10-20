@@ -4,7 +4,7 @@
 #include "FrameBuffer.h"
 #include "Scene.h"
 #include "Camera.h"
-#include "Descriptor.h"
+#include "ShaderResourceDescriptor.h"
 #include "Image.h"
 #include "Buffer.h"
 #include "IPipeline.h"
@@ -89,12 +89,12 @@ protected:
         __updateDescriptorSet();
     }
 
-    virtual void _initDescriptorV() override
+    virtual void _initShaderResourceDescriptorV() override
     {
         _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-        m_Descriptor.clear();
-        m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-        m_Descriptor.createLayout(m_pDevice);
+        m_ShaderResourceDescriptor.clear();
+        m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+        m_ShaderResourceDescriptor.createLayout(m_pDevice);
     }
 
     virtual void _destroyV() override
@@ -134,11 +134,11 @@ protected:
 private:
     void __updateDescriptorSet()
     {
-        for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
+        for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
         {
             CDescriptorWriteInfo WriteInfo;
             WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-            m_Descriptor.update(i, WriteInfo);
+            m_ShaderResourceDescriptor.update(i, WriteInfo);
         }
     }
 

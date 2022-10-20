@@ -25,7 +25,7 @@ struct SUBOFrag
 
 void CPipelineDepthTest::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vTextureSet, VkImageView vLightmap)
 {
-    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
@@ -53,7 +53,7 @@ void CPipelineDepthTest::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& 
         VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? m_PlaceholderImage : vLightmap;
         WriteInfo.addWriteImageAndSampler(4, LightmapImageView);
 
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 
@@ -156,18 +156,18 @@ void CPipelineDepthTest::_createResourceV(size_t vImageNum)
     Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
-void CPipelineDepthTest::_initDescriptorV()
+void CPipelineDepthTest::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
+    m_ShaderResourceDescriptor.clear();
 
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("Sampler", 2, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("Texture", 3, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineDepthTest::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("Lightmap", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Sampler", 2, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Texture", 3, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineDepthTest::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Lightmap", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_pDevice);
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelineDepthTest::_initPushConstantV(VkCommandBuffer vCommandBuffer)

@@ -13,13 +13,13 @@ struct SUBOFragLight
 
 void CPipelineShadowMap::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 
@@ -88,15 +88,15 @@ void CPipelineShadowMap::_createResourceV(size_t vImageNum)
     __updateDescriptorSet();
 }
 
-void CPipelineShadowMap::_initDescriptorV()
+void CPipelineShadowMap::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
+    m_ShaderResourceDescriptor.clear();
 
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_pDevice);
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelineShadowMap::__destroyResources()

@@ -1,6 +1,6 @@
 #include "PassOutlineMask.h"
 #include "Common.h"
-#include "Descriptor.h"
+#include "ShaderResourceDescriptor.h"
 #include "Function.h"
 #include "Gui.h"
 #include "RenderPassDescriptor.h"

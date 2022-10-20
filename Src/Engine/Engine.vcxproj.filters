@@ -30,7 +30,7 @@
     <ClCompile Include="IPipeline.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Descriptor.cpp">
+    <ClCompile Include="ShaderResourceDescriptor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Command.cpp">
@@ -98,7 +98,7 @@
     <ClInclude Include="IPipeline.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Descriptor.h">
+    <ClInclude Include="ShaderResourceDescriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Command.h">
@@ -166,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="BasicMesh.h">
       <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineDescriptor.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

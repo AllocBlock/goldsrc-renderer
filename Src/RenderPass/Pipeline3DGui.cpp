@@ -21,18 +21,6 @@ struct SUBOVert
     alignas(16) glm::mat4 View;
 };
 
-VkPipelineDepthStencilStateCreateInfo CPipelineLine::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
-}
-
 void CPipelineLine::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
@@ -66,18 +54,27 @@ void CPipelineLine::removeObject(std::string vName)
     __updateVertexBuffer();
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineLine::_getInputAssemblyStageInfoV()
+void CPipelineLine::_initShaderResourceDescriptorV()
 {
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    Info.primitiveRestartEnable = VK_FALSE;
-    return Info;
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    m_ShaderResourceDescriptor.clear();
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-void CPipelineLine::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+CPipelineDescriptor CPipelineLine::_getPipelineDescriptionV()
 {
-    voBinding = SPointData::getBindingDescription();
-    voAttributeSet = SPointData::getAttributeDescriptionSet();
+    CPipelineDescriptor Descriptor;
+
+    Descriptor.setVertShaderPath("shaders/lineShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/lineShaderFrag.spv");
+
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, false);
+    Descriptor.setEnableDepthTest(false);
+    Descriptor.setEnableDepthWrite(false);
+
+    return Descriptor;
 }
 
 void CPipelineLine::_createResourceV(size_t vImageNum)
@@ -96,14 +93,6 @@ void CPipelineLine::_createResourceV(size_t vImageNum)
     __updateDescriptorSet();
 }
 
-void CPipelineLine::_initDescriptorV()
-{
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.createLayout(m_pDevice);
-}
-
 void CPipelineLine::_destroyV()
 {
     m_VertexNum = 0;
@@ -113,11 +102,11 @@ void CPipelineLine::_destroyV()
 
 void CPipelineLine::__updateDescriptorSet()
 {
-    for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
+    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 

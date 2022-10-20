@@ -4,37 +4,44 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
+#include "Pipeline3DGui.h"
+
 const size_t CPipelineSprite::MaxSpriteNum = 2048;
 
-struct SPositionUVPointData
+namespace PipelineSprite
 {
-    glm::vec3 Pos;
-    glm::vec2 TexCoord;
-
-    using PointData_t = SPositionUVPointData;
-    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+    struct SPointData
     {
-        CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-        Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
-        return Descriptor.generate();
-    }
-};
+        glm::vec3 Pos;
+        glm::vec2 TexCoord;
 
-struct SUniformBufferObjectVert
-{
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::vec3 EyePosition;
-    alignas(16) glm::vec3 EyeDirection;
-};
+        using PointData_t = SPointData;
+        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
+
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            CVertexAttributeDescriptor Descriptor;
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
+            return Descriptor.generate();
+        }
+    };
+
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+        alignas(16) glm::vec3 EyePosition;
+        alignas(16) glm::vec3 EyeDirection;
+    };
+}
+
+using namespace PipelineSprite;
 
 void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImageSet)
 {
     _ASSERTE(vSpriteImageSet.size() <= CPipelineSprite::MaxSpriteNum);
-    // 为图标创建vkimage
+    // vkimage
     m_SpriteImageSet.destroyAndClearAll();
     m_SpriteImageSet.init(vSpriteImageSet.size());
 
@@ -54,7 +61,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
 
 void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
-    SUniformBufferObjectVert UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
     UBOVert.EyePosition = vCamera->getPos();
@@ -78,75 +85,48 @@ void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImag
     }
 }
 
-void CPipelineSprite::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+void CPipelineSprite::_initShaderResourceDescriptorV()
 {
-    voBinding = SPositionUVPointData::getBindingDescription();
-    voAttributeSet = SPositionUVPointData::getAttributeDescriptionSet();
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    m_ShaderResourceDescriptor.clear();
+
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("Sampler", 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Texture", 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSprite::MaxSpriteNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineSprite::_getInputAssemblyStageInfoV()
+CPipelineDescriptor CPipelineSprite::_getPipelineDescriptionV()
 {
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    CPipelineDescriptor Descriptor;
 
-    return Info;
-}
+    Descriptor.setVertShaderPath("shaders/visCollidePointShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/visCollidePointShaderFrag.spv");
 
-std::vector<VkPushConstantRange> CPipelineSprite::_getPushConstantRangeSetV()
-{
-    VkPushConstantRange PushConstantVertInfo = {};
-    PushConstantVertInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    PushConstantVertInfo.offset = 0;
-    PushConstantVertInfo.size = sizeof(SSpritePushConstant);
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
+    Descriptor.addPushConstant<SSpritePushConstant>(VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
+    Descriptor.addPushConstant<SSpritePushConstant>(VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    VkPushConstantRange PushConstantFragInfo = {};
-    PushConstantFragInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    PushConstantFragInfo.offset = 0;
-    PushConstantFragInfo.size = sizeof(SSpritePushConstant);
-
-    return { PushConstantVertInfo, PushConstantFragInfo };
-}
-
-VkPipelineDepthStencilStateCreateInfo CPipelineSprite::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
-}
-
-void CPipelineSprite::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
-{
     // result color = source color * source alpha + dst(old) color * (1 - source alpha)
     // result alpha = source alpha
-    voBlendAttachment = {};
-    voBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    voBlendAttachment.blendEnable = VK_TRUE;
-    voBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    voBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    voBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-    voBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    voBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    voBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-}
+    Descriptor.setEnableBlend(true);
+    Descriptor.setColorBlendSrcFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+    Descriptor.setColorBlendDstFactor(VK_BLEND_FACTOR_ONE);
+    Descriptor.setColorBlendOp(VK_BLEND_OP_ADD);
+    Descriptor.setAlphaBlendSrcFactor(VK_BLEND_FACTOR_ONE);
+    Descriptor.setAlphaBlendDstFactor(VK_BLEND_FACTOR_ONE);
+    Descriptor.setAlphaBlendOp(VK_BLEND_OP_ADD);
 
-void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
-{
-    SSpritePushConstant Data;
-    vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Data), &Data);
+    return Descriptor;
 }
 
 void CPipelineSprite::_createResourceV(size_t vImageNum)
 {
     // create unit square facing positive x-axis
-
-    // 顺时针
-    const std::vector<SPositionUVPointData> PointData =
+    
+    const std::vector<SPointData> PointData =
     {
         {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
         {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
@@ -156,14 +136,14 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
         {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
     };
 
-    VkDeviceSize DataSize = sizeof(SPositionUVPointData) * PointData.size();
+    VkDeviceSize DataSize = sizeof(SPointData) * PointData.size();
     m_VertexNum = PointData.size();
 
     m_VertexBuffer.create(m_pDevice, DataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_VertexBuffer.stageFill(PointData.data(), DataSize);
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUniformBufferObjectVert);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
     m_VertUniformBufferSet.init(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
@@ -182,16 +162,10 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
-void CPipelineSprite::_initDescriptorV()
+void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 {
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
-
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("Sampler", 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("Texture", 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSprite::MaxSpriteNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    m_Descriptor.createLayout(m_pDevice);
+    SSpritePushConstant Data;
+    vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Data), &Data);
 }
 
 void CPipelineSprite::_destroyV()
@@ -207,7 +181,7 @@ void CPipelineSprite::_destroyV()
 
 void CPipelineSprite::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
@@ -231,6 +205,6 @@ void CPipelineSprite::__updateDescriptorSet()
         }
         WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
 
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }

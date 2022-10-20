@@ -16,16 +16,10 @@ public:
     void record(VkCommandBuffer vCommandBuffer, size_t vImageIndex, glm::vec3 vEyePos);
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/visCollidePointShaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/visCollidePointShaderFrag.spv"; }
-
+    virtual CPipelineDescriptor _getPipelineDescriptionV() override;
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initDescriptorV() override;
+    virtual void _initShaderResourceDescriptorV() override;
     virtual void _destroyV() override;
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
-    virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;
 
 private:
     struct SCollidePointInfo

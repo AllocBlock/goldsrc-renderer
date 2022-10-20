@@ -82,7 +82,7 @@ void CPipelinePBS::__createPlaceholderImage()
 
 void CPipelinePBS::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
@@ -97,7 +97,7 @@ void CPipelinePBS::__updateDescriptorSet()
         WriteInfo.addWriteImageAndSampler(8, m_pSkyIrrImage);
         WriteInfo.addWriteImageAndSampler(9, m_pBRDFImage);
 
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 
@@ -171,23 +171,23 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
     m_pBRDFImage = Function::createImageFromIOImage(m_pDevice, pBRDFIOImage);
 }
 
-void CPipelinePBS::_initDescriptorV()
+void CPipelinePBS::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
+    m_ShaderResourceDescriptor.clear();
 
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("UboFragMaterial", 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("Sampler", 3, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureColors", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureNormals", 5, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureSpeculars", 6, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureSky", 7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureSkyIrr", 8, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("TextureBRDF", 9, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("UboFragMaterial", 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Sampler", 3, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("TextureColors", 4, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("TextureNormals", 5, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("TextureSpeculars", 6, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelinePBS::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("TextureSky", 7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("TextureSkyIrr", 8, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("TextureBRDF", 9, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    m_Descriptor.createLayout(m_pDevice);
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelinePBS::__destroyResources()

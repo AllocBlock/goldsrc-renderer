@@ -24,18 +24,28 @@ void CPipelineEnvironment::updateUniformBuffer(uint32_t vImageIndex, CCamera::Pt
     m_FragUBSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineEnvironment::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+CPipelineDescriptor CPipelineEnvironment::_getPipelineDescriptionV()
 {
-    voBinding = SFullScreenPointData::getBindingDescription();
-    voAttributeSet = SFullScreenPointData::getAttributeDescriptionSet();
+    CPipelineDescriptor Descriptor;
+
+    Descriptor.setVertShaderPath("shaders/envVert.spv");
+    Descriptor.setFragShaderPath("shaders/envFrag.spv");
+
+    Descriptor.setVertexInputInfo<SFullScreenPointData>();
+    Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
+
+    return Descriptor;
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineEnvironment::_getInputAssemblyStageInfoV()
+void CPipelineEnvironment::_initShaderResourceDescriptorV()
 {
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    m_ShaderResourceDescriptor.clear();
 
-    return Info;
+    m_ShaderResourceDescriptor.add("UboFrag", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("CombinedSampler", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelineEnvironment::_createResourceV(size_t vImageNum)
@@ -59,17 +69,6 @@ void CPipelineEnvironment::_createResourceV(size_t vImageNum)
     __createPlaceholderImage();
 }
 
-void CPipelineEnvironment::_initDescriptorV()
-{
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
-
-    m_Descriptor.add("UboFrag", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("CombinedSampler", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    m_Descriptor.createLayout(m_pDevice);
-}
-
 void CPipelineEnvironment::_destroyV()
 {
     __destroyResources();
@@ -88,7 +87,7 @@ void CPipelineEnvironment::__createPlaceholderImage()
 
 void CPipelineEnvironment::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
@@ -96,7 +95,7 @@ void CPipelineEnvironment::__updateDescriptorSet()
         VkImageView EnvImageView = m_EnvironmentImage.isValid() ? m_EnvironmentImage : m_PlaceholderImage;
         WriteInfo.addWriteImageAndSampler(1, EnvImageView, m_Sampler.get());
 
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 

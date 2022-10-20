@@ -1,18 +1,78 @@
-#include "Descriptor.h"
+#include "ShaderResourceDescriptor.h"
 #include "Vulkan.h"
 
 using namespace vk;
 
-CDescriptor::~CDescriptor() { clear(); }
+void CDescriptorWriteInfo::clear()
+{
+    m_WriteInfoSet.clear();
+}
 
-void CDescriptor::add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage)
+void CDescriptorWriteInfo::addWriteBuffer(size_t vTargetIndex, const vk::CBuffer& vBuffer)
+{
+    _ASSERTE(vTargetIndex != std::numeric_limits<size_t>::max());
+    VkDescriptorBufferInfo VertBufferInfo = {};
+    VertBufferInfo.buffer = vBuffer;
+    VertBufferInfo.offset = 0;
+    VertBufferInfo.range = vBuffer.getSize();
+    m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {VertBufferInfo}, {} }));
+}
+
+void CDescriptorWriteInfo::addWriteSampler(size_t vTargetIndex, VkSampler vSampler)
+{
+    _ASSERTE(vSampler != VK_NULL_HANDLE);
+
+    VkDescriptorImageInfo Info = {};
+    Info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    Info.imageView =VK_NULL_HANDLE;
+    Info.sampler = vSampler;
+    m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
+}
+
+void CDescriptorWriteInfo::addWriteImagesAndSampler(size_t vTargetIndex, const vk::CPointerSet<vk::CImage>& vImageSet,
+    VkSampler vSampler)
+{
+    _ASSERTE(vImageSet.isAllValid());
+    addWriteImagesAndSampler(vTargetIndex, vImageSet, vSampler);
+}
+
+void CDescriptorWriteInfo::addWriteImageAndSampler(size_t vTargetIndex, VkImageView vImageView, VkSampler vSampler)
+{
+    _ASSERTE(!(vImageView == VK_NULL_HANDLE && vSampler == VK_NULL_HANDLE));
+
+    VkDescriptorImageInfo Info = {};
+    Info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    Info.imageView = vImageView;
+    Info.sampler = vSampler;
+    m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
+}
+
+void CDescriptorWriteInfo::addWriteImagesAndSampler(size_t vTargetIndex, const std::vector<VkImageView>& vImageViewSet,
+    VkSampler vSampler)
+{
+    _ASSERTE(!vImageViewSet.empty());
+
+    std::vector<VkDescriptorImageInfo> InfoSet(vImageViewSet.size());
+    for (size_t i = 0; i < InfoSet.size(); ++i)
+    {
+        _ASSERTE(vImageViewSet[i] != VK_NULL_HANDLE);
+        InfoSet[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        InfoSet[i].imageView = vImageViewSet[i];
+        InfoSet[i].sampler = vSampler;
+    }
+    m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, InfoSet }));
+}
+
+CShaderResourceDescriptor::~CShaderResourceDescriptor() { clear(); }
+
+void CShaderResourceDescriptor::add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage)
 {
     SDescriptorInfo Info = { vName, vIndex, vType, vSize, vStage };
     m_DescriptorInfoSet.emplace_back(std::move(Info));
     m_PoolSizeSet.emplace_back(VkDescriptorPoolSize({ vType, vSize }));
 }
 
-void CDescriptor::createLayout(CDevice::CPtr vDevice)
+void CShaderResourceDescriptor::createLayout(CDevice::CPtr vDevice)
 {
     __destroyLayout();
 
@@ -35,7 +95,7 @@ void CDescriptor::createLayout(CDevice::CPtr vDevice)
     vk::checkError(vkCreateDescriptorSetLayout(*m_pDevice, &LayoutInfo, nullptr, &m_DescriptorLayout));
 }
 
-const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t vImageNum)
+const std::vector<VkDescriptorSet>& CShaderResourceDescriptor::createDescriptorSetSet(size_t vImageNum)
 {
     _ASSERTE(vImageNum > 0);
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
@@ -58,7 +118,7 @@ const std::vector<VkDescriptorSet>& CDescriptor::createDescriptorSetSet(size_t v
     return m_DescriptorSetSet;
 }
 
-void CDescriptor::update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo)
+void CShaderResourceDescriptor::update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo)
 {
     const std::vector<SDescriptorWriteInfoEntry>& vWriteInfoSet = vWriteInfo.get();
     if (m_DescriptorInfoSet.size() != vWriteInfoSet.size())
@@ -84,7 +144,7 @@ void CDescriptor::update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInf
     vkUpdateDescriptorSets(*m_pDevice, static_cast<uint32_t>(DescriptorWrites.size()), DescriptorWrites.data(), 0, nullptr);
 }
 
-void CDescriptor::clear()
+void CShaderResourceDescriptor::clear()
 {
     m_DescriptorInfoSet.clear();
     m_PoolSizeSet.clear();
@@ -95,28 +155,28 @@ void CDescriptor::clear()
     m_pDevice = VK_NULL_HANDLE;
 }
 
-VkDescriptorSetLayout CDescriptor::getLayout() const 
+VkDescriptorSetLayout CShaderResourceDescriptor::getLayout() const 
 {
     return m_DescriptorLayout; 
 }
 
-const std::vector<VkDescriptorPoolSize>& CDescriptor::getPoolSizeSet() const
+const std::vector<VkDescriptorPoolSize>& CShaderResourceDescriptor::getPoolSizeSet() const
 {
     return m_PoolSizeSet;
 }
 
-VkDescriptorSet CDescriptor::getDescriptorSet(size_t vIndex) const
+VkDescriptorSet CShaderResourceDescriptor::getDescriptorSet(size_t vIndex) const
 {
     _ASSERTE(vIndex < m_DescriptorSetSet.size());
     return m_DescriptorSetSet[vIndex];
 }
 
-size_t CDescriptor::getDescriptorSetNum() const
+size_t CShaderResourceDescriptor::getDescriptorSetNum() const
 {
     return m_DescriptorSetSet.size();
 }
 
-void CDescriptor::__createPool(size_t vImageNum)
+void CShaderResourceDescriptor::__createPool(size_t vImageNum)
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     __destroyPool();
@@ -134,7 +194,7 @@ void CDescriptor::__createPool(size_t vImageNum)
     vk::checkError(vkCreateDescriptorPool(*m_pDevice, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
-void CDescriptor::__destroyPool()
+void CShaderResourceDescriptor::__destroyPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE)
     {
@@ -143,7 +203,7 @@ void CDescriptor::__destroyPool()
     }
 }
 
-void CDescriptor::__destroyLayout()
+void CShaderResourceDescriptor::__destroyLayout()
 {
     if (m_DescriptorLayout != VK_NULL_HANDLE)
     {
@@ -152,7 +212,7 @@ void CDescriptor::__destroyLayout()
     }
 }
 
-void CDescriptor::__destroySetSet()
+void CShaderResourceDescriptor::__destroySetSet()
 {
     if (!m_DescriptorSetSet.empty())
     {

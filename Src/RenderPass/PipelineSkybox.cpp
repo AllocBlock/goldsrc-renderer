@@ -2,17 +2,38 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-struct SSkyUniformBufferObjectVert
+namespace PipelineSkybox
 {
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::vec3 EyePosition;
-};
 
-struct SSkyUniformBufferObjectFrag
-{
-    alignas(16) glm::mat4 UpCorrection;
-};
+    struct SPointData
+    {
+        glm::vec3 Pos;
+
+        using PointData_t = SPointData;
+        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
+
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            CVertexAttributeDescriptor Descriptor;
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+            return Descriptor.generate();
+        }
+    };
+
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+        alignas(16) glm::vec3 EyePosition;
+    };
+
+    struct SUBOFrag
+    {
+        alignas(16) glm::mat4 UpCorrection;
+    };
+}
+
+using namespace PipelineSkybox;
 
 void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
@@ -76,13 +97,13 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBox
 
 void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
-    SSkyUniformBufferObjectVert UBOVert = {};
+    SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
     UBOVert.EyePosition = vCamera->getPos();
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
-    SSkyUniformBufferObjectFrag UBOFrag = {};
+    SUBOFrag UBOFrag = {};
     glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
     glm::vec3 Up = glm::normalize(vCamera->getUp());
 
@@ -106,30 +127,31 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineSkybox::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+void CPipelineSkybox::_initShaderResourceDescriptorV()
 {
-    voBinding = SPointData::getBindingDescription();
-    voAttributeSet = SPointData::getAttributeDescriptionSet();
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    m_ShaderResourceDescriptor.clear();
+
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineSkybox::_getInputAssemblyStageInfoV()
+CPipelineDescriptor CPipelineSkybox::_getPipelineDescriptionV()
 {
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    CPipelineDescriptor Descriptor;
 
-    return Info;
-}
+    Descriptor.setVertShaderPath("shaders/skyShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/skyShaderFrag.spv");
 
-VkPipelineDepthStencilStateCreateInfo CPipelineSkybox::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
+    Descriptor.setEnableDepthTest(false);
+    Descriptor.setEnableDepthWrite(false);
 
-    return DepthStencilInfo;
+    return Descriptor;
 }
 
 void CPipelineSkybox::_createResourceV(size_t vImageNum)
@@ -164,8 +186,8 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
     m_VertexBuffer.stageFill(PointData.data(), DataSize);
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SSkyUniformBufferObjectVert);
-    VkDeviceSize FragBufferSize = sizeof(SSkyUniformBufferObjectFrag);
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
+    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
     m_VertUniformBufferSet.init(vImageNum);
     m_FragUniformBufferSet.init(vImageNum);
 
@@ -182,18 +204,6 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
 }
 
-void CPipelineSkybox::_initDescriptorV()
-{
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
-
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.add("CombinedSampler", 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    m_Descriptor.createLayout(m_pDevice);
-}
-
 void CPipelineSkybox::_destroyV()
 {
     if (m_pDevice == VK_NULL_HANDLE) return;
@@ -207,13 +217,13 @@ void CPipelineSkybox::_destroyV()
 
 void CPipelineSkybox::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_Descriptor.getDescriptorSetNum();
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
         WriteInfo.addWriteImageAndSampler(2, m_SkyBoxImage, m_Sampler.get());
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }

@@ -9,15 +9,6 @@
 
 #include <glm/glm.hpp>
 
-struct SSpritePushConstant
-{
-    uint32_t TexIndex = 0;
-    uint32_t SpriteType = 0x00;
-    float Scale = 1.0f;
-    alignas(16) glm::vec3 Origin = glm::vec3(0.0f, 0.0f, 0.0f);
-    alignas(16) glm::vec3 Angle = glm::vec3(0.0f, 0.0f, 0.0f);
-};
-
 class CPipelineSprite : public IPipeline
 {
 public:
@@ -26,21 +17,23 @@ public:
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/sprShaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/sprShaderFrag.spv"; }
-
-    void _initPushConstantV(VkCommandBuffer vCommandBuffer);
+    virtual void _initShaderResourceDescriptorV() override;
+    virtual CPipelineDescriptor _getPipelineDescriptionV() override;
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initDescriptorV() override;
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override;
     virtual void _destroyV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
-    virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
-    virtual void _getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment) override;
 
     static const size_t MaxSpriteNum;
 private:
+    struct SSpritePushConstant
+    {
+        uint32_t TexIndex = 0;
+        uint32_t SpriteType = 0x00;
+        float Scale = 1.0f;
+        alignas(16) glm::vec3 Origin = glm::vec3(0.0f, 0.0f, 0.0f);
+        alignas(16) glm::vec3 Angle = glm::vec3(0.0f, 0.0f, 0.0f);
+    };
+
     void __updateDescriptorSet();
 
     vk::CSampler m_Sampler;

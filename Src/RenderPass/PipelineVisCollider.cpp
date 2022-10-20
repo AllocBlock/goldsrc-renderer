@@ -40,18 +40,6 @@ namespace PipelineVisCollider
 }
 using namespace PipelineVisCollider;
 
-VkPipelineDepthStencilStateCreateInfo CPipelineVisCollider::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
-}
-
 void CPipelineVisCollider::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
@@ -102,35 +90,20 @@ void CPipelineVisCollider::endRecord()
     m_CurCommandBuffer = VK_NULL_HANDLE;
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineVisCollider::_getInputAssemblyStageInfoV()
+CPipelineDescriptor CPipelineVisCollider::_getPipelineDescriptionV()
 {
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    Info.primitiveRestartEnable = VK_FALSE;
-    return Info;
-}
+    CPipelineDescriptor Descriptor;
 
-std::vector<VkPushConstantRange> CPipelineVisCollider::_getPushConstantRangeSetV()
-{
-    VkPushConstantRange PushConstantInfo = {};
-    PushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    PushConstantInfo.offset = 0;
-    PushConstantInfo.size = sizeof(SPushConstant);
+    Descriptor.setVertShaderPath("shaders/visColliderShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/visColliderShaderFrag.spv");
 
-    return { PushConstantInfo };
-}
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, false);
+    Descriptor.addPushConstant<SPushConstant>(VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
+    Descriptor.setEnableDepthTest(false);
+    Descriptor.setEnableDepthWrite(false);
 
-VkPipelineRasterizationStateCreateInfo CPipelineVisCollider::_getRasterizationStageInfoV()
-{
-    auto StageInfo = IPipeline::getDefaultRasterizationStageInfo();
-    StageInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    return StageInfo;
-}
-
-void CPipelineVisCollider::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
-{
-    voBinding = SPointData::getBindingDescription();
-    voAttributeSet = SPointData::getAttributeDescriptionSet();
+    return Descriptor;
 }
 
 void CPipelineVisCollider::_createResourceV(size_t vImageNum)
@@ -157,13 +130,13 @@ void CPipelineVisCollider::_createResourceV(size_t vImageNum)
     __initVertexBuffer();
 }
 
-void CPipelineVisCollider::_initDescriptorV()
+void CPipelineVisCollider::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_Descriptor.createLayout(m_pDevice);
+    m_ShaderResourceDescriptor.clear();
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelineVisCollider::_destroyV()
@@ -175,12 +148,12 @@ void CPipelineVisCollider::_destroyV()
 
 void CPipelineVisCollider::__updateDescriptorSet()
 {
-    for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
+    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 

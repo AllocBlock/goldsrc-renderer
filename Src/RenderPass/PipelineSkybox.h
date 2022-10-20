@@ -29,32 +29,12 @@ public:
     }
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/skyShaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/skyShaderFrag.spv"; }
-
+    virtual void _initShaderResourceDescriptorV() override;
+    virtual CPipelineDescriptor _getPipelineDescriptionV() override;
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initDescriptorV() override;
     virtual void _destroyV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
 
 private:
-    struct SPointData
-    {
-        glm::vec3 Pos;
-
-        using PointData_t = SPointData;
-        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-        {
-            CVertexAttributeDescriptor Descriptor;
-            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-            return Descriptor.generate();
-        }
-    };
-
     void __updateDescriptorSet();
 
     vk::CSampler m_Sampler;

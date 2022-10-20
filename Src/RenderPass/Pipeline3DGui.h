@@ -28,15 +28,10 @@ public:
     void removeObject(std::string vName);
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/lineShaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/lineShaderFrag.spv"; }
-
+    virtual void _initShaderResourceDescriptorV() override;
+    virtual CPipelineDescriptor _getPipelineDescriptionV() override;
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initDescriptorV() override;
     virtual void _destroyV() override;
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
 
 private:
     void __updateDescriptorSet();

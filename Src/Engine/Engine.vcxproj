@@ -97,7 +97,7 @@
     <ClCompile Include="BasicMesh.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
-    <ClCompile Include="Descriptor.cpp" />
+    <ClCompile Include="ShaderResourceDescriptor.cpp" />
     <ClCompile Include="GlobalSingleTimeBuffer.cpp" />
     <ClCompile Include="GUIPass.cpp" />
     <ClCompile Include="IApplication.cpp" />
@@ -121,7 +121,7 @@
     <ClInclude Include="BasicMesh.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
-    <ClInclude Include="Descriptor.h" />
+    <ClInclude Include="ShaderResourceDescriptor.h" />
     <ClInclude Include="GlobalSingleTimeBuffer.h" />
     <ClInclude Include="GUIPass.h" />
     <ClInclude Include="Collider.h" />
@@ -133,6 +133,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="PhysicsState.h" />
+    <ClInclude Include="PipelineDescriptor.h" />
     <ClInclude Include="Rotator.h" />
     <ClInclude Include="ScenePass.h" />
     <ClInclude Include="RenderPassPort.h" />

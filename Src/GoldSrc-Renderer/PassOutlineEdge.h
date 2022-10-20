@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "FrameBuffer.h"
 #include "Scene.h"
-#include "Descriptor.h"
+#include "ShaderResourceDescriptor.h"
 #include "Image.h"
 #include "Buffer.h"
 #include "Sampler.h"
@@ -45,7 +45,7 @@ public:
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, *m_FragUbufferSet[vIndex]);
         WriteInfo.addWriteImageAndSampler(1, vImageView != VK_NULL_HANDLE ? vImageView : *m_pPlaceholderImage, m_Sampler);
-        m_Descriptor.update(vIndex, WriteInfo);
+        m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
     }
 
 protected:
@@ -81,13 +81,13 @@ protected:
         __initAllDescriptorSet();
     }
 
-    virtual void _initDescriptorV() override
+    virtual void _initShaderResourceDescriptorV() override
     {
         _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-        m_Descriptor.clear();
-        m_Descriptor.add("UBOFrag", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-        m_Descriptor.add("Input", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-        m_Descriptor.createLayout(m_pDevice);
+        m_ShaderResourceDescriptor.clear();
+        m_ShaderResourceDescriptor.add("UBOFrag", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+        m_ShaderResourceDescriptor.add("Input", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+        m_ShaderResourceDescriptor.createLayout(m_pDevice);
     }
 
     virtual void _destroyV() override
@@ -138,12 +138,12 @@ private:
 
     void __initAllDescriptorSet()
     {
-        for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
+        for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
         {
             CDescriptorWriteInfo WriteInfo;
             WriteInfo.addWriteBuffer(0, *m_FragUbufferSet[i]);
             WriteInfo.addWriteImageAndSampler(1, *m_pPlaceholderImage, m_Sampler);
-            m_Descriptor.update(i, WriteInfo);
+            m_ShaderResourceDescriptor.update(i, WriteInfo);
         }
     }
 

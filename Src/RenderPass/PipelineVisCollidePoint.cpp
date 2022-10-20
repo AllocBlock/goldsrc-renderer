@@ -36,18 +36,6 @@ void CPipelineVisCollidePoint::addCollidePoint(glm::vec3 vPos, glm::vec3 vNormal
     m_CollidePointInfoSet.push_back({ vPos, vNormal, vShowTime });
 }
 
-VkPipelineDepthStencilStateCreateInfo CPipelineVisCollidePoint::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
-}
-
 void CPipelineVisCollidePoint::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
@@ -87,28 +75,20 @@ void CPipelineVisCollidePoint::record(VkCommandBuffer vCommandBuffer, size_t vIm
     }
 }
 
-std::vector<VkPushConstantRange> CPipelineVisCollidePoint::_getPushConstantRangeSetV()
+CPipelineDescriptor CPipelineVisCollidePoint::_getPipelineDescriptionV()
 {
-    VkPushConstantRange PushConstantInfo = {};
-    PushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    PushConstantInfo.offset = 0;
-    PushConstantInfo.size = sizeof(SPushConstant);
+    CPipelineDescriptor Descriptor;
 
-    return { PushConstantInfo };
-}
+    Descriptor.setVertShaderPath("shaders/visCollidePointShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/visCollidePointShaderFrag.spv");
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineVisCollidePoint::_getInputAssemblyStageInfoV()
-{
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-    Info.primitiveRestartEnable = VK_FALSE;
-    return Info;
-}
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, false);
+    Descriptor.addPushConstant<SPushConstant>(VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
+    Descriptor.setEnableDepthTest(false);
+    Descriptor.setEnableDepthWrite(false);
 
-void CPipelineVisCollidePoint::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
-{
-    voBinding = SPointData::getBindingDescription();
-    voAttributeSet = SPointData::getAttributeDescriptionSet();
+    return Descriptor;
 }
 
 void CPipelineVisCollidePoint::_createResourceV(size_t vImageNum)
@@ -127,12 +107,12 @@ void CPipelineVisCollidePoint::_createResourceV(size_t vImageNum)
     __initVertexBuffer();
 }
 
-void CPipelineVisCollidePoint::_initDescriptorV()
+void CPipelineVisCollidePoint::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_Descriptor.clear();
-    m_Descriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_Descriptor.createLayout(m_pDevice);
+    m_ShaderResourceDescriptor.clear();
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelineVisCollidePoint::_destroyV()
@@ -143,11 +123,11 @@ void CPipelineVisCollidePoint::_destroyV()
 
 void CPipelineVisCollidePoint::__updateDescriptorSet()
 {
-    for (size_t i = 0; i < m_Descriptor.getDescriptorSetNum(); ++i)
+    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        m_Descriptor.update(i, WriteInfo);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
 
