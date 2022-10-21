@@ -13,7 +13,7 @@ public:
     CRenderPassShade() = default;
 
     void setScene(CTempScene::Ptr vScene);
-    void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; } 
+    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; } 
 
 protected:
     virtual void _initV() override;
@@ -45,6 +45,6 @@ private:
 
     vk::CImage m_DepthImage;
 
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
 };
 

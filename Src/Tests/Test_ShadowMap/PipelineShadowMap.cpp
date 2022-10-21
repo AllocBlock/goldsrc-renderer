@@ -1,26 +1,17 @@
 #include "PipelineShadowMap.h"
 
-struct SUBOVert
+namespace
 {
-    alignas(16) glm::mat4 MVP;
-};
-
-struct SUBOFragLight
-{
-    alignas(16) float ShadowMapCameraNear;
-    alignas(16) float ShadowMapCameraFar;
-};
-
-void CPipelineShadowMap::__updateDescriptorSet()
-{
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
+    struct SUBOVert
     {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, m_FragUniformBufferSet[i]);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+        alignas(16) glm::mat4 MVP;
+    };
+
+    struct SUBOFrag
+    {
+        alignas(16) float ShadowMapCameraNear;
+        alignas(16) float ShadowMapCameraFar;
+    };
 }
 
 void CPipelineShadowMap::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLightViewProj, float vLightNear, float vLightFar)
@@ -29,63 +20,22 @@ void CPipelineShadowMap::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLi
     UBOVert.MVP = vLightViewProj;
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 
-    SUBOFragLight UBOFrag = {};
+    SUBOFrag UBOFrag = {};
     UBOFrag.ShadowMapCameraNear = vLightNear;
     UBOFrag.ShadowMapCameraFar = vLightFar;
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineShadowMap::destroy()
+void CPipelineShadowMap::__updateDescriptorSet()
 {
-    __destroyResources();
-    IPipeline::destroy();
-}
-
-void CPipelineShadowMap::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
-{
-    voBinding = SShadowMapPointData::getBindingDescription();
-    voAttributeSet = SShadowMapPointData::getAttributeDescriptionSet();
-}
-
-VkPipelineInputAssemblyStateCreateInfo CPipelineShadowMap::_getInputAssemblyStageInfoV()
-{
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-    return Info;
-}
-
-VkPipelineDepthStencilStateCreateInfo CPipelineShadowMap::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo Info = {};
-    Info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    Info.depthTestEnable = VK_FALSE;
-    Info.depthWriteEnable = VK_FALSE;
-    Info.depthCompareOp = VkCompareOp::VK_COMPARE_OP_LESS;
-    Info.depthBoundsTestEnable = VK_FALSE;
-    Info.stencilTestEnable = VK_FALSE;
-
-    return Info;
-}
-
-void CPipelineShadowMap::_createResourceV(size_t vImageNum)
-{
-    __destroyResources();
-
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    VkDeviceSize FragBufferSize = sizeof(SUBOFragLight);
-    m_VertUniformBufferSet.resize(vImageNum);
-    m_FragUniformBufferSet.resize(vImageNum);
-
-    for (size_t i = 0; i < vImageNum; ++i)
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
+    for (size_t i = 0; i < DescriptorNum; ++i)
     {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
-
-    __updateDescriptorSet();
 }
 
 void CPipelineShadowMap::_initShaderResourceDescriptorV()
@@ -99,14 +49,44 @@ void CPipelineShadowMap::_initShaderResourceDescriptorV()
     m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-void CPipelineShadowMap::__destroyResources()
+CPipelineDescriptor CPipelineShadowMap::_getPipelineDescriptionV()
 {
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-        m_FragUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
-    m_FragUniformBufferSet.clear();
+    CPipelineDescriptor Descriptor;
+
+    Descriptor.setVertShaderPath("shaders/shadowMapVert.spv");
+    Descriptor.setFragShaderPath("shaders/shadowMapFrag.spv");
+
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setRasterFrontFace(VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+    return Descriptor;
 }
 
+void CPipelineShadowMap::_createResourceV(size_t vImageNum)
+{
+    __destroyResources();
+
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
+    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
+    m_VertUniformBufferSet.init(vImageNum);
+    m_FragUniformBufferSet.init(vImageNum);
+
+    for (size_t i = 0; i < vImageNum; ++i)
+    {
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
+    }
+
+    __updateDescriptorSet();
+}
+
+void CPipelineShadowMap::_destroyV()
+{
+    __destroyResources();
+}
+
+void CPipelineShadowMap::__destroyResources()
+{
+    m_VertUniformBufferSet.destroyAndClearAll();
+    m_FragUniformBufferSet.destroyAndClearAll();
+}

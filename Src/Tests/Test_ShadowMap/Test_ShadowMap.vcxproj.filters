@@ -53,6 +53,9 @@
     <ClInclude Include="ShadowMapDefines.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PassTempSceneBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shadowMap.frag">

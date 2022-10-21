@@ -178,8 +178,8 @@ class COutlineMaskRenderPass : public vk::IRenderPass
 public:
     COutlineMaskRenderPass() = default;
 
-    ptr<CCamera> getCamera() { return m_pCamera; }
-    void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; }
+    CCamera::Ptr getCamera() { return m_pCamera; }
+    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; }
 
     void setHighlightObject(ptr<CMeshDataGoldSrc> vObject);
     void removeHighlight();
@@ -200,7 +200,7 @@ private:
     void __createMaskImage();
     void __createFramebuffers();
 
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
 
     CPipelineMask m_PipelineMask;
     vk::CPointerSet<vk::CImage> m_MaskImageSet;

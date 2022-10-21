@@ -1,13 +1,16 @@
 #include "PipelineShade.h"
 #include "Function.h"
 
-struct SUBOVert
+namespace
 {
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::mat4 Model;
-    alignas(16) glm::mat4 LightVP;
-};
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+        alignas(16) glm::mat4 Model;
+        alignas(16) glm::mat4 LightVP;
+    };
+}
 
 void CPipelineShade::setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews)
 {
@@ -21,8 +24,8 @@ void CPipelineShade::__updateDescriptorSet()
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteImageAndSampler(1, (m_ShadowMapImageViewSet.empty() ? *m_pPlaceholderImage : m_ShadowMapImageViewSet[i]), m_Sampler);
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteImageAndSampler(1, (m_ShadowMapImageViewSet.empty() ? m_PlaceholderImage : m_ShadowMapImageViewSet[i]), m_Sampler);
         m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }
@@ -38,49 +41,6 @@ void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCa
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineShade::destroy()
-{
-    __destroyResources();
-    IPipeline::destroy();
-}
-
-void CPipelineShade::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
-{
-    voBinding = SPointData::getBindingDescription();
-    voAttributeSet = SPointData::getAttributeDescriptionSet();
-}
-
-VkPipelineInputAssemblyStateCreateInfo CPipelineShade::_getInputAssemblyStageInfoV()
-{
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-    return Info;
-}
-
-void CPipelineShade::_createResourceV(size_t vImageNum)
-{
-    __destroyResources();
-
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.resize(vImageNum);
-
-    for (size_t i = 0; i < vImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-    }
-
-    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
-    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
-        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
-    );
-    m_Sampler.create(m_pDevice, SamplerInfo);
-
-    m_pPlaceholderImage = Function::createPlaceholderImage(m_pDevice);
-    __updateDescriptorSet();
-}
-
 void CPipelineShade::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
@@ -92,17 +52,47 @@ void CPipelineShade::_initShaderResourceDescriptorV()
     m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-void CPipelineShade::__destroyResources()
+CPipelineDescriptor CPipelineShade::_getPipelineDescriptionV()
 {
-    for (size_t i = 0; i < m_VertUniformBufferSet.size(); ++i)
-    {
-        m_VertUniformBufferSet[i]->destroy();
-    }
-    m_VertUniformBufferSet.clear();
+    CPipelineDescriptor Descriptor;
 
-    if (m_pPlaceholderImage)
-        m_pPlaceholderImage->destroy();
+    Descriptor.setVertShaderPath("shaders/shaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/shaderFrag.spv");
 
-    m_Sampler.destroy();
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setRasterFrontFace(VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+    return Descriptor;
 }
 
+void CPipelineShade::_createResourceV(size_t vImageNum)
+{
+    __destroyResources();
+
+    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
+    m_VertUniformBufferSet.init(vImageNum);
+
+    for (size_t i = 0; i < vImageNum; ++i)
+        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
+
+    const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
+    VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+        VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT, Properties.limits.maxSamplerAnisotropy
+    );
+    m_Sampler.create(m_pDevice, SamplerInfo);
+
+    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    __updateDescriptorSet();
+}
+
+void CPipelineShade::_destroyV()
+{
+    __destroyResources();
+}
+
+void CPipelineShade::__destroyResources()
+{
+    m_VertUniformBufferSet.destroyAndClearAll();
+    m_PlaceholderImage.destroy();
+    m_Sampler.destroy();
+}

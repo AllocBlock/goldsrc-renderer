@@ -26,7 +26,7 @@ private:
     void __resetActors();
     void __linkPasses();
 
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
 
     ptr<CRenderPassGUI> m_pPassGUI = nullptr;
     ptr<CRenderPassShade> m_pPassShade = nullptr;

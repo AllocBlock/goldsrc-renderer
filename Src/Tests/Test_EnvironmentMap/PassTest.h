@@ -11,7 +11,7 @@ class CRenderPassTest : public vk::IRenderPass
 public:
     CRenderPassTest() : m_pCamera(make<CCamera>()) {}
 
-    ptr<CCamera> getCamera() { return m_pCamera; }
+    CCamera::Ptr getCamera() { return m_pCamera; }
 
 protected:
     virtual void _initV() override;
@@ -44,7 +44,7 @@ private:
     vk::CImage m_DepthImage;
 
     const std::string m_SkyFilePrefix = "../../../ExampleData/sky-test/neb6";
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
     std::vector<CPipelineTest::SPointData> m_PointDataSet;
     std::array<ptr<CIOImage>, 6> m_SkyBoxImageSet;
 };

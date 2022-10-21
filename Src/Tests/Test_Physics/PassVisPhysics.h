@@ -12,7 +12,7 @@ public:
     CRenderPassVisPhysics() = default;
 
     void setPhysicsEngine(CPhysicsEngine::Ptr vEngine);
-    void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; } 
+    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; } 
 
 protected:
     virtual void _initV() override;
@@ -40,7 +40,7 @@ private:
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
     CPhysicsEngine::Ptr m_pEngine = nullptr;
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
 
     bool m_ShowCollider = true;
 };

@@ -1,6 +1,9 @@
 #include "RenderPassPort.h"
 
-const SPortFormat& SPortFormat::AnyFormat = SPortFormat::createAnyOfUsage(EUsage::DONT_CARE);
+const SPortFormat& SPortFormat::AnyPortFormat = SPortFormat::createAnyOfUsage(EUsage::DONT_CARE);
+const VkFormat& SPortFormat::AnyFormat = VkFormat::VK_FORMAT_UNDEFINED;
+const VkExtent2D& SPortFormat::AnyExtent = {0, 0};
+const size_t SPortFormat::AnyNum = 0;
 
 VkImageLayout toLayout(EUsage vUsage, bool isDepth)
 {

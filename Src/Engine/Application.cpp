@@ -15,7 +15,7 @@ void IApplication::init(GLFWwindow* vWindow)
     m_pDevice->create(m_pPhysicalDevice, m_DeviceExtensions, m_ValidationLayers);
     __createSemaphores();
 
-    SPortFormat SwapchainFormat = SPortFormat::AnyFormat;
+    SPortFormat SwapchainFormat = SPortFormat::AnyPortFormat;
     SwapchainFormat.Usage = EUsage::UNDEFINED;
     m_pSwapchainPort = make<CSourcePort>(SwapchainFormat);
     m_pSwapchainPort->markAsSwapchainSource();

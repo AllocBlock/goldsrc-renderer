@@ -41,9 +41,6 @@
     <ClInclude Include="PassShade.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TempScene.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PassVisPhysics.h">
       <Filter>头文件</Filter>
     </ClInclude>

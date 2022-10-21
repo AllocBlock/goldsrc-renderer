@@ -32,7 +32,7 @@ private:
     ptr<COutlineEdgeRenderPass> m_pPassOutlineEdge = nullptr;
     ptr<CGUIMain> m_pMainUI = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
 
     ptr<SScene> m_pScene = nullptr;
 };

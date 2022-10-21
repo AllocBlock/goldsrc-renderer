@@ -2,39 +2,49 @@
 #include "Pipeline.h"
 #include "UniformBuffer.h"
 #include "VertexAttributeDescriptor.h"
+#include "Mesh.h"
 
 #include <glm/glm.hpp>
-
-struct SShadowMapPointData
-{
-    glm::vec3 Pos;
-
-    using PointData_t = SShadowMapPointData;
-    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-    {
-        CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-        return Descriptor.generate();
-    }
-};
 
 class CPipelineShadowMap : public IPipeline
 {
 public:
+    struct SPointData
+    {
+        glm::vec3 Pos;
+
+        using PointData_t = SPointData;
+        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
+
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            CVertexAttributeDescriptor Descriptor;
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+            return Descriptor.generate();
+        }
+
+        static std::vector<SPointData> extractFromMeshData(const CGeneralMeshDataTest& vMeshData)
+        {
+            auto pVertexArray = vMeshData.getVertexArray();
+
+            size_t NumPoint = pVertexArray->size();
+
+            std::vector<SPointData> PointData(NumPoint);
+            for (size_t i = 0; i < NumPoint; ++i)
+            {
+                PointData[i].Pos = pVertexArray->get(i);
+            }
+            return PointData;
+        }
+    };
+
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vLightViewProj, float vLightNear, float vLightFar);
-    void destroy();
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shadowMapVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shadowMapFrag.spv"; }
-
-    virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initShaderResourceDescriptorV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
+    virtual CPipelineDescriptor _getPipelineDescriptionV() override;
+    virtual void _createResourceV(size_t vImageNum) override;
+    virtual void _destroyV() override;
 
 private:
     void __updateDescriptorSet();

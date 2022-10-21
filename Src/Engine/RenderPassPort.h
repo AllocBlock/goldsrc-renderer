@@ -1,4 +1,5 @@
 #pragma once
+#include "Log.h"
 #include "PchVulkan.h"
 #include "Image.h"
 
@@ -41,7 +42,10 @@ struct SPortFormat
         return { VkFormat::VK_FORMAT_UNDEFINED, {0, 0}, 0, vUsage };
     }
 
-    static const SPortFormat& AnyFormat;
+    static const SPortFormat& AnyPortFormat;
+    static const VkFormat& AnyFormat;
+    static const VkExtent2D& AnyExtent;
+    static const size_t AnyNum;
 };
 
 class ILinkEvent
@@ -117,6 +121,8 @@ public:
 
     CPort() = delete;
     CPort(const SPortFormat& vFormat): m_Format(vFormat) {}
+
+    virtual ~CPort() = default;
     
     bool isSwapchainSource() { return m_isSwapchainSource; }
     void markAsSwapchainSource() { m_isSwapchainSource = true; }
@@ -154,7 +160,11 @@ public:
     }
 
     // if the link of this port is ready, means it has a source port as head and no in valid port before it
-    virtual bool isReadyV() const { return !m_ForceNotReady; }
+    virtual bool isReadyV() const
+    {
+        return !m_ForceNotReady;
+    }
+
     void setForceNotReady(bool vForceNotReady) 
     { 
         if (m_ForceNotReady != vForceNotReady)
@@ -164,7 +174,7 @@ public:
             _onLinkUpdate(generateEventId("LinkUpdate"), nullptr);
         }
     }
-    bool isForceNotReady() { return m_ForceNotReady; }
+    bool isForceNotReady() const { return m_ForceNotReady; }
 
     const SPortFormat& getFormat() const { return m_Format; }
     virtual bool hasActualFormatV() const = 0;
@@ -214,7 +224,13 @@ class CSourcePort : public CPort
 public:
     _DEFINE_PTR(CSourcePort);
 
-    CSourcePort(const SPortFormat& vFormat) : CPort(vFormat) {}
+    CSourcePort(const SPortFormat& vFormat) : CPort(vFormat)
+    {
+        if (vFormat.Format != VkFormat::VK_FORMAT_UNDEFINED && vFormat.Extent.width != 0 && vFormat.Extent.height != 0)
+        {
+            setActualFormat(vFormat.Format, vFormat.Extent);
+        }
+    }
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final
     {
@@ -297,7 +313,7 @@ public:
 class SPortDescriptor
 {
 public:
-    void addInput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyFormat)
+    void addInput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat)
     {
         _ASSERTE(!hasInput(vName));
         _ASSERTE(!hasInputOutput(vName));
@@ -306,7 +322,7 @@ public:
         m_InputPortSet.emplace_back(vFormat);
     }
 
-    void addOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyFormat)
+    void addOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat)
     {
         _ASSERTE(!hasOutput(vName));
         _ASSERTE(!hasInputOutput(vName));
@@ -315,7 +331,7 @@ public:
         m_OutputPortSet.emplace_back(vFormat);
     }
 
-    void addInputOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyFormat)
+    void addInputOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat)
     {
         _ASSERTE(!hasInput(vName));
         _ASSERTE(!hasOutput(vName));
@@ -427,7 +443,13 @@ public:
         Format.Num = 0; // dont care
 
         auto pPort = getOutputPort(vOutputName);
+        const auto& TargetFormat = pPort->getFormat();
         _ASSERTE(Format.isMatch(pPort->getFormat()));
+
+        if (TargetFormat.Num != 0 && vIndex >= TargetFormat.Num)
+        {
+            Common::Log::log("Warning: more images than specific port image num are set on Output port [" + vOutputName + "]");
+        }
 
         CSourcePort::Ptr pSourcePort = std::dynamic_pointer_cast<CSourcePort>(pPort);
 

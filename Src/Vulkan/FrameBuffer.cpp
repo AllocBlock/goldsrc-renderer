@@ -9,6 +9,7 @@ void CFrameBuffer::create(CDevice::CPtr vDevice, VkRenderPass vRenderPass, const
     destroy();
 
     m_pDevice = vDevice;
+    m_AttachmentNum = vAttachmentSet.size();
 
     VkFramebufferCreateInfo FramebufferInfo = {};
     FramebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

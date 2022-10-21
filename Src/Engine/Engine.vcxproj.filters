@@ -164,5 +164,8 @@
     <ClInclude Include="PipelineDescriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TempScene.h">
+      <Filter>头文件\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

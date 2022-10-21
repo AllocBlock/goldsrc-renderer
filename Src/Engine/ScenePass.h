@@ -13,8 +13,8 @@ struct SObjectDataPosition
 class CSceneRenderPass : public vk::IRenderPass
 {
 public:
-    ptr<CCamera> getCamera() { return m_pCamera; }
-    void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; }
+    CCamera::Ptr getCamera() { return m_pCamera; }
+    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; }
 
     ptr<SScene> getScene() const { return m_pScene; }
     void loadScene(ptr<SScene> vScene) 
@@ -95,7 +95,7 @@ protected:
         return true;
     }
 
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
     ptr<SScene> m_pScene = nullptr;
     std::vector<SObjectDataPosition> m_ObjectDataPositionSet;
 };

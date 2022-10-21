@@ -1,52 +1,46 @@
 #pragma once
-#include "RenderPass.h"
+#include "PassTempSceneBase.h"
 #include "FrameBuffer.h"
-#include "PipelineShade.h"
 #include "Camera.h"
-#include "Buffer.h"
 #include "Image.h"
-#include "3DObject.h"
+#include "PipelineShade.h"
 
-class CRenderPassShade : public vk::IRenderPass
+class CRenderPassShade : public CRenderPassTempSceneBase<CPipelineShade::SPointData>
 {
 public:
     CRenderPassShade() : m_pCamera(make<CCamera>())
     {
     }
 
-    ptr<CCamera> getCamera() { return m_pCamera; }
+    CCamera::Ptr getCamera() { return m_pCamera; }
 
     void setShadowMapInfo(CCamera::CPtr vLightCamera);
-    void setScene(const std::vector<ptr<CGeneralMeshData>>& vObjectSet);
 
 protected:
     virtual void _initV() override;
     virtual SPortDescriptor _getPortDescV() override;
-    virtual void _recreateV() override;
+    virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
+    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+
 private:
-    void __createRenderPass();
-    void __createGraphicsPipelines();
     void __createDepthResources();
-    void __createLightFramebuffers();
+    void __createFramebuffers();
 
     void __createRecreateResources();
     void __destroyRecreateResources();
 
     void __updateUniformBuffer(uint32_t vImageIndex);
+    void __updateShadowMapImages();
 
     CPipelineShade m_PipelineShade;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
-    ptr<vk::CBuffer> m_pVertBuffer;
-    size_t m_VertexNum = 0;
 
-    vk::CImage m_DepthImage = nullptr;
+    vk::CImage m_DepthImage;
 
-    ptr<CCamera> m_pCamera = nullptr;
-
+    CCamera::Ptr m_pCamera = nullptr;
     CCamera::CPtr m_pLightCamera = nullptr;
 };
-

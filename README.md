@@ -298,6 +298,10 @@
         - 暂时先邻接吧
   - **解决方法：目前link是树状的，image update向子节点传播，link update向父节点和子节点传递（参数带有传播来源节点，从而避免重复触发）**
 
+### 问题：在PortSet的基础上，如果pass之间有资源依赖，需要如何处理？
+  - 例：shadowmap中，shade pass依赖shadow pass的shadow map，当port有效时，创建顺序是不定的，不能保证shadow pass先于shade pass
+  - 比较复杂，目前先绕过：用port的hook监测更新，然后每次更新都尝试更新pipeline，但这样监测也有触发顺序的问题，是先重建还是先更新？而更新依赖于重建
+
 ### 问题：错误定位
   - 只靠Handle ID难以定位对应Vulkan对象的位置
   - **预想解决方法：每个对象创建和销毁之间为一个Scope，通过Scope可以形成一个树状图，可以打印出来，从而找到对象在何处创建的**

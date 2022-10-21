@@ -6,6 +6,9 @@
 template <typename T>
 class CGeneralDataArray : public IDataArray<T>
 {
+public:
+    CGeneralDataArray() = default;
+
 protected:
     virtual size_t _sizeV() override
     {
@@ -38,6 +41,13 @@ protected:
     virtual void _clearV() override
     {
         m_Array.clear();
+    }
+    
+    virtual IDataArray<T>::Ptr _copyV() override
+    {
+        auto pNewArray = make<CGeneralDataArray<T>>();
+        pNewArray->m_Array = m_Array;
+        return pNewArray;
     }
 
 private:

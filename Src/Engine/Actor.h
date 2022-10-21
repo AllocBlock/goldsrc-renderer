@@ -57,6 +57,12 @@ public:
 		m_pPhysicsState->clearAlpha();
 	}
 
+	void bakeTransform()
+	{
+		m_pMesh = Mesh::bakeTransform(m_pMesh, m_pTransform);
+		m_pTransform->reset();
+	}
+
 private:
 	std::string m_Name;
 	const ptr<STransform> m_pTransform = make<STransform>();

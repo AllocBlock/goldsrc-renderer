@@ -9,7 +9,7 @@ class CRenderPassTest : public vk::IRenderPass
 public:
     CRenderPassTest() : m_pCamera(make<CCamera>()) {}
 
-    ptr<CCamera> getCamera() { return m_pCamera; }
+    CCamera::Ptr getCamera() { return m_pCamera; }
 
 protected:
     virtual void _initV() override;
@@ -34,5 +34,5 @@ private:
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     vk::CImage m_DepthImage;
 
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
 };

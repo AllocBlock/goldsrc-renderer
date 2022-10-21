@@ -22,7 +22,7 @@ protected:
 private:
     void __linkPasses();
 
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
     ptr<CRenderPassGUI> m_pGUI = nullptr;
     ptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
     ptr<CRenderPassFullScreen> m_pRenderPassFullScreen = nullptr;

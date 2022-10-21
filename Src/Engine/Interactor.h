@@ -28,7 +28,7 @@ class CInteractor : public IDrawableUI
 public:
 	CInteractor() = default;
 
-	void bindEvent(GLFWwindow* vWindow, ptr<CCamera> vCamera);
+	void bindEvent(GLFWwindow* vWindow, CCamera::Ptr vCamera);
 	void enable() { m_Enabled = true; }
 	void disable() { m_Enabled = false; }
 	void update();
@@ -38,7 +38,7 @@ public:
 
 	float getSpeed() { return m_Speed; }
 	void setSpeed(float vSpeed) { m_Speed = vSpeed; }
-	ptr<CCamera> getCamera() { return m_pCamera; }
+	CCamera::Ptr getCamera() { return m_pCamera; }
 
 	static void onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int vAction, int vMods);
 	static void onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY);
@@ -56,7 +56,7 @@ private:
 	void __updateRotate(float vDeltaTime);
 
 	GLFWwindow* m_pWindow = nullptr;
-	ptr<CCamera> m_pCamera = nullptr;
+	CCamera::Ptr m_pCamera = nullptr;
 
 	float m_Speed = 3.0;
 	const float m_BoostScale = 3.0f;

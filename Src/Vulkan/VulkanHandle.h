@@ -43,15 +43,12 @@ namespace vk
         T m_Handle = VK_NULL_HANDLE;
     };
 
+    // TIPS: CPointerSet manage a set of pointer, and you can not create instance by yourself,
+    // all instance are created and destroyed inside this class
     template <typename T>
     struct CPointerSet
     {
     public:
-        ptr<T>& operator [](size_t vIndex)
-        {
-            return m_Set[vIndex];
-        }
-
         const ptr<T>& operator [](size_t vIndex) const
         {
             return m_Set[vIndex];

@@ -12,8 +12,8 @@ class CRenderPassPBR : public vk::IRenderPass
 public:
     CRenderPassPBR() = default;
 
-    void setCamera(ptr<CCamera> vCamera) { m_pCamera = vCamera; }
-    ptr<CCamera> getCamera() { return m_pCamera; }
+    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; }
+    CCamera::Ptr getCamera() { return m_pCamera; }
 
 protected:
     virtual void _initV() override;
@@ -46,7 +46,7 @@ private:
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
     vk::CImage m_DepthImage; 
 
-    ptr<CCamera> m_pCamera = nullptr;
+    CCamera::Ptr m_pCamera = nullptr;
     std::vector<CPipelinePBS::SPointData> m_PointDataSet;
 
     uint32_t m_GridSize = 8;

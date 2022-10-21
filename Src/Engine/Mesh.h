@@ -2,6 +2,7 @@
 #include "Pointer.h"
 #include "Common.h"
 #include "GeneralDataArray.h"
+#include "Transform.h"
 
 #include <string>
 #include <glm/glm.hpp>
@@ -20,6 +21,7 @@ public:
 
     bool getVisibleState() { return m_IsVisible; }
     void setVisibleState(bool vState) { m_IsVisible = vState; }
+    CGeneralMeshDataTest copy();
 
     _DEFINE_GETTER_SETTER_POINTER(VertexArray, IDataArray<glm::vec3>::Ptr)
     _DEFINE_GETTER_SETTER_POINTER(NormalArray, IDataArray<glm::vec3>::Ptr)
@@ -60,6 +62,10 @@ public:
     virtual CGeneralMeshDataTest getMeshData() const override;
 
     void addTriangles(std::vector<glm::vec3> vPosSet, std::vector<glm::vec3> vNormalSet);
+    virtual void setMeshData(CGeneralMeshDataTest vData)
+    {
+        m_Data = std::move(vData);
+    }
 
 private:
     CGeneralMeshDataTest m_Data;
@@ -97,3 +103,8 @@ public:
 
     virtual CGeneralMeshDataTest getMeshData() const override;
 };
+
+namespace Mesh
+{
+    CMeshTriangleList::Ptr bakeTransform(CMesh::CPtr vMesh, cptr<STransform> vTransform);
+}
