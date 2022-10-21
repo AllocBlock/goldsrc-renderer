@@ -107,14 +107,14 @@
   <ItemGroup>
     <ClCompile Include="ApplicationPBR.cpp" />
     <ClCompile Include="MaterialPBR.cpp" />
-    <ClCompile Include="RenderPassPBR.cpp" />
+    <ClCompile Include="PassPBR.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PipelinePBS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationPBR.h" />
     <ClInclude Include="MaterialPBR.h" />
-    <ClInclude Include="RenderPassPBR.h" />
+    <ClInclude Include="PassPBR.h" />
     <ClInclude Include="PipelinePBS.h" />
   </ItemGroup>
   <ItemGroup>

@@ -1,10 +1,10 @@
 #pragma once
 #include "Application.h"
-#include "PassGUI.h"
-#include "RenderPassPBR.h"
-#include "RenderPassFullScreen.h"
-#include "PipelineEnvironment.h"
 #include "Interactor.h"
+#include "PipelineEnvironment.h"
+#include "PassGUI.h"
+#include "PassPBR.h"
+#include "PassFullScreen.h"
 
 class CApplicationPBR : public IApplication
 {
@@ -17,7 +17,6 @@ protected:
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex) override;
     virtual void _createOtherResourceV() override;
-    virtual void _recreateOtherResourceV() override;
     virtual void _destroyOtherResourceV() override;
 
 private:

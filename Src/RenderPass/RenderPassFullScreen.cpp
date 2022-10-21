@@ -1,4 +1,4 @@
-#include "RenderPassFullScreen.h"
+#include "PassFullScreen.h"
 #include "Function.h"
 #include "RenderPassDescriptor.h"
 
@@ -10,31 +10,32 @@ void CRenderPassFullScreen::_initV()
 SPortDescriptor CRenderPassFullScreen::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addOutput("Output", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
     return Ports;
 }
 
 CRenderPassDescriptor CRenderPassFullScreen::_getRenderPassDescV()
 {
-    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Output"));
+    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
 }
 
 void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated)
+    if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
     {
         __createFramebuffers();
 
         if (m_pPipeline)
-            m_pPipeline->setImageNum(m_AppInfo.ImageNum);
+        {
+            __createPipeline();
+        }
     }
 }
 
 std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    _ASSERTE(m_pPipeline);
-    //_ASSERTE(m_pPipeline->isReady());
-    _ASSERTE(!m_FramebufferSet.isValid(vImageIndex));
+    _ASSERTE(m_pPipeline->isValid());
+    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
@@ -67,6 +68,16 @@ void CRenderPassFullScreen::_destroyV()
     IRenderPass::_destroyV();
 }
 
+void CRenderPassFullScreen::__createPipeline()
+{
+    _ASSERTE(isValid() && m_pPipeline);
+    m_pPipeline->create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_pPipeline->setImageNum(m_AppInfo.ImageNum);
+
+    for (const auto& Callback : m_PipelineCreateCallbackSet)
+        Callback();
+}
+
 void CRenderPassFullScreen::__createFramebuffers()
 {
     if (!isValid()) return;
@@ -79,7 +90,7 @@ void CRenderPassFullScreen::__createFramebuffers()
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pPortSet->getOutputPort("Output")->getImageV(i)
+            m_pPortSet->getOutputPort("Main")->getImageV(i)
         };
 
         m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);

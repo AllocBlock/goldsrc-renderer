@@ -29,13 +29,6 @@ void CDescriptorWriteInfo::addWriteSampler(size_t vTargetIndex, VkSampler vSampl
     m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
 }
 
-void CDescriptorWriteInfo::addWriteImagesAndSampler(size_t vTargetIndex, const vk::CPointerSet<vk::CImage>& vImageSet,
-    VkSampler vSampler)
-{
-    _ASSERTE(vImageSet.isAllValid());
-    addWriteImagesAndSampler(vTargetIndex, vImageSet, vSampler);
-}
-
 void CDescriptorWriteInfo::addWriteImageAndSampler(size_t vTargetIndex, VkImageView vImageView, VkSampler vSampler)
 {
     _ASSERTE(!(vImageView == VK_NULL_HANDLE && vSampler == VK_NULL_HANDLE));
@@ -61,6 +54,34 @@ void CDescriptorWriteInfo::addWriteImagesAndSampler(size_t vTargetIndex, const s
         InfoSet[i].sampler = vSampler;
     }
     m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, InfoSet }));
+}
+
+void CDescriptorWriteInfo::addWriteImagesAndSampler(size_t vTargetIndex, const std::vector<vk::CImage>& vImageSet,
+    VkSampler vSampler)
+{
+    std::vector<VkImageView> ImageViewSet(vImageSet.size());
+
+    for (size_t i = 0; i < ImageViewSet.size(); ++i)
+    {
+        ImageViewSet[i] = vImageSet[i];
+    }
+
+    addWriteImagesAndSampler(vTargetIndex, ImageViewSet, vSampler);
+}
+
+void CDescriptorWriteInfo::addWriteImagesAndSampler(size_t vTargetIndex, const vk::CPointerSet<vk::CImage>& vImageSet,
+    VkSampler vSampler)
+{
+    _ASSERTE(!vImageSet.empty() && vImageSet.isAllValid());
+
+    std::vector<VkImageView> ImageViewSet(vImageSet.size());
+
+    for (size_t i = 0; i < ImageViewSet.size(); ++i)
+    {
+        ImageViewSet[i] = *vImageSet[i];
+    }
+
+    addWriteImagesAndSampler(vTargetIndex, ImageViewSet, vSampler);
 }
 
 CShaderResourceDescriptor::~CShaderResourceDescriptor() { clear(); }

@@ -21,7 +21,7 @@
     <ClInclude Include="PipelineSprite.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPassFullScreen.h">
+    <ClInclude Include="PassFullScreen.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineEnvironment.h">

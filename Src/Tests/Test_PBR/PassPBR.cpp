@@ -1,29 +1,27 @@
-#include "RenderPassPBR.h"
+#include "PassPBR.h"
 #include "InterfaceUI.h"
 #include "Function.h"
 #include "RenderPassDescriptor.h"
 
 void CRenderPassPBR::_initV()
 {
-    __createRenderPass();
     __createVertexBuffer();
     __createRecreateResources();
 }
 
 SPortDescriptor CRenderPassPBR::_getPortDescV()
 {
-    CRenderPassPort Ports;
-    Ports.addInput("Main", m_AppInfo.ImageFormat, m_AppInfo.Extent);
-    Ports.addOutput("Main", m_AppInfo.ImageFormat, m_AppInfo.Extent);
+    SPortDescriptor Ports;
+    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
+    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
     return Ports;
 }
 
-void CRenderPassPBR::_recreateV()
+CRenderPassDescriptor CRenderPassPBR::_getRenderPassDescV()
 {
-    IRenderPass::_recreateV();
-
-    __destroyRecreateResources();
-    __createRecreateResources();
+    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
+        m_pPortSet->getOutputPort("Depth"));
 }
 
 void CRenderPassPBR::_updateV(uint32_t vImageIndex)
@@ -58,7 +56,7 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
     if (m_FramebufferSet.empty())
         __createFramebuffers();
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_CommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
     std::vector<VkClearValue> ClearValueSet(2);
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -84,19 +82,15 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
 void CRenderPassPBR::_destroyV()
 {
     __destroyRecreateResources();
-    m_pVertexBuffer->destroy();
-    m_pVertexBuffer = nullptr;
+    destroyAndClear(m_pVertexBuffer);
 
     IRenderPass::_destroyV();
 }
 
-void CRenderPassPBR::__createRenderPass()
+void CRenderPassPBR::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassDescriptor Desc;
-    Desc.addColorAttachment(m_RenderPassPosBitField, m_AppInfo.ImageFormat);
-    Desc.setDepthAttachment(vk::ERenderPassPos::BEGIN, VK_FORMAT_D32_SFLOAT);
-    auto Info = Desc.generateInfo();
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
+    __destroyRecreateResources();
+    __createRecreateResources();
 }
 
 void CRenderPassPBR::__createGraphicsPipeline()
@@ -106,7 +100,8 @@ void CRenderPassPBR::__createGraphicsPipeline()
 
 void CRenderPassPBR::__createDepthResources()
 {
-    m_pDepthImage = Function::createDepthImage(m_AppInfo.pDevice, m_AppInfo.Extent);
+    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent);
+    m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
 void CRenderPassPBR::__createFramebuffers()
@@ -114,13 +109,13 @@ void CRenderPassPBR::__createFramebuffers()
     _ASSERTE(isValid());
 
     size_t ImageNum = m_AppInfo.ImageNum;
-    m_FramebufferSet.resize(ImageNum);
+    m_FramebufferSet.init(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
-            m_pLink->getOutput("Main", i),
-            *m_pDepthImage
+            m_pPortSet->getOutputPort("Main")->getImageV(i),
+            m_DepthImage
         };
 
         m_FramebufferSet[i] = make<vk::CFrameBuffer>();
@@ -135,7 +130,7 @@ void CRenderPassPBR::__createVertexBuffer()
 
     if (VertexNum > 0)
     {
-        VkDeviceSize BufferSize = sizeof(SPBSPointData) * VertexNum;
+        VkDeviceSize BufferSize = sizeof(CPipelinePBS::SPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
         m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
@@ -143,21 +138,22 @@ void CRenderPassPBR::__createVertexBuffer()
 }
 
 void CRenderPassPBR::__createMaterials()
-{ 
+{
+    m_TextureColorSet.init(1);
     CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
-    vk::CImage pColor = Function::createImageFromIOImage(m_AppInfo.pDevice, pColorImage);
-    m_TextureColorSet.push_back(pColor);
+    Function::createImageFromIOImage(*m_TextureColorSet[0], m_AppInfo.pDevice, pColorImage);
 
+    m_TextureNormalSet.init(1);
     CIOImage::Ptr pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
     pNormalImage->read();
-    vk::CImage pNormal = Function::createImageFromIOImage(m_AppInfo.pDevice, pNormalImage);
-    m_TextureNormalSet.push_back(pNormal);
+    Function::createImageFromIOImage(*m_TextureNormalSet[0], m_AppInfo.pDevice, pNormalImage);
 
+    m_TextureSpecularSet.init(1);
     CIOImage::Ptr pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
     pSpecularImage->read();
-    vk::CImage pSpecular = Function::createImageFromIOImage(m_AppInfo.pDevice, pSpecularImage);
-    m_TextureSpecularSet.push_back(pSpecular);
+    vk::CImage Specular;
+    Function::createImageFromIOImage(*m_TextureSpecularSet[0], m_AppInfo.pDevice, pSpecularImage);
 
     _ASSERTE(m_GridSize > 0);
     size_t Num = m_GridSize * m_GridSize;
@@ -185,39 +181,30 @@ void CRenderPassPBR::__createMaterials()
 void CRenderPassPBR::__createRecreateResources()
 {
     __createMaterials();
-
-    __createGraphicsPipeline(); 
     __createDepthResources();
-    m_Pipeline.setImageNum(m_AppInfo.ImageNum);
-    m_Pipeline.setMaterialBuffer(m_pMaterialBuffer);
-    m_Pipeline.setTextures(m_TextureColorSet, m_TextureNormalSet, m_TextureSpecularSet);
+    if (isValid())
+    {
+        __createGraphicsPipeline();
+        m_Pipeline.setImageNum(m_AppInfo.ImageNum);
+        m_Pipeline.setMaterialBuffer(m_pMaterialBuffer);
+        m_Pipeline.setTextures(m_TextureColorSet, m_TextureNormalSet, m_TextureSpecularSet);
 
-    CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
-    pSkyIOImage->read();
-    CIOImage::Ptr pSkyIrrIOImage = make<CIOImage>("./textures/old_hall_4k_irr.exr");
-    pSkyIrrIOImage->read();
-    m_Pipeline.setSkyTexture(pSkyIOImage, pSkyIrrIOImage);
+        CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
+        pSkyIOImage->read();
+        CIOImage::Ptr pSkyIrrIOImage = make<CIOImage>("./textures/old_hall_4k_irr.exr");
+        pSkyIrrIOImage->read();
+        m_Pipeline.setSkyTexture(pSkyIOImage, pSkyIrrIOImage);
+    }
 }
 
 void CRenderPassPBR::__destroyRecreateResources()
 {
-    m_pDepthImage->destroy();
-
-    for (int i = 0; i < m_TextureColorSet.size(); ++i)
-        m_TextureColorSet[i]->destroy();
-    m_TextureColorSet.clear();
-    for (int i = 0; i < m_TextureNormalSet.size(); ++i)
-        m_TextureNormalSet[i]->destroy();
-    m_TextureNormalSet.clear();
-    for (int i = 0; i < m_TextureSpecularSet.size(); ++i)
-        m_TextureSpecularSet[i]->destroy();
-    m_TextureSpecularSet.clear();
-
-    m_pMaterialBuffer->destroy();
-
-    for (auto pFramebuffer : m_FramebufferSet)
-        pFramebuffer->destroy();
-    m_FramebufferSet.clear();
+    m_DepthImage.destroy();
+    m_TextureColorSet.destroyAndClearAll();
+    m_TextureNormalSet.destroyAndClearAll();
+    m_TextureSpecularSet.destroyAndClearAll();
+    destroyAndClear(m_pMaterialBuffer);
+    m_FramebufferSet.destroyAndClearAll();
     m_Pipeline.destroy();
 }
 
@@ -263,7 +250,7 @@ void CRenderPassPBR::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, gl
             glm::vec3 Bitangent = cross(Normal, glm::vec3(0.0f, 0.0f, 1.0f));
             glm::vec3 Tangent = cross(Bitangent, Normal);
 
-            m_PointDataSet.emplace_back(SPBSPointData({ vCenter + Vertex, Normal, Tangent, TexCoord, vMaterialIndex }));
+            m_PointDataSet.emplace_back(CPipelinePBS::SPointData({ vCenter + Vertex, Normal, Tangent, TexCoord, vMaterialIndex }));
         }
     }
     else

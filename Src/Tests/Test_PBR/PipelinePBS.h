@@ -10,33 +10,34 @@
 
 #include <glm/glm.hpp>
 
-struct SPBSPointData
-{
-    glm::vec3 Pos;
-    glm::vec3 Normal;
-    glm::vec3 Tangent;
-    glm::vec2 TexCoord;
-    uint32_t MaterialIndex;
-
-    using PointData_t = SPBSPointData;
-
-    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-    {
-        CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Tangent));
-        Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
-        Descriptor.add(_GET_ATTRIBUTE_INFO(MaterialIndex));
-        return Descriptor.generate();
-    }
-};
-
 class CPipelinePBS : public IPipeline
 {
 public:
+
+    struct SPointData
+    {
+        glm::vec3 Pos;
+        glm::vec3 Normal;
+        glm::vec3 Tangent;
+        glm::vec2 TexCoord;
+        uint32_t MaterialIndex;
+
+        using PointData_t = SPointData;
+
+        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
+
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            CVertexAttributeDescriptor Descriptor;
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Tangent));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(MaterialIndex));
+            return Descriptor.generate();
+        }
+    };
+
     struct SControl
     {
         SMaterialPBR Material;
@@ -50,22 +51,18 @@ public:
     void setTextures(const vk::CPointerSet<vk::CImage>& vColorSet, const vk::CPointerSet<vk::CImage>& vNormalSet, const vk::CPointerSet<vk::CImage>& vSpecularSet);
     void setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::Ptr vSkyIrrImage);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl);
-    void destroy();
 
     bool isReady() {
-        return m_pMaterialBuffer && m_TextureColorSet.size() > 0 && m_pSkyImage && m_pSkyIrrImage;
+        return m_pMaterialBuffer && m_TextureColorSet.size() > 0 && m_SkyImage.isValid() && m_SkyIrrImage.isValid();
     }
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
 
 protected:
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shaderFrag.spv"; }
-
-    virtual void _createResourceV(size_t vImageNum) override;
     virtual void _initShaderResourceDescriptorV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
+    virtual CPipelineDescriptor _getPipelineDescriptionV() override;
+    virtual void _createResourceV(size_t vImageNum) override;
+    virtual void _destroyV() override;
 
 private:
     void __createPlaceholderImage();
@@ -76,14 +73,14 @@ private:
     vk::CSampler m_MipmapSampler;
     vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
-    vk::CImage m_PlaceholderImage = nullptr;
+    vk::CImage m_PlaceholderImage;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
-    vk::CPointerSet<vk::CImage> m_TextureColorSet;
-    vk::CPointerSet<vk::CImage> m_TextureNormalSet;
-    vk::CPointerSet<vk::CImage> m_TextureSpecularSet;
-    vk::CImage m_SkyImage = nullptr;
-    vk::CImage m_SkyIrrImage = nullptr;
-    vk::CImage m_BRDFImage = nullptr;
+    std::vector<VkImageView> m_TextureColorSet;
+    std::vector<VkImageView> m_TextureNormalSet;
+    std::vector<VkImageView> m_TextureSpecularSet;
+    vk::CImage m_SkyImage;
+    vk::CImage m_SkyIrrImage;
+    vk::CImage m_BRDFImage;
 
     const int m_MipmapLevelNum = 8;
 };

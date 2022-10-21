@@ -24,7 +24,7 @@
     <ClCompile Include="PipelinePBS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPassPBR.cpp">
+    <ClCompile Include="PassPBR.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MaterialPBR.cpp">
@@ -38,7 +38,7 @@
     <ClInclude Include="PipelinePBS.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPassPBR.h">
+    <ClInclude Include="PassPBR.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MaterialPBR.h">

@@ -5,22 +5,30 @@
 #include "Pipeline.h"
 #include "FullScreenPointData.h"
 
+#include <functional>
+
 class CRenderPassFullScreen : public vk::IRenderPass
 {
 public:
+    using PipelineCreateCallback_t = std::function<void()>;
+
+    // create pipeline instance but maybe not valid as renderpass maynot be valid
     template <typename T>
     ptr<T> initPipeline()
     {
-        VkRenderPass RenderPass = get();
-        _ASSERTE(RenderPass != VK_NULL_HANDLE);
         if (m_pPipeline) m_pPipeline->destroy();
         ptr<T> pPipeline = make<T>();
+        if (isValid())
+            __createPipeline();
         m_pPipeline = pPipeline;
-        m_pPipeline->create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-        m_pPipeline->setImageNum(m_AppInfo.ImageNum);
         return pPipeline;
     }
     ptr<IPipeline> getPipeline() { return m_pPipeline; }
+
+    void hookPipelineCreate(PipelineCreateCallback_t vCallback)
+    {
+        m_PipelineCreateCallbackSet.emplace_back(vCallback);
+    }
 
 protected:
     virtual void _initV() override;
@@ -32,6 +40,7 @@ protected:
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
 private:
+    void __createPipeline();
     void __createFramebuffers();
     void __createVertexBuffer();
 
@@ -42,5 +51,6 @@ private:
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
     std::vector<SFullScreenPointData> m_PointDataSet;
+    std::vector<PipelineCreateCallback_t> m_PipelineCreateCallbackSet;
 };
 

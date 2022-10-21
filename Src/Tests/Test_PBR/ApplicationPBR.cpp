@@ -4,34 +4,7 @@
 
 void CApplicationPBR::_initV()
 {
-    vk::SAppInfo AppInfo = getAppInfo();
-
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
-
-    m_pCamera = make<CCamera>();
-    m_pInteractor = make<CInteractor>(); 
-    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
-
-    m_pRenderPassFullScreen = make<CRenderPassFullScreen>(); 
-    m_pRenderPassFullScreen->init(AppInfo, vk::ERenderPassPos::BEGIN);
-    m_pPipelineEnv = m_pRenderPassFullScreen->initPipeline<CPipelineEnvironment>();
-
-    CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
-    pSkyIOImage->read();
-
-    m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
-    
-    m_pRenderPassPBR = make<CRenderPassPBR>();
-    m_pRenderPassPBR->init(AppInfo, vk::ERenderPassPos::MIDDLE);
-    m_pRenderPassPBR->setCamera(m_pCamera);
-
-    m_pGUI = make<CRenderPassGUI>();
-    m_pGUI->setWindow(m_pWindow);
-    m_pGUI->init(AppInfo, vk::ERenderPassPos::END);
-
-    m_pCamera->setPos(glm::vec3(0.0f, -13.6114998f, 0.0f));
-    m_pCamera->setPhi(90);
-    m_pCamera->setTheta(90);
 }
 
 void CApplicationPBR::_updateV(uint32_t vImageIndex)
@@ -66,45 +39,58 @@ std::vector<VkCommandBuffer> CApplicationPBR::_getCommandBufferSetV(uint32_t vIm
 
 void CApplicationPBR::_createOtherResourceV()
 {
-    _recreateOtherResourceV();
-}
+    vk::SAppInfo AppInfo = getAppInfo();
 
-void CApplicationPBR::_recreateOtherResourceV()
-{
-    auto ImageFormat = m_pSwapchain->getImageFormat();
-    auto Extent = m_pSwapchain->getExtent();
-    auto ImageNum = m_pSwapchain->getImageNum();
+    m_pCamera = make<CCamera>();
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
-    m_pRenderPassFullScreen->recreate(ImageFormat, Extent, ImageNum);
-    m_pRenderPassPBR->recreate(ImageFormat, Extent, ImageNum);
-    m_pGUI->recreate(ImageFormat, Extent, ImageNum);
+    m_pRenderPassFullScreen = make<CRenderPassFullScreen>();
+    m_pRenderPassFullScreen->init(AppInfo);
+    m_pPipelineEnv = m_pRenderPassFullScreen->initPipeline<CPipelineEnvironment>();
+    
+    m_pRenderPassFullScreen->hookPipelineCreate([this]
+        {
+            CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
+            pSkyIOImage->read();
+            m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
+        });
+    
+
+    m_pRenderPassPBR = make<CRenderPassPBR>();
+    m_pRenderPassPBR->init(AppInfo);
+    m_pRenderPassPBR->setCamera(m_pCamera);
+
+    m_pGUI = make<CRenderPassGUI>();
+    m_pGUI->setWindow(m_pWindow);
+    m_pGUI->init(AppInfo);
+
+    m_pCamera->setPos(glm::vec3(0.0f, -13.6114998f, 0.0f));
+    m_pCamera->setPhi(90);
+    m_pCamera->setTheta(90);
 
     __linkPasses();
 }
 
 void CApplicationPBR::_destroyOtherResourceV()
 {
-    m_pPipelineEnv->destroy();
-    m_pRenderPassFullScreen->destroy();
-    m_pRenderPassPBR->destroy();
-    m_pGUI->destroy();
+    destroyAndClear(m_pPipelineEnv);
+    destroyAndClear(m_pRenderPassFullScreen);
+    destroyAndClear(m_pRenderPassPBR);
+    destroyAndClear(m_pGUI);
 
     cleanGlobalCommandBuffer();
 }
 
 void CApplicationPBR::__linkPasses()
 {
-    auto pLinkPBR = m_pRenderPassPBR->getLink();
-    auto pLinkEnv = m_pRenderPassFullScreen->getLink();
-    auto pLinkGui = m_pGUI->getLink();
+    auto pPortEnv = m_pRenderPassFullScreen->getPortSet();
+    auto pPortPBR = m_pRenderPassPBR->getPortSet();
+    auto pPortGui = m_pGUI->getPortSet();
 
-    const auto& ImageViews = m_pSwapchain->getImageViews();
-    for (int i = 0; i < m_pSwapchain->getImageNum(); ++i)
-    {
-        pLinkEnv->link("Main", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkPBR->link("Main", ImageViews[i], EPortType::INPUT, i);
-        pLinkPBR->link("Main", ImageViews[i], EPortType::OUTPUT, i);
-        pLinkGui->link("Main", ImageViews[i], EPortType::INPUT, i);
-        pLinkGui->link("Main", ImageViews[i], EPortType::OUTPUT, i);
-    }
+    m_pSwapchainPort->setForceNotReady(true);
+    CPortSet::link(m_pSwapchainPort, pPortEnv, "Main");;
+    CPortSet::link(pPortEnv, "Main", pPortPBR, "Main");
+    CPortSet::link(pPortPBR, "Main", pPortGui, "Main");
+    m_pSwapchainPort->setForceNotReady(false);
 }

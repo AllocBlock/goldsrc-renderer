@@ -18,14 +18,15 @@ public:
 protected:
     virtual void _initV() override;
     virtual SPortDescriptor _getPortDescV() override;
-    virtual void _recreateV() override;
+    virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
+    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+
 private:
-    void __createRenderPass();
     void __createGraphicsPipeline();
     void __createDepthResources();
     void __createFramebuffers();
@@ -43,10 +44,10 @@ private:
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
-    vk::CImage m_DepthImage = nullptr; 
+    vk::CImage m_DepthImage; 
 
     ptr<CCamera> m_pCamera = nullptr;
-    std::vector<SPBSPointData> m_PointDataSet;
+    std::vector<CPipelinePBS::SPointData> m_PointDataSet;
 
     uint32_t m_GridSize = 8;
      

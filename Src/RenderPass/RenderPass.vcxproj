@@ -42,7 +42,7 @@
     <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PipelineVisCollidePoint.h" />
     <ClInclude Include="PipelineVisCollider.h" />
-    <ClInclude Include="RenderPassFullScreen.h" />
+    <ClInclude Include="PassFullScreen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PassGUI.cpp" />

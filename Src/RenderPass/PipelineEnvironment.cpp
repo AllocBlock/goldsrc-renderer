@@ -75,7 +75,6 @@ void CPipelineEnvironment::_createResourceV(size_t vImageNum)
 void CPipelineEnvironment::_destroyV()
 {
     __destroyResources();
-    IPipeline::destroy();
 }
 
 void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
