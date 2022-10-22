@@ -2,14 +2,12 @@
 #include <functional>
 #include <string>
 
-namespace Common
+namespace Log
 {
-    namespace Log
-    {
-        using LogFunc = std::function<void(std::string)>;
+    using LogFunc = std::function<void(std::string)>;
 
-        void setLogObserverFunc(LogFunc vLogFunc);
-        bool log(std::string vText);
-        void print(std::string vText, bool vEndOfLine = true);
-    }
+    void setLogObserverFunc(LogFunc vLogFunc);
+    void setEnablePrintWhenLog(bool vEnable);
+    void log(std::string vText);
+    void print(std::string vText, bool vEndOfLine = true);
 }

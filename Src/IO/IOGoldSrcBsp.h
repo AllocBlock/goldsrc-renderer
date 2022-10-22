@@ -61,7 +61,7 @@ enum class EPlaneType
  **************************************************************/
 struct SBspPlane
 {
-    Common::GoldSrc::SVec3 Normal;
+    GoldSrc::SVec3 Normal;
     float DistanceToOrigin;
     int32_t Type; // EPlaneType
 };
@@ -90,7 +90,7 @@ struct SBspTexture
 
     bool IsDataInBsp = false; // memory-only
     uint8_t* pIndices = nullptr; // memory-only
-    Common::GoldSrc::SColor Palette[256];
+    GoldSrc::SColor Palette[256];
 
     void read(std::ifstream& vFile, uint64_t vOffset);
     bool getRawRGBAPixels(void* vopData) const;
@@ -115,7 +115,7 @@ struct SLumpTexture
  **************************************************************/
 struct SLumpVertex
 {
-    std::vector<Common::GoldSrc::SVec3> Vertices;
+    std::vector<GoldSrc::SVec3> Vertices;
 
     void read(std::ifstream& vFile, uint64_t vOffset, uint64_t vSize);
 };
@@ -177,9 +177,9 @@ struct SLumpNode
  **************************************************************/
 struct SBspTexInfo
 {
-    Common::GoldSrc::SVec3 TextureDirectionU;
+    GoldSrc::SVec3 TextureDirectionU;
     float TextureOffsetU;
-    Common::GoldSrc::SVec3 TextureDirectionV;
+    GoldSrc::SVec3 TextureDirectionV;
     float TextureOffsetV;
     uint32_t TextureIndex;
     uint32_t Flags;
@@ -375,7 +375,7 @@ struct SBspModel
 {
     float BoundingBoxMin[3];
     float BoundingBoxMax[3];
-    Common::GoldSrc::SVec3 Origin;
+    GoldSrc::SVec3 Origin;
     int32_t NodeIndices[BSP_MAX_HULL];
     int32_t VisLeafs;
     int32_t FirstFaceIndex;

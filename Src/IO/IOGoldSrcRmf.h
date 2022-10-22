@@ -28,7 +28,7 @@ struct SRmfEntityProperty
 struct SRmfVisGroup
 {
     char Name[128]; // Name of the VisGroup
-    Common::GoldSrc::SColor Color; // Border color in VHE of this group
+    GoldSrc::SColor Color; // Border color in VHE of this group
     char Unknown;
     int Index; // Index of this group. Used by objects.
     uint8_t IsVisible; // If this group visible. 1 = visible, 0 = not visible.
@@ -44,17 +44,17 @@ struct SRmfFace
 {
     char TextureName[256]; // Name of texture
     float Unknown;
-    Common::GoldSrc::SVec3 TextureDirectionU;
+    GoldSrc::SVec3 TextureDirectionU;
     float TextureOffsetU;
-    Common::GoldSrc::SVec3 TextureDirectionV;
+    GoldSrc::SVec3 TextureDirectionV;
     float TextureOffsetV;
     float TextureRotation; // In degrees
     float TextureScaleU;
     float TextureScaleV;
     char Unknown2[16];
     int  VertexNum; // Number of vertices
-    std::vector<Common::GoldSrc::SVec3> Vertices; // Vertices data in clockwise
-    Common::GoldSrc::SVec3 PlanePoints[3]; // Used for defining plane of this face. VHE directly use first 3 vertices rather than this;
+    std::vector<GoldSrc::SVec3> Vertices; // Vertices data in clockwise
+    GoldSrc::SVec3 PlanePoints[3]; // Used for defining plane of this face. VHE directly use first 3 vertices rather than this;
 
     void read(std::ifstream& vFile);
 };
@@ -67,7 +67,7 @@ struct SRmfObject
     SRmfVariableString Type; // type of this object. Could be "CMapSolid", "CMapEntity" or "CMapGroup".
     int VisGroupIndex; // Each Object belongs to one and only-one VisGroup.
     
-    Common::GoldSrc::SColor Color; // The display color in VHE.
+    GoldSrc::SColor Color; // The display color in VHE.
 
     static ptr<SRmfObject> create(std::ifstream& vFile);
 protected:
@@ -106,7 +106,7 @@ struct SRmfEntity : SRmfObject
     int PropertyNum; // Number of properties (key-value pairs)
     std::vector<SRmfEntityProperty> Properties;
     char Unknown2[14];
-    Common::GoldSrc::SVec3 Origin; // Position of entity in world coordinates (only used for point entities)
+    GoldSrc::SVec3 Origin; // Position of entity in world coordinates (only used for point entities)
     char Unknown3[4];
 
 protected:
@@ -153,7 +153,7 @@ protected:
  **************************************************************/
 struct SRmfCorner
 {
-    Common::GoldSrc::SVec3 Origin; // Position in world coordinates
+    GoldSrc::SVec3 Origin; // Position in world coordinates
     int Index; // Index is used for generating targetnames (corner01, corner02, etc..).
     char Name[128];
     int PropertyNum;
@@ -181,8 +181,8 @@ struct SRmfPath
  **************************************************************/
 struct SRmfCamera
 {
-    Common::GoldSrc::SVec3 EyePosition; // Eye position of the camera
-    Common::GoldSrc::SVec3 Direction; // Direction of the camera
+    GoldSrc::SVec3 EyePosition; // Eye position of the camera
+    GoldSrc::SVec3 Direction; // Direction of the camera
 };
 
 /***************************************************************

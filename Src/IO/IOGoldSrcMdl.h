@@ -12,12 +12,12 @@ struct SMdlHeader
     char Name[64];
     int Length;
 
-    Common::GoldSrc::SVec3 Eyeposition;    // ideal eye position
-    Common::GoldSrc::SVec3 Min;            // ideal movement hull size
-    Common::GoldSrc::SVec3 Max;
+    GoldSrc::SVec3 Eyeposition;    // ideal eye position
+    GoldSrc::SVec3 Min;            // ideal movement hull size
+    GoldSrc::SVec3 Max;
 
-    Common::GoldSrc::SVec3 AABBMin;            // clipping bounding box
-    Common::GoldSrc::SVec3 AABBMax;
+    GoldSrc::SVec3 AABBMin;            // clipping bounding box
+    GoldSrc::SVec3 AABBMax;
 
     int                    FlagBitField;
 
@@ -72,7 +72,7 @@ struct SMdlTexture
     int32_t    DataOffset;
 
     std::vector<uint8_t> IndexSet;
-    std::array<Common::GoldSrc::SColor, 256> Palette;
+    std::array<GoldSrc::SColor, 256> Palette;
 
     static size_t getHeaderSize()
     {
@@ -93,7 +93,7 @@ struct SMdlTexture
         unsigned char* pIter = static_cast<unsigned char*>(voData);
         for (uint8_t PalatteIndex : IndexSet)
         {
-            Common::GoldSrc::SColor PixelColor = Palette[PalatteIndex];
+            GoldSrc::SColor PixelColor = Palette[PalatteIndex];
             *pIter++ = static_cast<unsigned char>(PixelColor.R);
             *pIter++ = static_cast<unsigned char>(PixelColor.G);
             *pIter++ = static_cast<unsigned char>(PixelColor.B);
@@ -199,8 +199,8 @@ struct SMdlModel
     int32_t GroupDataOffset = 0;
 
     std::vector<SMdlMesh> MeshSet;
-    std::vector<Common::GoldSrc::SVec3> VertexSet;
-    std::vector<Common::GoldSrc::SVec3> NormalSet;
+    std::vector<GoldSrc::SVec3> VertexSet;
+    std::vector<GoldSrc::SVec3> NormalSet;
     std::vector<int16_t> VertexBoneIndexSet;
     std::vector<int16_t> NormalBoneIndexSet;
 
@@ -223,11 +223,11 @@ struct SMdlModel
 
         VertexSet.resize(VertexNum);
         voFile.seekg(VertexDataOffset, std::ios::beg);
-        voFile.read(reinterpret_cast<char*>(VertexSet.data()), VertexNum * sizeof(Common::GoldSrc::SVec3));
+        voFile.read(reinterpret_cast<char*>(VertexSet.data()), VertexNum * sizeof(GoldSrc::SVec3));
 
         NormalSet.resize(NormalNum);
         voFile.seekg(NormalDataOffset, std::ios::beg);
-        voFile.read(reinterpret_cast<char*>(NormalSet.data()), NormalNum * sizeof(Common::GoldSrc::SVec3));
+        voFile.read(reinterpret_cast<char*>(NormalSet.data()), NormalNum * sizeof(GoldSrc::SVec3));
 
         VertexBoneIndexSet.resize(VertexNum);
         voFile.seekg(VertexBondIndexDataOffset, std::ios::beg);
@@ -318,12 +318,12 @@ struct SMdlSequenceDescription
 
     int					motiontype = 0;
     int					motionbone = 0;
-    Common::GoldSrc::SVec3				linearmovement;
+    GoldSrc::SVec3				linearmovement;
     int					automoveposindex = 0;
     int					automoveangleindex = 0;
 
-    Common::GoldSrc::SVec3				bbmin;		// per sequence bounding box
-    Common::GoldSrc::SVec3				bbmax;
+    GoldSrc::SVec3				bbmin;		// per sequence bounding box
+    GoldSrc::SVec3				bbmax;
 
     int					numblends = 0;
     int					animindex = 0;		// mstudioanim_t pointer relative to start of sequence group data

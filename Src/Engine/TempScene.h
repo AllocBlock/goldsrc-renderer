@@ -66,7 +66,7 @@ public:
 
         if (NumVertex == 0)
         {
-            Common::Log::log(u8"没有顶点数据，跳过顶点缓存创建");
+            Log::log(u8"没有顶点数据，跳过顶点缓存创建");
             return nullptr;
         }
 

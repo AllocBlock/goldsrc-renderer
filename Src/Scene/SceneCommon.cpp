@@ -2,8 +2,6 @@
 #include "SceneCommon.h"
 #include "Environment.h"
 
-using namespace Common;
-
 std::function<void(std::string)> g_pReportProgressFunc = nullptr;
 std::function<Scene::SRequestResultFilePath(std::string,std::string)> g_pRequestFilePathFunc = nullptr;
 

@@ -19,7 +19,7 @@ struct SSprHeader
 struct SSprPalette
 {
     int16_t Size; // 调色板大小，始终等于256
-    Common::GoldSrc::SColor ColorSet[256]; // 颜色
+    GoldSrc::SColor ColorSet[256]; // 颜色
 };
 
 struct SSprPicture

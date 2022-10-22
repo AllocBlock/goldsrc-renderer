@@ -3,18 +3,18 @@
 
 #include <string>
 
-std::future<Common::Scene::ERequestResultState> CGuiRequestPopupModal::show(std::string vTitle, std::string vDescription)
+std::future<Scene::ERequestResultState> CGuiRequestPopupModal::show(std::string vTitle, std::string vDescription)
 {
     _ASSERTE(!m_IsShow);
     m_IsShow = true;
     m_Title = vTitle;
     m_Description = vDescription;
-    m_Promise = std::promise<Common::Scene::ERequestResultState>();
+    m_Promise = std::promise<Scene::ERequestResultState>();
     m_IsToOpen = true;
     return m_Promise.get_future();
 }
 
-void CGuiRequestPopupModal::close(Common::Scene::ERequestResultState vState)
+void CGuiRequestPopupModal::close(Scene::ERequestResultState vState)
 {
     _ASSERTE(m_IsShow);
     m_IsShow = false;
@@ -40,25 +40,25 @@ void CGuiRequestPopupModal::draw()
         bool Close = false;
         if (UI::button(u8"寻找文件"))
         {
-            __setValue(Common::Scene::ERequestResultState::CONTINUE);
+            __setValue(Scene::ERequestResultState::CONTINUE);
             Close = true;
         }
         UI::sameLine();
         if (UI::button(u8"取消"))
         {
-            __setValue(Common::Scene::ERequestResultState::CANCEL);
+            __setValue(Scene::ERequestResultState::CANCEL);
             Close = true;
         }
         UI::sameLine();
         if (UI::button(u8"跳过"))
         {
-             __setValue(Common::Scene::ERequestResultState::IGNORE_);
+             __setValue(Scene::ERequestResultState::IGNORE_);
             Close = true;
         }
         UI::sameLine();
         if (UI::button(u8"重试"))
         {
-             __setValue(Common::Scene::ERequestResultState::RETRY);
+             __setValue(Scene::ERequestResultState::RETRY);
             Close = true;
         }
 
@@ -69,7 +69,7 @@ void CGuiRequestPopupModal::draw()
     }
 }
 
-void CGuiRequestPopupModal::__setValue(Common::Scene::ERequestResultState vState)
+void CGuiRequestPopupModal::__setValue(Scene::ERequestResultState vState)
 {
     close(vState);
 }

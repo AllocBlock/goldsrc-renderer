@@ -2,14 +2,12 @@
 #include "SceneGoldsrcCommon.h"
 #include "Log.h"
 
-using namespace Common;
-
 bool GoldSrc::readWad(std::filesystem::path vWadPath, std::filesystem::path vAdditionalSearchDir, CIOGoldsrcWad& voWad)
 {
     std::filesystem::path RealWadPath;
     if (!Scene::requestFilePathUntilCancel(vWadPath, vAdditionalSearchDir, "wad", RealWadPath))
     {
-        Common::Log::log(u8"未找到WAD文件：" + vWadPath.u8string());
+        Log::log(u8"未找到WAD文件：" + vWadPath.u8string());
         return false;
     }
 

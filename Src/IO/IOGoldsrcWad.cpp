@@ -3,8 +3,6 @@
 
 #include <fstream>
 
-using namespace Common;
-
 bool CIOGoldsrcWad::_readV(std::filesystem::path vFilePath)
 {
     std::ifstream File;

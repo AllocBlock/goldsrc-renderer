@@ -2,8 +2,6 @@
 #include "SceneCommon.h"
 #include "IOObj.h"
 
-using namespace Common;
-
 ptr<SScene> CSceneReaderObj::_readV()
 {
     Scene::reportProgress(u8"[obj]读取文件中");

@@ -4,8 +4,6 @@
 
 #include <fstream>
 
-using namespace Common;
-
 float CIOGoldSrcRmf::getVersion() const
 {
     return Version;

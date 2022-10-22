@@ -6,39 +6,36 @@
 #include <memory>
 #include <functional>
 
-namespace Common
+namespace Scene
 {
-    namespace Scene
+    ptr<CIOImage> generateGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize, uint8_t vBaseColor1[3], uint8_t vBaseColor2[3]);
+    ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize);
+    ptr<CIOImage> generatePureColorTexture(uint8_t vBaseColor[3], size_t vSize);
+    ptr<CIOImage> generateDiagonalGradientGrid(size_t vWidth, size_t vHeight, uint8_t vR1, uint8_t vG1, uint8_t vB1, uint8_t vR2, uint8_t vG2, uint8_t vB2);
+    ptr<CIOImage> getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex);
+    ptr<CIOImage> getIOImageFromBspTexture(const SBspTexture& vBspTexture);
+
+    enum class ERequestResultState
     {
-        ptr<CIOImage> generateGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize, uint8_t vBaseColor1[3], uint8_t vBaseColor2[3]);
-        ptr<CIOImage> generateBlackPurpleGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize);
-        ptr<CIOImage> generatePureColorTexture(uint8_t vBaseColor[3], size_t vSize);
-        ptr<CIOImage> generateDiagonalGradientGrid(size_t vWidth, size_t vHeight, uint8_t vR1, uint8_t vG1, uint8_t vB1, uint8_t vR2, uint8_t vG2, uint8_t vB2);
-        ptr<CIOImage> getIOImageFromWad(const CIOGoldsrcWad& vWad, size_t vIndex);
-        ptr<CIOImage> getIOImageFromBspTexture(const SBspTexture& vBspTexture);
+        CONTINUE,
+        RETRY,
+        IGNORE_, // IGNORE已有默认宏定义，所以加了个下划线
+        CANCEL
+    };
 
-        enum class ERequestResultState
-        {
-            CONTINUE,
-            RETRY,
-            IGNORE_, // IGNORE已有默认宏定义，所以加了个下划线
-            CANCEL
-        };
+    template <typename T>
+    struct SRequestResult
+    {
+        ERequestResultState State = ERequestResultState::IGNORE_;
+        T Data;
+    };
 
-        template <typename T>
-        struct SRequestResult
-        {
-            ERequestResultState State = ERequestResultState::IGNORE_;
-            T Data;
-        };
+    using SRequestResultFilePath = SRequestResult<std::filesystem::path>;
 
-        using SRequestResultFilePath = SRequestResult<std::filesystem::path>;
+    void reportProgress(std::string vText);
+    void setGlobalReportProgressFunc(std::function<void(std::string)> vFunc);
+    SRequestResultFilePath requestFilePath(std::string vMessage, std::string vFilter = "");
+    void setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string, std::string)> vFunc);
 
-        void reportProgress(std::string vText);
-        void setGlobalReportProgressFunc(std::function<void(std::string)> vFunc);
-        SRequestResultFilePath requestFilePath(std::string vMessage, std::string vFilter = "");
-        void setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string, std::string)> vFunc);
-
-        bool requestFilePathUntilCancel(std::filesystem::path vFilePath, std::filesystem::path vAdditionalSearchDir, std::string vFilter, std::filesystem::path& voFilePath);
-    }
+    bool requestFilePathUntilCancel(std::filesystem::path vFilePath, std::filesystem::path vAdditionalSearchDir, std::string vFilter, std::filesystem::path& voFilePath);
 }

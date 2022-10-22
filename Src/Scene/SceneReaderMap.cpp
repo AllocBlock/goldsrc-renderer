@@ -3,8 +3,6 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcMap.h"
 
-using namespace Common;
-
 ptr<SScene> CSceneReaderMap::_readV()
 {
     m_pScene = make<SScene>();

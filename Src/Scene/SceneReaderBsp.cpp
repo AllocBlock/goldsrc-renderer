@@ -9,8 +9,6 @@
 
 #include <sstream>
 
-using namespace Common;
-
 glm::vec3 stringToVec3(std::string vString)
 {
     std::istringstream StringStream(vString);
@@ -575,7 +573,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
     std::string SkyFilePrefix = Lumps.m_LumpEntity.SkyBoxPrefix;
     if (SkyFilePrefix.empty())
     {
-        Common::Log::log(u8"地图未指定天空文件，已使用默认天空neb6");
+        Log::log(u8"地图未指定天空文件，已使用默认天空neb6");
         vCurrentDir = std::filesystem::current_path().string() + "/../data/";
         SkyFilePrefix = "neb6";
     }
@@ -592,7 +590,7 @@ void CSceneReaderBsp::__loadSkyBox(std::filesystem::path vCurrentDir)
         }
     }
     if (!FoundSkyBoxImages)
-        Common::Log::log(u8"未找到天空图片文件[" + SkyFilePrefix + u8"]，将不会渲染天空盒");
+        Log::log(u8"未找到天空图片文件[" + SkyFilePrefix + u8"]，将不会渲染天空盒");
 }
 
 bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension, std::filesystem::path vCurrentDir)

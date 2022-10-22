@@ -564,7 +564,7 @@ void CSceneGoldSrcRenderPass::__createVertexBuffer()
             NumVertex += pObject->getVertexArray()->size();
         if (NumVertex == 0)
         {
-            Common::Log::log(u8"没有顶点数据，跳过索引缓存创建");
+            Log::log(u8"没有顶点数据，跳过索引缓存创建");
             return;
         }
     }
@@ -645,7 +645,7 @@ size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
     size_t NumTexture = m_pScene ? m_pScene->TexImageSet.size() : 0;
     if (NumTexture > CPipelineDepthTest::MaxTextureNum)
     {
-        Common::Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(CPipelineDepthTest::MaxTextureNum) + u8"), 多出的纹理将被忽略");
+        Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(CPipelineDepthTest::MaxTextureNum) + u8"), 多出的纹理将被忽略");
         NumTexture = CPipelineDepthTest::MaxTextureNum;
     }
     return NumTexture;

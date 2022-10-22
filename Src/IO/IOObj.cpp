@@ -7,8 +7,6 @@
 #include <filesystem>
 #include <random>
 
-using namespace Common;
-
 bool CIOObj::_readV(std::filesystem::path vFilePath) {
     m_pObj = make<SObj>();
 

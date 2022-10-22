@@ -4,8 +4,6 @@
 
 #include <fstream>
 
-using namespace Common;
-
 bool CIOGoldSrcBsp::_readV(std::filesystem::path vFilePath)
 {
     std::ifstream File;

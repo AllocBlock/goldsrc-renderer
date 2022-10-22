@@ -85,7 +85,7 @@ public:
     VkPipelineViewportStateCreateInfo getViewportStageInfo(VkExtent2D vExtent)
     {
         if (m_IsViewportSet)
-            Common::Log::log("Warning: viewport is reset and previous unsubmitted data will be invalid.");
+            Log::log("Warning: viewport is reset and previous unsubmitted data will be invalid.");
 
         m_IsViewportSet = true;
         m_TempViewport = {};
@@ -152,7 +152,7 @@ public:
     VkPipelineColorBlendStateCreateInfo getColorBlendInfo()
     {
         if (m_IsBlendAttachmentSet)
-            Common::Log::log("Warning: blend attachment is reset and previous unsubmitted data will be invalid.");
+            Log::log("Warning: blend attachment is reset and previous unsubmitted data will be invalid.");
         
         m_IsBlendAttachmentSet = true;
         m_TempBlendAttachment = {};
@@ -221,7 +221,7 @@ public:
     void setDynamicStateSet(const std::vector<VkDynamicState>& vDynamicStateSet)
     {
         if (m_IsDynamicStateSet)
-            Common::Log::log("Warning: blend attachment is reset and previous unsubmitted data will be invalid.");
+            Log::log("Warning: blend attachment is reset and previous unsubmitted data will be invalid.");
 
         m_IsDynamicStateSet = true;
         m_DynamicStateSet = vDynamicStateSet;

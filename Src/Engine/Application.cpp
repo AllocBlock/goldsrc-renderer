@@ -164,7 +164,7 @@ void IApplication::__setupDebugMessenger()
     m_pDebugMessenger->create(*m_pInstance);
     vk::DebugMessageCallbackFunc_t pCallback = [=](vk::EDebugMessageServerity vServerity, std::string vMessage)
     {
-        Common::Log::log(u8"[验证层] " + vMessage);
+        Log::log(u8"[验证层] " + vMessage);
     };
     m_pDebugMessenger->setCustomCallback(pCallback);
 } 

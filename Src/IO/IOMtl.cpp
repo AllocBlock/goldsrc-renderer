@@ -4,8 +4,6 @@
 #include <fstream>
 #include <sstream>
 
-using namespace Common;
-
 bool CIOMtl::_readV(std::filesystem::path vFilePath) {
     std::ifstream File;
     File.open(vFilePath);

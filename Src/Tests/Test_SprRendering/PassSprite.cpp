@@ -94,42 +94,42 @@ void CRenderPassSprite::__createRecreateResources()
                 glm::vec3(0.0, 0.0, 0.0),
                 1.0,
                 EGoldSrcSpriteType::PARALLEL,
-                Common::Scene::generateBlackPurpleGrid(16, 16, 4),
+                Scene::generateBlackPurpleGrid(16, 16, 4),
             },
             {
                 glm::vec3(0.0, 3.0, 0.0),
                 glm::vec3(0.0, 0.0, 0.0),
                 0.5,
                 EGoldSrcSpriteType::PARALLEL,
-                Common::Scene::generateDiagonalGradientGrid(64, 64, 255, 0, 0, 0, 255, 0),
+                Scene::generateDiagonalGradientGrid(64, 64, 255, 0, 0, 0, 255, 0),
             },
             {
                 glm::vec3(0.0, 6.0, 0.0),
                 glm::vec3(0.0, 0.0, 0.0),
                 1.0,
                 EGoldSrcSpriteType::PARALLEL_UP_RIGHT,
-                Common::Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 0),
+                Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 0),
             },
             {
                 glm::vec3(0.0, 9.0, 0.0),
                 glm::vec3(-90.0, 0.0, 0.0),
                 1.0,
                 EGoldSrcSpriteType::PARALLEL_ORIENTED,
-                Common::Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 255),
+                Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 255),
             },
             {
                 glm::vec3(0.0, 12.0, 0.0),
                 glm::vec3(-90.0, 0.0, 0.0),
                 1.0,
                 EGoldSrcSpriteType::ORIENTED,
-                Common::Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 255, 0, 0, 255),
+                Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 255, 0, 0, 255),
             },
             {
                 glm::vec3(0.0, 15.0, 0.0),
                 glm::vec3(0.0, 0.0, 0.0),
                 1.0,
                 EGoldSrcSpriteType::FACING_UP_RIGHT,
-                Common::Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 0, 255, 0, 255),
+                Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 0, 255, 0, 255),
             }
         };
 

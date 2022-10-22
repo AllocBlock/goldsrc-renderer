@@ -1,24 +1,29 @@
 #include "Log.h"
 #include <iostream>
 
-using namespace Common;
-
-Log::LogFunc g_LogFunc = nullptr;
+namespace
+{
+    Log::LogFunc gLogFunc = nullptr;
+    bool gEnablePrintWhenLog = true;
+}
 
 void Log::setLogObserverFunc(Log::LogFunc vLogFunc)
 {
-    g_LogFunc = vLogFunc;
+    gLogFunc = vLogFunc;
 }
 
-bool Log::log(std::string vText)
+// TIPS: default it's on
+void setEnablePrintWhenLog(bool vEnable)
 {
-    if (g_LogFunc)
-    {
-        g_LogFunc(vText);
-        return true;
-    }
-    else
-        return false;
+    gEnablePrintWhenLog = vEnable;
+}
+
+void Log::log(std::string vText)
+{
+    if (gEnablePrintWhenLog)
+        print(vText);
+    if (gLogFunc)
+        gLogFunc(vText);
 }
 
 void Log::print(std::string vText, bool vEndOfLine)

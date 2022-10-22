@@ -327,7 +327,7 @@ void CPortSet::setOutput(const std::string& vOutputName, VkImageView vImage, VkF
 
     if (TargetFormat.Num != 0 && vIndex >= TargetFormat.Num)
     {
-        Common::Log::log("Warning: more images than specific port image num are set on Output port [" + vOutputName + "]");
+        Log::log("Warning: more images than specific port image num are set on Output port [" + vOutputName + "]");
     }
 
     CSourcePort::Ptr pSourcePort = std::dynamic_pointer_cast<CSourcePort>(pPort);

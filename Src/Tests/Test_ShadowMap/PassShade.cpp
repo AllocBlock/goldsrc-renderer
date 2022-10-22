@@ -50,7 +50,7 @@ void CRenderPassShade::_updateV(uint32_t vImageIndex)
 std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     if (!m_PipelineShade.isShadowMapReady())
-        Common::Log::log("Warning: shadow map image is not ready when shading");
+        Log::log("Warning: shadow map image is not ready when shading");
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 

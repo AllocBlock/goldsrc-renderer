@@ -9,8 +9,6 @@
 float SMapBrush::GlobalScale = 1.0f / 64.0f;
 const std::string g_ParseFailMessage = u8"MAPÎÄ¼ş½âÎöÊ§°Ü";
 
-using namespace Common;
-
 // vertice are stored at clockwise
 glm::vec3 SMapPlane::getNormal() const
 {

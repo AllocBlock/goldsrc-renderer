@@ -2,8 +2,6 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-using namespace Common;
-
 ptr<SScene> CSceneReaderRmf::_readV()
 {
     m_pScene = make<SScene>();
@@ -40,7 +38,7 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
         if (FilePathResult.State == Scene::ERequestResultState::CONTINUE)
         {
             CIOGoldsrcWad Wad;
-            Common::GoldSrc::readWad(FilePathResult.Data, m_FilePath.parent_path(), Wad);
+            GoldSrc::readWad(FilePathResult.Data, m_FilePath.parent_path(), Wad);
             m_Wads.emplace_back(std::move(Wad));
         }
         else

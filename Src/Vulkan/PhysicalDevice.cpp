@@ -55,7 +55,7 @@ void CPhysicalDevice::printSupportedExtension() const
 
     for (const VkExtensionProperties& Extension : ExtensionProperties)
     {
-        Common::Log::log("[À©Õ¹] " + std::string(Extension.extensionName) + ", " + std::to_string(Extension.specVersion));
+        Log::log("[À©Õ¹] " + std::string(Extension.extensionName) + ", " + std::to_string(Extension.specVersion));
     }
 }
 

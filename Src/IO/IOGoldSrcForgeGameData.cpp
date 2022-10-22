@@ -4,8 +4,6 @@
 #include <regex>
 #include <algorithm>
 
-using namespace Common;
-
 #define _CHECK_ERROR(X) __checkResult(X, __LINE__)
 
 size_t CIOGoldSrcForgeGameData::getEntityNum() const
