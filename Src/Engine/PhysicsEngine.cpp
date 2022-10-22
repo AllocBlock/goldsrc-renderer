@@ -39,7 +39,7 @@ void CPhysicsEngine::update(float vDeltaTime) const
                     std::cout << "Hit " << i << " with " << k << "\n";
                     // 2. solve constraints
                     // TODO: Penalty Force method, use solving constraint later
-                    float PenaltyForceIntensity = 40.0f * pow(Depth, 2);
+                    float PenaltyForceIntensity = static_cast<float>(40.0 * pow(Depth, 2));
                     CollideForceSet[i].emplace_back(Normal * PenaltyForceIntensity);
                     CollideForceSet[k].emplace_back(-Normal * PenaltyForceIntensity);
 
@@ -98,7 +98,7 @@ void CPhysicsEngine::update(float vDeltaTime) const
         pRigid->Velocity += DeltaSpeed;
 
         glm::quat DeltaRotation;
-        float HalfTheta = glm::length(DeltaAngular) * 0.5;
+        float HalfTheta = glm::length(DeltaAngular) * 0.5f;
         if (HalfTheta < 1e-5)
             DeltaRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
         else

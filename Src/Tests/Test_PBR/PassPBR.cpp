@@ -71,7 +71,7 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_Pipeline.bind(CommandBuffer, vImageIndex);
 
-        size_t VertexNum = m_PointDataSet.size();
+        uint32_t VertexNum = static_cast<uint32_t>(m_PointDataSet.size());
         vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
     }
     
@@ -209,10 +209,9 @@ void CRenderPassPBR::__destroyRecreateResources()
 
 void CRenderPassPBR::__generateScene()
 {
-    float Sqrt2 = std::sqrt(2);
-    float Sqrt3 = std::sqrt(3);
-    float Sqrt6 = std::sqrt(6);
-    float OneThrid = 1.0 / 3.0;
+    const float Sqrt2 = static_cast<float>(std::sqrt(2));
+    const float Sqrt6 = static_cast<float>(std::sqrt(6));
+    const float OneThrid = 1.0f / 3.0f;
     std::array<glm::vec3, 4> VertexSet =
     {
         glm::vec3(0.0, 0.0, 1.0),
@@ -241,7 +240,7 @@ void CRenderPassPBR::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, gl
     {
         for (const auto& Vertex : vVertexSet)
         {
-            float u = std::atan2(Vertex.y, Vertex.x) * 0.5 / glm::pi<float>() + 0.5f;
+            float u = std::atan2(Vertex.y, Vertex.x) * 0.5f / glm::pi<float>() + 0.5f;
             float v = Vertex.z * 0.5f + 0.5f;
             glm::vec2 TexCoord = glm::vec2(u, v);
 
@@ -267,10 +266,7 @@ void CRenderPassPBR::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, gl
 
 void CRenderPassPBR::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    float Aspect = 1.0;
-    if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
-        Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
-    m_pCamera->setAspect(Aspect);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
 
     glm::mat4 Model = glm::mat4(1.0f);
     glm::mat4 View = m_pCamera->getViewMat();

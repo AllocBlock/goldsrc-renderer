@@ -2,6 +2,7 @@
 #include "Pointer.h"
 #include "Common.h"
 #include "DrawableUI.h"
+#include "Log.h"
 
 #include <glm/glm.hpp>
 #include <array>
@@ -40,6 +41,16 @@ public:
 	void setPhi(float vPhi) { m_Phi = Common::mod(vPhi, 360.0f);} // in degree, [0, 360]
 	void setTheta(float vTheta) { m_Theta = Common::mod(vTheta, 180.0f); } // in degree [0, 180]
 	void setFov(float vFov) { m_Fov = vFov; }
+	void setAspect(size_t vWidth, size_t vHeight)
+	{
+		if (vWidth > 0 && vHeight > 0)
+			m_Aspect = static_cast<float>(vWidth) / vHeight;
+		else
+		{
+			Log::log("Warning: when setting aspect, width or height is zero, the aspect is forced to be 1.0");
+			m_Aspect = 1.0;
+		}
+	}
 	void setAspect(float vAspect) { m_Aspect = vAspect; }
 	void setNear(float vNear) { m_Near = vNear; }
 	void setFar(float vFar) { m_Far = vFar; }

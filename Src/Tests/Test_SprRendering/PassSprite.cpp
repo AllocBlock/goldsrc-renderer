@@ -6,7 +6,7 @@
 void CRenderPassSprite::_initV()
 {
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
     m_pCamera->setPos(glm::vec3(1.0, 0.0, 0.0));
     m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
     
@@ -145,10 +145,7 @@ void CRenderPassSprite::__destroyRecreateResources()
 
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    float Aspect = 1.0;
-    if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
-        Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
-    m_pCamera->setAspect(Aspect);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
 
     glm::mat4 View = m_pCamera->getViewMat();
     glm::mat4 Proj = m_pCamera->getProjMat();

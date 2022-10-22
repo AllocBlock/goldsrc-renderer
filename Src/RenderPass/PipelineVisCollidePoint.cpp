@@ -142,8 +142,8 @@ void CPipelineVisCollidePoint::__initVertexBuffer()
     const float Radius = 0.1f;
     for (int i = 0; i < SegNum; ++i)
     {
-        float Rad1 = (i / static_cast<float>(SegNum)) * glm::pi<float>() * 2.0;
-        float Rad2 = (i + 1) / static_cast<float>(SegNum) * glm::pi<float>() * 2.0;
+        float Rad1 = (i / static_cast<float>(SegNum)) * glm::pi<float>() * 2.0f;
+        float Rad2 = (i + 1) / static_cast<float>(SegNum) * glm::pi<float>() * 2.0f;
         LineSet.push_back({glm::vec3(glm::cos(Rad1), glm::sin(Rad1), 0.0f) * Radius});
         LineSet.push_back({glm::vec3(glm::cos(Rad2), glm::sin(Rad2), 0.0f) * Radius});
     }
@@ -161,7 +161,7 @@ void CPipelineVisCollidePoint::__initVertexBuffer()
     LineSet.push_back({ Head });
     LineSet.push_back({ RightEar });
 
-    m_VertexNum = LineSet.size();
+    m_VertexNum = static_cast<uint32_t>(LineSet.size());
     VkDeviceSize BufferSize = sizeof(SPointData) * m_VertexNum;
 
     m_VertexBuffer.create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);

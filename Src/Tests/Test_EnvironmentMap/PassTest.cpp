@@ -5,7 +5,7 @@
 void CRenderPassSprite::_initV()
 {
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
     m_pCamera->setPos(glm::vec3(0.0, -1.0, 0.0));
 
     __loadSkyBox();
@@ -50,7 +50,7 @@ std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_Pipeline.bind(CommandBuffer, vImageIndex);
 
-        size_t VertexNum = m_PointDataSet.size();
+        uint32_t VertexNum = static_cast<uint32_t>(m_PointDataSet.size());
         vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
     }
     
@@ -176,10 +176,9 @@ void CRenderPassSprite::__destroyRecreateResources()
 
 void CRenderPassSprite::__generateScene()
 {
-    float Sqrt2 = std::sqrt(2);
-    float Sqrt3 = std::sqrt(3);
-    float Sqrt6 = std::sqrt(6);
-    float OneThrid = 1.0 / 3.0;
+    const float Sqrt2 = static_cast<float>(std::sqrt(2));
+    const float Sqrt6 = static_cast<float>(std::sqrt(6));
+    const float OneThrid = 1.0f / 3.0f;
     std::array<glm::vec3, 4> VertexSet =
     {
         glm::vec3(0.0, 0.0, 1.0),
@@ -216,10 +215,7 @@ void CRenderPassSprite::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet,
 
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    float Aspect = 1.0;
-    if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
-        Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
-    m_pCamera->setAspect(Aspect);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
 
     glm::mat4 Model = glm::mat4(1.0f);
     glm::mat4 View = m_pCamera->getViewMat();

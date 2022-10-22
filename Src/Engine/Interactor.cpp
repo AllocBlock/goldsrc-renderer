@@ -62,9 +62,9 @@ void CInteractor::onKeyboard(GLFWwindow* vpWindow, int vKey, int vScancode, int 
 					pInteractor->__startMovingMode();
 			}
 			else if (vKey == GLFW_KEY_EQUAL)
-				pInteractor->m_Speed *= 1.05;
+				pInteractor->m_Speed *= 1.05f;
 			else if (vKey == GLFW_KEY_MINUS)
-				pInteractor->m_Speed *= 0.95;
+				pInteractor->m_Speed *= 0.95f;
 			else if (vKey == GLFW_KEY_ESCAPE)
 				pInteractor->__stopMovingMode();
 		}
@@ -75,12 +75,15 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 {
     if (UI::isInited() && UI::isUsingMouse()) return;
 
+	float PosX = static_cast<float>(vPosX);
+	float PosY = static_cast<float>(vPosY);
+
 	CInteractor* pInteractor = reinterpret_cast<CInteractor*>(glfwGetWindowUserPointer(vpWindow));
 	if (!pInteractor->m_Enabled || !pInteractor->m_IsMoving) return;
 
 	CCamera::Ptr pCamera = pInteractor->m_pCamera;
-	pCamera->setPhi(pInteractor->m_LastPhi + (pInteractor->m_LastMousePosX - vPosX) * pInteractor->m_HorizontalSensetivity);
-	pCamera->setTheta(std::min(std::max(pInteractor->m_LastTheta - (pInteractor->m_LastMousePosY - vPosY) * pInteractor->m_VerticalSensetivity, 1.0), 179.0));
+	pCamera->setPhi(pInteractor->m_LastPhi + (pInteractor->m_LastMousePosX - PosX) * pInteractor->m_HorizontalSensetivity);
+	pCamera->setTheta(glm::clamp(pInteractor->m_LastTheta - (pInteractor->m_LastMousePosY - PosY) * pInteractor->m_VerticalSensetivity, 1.0f, 179.0f));
 }
 
 void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, int vMods)
@@ -205,7 +208,10 @@ void CInteractor::__startMovingMode()
 	m_IsMoving = true;
 	glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	glfwGetCursorPos(m_pWindow, &m_LastMousePosX, &m_LastMousePosY);
+	double LastMousePosX, LastMousePosY;
+	glfwGetCursorPos(m_pWindow, &LastMousePosX, &LastMousePosY);
+	m_LastMousePosX = static_cast<float>(LastMousePosX);
+	m_LastMousePosY = static_cast<float>(LastMousePosY);
 
 	m_LastPhi = m_pCamera->getPhi();
 	m_LastTheta = m_pCamera->getTheta();
@@ -244,11 +250,11 @@ void CInteractor::__updateMove(float vDeltaTime)
 void CInteractor::__updateRotate(float vDeltaTime)
 {
 	// йс╫г
-	double Scale = m_Speed * vDeltaTime * 1000.0;
+	float Scale = m_Speed * vDeltaTime * 1000.0f;
 	int RotateState = __getCurrentRotateState();
 	if (RotateState == int(ERotateState::STOP)) return;
 
-	double RotateLeft = 0.0, RotateUp = 0.0;
+	float RotateLeft = 0.0f, RotateUp = 0.0f;
 	if (RotateState & int(ERotateState::UP)) RotateUp += 1;
 	if (RotateState & int(ERotateState::DOWN)) RotateUp -= 1;
 	if (RotateState & int(ERotateState::LEFT)) RotateLeft += 1;
@@ -257,5 +263,5 @@ void CInteractor::__updateRotate(float vDeltaTime)
 	if (RotateState & int(ERotateState::CRAWL)) Scale *= m_CrawlScale;
 
 	m_pCamera->setPhi(m_pCamera->getPhi() + m_HorizontalSensetivity * RotateLeft * Scale);
-	m_pCamera->setTheta(std::min(std::max(m_pCamera->getTheta() - m_VerticalSensetivity * RotateUp * Scale, 1.0), 179.0));
+	m_pCamera->setTheta(glm::clamp(m_pCamera->getTheta() - m_VerticalSensetivity * RotateUp * Scale, 1.0f, 179.0f));
 }

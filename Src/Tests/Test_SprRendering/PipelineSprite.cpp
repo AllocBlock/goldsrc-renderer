@@ -47,7 +47,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
         m_SpriteSequence[i].Scale = vSpriteImageSet[i].Scale;
-        m_SpriteSequence[i].TexIndex = i;
+        m_SpriteSequence[i].TexIndex = static_cast<uint32_t>(i);
     }
 
     __updateDescriptorSet();

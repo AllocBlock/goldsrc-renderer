@@ -85,7 +85,7 @@ std::vector<VkCommandBuffer> CRenderPassShadowMap::_requestCommandBuffersV(uint3
         VkBuffer VertBuffer = *m_pVertBuffer;
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_PipelineShadowMap.bind(CommandBuffer, vImageIndex);
-        vkCmdDraw(CommandBuffer, m_VertexNum, 1, 0, 0); 
+        vkCmdDraw(CommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
     }
 
     end();

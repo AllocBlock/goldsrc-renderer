@@ -3,7 +3,7 @@
 
 namespace Math
 {
-    const float Acc = 1e-5;
+    const float Acc = 1e-5f;
 
     // AABB
     struct S3DBoundingBox

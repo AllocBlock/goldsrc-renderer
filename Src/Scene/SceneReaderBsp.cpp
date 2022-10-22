@@ -659,7 +659,7 @@ void CSceneReaderBsp::__loadPointEntities()
             SGoldSrcSprite Sprite;
             Sprite.Position = Origin * m_SceneScale;
             Sprite.Angle = (Entity.Properties.find("angles") != Entity.Properties.end()) ? stringToVec3(Entity.Properties.at("angles")) : glm::vec3(0.0f, 0.0f, 0.0f);
-            Sprite.Scale = (Entity.Properties.find("scale") != Entity.Properties.end()) ? std::atoi(Entity.Properties.at("scale").c_str()) : 1.0;
+            Sprite.Scale = (Entity.Properties.find("scale") != Entity.Properties.end()) ? std::atoi(Entity.Properties.at("scale").c_str()) : 1.0f;
             std::string Name = (Entity.Properties.find("model") != Entity.Properties.end()) ? Entity.Properties.at("model") : "";
 
             std::filesystem::path RealSprPath;

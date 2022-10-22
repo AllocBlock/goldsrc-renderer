@@ -20,7 +20,7 @@ public:
     {
         auto Current = std::chrono::system_clock::now();
         auto Duration = std::chrono::duration_cast<std::chrono::nanoseconds>(Current - m_Last);
-        T DeltaSecond = T(Duration.count()) * 1e-9;
+        T DeltaSecond = T(Duration.count()) * 1e-9f;
         m_Last = Current;
         return DeltaSecond;
     }

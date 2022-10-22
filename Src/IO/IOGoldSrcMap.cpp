@@ -23,7 +23,7 @@ float SMapPlane::getDistanceToFace(glm::vec3 vPoint) const
 glm::vec3 SMapPlane::correctNormal(glm::vec3 vN) const
 {
     // solve accuracy problem which causes a negative zero
-    float Epsilon = 0.05;
+    float Epsilon = 0.05f;
     if (vN.x > -Epsilon && vN.x < Epsilon) vN.x = 0;
     if (vN.y > -Epsilon && vN.y < Epsilon) vN.y = 0;
     if (vN.z > -Epsilon && vN.z < Epsilon) vN.z = 0;
@@ -42,7 +42,7 @@ std::vector<glm::vec2> SMapPolygon::getTexCoords(size_t vTexWidth, size_t vTexHe
 
 glm::vec2 SMapPolygon::__calcTexCoord(glm::vec3 vVertex, size_t vTexWidth, size_t vTexHeight)
 {
-    glm::vec2 TexCoord;
+    glm::vec2 TexCoord = {};
     TexCoord.x = (glm::dot(vVertex / SMapBrush::GlobalScale, pPlane->TextureDirectionU) / pPlane->TextureScaleU + pPlane->TextureOffsetU) / vTexWidth;
     TexCoord.y = (glm::dot(vVertex / SMapBrush::GlobalScale, pPlane->TextureDirectionV) / pPlane->TextureScaleV + pPlane->TextureOffsetV) / vTexHeight;
     return TexCoord;
@@ -113,7 +113,7 @@ bool SMapBrush::__getIntersection(glm::vec3& voPoint, size_t vPlane1, size_t vPl
     // the intersection might be not in the brush (see the map file spec. for example)
     // we need to check if it is using the property of convex polyhedron: 
     // if a point is on the brush, this point must be on or behind each plane (normal direction is front) 
-    const float Epsilon = 1e-3;
+    const float Epsilon = 1e-3f;
     for (SMapPlane pPlane : Planes)
     {
         float D = pPlane.getDistanceToFace(IntersectionPoint);
@@ -143,16 +143,16 @@ void SMapBrush::sortVerticesInClockwise(std::vector<glm::vec3>& vVertices, const
         int NextVertexIndex = -1;
         glm::vec3 ScanDirection = -glm::normalize(glm::cross(vNormal, BaseRadialDirection)); // clockwise
 
-        for (int k = i + 1; k < vVertices.size(); ++k)
+        for (size_t k = i + 1; k < vVertices.size(); ++k)
         {
             glm::vec3 CurRadialDirection = glm::normalize(vVertices[k] - Center);
             if (glm::dot(ScanDirection, CurRadialDirection) >= 0) 
             {
-                double Cos = glm::dot(BaseRadialDirection, CurRadialDirection);
+                float Cos = glm::dot(BaseRadialDirection, CurRadialDirection);
                 if (Cos >= MaxCos)
                 {
                     MaxCos = Cos;
-                    NextVertexIndex = k;
+                    NextVertexIndex = static_cast<int>(k);
                 }
             }
         }
@@ -172,7 +172,7 @@ bool CIOGoldSrcMap::readFromString(std::string vText)
         {
             if (PairingLevel == 0)
             {
-                EntityStartIndex = i;
+                EntityStartIndex = static_cast<uint32_t>(i);
             }
             if (PairingLevel == 2) continue; // max level is 2, and need to void { appears in texture name
             PairingLevel++;
@@ -356,15 +356,15 @@ std::vector<float> SMapEntity::__parseFloatArray(std::string vText)
 
 float SMapEntity::__parseFloat(std::string vText)
 {
-    return atof(vText.c_str());
+    return static_cast<float>(atof(vText.c_str()));
 }
 
 std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
 {
     for (int i = 0; i < m_Entities.size(); ++i)
     {
-        auto Properties = m_Entities[i].Properties;
-        if (Properties.find("classname") != Properties.end() && Properties["classname"] == "worldspawn")
+        const auto& Properties = m_Entities[i].Properties;
+        if (Properties.find("classname") != Properties.end() && Properties.at("classname") == "worldspawn")
         {
             if (Properties.find("wad") == Properties.end())
             {
@@ -373,7 +373,7 @@ std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
             }
             else
             {
-                std::vector<std::string> WadNames = CIOBase::splitString(Properties["wad"], ';');
+                std::vector<std::string> WadNames = CIOBase::splitString(Properties.at("wad"), ';');
                 std::vector<std::filesystem::path> WadPaths(WadNames.begin(), WadNames.end());
                 return WadPaths;
             }
@@ -386,8 +386,8 @@ std::string CIOGoldSrcMap::getSkyBoxPrefix()
 {
     for (int i = 0; i < m_Entities.size(); ++i)
     {
-        auto Properties = m_Entities[i].Properties;
-        if (Properties.find("classname") != Properties.end() && Properties["classname"] == "worldspawn")
+        const auto& Properties = m_Entities[i].Properties;
+        if (Properties.find("classname") != Properties.end() && Properties.at("classname")== "worldspawn")
         {
             if (Properties.find("skyname") == Properties.end())
             {
@@ -396,7 +396,7 @@ std::string CIOGoldSrcMap::getSkyBoxPrefix()
             }
             else
             {
-                return Properties["skyname"];
+                return Properties.at("skyname");
             }
         }
     }

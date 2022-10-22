@@ -122,10 +122,7 @@ void CRenderPassVisPhysics::__destroyRecreateResources()
 
 void CRenderPassVisPhysics::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    float Aspect = 1.0;
-    if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
-        Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
-    m_pCamera->setAspect(Aspect);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
     
     m_PipelineVisCollider.updateUniformBuffer(vImageIndex, m_pCamera);
     m_PipelineVisCollidePoint.updateUniformBuffer(vImageIndex, m_pCamera);

@@ -161,7 +161,7 @@ glm::vec2 CSceneReaderRmf::__getTexCoord(SRmfFace vFace, glm::vec3 vVertex)
     size_t TexWidth = pImage->getWidth();
     size_t TexHeight = pImage->getHeight();
 
-    glm::vec2 TexCoord;
+    glm::vec2 TexCoord = {};
     TexCoord.x = (glm::dot(vVertex, vFace.TextureDirectionU.toGlm()) / vFace.TextureScaleU + vFace.TextureOffsetU) / TexWidth;
     TexCoord.y = (glm::dot(vVertex, vFace.TextureDirectionV.toGlm()) / vFace.TextureScaleV + vFace.TextureOffsetV) / TexHeight;
     return TexCoord;

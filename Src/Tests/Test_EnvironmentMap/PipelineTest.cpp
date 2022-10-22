@@ -19,8 +19,8 @@ namespace
 void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
-    int TexWidth = vSkyBoxImageSet[0]->getWidth();
-    int TexHeight = vSkyBoxImageSet[0]->getHeight();
+    size_t TexWidth = vSkyBoxImageSet[0]->getWidth();
+    size_t TexHeight = vSkyBoxImageSet[0]->getHeight();
     size_t SingleFaceImageSize = static_cast<size_t>(4) * TexWidth * TexHeight;
     size_t TotalImageSize = SingleFaceImageSize * 6;
     uint8_t* pPixelData = new uint8_t[TotalImageSize];
@@ -52,8 +52,8 @@ void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxIm
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    ImageInfo.extent.width = TexWidth;
-    ImageInfo.extent.height = TexHeight;
+    ImageInfo.extent.width = static_cast<uint32_t>(TexWidth);
+    ImageInfo.extent.height = static_cast<uint32_t>(TexHeight);
     ImageInfo.extent.depth = 1;
     ImageInfo.mipLevels = 1;
     ImageInfo.arrayLayers = 6;

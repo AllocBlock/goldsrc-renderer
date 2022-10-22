@@ -13,8 +13,8 @@ enum class EAttributeType
 
 struct SActorDataInfo
 {
-    VkDeviceSize First;
-    VkDeviceSize Num;
+    uint32_t First;
+    uint32_t Num;
 };
 
 class CTempScene
@@ -51,7 +51,7 @@ public:
     template <typename PointData_t>
     vk::CBuffer::Ptr generateVertexBuffer(vk::CDevice::CPtr vDevice, std::vector<SActorDataInfo>& voPositionSet, size_t& voVertexNum)
     {
-        size_t NumVertex = 0;
+        uint32_t VertexNum = 0;
         std::vector<std::vector<PointData_t>> DataSet;
         std::vector<SActorDataInfo> PositionSet;
         for (auto pActor : m_ActorSet)
@@ -60,17 +60,19 @@ public:
             auto MeshData = pMesh->getMeshData();
             const auto& Data = PointData_t::extractFromMeshData(MeshData);
             DataSet.emplace_back(Data);
-            PositionSet.push_back({ NumVertex, Data.size() });
-            NumVertex += Data.size();
+
+            uint32_t CurVertexNum = static_cast<uint32_t>(Data.size());
+            PositionSet.push_back({ VertexNum, CurVertexNum });
+            VertexNum += CurVertexNum;
         }
 
-        if (NumVertex == 0)
+        if (VertexNum == 0)
         {
             Log::log(u8"没有顶点数据，跳过顶点缓存创建");
             return nullptr;
         }
 
-        VkDeviceSize BufferSize = sizeof(PointData_t) * NumVertex;
+        VkDeviceSize BufferSize = sizeof(PointData_t) * VertexNum;
         uint8_t* pData = new uint8_t[BufferSize];
         size_t Offset = 0;
         for (const auto& Data : DataSet)
@@ -86,7 +88,7 @@ public:
         delete[] pData;
 
         voPositionSet = PositionSet;
-        voVertexNum = NumVertex;
+        voVertexNum = VertexNum;
         return pVertBuffer;
     }
 

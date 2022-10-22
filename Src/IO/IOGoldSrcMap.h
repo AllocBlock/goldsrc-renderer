@@ -27,7 +27,7 @@ struct SMapPlane
 struct SMapPolygon
 {
 	std::vector<glm::vec3> Vertices;
-	const SMapPlane* pPlane;
+	const SMapPlane* pPlane = nullptr;
 
 	std::vector<glm::vec2> getTexCoords(size_t vTexWidth, size_t vTexHeight);
 	glm::vec3 getNormal() const { return pPlane->getNormal(); };

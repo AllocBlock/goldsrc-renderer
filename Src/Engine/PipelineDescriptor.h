@@ -227,7 +227,7 @@ public:
         m_DynamicStateSet = vDynamicStateSet;
     }
 
-    void addPushConstant(VkShaderStageFlags vStage, VkDeviceSize vSize)
+    void addPushConstant(VkShaderStageFlags vStage, uint32_t vSize)
     {
         m_PushConstantSet.push_back(std::make_pair(vStage , vSize));
     }
@@ -290,7 +290,7 @@ private:
     bool m_IsDynamicStateSet = false;
     std::vector<VkDynamicState> m_DynamicStateSet;
 
-    std::vector<std::pair<VkShaderStageFlags, VkDeviceSize>> m_PushConstantSet;
+    std::vector<std::pair<VkShaderStageFlags, uint32_t>> m_PushConstantSet;
 
     VkPipelineRasterizationStateCreateInfo m_RasterizationStageInfo;
     VkPipelineMultisampleStateCreateInfo m_MultisampleStageInfo;

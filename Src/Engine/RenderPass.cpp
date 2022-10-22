@@ -20,9 +20,11 @@ void IRenderPass::init(const vk::SAppInfo& vAppInfo)
             if (NewDesc != m_CurPassDesc) // change happens
             {
                 m_CurPassDesc = NewDesc;
-                __createRenderpass();
+                if (__createRenderpass())
+                {
+                    __triggerRenderpassUpdate();
+                }
             }
-            __triggerRenderpassUpdate();
         }
     );
 
@@ -114,9 +116,10 @@ void IRenderPass::__destroyCommandPoolAndBuffers()
 
 bool IRenderPass::__createRenderpass()
 {
+    bool isPrevValid = isValid();
     __destroyRenderpass();
 
-    if (!m_CurPassDesc.isValid()) return false;
+    if (!m_CurPassDesc.isValid()) return isPrevValid;
 
     auto Info = m_CurPassDesc.generateInfo();
     vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
@@ -124,11 +127,13 @@ bool IRenderPass::__createRenderpass()
 
 #ifdef _DEBUG
     static int Count = 0;
-    std::cout << "create renderpass [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(get()) << std::setbase(10) << std::endl;
+    std::cout << "create renderpass [" << Count << "] = 0x" << std::setbase(16) << uint64_t(get()) << std::setbase(10) << std::endl;
     Count++;
 #endif
 
     __triggerRenderpassUpdate();
+
+    return true;
 }
 
 void IRenderPass::__destroyRenderpass()

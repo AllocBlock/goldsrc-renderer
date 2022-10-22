@@ -12,7 +12,7 @@ void CRenderPassShade::setShadowMapInfo(CCamera::CPtr vLightCamera)
 void CRenderPassShade::_initV()
 {
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
     m_pCamera->setPos(glm::vec3(-3, 6, 4));
     m_pCamera->setTheta(120.0f);
     m_pCamera->setPhi(300.0f);
@@ -66,7 +66,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
         VkBuffer VertBuffer = *m_pVertBuffer;
         vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         m_PipelineShade.bind(CommandBuffer, vImageIndex);
-        vkCmdDraw(CommandBuffer, m_VertexNum, 1, 0, 0);
+        vkCmdDraw(CommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
     }
     end();
     return { CommandBuffer };
@@ -130,11 +130,8 @@ void CRenderPassShade::__destroyRecreateResources()
 void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
 {
     _ASSERTE(m_pLightCamera);
-
-    float Aspect = 1.0;
-    if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
-        Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
-    m_pCamera->setAspect(Aspect);
+    
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
 
     m_PipelineShade.updateUniformBuffer(vImageIndex, m_pCamera, m_pLightCamera, gShadowMapSize);
 }

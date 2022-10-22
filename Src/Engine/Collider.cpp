@@ -72,6 +72,8 @@ bool __collideEdgeToPlane(const glm::vec3& vPlaneCenter, const glm::vec3& vPlane
 	voPosition = vEdgeStart + t * D;
 	voNormal = vPlaneNormal;
 	voDepth = (MaxT - t) * glm::abs(glm::dot(vPlaneNormal, D));
+
+	return true;
 }
 
 bool __collideQuadToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)

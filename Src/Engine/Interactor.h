@@ -66,10 +66,10 @@ private:
 
 	bool m_Enabled = true;
 	bool m_IsMoving = false;
-	double m_LastMousePosX = 0.0;
-	double m_LastMousePosY = 0.0;
-	double m_LastPhi = 0.0; 
-	double m_LastTheta = 0.0;
+	float m_LastMousePosX = 0.0f;
+	float m_LastMousePosY = 0.0f;
+	float m_LastPhi = 0.0f; 
+	float m_LastTheta = 0.0f;
 
 	std::map<int, std::function<void()>> m_KeyCallbackMap;
 	MouseCallback_t m_pMouseCallback = nullptr;

@@ -713,10 +713,7 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 
 void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
-    float Aspect = 1.0;
-    if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)
-        Aspect = static_cast<float>(m_AppInfo.Extent.width) / m_AppInfo.Extent.height;
-    m_pCamera->setAspect(Aspect);
+    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
 
     glm::mat4 Model = glm::mat4(1.0f);
     m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, m_pCamera);

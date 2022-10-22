@@ -66,7 +66,7 @@ glm::vec3 __generateRandomAlpha()
 {
     static std::default_random_engine e;
     static std::uniform_real_distribution<float> u(-1, 1);
-    float Speed = 2000.0f * (u(e) * 0.5 + 0.5);
+    float Speed = 2000.0f * (u(e) * 0.5f + 0.5f);
     return glm::normalize(glm::vec3(u(e), u(e), u(e))) * Speed;
 }
 
@@ -78,7 +78,7 @@ void CApplicationPhysics::_createV()
 
     m_pCamera = make<CCamera>();
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(AppInfo.Extent.width / AppInfo.Extent.height);
+    m_pCamera->setAspect(AppInfo.Extent.width, AppInfo.Extent.height);
     m_pCamera->setPos(glm::vec3(20.0, 20.0, 20.0));
     m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
 

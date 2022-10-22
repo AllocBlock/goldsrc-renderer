@@ -14,7 +14,7 @@ namespace vk
     template <typename T>
     struct SPassUpdateAttribute
     {
-        T Value;
+        T Value = T();
         bool IsUpdated = false;
 
         static SPassUpdateAttribute create(const T& vOld, const T& vNew)
@@ -133,7 +133,7 @@ namespace vk
     private:
         void __createCommandPoolAndBuffers();
         void __destroyCommandPoolAndBuffers();
-        bool __createRenderpass();
+        bool __createRenderpass(); // return if the pass is updated
         void __destroyRenderpass();
         void __beginCommand(VkCommandBuffer vCommandBuffer);
         void __endCommand(VkCommandBuffer vCommandBuffer);

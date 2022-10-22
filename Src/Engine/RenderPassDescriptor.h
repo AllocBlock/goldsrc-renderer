@@ -74,7 +74,7 @@ private:
     // avoid local point problem
     std::vector<VkAttachmentDescription> m_StageAttachmentDescSet;
     std::vector<VkAttachmentReference> m_StageColorRefSet;
-    VkAttachmentReference m_StageDepthRef;
+    VkAttachmentReference m_StageDepthRef = {};
     std::vector<VkSubpassDescription> m_StageSubpassDescSet;
     std::vector<VkSubpassDependency> m_StageDepedencySet;
 };
