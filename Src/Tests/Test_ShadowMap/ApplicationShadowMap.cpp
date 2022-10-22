@@ -1,49 +1,13 @@
-#include "ApplicationTest.h"
+#include "ApplicationShadowMap.h"
 #include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
 
 using namespace vk;
 
-void CApplicationTest::_initV()
+void CApplicationShadowMap::_createV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
-}
 
-void CApplicationTest::_updateV(uint32_t vImageIndex)
-{
-    m_pInteractor->update();
-    m_pPassGUI->update(vImageIndex);
-    m_pRenderPassShadowMap->update(vImageIndex);
-    m_pPassShade->update(vImageIndex);
-}
-
-void CApplicationTest::_renderUIV()
-{
-    UI::beginFrame();
-    UI::beginWindow(u8"ÒõÓ°Ó³Éä Shadow Map");
-    UI::text(u8"²âÊÔ");
-    m_pInteractor->getCamera()->renderUI();
-    if (UI::button(u8"µ¼³öShadowMapÍ¼Æ¬"))
-    {
-        m_pRenderPassShadowMap->exportShadowMapToFile("shadowmap.ppm");
-    }
-    UI::endWindow();
-    UI::endFrame();
-}
-
-std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
-{
-    std::vector<VkCommandBuffer> ShadowMapBuffers = m_pRenderPassShadowMap->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> ShadeBuffers = m_pPassShade->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> Result = ShadowMapBuffers;
-    Result.insert(Result.end(), ShadeBuffers.begin(), ShadeBuffers.end());
-    Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
-    return Result;
-}
-
-void CApplicationTest::_createOtherResourceV()
-{
     vk::SAppInfo AppInfo = getAppInfo();
 
     m_pRenderPassShadowMap = make<CRenderPassShadowMap>();
@@ -62,11 +26,44 @@ void CApplicationTest::_createOtherResourceV()
     __generateScene();
     m_pPassShade->setScene(m_pScene);
     m_pRenderPassShadowMap->setScene(m_pScene);
-    
+
     __linkPasses();
 }
 
-void CApplicationTest::_destroyOtherResourceV()
+void CApplicationShadowMap::_updateV(uint32_t vImageIndex)
+{
+    m_pInteractor->update();
+    m_pPassGUI->update(vImageIndex);
+    m_pRenderPassShadowMap->update(vImageIndex);
+    m_pPassShade->update(vImageIndex);
+}
+
+void CApplicationShadowMap::_renderUIV()
+{
+    UI::beginFrame();
+    UI::beginWindow(u8"ÒõÓ°Ó³Éä Shadow Map");
+    UI::text(u8"²âÊÔ");
+    m_pInteractor->getCamera()->renderUI();
+    if (UI::button(u8"µ¼³öShadowMapÍ¼Æ¬"))
+    {
+        m_pRenderPassShadowMap->exportShadowMapToFile("shadowmap.ppm");
+    }
+    UI::endWindow();
+    UI::endFrame();
+}
+
+std::vector<VkCommandBuffer> CApplicationShadowMap::_getCommandBufferSetV(uint32_t vImageIndex)
+{
+    std::vector<VkCommandBuffer> ShadowMapBuffers = m_pRenderPassShadowMap->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> ShadeBuffers = m_pPassShade->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
+    std::vector<VkCommandBuffer> Result = ShadowMapBuffers;
+    Result.insert(Result.end(), ShadeBuffers.begin(), ShadeBuffers.end());
+    Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
+    return Result;
+}
+
+void CApplicationShadowMap::_destroyV()
 {
     m_pPassGUI->destroy();
     m_pRenderPassShadowMap->destroy();
@@ -75,7 +72,7 @@ void CApplicationTest::_destroyOtherResourceV()
     cleanGlobalCommandBuffer();
 }
 
-void CApplicationTest::__linkPasses()
+void CApplicationShadowMap::__linkPasses()
 {
     auto pPortShadowMap = m_pRenderPassShadowMap->getPortSet();
     auto pPortShade = m_pPassShade->getPortSet();
@@ -94,7 +91,7 @@ void CApplicationTest::__linkPasses()
 
 }
 
-void CApplicationTest::__generateScene()
+void CApplicationShadowMap::__generateScene()
 {
     m_pScene = make<CTempScene>();
 

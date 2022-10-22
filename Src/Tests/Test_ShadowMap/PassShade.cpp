@@ -13,8 +13,9 @@ void CRenderPassShade::_initV()
 {
     m_pCamera->setFov(90);
     m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
-    m_pCamera->setPos(glm::vec3(10.0, 10.0, 10.0));
-    m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
+    m_pCamera->setPos(glm::vec3(-3, 6, 4));
+    m_pCamera->setTheta(120.0f);
+    m_pCamera->setPhi(300.0f);
     
     __createRecreateResources();
 

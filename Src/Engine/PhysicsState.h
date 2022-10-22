@@ -36,7 +36,7 @@ struct SPhysicsStateRigidBody : IPhysicsState
     bool HasGravity = true;
     glm::vec3 Velocity = glm::vec3(0.0f);
     glm::vec3 AngularVelocity = glm::vec3(0.0f); // direction as axis, length as speed
-    glm::mat3 InertiaTensor = glm::mat3(1.0f); // TODO: how to init? currently pretend it = 1 for all axis
+    glm::mat3 InertiaTensor = glm::mat3(1.0f); // TODO: how to create? currently pretend it = 1 for all axis
 
     glm::vec3 FrameAlpha = glm::vec3(0.0f);
 

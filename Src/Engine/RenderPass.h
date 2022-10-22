@@ -76,7 +76,7 @@ namespace vk
         virtual SPortDescriptor _getPortDescV() = 0;
 
         /*
-         * _initV: 
+         * _createV: 
          * triggers only once
          * AppInfo and PortSet is ready before trigger
          */

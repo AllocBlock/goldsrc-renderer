@@ -93,7 +93,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ApplicationTest.cpp" />
+    <ClCompile Include="ApplicationShadowMap.cpp" />
     <ClCompile Include="PipelineShadowMap.cpp" />
     <ClCompile Include="PassShade.cpp" />
     <ClCompile Include="PassShadowMap.cpp" />
@@ -101,7 +101,7 @@
     <ClCompile Include="PipelineShade.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationTest.h" />
+    <ClInclude Include="ApplicationShadowMap.h" />
     <ClInclude Include="PassTempSceneBase.h" />
     <ClInclude Include="PipelineShadowMap.h" />
     <ClInclude Include="PassShade.h" />

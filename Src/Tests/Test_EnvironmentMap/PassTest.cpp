@@ -2,7 +2,7 @@
 #include "RenderPassDescriptor.h"
 #include "Function.h"
 
-void CRenderPassTest::_initV()
+void CRenderPassSprite::_initV()
 {
     m_pCamera->setFov(90);
     m_pCamera->setAspect(m_AppInfo.Extent.width / m_AppInfo.Extent.height);
@@ -13,7 +13,7 @@ void CRenderPassTest::_initV()
     __createRecreateResources();
 }
 
-SPortDescriptor CRenderPassTest::_getPortDescV()
+SPortDescriptor CRenderPassSprite::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
@@ -22,18 +22,18 @@ SPortDescriptor CRenderPassTest::_getPortDescV()
     return Ports;
 }
 
-CRenderPassDescriptor CRenderPassTest::_getRenderPassDescV()
+CRenderPassDescriptor CRenderPassSprite::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
         m_pPortSet->getOutputPort("Depth"));
 }
 
-void CRenderPassTest::_updateV(uint32_t vImageIndex)
+void CRenderPassSprite::_updateV(uint32_t vImageIndex)
 {
     __updateUniformBuffer(vImageIndex);
 }
 
-std::vector<VkCommandBuffer> CRenderPassTest::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
@@ -58,7 +58,7 @@ std::vector<VkCommandBuffer> CRenderPassTest::_requestCommandBuffersV(uint32_t v
     return { CommandBuffer };
 }
 
-void CRenderPassTest::_destroyV()
+void CRenderPassSprite::_destroyV()
 {
     __destroyRecreateResources();
     m_pVertexBuffer->destroy();
@@ -67,13 +67,13 @@ void CRenderPassTest::_destroyV()
     IRenderPass::_destroyV();
 }
 
-void CRenderPassTest::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
+void CRenderPassSprite::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     __destroyRecreateResources();
     __createRecreateResources();
 }
 
-void CRenderPassTest::__loadSkyBox()
+void CRenderPassSprite::__loadSkyBox()
 {
     if (m_SkyFilePrefix.empty()) throw "sky box image file not found";
 
@@ -92,7 +92,7 @@ void CRenderPassTest::__loadSkyBox()
         throw "sky box image file not found";
 }
 
-bool CRenderPassTest::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension)
+bool CRenderPassSprite::__readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension)
 {
     // front back up down right left
     std::array<std::string, 6> SkyBoxPostfixes = { "ft", "bk", "up", "dn", "rt", "lf" };
@@ -112,18 +112,18 @@ bool CRenderPassTest::__readSkyboxImages(std::string vSkyFilePrefix, std::string
     return true;
 }
 
-void CRenderPassTest::__createGraphicsPipeline()
+void CRenderPassSprite::__createGraphicsPipeline()
 {
     m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
 }
 
-void CRenderPassTest::__createDepthResources()
+void CRenderPassSprite::__createDepthResources()
 {
     Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
-void CRenderPassTest::__createFramebuffers()
+void CRenderPassSprite::__createFramebuffers()
 {
     _ASSERTE(isValid());
 
@@ -136,13 +136,12 @@ void CRenderPassTest::__createFramebuffers()
             m_pPortSet->getOutputPort("Main")->getImageV(i),
             m_DepthImage
         };
-
-        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
+        
         m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }
 
-void CRenderPassTest::__createVertexBuffer()
+void CRenderPassSprite::__createVertexBuffer()
 {
      __generateScene();
     size_t VertexNum = m_PointDataSet.size();
@@ -156,7 +155,7 @@ void CRenderPassTest::__createVertexBuffer()
     }
 }
 
-void CRenderPassTest::__createRecreateResources()
+void CRenderPassSprite::__createRecreateResources()
 {
     __createDepthResources();
     if (isValid())
@@ -168,14 +167,14 @@ void CRenderPassTest::__createRecreateResources()
     }
 }
 
-void CRenderPassTest::__destroyRecreateResources()
+void CRenderPassSprite::__destroyRecreateResources()
 {
     m_DepthImage.destroy();
     m_FramebufferSet.destroyAndClearAll();
     m_Pipeline.destroy();
 }
 
-void CRenderPassTest::__generateScene()
+void CRenderPassSprite::__generateScene()
 {
     float Sqrt2 = std::sqrt(2);
     float Sqrt3 = std::sqrt(3);
@@ -195,7 +194,7 @@ void CRenderPassTest::__generateScene()
     __subdivideTriangle({ VertexSet[3], VertexSet[2], VertexSet[1] }, 4);
 }
 
-void CRenderPassTest::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth)
+void CRenderPassSprite::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth)
 {
     if (vDepth == 0)
     {
@@ -215,7 +214,7 @@ void CRenderPassTest::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, i
     }
 }
 
-void CRenderPassTest::__updateUniformBuffer(uint32_t vImageIndex)
+void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
     float Aspect = 1.0;
     if (m_AppInfo.Extent.height > 0 && m_AppInfo.Extent.width > 0)

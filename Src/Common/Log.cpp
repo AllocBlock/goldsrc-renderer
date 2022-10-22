@@ -1,4 +1,5 @@
 #include "Log.h"
+#include <iostream>
 
 using namespace Common;
 
@@ -18,4 +19,9 @@ bool Log::log(std::string vText)
     }
     else
         return false;
+}
+
+void Log::print(std::string vText, bool vEndOfLine)
+{
+    std::cout << vText << vEndOfLine ? "\n" : "";
 }

@@ -117,8 +117,7 @@ void CRenderPassPBR::__createFramebuffers()
             m_pPortSet->getOutputPort("Main")->getImageV(i),
             m_DepthImage
         };
-
-        m_FramebufferSet[i] = make<vk::CFrameBuffer>();
+        
         m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
     }
 }

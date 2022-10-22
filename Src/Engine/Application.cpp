@@ -4,7 +4,7 @@
 
 using namespace vk;
 
-void IApplication::init(GLFWwindow* vWindow)
+void IApplication::create(GLFWwindow* vWindow)
 {
     m_pWindow = vWindow;
 
@@ -21,9 +21,7 @@ void IApplication::init(GLFWwindow* vWindow)
     m_pSwapchainPort->markAsSwapchainSource();
     __createSwapchain();
 
-    _initV();
-
-    _createOtherResourceV();
+    _createV();
 }
 
 void IApplication::waitDevice()
@@ -34,8 +32,8 @@ void IApplication::waitDevice()
 void IApplication::destroy()
 {
     if (*m_pInstance == VK_NULL_HANDLE) return;
-
-    _destroyOtherResourceV();
+    
+    _destroyV();
     __destroySwapchain();
 
     for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
@@ -131,7 +129,7 @@ vk::SAppInfo IApplication::getAppInfo()
     return Info;
 }
 
-void IApplication::_initV()
+void IApplication::_createV()
 {
 }
 
@@ -144,15 +142,7 @@ std::vector<VkCommandBuffer> IApplication::_getCommandBufferSetV(uint32_t vImage
     return {};
 }
 
-void IApplication::_createOtherResourceV()
-{
-}
-
-void IApplication::_recreateOtherResourceV()
-{
-}
-
-void IApplication::_destroyOtherResourceV()
+void IApplication::_destroyV()
 {
 }
 
@@ -214,7 +204,6 @@ void IApplication::__recreateSwapchain()
     waitDevice();
     __destroySwapchain();
     __createSwapchain();
-    _recreateOtherResourceV();
 }
 
 std::vector<const char*> IApplication::__getRequiredExtensions()

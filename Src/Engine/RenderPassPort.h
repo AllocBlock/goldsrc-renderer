@@ -1,5 +1,4 @@
 #pragma once
-#include "Log.h"
 #include "PchVulkan.h"
 #include "Image.h"
 
@@ -7,8 +6,6 @@
 #include <vector>
 #include <map>
 #include <functional>
-#include <set>
-#include <chrono>
 
 enum class EUsage
 {
@@ -29,18 +26,9 @@ struct SPortFormat
 
     EUsage Usage = EUsage::DONT_CARE;
 
-    bool isMatch(const SPortFormat& v) const
-    {
-        return (Format == v.Format || Format == VkFormat::VK_FORMAT_UNDEFINED || v.Format == VkFormat::VK_FORMAT_UNDEFINED)
-            && (Extent.width == v.Extent.width || Extent.width == 0 || v.Extent.width == 0)
-            && (Extent.height == v.Extent.height || Extent.height == 0 || v.Extent.height == 0)
-            && (Num == v.Num || Num == 0 || v.Num == 0);
-    }
+    bool isMatch(const SPortFormat& v) const;
 
-    static SPortFormat createAnyOfUsage(EUsage vUsage)
-    {
-        return { VkFormat::VK_FORMAT_UNDEFINED, {0, 0}, 0, vUsage };
-    }
+    static SPortFormat createAnyOfUsage(EUsage vUsage);
 
     static const SPortFormat& AnyPortFormat;
     static const VkFormat& AnyFormat;
@@ -54,60 +42,22 @@ public:
     _DEFINE_PTR(ILinkEvent);
 
     using EventId_t = std::string;
+    static EventId_t generateEventId(std::string vPrefix);
 
-    static EventId_t generateEventId(std::string vPrefix)
-    {
-        auto Now = std::chrono::system_clock::now();
-        auto NowMs = std::chrono::duration_cast<std::chrono::milliseconds>(Now.time_since_epoch());
-        std::string Timestamp = std::to_string(NowMs.count());
-        return vPrefix + "_" + Timestamp;
-    }
+    size_t hookImageUpdate(std::function<void()> vCallback);
+    void unhookImageUpdate(size_t vHookId);
+    size_t hookLinkUpdate(std::function<void(EventId_t, ILinkEvent::CPtr)> vCallback);
+    void unhookLinkUpdate(size_t vHookId);
 
-    size_t hookImageUpdate(std::function<void()> vCallback)
-    {
-        m_ImageHookMap[m_CurImageHookId] = vCallback;
-        return m_CurImageHookId++;
-    }
-
-    void unhookImageUpdate(size_t vHookId)
-    {
-        if (m_ImageHookMap.find(vHookId) != m_ImageHookMap.end())
-            m_ImageHookMap.erase(vHookId);
-    }
-
-    size_t hookLinkUpdate(std::function<void(EventId_t, ILinkEvent::CPtr)> vCallback)
-    {
-        m_LinkHookMap[m_CurLinkHookId] = vCallback;
-        return m_CurLinkHookId++;
-    }
-
-    void unhookLinkUpdate(size_t vHookId)
-    {
-        if (m_LinkHookMap.find(vHookId) != m_LinkHookMap.end())
-            m_LinkHookMap.erase(vHookId);
-    }
 protected:
-    void _onImageUpdate()
-    {
-        for (const auto& Pair : m_ImageHookMap)
-            Pair.second();
-
-        _onImageUpdateExtendV();
-    }
-
-    void _onLinkUpdate(EventId_t vEventId, ILinkEvent::CPtr vFrom)
-    {
-        for (const auto& Pair : m_LinkHookMap)
-            Pair.second(vEventId, vFrom);
-
-        _onLinkUpdateExtendV(vEventId, vFrom);
-    }
+    void _onImageUpdate();
+    void _onLinkUpdate(EventId_t vEventId, ILinkEvent::CPtr vFrom);
 
     virtual void _onImageUpdateExtendV() {}
     virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) {}
 
 private:
-
+    static size_t CurEventId;
     size_t m_CurImageHookId = 1;
     size_t m_CurLinkHookId = 1;
     std::map<size_t, std::function<void()>> m_ImageHookMap;
@@ -147,17 +97,7 @@ public:
     }
     void clearChildren() { m_ChildSet.clear(); }
 
-    void attachTo(CPort::Ptr vPort)
-    {
-        _ASSERTE(isMatch(vPort));
-
-        auto pThis = shared_from_this();
-
-        m_pParent = vPort;
-        vPort->m_ChildSet.emplace_back(pThis);
-
-        _onLinkUpdate(generateEventId("LinkUpdate"), nullptr);
-    }
+    void attachTo(CPort::Ptr vPort);
 
     // if the link of this port is ready, means it has a source port as head and no in valid port before it
     virtual bool isReadyV() const
@@ -165,15 +105,7 @@ public:
         return !m_ForceNotReady;
     }
 
-    void setForceNotReady(bool vForceNotReady) 
-    { 
-        if (m_ForceNotReady != vForceNotReady)
-        {
-            m_ForceNotReady = vForceNotReady;
-            _onImageUpdate();
-            _onLinkUpdate(generateEventId("LinkUpdate"), nullptr);
-        }
-    }
+    void setForceNotReady(bool vForceNotReady);
     bool isForceNotReady() const { return m_ForceNotReady; }
 
     const SPortFormat& getFormat() const { return m_Format; }
@@ -188,25 +120,10 @@ public:
 
 protected:
     // image update propagates to tail
-    virtual void _onImageUpdateExtendV() override final
-    {
-        for (const auto& pChild : m_ChildSet)
-            pChild->_onImageUpdate();
-    }
+    virtual void _onImageUpdateExtendV() override final;
 
     // link update propagates to whole link
-    virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) override final
-    {
-        auto pThis = shared_from_this();
-        if (!m_pParent.expired() && m_pParent.lock() != vFrom)
-            m_pParent.lock()->_onLinkUpdate(vEventId, pThis);
-
-        for (auto pChild : m_ChildSet)
-        {
-            if (pChild != vFrom)
-                pChild->_onLinkUpdate(vEventId, pThis);
-        }
-    }
+    virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) override final;
 
     bool m_isSwapchainSource = false;
 
@@ -224,51 +141,14 @@ class CSourcePort : public CPort
 public:
     _DEFINE_PTR(CSourcePort);
 
-    CSourcePort(const SPortFormat& vFormat) : CPort(vFormat)
-    {
-        if (vFormat.Format != VkFormat::VK_FORMAT_UNDEFINED && vFormat.Extent.width != 0 && vFormat.Extent.height != 0)
-        {
-            setActualFormat(vFormat.Format, vFormat.Extent);
-        }
-    }
+    CSourcePort(const SPortFormat& vFormat);
 
-    virtual VkImageView getImageV(size_t vIndex = 0) const override final
-    {
-        _ASSERTE(m_ImageMap.find(vIndex) != m_ImageMap.end());
-        return m_ImageMap.at(vIndex);
-    }
-
-    virtual bool hasActualFormatV() const override final
-    {
-        return m_IsActualFormatSet;
-    }
-
-    virtual SPortFormat getActualFormatV() const override final
-    {
-        _ASSERTE(m_IsActualFormatSet);
-        return { m_ActualFormat, m_ActualExtent, m_ImageMap.size() };
-    }
-
-    virtual bool isReadyV() const override final
-    {
-        return CPort::isReadyV();
-    }
-
-    void setImage(VkImageView vImage, size_t vIndex = 0)
-    {
-        if (m_ImageMap.find(vIndex) == m_ImageMap.end() || m_ImageMap[vIndex] != vImage)
-        {
-            m_ImageMap[vIndex] = vImage;
-            _onImageUpdate();
-        }
-    }
-
-    void setActualFormat(VkFormat vFormat, VkExtent2D vExtent)
-    {
-        m_IsActualFormatSet = true;
-        m_ActualFormat = vFormat;
-        m_ActualExtent = vExtent;
-    }
+    virtual VkImageView getImageV(size_t vIndex = 0) const override final;
+    virtual bool hasActualFormatV() const override final;
+    virtual SPortFormat getActualFormatV() const override final;
+    virtual bool isReadyV() const override final;
+    void setImage(VkImageView vImage, size_t vIndex = 0);
+    void setActualFormat(VkFormat vFormat, VkExtent2D vExtent);
 
 private:
     std::map<size_t, VkImageView> m_ImageMap;
@@ -285,84 +165,22 @@ public:
 
     CRelayPort(const SPortFormat& vFormat) : CPort(vFormat) {}
 
-    virtual VkImageView getImageV(size_t vIndex = 0) const override final
-    {
-        _ASSERTE(!m_pParent.expired());
-        return m_pParent.lock()->getImageV(vIndex);
-    }
-
-    virtual bool hasActualFormatV() const override final
-    {
-        if (m_pParent.expired()) return false;
-        else return m_pParent.lock()->hasActualFormatV();
-    }
-
-    virtual SPortFormat getActualFormatV() const override final
-    {
-        _ASSERTE(!m_pParent.expired());
-        return m_pParent.lock()->getActualFormatV();
-    }
-
-    virtual bool isReadyV() const override final
-    {
-        if (m_pParent.expired()) return false;
-        else return CPort::isReadyV() && m_pParent.lock()->isReadyV();
-    }
+    virtual VkImageView getImageV(size_t vIndex = 0) const override final;
+    virtual bool hasActualFormatV() const override final;
+    virtual SPortFormat getActualFormatV() const override final;
+    virtual bool isReadyV() const override final;
 };
 
 class SPortDescriptor
 {
 public:
-    void addInput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat)
-    {
-        _ASSERTE(!hasInput(vName));
-        _ASSERTE(!hasInputOutput(vName));
-
-        m_InputPortNameSet.emplace_back(vName);
-        m_InputPortSet.emplace_back(vFormat);
-    }
-
-    void addOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat)
-    {
-        _ASSERTE(!hasOutput(vName));
-        _ASSERTE(!hasInputOutput(vName));
-
-        m_OutputPortNameSet.emplace_back(vName);
-        m_OutputPortSet.emplace_back(vFormat);
-    }
-
-    void addInputOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat)
-    {
-        _ASSERTE(!hasInput(vName));
-        _ASSERTE(!hasOutput(vName));
-        _ASSERTE(!hasInputOutput(vName));
-
-        m_InputOutputPortNameSet.emplace_back(vName);
-        m_InputOutputPortSet.emplace_back(vFormat);
-    }
-
-    void clear()
-    {
-        m_InputPortNameSet.clear();
-        m_InputPortSet.clear();
-        m_OutputPortNameSet.clear();
-        m_OutputPortSet.clear();
-        m_InputOutputPortNameSet.clear();
-        m_InputOutputPortSet.clear();
-    }
-
-    bool hasInput(const std::string vName) const 
-    { 
-        return std::find(m_InputPortNameSet.begin(), m_InputPortNameSet.end(), vName) != m_InputPortNameSet.end();
-    }
-    bool hasOutput(const std::string vName) const
-    {
-        return std::find(m_OutputPortNameSet.begin(), m_OutputPortNameSet.end(), vName) != m_OutputPortNameSet.end();
-    }
-    bool hasInputOutput(const std::string vName) const
-    {
-        return std::find(m_InputOutputPortNameSet.begin(), m_InputOutputPortNameSet.end(), vName) != m_InputOutputPortNameSet.end();
-    }
+    void addInput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
+    void addOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
+    void addInputOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
+    void clear();
+    bool hasInput(const std::string vName) const;
+    bool hasOutput(const std::string vName) const;
+    bool hasInputOutput(const std::string vName) const;
 
     std::vector<std::string> m_InputPortNameSet;
     std::vector<SPortFormat> m_InputPortSet;
@@ -378,161 +196,35 @@ public:
     _DEFINE_PTR(CPortSet);
 
     CPortSet() = delete;
-    CPortSet(const SPortDescriptor& vDesc)
-    {
-        for (size_t i = 0; i < vDesc.m_InputPortNameSet.size(); ++i)
-        {
-            __addInput(vDesc.m_InputPortNameSet[i], vDesc.m_InputPortSet[i]);
-        }
-        for (size_t i = 0; i < vDesc.m_OutputPortNameSet.size(); ++i)
-        {
-            __addOutput(vDesc.m_OutputPortNameSet[i], vDesc.m_OutputPortSet[i]);
-        }
+    CPortSet(const SPortDescriptor& vDesc);
 
-        for (size_t i = 0; i < vDesc.m_InputOutputPortNameSet.size(); ++i)
-        {
-            __addInputOutput(vDesc.m_InputOutputPortNameSet[i], vDesc.m_InputOutputPortSet[i]);
-        }
-    }
+    bool isReady();
 
-    bool isReady()
-    {
-        for (const auto& Pair : m_InputPortMap)
-        {
-            if (!Pair.second->isReadyV()) return false;
-        }
-        for (const auto& Pair : m_OutputPortMap)
-        {
-            if (!Pair.second->isReadyV()) return false;
-        }
-        return true;
-    }
+    bool hasInput(const std::string& vName) const;
+    bool hasOutput(const std::string& vName) const;
 
-    bool hasInput(const std::string& vName) const { return m_InputPortMap.find(vName) != m_InputPortMap.end(); }
-    bool hasOutput(const std::string& vName) const { return m_OutputPortMap.find(vName) != m_OutputPortMap.end(); }
+    CPort::Ptr getInputPort(const std::string& vName);
+    CPort::Ptr getOutputPort(const std::string& vName);
+    const SPortFormat& getInputFormat(const std::string& vName);
+    const SPortFormat& getOutputFormat(const std::string& vName);
 
-    CPort::Ptr getInputPort(const std::string& vName)
-    {
-        _ASSERTE(hasInput(vName));
-        return m_InputPortMap.at(vName);
-    }
+    void setOutput(const std::string& vOutputName, VkImageView vImage, VkFormat vFormat, VkExtent2D vExtent, size_t vIndex = 0);
+    void setOutput(const std::string& vOutputName, const vk::CImage& vImage, size_t vIndex = 0);
+    void append(const std::string& vInputName, CPort::Ptr vPort);
+    void attachTo(const std::string& vInputName, CPort::Ptr vPort);
 
-    CPort::Ptr getOutputPort(const std::string& vName)
-    {
-        _ASSERTE(hasOutput(vName));
-        return m_OutputPortMap.at(vName);
-    }
-
-    const SPortFormat& getInputFormat(const std::string& vName)
-    {
-        _ASSERTE(hasInput(vName));
-        return getInputPort(vName)->getFormat();
-    }
-
-    const SPortFormat& getOutputFormat(const std::string& vName)
-    {
-        _ASSERTE(hasOutput(vName));
-        return getOutputPort(vName)->getFormat();
-    }
-
-    void setOutput(const std::string& vOutputName, VkImageView vImage, VkFormat vFormat, VkExtent2D vExtent, size_t vIndex = 0)
-    {
-        SPortFormat Format;
-        Format.Format = vFormat;
-        Format.Extent = vExtent;
-        Format.Num = 0; // dont care
-
-        auto pPort = getOutputPort(vOutputName);
-        const auto& TargetFormat = pPort->getFormat();
-        _ASSERTE(Format.isMatch(pPort->getFormat()));
-
-        if (TargetFormat.Num != 0 && vIndex >= TargetFormat.Num)
-        {
-            Common::Log::log("Warning: more images than specific port image num are set on Output port [" + vOutputName + "]");
-        }
-
-        CSourcePort::Ptr pSourcePort = std::dynamic_pointer_cast<CSourcePort>(pPort);
-
-        // FIXME: what if different formats/extents are set? how to deal this?
-        pSourcePort->setActualFormat(vFormat, vExtent);
-        pSourcePort->setImage(vImage, vIndex);
-    }
-
-    void setOutput(const std::string& vOutputName, const vk::CImage& vImage, size_t vIndex = 0)
-    {
-        setOutput(vOutputName, vImage, vImage.getFormat(), vImage.getExtent(), vIndex);
-    }
-
-    void append(const std::string& vInputName, CPort::Ptr vPort)
-    {
-        auto pPort = getInputPort(vInputName);
-        pPort->append(vPort);
-    }
-
-    void attachTo(const std::string& vInputName, CPort::Ptr vPort)
-    {
-        auto pPort = getInputPort(vInputName);
-        pPort->attachTo(vPort);
-    }
-
-    static void link(CPort::Ptr vOutputPort, CPort::Ptr vInputPort)
-    {
-        _ASSERTE(vOutputPort);
-        _ASSERTE(vInputPort);
-        vOutputPort->append(vInputPort);
-    }
-
-    static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPort::Ptr vInputPort)
-    {
-        link(vSet1->getOutputPort(vOutputName), vInputPort);
-    }
-
-    static void link(CPort::Ptr vOutputPort, CPortSet::Ptr vSet2, const std::string& vInputName)
-    {
-        link(vOutputPort, vSet2->getInputPort(vInputName));
-    }
-
-    static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPortSet::Ptr vSet2, const std::string& vInputName)
-    {
-        link(vSet1->getOutputPort(vOutputName), vSet2->getInputPort(vInputName));
-    }
+    static void link(CPort::Ptr vOutputPort, CPort::Ptr vInputPort);
+    static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPort::Ptr vInputPort);
+    static void link(CPort::Ptr vOutputPort, CPortSet::Ptr vSet2, const std::string& vInputName);
+    static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPortSet::Ptr vSet2, const std::string& vInputName);
 
 private:
-    void __addInput(const std::string& vName, const SPortFormat& vFormat)
-    {
-        _ASSERTE(!hasInput(vName));
-        m_InputPortMap[vName] = make<CRelayPort>(vFormat);
-        m_InputPortMap[vName]->hookImageUpdate(m_pImageUpdateCallbackFunc);
-        m_InputPortMap[vName]->hookLinkUpdate(m_pLinkUpdateCallbackFunc);
-    }
+    void __addInput(const std::string& vName, const SPortFormat& vFormat);
+    void __addOutput(const std::string& vName, const SPortFormat& vFormat);
+    void __addInputOutput(const std::string& vName, const SPortFormat& vFormat);
 
-    void __addOutput(const std::string& vName, const SPortFormat& vFormat)
-    {
-        _ASSERTE(!hasOutput(vName));
-        m_OutputPortMap[vName] = make<CSourcePort>(vFormat);
-        m_OutputPortMap[vName]->hookImageUpdate(m_pImageUpdateCallbackFunc);
-        m_OutputPortMap[vName]->hookLinkUpdate(m_pLinkUpdateCallbackFunc);
-    }
-
-    void __addInputOutput(const std::string& vName, const SPortFormat& vFormat)
-    {
-        _ASSERTE(!hasOutput(vName));
-        _ASSERTE(!hasInput(vName));
-        CRelayPort::Ptr pPort = make<CRelayPort>(vFormat);
-        pPort->hookImageUpdate(m_pImageUpdateCallbackFunc);
-        pPort->hookLinkUpdate(m_pLinkUpdateCallbackFunc);
-        m_InputPortMap[vName] = m_OutputPortMap[vName] = pPort;
-    }
-
-    std::function<void()> m_pImageUpdateCallbackFunc = [this]() { _onImageUpdate(); };
-    std::function<void(EventId_t, ILinkEvent::CPtr)> m_pLinkUpdateCallbackFunc = [this](EventId_t vEventId, ILinkEvent::CPtr vFrom)
-    {
-        if (m_LastEventId != vEventId) // only once
-        {
-            m_LastEventId = vEventId;
-            _onLinkUpdate(vEventId, vFrom);
-        }
-    };
+    std::function<void()> m_pImageUpdateCallbackFunc = nullptr;
+    std::function<void(EventId_t, ILinkEvent::CPtr)> m_pLinkUpdateCallbackFunc = nullptr;
     std::map<std::string, CPort::Ptr> m_InputPortMap;
     std::map<std::string, CPort::Ptr> m_OutputPortMap;
 

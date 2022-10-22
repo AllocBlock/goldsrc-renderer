@@ -206,6 +206,8 @@
     - 引入下PresentPort，用于确定一个link是否完整，presentport只在最后定义（或者mark也可以），这样可以避免冗余重建！
     - 或者也不需要PresentPort，给SourcePort加一个暂时无效化，等创建完后再置为有效就行了
     - **解决方法2：在批量更新状态时，暂时禁用节点更新（具体方法是让swapchain无效化，这样整个链条无效，链条无效时不会重建renderpass），最后做一个恢复与重建即可；重复触发的问题，PortSet自己记录EventId，重复的Id不触发**
+  - **问题：就算按上述方法做依旧非常慢...另外顺序很混乱，遇到了bug：打断点慢运行不触发，而无断点会触发的情况**
+    - 这个是不是eventid名称生成的粒度不够？...太快了所以出问题...换一个思路吧不用时间了
 
 #### image layout如何管理
   - 一个image可做多种用途（采样输入，渲染目标），在使用时最好是对应的layout，layout可以手动在command里转换，在renderpass渲染时也会指定一次layout转换，确认每个attachment输入和输出的layout

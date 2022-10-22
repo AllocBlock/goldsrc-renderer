@@ -7,8 +7,6 @@
 #include "Camera.h"
 #include "Mesh.h"
 
-#include <glm/ext/matrix_transform.hpp>
-
 class CPipelineShade : public IPipeline
 {
 public:

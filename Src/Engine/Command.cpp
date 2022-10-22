@@ -27,6 +27,12 @@ void CCommand::createPool(CDevice::CPtr vDevice, ECommandType vType, uint32_t vQ
     PoolInfo.queueFamilyIndex = vQueueIndex;
 
     vk::checkError(vkCreateCommandPool(*m_pDevice, &PoolInfo, nullptr, &m_CommandPool));
+
+//#ifdef _DEBUG
+//    static int Count = 0;
+//    std::cout << "create command pool [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_CommandPool) << std::setbase(10) << std::endl;
+//    Count++;
+//#endif
 }
 
 void CCommand::createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel)

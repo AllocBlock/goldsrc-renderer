@@ -306,14 +306,14 @@ void UI::setScrollHereY(float vCenterRatio) { ImGui::SetScrollHereY(vCenterRatio
 
 bool UI::isUsingMouse()
 {
-    __checkIsInitted();
+    if (!gIsInitted) return false;
     ImGuiIO& IO = ImGui::GetIO();
     return IO.WantCaptureMouse;
 }
 
 bool UI::isUsingKeyboard()
 {
-    __checkIsInitted();
+    if (!gIsInitted) return false;
     ImGuiIO& IO = ImGui::GetIO();
     return IO.WantCaptureKeyboard;
 }

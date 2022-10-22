@@ -18,10 +18,10 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ApplicationTest.cpp">
+    <ClCompile Include="ApplicationSprite.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RendererTest.cpp">
+    <ClCompile Include="PassSprite.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PipelineSprite.cpp">
@@ -29,10 +29,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationTest.h">
+    <ClInclude Include="ApplicationSprite.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RendererTest.h">
+    <ClInclude Include="PassSprite.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineSprite.h">

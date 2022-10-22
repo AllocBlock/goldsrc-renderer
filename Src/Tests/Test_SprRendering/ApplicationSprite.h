@@ -1,15 +1,13 @@
 #pragma once
 #include "Application.h"
 #include "Interactor.h"
-#include "PipelineEnvironment.h"
 #include "PassGUI.h"
-#include "PassPBR.h"
-#include "PassFullScreen.h"
+#include "PassSprite.h"
 
-class CApplicationPBR : public IApplication
+class CApplicationSprite : public IApplication
 {
 public:
-    CApplicationPBR() = default;
+    CApplicationSprite() = default;
 
 protected:
     virtual void _createV() override;
@@ -21,11 +19,7 @@ protected:
 private:
     void __linkPasses();
 
-    CCamera::Ptr m_pCamera = nullptr;
-    ptr<CRenderPassGUI> m_pGUI = nullptr;
-    ptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
-    ptr<CRenderPassFullScreen> m_pRenderPassFullScreen = nullptr;
-    ptr<CPipelineEnvironment> m_pPipelineEnv = nullptr;
+    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
+    ptr<CRenderPassSprite> m_pPassMain = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };
-

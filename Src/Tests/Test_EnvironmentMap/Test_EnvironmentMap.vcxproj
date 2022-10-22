@@ -93,13 +93,13 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ApplicationTest.cpp" />
+    <ClCompile Include="ApplicationEnvMap.cpp" />
     <ClCompile Include="PassTest.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PipelineTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationTest.h" />
+    <ClInclude Include="ApplicationEnvMap.h" />
     <ClInclude Include="PassTest.h" />
     <ClInclude Include="PipelineTest.h" />
   </ItemGroup>

@@ -27,7 +27,7 @@ public:
     IApplication() = default;
     virtual ~IApplication() = default;
 
-    void init(GLFWwindow* vWindow);
+    void create(GLFWwindow* vWindow);
     void render();
     void waitDevice();
     void destroy();
@@ -36,13 +36,11 @@ public:
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
 
 protected:
-    virtual void _initV();
+    virtual void _createV();
     virtual void _updateV(uint32_t vImageIndex);
     virtual void _renderUIV() {};
     virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex);
-    virtual void _createOtherResourceV();
-    virtual void _recreateOtherResourceV();
-    virtual void _destroyOtherResourceV();
+    virtual void _destroyV();
 
     GLFWwindow* m_pWindow = nullptr;
     vk::CInstance::Ptr m_pInstance = make<vk::CInstance>();

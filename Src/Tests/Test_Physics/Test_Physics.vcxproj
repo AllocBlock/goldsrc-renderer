@@ -93,14 +93,14 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ApplicationTest.cpp" />
+    <ClCompile Include="ApplicationPhysics.cpp" />
     <ClCompile Include="PassShade.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassVisPhysics.cpp" />
     <ClCompile Include="PipelineShade.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationTest.h" />
+    <ClInclude Include="ApplicationPhysics.h" />
     <ClInclude Include="PassShade.h" />
     <ClInclude Include="PassVisPhysics.h" />
     <ClInclude Include="PipelineShade.h" />

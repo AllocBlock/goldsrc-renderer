@@ -6,10 +6,10 @@
 #include "Buffer.h"
 #include "PipelineTest.h"
 
-class CRenderPassTest : public vk::IRenderPass
+class CRenderPassSprite : public vk::IRenderPass
 {
 public:
-    CRenderPassTest() : m_pCamera(make<CCamera>()) {}
+    CRenderPassSprite() : m_pCamera(make<CCamera>()) {}
 
     CCamera::Ptr getCamera() { return m_pCamera; }
 

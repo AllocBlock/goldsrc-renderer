@@ -5,7 +5,7 @@
 #include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
 
-void CApplicationGoldSrc::_initV()
+void CApplicationGoldSrc::_createV()
 {
     m_pCamera = make<CCamera>();
 
@@ -42,7 +42,7 @@ void CApplicationGoldSrc::_renderUIV()
     UI::endFrame();
 }
 
-void CApplicationGoldSrc::_createOtherResourceV()
+void CApplicationGoldSrc::_createV()
 {
     vk::SAppInfo AppInfo = getAppInfo();
 
@@ -110,13 +110,16 @@ void CApplicationGoldSrc::_recreateOtherResourceV()
     m_pPassGUI->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
 }
 
-void CApplicationGoldSrc::_destroyOtherResourceV()
+void CApplicationGoldSrc::_destroyV()
 {
     destroyAndClear(m_pPassScene);
     destroyAndClear(m_pPassOutlineMask);
     destroyAndClear(m_pPassOutlineEdge);
     destroyAndClear(m_pPassGUI);
+}
 
+void CApplicationGoldSrc::_destroyV()
+{
     cleanGlobalCommandBuffer();
 }
 

@@ -1,4 +1,4 @@
-#include "ApplicationTest.h"
+#include "ApplicationPhysics.h"
 #include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
 #include "Ticker.h"
@@ -70,7 +70,7 @@ glm::vec3 __generateRandomAlpha()
     return glm::normalize(glm::vec3(u(e), u(e), u(e))) * Speed;
 }
 
-void CApplicationTest::_initV()
+void CApplicationPhysics::_createV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
@@ -83,9 +83,32 @@ void CApplicationTest::_initV()
     m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
 
     m_pPhysicsEngine = make<CPhysicsEngine>();
+
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
+
+    m_pPassGUI = make<CRenderPassGUI>();
+    m_pPassGUI->setWindow(m_pWindow);
+    m_pPassGUI->init(AppInfo);
+
+    m_pPassShade = make<CRenderPassShade>();
+    m_pPassShade->init(AppInfo);
+    m_pPassShade->setCamera(m_pCamera);
+
+    m_pPassVisPhysics = make<CRenderPassVisPhysics>();
+    m_pPassVisPhysics->init(AppInfo);
+    m_pPassVisPhysics->setCamera(m_pCamera);
+
+    m_pScene = __generateScene();
+    __resetActors();
+    __initPhysicsEngine();
+    m_pPassVisPhysics->setPhysicsEngine(m_pPhysicsEngine);
+    m_pPassShade->setScene(m_pScene);
+
+    __linkPasses();
 }
 
-void CApplicationTest::_updateV(uint32_t vImageIndex)
+void CApplicationPhysics::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
@@ -98,7 +121,7 @@ void CApplicationTest::_updateV(uint32_t vImageIndex)
     m_pPhysicsEngine->update(DeltaTime);
 }
 
-void CApplicationTest::_renderUIV()
+void CApplicationPhysics::_renderUIV()
 {
     UI::beginFrame();
     UI::beginWindow(u8"物理系统 Physics");
@@ -176,7 +199,7 @@ void CApplicationTest::_renderUIV()
     UI::endFrame();
 }
 
-std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CApplicationPhysics::_getCommandBufferSetV(uint32_t vImageIndex)
 {
     std::vector<VkCommandBuffer> ShadeBuffers = m_pPassShade->requestCommandBuffers(vImageIndex);
     std::vector<VkCommandBuffer> VisPhysicsBuffers = m_pPassVisPhysics->requestCommandBuffers(vImageIndex);
@@ -187,39 +210,7 @@ std::vector<VkCommandBuffer> CApplicationTest::_getCommandBufferSetV(uint32_t vI
     return Result;
 }
 
-void CApplicationTest::_createOtherResourceV()
-{
-    vk::SAppInfo AppInfo = getAppInfo();
-
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
-
-    m_pPassGUI = make<CRenderPassGUI>();
-    m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo);
-
-    m_pPassShade = make<CRenderPassShade>();
-    m_pPassShade->init(AppInfo);
-    m_pPassShade->setCamera(m_pCamera);
-
-    m_pPassVisPhysics = make<CRenderPassVisPhysics>();
-    m_pPassVisPhysics->init(AppInfo);
-    m_pPassVisPhysics->setCamera(m_pCamera);
-    
-    m_pScene = __generateScene();
-    __resetActors();
-    __initPhysicsEngine();
-    m_pPassVisPhysics->setPhysicsEngine(m_pPhysicsEngine);
-    m_pPassShade->setScene(m_pScene);
-    
-    __linkPasses();
-}
-
-void CApplicationTest::_recreateOtherResourceV()
-{
-}
-
-void CApplicationTest::_destroyOtherResourceV()
+void CApplicationPhysics::_destroyV()
 {
     destroyAndClear(m_pPassGUI);
     destroyAndClear(m_pPassShade);
@@ -229,7 +220,7 @@ void CApplicationTest::_destroyOtherResourceV()
     cleanGlobalCommandBuffer();
 }
 
-void CApplicationTest::__initPhysicsEngine()
+void CApplicationPhysics::__initPhysicsEngine()
 {
     for (size_t i = 0; i < m_pScene->getActorNum(); ++i)
     {
@@ -238,7 +229,7 @@ void CApplicationTest::__initPhysicsEngine()
     }
 }
 
-void CApplicationTest::__resetActors()
+void CApplicationPhysics::__resetActors()
 {
     auto pGround = m_pScene->findActor("Ground");
     _ASSERTE(pGround);
@@ -266,7 +257,7 @@ void CApplicationTest::__resetActors()
     pSphere1->clearMoveState();*/
 }
 
-void CApplicationTest::__linkPasses()
+void CApplicationPhysics::__linkPasses()
 {
     auto pPortShade = m_pPassShade->getPortSet();
     auto pPortVisPhysics = m_pPassVisPhysics->getPortSet();

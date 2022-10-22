@@ -18,7 +18,7 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ApplicationTest.cpp">
+    <ClCompile Include="ApplicationEnvMap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PipelineTest.cpp">
@@ -29,7 +29,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationTest.h">
+    <ClInclude Include="ApplicationEnvMap.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineTest.h">

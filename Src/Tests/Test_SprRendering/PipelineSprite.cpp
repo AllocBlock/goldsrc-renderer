@@ -4,64 +4,45 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-const size_t CPipelineSprite::MaxSpriteNum = 2048;
+const size_t CPipelineSprite::MaxSpriteNum = 16; // if need change, you should change this in shader as well
 
-struct SPointData
+namespace
 {
-    glm::vec3 Pos;
-    glm::vec2 TexCoord;
-
-    using PointData_t = SPointData;
-    _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+    struct SPointData
     {
-        CVertexAttributeDescriptor Descriptor;
-        Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-        Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
-        return Descriptor.generate();
-    }
-};
+        glm::vec3 Pos;
+        glm::vec2 TexCoord;
 
-struct SUBOVert
-{
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::vec3 EyePosition;
-    alignas(16) glm::vec3 EyeDirection;
-};
+        using PointData_t = SPointData;
+        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
 
-void CPipelineSprite::destroy()
-{
-    if (m_pDevice == VK_NULL_HANDLE) return;
+        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
+        {
+            CVertexAttributeDescriptor Descriptor;
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
+            return Descriptor.generate();
+        }
+    };
 
-    m_Sampler.destroy();
-
-    for (auto& pImage : m_SpriteImageSet)
-        pImage->destroy();
-    m_SpriteImageSet.clear();
-
-    m_pPlaceholderImage->destroy();
-
-    m_pVertexDataBuffer->destroy();
-    for (auto& pBuffer : m_VertUniformBufferSet)
-        pBuffer->destroy();
-    m_VertUniformBufferSet.clear();
-
-    IPipeline::destroy();
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+        alignas(16) glm::vec3 EyePosition;
+        alignas(16) glm::vec3 EyeDirection;
+    };
 }
 
 void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImageSet)
 {
     _ASSERTE(vSpriteImageSet.size() <= CPipelineSprite::MaxSpriteNum);
-    // Ϊͼ�괴��vkimage
-    for (auto& pImage : m_SpriteImageSet)
-        pImage->destroy();
-    m_SpriteImageSet.resize(vSpriteImageSet.size());
+
+    m_SpriteImageSet.init(vSpriteImageSet.size());
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        m_SpriteImageSet[i] = Function::createImageFromIOImage(m_pDevice, vSpriteImageSet[i].pImage);
+        Function::createImageFromIOImage(*m_SpriteImageSet[i], m_pDevice, vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -96,65 +77,46 @@ void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImag
             vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &PushConstant);
             vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
         }
-
     }
 }
 
-void CPipelineSprite::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+void CPipelineSprite::_initShaderResourceDescriptorV()
 {
-    voBinding = SPointData::getBindingDescription();
-    voAttributeSet = SPointData::getAttributeDescriptionSet();
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    m_ShaderResourceDescriptor.clear();
+
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("Sampler", 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Texture", 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSprite::MaxSpriteNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineSprite::_getInputAssemblyStageInfoV()
+CPipelineDescriptor CPipelineSprite::_getPipelineDescriptionV()
 {
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    CPipelineDescriptor Descriptor;
 
-    return Info;
-}
+    Descriptor.setVertShaderPath("shaders/sprShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/sprShaderFrag.spv");
 
-std::vector<VkPushConstantRange> CPipelineSprite::_getPushConstantRangeSetV()
-{
-    VkPushConstantRange PushConstantVertInfo = {};
-    PushConstantVertInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    PushConstantVertInfo.offset = 0;
-    PushConstantVertInfo.size = sizeof(SSpritePushConstant);
+    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.addPushConstant<SSpritePushConstant>(VK_SHADER_STAGE_VERTEX_BIT);
+    Descriptor.addPushConstant<SSpritePushConstant>(VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    VkPushConstantRange PushConstantFragInfo = {};
-    PushConstantFragInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    PushConstantFragInfo.offset = 0;
-    PushConstantFragInfo.size = sizeof(SSpritePushConstant);
+    Descriptor.setEnableDepthTest(false);
+    Descriptor.setEnableDepthWrite(false);
 
-    return { PushConstantVertInfo, PushConstantFragInfo };
-}
-
-VkPipelineDepthStencilStateCreateInfo CPipelineSprite::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_FALSE;
-    DepthStencilInfo.depthWriteEnable = VK_FALSE;
-    DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
-
-    return DepthStencilInfo;
-}
-
-void CPipelineSprite::_getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment)
-{
     // result color = source color * source alpha + dst(old) color * (1 - source alpha)
     // result alpha = source alpha
-    voBlendAttachment = {};
-    voBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    voBlendAttachment.blendEnable = VK_TRUE;
-    voBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    voBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    voBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-    voBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    voBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    voBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    Descriptor.setEnableBlend(true);
+    Descriptor.setColorBlendSrcFactor(VK_BLEND_FACTOR_SRC_ALPHA);
+    Descriptor.setColorBlendDstFactor(VK_BLEND_FACTOR_ONE);
+    Descriptor.setColorBlendOp(VK_BLEND_OP_ADD);
+    Descriptor.setAlphaBlendSrcFactor(VK_BLEND_FACTOR_ONE);
+    Descriptor.setAlphaBlendDstFactor(VK_BLEND_FACTOR_ONE);
+    Descriptor.setAlphaBlendOp(VK_BLEND_OP_ADD);
+
+    return Descriptor;
 }
 
 void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
@@ -166,7 +128,6 @@ void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 void CPipelineSprite::_createResourceV(size_t vImageNum)
 {
     // create unit square facing positive x-axis
-    // ˳ʱ��
     const std::vector<SPointData> PointData =
     {
         {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
@@ -185,11 +146,10 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.resize(vImageNum);
+    m_VertUniformBufferSet.init(vImageNum);
 
     for (size_t i = 0; i < vImageNum; ++i)
     {
-        m_VertUniformBufferSet[i] = make<vk::CUniformBuffer>();
         m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }
 
@@ -201,23 +161,19 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
 
     // placeholder image
-    uint8_t Data[4] = { 0, 0, 0, 0 };
-    auto pTinyImage = make<CIOImage>();
-    pTinyImage->setSize(1, 1);
-    pTinyImage->setData(Data);
-    m_pPlaceholderImage = Function::createImageFromIOImage(m_pDevice, pTinyImage);
+    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
-void CPipelineSprite::_initShaderResourceDescriptorV()
+void CPipelineSprite::_destroyV()
 {
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_ShaderResourceDescriptor.clear();
+    if (m_pDevice == VK_NULL_HANDLE) return;
 
-    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_ShaderResourceDescriptor.add("Sampler", 1, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_ShaderResourceDescriptor.add("Texture", 2, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSprite::MaxSpriteNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_Sampler.destroy();
+    m_SpriteImageSet.destroyAndClearAll();
+    m_PlaceholderImage.destroy();
 
-    m_ShaderResourceDescriptor.createLayout(m_pDevice);
+    destroyAndClear(m_pVertexDataBuffer);
+    m_VertUniformBufferSet.destroyAndClearAll();
 }
 
 void CPipelineSprite::__updateDescriptorSet()
@@ -226,7 +182,7 @@ void CPipelineSprite::__updateDescriptorSet()
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
         WriteInfo.addWriteSampler(1, m_Sampler);
 
         const size_t NumTexture = m_SpriteImageSet.size();
@@ -237,12 +193,12 @@ void CPipelineSprite::__updateDescriptorSet()
             if (i >= NumTexture)
             {
                 if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = *m_pPlaceholderImage;
+                    TexImageViewSet[i] = m_PlaceholderImage;
                 else
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = m_SpriteImageSet[i]->get();
+                TexImageViewSet[i] = *m_SpriteImageSet[i];
         }
 
         WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);

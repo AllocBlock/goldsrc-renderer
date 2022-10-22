@@ -18,6 +18,9 @@
     <ClInclude Include="Function.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TestUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Function.cpp">

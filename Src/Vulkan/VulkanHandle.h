@@ -54,7 +54,7 @@ namespace vk
             return m_Set[vIndex];
         }
 
-        // auto destroy before init
+        // auto destroy before create
         void init(size_t vNum)
         {
             destroyAndClearAll();

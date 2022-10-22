@@ -10,5 +10,6 @@ namespace Common
 
         void setLogObserverFunc(LogFunc vLogFunc);
         bool log(std::string vText);
+        void print(std::string vText, bool vEndOfLine = true);
     }
 }

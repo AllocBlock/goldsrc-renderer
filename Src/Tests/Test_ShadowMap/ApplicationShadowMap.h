@@ -5,18 +5,17 @@
 #include "PassShade.h"
 #include "PassShadowMap.h"
 
-class CApplicationTest : public IApplication
+class CApplicationShadowMap : public IApplication
 {
 public:
-    CApplicationTest() = default;
+    CApplicationShadowMap() = default;
 
 protected:
-    virtual void _initV() override;
+    virtual void _createV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex) override;
-    virtual void _createOtherResourceV() override;
-    virtual void _destroyOtherResourceV() override;
+    virtual void _destroyV() override;
 
 private:
     void __linkPasses();

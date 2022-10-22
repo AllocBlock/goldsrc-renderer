@@ -28,8 +28,8 @@ public:
 	glm::vec3 getUp() const { return m_Up; }
 	glm::vec3 getFront() const;
 	glm::vec3 getLeft() const { return glm::normalize(glm::cross(m_Up, getFront())); }
-	float getPhi() const { return m_Phi; }
-	float getTheta() const { return m_Theta; }
+	float getPhi() const { return m_Phi; } // in degree, [0, 360]
+	float getTheta() const { return m_Theta; } // in degree [0, 180]
 	float getFov() const { return m_Fov; }
 	float getAspect() const { return m_Aspect; }
 	float getNear() const { return m_Near; }
@@ -37,8 +37,8 @@ public:
 
 	void setPos(glm::vec3 vPos) { m_Pos = vPos; }
 	void setUp(glm::vec3 vUp) { m_Up = vUp; }
-	void setPhi(float vPhi) { m_Phi = Common::mod(vPhi, 360.0f);}
-	void setTheta(float vTheta) { m_Theta = Common::mod(vTheta, 180.0f); }
+	void setPhi(float vPhi) { m_Phi = Common::mod(vPhi, 360.0f);} // in degree, [0, 360]
+	void setTheta(float vTheta) { m_Theta = Common::mod(vTheta, 180.0f); } // in degree [0, 180]
 	void setFov(float vFov) { m_Fov = vFov; }
 	void setAspect(float vAspect) { m_Aspect = vAspect; }
 	void setNear(float vNear) { m_Near = vNear; }
