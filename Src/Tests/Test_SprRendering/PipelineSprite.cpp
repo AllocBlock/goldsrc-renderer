@@ -2,8 +2,6 @@
 #include "Function.h"
 #include "VertexAttributeDescriptor.h"
 
-#include <glm/ext/matrix_transform.hpp>
-
 const size_t CPipelineSprite::MaxSpriteNum = 16; // if need change, you should change this in shader as well
 
 namespace
@@ -105,16 +103,9 @@ CPipelineDescriptor CPipelineSprite::_getPipelineDescriptionV()
 
     Descriptor.setEnableDepthTest(false);
     Descriptor.setEnableDepthWrite(false);
-
-    // result color = source color * source alpha + dst(old) color * (1 - source alpha)
-    // result alpha = source alpha
+    
     Descriptor.setEnableBlend(true);
-    Descriptor.setColorBlendSrcFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-    Descriptor.setColorBlendDstFactor(VK_BLEND_FACTOR_ONE);
-    Descriptor.setColorBlendOp(VK_BLEND_OP_ADD);
-    Descriptor.setAlphaBlendSrcFactor(VK_BLEND_FACTOR_ONE);
-    Descriptor.setAlphaBlendDstFactor(VK_BLEND_FACTOR_ONE);
-    Descriptor.setAlphaBlendOp(VK_BLEND_OP_ADD);
+    Descriptor.setBlendMethod(EBlendFunction::NORMAL);
 
     return Descriptor;
 }

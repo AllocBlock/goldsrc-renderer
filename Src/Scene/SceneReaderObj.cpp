@@ -1,23 +1,24 @@
 #include "SceneReaderObj.h"
 #include "SceneCommon.h"
+#include "SceneGoldsrcCommon.h"
 #include "IOObj.h"
 
-ptr<SScene> CSceneReaderObj::_readV()
+ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
 {
     Scene::reportProgress(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();
     Obj.read(m_FilePath);
 
     Scene::reportProgress(u8"读取场景中");
-    ptr<CMeshDataGoldSrc> pObjObject = make<CMeshDataGoldSrc>();
+    CMeshDataGoldSrc MeshData = CMeshDataGoldSrc();
     const uint32_t TexIndex = 0;
 
-    auto pVertexArray = pObjObject->getVertexArray();
-    auto pColorArray = pObjObject->getColorArray();
-    auto pNormalArray = pObjObject->getNormalArray();
-    auto pTexCoordArray = pObjObject->getTexCoordArray();
-    auto pLightmapCoordArray = pObjObject->getLightmapCoordArray();
-    auto pTexIndexArray = pObjObject->getTexIndexArray();
+    auto pVertexArray = MeshData.getVertexArray();
+    auto pColorArray = MeshData.getColorArray();
+    auto pNormalArray = MeshData.getNormalArray();
+    auto pTexCoordArray = MeshData.getTexCoordArray();
+    auto pLightmapCoordArray = MeshData.getLightmapTexCoordArray();
+    auto pTexIndexArray = MeshData.getTexIndexArray();
 
     const std::vector<SObjFace>& Faces = Obj.getFaces();
     for (size_t i = 0; i < Faces.size(); ++i)
@@ -55,9 +56,12 @@ ptr<SScene> CSceneReaderObj::_readV()
         }
     }
 
-    m_pScene = make<SScene>();
-    m_pScene->Objects.emplace_back(pObjObject);
-    m_pScene->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
 
-    return m_pScene;
+    m_pSceneInfo = make<SSceneInfoGoldSrc>();
+    m_pSceneInfo->pScene = make<CTempScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene->addActor(pActor);
+    m_pSceneInfo->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+
+    return m_pSceneInfo;
 }

@@ -6,7 +6,9 @@
 #include "PhysicsState.h"
 
 #include <string>
+#include <set>
 
+template <typename MeshData_t = CMeshDataGeneral>
 class CActor
 {
 public:
@@ -18,7 +20,7 @@ public:
 	}
 
 	_DEFINE_GETTER_SETTER(Name, std::string)
-	_DEFINE_GETTER_SETTER_POINTER(Mesh, CMesh::CPtr)
+	_DEFINE_GETTER_SETTER_POINTER(Mesh, cptr<CMesh<MeshData_t>>)
 
 	_DEFINE_GETTER_POINTER(Transform, ptr<STransform>)
     _DEFINE_GETTER_POINTER(PhysicsState, ptr<SPhysicsStateRigidBody>)
@@ -63,9 +65,21 @@ public:
 		m_pTransform->reset();
 	}
 
+	void addTag(const std::string& vTag) { m_TagSet.insert(vTag); }
+	bool hasTag(const std::string& vTag) { return m_TagSet.count(vTag) > 0; }
+	void removeTag(const std::string& vTag) { if (hasTag(vTag)) m_TagSet.erase(vTag); }
+	void clearAllTag() { m_TagSet.clear(); }
+
+	SAABB getAABB() const
+	{
+		return m_pMesh->getAABB().transform(m_pTransform);
+	}
+
 private:
 	std::string m_Name;
 	const ptr<STransform> m_pTransform = make<STransform>();
-	CMesh::CPtr m_pMesh = nullptr;
-	const ptr<SPhysicsStateRigidBody> m_pPhysicsState = make<SPhysicsStateRigidBody>();;
+	cptr<CMesh<MeshData_t>> m_pMesh = nullptr;
+	const ptr<SPhysicsStateRigidBody> m_pPhysicsState = make<SPhysicsStateRigidBody>();
+
+	std::set<std::string> m_TagSet;
 };

@@ -7,13 +7,14 @@
 #include <vector>
 #include <fstream>
 
-void CSceneSimpleRenderPass::_loadSceneV(ptr<SScene> vScene)
+void CSceneSimpleRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
+    CRenderPassSceneTyped::_loadSceneV(vScene);
+
     m_AppInfo.pDevice->waitUntilIdle();
-    m_pScene = vScene;
 
     m_AreObjectsVisable.clear();
-    m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
+    m_AreObjectsVisable.resize(m_pSceneInfo->pScene->getActorNum(), false);
 
     __destroySceneResources();
     __createSceneResources();
@@ -23,7 +24,7 @@ void CSceneSimpleRenderPass::_loadSceneV(ptr<SScene> vScene)
 
 void CSceneSimpleRenderPass::rerecordCommand()
 {
-    m_RerecordCommandTimes += m_AppInfo.ImageNum;
+    m_RerecordCommandTimes = m_AppInfo.ImageNum;
 }
 
 void CSceneSimpleRenderPass::_initV()
@@ -60,9 +61,9 @@ void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState
             m_PipelineSet.Main.setImageNum(m_AppInfo.ImageNum);
             m_PipelineSet.Sky.setImageNum(m_AppInfo.ImageNum);
 
-            if (m_pScene && m_pScene->UseSkyBox)
+            if (m_pSceneInfo && m_pSceneInfo->UseSkyBox)
             {
-                m_PipelineSet.Sky.setSkyBoxImage(m_pScene->SkyBoxImages);
+                m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
             }
         }
         __createFramebuffers();
@@ -102,13 +103,11 @@ void CSceneSimpleRenderPass::_renderUIV()
 void CSceneSimpleRenderPass::_destroyV()
 {
     m_DepthImage.destroy();
-
     m_FramebufferSet.destroyAndClearAll();
-
     m_PipelineSet.destroy();
 
     __destroySceneResources();
-    CSceneRenderPass::_destroyV();
+    CRenderPassScene::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -135,13 +134,11 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         
         bool Valid = true;
         VkDeviceSize Offsets[] = { 0 };
-        if (m_pVertexBuffer &&m_pVertexBuffer->isValid())
+        if (isNonEmptyAndValid(m_pVertexBuffer))
         {
             VkBuffer VertBuffer = *m_pVertexBuffer;
             vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         }
-        else if (m_pIndexBuffer && m_pIndexBuffer->isValid())
-            vkCmdBindIndexBuffer(CommandBuffer, *m_pIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
         else
             Valid = false;
 
@@ -149,11 +146,11 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         {
             __calculateVisiableObjects();
             m_PipelineSet.Main.bind(CommandBuffer, vImageIndex);
-            for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+            for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
                 if (m_AreObjectsVisable[i])
                 {
-                    __recordObjectRenderCommand(vImageIndex, i);
+                    __recordRenderActorCommand(vImageIndex, i);
                 }
             }
         }
@@ -167,28 +164,24 @@ void CSceneSimpleRenderPass::__createSceneResources()
 {
     __createTextureImages();
     __updateDescriptorSets();
-    __createVertexBuffer();
 
-    m_EnableSky = m_EnableSky && m_pScene && m_pScene->UseSkyBox;
+    m_EnableSky = m_EnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
 
-    if (m_pScene && m_pScene->UseSkyBox && m_PipelineSet.Sky.isValid())
+    if (m_pSceneInfo && m_pSceneInfo->UseSkyBox && m_PipelineSet.Sky.isValid())
     {
-        m_PipelineSet.Sky.setSkyBoxImage(m_pScene->SkyBoxImages);
+        m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
     }
 }
 
 void CSceneSimpleRenderPass::__destroySceneResources()
 {
     m_TextureImageSet.destroyAndClearAll();
-
-    if (m_pIndexBuffer) m_pIndexBuffer->destroy();
-    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 }
 
-void CSceneSimpleRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
+void CSceneSimpleRenderPass::__recordRenderActorCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
-    _recordObjectRenderCommand(CommandBuffer, vObjectIndex);
+    _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
 void CSceneSimpleRenderPass::__createGraphicsPipelines()
@@ -233,42 +226,9 @@ void CSceneSimpleRenderPass::__createTextureImages()
         m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-             Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
+             Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pSceneInfo->TexImageSet[i]);
         }
     }
-}
-
-void CSceneSimpleRenderPass::__createVertexBuffer()
-{
-    size_t NumVertex = 0;
-    if (m_pScene)
-    {
-        for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
-            NumVertex += pObject->getVertexArray()->size();
-        if (NumVertex == 0)
-        {
-            Log::log(u8"没有顶点数据，跳过顶点缓存创建");
-            return;
-        } 
-    }
-    else
-        return;
-
-    VkDeviceSize BufferSize = sizeof(SSimplePointData) * NumVertex;
-    uint8_t* pData = new uint8_t[BufferSize];
-    size_t Offset = 0;
-    for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
-    {
-        std::vector<SSimplePointData> PointData = __readPointData(pObject);
-        size_t SubBufferSize = sizeof(SSimplePointData) * pObject->getVertexArray()->size();
-        memcpy(reinterpret_cast<char*>(pData) + Offset, PointData.data(), SubBufferSize);
-        Offset += SubBufferSize;
-    }
-
-    m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    m_pVertexBuffer->stageFill(pData, BufferSize);
-    delete[] pData;
 }
 
 void CSceneSimpleRenderPass::__updateDescriptorSets()
@@ -276,32 +236,9 @@ void CSceneSimpleRenderPass::__updateDescriptorSets()
     m_PipelineSet.Main.updateDescriptorSet(m_TextureImageSet);
 }
 
-std::vector<SSimplePointData> CSceneSimpleRenderPass::__readPointData(ptr<CMeshDataGoldSrc> vpObject) const
-{
-    auto pVertexArray = vpObject->getVertexArray();
-    auto pNormalArray = vpObject->getNormalArray();
-    auto pTexCoordArray = vpObject->getTexCoordArray();
-    auto pTexIndexArray = vpObject->getTexIndexArray();
-
-    size_t NumPoint = pVertexArray->size();
-    _ASSERTE(NumPoint == pNormalArray->size());
-    _ASSERTE(NumPoint == pTexCoordArray->size());
-    _ASSERTE(NumPoint == pTexIndexArray->size());
-
-    std::vector<SSimplePointData> PointData(NumPoint);
-    for (size_t i = 0; i < NumPoint; ++i)
-    {
-        PointData[i].Pos = pVertexArray->get(i);
-        PointData[i].Normal = pNormalArray->get(i);
-        PointData[i].TexCoord = pTexCoordArray->get(i);
-        PointData[i].TexIndex = pTexIndexArray->get(i);
-    }
-    return PointData;
-}
-
 size_t CSceneSimpleRenderPass::__getActualTextureNum()
 {
-    size_t NumTexture = m_pScene ? m_pScene->TexImageSet.size() : 0;
+    size_t NumTexture = m_pSceneInfo ? m_pSceneInfo->TexImageSet.size() : 0;
     if (NumTexture > CPipelineSimple::MaxTextureNum)
     {
         Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(CPipelineSimple::MaxTextureNum) + u8"), 多出的纹理将被忽略");
@@ -312,20 +249,24 @@ size_t CSceneSimpleRenderPass::__getActualTextureNum()
 
 void CSceneSimpleRenderPass::__calculateVisiableObjects()
 {
-    if (!m_pScene) return;
+    if (!m_pSceneInfo) return;
+
+    auto pScene = m_pSceneInfo->pScene;
 
     SFrustum Frustum = m_pCamera->getFrustum();
 
-    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+    for (size_t i = 0; i < pScene->getActorNum(); ++i)
     {
+        auto pActor = pScene->getActor(i);
+
         m_AreObjectsVisable[i] = false;
 
-        if (m_pScene->Objects[i]->getMark() == "sky" || m_pScene->Objects[i]->getVertexArray()->empty())
+        if (pActor->hasTag("sky") || m_ActorDataInfoSet[i].Num == 0)
             continue;
 
         if (m_EnableCulling)
         {
-            if (i >= m_pScene->BspTree.NodeNum + m_pScene->BspTree.LeafNum) // ignore culling for model for now
+            if (i >= m_pSceneInfo->BspTree.NodeNum + m_pSceneInfo->BspTree.LeafNum) // ignore culling for model for now
             {
                 m_AreObjectsVisable[i] = true;
                 continue;
@@ -333,7 +274,7 @@ void CSceneSimpleRenderPass::__calculateVisiableObjects()
 
             // frustum culling: don't draw object outside of view (judge by bounding box)
             if (m_EnableFrustumCulling)
-                if (!_isObjectInSight(m_pScene->Objects[i], Frustum))
+                if (!isActorInSight(pActor, Frustum))
                     continue;
         }
 

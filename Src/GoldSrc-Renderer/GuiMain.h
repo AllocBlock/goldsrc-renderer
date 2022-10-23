@@ -6,7 +6,7 @@
 #include "GuiLog.h"
 #include "GuiFGD.h"
 #include "GuiRequestPopupModal.h"
-#include "Scene.h"
+#include "SceneInfoGoldSrc.h"
 
 #include <future>
 
@@ -20,11 +20,11 @@ struct SResultReadScene
 {
     bool Succeed = false;
     std::string Message;
-    ptr<SScene> pScene;
+    ptr<SSceneInfoGoldSrc> pSceneInfo;
 };
 
 // TODO: custom event loop!
-using ReadSceneCallbackFunc_T = std::function<void(ptr<SScene>)>;
+using ReadSceneCallbackFunc_T = std::function<void(ptr<SSceneInfoGoldSrc>)>;
 using ChangeRenderMethodCallbackFunc_T = std::function<void(ERenderMethod)>;
 
 class CGUIMain : public IDrawableUI
@@ -68,7 +68,7 @@ private:
     CGuiFGD m_FGD;
     CGuiRequestPopupModal m_RequestPopupModal;
 
-    SScene::Ptr m_pCurScene = nullptr;
+    ptr<SSceneInfoGoldSrc> m_pCurSceneInfo = nullptr;
 
     struct SControl
     {

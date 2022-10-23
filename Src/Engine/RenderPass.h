@@ -54,6 +54,7 @@ namespace vk
     {
     public:
         IRenderPass();
+        virtual ~IRenderPass() = default;
 
         void init(const vk::SAppInfo& vAppInfo);
         void update(uint32_t vImageIndex);

@@ -1,19 +1,21 @@
 #pragma once
-#include "ScenePass.h"
+#include "RenderPass.h"
 #include "FrameBuffer.h"
-#include "Scene.h"
+#include "BoundingBox.h"
 #include "Camera.h"
 #include "Pipeline3DGui.h"
 
 #include <vulkan/vulkan.h> 
 #include <glm/glm.hpp>
 
-class CLineRenderPass : public CSceneRenderPass
+class CLineRenderPass : public vk::IRenderPass
 {
 public:
     CLineRenderPass() = default;
 
-    void setHighlightBoundingBox(Math::S3DBoundingBox vBoundingBox);
+    _DEFINE_GETTER_SETTER_POINTER(Camera, CCamera::CPtr);
+
+    void setHighlightBoundingBox(SAABB vBoundingBox);
     void removeHighlightBoundingBox();
     void addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 vEnd);
 
@@ -28,8 +30,6 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
-    virtual void _loadSceneV(ptr<SScene> vScene) override {}
-
 private:
     void __rerecordCommand();
     void __createFramebuffers();
@@ -38,4 +38,5 @@ private:
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
     size_t m_RerecordCommandTimes = 0;
+    CCamera::CPtr m_pCamera = nullptr;
 };

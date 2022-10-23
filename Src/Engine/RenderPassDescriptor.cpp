@@ -32,7 +32,7 @@ SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bo
         }
     }
 
-    return { vPort->getActualFormatV().Format, toLayout(CurUsage, vIsDepth), toLayout(NextUsage, vIsDepth), IsBegin, IsEnd };
+    return { vPort->getActualFormatV(), toLayout(CurUsage, vIsDepth), toLayout(NextUsage, vIsDepth), IsBegin, IsEnd };
 }
 
 void CRenderPassDescriptor::addColorAttachment(CPort::Ptr vPort)

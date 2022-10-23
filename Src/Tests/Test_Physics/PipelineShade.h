@@ -31,7 +31,7 @@ public:
             return Result;
         }
 
-        static std::vector<SPointData> extractFromMeshData(const CGeneralMeshDataTest& vMeshData)
+        static std::vector<SPointData> extractFromMeshData(const CMeshDataGeneral& vMeshData)
         {
             auto pVertexArray = vMeshData.getVertexArray();
             auto pNormalArray = vMeshData.getNormalArray();

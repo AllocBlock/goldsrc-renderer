@@ -40,10 +40,16 @@ bool Environment::findFile(const std::filesystem::path& vTargetName, const std::
     std::filesystem::path CurDir = FullPath.parent_path();
     std::filesystem::path FileName = FullPath.filename();
 
-    std::vector<std::filesystem::path> SearchDirs;
-    SearchDirs.emplace_back(CurDir); 
-    if (!vAddtionalSearchDir.empty()) SearchDirs.emplace_back(vAddtionalSearchDir);
-    if (vSearchInEnvironment) SearchDirs.insert(SearchDirs.end(), gPaths.begin(), gPaths.end());
+    std::set<std::filesystem::path> SearchDirs;
+    SearchDirs.insert(CurDir); 
+    if (!vAddtionalSearchDir.empty())
+    {
+        std::filesystem::path AddDir = std::filesystem::absolute(vAddtionalSearchDir / vTargetName).parent_path();
+        SearchDirs.insert(AddDir);
+    }
+    if (vSearchInEnvironment)
+        for (const auto& Path : gPaths)
+            SearchDirs.insert(Path);
 
     for (const std::filesystem::path& SearchDir : SearchDirs)
     {
@@ -53,6 +59,14 @@ bool Environment::findFile(const std::filesystem::path& vTargetName, const std::
             return true;
         }
     }
+    return false;
+}
+
+bool Environment::findFile(const std::filesystem::path& vTargetName, const std::vector<std::filesystem::path>& vAddtionalSearchDirSet, bool vSearchInEnvironment, std::filesystem::path& voFilePath)
+{
+    for (const auto& SearchDir : vAddtionalSearchDirSet)
+        if (Environment::findFile(vTargetName, SearchDir, vSearchInEnvironment, voFilePath))
+            return true;
     return false;
 }
 

@@ -9,7 +9,7 @@
 #include <functional>
 #include <algorithm>
 
-using ReadFunc_t = std::function<ptr<SScene>(std::filesystem::path)>;
+using ReadFunc_t = std::function<ptr<SSceneInfoGoldSrc>(std::filesystem::path)>;
 std::map<std::string, ReadFunc_t> g_RegistedList;
 
 template <typename T>
@@ -19,7 +19,7 @@ struct SRegister
     SRegister(std::string vType)
     {
         std::transform(vType.begin(), vType.end(), vType.begin(), ::tolower);
-        g_RegistedList[vType] = [](std::filesystem::path vFilePath) -> ptr<SScene>
+        g_RegistedList[vType] = [](std::filesystem::path vFilePath) -> ptr<SSceneInfoGoldSrc>
         {
             T Reader;
             return Reader.read(vFilePath);
@@ -35,11 +35,11 @@ REGISTER_FILE(CSceneReaderMap, "map");
 REGISTER_FILE(CSceneReaderBsp, "bsp");
 REGISTER_FILE(CSceneReaderMdl, "mdl");
 
-ptr<SScene> SceneReader::read(std::string vType, std::filesystem::path vFilePath)
+ptr<SSceneInfoGoldSrc> SceneInterface::read(std::string vType, std::filesystem::path vFilePath)
 {
     std::transform(vType.begin(), vType.end(), vType.begin(), ::tolower);
     if (g_RegistedList.count(vType) == 0)
-        throw std::runtime_error(u8"Î´ÖªµÄÎÄ¼þÀàÐÍ");
+        throw std::runtime_error(u8"Î´Öªï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½");
     else
         return g_RegistedList[vType](vFilePath);
 }

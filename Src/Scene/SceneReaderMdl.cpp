@@ -1,17 +1,18 @@
 #include "SceneReaderMdl.h"
 #include "SceneCommon.h"
+#include "SceneGoldsrcCommon.h"
 
-ptr<SScene> CSceneReaderMdl::_readV()
+ptr<SSceneInfoGoldSrc> CSceneReaderMdl::_readV()
 {
     m_pIOMdl = make<CIOGoldSrcMdl>();
     m_pIOMdl->read(m_FilePath);
 
-    auto pScene = make<SScene>();
+    auto pSceneInfo = make<SSceneInfoGoldSrc>();
     auto BodyPartSet = m_pIOMdl->getBodyParts();
     for (const auto& BodyPart : BodyPartSet)
     {
         auto pObject = __readBodyPart(BodyPart);
-        pScene->Objects.emplace_back(pObject);
+        pSceneInfo->pScene->addActor(pObject);
     }
 
     auto TextureSet = m_pIOMdl->getTextures();
@@ -24,33 +25,32 @@ ptr<SScene> CSceneReaderMdl::_readV()
         pImage->setData(pData);
         delete[] pData;
 
-        pScene->TexImageSet.emplace_back(pImage);
+        pSceneInfo->TexImageSet.emplace_back(pImage);
     }
 
-    return pScene;
+    return pSceneInfo;
 }
 
-ptr<CMeshDataGoldSrc> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
+CActor<CMeshDataGoldSrc>::Ptr CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
 {
-    auto pObject = make<CMeshDataGoldSrc>();
-    pObject->setPrimitiveType(E3DObjectPrimitiveType::TRIAGNLE_LIST);
+    CMeshDataGoldSrc MeshData;
 
     for (const auto& Model : vBodyPart.ModelSet)
     {
-        __readModel(Model, pObject);
+        __appendModelData(Model, MeshData);
     }
 
-    return pObject;
+    return GoldSrc::createActorByMeshAndTag(MeshData, { "model" });
 }
 
-void CSceneReaderMdl::__readModel(const SMdlModel& vModel, ptr<CMeshDataGoldSrc> voObject)
+void CSceneReaderMdl::__appendModelData(const SMdlModel& vModel, CMeshDataGoldSrc& vioMeshData)
 {
-    auto pVertexArray = voObject->getVertexArray();
-    auto pColorArray = voObject->getColorArray();
-    auto pNormalArray = voObject->getNormalArray();
-    auto pTexCoordArray = voObject->getTexCoordArray();
-    auto pLightmapCoordArray = voObject->getLightmapCoordArray();
-    auto pTexIndexArray = voObject->getTexIndexArray();
+    auto pVertexArray = vioMeshData.getVertexArray();
+    auto pColorArray = vioMeshData.getColorArray();
+    auto pNormalArray = vioMeshData.getNormalArray();
+    auto pTexCoordArray = vioMeshData.getTexCoordArray();
+    auto pLightmapCoordArray = vioMeshData.getLightmapTexCoordArray();
+    auto pTexIndexArray = vioMeshData.getTexIndexArray();
 
     auto TextureSet = m_pIOMdl->getTextures();
     auto SkinReferenceSet = m_pIOMdl->getSkinReferences();

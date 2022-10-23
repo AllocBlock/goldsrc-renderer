@@ -60,9 +60,6 @@
     <ClCompile Include="GuiTextureViewer.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineDepthTest.cpp">
-      <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineSimple.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
@@ -86,6 +83,15 @@
     </ClCompile>
     <ClCompile Include="PassOutlineEdge.cpp">
       <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineGoldSrc.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineOutlineMask.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineOutlineEdge.cpp">
+      <Filter>源文件\Pipeline</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,10 +152,19 @@
     <ClInclude Include="GuiRequestPopupModal.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
-    <ClInclude Include="PassOutlineMask.h">
-      <Filter>头文件\RenderPass</Filter>
+    <ClInclude Include="PipelineGoldSrc.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineOutlineEdge.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineOutlineMask.h">
+      <Filter>头文件\Pipeline</Filter>
     </ClInclude>
     <ClInclude Include="PassOutlineEdge.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="PassOutlineMask.h">
       <Filter>头文件\RenderPass</Filter>
     </ClInclude>
   </ItemGroup>

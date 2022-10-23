@@ -109,14 +109,17 @@ public:
     bool isForceNotReady() const { return m_ForceNotReady; }
 
     const SPortFormat& getFormat() const { return m_Format; }
-    virtual bool hasActualFormatV() const = 0;
-    virtual SPortFormat getActualFormatV() const = 0;
     virtual VkImageView getImageV(size_t vIndex = 0) const = 0;
 
     bool isMatch(CPort::CPtr vPort)
     {
         return m_Format.isMatch(vPort->getFormat());
     }
+    
+    virtual bool hasActualFormatV() const = 0;
+    virtual VkFormat getActualFormatV() const = 0;
+    virtual bool hasActualExtentV() const = 0;
+    virtual VkExtent2D getActualExtentV() const = 0;
 
 protected:
     // image update propagates to tail
@@ -144,16 +147,19 @@ public:
     CSourcePort(const SPortFormat& vFormat);
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final;
-    virtual bool hasActualFormatV() const override final;
-    virtual SPortFormat getActualFormatV() const override final;
     virtual bool isReadyV() const override final;
     void setImage(VkImageView vImage, size_t vIndex = 0);
-    void setActualFormat(VkFormat vFormat, VkExtent2D vExtent);
+    
+    virtual bool hasActualFormatV() const override final { return m_ActualFormat != VK_FORMAT_UNDEFINED; }
+    virtual bool hasActualExtentV() const override final { return m_ActualExtent.width != 0 && m_ActualExtent.height != 0; }
+    virtual VkFormat getActualFormatV() const override final { _ASSERTE(hasActualFormatV()); return m_ActualFormat; }
+    virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_ActualExtent; }
+    void setActualFormat(VkFormat vFormat) { m_ActualFormat = vFormat; }
+    void setActualExtent(VkExtent2D vExtent) { m_ActualExtent = vExtent; }
 
 private:
     std::map<size_t, VkImageView> m_ImageMap;
-
-    bool m_IsActualFormatSet = false;
+    
     VkFormat m_ActualFormat = VkFormat::VK_FORMAT_UNDEFINED;
     VkExtent2D m_ActualExtent = VkExtent2D{ 0, 0 };
 };
@@ -166,9 +172,13 @@ public:
     CRelayPort(const SPortFormat& vFormat) : CPort(vFormat) {}
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final;
-    virtual bool hasActualFormatV() const override final;
-    virtual SPortFormat getActualFormatV() const override final;
     virtual bool isReadyV() const override final;
+
+    virtual bool hasActualFormatV() const override final { return !m_pParent.expired() && m_pParent.lock()->hasActualFormatV(); }
+    virtual bool hasActualExtentV() const override final { return !m_pParent.expired() && m_pParent.lock()->hasActualExtentV(); }
+    virtual VkFormat getActualFormatV() const override final { _ASSERTE(hasActualFormatV()); return m_pParent.lock()->getActualFormatV(); }
+    virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_pParent.lock()->getActualExtentV();
+    }
 };
 
 class SPortDescriptor

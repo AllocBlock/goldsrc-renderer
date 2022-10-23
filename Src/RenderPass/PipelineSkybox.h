@@ -16,7 +16,7 @@ public:
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
     {
-        if (m_VertexBuffer.isValid())
+        if (m_VertexBuffer.isValid() && m_SkyBoxImage.isValid())
         {
             VkBuffer VertBuffer = m_VertexBuffer;
             const VkDeviceSize Offsets[] = { 0 };

@@ -17,15 +17,16 @@ glm::vec3 stringToVec3(std::string vString)
     return glm::vec3(X, Y, Z);
 }
 
-ptr<SScene> CSceneReaderBsp::_readV()
+ptr<SSceneInfoGoldSrc> CSceneReaderBsp::_readV()
 {
-    m_pScene = make<SScene>();
+    m_pSceneInfo = make<SSceneInfoGoldSrc>();
+    m_pSceneInfo->pScene = make<CTempScene<CMeshDataGoldSrc>>();
     
     __readBsp(m_FilePath);
     if (!m_Bsp.getLumps().m_LumpLighting.Lightmaps.empty())
     {
-        m_pScene->UseLightmap = true;
-        m_pScene->pLightmap = make<CLightmap>();
+        m_pSceneInfo->UseLightmap = true;
+        m_pSceneInfo->pLightmap = make<CLightmap>();
         m_HasLightmapData = true;
     }
 
@@ -38,7 +39,7 @@ ptr<SScene> CSceneReaderBsp::_readV()
     __loadPointEntities();
     __loadSkyBox(m_FilePath.parent_path());
 
-    return m_pScene;
+    return m_pSceneInfo;
 }
 
 void CSceneReaderBsp::__readBsp(std::filesystem::path vFilePath)
@@ -99,20 +100,18 @@ void CSceneReaderBsp::__readTextures()
         }
     }
 
-    m_pScene->TexImageSet = std::move(TexImageSet);
+    m_pSceneInfo->TexImageSet = std::move(TexImageSet);
 }
 
-std::vector<ptr<CMeshDataGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
+std::vector<CActor<CMeshDataGoldSrc>::Ptr> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     _ASSERTE(vLeafIndex < Lumps.m_LumpLeaf.Leaves.size());
     const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
 
-    auto pObjectNormalPart = make<CMeshDataGoldSrc>();
-    pObjectNormalPart->setMark("brush");
-    auto pObjectSkyPart = make<CMeshDataGoldSrc>();
-    pObjectSkyPart->setMark("sky");
+    auto MeshDataNormalPart = CMeshDataGoldSrc();
+    auto MeshDataSkyPart = CMeshDataGoldSrc();
 
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -125,30 +124,26 @@ std::vector<ptr<CMeshDataGoldSrc>> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex
         __getBspFaceTextureSizeAndName(FaceIndex, TexWidth, TexHeight, TexName);
         if (TexName == "sky")
         {
-            __appendBspFaceToObject(pObjectSkyPart, FaceIndex);
+            __appendBspFaceToObject(MeshDataSkyPart, FaceIndex);
         }
         else
         {
-            __appendBspFaceToObject(pObjectNormalPart, FaceIndex);
+            __appendBspFaceToObject(MeshDataNormalPart, FaceIndex);
         }
     }
+    
+    auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "brush" });
+    auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
 
-    std::vector<ptr<CMeshDataGoldSrc>> Objects;
-    if (pObjectNormalPart->getVertexArray()->size() > 0)
-        Objects.emplace_back(std::move(pObjectNormalPart));
-    if (pObjectSkyPart->getVertexArray()->size() > 0)
-        Objects.emplace_back(std::move(pObjectSkyPart));
-    return Objects;
+    return { pActorNormalPart, pActorSkyPart };
 }
 
-std::vector<ptr<CMeshDataGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+std::vector<CActor<CMeshDataGoldSrc>::Ptr> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    auto pObjectNormalPart = make<CMeshDataGoldSrc>();
-    pObjectNormalPart->setMark("entity");
-    auto pObjectSkyPart = make<CMeshDataGoldSrc>();
-    pObjectSkyPart->setMark("sky");
+    auto MeshDataNormalPart = CMeshDataGoldSrc();
+    auto MeshDataSkyPart = CMeshDataGoldSrc();
     
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
     size_t TexWidth, TexHeight;
@@ -158,23 +153,24 @@ std::vector<ptr<CMeshDataGoldSrc>> CSceneReaderBsp::__loadEntity(size_t vModelIn
         uint16_t FaceIndex = Model.FirstFaceIndex + i;
         __getBspFaceTextureSizeAndName(FaceIndex, TexWidth, TexHeight, TexName);
         if (TexName == "sky")
-            __appendBspFaceToObject(pObjectSkyPart, FaceIndex);
+            __appendBspFaceToObject(MeshDataSkyPart, FaceIndex);
         else
-            __appendBspFaceToObject(pObjectNormalPart, FaceIndex);
+            __appendBspFaceToObject(MeshDataNormalPart, FaceIndex);
     }
+    
+    auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "entity" });
+    auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
 
-    std::vector<ptr<CMeshDataGoldSrc>> Objects;
-    Objects.emplace_back(std::move(pObjectNormalPart));
-    Objects.emplace_back(std::move(pObjectSkyPart));
-    return Objects;
+    return { pActorNormalPart, pActorSkyPart };
 }
 
 void CSceneReaderBsp::__loadBspTree()
 {
+    auto pScene = m_pSceneInfo->pScene;
+
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     SBspTree BspTree;
-    std::vector<ptr<CMeshDataGoldSrc>> Objects;
 
     // read node and PVS data
     Scene::reportProgress(u8"载入BSP数据");
@@ -204,12 +200,12 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[0]);
             Node.Front = NodeNum + LeafIndex;
-            std::vector<ptr<CMeshDataGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
+            auto LeafActorSet = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (ptr<CMeshDataGoldSrc> LeafObject : LeafObjects)
+            for (auto pActor : LeafActorSet)
             {
-                ObjectIndices.emplace_back(Objects.size());
-                Objects.emplace_back(LeafObject);
+                ObjectIndices.emplace_back(pScene->getActorNum());
+                pScene->addActor(pActor);
             }
             BspTree.LeafIndexToObjectIndices[LeafIndex] = ObjectIndices;
         }
@@ -219,12 +215,12 @@ void CSceneReaderBsp::__loadBspTree()
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[1]);
             Node.Back = NodeNum + LeafIndex;
-            std::vector<ptr<CMeshDataGoldSrc>> LeafObjects = __loadLeaf(LeafIndex);
+            auto LeafActorSet = __loadLeaf(LeafIndex);
             std::vector<size_t> ObjectIndices;
-            for (ptr<CMeshDataGoldSrc> pLeafObject : LeafObjects)
+            for (auto pActor : LeafActorSet)
             {
-                ObjectIndices.emplace_back(Objects.size());
-                Objects.emplace_back(pLeafObject);
+                ObjectIndices.emplace_back(pScene->getActorNum());
+                pScene->addActor(pActor);
             }
             BspTree.LeafIndexToObjectIndices[LeafIndex] = ObjectIndices;
         }
@@ -248,25 +244,25 @@ void CSceneReaderBsp::__loadBspTree()
         }
 
         // load entities data and calculate bounding box
-        std::vector<ptr<CMeshDataGoldSrc>> ModelObjects = __loadEntity(i);
+        auto ModelActorSet = __loadEntity(i);
         std::vector<size_t> ObjectIndices;
-        Math::S3DBoundingBox TotalBoundingBox =
+        SAABB TotalBoundingBox =
         {
             {INFINITY, INFINITY, INFINITY},
             {-INFINITY, -INFINITY, -INFINITY},
         };
-        for (ptr<CMeshDataGoldSrc> pModelObject : ModelObjects)
+        for (auto pModelActor : ModelActorSet)
         {
-            std::optional<Math::S3DBoundingBox> BoundingBox = pModelObject->getBoundingBox();
-            if (BoundingBox == std::nullopt) continue;
-            TotalBoundingBox.Min.x = std::min<float>(TotalBoundingBox.Min.x, BoundingBox.value().Min.x);
-            TotalBoundingBox.Min.y = std::min<float>(TotalBoundingBox.Min.y, BoundingBox.value().Min.y);
-            TotalBoundingBox.Min.z = std::min<float>(TotalBoundingBox.Min.z, BoundingBox.value().Min.z);
-            TotalBoundingBox.Max.x = std::max<float>(TotalBoundingBox.Max.x, BoundingBox.value().Max.x);
-            TotalBoundingBox.Max.y = std::max<float>(TotalBoundingBox.Max.y, BoundingBox.value().Max.y);
-            TotalBoundingBox.Max.z = std::max<float>(TotalBoundingBox.Max.z, BoundingBox.value().Max.z);
-            ObjectIndices.emplace_back(Objects.size());
-            Objects.emplace_back(pModelObject);
+            SAABB BoundingBox = pModelActor->getAABB();
+            if (!BoundingBox.IsValid) continue;
+            TotalBoundingBox.Min.x = std::min<float>(TotalBoundingBox.Min.x, BoundingBox.Min.x);
+            TotalBoundingBox.Min.y = std::min<float>(TotalBoundingBox.Min.y, BoundingBox.Min.y);
+            TotalBoundingBox.Min.z = std::min<float>(TotalBoundingBox.Min.z, BoundingBox.Min.z);
+            TotalBoundingBox.Max.x = std::max<float>(TotalBoundingBox.Max.x, BoundingBox.Max.x);
+            TotalBoundingBox.Max.y = std::max<float>(TotalBoundingBox.Max.y, BoundingBox.Max.y);
+            TotalBoundingBox.Max.z = std::max<float>(TotalBoundingBox.Max.z, BoundingBox.Max.z);
+            ObjectIndices.emplace_back(pScene->getActorNum());
+            pScene->addActor(pModelActor);
         }
 
         BspTree.ModelIndexToObjectIndex[i] = ObjectIndices;
@@ -285,8 +281,7 @@ void CSceneReaderBsp::__loadBspTree()
             Node.PvsOffset = OriginLeaf.VisOffset;
     }
 
-    m_pScene->BspTree = BspTree;
-    m_pScene->Objects = Objects;
+    m_pSceneInfo->BspTree = BspTree;
 }
 
 void CSceneReaderBsp::__loadBspPvs()
@@ -297,8 +292,8 @@ void CSceneReaderBsp::__loadBspPvs()
 
     if (!Lumps.m_LumpVisibility.Vis.empty())
     {
-        m_pScene->UsePVS = true;
-        m_pScene->BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_pScene->BspTree);
+        m_pSceneInfo->UsePVS = true;
+        m_pSceneInfo->BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_pSceneInfo->BspTree);
     }
 }
 
@@ -388,7 +383,7 @@ std::vector<glm::vec2> CSceneReaderBsp::__getBspFaceUnnormalizedTexCoords(size_t
 }
 
 // vTexCoords should contain unnormalized texcoords to avoid known of texture width and height
-std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords)
+std::pair<uint32_t, std::vector<glm::vec2>> CSceneReaderBsp::__getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
@@ -442,7 +437,7 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
         pLightmapImage->setData(pIndices);
         delete[] pTempData;
         delete[] pIndices;
-        uint32_t LightmapIndex = static_cast<uint32_t>(m_pScene->pLightmap->appendLightmap(pLightmapImage));
+        uint32_t LightmapIndex = static_cast<uint32_t>(m_pSceneInfo->pLightmap->appendLightmap(pLightmapImage));
 
         std::vector<glm::vec2> LightmapCoords;
         for (const glm::vec2& TexCoord : vTexCoords)
@@ -465,7 +460,7 @@ std::pair<std::optional<size_t>, std::vector<glm::vec2>> CSceneReaderBsp::__getA
     }
     else
     {
-        return std::make_pair(std::nullopt, std::vector<glm::vec2>{});
+        return std::make_pair(CMeshDataGoldSrc::InvalidLightmapIndex, std::vector<glm::vec2>{});
     }
 }
 
@@ -487,7 +482,7 @@ void CSceneReaderBsp::__getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& 
     voName = BspTexture.Name;
 }
 
-void CSceneReaderBsp::__appendBspFaceToObject(ptr<CMeshDataGoldSrc> pObject, uint32_t vFaceIndex)
+void CSceneReaderBsp::__appendBspFaceToObject(CMeshDataGoldSrc& vioMeshData, uint32_t vFaceIndex)
 {
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -499,13 +494,13 @@ void CSceneReaderBsp::__appendBspFaceToObject(ptr<CMeshDataGoldSrc> pObject, uin
 
     auto [LightmapIndex, LightmapCoords] = __getAndAppendBspFaceLightmap(vFaceIndex, TexCoords);
     uint32_t TexIndex = m_TexNameToIndex[TexName];
-    if (LightmapIndex == std::nullopt)
+    if (LightmapIndex == CMeshDataGoldSrc::InvalidLightmapIndex)
     {
         LightmapCoords.resize(TexCoords.size(), glm::vec2(0.0, 0.0));
     }
     else
     {
-        pObject->setLightMapState(true);
+        vioMeshData.setEnableLightmap(true);
     }
     
     // scale texture coordinates
@@ -516,13 +511,13 @@ void CSceneReaderBsp::__appendBspFaceToObject(ptr<CMeshDataGoldSrc> pObject, uin
     }
 
     // save scaled datas
-    auto pVertexArray = pObject->getVertexArray();
-    auto pColorArray = pObject->getColorArray();
-    auto pNormalArray = pObject->getNormalArray();
-    auto pTexCoordArray = pObject->getTexCoordArray();
-    auto pTexIndexArray = pObject->getTexIndexArray();
-    auto pLightmapIndexArray = pObject->getLightmapIndexArray();
-    auto pLightmapCoordArray = pObject->getLightmapCoordArray();
+    auto pVertexArray = vioMeshData.getVertexArray();
+    auto pColorArray = vioMeshData.getColorArray();
+    auto pNormalArray = vioMeshData.getNormalArray();
+    auto pTexCoordArray = vioMeshData.getTexCoordArray();
+    auto pTexIndexArray = vioMeshData.getTexIndexArray();
+    auto pLightmapIndexArray = vioMeshData.getLightmapIndexArray();
+    auto pLightmapCoordArray = vioMeshData.getLightmapTexCoordArray();
     for (size_t k = 2; k < Vertices.size(); ++k)
     {
         size_t VertexStartIndex = (k - 2) * 3;
@@ -547,19 +542,22 @@ void CSceneReaderBsp::__correntLightmapCoords()
 {
     Scene::reportProgress(u8"修正Lightmap数据");
 
-    for (auto& pObject : m_pScene->Objects)
+    for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
-        if (!pObject->getLightMapState()) continue;
+        auto pMesh = m_pSceneInfo->pScene->getActor(i)->getMesh();
+        auto MeshData = pMesh->getMeshData(); // TODO: edit is messed up when try to change data after creation, how to handle?
 
-        auto pLightmapIndexArray = pObject->getLightmapIndexArray();
-        auto pLightmapTexCoordArray = pObject->getLightmapCoordArray();
+        if (!MeshData.getEnableLightmap()) continue;
+
+        auto pLightmapIndexArray = MeshData.getLightmapIndexArray();
+        auto pLightmapTexCoordArray = MeshData.getLightmapTexCoordArray();
 
         for (size_t i = 0; i < pLightmapIndexArray->size(); ++i)
         {
-            if (pLightmapIndexArray->get(i) == std::nullopt) continue;
+            uint32_t LightmapIndex = pLightmapIndexArray->get(i);
+            if (LightmapIndex == CMeshDataGoldSrc::InvalidLightmapIndex) continue;
 
-            size_t LightmapIndex = pLightmapIndexArray->get(i).value();
-            pLightmapTexCoordArray->set(i, m_pScene->pLightmap->getAcutalLightmapCoord(LightmapIndex, pLightmapTexCoordArray->get(i)));
+            pLightmapTexCoordArray->set(i, m_pSceneInfo->pLightmap->getAcutalLightmapCoord(LightmapIndex, pLightmapTexCoordArray->get(i)));
         }
     }
 }
@@ -602,17 +600,17 @@ bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string
         std::filesystem::path ImagePath;
         if (Environment::findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, true, ImagePath))
         {
-            m_pScene->SkyBoxImages[i] = make<CIOImage>();
-            m_pScene->SkyBoxImages[i]->read(ImagePath);
+            m_pSceneInfo->SkyBoxImages[i] = make<CIOImage>();
+            m_pSceneInfo->SkyBoxImages[i]->read(ImagePath);
         }
         else
         {
-            m_pScene->UseSkyBox = false;
-            m_pScene->SkyBoxImages = {};
+            m_pSceneInfo->UseSkyBox = false;
+            m_pSceneInfo->SkyBoxImages = {};
             return false;
         }
     }
-    m_pScene->UseSkyBox = true;
+    m_pSceneInfo->UseSkyBox = true;
     return true;
 }
 
@@ -677,25 +675,25 @@ void CSceneReaderBsp::__loadPointEntities()
 
                 Sprite.pImage = pImage;
                 Sprite.Type = static_cast<EGoldSrcSpriteType>(Spr.getType());
-                m_pScene->SprSet.emplace_back(Sprite);
+                m_pSceneInfo->SprSet.emplace_back(Sprite);
             }
         }
 
-        auto pEntityCube = make<CMeshDataGoldSrc>();
-        pEntityCube->setMark("point_entity");
+        auto MeshDataEntityCube = CMeshDataGoldSrc();
+        const float Size = 0.2f;
+        __appendCube(Origin * m_SceneScale, Size, MeshDataEntityCube);
+
+        auto pCubeActor = GoldSrc::createActorByMeshAndTag(MeshDataEntityCube, { "point_entity" });
         if (!Name.empty())
         {
-            pEntityCube->setName(Entity.Properties.at("classname"));
+            pCubeActor->setName(Entity.Properties.at("classname"));
         }
 
-        const float Size = 0.2f;
-        __appendCube(Origin * m_SceneScale, Size, pEntityCube);
-
-        m_pScene->Objects.emplace_back(pEntityCube);
+        m_pSceneInfo->pScene->addActor(pCubeActor);
     }
 }
 
-void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, ptr<CMeshDataGoldSrc> voObject)
+void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, CMeshDataGoldSrc& vioMeshData)
 {
     // create plane and vertex buffer
     std::vector<glm::vec3> VertexSet =
@@ -735,12 +733,12 @@ void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, ptr<CMeshData
         {-1.0f, 0.0f, 0.0f},
     };
 
-    auto pVertexArray = voObject->getVertexArray();
-    auto pColorArray = voObject->getColorArray();
-    auto pNormalArray = voObject->getNormalArray();
-    auto pTexCoordArray = voObject->getTexCoordArray();
-    auto pLightmapCoordArray = voObject->getLightmapCoordArray();
-    auto pTexIndexArray = voObject->getTexIndexArray();
+    auto pVertexArray = vioMeshData.getVertexArray();
+    auto pColorArray = vioMeshData.getColorArray();
+    auto pNormalArray = vioMeshData.getNormalArray();
+    auto pTexCoordArray = vioMeshData.getTexCoordArray();
+    auto pLightmapCoordArray = vioMeshData.getLightmapTexCoordArray();
+    auto pTexIndexArray = vioMeshData.getTexIndexArray();
 
     for (size_t i = 0; i < IndexSet.size(); ++i)
     {

@@ -32,6 +32,6 @@ private:
 
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    CTempScene::Ptr m_pScene = nullptr;
+    CTempScene<CMeshDataGeneral>::Ptr m_pScene = nullptr;
     CPhysicsEngine::Ptr m_pPhysicsEngine = nullptr;
 };

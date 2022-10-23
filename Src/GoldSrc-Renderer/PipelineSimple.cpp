@@ -4,17 +4,20 @@
 
 size_t CPipelineSimple::MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
 
-struct SUBOVert
+namespace
 {
-    alignas(16) glm::mat4 Proj;
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::mat4 Model;
-};
+    struct SUBOVert
+    {
+        alignas(16) glm::mat4 Proj;
+        alignas(16) glm::mat4 View;
+        alignas(16) glm::mat4 Model;
+    };
 
-struct SUBOFrag
-{
-    alignas(16) glm::vec3 Eye;
-};
+    struct SUBOFrag
+    {
+        alignas(16) glm::vec3 Eye;
+    };
+}
 
 void CPipelineSimple::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vTextureSet)
 {
@@ -62,31 +65,32 @@ void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineSimple::_getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet)
+void CPipelineSimple::_initShaderResourceDescriptorV()
 {
-    voBinding = SSimplePointData::getBindingDescription();
-    voAttributeSet = SSimplePointData::getAttributeDescriptionSet();
+    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    m_ShaderResourceDescriptor.clear();
+
+    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
+    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Sampler", 2, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+    m_ShaderResourceDescriptor.add("Texture", 3, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSimple::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-VkPipelineInputAssemblyStateCreateInfo CPipelineSimple::_getInputAssemblyStageInfoV()
+CPipelineDescriptor CPipelineSimple::_getPipelineDescriptionV()
 {
-    auto Info = IPipeline::getDefaultInputAssemblyStageInfo();
-    Info.topology = VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    CPipelineDescriptor Descriptor;
 
-    return Info;
-}
+    Descriptor.setVertShaderPath("shaders/simpleShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/simpleShaderFrag.spv");
 
-VkPipelineDepthStencilStateCreateInfo CPipelineSimple::_getDepthStencilInfoV()
-{
-    VkPipelineDepthStencilStateCreateInfo DepthStencilInfo = {};
-    DepthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    DepthStencilInfo.depthTestEnable = VK_TRUE;
-    DepthStencilInfo.depthWriteEnable = VK_TRUE;
-    DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-    DepthStencilInfo.depthBoundsTestEnable = VK_FALSE;
-    DepthStencilInfo.stencilTestEnable = VK_FALSE;
+    Descriptor.setVertexInputInfo<SSimplePointData>();
 
-    return DepthStencilInfo;
+    Descriptor.setEnableDepthTest(true);
+    Descriptor.setEnableDepthWrite(true);
+
+    return Descriptor;
 }
 
 void CPipelineSimple::_createResourceV(size_t vImageNum)
@@ -111,19 +115,6 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
 
     Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
-}
-
-void CPipelineSimple::_initShaderResourceDescriptorV()
-{
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
-    m_ShaderResourceDescriptor.clear();
-
-    m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-    m_ShaderResourceDescriptor.add("UboFrag", 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_ShaderResourceDescriptor.add("Sampler", 2, VK_DESCRIPTOR_TYPE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-    m_ShaderResourceDescriptor.add("Texture", 3, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, static_cast<uint32_t>(CPipelineSimple::MaxTextureNum), VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
 void CPipelineSimple::_destroyV()

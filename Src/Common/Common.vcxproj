@@ -16,14 +16,12 @@
     <ClInclude Include="Environment.h" />
     <ClInclude Include="GeneralDataArray.h" />
     <ClInclude Include="Log.h" />
-    <ClInclude Include="Maths.h" />
     <ClInclude Include="SingleValueDataArray.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Log.cpp" />
-    <ClCompile Include="Maths.cpp" />
     <ClCompile Include="Pointer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

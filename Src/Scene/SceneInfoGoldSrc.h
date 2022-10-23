@@ -1,12 +1,13 @@
 #pragma once
 #include "IOImage.h"
-#include "3DObjectGoldSrc.h"
-#include "Maths.h"
+#include "MeshDataGoldSrc.h"
+#include "TempScene.h"
+#include "BoundingBox.h"
 
 #include <vector>
-#include <functional>
 #include <array>
 #include <map>
+#include <optional>
 #include <glm/glm.hpp>
 
 enum class EGoldSrcRenderMode
@@ -21,7 +22,7 @@ enum class EGoldSrcRenderMode
 
 struct SModelInfo
 {
-    Math::S3DBoundingBox BoundingBox;
+    SAABB BoundingBox;
     EGoldSrcRenderMode RenderMode = EGoldSrcRenderMode::NORMAL;
     float Opacity = 1.0f;
 };
@@ -95,13 +96,10 @@ struct SGoldSrcSprite
     ptr<CIOImage> pImage;
 };
 
-struct SScene
+struct SSceneInfoGoldSrc
 {
-    using Ptr = ptr<SScene>;
-
-    std::vector<ptr<CMeshDataGoldSrc>> Objects;
+    CTempScene<CMeshDataGoldSrc>::Ptr pScene = nullptr;
     std::vector<ptr<CIOImage>> TexImageSet;
-
     std::vector<SGoldSrcSprite> SprSet;
 
     // for bsp

@@ -6,6 +6,8 @@ class IDataArray
 public:
     _DEFINE_PTR(IDataArray<T>);
 
+    virtual ~IDataArray() = default;
+
     bool empty() { return size() == 0; }
     size_t size() { return _sizeV(); }
     void resize(size_t vSize, T vFill = T()) { _resizeV(vSize, vFill); }

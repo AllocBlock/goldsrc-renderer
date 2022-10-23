@@ -99,23 +99,16 @@ CPipelineDescriptor CPipelineSprite::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/visCollidePointShaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/visCollidePointShaderFrag.spv");
+    Descriptor.setVertShaderPath("shaders/sprShaderVert.spv");
+    Descriptor.setFragShaderPath("shaders/sprShaderFrag.spv");
 
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
     Descriptor.addPushConstant<SSpritePushConstant>(VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT);
     Descriptor.addPushConstant<SSpritePushConstant>(VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT);
-
-    // result color = source color * source alpha + dst(old) color * (1 - source alpha)
-    // result alpha = source alpha
+    
     Descriptor.setEnableBlend(true);
-    Descriptor.setColorBlendSrcFactor(VK_BLEND_FACTOR_SRC_ALPHA);
-    Descriptor.setColorBlendDstFactor(VK_BLEND_FACTOR_ONE);
-    Descriptor.setColorBlendOp(VK_BLEND_OP_ADD);
-    Descriptor.setAlphaBlendSrcFactor(VK_BLEND_FACTOR_ONE);
-    Descriptor.setAlphaBlendDstFactor(VK_BLEND_FACTOR_ONE);
-    Descriptor.setAlphaBlendOp(VK_BLEND_OP_ADD);
+    Descriptor.setBlendMethod(EBlendFunction::NORMAL);
 
     return Descriptor;
 }

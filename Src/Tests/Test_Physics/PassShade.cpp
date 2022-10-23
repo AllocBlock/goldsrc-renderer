@@ -3,7 +3,7 @@
 #include "RenderPassDescriptor.h"
 #include "InterfaceUI.h"
 
-void CRenderPassShade::setScene(CTempScene::Ptr vScene)
+void CRenderPassShade::setScene(CTempScene<CMeshDataGeneral>::Ptr vScene)
 {
     m_pScene = vScene;
     m_ActorDataPositionSet.clear();

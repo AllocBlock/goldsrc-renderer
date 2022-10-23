@@ -1,4 +1,4 @@
-﻿#include "Scene.h"
+﻿#include "SceneInfoGoldSrc.h"
 
 #include <iostream>
 

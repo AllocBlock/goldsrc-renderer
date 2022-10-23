@@ -1,44 +1,15 @@
 #pragma once
-#include "Pipeline.h"
-#include "Image.h"
-#include "UniformBuffer.h"
-#include "Sampler.h"
-#include "Camera.h"
+#include "PipelineGoldSrc.h"
 
-#include <glm/glm.hpp>
-
-class CPipelineDepthTest : public IPipeline
+class CPipelineDepthTest : public CPipelineGoldSrc
 {
-public:
-    void setLightmapState(VkCommandBuffer vCommandBuffer, bool vEnable);
-    void setOpacity(VkCommandBuffer vCommandBuffer, float vOpacity);
-    void updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vTextureSet, VkImageView vLightmap);
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, CCamera::CPtr vCamera);
-
-    static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
-
 protected:
-    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override;
-    virtual std::filesystem::path _getVertShaderPathV() override { return "shaders/shaderVert.spv"; }
-    virtual std::filesystem::path _getFragShaderPathV() override { return "shaders/shaderFrag.spv"; }
+    virtual void _dumpExtraPipelineDescriptionV(CPipelineDescriptor& vioDesc) override
+    {
+        vioDesc.setVertShaderPath("shaders/shaderVert.spv");
+        vioDesc.setFragShaderPath("shaders/shaderFrag.spv");
 
-    virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initShaderResourceDescriptorV() override;
-    virtual void _destroyV() override;
-    virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) override;
-    virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV() override;
-    virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV() override;
-    virtual std::vector<VkDynamicState> _getEnabledDynamicSetV() override;
-    virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV() override;
-private:
-    void __destroyResources();
-    void __updatePushConstant(VkCommandBuffer vCommandBuffer, bool vEnableLightmap, float vOpacity);
-    
-    bool m_EnableLightmap = false;
-    float m_Opacity = 1.0f;
-
-    vk::CSampler m_Sampler;
-    vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
-    vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
-    vk::CImage m_PlaceholderImage;
+        vioDesc.setEnableDepthTest(true);
+        vioDesc.setEnableDepthWrite(true);
+    }
 };

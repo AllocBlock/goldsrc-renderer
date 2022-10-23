@@ -21,9 +21,15 @@
     <ClInclude Include="TestUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Maths.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Function.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Maths.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

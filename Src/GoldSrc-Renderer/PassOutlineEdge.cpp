@@ -1,17 +1,16 @@
 #include "PassOutlineEdge.h"
 #include "Common.h"
-#include "ShaderResourceDescriptor.h"
 #include "InterfaceUI.h"
 #include "RenderPassDescriptor.h"
 
 #include <vector>
 
-void COutlineEdgeRenderPass::_initV()
+void CRenderPassOutlineEdge::_initV()
 {
     __createVertexBuffer();
 }
 
-SPortDescriptor COutlineEdgeRenderPass::_getPortDescV()
+SPortDescriptor CRenderPassOutlineEdge::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
@@ -19,12 +18,12 @@ SPortDescriptor COutlineEdgeRenderPass::_getPortDescV()
     return Ports;
 }
 
-CRenderPassDescriptor COutlineEdgeRenderPass::_getRenderPassDescV()
+CRenderPassDescriptor CRenderPassOutlineEdge::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
 }
 
-void COutlineEdgeRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
+void CRenderPassOutlineEdge::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
     {
@@ -40,7 +39,7 @@ void COutlineEdgeRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState
     }
 }
 
-std::vector<VkCommandBuffer> COutlineEdgeRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(m_Pipeline.isValid());
     _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
@@ -69,7 +68,7 @@ std::vector<VkCommandBuffer> COutlineEdgeRenderPass::_requestCommandBuffersV(uin
     return { CommandBuffer };
 }
 
-void COutlineEdgeRenderPass::_destroyV()
+void CRenderPassOutlineEdge::_destroyV()
 {
     m_FramebufferSet.destroyAndClearAll();
     m_Pipeline.destroy();
@@ -78,7 +77,7 @@ void COutlineEdgeRenderPass::_destroyV()
     IRenderPass::_destroyV();
 }
 
-void COutlineEdgeRenderPass::__createFramebuffers()
+void CRenderPassOutlineEdge::__createFramebuffers()
 {
     if (!isValid()) return;
 
@@ -97,7 +96,7 @@ void COutlineEdgeRenderPass::__createFramebuffers()
     }
 }
 
-void COutlineEdgeRenderPass::__createVertexBuffer()
+void CRenderPassOutlineEdge::__createVertexBuffer()
 {
     m_PointDataSet =
     {

@@ -1,4 +1,4 @@
-﻿#include "Scene.h"
+﻿#include "SceneInfoGoldSrc.h"
 #include "SceneCommon.h"
 #include "IOGoldsrcWad.h"
 #include "IOObj.h"

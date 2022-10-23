@@ -1,17 +1,14 @@
 #pragma once
 #include "PointData.h"
-#include "ScenePass.h"
+#include "PassScene.h"
 #include "FrameBuffer.h"
-#include "Scene.h"
+#include "SceneInfoGoldSrc.h"
 #include "Camera.h"
+#include "Image.h"
 #include "PipelineSkybox.h"
 #include "PipelineSimple.h"
-#include "Image.h"
-#include "Buffer.h"
 
-#include <vulkan/vulkan.h>
-
-class CSceneSimpleRenderPass : public CSceneRenderPass
+class CSceneSimpleRenderPass : public CRenderPassSceneTyped<SSimplePointData>
 {
 public:
     CSceneSimpleRenderPass() = default;
@@ -20,7 +17,7 @@ public:
 
     bool getSkyState() const { return m_EnableSky; }
     void setSkyState(bool vSkyState) {
-        bool EnableSky = vSkyState && m_pScene && m_pScene->UseSkyBox;
+        bool EnableSky = vSkyState && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
         if (EnableSky != m_EnableSky)
         {
             rerecordCommand();
@@ -43,21 +40,20 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
-    virtual void _loadSceneV(ptr<SScene> vScene) override;
+    virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
     void __createGraphicsPipelines();
     void __createDepthResources();
     void __createFramebuffers();
     void __createTextureImages();
-    void __createVertexBuffer();
 
     void __createSceneResources();
     void __destroySceneResources();
 
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
-    void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
+    void __recordRenderActorCommand(uint32_t vImageIndex, size_t vObjectIndex);
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
     
@@ -80,8 +76,6 @@ private:
 
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
-    ptr<vk::CBuffer> m_pVertexBuffer;
-    ptr<vk::CBuffer> m_pIndexBuffer;
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
     vk::CImage m_DepthImage;
 

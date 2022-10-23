@@ -1,6 +1,6 @@
 #include "GuiRenderer.h"
 
-void CGuiRenderer::setTarget(ptr<CSceneRenderPass> vRenderer)
+void CGuiRenderer::setTarget(ptr<CRenderPassScene> vRenderer)
 {
     _setTargetV(vRenderer);
 }

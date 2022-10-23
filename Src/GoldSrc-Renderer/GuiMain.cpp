@@ -59,7 +59,7 @@ SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath)
     {
         std::string Extension = vFilePath.extension().string().substr(1);
         Result.Succeed = true;
-        Result.pScene = SceneReader::read(Extension, vFilePath);
+        Result.pSceneInfo = SceneInterface::read(Extension, vFilePath);
     }
     else
     {
@@ -103,8 +103,8 @@ void CGUIMain::_renderUIV()
             if (ResultScene.Succeed)
             {
                 _ASSERTE(m_ReadSceneCallback);
-                m_ReadSceneCallback(ResultScene.pScene);
-                m_pCurScene = ResultScene.pScene;
+                m_ReadSceneCallback(ResultScene.pSceneInfo);
+                m_pCurSceneInfo = ResultScene.pSceneInfo;
             }
             else
                 showAlert(ResultScene.Message);
@@ -143,13 +143,13 @@ void CGUIMain::_renderUIV()
                     }
                 }
             }
-            if (m_pCurScene && UI::menuItem(u8"保存"))
+            if (m_pCurSceneInfo && UI::menuItem(u8"保存"))
             {
                 auto Result = Gui::createSaveFileDialog("obj");
                 if (Result)
                 {
                     CSceneObjWriter Writer;
-                    Writer.addScene(m_pCurScene);
+                    Writer.addSceneInfo(m_pCurSceneInfo);
                     Writer.writeToFile(Result.FilePath);
                 }
             }

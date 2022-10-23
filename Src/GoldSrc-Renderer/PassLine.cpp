@@ -4,7 +4,7 @@
 
 #include <vector>
 
-void CLineRenderPass::setHighlightBoundingBox(Math::S3DBoundingBox vBoundingBox)
+void CLineRenderPass::setHighlightBoundingBox(SAABB vBoundingBox)
 {
     auto pObject = make<SGuiObject>();
 
@@ -83,6 +83,7 @@ void CLineRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CLineRenderPass::_updateV(uint32_t vImageIndex)
 {
+    _ASSERTE(m_pCamera);
     m_PipelineLine.updateUniformBuffer(vImageIndex, m_pCamera);
 }
 

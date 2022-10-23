@@ -7,14 +7,14 @@
 
 using namespace vk;
 
-CTempScene::Ptr __generateScene()
+CTempScene<CMeshDataGeneral>::Ptr __generateScene()
 {
-    CTempScene::Ptr m_pScene = make<CTempScene>();
+    auto m_pScene = make<CTempScene<CMeshDataGeneral>>();
 
     // Ground
     {
         auto pGroundMesh = make<CMeshBasicQuad>();
-        auto pGroundActor = make<CActor>("Ground");
+        auto pGroundActor = make<CActor<CMeshDataGeneral>>("Ground");
         pGroundActor->setMesh(pGroundMesh);
         pGroundActor->getPhysicsState()->IsStatic = true;
         pGroundActor->getPhysicsState()->pCollider = make<CColliderBasic>(pGroundActor->getTransform(), EBasicColliderType::PLANE);
@@ -35,7 +35,7 @@ CTempScene::Ptr __generateScene()
     // Quad
     {
         auto pQuadMesh1 = make<CMeshBasicQuad>();
-        auto pQuadActor1 = make<CActor>("Quad1");
+        auto pQuadActor1 = make<CActor<CMeshDataGeneral>>("Quad1");
         pQuadActor1->setMesh(pQuadMesh1);
         pQuadActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pQuadActor1->getTransform(), EBasicColliderType::QUAD);
 

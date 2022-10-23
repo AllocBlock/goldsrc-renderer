@@ -1,7 +1,7 @@
 #pragma once
-#include "Scene.h"
+#include "SceneInfoGoldSrc.h"
 
-namespace SceneReader
+namespace SceneInterface
 {
-    ptr<SScene> read(std::string vType, std::filesystem::path vFilePath);
+    ptr<SSceneInfoGoldSrc> read(std::string vType, std::filesystem::path vFilePath);
 }

@@ -23,7 +23,7 @@ public:
             return Descriptor.generate();
         }
 
-        static std::vector<SPointData> extractFromMeshData(const CGeneralMeshDataTest& vMeshData)
+        static std::vector<SPointData> extractFromMeshData(const CMeshDataGeneral& vMeshData)
         {
             auto pVertexArray = vMeshData.getVertexArray();
 

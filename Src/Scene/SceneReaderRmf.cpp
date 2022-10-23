@@ -2,9 +2,9 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-ptr<SScene> CSceneReaderRmf::_readV()
+ptr<SSceneInfoGoldSrc> CSceneReaderRmf::_readV()
 {
-    m_pScene = make<SScene>();
+    m_pScene = make<SSceneInfoGoldSrc>();
     
     __readRmf(m_FilePath);
     __readWadsAndInitTextures();
@@ -87,14 +87,15 @@ void CSceneReaderRmf::__readObject(ptr<SRmfObject> vpObject)
 
 void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
 {
-    auto pObject = make<CMeshDataGoldSrc>();
+    CMeshDataGoldSrc MeshData = CMeshDataGoldSrc();
     for (const SRmfFace& Face : vpSolid->Faces)
-        __readSolidFace(Face, pObject);
+        __readSolidFace(Face, MeshData);
 
-    m_pScene->Objects.emplace_back(std::move(pObject));
+    auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
+    m_pScene->pScene->addActor(pActor);
 }
 
-void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, ptr<CMeshDataGoldSrc> vopObject)
+void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, CMeshDataGoldSrc& vioMeshData)
 {
     uint32_t TexIndex = __requestTextureIndex(vFace.TextureName);
 
@@ -109,12 +110,12 @@ void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, ptr<CMeshDataGoldSr
 
     glm::vec3 Normal = glm::normalize(glm::cross(Vertices[2] - Vertices[0], Vertices[1] - Vertices[0]));
     
-    auto pVertexArray = vopObject->getVertexArray();
-    auto pColorArray = vopObject->getColorArray();
-    auto pNormalArray = vopObject->getNormalArray();
-    auto pTexCoordArray = vopObject->getTexCoordArray();
-    auto pLightmapCoordArray = vopObject->getLightmapCoordArray();
-    auto pTexIndexArray = vopObject->getTexIndexArray();
+    auto pVertexArray = vioMeshData.getVertexArray();
+    auto pColorArray = vioMeshData.getColorArray();
+    auto pNormalArray = vioMeshData.getNormalArray();
+    auto pTexCoordArray = vioMeshData.getTexCoordArray();
+    auto pLightmapCoordArray = vioMeshData.getLightmapTexCoordArray();
+    auto pTexIndexArray = vioMeshData.getTexIndexArray();
     for (size_t k = 2; k < Vertices.size(); ++k)
     {
         pVertexArray->append(Vertices[0] * m_SceneScale);

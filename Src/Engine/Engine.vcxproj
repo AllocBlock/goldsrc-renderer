@@ -95,6 +95,7 @@
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="BasicMesh.cpp" />
+    <ClCompile Include="BoundingBox.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="ShaderResourceDescriptor.cpp" />
@@ -118,6 +119,7 @@
   <ItemGroup>
     <ClInclude Include="Actor.h" />
     <ClInclude Include="BasicMesh.h" />
+    <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="ShaderResourceDescriptor.h" />
@@ -133,7 +135,6 @@
     <ClInclude Include="PhysicsState.h" />
     <ClInclude Include="PipelineDescriptor.h" />
     <ClInclude Include="Rotator.h" />
-    <ClInclude Include="ScenePass.h" />
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />
     <ClInclude Include="TempScene.h" />

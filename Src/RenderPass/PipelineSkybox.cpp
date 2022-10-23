@@ -6,7 +6,6 @@
 
 namespace
 {
-
     struct SPointData
     {
         glm::vec3 Pos;
@@ -109,7 +108,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
 
     glm::vec3 RotationAxe = glm::cross(Up, FixUp);
 
-    if (RotationAxe.length() == 0)
+    if (RotationAxe.length() < Common::Acc)
     {
         UBOFrag.UpCorrection = glm::mat4(1.0);
         if (glm::dot(FixUp, Up) < 0)

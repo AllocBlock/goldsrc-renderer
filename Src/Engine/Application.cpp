@@ -176,7 +176,8 @@ void IApplication::__createSwapchain()
     for (size_t i = 0; i < m_pSwapchain->getImageNum(); ++i)
         m_pSwapchainPort->setImage(Views[i], i);
 
-    m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent());
+    m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat());
+    m_pSwapchainPort->setActualExtent( m_pSwapchain->getExtent());
 }
 
 void IApplication::__destroySwapchain()

@@ -3,9 +3,10 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcMap.h"
 
-ptr<SScene> CSceneReaderMap::_readV()
+ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
 {
-    m_pScene = make<SScene>();
+    m_pSceneInfo = make<SSceneInfoGoldSrc>();
+    m_pSceneInfo->pScene = make<CTempScene<CMeshDataGoldSrc>>();
 
     Scene::reportProgress(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(m_FilePath);
@@ -18,7 +19,7 @@ ptr<SScene> CSceneReaderMap::_readV()
     // find used textures, load and index them
     std::map<std::string, uint32_t> TexNameToIndex;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
-    m_pScene->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    m_pSceneInfo->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     TexNameToIndex["TextureNotFound"] = 0;
     UsedTextureNames.insert("TextureNotFound");
     for (const std::string& TexName : UsedTextureNames)
@@ -30,10 +31,10 @@ ptr<SScene> CSceneReaderMap::_readV()
             if (Index.has_value())
             {
                 Found = true;
-                TexNameToIndex[TexName] = static_cast<uint32_t>(m_pScene->TexImageSet.size());
+                TexNameToIndex[TexName] = static_cast<uint32_t>(m_pSceneInfo->TexImageSet.size());
 
                 ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
-                m_pScene->TexImageSet.emplace_back(std::move(pTexImage));
+                m_pSceneInfo->TexImageSet.emplace_back(std::move(pTexImage));
                 break;
             }
         }
@@ -43,49 +44,25 @@ ptr<SScene> CSceneReaderMap::_readV()
 
     Scene::reportProgress(u8"生成场景中");
     // group polygon by texture, one object per texture 
-    m_pScene->Objects.resize(UsedTextureNames.size());
-    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
-    {
-        m_pScene->Objects[i] = make<CMeshDataGoldSrc>();
-    }
-
     std::vector<SMapPolygon> Polygons = Map.getAllPolygons();
 
     for (SMapPolygon& Polygon : Polygons)
     {
         uint32_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
-        size_t TexWidth = m_pScene->TexImageSet[TexIndex]->getWidth();
-        size_t TexHeight = m_pScene->TexImageSet[TexIndex]->getHeight();
-        ptr<CMeshDataGoldSrc> pObject = m_pScene->Objects[TexIndex];
-        uint32_t IndexStart = static_cast<uint32_t>(pObject->getVertexArray()->size());
+        size_t TexWidth = m_pSceneInfo->TexImageSet[TexIndex]->getWidth();
+        size_t TexHeight = m_pSceneInfo->TexImageSet[TexIndex]->getHeight();
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
-
-        // indexed data
-        /*Object.Vertices.insert(Object.Vertices.end(), Polygon.Vertices.begin(), Polygon.Vertices.end());
-        Object.TexCoords.insert(Object.TexCoords.end(), TexCoords.begin(), TexCoords.end());
-        for (size_t i = 0; i < Polygon.Vertices.size(); ++i)
-        {
-            Object.Colors.emplace_back(glm::vec3(1.0, 0.0, 0.0));
-            Object.Normals.emplace_back(Normal);
-        }
-
-        for (size_t i = 2; i < Polygon.Vertices.size(); ++i)
-        {
-            Object.Indices.emplace_back(IndexStart);
-            Object.Indices.emplace_back(IndexStart + i - 1);
-            Object.Indices.emplace_back(IndexStart + i);
-        }
-        IndexStart += static_cast<uint32_t>(Polygon.Vertices.size());*/
-
+        
         // non-indexed data
-        auto pVertexArray = pObject->getVertexArray();
-        auto pColorArray = pObject->getColorArray();
-        auto pNormalArray = pObject->getNormalArray();
-        auto pTexCoordArray = pObject->getTexCoordArray();
-        auto pLightmapCoordArray = pObject->getLightmapCoordArray();
-        auto pTexIndexArray = pObject->getTexIndexArray();
+        auto MeshData = CMeshDataGoldSrc();
+        auto pVertexArray = MeshData.getVertexArray();
+        auto pColorArray = MeshData.getColorArray();
+        auto pNormalArray = MeshData.getNormalArray();
+        auto pTexCoordArray = MeshData.getTexCoordArray();
+        auto pLightmapCoordArray = MeshData.getLightmapTexCoordArray();
+        auto pTexIndexArray = MeshData.getTexIndexArray();
         for (size_t k = 2; k < Polygon.Vertices.size(); ++k)
         {
             pVertexArray->append(Polygon.Vertices[0]);
@@ -99,7 +76,10 @@ ptr<SScene> CSceneReaderMap::_readV()
             pLightmapCoordArray->append(glm::vec2(0.0, 0.0), 3);
             pTexIndexArray->append(TexIndex, 3);
         }
+
+        auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
+        m_pSceneInfo->pScene->addActor(pActor);
     }
     Scene::reportProgress(u8"完成");
-    return m_pScene;
+    return m_pSceneInfo;
 }

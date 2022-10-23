@@ -1,14 +1,22 @@
 #include "Vulkan.h"
 #include "Common.h"
 #include "Log.h"
+#include "Environment.h"
 
 #include <filesystem>
+
+
+enum class EBlendFunction
+{
+    NORMAL,
+    ADDITIVE
+};
 
 class CPipelineDescriptor
 {
 public:
-    _DEFINE_GETTER_SETTER(VertShaderPath, std::filesystem::path)
-    _DEFINE_GETTER_SETTER(FragShaderPath, std::filesystem::path)
+    _DEFINE_GETTER(VertShaderPath, std::filesystem::path)
+    _DEFINE_GETTER(FragShaderPath, std::filesystem::path)
     
     // TIPS: default backface culling
     _DEFINE_GETTER_SETTER(RasterCullMode, VkCullModeFlags)
@@ -198,6 +206,16 @@ public:
         return PushConstantInfoSet;
     }
 
+    void setVertShaderPath(std::filesystem::path vShaderPath)
+    {
+        m_VertShaderPath = __findShader(vShaderPath);
+    }
+
+    void setFragShaderPath(std::filesystem::path vShaderPath)
+    {
+        m_FragShaderPath = __findShader(vShaderPath);
+    }
+
     void setVertexInputInfo(VkVertexInputBindingDescription vBinding, const std::vector<VkVertexInputAttributeDescription>& vAttributeSet)
     {
         m_VertexInputBinding = vBinding;
@@ -243,20 +261,56 @@ public:
         m_PushConstantSet.clear();
     }
 
-    //virtual void _initDescriptorV() = 0;
-    //virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer);
-    //virtual std::vector<VkPipelineShaderStageCreateInfo> _getShadeStageInfoV(VkShaderModule vVertModule, VkShaderModule vFragModule);
-    //virtual void _getVertexInputInfoV(VkVertexInputBindingDescription& voBinding, std::vector<VkVertexInputAttributeDescription>& voAttributeSet) = 0;
-    //virtual VkPipelineInputAssemblyStateCreateInfo _getInputAssemblyStageInfoV();
-    //virtual void _getViewportStageInfoV(VkExtent2D vExtent, VkViewport& voViewport, VkRect2D& voScissor);
-    //virtual VkPipelineRasterizationStateCreateInfo _getRasterizationStageInfoV();
-    //virtual VkPipelineMultisampleStateCreateInfo _getMultisampleStageInfoV();
-    //virtual VkPipelineDepthStencilStateCreateInfo _getDepthStencilInfoV();
-    //virtual void _getColorBlendInfoV(VkPipelineColorBlendAttachmentState& voBlendAttachment);
-    //virtual std::vector<VkDynamicState> _getEnabledDynamicSetV();
-    //virtual std::vector<VkPushConstantRange> _getPushConstantRangeSetV();
+    void setBlendMethod(EBlendFunction vFunction)
+    {
+        switch (vFunction)
+        {
+        case EBlendFunction::NORMAL:
+        {
+            // result color = source color * source alpha + dst(old) color * (1 - source alpha)
+            // result alpha = source alpha
+            m_ColorBlendSrcFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            m_ColorBlendDstFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            m_ColorBlendOp = VK_BLEND_OP_ADD;
+            m_AlphaBlendSrcFactor = VK_BLEND_FACTOR_ONE;
+            m_AlphaBlendDstFactor = VK_BLEND_FACTOR_ZERO;
+            m_AlphaBlendOp = VK_BLEND_OP_ADD;
+            break;
+        }
+        case EBlendFunction::ADDITIVE:
+        {
+            // additive: 
+            // result color = source color + old color
+            // result alpha = source alpha + dst alpha
+            m_ColorBlendSrcFactor = m_ColorBlendDstFactor = VK_BLEND_FACTOR_ONE;
+            m_AlphaBlendSrcFactor = m_AlphaBlendDstFactor = VK_BLEND_FACTOR_ONE;
+            m_ColorBlendOp = m_AlphaBlendOp = VK_BLEND_OP_ADD;
+            break;
+        }
+        default:
+            throw std::runtime_error("Error: unknown blend function");
+        }
+    }
 
 private:
+    std::filesystem::path __findShader(std::filesystem::path vShaderPath)
+    {
+        std::filesystem::path FoundShaderPath;
+        std::vector<std::filesystem::path> ShaderDirSet = 
+            {
+            "./",
+            "../RenderPass/"
+            };
+
+        if (Environment::findFile(vShaderPath, ShaderDirSet, true, FoundShaderPath))
+        {
+            return FoundShaderPath;
+        }
+        else
+            throw std::runtime_error("Error: can not find shader");
+    }
+
+
     std::filesystem::path m_VertShaderPath;
     std::filesystem::path m_FragShaderPath;
 

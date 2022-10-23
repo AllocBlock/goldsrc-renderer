@@ -1,6 +1,6 @@
 #pragma once
 #include "PointData.h"
-#include "ScenePass.h"
+#include "PassScene.h"
 #include "FrameBuffer.h"
 #include "PipelineSkybox.h"
 #include "PipelineDepthTest.h"
@@ -15,7 +15,7 @@
 #include <optional>
 #include <set>
 
-class CSceneGoldSrcRenderPass : public CSceneRenderPass
+class CSceneGoldSrcRenderPass : public CRenderPassSceneTyped<SGoldSrcPointData>
 {
 public:
     CSceneGoldSrcRenderPass() = default;
@@ -33,7 +33,7 @@ public:
 
     void setSkyState(bool vEnableSky)
     { 
-        bool EnableSky = vEnableSky && m_pScene && m_pScene->UseSkyBox;
+        bool EnableSky = vEnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
         if (m_EnableSky != EnableSky) rerecordCommand();
         m_EnableSky = EnableSky;
     }
@@ -43,20 +43,23 @@ public:
         if (m_EnableCulling != vEnableCulling) rerecordCommand();
         m_EnableCulling = vEnableCulling;
     }
+
     void setFrustumCullingState(bool vEnableFrustumCulling) 
     { 
         if (m_EnableFrustumCulling != vEnableFrustumCulling) rerecordCommand();
         m_EnableFrustumCulling = vEnableFrustumCulling;
     }
+
     void setPVSState(bool vPVS) 
     { 
-        bool EnablePVS = vPVS && m_pScene && m_pScene->BspPvs.LeafNum > 0;
+        bool EnablePVS = vPVS && m_pSceneInfo && m_pSceneInfo->BspPvs.LeafNum > 0;
         if (m_EnablePVS != EnablePVS) rerecordCommand();
         m_EnablePVS = EnablePVS;
     }
+
     void setBSPState(bool vEnableBSP) 
     { 
-        bool EnableBSP = vEnableBSP && m_pScene && !m_pScene->BspTree.Nodes.empty();
+        bool EnableBSP = vEnableBSP && m_pSceneInfo && !m_pSceneInfo->BspTree.Nodes.empty();
         if (!EnableBSP)
             m_RenderNodeSet.clear();
         if (m_EnableBSP != EnableBSP) rerecordCommand();
@@ -74,7 +77,7 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
-    virtual void _loadSceneV(ptr<SScene> vScene) override;
+    virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
     void __createGraphicsPipelines();
@@ -82,7 +85,6 @@ private:
     void __createFramebuffers();
     void __createTextureImages();
     void __createLightmapImage();
-    void __createVertexBuffer();
 
     void __createSceneResources();
     void __destroySceneResources();
@@ -128,9 +130,7 @@ private:
     } m_PipelineSet;
 
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
-
-    ptr<vk::CBuffer> m_pVertexBuffer;
-    ptr<vk::CBuffer> m_pIndexBuffer;
+    
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
     vk::CImage m_DepthImage;
     vk::CImage m_LightmapImage;

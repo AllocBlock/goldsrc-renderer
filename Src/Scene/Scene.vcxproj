@@ -58,7 +58,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/IO;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Vulkan;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
@@ -79,7 +79,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/IO;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Vulkan;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -91,12 +91,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="3DObject.cpp" />
-    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="MeshDataGoldSrc.cpp" />
     <ClCompile Include="SceneInterface.cpp" />
     <ClCompile Include="SceneObjWriter.cpp" />
     <ClCompile Include="SceneReaderMap.cpp" />
-    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneInfoGoldSrc.cpp" />
     <ClCompile Include="SceneCommon.cpp" />
     <ClCompile Include="SceneGoldsrcCommon.cpp" />
     <ClCompile Include="SceneReaderBase.cpp" />
@@ -106,12 +105,10 @@
     <ClCompile Include="SceneReaderRmf.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="3DObject.h" />
-    <ClInclude Include="3DObjectGoldSrc.h" />
+    <ClInclude Include="MeshDataGoldSrc.h" />
     <ClInclude Include="SceneObjWriter.h" />
-    <ClInclude Include="Object.h" />
     <ClInclude Include="SceneReaderMap.h" />
-    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneInfoGoldSrc.h" />
     <ClInclude Include="SceneCommon.h" />
     <ClInclude Include="SceneGoldsrcCommon.h" />
     <ClInclude Include="SceneInterface.h" />
@@ -125,8 +122,14 @@
     <ProjectReference Include="..\Common\Common.vcxproj">
       <Project>{7f241464-4b6b-4226-aabc-869fc3a6473d}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Engine\Engine.vcxproj">
+      <Project>{1fa794f5-b7fb-431f-8221-77f21034d0d9}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\IO\IO.vcxproj">
       <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Vulkan\Vulkan.vcxproj">
+      <Project>{117a19ef-c976-4370-b795-b58c27ee4ab0}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

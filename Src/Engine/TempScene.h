@@ -5,37 +5,32 @@
 #include "Actor.h"
 #include "Buffer.h"
 
-enum class EAttributeType
-{
-    POSITION,
-    NORMAL
-};
-
 struct SActorDataInfo
 {
     uint32_t First;
     uint32_t Num;
 };
 
+template <typename MeshData_t = CMeshDataGeneral>
 class CTempScene
 {
 public:
     _DEFINE_PTR(CTempScene);
 
-    void addActor(CActor::Ptr vActor)
+    void addActor(ptr<CActor<MeshData_t>> vActor)
     {
         m_ActorSet.emplace_back(vActor);
     }
 
     size_t getActorNum() { return m_ActorSet.size(); }
-    CActor::Ptr getActor(size_t vIndex)
+    ptr<CActor<MeshData_t>> getActor(size_t vIndex)
     {
         _ASSERTE(vIndex < m_ActorSet.size());
         return m_ActorSet[vIndex];
     }
 
     // return first found actor
-    CActor::Ptr findActor(std::string vName)
+    ptr<CActor<MeshData_t>> findActor(std::string vName)
     {
         for (auto pActor : m_ActorSet)
             if (pActor->getName() == vName)
@@ -93,5 +88,5 @@ public:
     }
 
 private:
-    std::vector<CActor::Ptr> m_ActorSet;
+    std::vector<ptr<CActor<MeshData_t>>> m_ActorSet;
 };

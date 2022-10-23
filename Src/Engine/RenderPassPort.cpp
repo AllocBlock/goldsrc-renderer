@@ -122,9 +122,14 @@ void CPort::_onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom)
 
 CSourcePort::CSourcePort(const SPortFormat& vFormat): CPort(vFormat)
 {
-    if (vFormat.Format != VkFormat::VK_FORMAT_UNDEFINED && vFormat.Extent.width != 0 && vFormat.Extent.height != 0)
+    if (vFormat.Format != VkFormat::VK_FORMAT_UNDEFINED)
     {
-        setActualFormat(vFormat.Format, vFormat.Extent);
+        setActualFormat(vFormat.Format);
+    }
+
+    if (vFormat.Extent.width != 0 && vFormat.Extent.height != 0)
+    {
+        setActualExtent(vFormat.Extent);
     }
 }
 
@@ -132,17 +137,6 @@ VkImageView CSourcePort::getImageV(size_t vIndex) const
 {
     _ASSERTE(m_ImageMap.find(vIndex) != m_ImageMap.end());
     return m_ImageMap.at(vIndex);
-}
-
-bool CSourcePort::hasActualFormatV() const
-{
-    return m_IsActualFormatSet;
-}
-
-SPortFormat CSourcePort::getActualFormatV() const
-{
-    _ASSERTE(m_IsActualFormatSet);
-    return { m_ActualFormat, m_ActualExtent, m_ImageMap.size() };
 }
 
 bool CSourcePort::isReadyV() const
@@ -159,29 +153,10 @@ void CSourcePort::setImage(VkImageView vImage, size_t vIndex)
     }
 }
 
-void CSourcePort::setActualFormat(VkFormat vFormat, VkExtent2D vExtent)
-{
-    m_IsActualFormatSet = true;
-    m_ActualFormat = vFormat;
-    m_ActualExtent = vExtent;
-}
-
 VkImageView CRelayPort::getImageV(size_t vIndex) const
 {
     _ASSERTE(!m_pParent.expired());
     return m_pParent.lock()->getImageV(vIndex);
-}
-
-bool CRelayPort::hasActualFormatV() const
-{
-    if (m_pParent.expired()) return false;
-    else return m_pParent.lock()->hasActualFormatV();
-}
-
-SPortFormat CRelayPort::getActualFormatV() const
-{
-    _ASSERTE(!m_pParent.expired());
-    return m_pParent.lock()->getActualFormatV();
 }
 
 bool CRelayPort::isReadyV() const
@@ -333,7 +308,8 @@ void CPortSet::setOutput(const std::string& vOutputName, VkImageView vImage, VkF
     CSourcePort::Ptr pSourcePort = std::dynamic_pointer_cast<CSourcePort>(pPort);
 
     // FIXME: what if different formats/extents are set? how to deal this?
-    pSourcePort->setActualFormat(vFormat, vExtent);
+    pSourcePort->setActualFormat(vFormat);
+    pSourcePort->setActualExtent(vExtent);
     pSourcePort->setImage(vImage, vIndex);
 }
 

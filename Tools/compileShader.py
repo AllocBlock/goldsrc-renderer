@@ -84,6 +84,22 @@ def delete_compiled_shader_of_source(sourceShaderFile):
     if os.path.exists(path):
         os.remove(path)
 
+def find_shader_source_in_dir(dir, cache):
+    needCompileFiles = []
+    notneedCompileFiles = []
+    files = os.listdir(shaderDir)
+    for file in files:
+        path = shaderDir + "/" + file
+        if os.path.isdir(path):
+            continue
+        elif os.path.splitext(path)[1] not in gSourceShaderExtensions:
+            continue
+        elif cache.doesNeedRecompile(path):
+            needCompileFiles.append(path)
+        else:
+            notneedCompileFiles.append(path)
+    return [needCompileFiles, notneedCompileFiles]
+
 def compile_shader(sourceShaderFile):
     if not os.path.exists(sourceShaderFile):
         abort("文件不存在：" + sourceShaderFile)
@@ -111,17 +127,9 @@ if os.path.isdir(param):
     cacheFilePath = os.path.join(shaderDir, gCacheFilename)
     cache.load(cacheFilePath)
 
-    files = os.listdir(shaderDir)
-    for file in files:
-        path = shaderDir + "/" + file
-        if os.path.isdir(path):
-            continue
-        elif os.path.splitext(path)[1] not in gSourceShaderExtensions:
-            continue
-        elif cache.doesNeedRecompile(path):
-            toProcessList.append(path)
-        else:
-            alreadyCompiledNum += 1
+    [need, notNeed] = find_shader_source_in_dir(shaderDir, cache)
+    toProcessList.extend(need)
+    alreadyCompiledNum += len(notNeed)
 else:
     toProcessList.append(param)
 

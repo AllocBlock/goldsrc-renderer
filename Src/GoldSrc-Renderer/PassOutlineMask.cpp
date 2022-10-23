@@ -1,59 +1,48 @@
 #include "PassOutlineMask.h"
 #include "Common.h"
-#include "ShaderResourceDescriptor.h"
 #include "InterfaceUI.h"
-#include "RenderPassDescriptor.h"
 
 #include <vector>
 
-void COutlineMaskRenderPass::setHighlightObject(ptr<CMeshDataGoldSrc> vObject)
+void CRenderPassOutlineMask::setHighlightActor(CActor<CMeshDataGoldSrc>::Ptr vActor)
 {
-    m_PipelineMask.setObject(vObject);
+    m_PipelineMask.setActor(vActor);
     __rerecordCommand();
 }
 
-void COutlineMaskRenderPass::removeHighlight()
+void CRenderPassOutlineMask::removeHighlight()
 {
     m_PipelineMask.removeObject();
     __rerecordCommand();
 }
 
-void COutlineMaskRenderPass::_initV()
+void CRenderPassOutlineMask::_initV()
 {
     IRenderPass::_initV();
-    m_pPortSet->getInputPort("Depth")->hookImageUpdate([this]()
-        {
-            if (isValid())
-            {
-                __createFramebuffers();
-            }
-        });
     __rerecordCommand();
 }
 
-SPortDescriptor COutlineMaskRenderPass::_getPortDescV()
+SPortDescriptor CRenderPassOutlineMask::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInput("Main", SPortFormat::createAnyOfUsage(EUsage::READ));
-    Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, m_AppInfo.Extent, 1, EUsage::WRITE });
     Ports.addOutput("Mask", { VK_FORMAT_R8G8B8A8_UNORM, {0, 0}, 0, EUsage::WRITE });
     return Ports;
 }
 
-CRenderPassDescriptor COutlineMaskRenderPass::_getRenderPassDescV()
+CRenderPassDescriptor CRenderPassOutlineMask::_getRenderPassDescV()
 {
-    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Mask"),
-                                                            m_pPortSet->getInputPort("Depth"));
+    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Mask"));
 }
 
-void COutlineMaskRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
+void CRenderPassOutlineMask::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
     {
         __createMaskImage();
-        __createFramebuffers();
         if (isValid())
         {
+            __createFramebuffers();
             m_PipelineMask.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
             m_PipelineMask.setImageNum(m_AppInfo.ImageNum);
         }
@@ -62,17 +51,17 @@ void COutlineMaskRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState
     }
 }
 
-void COutlineMaskRenderPass::_updateV(uint32_t vImageIndex)
+void CRenderPassOutlineMask::_updateV(uint32_t vImageIndex)
 {
     _ASSERTE(m_pCamera);
     m_PipelineMask.updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
-void COutlineMaskRenderPass::_renderUIV()
+void CRenderPassOutlineMask::_renderUIV()
 {
 }
 
-void COutlineMaskRenderPass::_destroyV()
+void CRenderPassOutlineMask::_destroyV()
 {
     m_FramebufferSet.destroyAndClearAll();
     m_MaskImageSet.destroyAndClearAll();
@@ -81,7 +70,7 @@ void COutlineMaskRenderPass::_destroyV()
     IRenderPass::_destroyV();
 }
 
-std::vector<VkCommandBuffer> COutlineMaskRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
 
@@ -107,12 +96,12 @@ std::vector<VkCommandBuffer> COutlineMaskRenderPass::_requestCommandBuffersV(uin
     return { CommandBuffer };
 }
 
-void COutlineMaskRenderPass::__rerecordCommand()
+void CRenderPassOutlineMask::__rerecordCommand()
 {
-    m_RerecordCommandTimes += m_AppInfo.ImageNum;
+    m_RerecordCommandTimes = m_AppInfo.ImageNum;
 }
 
-void COutlineMaskRenderPass::__createMaskImage()
+void CRenderPassOutlineMask::__createMaskImage()
 {
     VkFormat Format = m_pPortSet->getOutputFormat("Mask").Format;
 
@@ -144,7 +133,7 @@ void COutlineMaskRenderPass::__createMaskImage()
     }
 }
 
-void COutlineMaskRenderPass::__createFramebuffers()
+void CRenderPassOutlineMask::__createFramebuffers()
 {
     if (!isValid()) return;
 
@@ -156,7 +145,6 @@ void COutlineMaskRenderPass::__createFramebuffers()
         std::vector<VkImageView> AttachmentSet =
         {
             m_pPortSet->getOutputPort("Mask")->getImageV(i),
-            m_pPortSet->getInputPort("Depth")->getImageV(),
         };
 
         m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);

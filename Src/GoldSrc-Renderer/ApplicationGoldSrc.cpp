@@ -7,9 +7,66 @@
 
 void CApplicationGoldSrc::_createV()
 {
+    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+
     m_pCamera = make<CCamera>();
 
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    vk::SAppInfo AppInfo = getAppInfo();
+
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
+
+    m_pPassGUI = make<CRenderPassGUI>();
+    m_pPassGUI->setWindow(m_pWindow);
+    m_pPassGUI->init(AppInfo);
+
+    m_pPassOutlineMask = make<CRenderPassOutlineMask>();
+    m_pPassOutlineMask->init(AppInfo);
+    m_pPassOutlineMask->setCamera(m_pCamera);
+
+    m_pPassOutlineEdge = make<CRenderPassOutlineEdge>();
+    m_pPassOutlineEdge->init(AppInfo);
+
+    m_pMainUI = make<CGUIMain>();
+    m_pMainUI->setInteractor(m_pInteractor);
+    m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
+        {
+            __recreateRenderer(vMethod);
+        });
+
+    m_pMainUI->setReadSceneCallback([this](ptr<SSceneInfoGoldSrc> vScene)
+        {
+            m_pSceneInfo = vScene;
+            m_pPassScene->loadScene(vScene);
+        });
+    m_pMainUI->setRenderSettingCallback([this]()
+        {
+            if (m_pCamera) m_pCamera->renderUI();
+            if (m_pInteractor) m_pInteractor->renderUI();
+            if (m_pPassOutlineMask) m_pPassOutlineMask->renderUI();
+            if (m_pPassOutlineEdge) m_pPassOutlineEdge->renderUI();
+            if (m_pPassScene) m_pPassScene->renderUI();
+        });
+
+    m_pInteractor->setMouseCallback([this](GLFWwindow* vWindow, int vButton, int vAction)
+        {
+            if (!m_pSceneInfo || !m_pSceneInfo->pScene) return;
+
+            double XPos = 0.0, YPos = 0.0;
+            glfwGetCursorPos(vWindow, &XPos, &YPos);
+            int WindowWidth = 0, WindowHeight = 0;
+            glfwGetFramebufferSize(vWindow, &WindowWidth, &WindowHeight);
+            glm::vec2 NDC = glm::vec2(XPos / WindowWidth * 2 - 1.0, YPos / WindowHeight * 2 - 1.0);
+
+            CActor<CMeshDataGoldSrc>::Ptr pNearestActor = nullptr;
+            float NearestIntersection = 0.0f;
+            if (SceneProbe::select(NDC, m_pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
+            {
+                m_pPassOutlineMask->setHighlightActor(pNearestActor);
+            }
+        });
+
+    __recreateRenderer(ERenderMethod::BSP);
 }
 
 void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
@@ -42,84 +99,13 @@ void CApplicationGoldSrc::_renderUIV()
     UI::endFrame();
 }
 
-void CApplicationGoldSrc::_createV()
-{
-    vk::SAppInfo AppInfo = getAppInfo();
-
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
-
-    m_pPassGUI = make<CRenderPassGUI>();
-    m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo);
-
-    m_pPassOutlineMask = make<COutlineMaskRenderPass>();
-    m_pPassOutlineMask->init(AppInfo);
-    m_pPassOutlineMask->setCamera(m_pCamera);
-
-    m_pPassOutlineEdge = make<COutlineEdgeRenderPass>();
-    m_pPassOutlineEdge->init(AppInfo);
-
-    m_pMainUI = make<CGUIMain>();
-    m_pMainUI->setInteractor(m_pInteractor);
-    m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
-    {
-        __recreateRenderer(vMethod);
-    });
-
-    m_pMainUI->setReadSceneCallback([this](ptr<SScene> vScene)
-    {
-        m_pScene = vScene;
-        m_pPassScene->loadScene(vScene);
-    });
-    m_pMainUI->setRenderSettingCallback([this]()
-    {
-        if (m_pCamera) m_pCamera->renderUI();
-        if (m_pInteractor) m_pInteractor->renderUI();
-        if (m_pPassOutlineMask) m_pPassOutlineMask->renderUI();
-        if (m_pPassOutlineEdge) m_pPassOutlineEdge->renderUI();
-        if (m_pPassScene) m_pPassScene->renderUI();
-    });
-
-    m_pInteractor->setMouseCallback([this](GLFWwindow* vWindow, int vButton, int vAction) 
-    {
-        double XPos = 0.0, YPos = 0.0;
-        glfwGetCursorPos(vWindow, &XPos, &YPos);
-        int WindowWidth = 0, WindowHeight = 0;
-        glfwGetFramebufferSize(vWindow, &WindowWidth, &WindowHeight);
-        glm::vec2 NDC = glm::vec2(XPos / WindowWidth * 2 - 1.0, YPos / WindowHeight * 2 - 1.0);
-
-        ptr<CMeshDataGoldSrc> pNearestObject = nullptr;
-        float NearestIntersection = 0.0f;
-        if (SceneProbe::select(NDC, m_pCamera, m_pScene, pNearestObject, NearestIntersection))
-        {
-            m_pPassOutlineMask->setHighlightObject(pNearestObject);
-        }
-    });
-
-    __recreateRenderer(ERenderMethod::BSP);
-
-    _recreateOtherResourceV();
-}
-
-void CApplicationGoldSrc::_recreateOtherResourceV()
-{
-    m_pPassScene->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pPassOutlineMask->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pPassOutlineEdge->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-    m_pPassGUI->updateImageInfo(m_pSwapchain->getImageFormat(), m_pSwapchain->getExtent(), m_pSwapchain->getImageNum());
-}
-
 void CApplicationGoldSrc::_destroyV()
 {
     destroyAndClear(m_pPassScene);
     destroyAndClear(m_pPassOutlineMask);
     destroyAndClear(m_pPassOutlineEdge);
     destroyAndClear(m_pPassGUI);
-}
 
-void CApplicationGoldSrc::_destroyV()
-{
     cleanGlobalCommandBuffer();
 }
 
@@ -148,8 +134,8 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
 
     m_pPassScene->init(AppInfo);
     m_pPassScene->setCamera(m_pCamera);
-    if (m_pScene)
-        m_pPassScene->loadScene(m_pScene);
+    if (m_pSceneInfo)
+        m_pPassScene->loadScene(m_pSceneInfo);
 
     __linkPasses();
 }
@@ -163,7 +149,6 @@ void CApplicationGoldSrc::__linkPasses()
 
     m_pSwapchainPort->setForceNotReady(true);
     CPortSet::link(m_pSwapchainPort, pPortScene, "Main");
-    CPortSet::link(pPortScene, "Depth", pPortOutlineMask, "Depth");
     CPortSet::link(pPortOutlineMask, "Mask", pPortOutlineEdge, "Mask");
     CPortSet::link(pPortScene, "Main", pPortOutlineEdge, "Main");
     CPortSet::link(pPortOutlineEdge, "Main", pPortGui, "Main");

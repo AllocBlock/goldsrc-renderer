@@ -9,15 +9,16 @@
 #include <set>
 #include <fstream>
 
-void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SScene> vScene)
+void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
+    CRenderPassSceneTyped::_loadSceneV(vScene);
+
     m_AppInfo.pDevice->waitUntilIdle();
-    m_pScene = vScene;
-    if (m_pScene->BspTree.Nodes.empty()) m_EnableBSP = false;
-    if (m_pScene->BspPvs.LeafNum == 0) m_EnablePVS = false;
+    if (m_pSceneInfo->BspTree.Nodes.empty()) m_EnableBSP = false;
+    if (m_pSceneInfo->BspPvs.LeafNum == 0) m_EnablePVS = false;
 
     m_AreObjectsVisable.clear();
-    m_AreObjectsVisable.resize(m_pScene->Objects.size(), false);
+    m_AreObjectsVisable.resize(m_pSceneInfo->pScene->getActorNum(), false);
 
     __destroySceneResources();
     __createSceneResources();
@@ -44,7 +45,7 @@ SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 
     VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
+    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
     
     return Ports;
 }
@@ -213,13 +214,11 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
         bool Valid = true;
         VkDeviceSize Offsets[] = { 0 };
-        if (m_pVertexBuffer && m_pVertexBuffer->isValid())
+        if (isNonEmptyAndValid(m_pVertexBuffer))
         {
             VkBuffer VertBuffer = *m_pVertexBuffer;
             vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
         }
-        else if (m_pIndexBuffer && m_pIndexBuffer->isValid())
-            vkCmdBindIndexBuffer(CommandBuffer, *m_pIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
         else
             Valid = false;
 
@@ -234,9 +233,10 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
                 m_PipelineSet.DepthTest.setOpacity(CommandBuffer, 1.0f);
 
-                for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+                for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
                 {
-                    bool EnableLightmap = m_pScene->Objects[i]->getLightMapState();
+                    auto pActor = m_pSceneInfo->pScene->getActor(i);
+                    bool EnableLightmap = pActor->getMesh()->getMeshData().getEnableLightmap();
                     m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
                     {
@@ -247,7 +247,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
             }
         }
 
-        if (m_pScene && !m_pScene->SprSet.empty())
+        if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
             __recordSpriteRenderCommand(vImageIndex);
 
         end();
@@ -259,18 +259,17 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
 {
     __createTextureImages();
     __createLightmapImage();
-    __createVertexBuffer();
 
-    m_EnableSky = m_EnableSky && m_pScene && m_pScene->UseSkyBox;
+    m_EnableSky = m_EnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
 
-    if (m_pScene && m_pScene->UseSkyBox)
+    if (m_pSceneInfo && m_pSceneInfo->UseSkyBox)
     {
-        m_PipelineSet.Sky.setSkyBoxImage(m_pScene->SkyBoxImages);
+        m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
     }
 
-    if (m_pScene && !m_pScene->SprSet.empty())
+    if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
     {
-        m_PipelineSet.Sprite.setSprites(m_pScene->SprSet);
+        m_PipelineSet.Sprite.setSprites(m_pSceneInfo->SprSet);
     }
 
     __updateDescriptorSets();
@@ -281,15 +280,12 @@ void CSceneGoldSrcRenderPass::__destroySceneResources()
 {
     m_TextureImageSet.destroyAndClearAll();
     m_LightmapImage.destroy();
-
-    if (m_pIndexBuffer) m_pIndexBuffer->destroy();
-    if (m_pVertexBuffer) m_pVertexBuffer->destroy();
 }
 
 void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
 {
     m_RenderNodeSet.clear();
-    if (m_pScene->BspTree.Nodes.empty()) throw "场景不含BSP数据";
+    if (m_pSceneInfo->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
@@ -306,17 +302,17 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
 
     m_PipelineSet.DepthTest.setOpacity(CommandBuffer, 1.0f);
 
-    if (vNodeIndex >= m_pScene->BspTree.NodeNum) // if is leaf, render it
+    if (vNodeIndex >= m_pSceneInfo->BspTree.NodeNum) // if is leaf, render it
     {
-        uint32_t LeafIndex = static_cast<uint32_t>(vNodeIndex - m_pScene->BspTree.NodeNum);
+        uint32_t LeafIndex = static_cast<uint32_t>(vNodeIndex - m_pSceneInfo->BspTree.NodeNum);
         bool isLeafVisable = false;
-        for (size_t ObjectIndex : m_pScene->BspTree.LeafIndexToObjectIndices.at(LeafIndex))
+        for (size_t ObjectIndex : m_pSceneInfo->BspTree.LeafIndexToObjectIndices.at(LeafIndex))
         {
             if (!m_AreObjectsVisable[ObjectIndex]) continue;
             m_RenderedObjectSet.insert(ObjectIndex);
             isLeafVisable = true;
 
-            bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapState();
+            bool EnableLightmap = m_pSceneInfo->pScene->getActor(ObjectIndex)->getMesh()->getMeshData().getEnableLightmap();
             m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
 
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
@@ -326,7 +322,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
     }
     else
     {
-        const SBspTreeNode& Node = m_pScene->BspTree.Nodes[vNodeIndex];
+        const SBspTreeNode& Node = m_pSceneInfo->BspTree.Nodes[vNodeIndex];
         glm::vec3 CameraPos = m_pCamera->getPos();
         if (Node.isPointFrontOfPlane(CameraPos))
         {
@@ -390,10 +386,10 @@ std::vector<size_t> CSceneGoldSrcRenderPass::__sortModelRenderSequence()
 {
     std::vector<SModelSortInfo> InfoForSort;
     glm::vec3 CameraPos = m_pCamera->getPos();
-    for (size_t i = 0; i < m_pScene->BspTree.ModelNum; ++i)
+    for (size_t i = 0; i < m_pSceneInfo->BspTree.ModelNum; ++i)
     {
-        const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[i];
-        Math::S3DBoundingBox BoundingBox = ModelInfo.BoundingBox;
+        const SModelInfo& ModelInfo = m_pSceneInfo->BspTree.ModelInfos[i];
+        SAABB BoundingBox = ModelInfo.BoundingBox;
         glm::vec3 Center = (BoundingBox.Min + BoundingBox.Max) * 0.5f;
         float Distance = glm::distance(Center, CameraPos);
 
@@ -427,10 +423,10 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
-    _ASSERTE(vModelIndex < m_pScene->BspTree.ModelInfos.size());
+    _ASSERTE(vModelIndex < m_pSceneInfo->BspTree.ModelInfos.size());
 
-    const SModelInfo& ModelInfo = m_pScene->BspTree.ModelInfos[vModelIndex];
-    CPipelineDepthTest* pPipeline = nullptr;
+    const SModelInfo& ModelInfo = m_pSceneInfo->BspTree.ModelInfos[vModelIndex];
+    CPipelineGoldSrc* pPipeline = nullptr;
 
     switch (ModelInfo.RenderMode)
     {
@@ -463,12 +459,12 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
     pPipeline->bind(CommandBuffer, vImageIndex);
     pPipeline->setOpacity(CommandBuffer, ModelInfo.Opacity);
 
-    std::vector<size_t> ObjectIndices = m_pScene->BspTree.ModelIndexToObjectIndex[vModelIndex];
+    std::vector<size_t> ObjectIndices = m_pSceneInfo->BspTree.ModelIndexToObjectIndex[vModelIndex];
     for (size_t ObjectIndex : ObjectIndices)
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
 
-        bool EnableLightmap = m_pScene->Objects[ObjectIndex]->getLightMapState();
+        bool EnableLightmap = m_pSceneInfo->pScene->getActor(ObjectIndex)->getMesh()->getMeshData().getEnableLightmap();
         pPipeline->setLightmapState(CommandBuffer, EnableLightmap);
         __recordObjectRenderCommand(vImageIndex, ObjectIndex);
     }
@@ -479,10 +475,10 @@ void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
 
-    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+    for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
         if (!m_AreObjectsVisable[i]) continue;
-        else if (m_pScene->Objects[i]->getMark() != "point_entity") continue;
+        else if (m_pSceneInfo->pScene->getActor(i)->hasTag("point_entity")) continue;
         __recordObjectRenderCommand(vImageIndex, i);
     }
 }
@@ -490,7 +486,7 @@ void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
-    _recordObjectRenderCommand(CommandBuffer, vObjectIndex);
+    _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
 void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
@@ -541,56 +537,23 @@ void CSceneGoldSrcRenderPass::__createTextureImages()
         m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pScene->TexImageSet[i]);
+            Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pSceneInfo->TexImageSet[i]);
         }
     }
 }
 
 void CSceneGoldSrcRenderPass::__createLightmapImage()
 {
-    if (m_pScene && m_pScene->UseLightmap)
+    if (m_pSceneInfo && m_pSceneInfo->UseLightmap)
     {
-        ptr<CIOImage> pCombinedLightmapImage = m_pScene->pLightmap->getCombinedLightmap();
+        ptr<CIOImage> pCombinedLightmapImage = m_pSceneInfo->pLightmap->getCombinedLightmap();
         Function::createImageFromIOImage(m_LightmapImage, m_AppInfo.pDevice, pCombinedLightmapImage);
     }
 }
 
-void CSceneGoldSrcRenderPass::__createVertexBuffer()
-{
-    size_t NumVertex = 0;
-    if (m_pScene)
-    {
-        for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
-            NumVertex += pObject->getVertexArray()->size();
-        if (NumVertex == 0)
-        {
-            Log::log(u8"没有顶点数据，跳过索引缓存创建");
-            return;
-        }
-    }
-    else
-        return;
-
-    VkDeviceSize BufferSize = sizeof(SGoldSrcPointData) * NumVertex;
-    void* pData = new char[BufferSize];
-    size_t Offset = 0;
-    for (ptr<CMeshDataGoldSrc> pObject : m_pScene->Objects)
-    {
-        std::vector<SGoldSrcPointData> PointData = __readPointData(pObject);
-        size_t SubBufferSize = sizeof(SGoldSrcPointData) * pObject->getVertexArray()->size();
-        memcpy(reinterpret_cast<char*>(pData) + Offset, PointData.data(), SubBufferSize);
-        Offset += SubBufferSize;
-    }
-
-    m_pVertexBuffer = make<vk::CBuffer>();
-    m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    m_pVertexBuffer->stageFill(pData, BufferSize);
-    delete[] pData;
-}
-
 void CSceneGoldSrcRenderPass::__updateDescriptorSets()
 {
-    VkImageView Lightmap = (m_pScene && m_pScene->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
+    VkImageView Lightmap = (m_pSceneInfo && m_pSceneInfo->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
     m_PipelineSet.DepthTest.updateDescriptorSet(m_TextureImageSet, Lightmap);
     m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(m_TextureImageSet, Lightmap);
     m_PipelineSet.BlendAlphaTest.updateDescriptorSet(m_TextureImageSet, Lightmap);
@@ -599,50 +562,21 @@ void CSceneGoldSrcRenderPass::__updateDescriptorSets()
 
 void CSceneGoldSrcRenderPass::__updateTextureView()
 {
-    size_t ImageNum = m_pScene->TexImageSet.size();
+    size_t ImageNum = m_pSceneInfo->TexImageSet.size();
     _ASSERTE(ImageNum == m_TextureImageSet.size());
     m_CurTextureIndex = std::max<int>(0, std::min<int>(int(ImageNum), m_CurTextureIndex));
     m_TextureNameSet.resize(ImageNum);
     m_TextureComboNameSet.resize(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
-        m_TextureNameSet[i] = std::to_string(i + 1) + ": " + m_pScene->TexImageSet[i]->getName();
+        m_TextureNameSet[i] = std::to_string(i + 1) + ": " + m_pSceneInfo->TexImageSet[i]->getName();
         m_TextureComboNameSet[i] = m_TextureNameSet[i].c_str();
     }
 }
 
-std::vector<SGoldSrcPointData> CSceneGoldSrcRenderPass::__readPointData(ptr<CMeshDataGoldSrc> vpObject) const
-{
-    auto pVertexArray = vpObject->getVertexArray();
-    auto pColorArray = vpObject->getColorArray();
-    auto pNormalArray = vpObject->getNormalArray();
-    auto pTexCoordArray = vpObject->getTexCoordArray();
-    auto pLightmapCoordArray = vpObject->getLightmapCoordArray();
-    auto pTexIndexArray = vpObject->getTexIndexArray();
-
-    size_t NumPoint = pVertexArray->size();
-    _ASSERTE(NumPoint == pColorArray->size());
-    _ASSERTE(NumPoint == pNormalArray->size());
-    _ASSERTE(NumPoint == pTexCoordArray->size());
-    _ASSERTE(NumPoint == pLightmapCoordArray->size());
-    _ASSERTE(NumPoint == pTexIndexArray->size());
-
-    std::vector<SGoldSrcPointData> PointData(NumPoint);
-    for (size_t i = 0; i < NumPoint; ++i)
-    {
-        PointData[i].Pos = pVertexArray->get(i);
-        PointData[i].Color = pColorArray->get(i);
-        PointData[i].Normal = pNormalArray->get(i);
-        PointData[i].TexCoord = pTexCoordArray->get(i);
-        PointData[i].LightmapCoord = pLightmapCoordArray->get(i);
-        PointData[i].TexIndex = pTexIndexArray->get(i);
-    }
-    return PointData;
-}
-
 size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
 {
-    size_t NumTexture = m_pScene ? m_pScene->TexImageSet.size() : 0;
+    size_t NumTexture = m_pSceneInfo ? m_pSceneInfo->TexImageSet.size() : 0;
     if (NumTexture > CPipelineDepthTest::MaxTextureNum)
     {
         Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(CPipelineDepthTest::MaxTextureNum) + u8"), 多出的纹理将被忽略");
@@ -653,14 +587,14 @@ size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
 
 void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 {
-    if (!m_pScene) return;
+    if (!m_pSceneInfo) return;
 
     SFrustum Frustum = m_pCamera->getFrustum();
 
     bool UsePVS = (m_EnableBSP || m_EnableCulling) && m_EnablePVS;
 
     if (UsePVS)
-        m_CameraNodeIndex = m_pScene->BspTree.getPointLeaf(m_pCamera->getPos());
+        m_CameraNodeIndex = m_pSceneInfo->BspTree.getPointLeaf(m_pCamera->getPos());
     else
         m_CameraNodeIndex = std::nullopt;
 
@@ -668,28 +602,29 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
     std::vector<bool> PVS;
     if (UsePVS)
     {
-        PVS.resize(m_pScene->Objects.size(), true);
-        for (size_t i = 0; i < m_pScene->BspTree.LeafNum; ++i)
+        PVS.resize(m_pSceneInfo->pScene->getActorNum(), true);
+        for (size_t i = 0; i < m_pSceneInfo->BspTree.LeafNum; ++i)
         {
-            if (!m_pScene->BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), static_cast<uint32_t>(i)))
+            if (!m_pSceneInfo->BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), static_cast<uint32_t>(i)))
             {
-                std::vector<size_t> LeafObjectIndices = m_pScene->BspTree.LeafIndexToObjectIndices[i];
+                std::vector<size_t> LeafObjectIndices = m_pSceneInfo->BspTree.LeafIndexToObjectIndices[i];
                 for (size_t LeafObjectIndex : LeafObjectIndices)
                     PVS[LeafObjectIndex] = false;
             }
         }
     }
 
-    for (size_t i = 0; i < m_pScene->Objects.size(); ++i)
+    for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
+        auto pActor = m_pSceneInfo->pScene->getActor(i);
         m_AreObjectsVisable[i] = false;
 
-        if (m_pScene->Objects[i]->getMark() == "sky" || m_pScene->Objects[i]->getVertexArray()->empty())
+        if (pActor->hasTag("sky") || m_ActorDataInfoSet[i].Num == 0)
             continue;
         
         if (m_EnableCulling)
         {
-            if (m_EnableBSP && i >= m_pScene->BspTree.NodeNum + m_pScene->BspTree.LeafNum) // ignore culling for model for now
+            if (m_EnableBSP && i >= m_pSceneInfo->BspTree.NodeNum + m_pSceneInfo->BspTree.LeafNum) // ignore culling for model for now
             {
                 m_AreObjectsVisable[i] = true;
                 continue;
@@ -697,7 +632,7 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 
             // frustum culling: don't draw object outside of view (judge by bounding box)
             if (m_EnableFrustumCulling)
-                if (!_isObjectInSight(m_pScene->Objects[i], Frustum))
+                if (!isActorInSight(pActor, Frustum))
                     continue;
 
             // PVS culling

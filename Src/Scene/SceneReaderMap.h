@@ -1,12 +1,11 @@
 #pragma once
-#include "Scene.h"
+#include "SceneInfoGoldSrc.h"
 #include "SceneReaderBase.h"
 
 class CSceneReaderMap : public CSceneReaderBase
 {
 protected:
-    virtual ptr<SScene> _readV() override;
+    virtual ptr<SSceneInfoGoldSrc> _readV() override;
 private:
-    ptr<SScene> m_pScene = nullptr;
+    ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
 };
-

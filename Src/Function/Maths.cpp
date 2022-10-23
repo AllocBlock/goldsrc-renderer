@@ -37,7 +37,7 @@ bool Math::intersectRayTriangle(
     return true;
 }
 
-bool Math::intersectRayBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, S3DBoundingBox vBB, float& voNearT, float& voFarT)
+bool Math::intersectRayBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, SAABB vBB, float& voNearT, float& voFarT)
 {
     vDirection = glm::normalize(vDirection);
 
