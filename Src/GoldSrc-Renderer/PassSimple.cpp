@@ -11,7 +11,7 @@ void CSceneSimpleRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
     CRenderPassSceneTyped::_loadSceneV(vScene);
 
-    m_AppInfo.pDevice->waitUntilIdle();
+    m_pDevice->waitUntilIdle();
 
     m_AreObjectsVisable.clear();
     m_AreObjectsVisable.resize(m_pSceneInfo->pScene->getActorNum(), false);
@@ -24,7 +24,7 @@ void CSceneSimpleRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 
 void CSceneSimpleRenderPass::rerecordCommand()
 {
-    m_RerecordCommandTimes = m_AppInfo.ImageNum;
+    m_RerecordCommandTimes = m_pAppInfo->getImageNum();
 }
 
 void CSceneSimpleRenderPass::_initV()
@@ -39,8 +39,8 @@ SPortDescriptor CSceneSimpleRenderPass::_getPortDescV()
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
     
-    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, m_AppInfo.Extent, 1, EUsage::WRITE });
+    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
+    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
     return Ports;
 }
 
@@ -52,21 +52,32 @@ CRenderPassDescriptor CSceneSimpleRenderPass::_getRenderPassDescV()
 
 void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
+    VkExtent2D RefExtent = { 0, 0 };
+    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+
+    if (m_pCamera)
+        m_pCamera->setAspect(RefExtent.width, RefExtent.height);
+
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
-        __createDepthResources(); // extent
+        if (RefExtent != vk::ZeroExtent)
+            __createDepthResources(RefExtent); // extent
         if (isValid())
         {
-            __createGraphicsPipelines(); // extent
-            m_PipelineSet.Main.setImageNum(m_AppInfo.ImageNum);
-            m_PipelineSet.Sky.setImageNum(m_AppInfo.ImageNum);
-
-            if (m_pSceneInfo && m_pSceneInfo->UseSkyBox)
+            __createFramebuffers(RefExtent);
+            if (!vUpdateState.InputImageUpdated)
             {
-                m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
+                m_PipelineSet.Main.create(m_pDevice, get(), RefExtent);
+                m_PipelineSet.Sky.create(m_pDevice, get(), RefExtent);
+                m_PipelineSet.Main.setImageNum(m_pAppInfo->getImageNum());
+                m_PipelineSet.Sky.setImageNum(m_pAppInfo->getImageNum());
+
+                if (m_pSceneInfo && m_pSceneInfo->UseSkyBox)
+                {
+                    m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
+                }
             }
         }
-        __createFramebuffers();
         rerecordCommand();
     }
 }
@@ -107,7 +118,7 @@ void CSceneSimpleRenderPass::_destroyV()
     m_PipelineSet.destroy();
 
     __destroySceneResources();
-    CRenderPassScene::_destroyV();
+    CRenderPassSceneTyped::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -127,7 +138,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -184,29 +195,23 @@ void CSceneSimpleRenderPass::__recordRenderActorCommand(uint32_t vImageIndex, si
     _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
-void CSceneSimpleRenderPass::__createGraphicsPipelines()
-{
-    m_PipelineSet.Sky.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-    m_PipelineSet.Main.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-}
-
-void CSceneSimpleRenderPass::__createDepthResources()
+void CSceneSimpleRenderPass::__createDepthResources(VkExtent2D vExtent)
 {
     m_DepthImage.destroy();
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+    Function::createDepthImage(m_DepthImage, m_pDevice, vExtent, NULL, DepthFormat);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
-void CSceneSimpleRenderPass::__createFramebuffers()
+void CSceneSimpleRenderPass::__createFramebuffers(VkExtent2D vExtent)
 {
     if (!isValid()) return;
 
     m_FramebufferSet.destroyAndClearAll();
 
-    m_FramebufferSet.init(m_AppInfo.ImageNum);
-    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+    m_FramebufferSet.init(m_pAppInfo->getImageNum());
+    for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
@@ -214,7 +219,7 @@ void CSceneSimpleRenderPass::__createFramebuffers()
             m_DepthImage
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }
 
@@ -226,7 +231,7 @@ void CSceneSimpleRenderPass::__createTextureImages()
         m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-             Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pSceneInfo->TexImageSet[i]);
+             Function::createImageFromIOImage(*m_TextureImageSet[i], m_pDevice, m_pSceneInfo->TexImageSet[i]);
         }
     }
 }
@@ -241,7 +246,7 @@ size_t CSceneSimpleRenderPass::__getActualTextureNum()
     size_t NumTexture = m_pSceneInfo ? m_pSceneInfo->TexImageSet.size() : 0;
     if (NumTexture > CPipelineSimple::MaxTextureNum)
     {
-        Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(CPipelineSimple::MaxTextureNum) + u8"), 多出的纹理将被忽略");
+        Log::log("警告: 纹理数量 = (" + std::to_string(NumTexture) + ") 大于限制数量 (" + std::to_string(CPipelineSimple::MaxTextureNum) + "), 多出的纹理将被忽略");
         NumTexture = CPipelineSimple::MaxTextureNum;
     }
     return NumTexture;
@@ -284,8 +289,6 @@ void CSceneSimpleRenderPass::__calculateVisiableObjects()
 
 void CSceneSimpleRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
-
     glm::mat4 Model = glm::mat4(1.0f);
     m_PipelineSet.Main.updateUniformBuffer(vImageIndex, Model, m_pCamera);
     if (m_EnableSky)

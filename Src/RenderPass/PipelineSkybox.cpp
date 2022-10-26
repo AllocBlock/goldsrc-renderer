@@ -128,7 +128,7 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
 
 void CPipelineSkybox::_initShaderResourceDescriptorV()
 {
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice);
     m_ShaderResourceDescriptor.clear();
 
     m_ShaderResourceDescriptor.add("UboVert", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
@@ -205,8 +205,7 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
 
 void CPipelineSkybox::_destroyV()
 {
-    if (m_pDevice == VK_NULL_HANDLE) return;
-
+    m_pDevice = nullptr;
     m_Sampler.destroy();
     m_SkyBoxImage.destroy();
     m_VertexBuffer.destroy();

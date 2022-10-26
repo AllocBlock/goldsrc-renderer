@@ -13,10 +13,12 @@ namespace vk
         void create(CDevice::CPtr vDevice, VkRenderPass vRenderPass, const std::vector<VkImageView>& vAttachmentSet, VkExtent2D vExtent);
         void destroy();
 
-        size_t getAttachmentNum() { return m_AttachmentNum; }
+        size_t getAttachmentNum() const { return m_AttachmentNum; }
+        VkExtent2D getExtent() const { return m_Extent; }
     private:
         CDevice::CPtr m_pDevice = nullptr;
         size_t m_AttachmentNum = 0;
+        VkExtent2D m_Extent = { 0, 0 };
     };
 }
 

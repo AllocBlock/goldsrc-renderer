@@ -25,7 +25,6 @@ void CRenderPassOutlineMask::_initV()
 SPortDescriptor CRenderPassOutlineMask::_getPortDescV()
 {
     SPortDescriptor Ports;
-    Ports.addInput("Main", SPortFormat::createAnyOfUsage(EUsage::READ));
     Ports.addOutput("Mask", { VK_FORMAT_R8G8B8A8_UNORM, {0, 0}, 0, EUsage::WRITE });
     return Ports;
 }
@@ -37,14 +36,20 @@ CRenderPassDescriptor CRenderPassOutlineMask::_getRenderPassDescV()
 
 void CRenderPassOutlineMask::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
+    VkExtent2D RefExtent = m_pAppInfo->getScreenExtent();
+
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
-        __createMaskImage();
+        if (RefExtent != vk::ZeroExtent)
+            __createMaskImage(RefExtent);
         if (isValid())
         {
-            __createFramebuffers();
-            m_PipelineMask.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-            m_PipelineMask.setImageNum(m_AppInfo.ImageNum);
+            __createFramebuffers(RefExtent);
+            if (!vUpdateState.InputImageUpdated)
+            {
+                m_PipelineMask.create(m_pDevice, get(), RefExtent);
+                m_PipelineMask.setImageNum(m_pAppInfo->getImageNum());
+            }
         }
 
         __rerecordCommand();
@@ -89,7 +94,7 @@ std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uin
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
         m_PipelineMask.recordCommand(CommandBuffer, vImageIndex);
         end();
     }
@@ -98,22 +103,22 @@ std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uin
 
 void CRenderPassOutlineMask::__rerecordCommand()
 {
-    m_RerecordCommandTimes = m_AppInfo.ImageNum;
+    m_RerecordCommandTimes = m_pAppInfo->getImageNum();
 }
 
-void CRenderPassOutlineMask::__createMaskImage()
+void CRenderPassOutlineMask::__createMaskImage(VkExtent2D vExtent)
 {
     VkFormat Format = m_pPortSet->getOutputFormat("Mask").Format;
 
     m_MaskImageSet.destroyAndClearAll();
-    m_MaskImageSet.init(m_AppInfo.ImageNum);
-    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+    m_MaskImageSet.init(m_pAppInfo->getImageNum());
+    for (size_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
     {
         VkImageCreateInfo ImageInfo = {};
         ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-        ImageInfo.extent.width = static_cast<uint32_t>(m_AppInfo.Extent.width);
-        ImageInfo.extent.height = static_cast<uint32_t>(m_AppInfo.Extent.height);
+        ImageInfo.extent.width = static_cast<uint32_t>(vExtent.width);
+        ImageInfo.extent.height = static_cast<uint32_t>(vExtent.height);
         ImageInfo.extent.depth = 1;
         ImageInfo.mipLevels = 1;
         ImageInfo.arrayLayers = 1;
@@ -127,26 +132,26 @@ void CRenderPassOutlineMask::__createMaskImage()
         vk::SImageViewInfo ViewInfo;
         ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
-        m_MaskImageSet[i]->create(m_AppInfo.pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+        m_MaskImageSet[i]->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 
         m_pPortSet->setOutput("Mask", *m_MaskImageSet[i], i);
     }
 }
 
-void CRenderPassOutlineMask::__createFramebuffers()
+void CRenderPassOutlineMask::__createFramebuffers(VkExtent2D vExtent)
 {
     if (!isValid()) return;
 
-    m_AppInfo.pDevice->waitUntilIdle();
+    m_pDevice->waitUntilIdle();
     m_FramebufferSet.destroyAndClearAll();
-    m_FramebufferSet.init(m_AppInfo.ImageNum);
-    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+    m_FramebufferSet.init(m_pAppInfo->getImageNum());
+    for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
             m_pPortSet->getOutputPort("Mask")->getImageV(i),
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }

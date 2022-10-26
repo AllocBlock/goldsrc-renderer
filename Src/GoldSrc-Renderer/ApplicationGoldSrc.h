@@ -33,4 +33,7 @@ private:
     CCamera::Ptr m_pCamera = nullptr;
 
     ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
+
+    bool m_NeedRecreateRenderer = false;
+    ERenderMethod m_CurRenderMethod = ERenderMethod::BSP;
 };

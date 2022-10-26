@@ -28,7 +28,7 @@ private:
     bool __readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension);
     void __createGraphicsPipeline();
     void __createDepthResources();
-    void __createFramebuffers();
+    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
 
     void __createRecreateResources();

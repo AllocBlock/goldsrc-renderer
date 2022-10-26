@@ -63,7 +63,7 @@ public:
 
         if (VertexNum == 0)
         {
-            Log::log(u8"没有顶点数据，跳过顶点缓存创建");
+            Log::log("没有顶点数据，跳过顶点缓存创建");
             return nullptr;
         }
 

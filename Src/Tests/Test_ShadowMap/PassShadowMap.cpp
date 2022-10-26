@@ -4,10 +4,10 @@
 
 void CRenderPassShadowMap::exportShadowMapToFile(std::string vFileName)
 {
-    m_AppInfo.pDevice->waitUntilIdle();
+    m_pDevice->waitUntilIdle();
     VkDeviceSize Size = m_ShadowMapExtent.width * m_ShadowMapExtent.height * 16;
     vk::CBuffer StageBuffer;
-    StageBuffer.create(m_AppInfo.pDevice, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    StageBuffer.create(m_pDevice, Size, VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     VkBufferImageCopy CopyRegion = {};
     CopyRegion.bufferOffset = 0;
@@ -52,7 +52,7 @@ SPortDescriptor CRenderPassShadowMap::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addOutput("ShadowMap", { m_ShadowMapFormat, m_ShadowMapExtent, 0, EUsage::READ });
-    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
+    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
     return Ports;
 }
@@ -108,7 +108,7 @@ void CRenderPassShadowMap::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CRenderPassShadowMap::__createDepthResources()
 {
-    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_ShadowMapExtent);
+    Function::createDepthImage(m_DepthImage, m_pDevice, m_ShadowMapExtent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
@@ -124,14 +124,14 @@ void CRenderPassShadowMap::__createFramebuffer()
             *m_ShadowMapImageSet[i],
             m_DepthImage
         };
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_ShadowMapExtent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, m_ShadowMapExtent);
     }
 }
 
 void CRenderPassShadowMap::__createShadowMapImages()
 {
-    m_ShadowMapImageSet.init(m_AppInfo.ImageNum);
-    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+    m_ShadowMapImageSet.init(m_pAppInfo->getImageNum());
+    for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
     {
         VkImageCreateInfo ImageInfo = {};
         ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -151,7 +151,7 @@ void CRenderPassShadowMap::__createShadowMapImages()
         vk::SImageViewInfo ViewInfo;
         ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
         
-        m_ShadowMapImageSet[i]->create(m_AppInfo.pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+        m_ShadowMapImageSet[i]->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
         VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
         m_ShadowMapImageSet[i]->transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         vk::endSingleTimeBuffer(CommandBuffer);
@@ -166,7 +166,7 @@ void CRenderPassShadowMap::__createRecreateResources()
     if (isValid())
     {
         __createFramebuffer();
-        m_PipelineShadowMap.create(m_AppInfo.pDevice, get(), m_ShadowMapExtent);
+        m_PipelineShadowMap.create(m_pDevice, get(), m_ShadowMapExtent);
         m_PipelineShadowMap.setImageNum(m_ShadowMapImageSet.size());
     }
 }

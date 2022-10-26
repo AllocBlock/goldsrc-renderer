@@ -78,10 +78,8 @@ glm::vec2 __toGlmVec2(ImVec2 vVec)
     return glm::vec2(vVec.x, vVec.y);
 }
 
-void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass)
+void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass)
 {
-    auto pDevice = vAppInfo.pDevice;
-
     if (!gIsInitted)
     {
         // setup context
@@ -99,11 +97,11 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
     }
 
     ImGui_ImplVulkan_InitInfo InitInfo = {};
-    InitInfo.Instance = *pDevice->getPhysicalDevice()->getInstance();
-    InitInfo.PhysicalDevice = *pDevice->getPhysicalDevice();
-    InitInfo.Device = *pDevice;
-    InitInfo.QueueFamily = pDevice->getGraphicsQueueIndex();
-    InitInfo.Queue = pDevice->getGraphicsQueue();
+    InitInfo.Instance = *vDevice->getPhysicalDevice()->getInstance();
+    InitInfo.PhysicalDevice = *vDevice->getPhysicalDevice();
+    InitInfo.Device = *vDevice;
+    InitInfo.QueueFamily = vDevice->getGraphicsQueueIndex();
+    InitInfo.Queue = vDevice->getGraphicsQueue();
     InitInfo.PipelineCache = VK_NULL_HANDLE;
     InitInfo.DescriptorPool = vPool;
     InitInfo.Allocator = nullptr;
@@ -117,11 +115,11 @@ void UI::init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPoo
         // init default sampler
         if (!gDefaultSampler.isValid())
         {
-            const auto& Properties = pDevice->getPhysicalDevice()->getProperty();
+            const auto& Properties = vDevice->getPhysicalDevice()->getProperty();
             VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
                 VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
             );
-            gDefaultSampler.create(pDevice, SamplerInfo);
+            gDefaultSampler.create(vDevice, SamplerInfo);
         }
     }
 

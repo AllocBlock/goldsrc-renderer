@@ -87,7 +87,7 @@ protected:
         m_VertexNum = 0;
 
         destroyAndClear(m_pVertexBuffer);
-        m_pVertexBuffer = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_AppInfo.pDevice, m_ActorDataInfoSet, m_VertexNum);
+        m_pVertexBuffer = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_pDevice, m_ActorDataInfoSet, m_VertexNum);
     }
 
     void _recordRenderActorCommand(VkCommandBuffer vCommandBuffer, size_t vObjectIndex)

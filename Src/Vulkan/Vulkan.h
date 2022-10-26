@@ -6,10 +6,13 @@
 #include <filesystem>
 #include <functional>
 
+bool operator == (const VkExtent2D& v1, const VkExtent2D& v2);
+bool operator != (const VkExtent2D& v1, const VkExtent2D& v2);
+
 namespace vk
 {
-    bool operator == (const VkExtent2D& v1, const VkExtent2D& v2);
-    bool operator != (const VkExtent2D& v1, const VkExtent2D& v2);
+
+    extern const VkExtent2D& ZeroExtent;
 
     struct SQueueFamilyIndices
     {

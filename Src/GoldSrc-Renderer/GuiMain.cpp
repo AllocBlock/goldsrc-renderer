@@ -71,7 +71,7 @@ SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath)
 void CGUIMain::showAlert(std::string vText)
 {
     m_GUIAlert.appendAlert(vText);
-    Log::log(u8"警告: " + vText);
+    Log::log("警告: " + vText);
 }
 
 void CGUIMain::log(std::string vText)

@@ -36,6 +36,9 @@
     <ClInclude Include="SingleValueDataArray.h">
       <Filter>头文件\DataArray</Filter>
     </ClInclude>
+    <ClInclude Include="Event.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp">
@@ -48,6 +51,9 @@
       <Filter>头文件</Filter>
     </ClCompile>
     <ClCompile Include="Environment.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Event.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

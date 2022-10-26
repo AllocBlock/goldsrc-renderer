@@ -64,7 +64,7 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     _createV();
 }
 
-void IPipeline::setImageNum(size_t vImageNum)
+void IPipeline::setImageNum(uint32_t vImageNum)
 {
     if (vImageNum == m_ImageNum) return;
     m_ImageNum = vImageNum;

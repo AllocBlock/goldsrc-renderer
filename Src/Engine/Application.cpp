@@ -4,6 +4,11 @@
 
 using namespace vk;
 
+IApplication::IApplication()
+{
+    m_pSwapchainPort->markAsSwapchainSource();
+}
+
 void IApplication::create(GLFWwindow* vWindow)
 {
     m_pWindow = vWindow;
@@ -15,10 +20,6 @@ void IApplication::create(GLFWwindow* vWindow)
     m_pDevice->create(m_pPhysicalDevice, m_DeviceExtensions, m_ValidationLayers);
     __createSemaphores();
 
-    SPortFormat SwapchainFormat = SPortFormat::AnyPortFormat;
-    SwapchainFormat.Usage = EUsage::UNDEFINED;
-    m_pSwapchainPort = make<CSourcePort>(SwapchainFormat);
-    m_pSwapchainPort->markAsSwapchainSource();
     __createSwapchain();
 
     _createV();
@@ -52,7 +53,6 @@ void IApplication::destroy()
     m_pPhysicalDevice->release();
 
     m_CurrentFrameIndex = 0;
-    m_FramebufferResized = false;
 }
 
 void IApplication::render()
@@ -105,9 +105,8 @@ void IApplication::render()
     PresentInfo.pImageIndices = &ImageIndex;
 
     Result = vkQueuePresentKHR(m_pDevice->getPresentQueue(), &PresentInfo);
-    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || m_FramebufferResized)
+    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
     {
-        m_FramebufferResized = false;
         __recreateSwapchain();
     }
     else if (Result != VK_SUCCESS)
@@ -116,34 +115,6 @@ void IApplication::render()
     }
 
     m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
-}
-
-vk::SAppInfo IApplication::getAppInfo()
-{
-    vk::SAppInfo Info;
-    Info.pDevice = m_pDevice;
-    Info.Extent = m_pSwapchain->getExtent();
-    Info.ImageFormat = m_pSwapchain->getImageFormat();
-    Info.ImageNum = m_pSwapchain->getImageNum();
-
-    return Info;
-}
-
-void IApplication::_createV()
-{
-}
-
-void IApplication::_updateV(uint32_t vImageIndex)
-{
-}
-
-std::vector<VkCommandBuffer> IApplication::_getCommandBufferSetV(uint32_t vImageIndex)
-{
-    return {};
-}
-
-void IApplication::_destroyV()
-{
 }
 
 void IApplication::__createInstance()
@@ -164,7 +135,7 @@ void IApplication::__setupDebugMessenger()
     m_pDebugMessenger->create(*m_pInstance);
     vk::DebugMessageCallbackFunc_t pCallback = [=](vk::EDebugMessageServerity vServerity, std::string vMessage)
     {
-        Log::log(u8"[验证层] " + vMessage);
+        Log::log("[验证层] " + vMessage);
     };
     m_pDebugMessenger->setCustomCallback(pCallback);
 } 
@@ -173,11 +144,15 @@ void IApplication::__createSwapchain()
 {
     m_pSwapchain->create(m_pDevice);
     const auto& Views = m_pSwapchain->getImageViews();
+
+    m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat());
+    m_pSwapchainPort->setActualExtent(m_pSwapchain->getExtent());
+    m_pSwapchainPort->clearImage();
     for (size_t i = 0; i < m_pSwapchain->getImageNum(); ++i)
         m_pSwapchainPort->setImage(Views[i], i);
 
-    m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat());
-    m_pSwapchainPort->setActualExtent( m_pSwapchain->getExtent());
+    m_pAppInfo->setImageNum(m_pSwapchain->getImageNum());
+    m_pAppInfo->setScreenExtent(m_pSwapchain->getExtent()); // for now, swapchain extent == screen extent
 }
 
 void IApplication::__destroySwapchain()

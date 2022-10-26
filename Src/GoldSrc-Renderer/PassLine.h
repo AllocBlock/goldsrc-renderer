@@ -32,7 +32,7 @@ protected:
 
 private:
     void __rerecordCommand();
-    void __createFramebuffers();
+    void __createFramebuffers(VkExtent2D vExtent);
 
     CPipelineLine m_PipelineLine;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;

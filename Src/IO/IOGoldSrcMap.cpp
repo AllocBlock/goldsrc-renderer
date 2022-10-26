@@ -204,7 +204,7 @@ bool CIOGoldSrcMap::_readV(std::filesystem::path vFilePath)
     File.open(vFilePath, std::ios::in);
     if (!File.is_open())
     {
-        Log::log(u8"打开文件 [" + vFilePath.u8string() + u8"] 失败，无权限或文件不存在");
+        Log::log("打开文件 [" + vFilePath.u8string() + "] 失败，无权限或文件不存在");
         return false;
     }
 
@@ -368,7 +368,7 @@ std::vector<std::filesystem::path> CIOGoldSrcMap::getWadPaths()
         {
             if (Properties.find("wad") == Properties.end())
             {
-                Log::log(u8"未在worldspawn实体内找到wad文件信息");
+                Log::log("未在worldspawn实体内找到wad文件信息");
                 return {};
             }
             else
@@ -391,7 +391,7 @@ std::string CIOGoldSrcMap::getSkyBoxPrefix()
         {
             if (Properties.find("skyname") == Properties.end())
             {
-                Log::log(u8"未在worldspawn实体内找到wad文件信息");
+                Log::log("未在worldspawn实体内找到wad文件信息");
                 return "";
             }
             else

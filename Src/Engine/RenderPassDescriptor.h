@@ -25,6 +25,9 @@ struct SAttachementInfo
 class CRenderPassDescriptor
 {
 public:
+    CRenderPassDescriptor() { m_IsValid = true; }
+    CRenderPassDescriptor(bool vIsDefaultValid) { m_IsValid = vIsDefaultValid; }
+
     void addColorAttachment(CPort::Ptr vPort);
     void setDepthAttachment(CPort::Ptr vPort);
     void addColorAttachment(const SAttachementInfo& vInfo);
@@ -69,7 +72,7 @@ private:
     std::vector<SAttachementInfo> m_ColorAttachmentInfoSet;
     std::optional<SAttachementInfo> m_DepthAttachmentInfo = std::nullopt;
     uint32_t m_SubPassNum = 1u;
-    bool m_IsValid = true;
+    bool m_IsValid = false;
 
     // avoid local point problem
     std::vector<VkAttachmentDescription> m_StageAttachmentDescSet;

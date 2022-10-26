@@ -41,7 +41,7 @@ std::vector<VkCommandBuffer> CRenderPassVisPhysics::_requestCommandBuffersV(uint
     VkClearValue ClearValue;
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, { ClearValue });
 
     // visualize collider
     if (m_ShowCollider)
@@ -82,23 +82,23 @@ void CRenderPassVisPhysics::_renderUIV()
 
 void CRenderPassVisPhysics::__createGraphicsPipelines()
 {
-    m_PipelineVisCollider.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-    m_PipelineVisCollidePoint.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineVisCollider.create(m_pDevice, get(), m_FirstInputExtent);
+    m_PipelineVisCollidePoint.create(m_pDevice, get(), m_FirstInputExtent);
 }
 
 void CRenderPassVisPhysics::__createFramebuffers()
 {
     m_FramebufferSet.destroyAndClearAll();
-    m_FramebufferSet.init(m_AppInfo.ImageNum);
+    m_FramebufferSet.init(m_pAppInfo->getImageNum());
 
-    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+    for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
             m_pPortSet->getOutputPort("Main")->getImageV(i)
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, m_FirstInputExtent);
     }
 }
 
@@ -107,8 +107,8 @@ void CRenderPassVisPhysics::__createRecreateResources()
     if (isValid())
     {
         __createGraphicsPipelines();
-        m_PipelineVisCollider.setImageNum(m_AppInfo.ImageNum);
-        m_PipelineVisCollidePoint.setImageNum(m_AppInfo.ImageNum);
+        m_PipelineVisCollider.setImageNum(m_pAppInfo->getImageNum());
+        m_PipelineVisCollidePoint.setImageNum(m_pAppInfo->getImageNum());
         __createFramebuffers();
     }
 }
@@ -122,7 +122,7 @@ void CRenderPassVisPhysics::__destroyRecreateResources()
 
 void CRenderPassVisPhysics::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
     
     m_PipelineVisCollider.updateUniformBuffer(vImageIndex, m_pCamera);
     m_PipelineVisCollidePoint.updateUniformBuffer(vImageIndex, m_pCamera);

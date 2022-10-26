@@ -80,9 +80,8 @@ protected:
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
-    void __createGraphicsPipelines();
-    void __createDepthResources();
-    void __createFramebuffers();
+    void __createDepthResources(VkExtent2D vExtent);
+    void __createFramebuffers(VkExtent2D vExtent);
     void __createTextureImages();
     void __createLightmapImage();
 
@@ -104,6 +103,7 @@ private:
     void __recordSpriteRenderCommand(uint32_t vImageIndex);
     
     size_t __getActualTextureNum();
+    void __updatePipelines();
     void __updateDescriptorSets();
     void __updateTextureView();
 

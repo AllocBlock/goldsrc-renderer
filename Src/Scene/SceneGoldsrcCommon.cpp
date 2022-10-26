@@ -21,7 +21,7 @@ bool GoldSrc::readWad(std::filesystem::path vWadPath, std::filesystem::path vAdd
     std::filesystem::path RealWadPath;
     if (!Scene::requestFilePathUntilCancel(vWadPath, vAdditionalSearchDir, "wad", RealWadPath))
     {
-        Log::log(u8"未找到WAD文件：" + vWadPath.u8string());
+        Log::log("未找到WAD文件：" + vWadPath.u8string());
         return false;
     }
 

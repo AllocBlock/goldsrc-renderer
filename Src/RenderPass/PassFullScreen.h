@@ -40,8 +40,8 @@ protected:
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
 private:
-    void __createPipeline();
-    void __createFramebuffers();
+    void __createPipeline(VkExtent2D vExtent);
+    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
 
     void __generateScene();

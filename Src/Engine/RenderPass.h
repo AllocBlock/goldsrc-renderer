@@ -5,6 +5,7 @@
 #include "RenderPassPort.h"
 #include "RenderPassDescriptor.h"
 #include "AppInfo.h"
+#include "FrameBuffer.h"
 
 #include <string>
 #include <vector>
@@ -37,17 +38,36 @@ namespace vk
         }
     };
 
-    // TIPS: pipelines require update when image extent changed, as viewport has to update
-    // TIPS: pipelines require update when renderpass changed, as it depends on renderpass
-    // TIPS: some textures with same extent as screen require update
-    // TIPS: command require rerecord when command manager changed
+    /*
+     * TIPS:
+     * 1. all image index related function react to image num change
+     * 2. input image may change, which lead to update
+     * 3. pipelines require update when renderpass changed, as it depends on renderpass
+     *    some textures with same extent as screen require update
+     * 4. command require rerecord when command manager changed
+     */
     struct SPassUpdateState
     {
-        SPassUpdateAttribute<VkFormat> ImageFormat;
-        SPassUpdateAttribute<VkExtent2D> ImageExtent;
-        SPassUpdateAttribute<size_t> ImageNum;
+        SPassUpdateState()
+        {
+            ImageNum = 0;
+            ScreenExtent = { 0, 0 };
+            InputImageUpdated = false;
+            RenderpassUpdated = false;
+        }
+
+        SPassUpdateState(uint32_t vImageNum, VkExtent2D vExtent)
+        {
+            ImageNum = vImageNum;
+            ScreenExtent = vExtent;
+            InputImageUpdated = false;
+            RenderpassUpdated = false;
+        }
+
+        SPassUpdateAttribute<uint32_t> ImageNum;
+        SPassUpdateAttribute<VkExtent2D> ScreenExtent;
+        bool InputImageUpdated = false;
         bool RenderpassUpdated = false;
-        bool CommandUpdated = false;
     };
 
     class IRenderPass : public IVulkanHandle<VkRenderPass>, public IDrawableUI
@@ -56,17 +76,18 @@ namespace vk
         IRenderPass();
         virtual ~IRenderPass() = default;
 
-        void init(const vk::SAppInfo& vAppInfo);
+        void init(CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo);
         void update(uint32_t vImageIndex);
         std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
         void destroy();
 
-        void updateImageInfo(VkFormat vImageFormat, VkExtent2D vImageExtent, size_t vImageNum);
-
-        void begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues);
+        void begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues);
         void end();
-
+        
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
+
+        static const std::vector<VkClearValue>& DefaultClearValueColor;
+        static const std::vector<VkClearValue>& DefaultClearValueColorDepth;
 
     protected:
         /*
@@ -125,59 +146,39 @@ namespace vk
          */
         virtual void _onUpdateV(const SPassUpdateState& vUpdateState) {}
 
-        vk::SAppInfo m_AppInfo;
-        CPortSet::Ptr m_pPortSet;
+        bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
+
+        CDevice::CPtr m_pDevice = nullptr;
+        CAppInfo::Ptr m_pAppInfo = nullptr;
+        CPortSet::Ptr m_pPortSet = nullptr;
 
         CCommand m_Command = CCommand();
         std::string m_DefaultCommandName = "Default";
 
     private:
-        void __createCommandPoolAndBuffers();
+        void __createCommandPoolAndBuffers(uint32_t vImageNum);
         void __destroyCommandPoolAndBuffers();
-        bool __createRenderpass(); // return if the pass is updated
+        void __createRenderpass();
         void __destroyRenderpass();
         void __beginCommand(VkCommandBuffer vCommandBuffer);
         void __endCommand(VkCommandBuffer vCommandBuffer);
+        
+        void __updateImageNum(uint32_t vImageNum);
+        void __hookEvents();
+        void __unhookEvents();
 
-        void __triggerImageUpdate(VkFormat vOldImageFormat, VkExtent2D vOldImageExtent, size_t vOldImageNum)
-        {
-            SPassUpdateState State;
-            State.ImageFormat = SPassUpdateAttribute<VkFormat>::create(vOldImageFormat, m_AppInfo.ImageFormat);
-            State.ImageExtent = SPassUpdateAttribute<VkExtent2D>::create(vOldImageExtent, m_AppInfo.Extent);
-            State.ImageNum = SPassUpdateAttribute<size_t>::create(vOldImageNum, m_AppInfo.ImageNum);
-            State.RenderpassUpdated = false;
-            State.CommandUpdated = false;
-
-            _onUpdateV(State);
-        }
-
-        void __triggerRenderpassUpdate()
-        {
-            SPassUpdateState State;
-            State.ImageFormat = m_AppInfo.ImageFormat;
-            State.ImageExtent = m_AppInfo.Extent;
-            State.ImageNum = m_AppInfo.ImageNum;
-            State.RenderpassUpdated = true;
-            State.CommandUpdated = false;
-
-            _onUpdateV(State);
-        }
-
-        void __triggerCommandUpdate()
-        {
-            SPassUpdateState State;
-            State.ImageFormat = m_AppInfo.ImageFormat;
-            State.ImageExtent = m_AppInfo.Extent;
-            State.ImageNum = m_AppInfo.ImageNum;
-            State.RenderpassUpdated = false;
-            State.CommandUpdated = true;
-
-            _onUpdateV(State);
-        }
+        void __triggerImageNumUpdate(uint32_t vImageNum);
+        void __triggerScreenExtentUpdate(VkExtent2D vExtent);
+        void __triggerInputImageUpdate();
+        void __triggerRenderpassUpdate();
 
         bool m_Begined = false;
         VkCommandBuffer m_CurrentCommandBuffer = VK_NULL_HANDLE;
-        CRenderPassDescriptor m_CurPassDesc;
-    };
+        CRenderPassDescriptor m_CurPassDesc = CRenderPassDescriptor(false);
 
+        HookId_t m_ImageNumUpdateHookId = 0;
+        HookId_t m_ScreenExtentUpdateHookId = 0;
+        HookId_t m_InputImageUpdateHookId = 0;
+        HookId_t m_LinkUpdateHookId = 0;
+    };
 }

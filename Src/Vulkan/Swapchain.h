@@ -17,7 +17,7 @@ namespace vk
         VkExtent2D getExtent();
         VkFormat getImageFormat();
         const std::vector<VkImageView>& getImageViews();
-        size_t getImageNum() { return m_ImageViewSet.size(); }
+        uint32_t getImageNum() { return static_cast<uint32_t>(m_ImageViewSet.size()); }
 
     private:
         VkSurfaceFormatKHR __chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats);

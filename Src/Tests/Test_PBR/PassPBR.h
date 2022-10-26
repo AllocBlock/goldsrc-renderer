@@ -29,7 +29,7 @@ protected:
 private:
     void __createGraphicsPipeline();
     void __createDepthResources();
-    void __createFramebuffers();
+    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
     void __createMaterials();
 

@@ -14,6 +14,7 @@
     <ClInclude Include="Common.h" />
     <ClInclude Include="DataArray.h" />
     <ClInclude Include="Environment.h" />
+    <ClInclude Include="Event.h" />
     <ClInclude Include="GeneralDataArray.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="SingleValueDataArray.h" />
@@ -21,6 +22,7 @@
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="Environment.cpp" />
+    <ClCompile Include="Event.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Pointer.h" />
   </ItemGroup>

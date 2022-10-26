@@ -11,27 +11,26 @@ void CApplicationGoldSrc::_createV()
 
     m_pCamera = make<CCamera>();
 
-    vk::SAppInfo AppInfo = getAppInfo();
-
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
     m_pPassGUI = make<CRenderPassGUI>();
     m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo);
+    m_pPassGUI->init(m_pDevice, m_pAppInfo);
 
     m_pPassOutlineMask = make<CRenderPassOutlineMask>();
-    m_pPassOutlineMask->init(AppInfo);
+    m_pPassOutlineMask->init(m_pDevice, m_pAppInfo);
     m_pPassOutlineMask->setCamera(m_pCamera);
 
     m_pPassOutlineEdge = make<CRenderPassOutlineEdge>();
-    m_pPassOutlineEdge->init(AppInfo);
+    m_pPassOutlineEdge->init(m_pDevice, m_pAppInfo);
 
     m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
     m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
         {
-            __recreateRenderer(vMethod);
+            m_NeedRecreateRenderer = true;
+            m_CurRenderMethod = vMethod;
         });
 
     m_pMainUI->setReadSceneCallback([this](ptr<SSceneInfoGoldSrc> vScene)
@@ -66,11 +65,17 @@ void CApplicationGoldSrc::_createV()
             }
         });
 
-    __recreateRenderer(ERenderMethod::BSP);
+    __recreateRenderer(m_CurRenderMethod);
 }
 
 void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
 {
+    if (m_NeedRecreateRenderer)
+    {
+        m_NeedRecreateRenderer = false;
+        __recreateRenderer(m_CurRenderMethod);
+    }
+
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
     m_pPassScene->update(vImageIndex);
@@ -113,9 +118,8 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
 {
     m_pDevice->waitUntilIdle();
     if (m_pPassScene)
-        m_pPassScene->destroy();
-
-    auto AppInfo = getAppInfo();
+        destroyAndClear(m_pPassScene);
+    
     switch (vMethod)
     {
     case ERenderMethod::DEFAULT:
@@ -132,7 +136,7 @@ void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
         return;
     }
 
-    m_pPassScene->init(AppInfo);
+    m_pPassScene->init(m_pDevice, m_pAppInfo);
     m_pPassScene->setCamera(m_pCamera);
     if (m_pSceneInfo)
         m_pPassScene->loadScene(m_pSceneInfo);
@@ -146,6 +150,11 @@ void CApplicationGoldSrc::__linkPasses()
     auto pPortOutlineMask = m_pPassOutlineMask->getPortSet();
     auto pPortOutlineEdge = m_pPassOutlineEdge->getPortSet();
     auto pPortGui = m_pPassGUI->getPortSet();
+    m_pSwapchainPort->unlinkAll();
+    pPortScene->unlinkAll();
+    pPortOutlineMask->unlinkAll();
+    pPortOutlineEdge->unlinkAll();
+    pPortGui->unlinkAll();
 
     m_pSwapchainPort->setForceNotReady(true);
     CPortSet::link(m_pSwapchainPort, pPortScene, "Main");

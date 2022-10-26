@@ -12,7 +12,7 @@ void CRenderPassShade::setShadowMapInfo(CCamera::CPtr vLightCamera)
 void CRenderPassShade::_initV()
 {
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
     m_pCamera->setPos(glm::vec3(-3, 6, 4));
     m_pCamera->setTheta(120.0f);
     m_pCamera->setPhi(300.0f);
@@ -31,7 +31,7 @@ SPortDescriptor CRenderPassShade::_getPortDescV()
     SPortDescriptor Ports;
     Ports.addInput("ShadowMap", { gShadowMapImageFormat, {0, 0}, 1, EUsage::READ });
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
+    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
     return Ports;
 }
@@ -58,7 +58,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
     ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValues[1].depthStencil = { 1.0f, 0 };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValues);
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, ClearValues);
 
     if (m_pVertBuffer->isValid())
     {
@@ -86,16 +86,16 @@ void CRenderPassShade::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CRenderPassShade::__createDepthResources()
 {
-    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent);
+    Function::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
 void CRenderPassShade::__createFramebuffers()
 {
-    size_t ImageNum = m_AppInfo.ImageNum;
+    uint32_t ImageNum = m_pAppInfo->getImageNum();
     m_FramebufferSet.init(ImageNum);
     
-    for (size_t i = 0; i < ImageNum; ++i)
+    for (uint32_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
@@ -103,7 +103,7 @@ void CRenderPassShade::__createFramebuffers()
             m_DepthImage
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, m_FirstInputExtent);
     }
 }
 
@@ -114,8 +114,8 @@ void CRenderPassShade::__createRecreateResources()
     if (isValid())
     {
         __createFramebuffers();
-        m_PipelineShade.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-        m_PipelineShade.setImageNum(m_AppInfo.ImageNum);
+        m_PipelineShade.create(m_pDevice, get(), m_FirstInputExtent);
+        m_PipelineShade.setImageNum(m_pAppInfo->getImageNum());
         __updateShadowMapImages();
     }
 }
@@ -131,7 +131,7 @@ void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
 {
     _ASSERTE(m_pLightCamera);
     
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
 
     m_PipelineShade.updateUniformBuffer(vImageIndex, m_pCamera, m_pLightCamera, gShadowMapSize);
 }
@@ -141,7 +141,7 @@ void CRenderPassShade::__updateShadowMapImages()
     if (isValid() && m_PipelineShade.isValid())
     {
         std::vector<VkImageView> ShadowMapImageViewSet;
-        for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+        for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
         {
             ShadowMapImageViewSet.emplace_back(m_pPortSet->getInputPort("ShadowMap")->getImageV(i));
         }

@@ -7,7 +7,7 @@ void CRenderPassShade::setScene(CTempScene<CMeshDataGeneral>::Ptr vScene)
 {
     m_pScene = vScene;
     m_ActorDataPositionSet.clear();
-    m_pVertBuffer = vScene->generateVertexBuffer<CPipelineShade::SPointData>(m_AppInfo.pDevice, m_ActorDataPositionSet, m_VertexNum);
+    m_pVertBuffer = vScene->generateVertexBuffer<CPipelineShade::SPointData>(m_pDevice, m_ActorDataPositionSet, m_VertexNum);
 }
 
 void CRenderPassShade::_initV()
@@ -18,7 +18,7 @@ SPortDescriptor CRenderPassShade::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
+    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
     return Ports;
 }
@@ -42,7 +42,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
     ClearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValues[1].depthStencil = { 1.0f, 0 };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValues);
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, ClearValues);
 
     // shade
     if (isNonEmptyAndValid(m_pVertBuffer))
@@ -80,7 +80,7 @@ void CRenderPassShade::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CRenderPassShade::__createGraphicsPipelines()
 {
-    m_PipelineShade.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_PipelineShade.create(m_pDevice, get(), m_FirstInputExtent);
 }
 
 void CRenderPassShade::__createDepthResources()
@@ -88,7 +88,7 @@ void CRenderPassShade::__createDepthResources()
     m_DepthImage.destroy();
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+    Function::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent, NULL, DepthFormat);
 
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
@@ -96,9 +96,9 @@ void CRenderPassShade::__createDepthResources()
 void CRenderPassShade::__createFramebuffers()
 {
     m_FramebufferSet.destroyAndClearAll();
-    m_FramebufferSet.init(m_AppInfo.ImageNum);
+    m_FramebufferSet.init(m_pAppInfo->getImageNum());
 
-    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+    for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
@@ -106,7 +106,7 @@ void CRenderPassShade::__createFramebuffers()
             m_DepthImage
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, m_FirstInputExtent);
     }
 }
 
@@ -116,7 +116,7 @@ void CRenderPassShade::__createRecreateResources()
     if (isValid())
     {
         __createGraphicsPipelines();
-        m_PipelineShade.setImageNum(m_AppInfo.ImageNum);
+        m_PipelineShade.setImageNum(m_pAppInfo->getImageNum());
         __createFramebuffers();
     }
 }
@@ -130,7 +130,7 @@ void CRenderPassShade::__destroyRecreateResources()
 
 void CRenderPassShade::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
 
     m_PipelineShade.updateUniformBuffer(vImageIndex, m_pCamera);
 }

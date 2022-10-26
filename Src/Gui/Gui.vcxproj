@@ -85,7 +85,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Gui.cpp" />
+    <ClCompile Include="InterfaceUI.cpp" />
     <ClCompile Include="NativeSystem.cpp" />
   </ItemGroup>
   <ItemGroup>

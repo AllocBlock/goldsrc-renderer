@@ -171,4 +171,7 @@
       <Filter>头文件\Scene</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
+  </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 
 SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth)
 {
-    if (!vPort->isReadyV() || !vPort->hasActualFormatV())
+    if (!vPort->isLinkReadyV() || !vPort->hasActualFormatV())
     {
         clear();
         m_IsValid = false;

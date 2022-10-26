@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Gui.cpp">
+    <ClCompile Include="InterfaceUI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="NativeSystem.cpp">

@@ -6,7 +6,7 @@
 void CRenderPassSprite::_initV()
 {
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
     m_pCamera->setPos(glm::vec3(1.0, 0.0, 0.0));
     m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
     
@@ -38,7 +38,7 @@ std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, ClearValueSet);
     m_Pipeline.recordCommand(CommandBuffer, vImageIndex);
     end();
     return { CommandBuffer };
@@ -59,23 +59,23 @@ void CRenderPassSprite::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CRenderPassSprite::__createGraphicsPipeline()
 {
-    m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_Pipeline.create(m_pDevice, get(), m_FirstInputExtent);
 }
 
 void CRenderPassSprite::__createFramebuffers()
 {
     _ASSERTE(isValid());
 
-    size_t ImageNum = m_AppInfo.ImageNum;
+    uint32_t ImageNum = m_pAppInfo->getImageNum();
     m_FramebufferSet.init(ImageNum);
-    for (size_t i = 0; i < ImageNum; ++i)
+    for (uint32_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> Attachments =
         {
             m_pPortSet->getOutputPort("Main")->getImageV(i),
         };
         
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), Attachments, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), Attachments, m_FirstInputExtent);
     }
 }
 
@@ -85,7 +85,7 @@ void CRenderPassSprite::__createRecreateResources()
     {
         __createFramebuffers();
         __createGraphicsPipeline();
-        m_Pipeline.setImageNum(m_AppInfo.ImageNum);
+        m_Pipeline.setImageNum(m_pAppInfo->getImageNum());
 
         const std::vector<SGoldSrcSprite> SpriteSet =
         {
@@ -145,7 +145,7 @@ void CRenderPassSprite::__destroyRecreateResources()
 
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
 
     glm::mat4 View = m_pCamera->getViewMat();
     glm::mat4 Proj = m_pCamera->getProjMat();

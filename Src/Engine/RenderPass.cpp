@@ -2,59 +2,51 @@
 
 using namespace vk;
 
+std::vector<VkClearValue> __createDefaultClearValueColor()
+{
+    VkClearValue Value;
+    Value.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+    return { Value };
+}
+
+std::vector<VkClearValue> __createDefaultClearValueColorDepth()
+{
+    std::vector<VkClearValue> ValueSet(2);
+    ValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    ValueSet[1].depthStencil = { 1.0f, 0 };
+
+    return ValueSet;
+}
+
+const std::vector<VkClearValue>& IRenderPass::DefaultClearValueColor = __createDefaultClearValueColor();
+const std::vector<VkClearValue>& IRenderPass::DefaultClearValueColorDepth = __createDefaultClearValueColorDepth();
+
 IRenderPass::IRenderPass()
 {
 }
 
-void IRenderPass::init(const vk::SAppInfo& vAppInfo)
+void IRenderPass::init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
 {
-    m_AppInfo = vAppInfo;
+    m_pDevice = vDevice;
+    m_pAppInfo = vAppInfo;
 
     auto PortDesc = _getPortDescV();
     m_pPortSet = make<CPortSet>(PortDesc);
-    m_CurPassDesc = _getRenderPassDescV();
-
-    m_pPortSet->hookLinkUpdate([this](ILinkEvent::EventId_t vEventId, ILinkEvent::CPtr vFrom)
-        {
-            CRenderPassDescriptor NewDesc = _getRenderPassDescV();
-            if (NewDesc != m_CurPassDesc) // change happens
-            {
-                m_CurPassDesc = NewDesc;
-                if (__createRenderpass())
-                {
-                    __triggerRenderpassUpdate();
-                }
-            }
-        }
-    );
 
     // FIXME: init first or create pass/command first
     _initV();
 
-    __createCommandPoolAndBuffers();
+    __hookEvents();
+    __createCommandPoolAndBuffers(m_pAppInfo->getImageNum());
     __createRenderpass();
-}
-
-void IRenderPass::updateImageInfo(VkFormat vImageFormat, VkExtent2D vImageExtent, size_t vImageNum)
-{
-    VkFormat OldImageFormat = m_AppInfo.ImageFormat;
-    VkExtent2D OldImageExtent = m_AppInfo.Extent;
-    size_t OldImageNum = m_AppInfo.ImageNum;
-
-    bool ShouldCommandBufferUpdate = (m_AppInfo.ImageNum != vImageNum);
-    m_AppInfo.ImageFormat = vImageFormat;
-    m_AppInfo.Extent = vImageExtent;
-    m_AppInfo.ImageNum = vImageNum;
-    if (ShouldCommandBufferUpdate) __createCommandPoolAndBuffers();
-
-    __triggerImageUpdate(OldImageFormat, OldImageExtent, OldImageNum);
 }
 
 void IRenderPass::update(uint32_t vImageIndex)
 {
     _ASSERTE(isValid());
     _updateV(vImageIndex);
-} 
+}
 
 std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers(uint32_t vImageIndex)
 {
@@ -67,9 +59,11 @@ void IRenderPass::destroy()
     _destroyV();
     __destroyRenderpass();
     __destroyCommandPoolAndBuffers();
+    __unhookEvents();
+    m_pPortSet->unlinkAll();
 }
 
-void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuffer, VkExtent2D vRenderExtent, const std::vector<VkClearValue>& vClearValues)
+void IRenderPass::begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues)
 {
     _ASSERTE(!m_Begined);
     _ASSERTE(isValid());
@@ -80,9 +74,9 @@ void IRenderPass::begin(VkCommandBuffer vCommandBuffer, VkFramebuffer vFrameBuff
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass = get();
-    RenderPassBeginInfo.framebuffer = vFrameBuffer;
+    RenderPassBeginInfo.framebuffer = *vFrameBuffer;
     RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-    RenderPassBeginInfo.renderArea.extent = vRenderExtent;
+    RenderPassBeginInfo.renderArea.extent = vFrameBuffer->getExtent();
     RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(vClearValues.size());
     RenderPassBeginInfo.pClearValues = vClearValues.data();
 
@@ -101,12 +95,23 @@ void IRenderPass::end()
     m_Begined = false;
 }
 
-void IRenderPass::__createCommandPoolAndBuffers()
+bool IRenderPass::_dumpInputPortExtent(std::string vName, VkExtent2D& voExtent)
+{
+    bool HasExtent = false;
+    auto pRefPort = m_pPortSet->getInputPort(vName);
+    if (pRefPort->hasActualExtentV())
+    {
+        HasExtent = true;
+        voExtent = pRefPort->getActualExtentV();
+    }
+    return HasExtent;
+}
+
+void IRenderPass::__createCommandPoolAndBuffers(uint32_t vImageNum)
 {
     __destroyCommandPoolAndBuffers();
-    m_Command.createPool(m_AppInfo.pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(m_AppInfo.ImageNum), ECommandBufferLevel::PRIMARY);
-    __triggerCommandUpdate();
+    m_Command.createPool(m_pDevice, ECommandType::RESETTABLE);
+    m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(vImageNum), ECommandBufferLevel::PRIMARY);
 }
 
 void IRenderPass::__destroyCommandPoolAndBuffers()
@@ -114,15 +119,18 @@ void IRenderPass::__destroyCommandPoolAndBuffers()
     m_Command.clear();
 }
 
-bool IRenderPass::__createRenderpass()
+void IRenderPass::__createRenderpass()
 {
-    bool isPrevValid = isValid();
+    CRenderPassDescriptor NewDesc = _getRenderPassDescV();
+    if (NewDesc == m_CurPassDesc) return; // same, no change
+    else if (!NewDesc.isValid() && !m_CurPassDesc.isValid()) return; // all invalid, no change
+
+    m_CurPassDesc = NewDesc;
+
     __destroyRenderpass();
 
-    if (!m_CurPassDesc.isValid()) return isPrevValid;
-
     auto Info = m_CurPassDesc.generateInfo();
-    vk::checkError(vkCreateRenderPass(*m_AppInfo.pDevice, &Info, nullptr, _getPtr()));
+    vk::checkError(vkCreateRenderPass(*m_pDevice, &Info, nullptr, _getPtr()));
     m_CurPassDesc.clearStage(); // free stage data to save memory
 
 #ifdef _DEBUG
@@ -132,15 +140,13 @@ bool IRenderPass::__createRenderpass()
 #endif
 
     __triggerRenderpassUpdate();
-
-    return true;
 }
 
 void IRenderPass::__destroyRenderpass()
 {
     if (isValid())
     {
-        vkDestroyRenderPass(*m_AppInfo.pDevice, get(), nullptr);
+        vkDestroyRenderPass(*m_pDevice, get(), nullptr);
         _setNull();
     }
 }
@@ -158,4 +164,64 @@ void IRenderPass::__beginCommand(VkCommandBuffer vCommandBuffer)
 void IRenderPass::__endCommand(VkCommandBuffer vCommandBuffer)
 {
     vk::checkError(vkEndCommandBuffer(vCommandBuffer));
+}
+
+void IRenderPass::__updateImageNum(uint32_t vImageNum)
+{
+    __createCommandPoolAndBuffers(vImageNum);
+    __triggerImageNumUpdate(vImageNum);
+}
+
+void IRenderPass::__hookEvents()
+{
+    m_ImageNumUpdateHookId = m_pAppInfo->hookImageNumUpdate([this](uint32_t vImageNum) 
+        { __updateImageNum(vImageNum); }
+    );
+    m_ScreenExtentUpdateHookId = m_pAppInfo->hookScreenExtentUpdate([this](VkExtent2D vExtent)      
+        { __triggerScreenExtentUpdate(vExtent); }
+    );
+
+    m_InputImageUpdateHookId = m_pPortSet->hookInputImageUpdate([this]()
+        { __triggerInputImageUpdate(); }
+    );
+
+    m_LinkUpdateHookId = m_pPortSet->hookLinkUpdate([this](EventId_t, ILinkEvent::CPtr)
+        { __createRenderpass(); }
+    );
+}
+
+void IRenderPass::__unhookEvents()
+{
+    if (m_ImageNumUpdateHookId) m_pAppInfo->unhookImageNumUpdate(m_ImageNumUpdateHookId);
+    if (m_ScreenExtentUpdateHookId) m_pAppInfo->unhookScreenExtentUpdate(m_ScreenExtentUpdateHookId);
+    if (m_InputImageUpdateHookId) m_pPortSet->unhookInputImageUpdate(m_InputImageUpdateHookId);
+    if (m_LinkUpdateHookId) m_pPortSet->unhookLinkUpdate(m_LinkUpdateHookId);
+}
+
+void IRenderPass::__triggerImageNumUpdate(uint32_t vImageNum)
+{
+    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
+    State.ImageNum = SPassUpdateAttribute<uint32_t>::create(vImageNum, true);
+    _onUpdateV(State);
+}
+
+void IRenderPass::__triggerScreenExtentUpdate(VkExtent2D vExtent)
+{
+    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
+    State.ScreenExtent = SPassUpdateAttribute<VkExtent2D>::create(vExtent, true);
+    _onUpdateV(State);
+}
+
+void IRenderPass::__triggerInputImageUpdate()
+{
+    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
+    State.InputImageUpdated = true;
+    _onUpdateV(State);
+}
+
+void IRenderPass::__triggerRenderpassUpdate()
+{
+    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
+    State.RenderpassUpdated = true;
+    _onUpdateV(State);
 }

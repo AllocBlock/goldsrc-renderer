@@ -27,7 +27,7 @@ protected:
 private:
     void __createDescriptorPool();
     void __destroyDescriptorPool();
-    void __createFramebuffer();
+    void __createFramebuffer(VkExtent2D vExtent);
 
     GLFWwindow* m_pWindow = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;

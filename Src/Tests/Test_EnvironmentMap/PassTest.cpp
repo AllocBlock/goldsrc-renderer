@@ -5,7 +5,7 @@
 void CRenderPassSprite::_initV()
 {
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
     m_pCamera->setPos(glm::vec3(0.0, -1.0, 0.0));
 
     __loadSkyBox();
@@ -17,7 +17,7 @@ SPortDescriptor CRenderPassSprite::_getPortDescV()
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
+    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
     return Ports;
 }
@@ -41,7 +41,7 @@ std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, ClearValueSet);
 
     if (m_pVertexBuffer->isValid())
     {
@@ -114,22 +114,22 @@ bool CRenderPassSprite::__readSkyboxImages(std::string vSkyFilePrefix, std::stri
 
 void CRenderPassSprite::__createGraphicsPipeline()
 {
-    m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+    m_Pipeline.create(m_pDevice, get(), m_FirstInputExtent);
 }
 
 void CRenderPassSprite::__createDepthResources()
 {
-    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent);
+    Function::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
-void CRenderPassSprite::__createFramebuffers()
+void CRenderPassSprite::__createFramebuffers(VkExtent2D vExtent)
 {
     _ASSERTE(isValid());
 
-    size_t ImageNum = m_AppInfo.ImageNum;
+    uint32_t ImageNum = m_pAppInfo->getImageNum();
     m_FramebufferSet.init(ImageNum);
-    for (size_t i = 0; i < ImageNum; ++i)
+    for (uint32_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
@@ -137,7 +137,7 @@ void CRenderPassSprite::__createFramebuffers()
             m_DepthImage
         };
         
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, m_FirstInputExtent);
     }
 }
 
@@ -150,7 +150,7 @@ void CRenderPassSprite::__createVertexBuffer()
     {
         VkDeviceSize BufferSize = sizeof(CPipelineTest::SPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }
@@ -161,9 +161,9 @@ void CRenderPassSprite::__createRecreateResources()
     if (isValid())
     {
         __createGraphicsPipeline();
-        m_Pipeline.setImageNum(m_AppInfo.ImageNum);
+        m_Pipeline.setImageNum(m_pAppInfo->getImageNum());
         m_Pipeline.setSkyBoxImage(m_SkyBoxImageSet);
-        __createFramebuffers();
+        __createFramebuffers(VkExtent2D vExtent);
     }
 }
 
@@ -215,7 +215,7 @@ void CRenderPassSprite::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet,
 
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
+    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
 
     glm::mat4 Model = glm::mat4(1.0f);
     glm::mat4 View = m_pCamera->getViewMat();

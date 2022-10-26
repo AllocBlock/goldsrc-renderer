@@ -13,7 +13,7 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
     CRenderPassSceneTyped::_loadSceneV(vScene);
 
-    m_AppInfo.pDevice->waitUntilIdle();
+    m_pDevice->waitUntilIdle();
     if (m_pSceneInfo->BspTree.Nodes.empty()) m_EnableBSP = false;
     if (m_pSceneInfo->BspPvs.LeafNum == 0) m_EnablePVS = false;
 
@@ -27,7 +27,7 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 
 void CSceneGoldSrcRenderPass::rerecordCommand()
 {
-    m_RerecordCommandTimes = m_AppInfo.ImageNum;
+    m_RerecordCommandTimes = m_pAppInfo->getImageNum();
 }
 
 void CSceneGoldSrcRenderPass::_initV()
@@ -44,7 +44,7 @@ SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 
-    VkFormat DepthFormat = m_AppInfo.pDevice->getPhysicalDevice()->getBestDepthFormat();
+    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
     Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
     
     return Ports;
@@ -58,29 +58,46 @@ CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()
 
 void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
+    VkExtent2D RefExtent = { 0, 0 };
+    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+
+    if (m_pCamera)
+        m_pCamera->setAspect(RefExtent.width, RefExtent.height);
+
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
-        __createDepthResources(); // extent
         if (isValid())
         {
-            __createGraphicsPipelines(); // extent
-            uint32_t ImageNum = uint32_t(m_AppInfo.ImageNum);
-            m_PipelineSet.DepthTest.setImageNum(ImageNum);
-            m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
-            m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
-            m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
-            m_PipelineSet.Sprite.setImageNum(ImageNum);
-            m_PipelineSet.Sky.setImageNum(ImageNum);
+            if (RefExtent != vk::ZeroExtent)
+                __createDepthResources(RefExtent);
+            __createFramebuffers(RefExtent);
+            if (!vUpdateState.InputImageUpdated)
+            {
+                VkRenderPass RenderPass = get();
 
-            __updateDescriptorSets();
+                m_PipelineSet.Sky.create(m_pDevice, RenderPass, RefExtent);
+                m_PipelineSet.DepthTest.create(m_pDevice, RenderPass, RefExtent);
+                m_PipelineSet.BlendTextureAlpha.create(m_pDevice, RenderPass, RefExtent);
+                m_PipelineSet.BlendAlphaTest.create(m_pDevice, RenderPass, RefExtent);
+                m_PipelineSet.BlendAdditive.create(m_pDevice, RenderPass, RefExtent);
+                m_PipelineSet.Sprite.create(m_pDevice, RenderPass, RefExtent);
+
+                uint32_t ImageNum = m_pAppInfo->getImageNum();
+                m_PipelineSet.DepthTest.setImageNum(ImageNum);
+                m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
+                m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
+                m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
+                m_PipelineSet.Sprite.setImageNum(ImageNum);
+                m_PipelineSet.Sky.setImageNum(ImageNum);
+
+                __updatePipelines();
+                __updateDescriptorSets();
+
+                m_PipelineSet.Sky.setImageNum(ImageNum);
+
+            }
         }
-        __createFramebuffers();
 
-        rerecordCommand();
-    }
-
-    if (vUpdateState.CommandUpdated)
-    {
         rerecordCommand();
     }
 }
@@ -174,15 +191,12 @@ void CSceneGoldSrcRenderPass::_renderUIV()
 void CSceneGoldSrcRenderPass::_destroyV()
 {
     m_DepthImage.destroy();
-
-    m_AppInfo.pDevice->waitUntilIdle();
     m_FramebufferSet.destroyAndClearAll();
-
     m_PipelineSet.destroy();
 
     __destroySceneResources();
 
-    IRenderPass::_destroyV();
+    CRenderPassSceneTyped::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -207,7 +221,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, ClearValueSet);
+        begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -262,16 +276,7 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
 
     m_EnableSky = m_EnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
 
-    if (m_pSceneInfo && m_pSceneInfo->UseSkyBox)
-    {
-        m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
-    }
-
-    if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
-    {
-        m_PipelineSet.Sprite.setSprites(m_pSceneInfo->SprSet);
-    }
-
+    __updatePipelines();
     __updateDescriptorSets();
     rerecordCommand();
 }
@@ -489,35 +494,24 @@ void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, 
     _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
-void CSceneGoldSrcRenderPass::__createGraphicsPipelines()
-{
-    VkRenderPass RenderPass = get();
-    m_PipelineSet.Sky.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.DepthTest.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendTextureAlpha.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendAlphaTest.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.BlendAdditive.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-    m_PipelineSet.Sprite.create(m_AppInfo.pDevice, RenderPass, m_AppInfo.Extent);
-}
-
-void CSceneGoldSrcRenderPass::__createDepthResources()
+void CSceneGoldSrcRenderPass::__createDepthResources(VkExtent2D vExtent)
 {
     m_DepthImage.destroy();
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    Function::createDepthImage(m_DepthImage, m_AppInfo.pDevice, m_AppInfo.Extent, NULL, DepthFormat);
+    Function::createDepthImage(m_DepthImage, m_pDevice, vExtent, NULL, DepthFormat);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
-void CSceneGoldSrcRenderPass::__createFramebuffers()
+void CSceneGoldSrcRenderPass::__createFramebuffers(VkExtent2D vExtent)
 {
     if (!isValid()) return;
 
-    m_AppInfo.pDevice->waitUntilIdle();
+    m_pDevice->waitUntilIdle();
 
     m_FramebufferSet.destroyAndClearAll();
-    m_FramebufferSet.init(m_AppInfo.ImageNum);
-    for (size_t i = 0; i < m_AppInfo.ImageNum; ++i)
+    m_FramebufferSet.init(m_pAppInfo->getImageNum());
+    for (size_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
@@ -525,7 +519,7 @@ void CSceneGoldSrcRenderPass::__createFramebuffers()
             m_pPortSet->getOutputPort("Depth")->getImageV(),
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }
 
@@ -537,7 +531,7 @@ void CSceneGoldSrcRenderPass::__createTextureImages()
         m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            Function::createImageFromIOImage(*m_TextureImageSet[i], m_AppInfo.pDevice, m_pSceneInfo->TexImageSet[i]);
+            Function::createImageFromIOImage(*m_TextureImageSet[i], m_pDevice, m_pSceneInfo->TexImageSet[i]);
         }
     }
 }
@@ -547,7 +541,7 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
     if (m_pSceneInfo && m_pSceneInfo->UseLightmap)
     {
         ptr<CIOImage> pCombinedLightmapImage = m_pSceneInfo->pLightmap->getCombinedLightmap();
-        Function::createImageFromIOImage(m_LightmapImage, m_AppInfo.pDevice, pCombinedLightmapImage);
+        Function::createImageFromIOImage(m_LightmapImage, m_pDevice, pCombinedLightmapImage);
     }
 }
 
@@ -579,10 +573,25 @@ size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
     size_t NumTexture = m_pSceneInfo ? m_pSceneInfo->TexImageSet.size() : 0;
     if (NumTexture > CPipelineDepthTest::MaxTextureNum)
     {
-        Log::log(u8"警告: 纹理数量 = (" + std::to_string(NumTexture) + u8") 大于限制数量 (" + std::to_string(CPipelineDepthTest::MaxTextureNum) + u8"), 多出的纹理将被忽略");
+        Log::log("警告: 纹理数量 = (" + std::to_string(NumTexture) + ") 大于限制数量 (" + std::to_string(CPipelineDepthTest::MaxTextureNum) + "), 多出的纹理将被忽略");
         NumTexture = CPipelineDepthTest::MaxTextureNum;
     }
     return NumTexture;
+}
+
+void CSceneGoldSrcRenderPass::__updatePipelines()
+{
+    if (m_pSceneInfo)
+    {
+        if (m_pSceneInfo->UseSkyBox && m_PipelineSet.Sky.isValid())
+        {
+            m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
+        }
+        if (!m_pSceneInfo->SprSet.empty() && m_PipelineSet.Sprite.isValid())
+        {
+            m_PipelineSet.Sprite.setSprites(m_pSceneInfo->SprSet);
+        }
+    }
 }
 
 void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
@@ -648,8 +657,6 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 
 void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_AppInfo.Extent.width, m_AppInfo.Extent.height);
-
     glm::mat4 Model = glm::mat4(1.0f);
     m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, m_pCamera);
     m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, m_pCamera);

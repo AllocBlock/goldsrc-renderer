@@ -29,7 +29,7 @@ namespace UI
         APPEARING
     };
 
-    void init(const vk::SAppInfo& vAppInfo, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass);
+    void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass);
     void addFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer);
     void destory();
     void draw(VkCommandBuffer vCommandBuffer);

@@ -11,7 +11,7 @@ class CRenderPassTempSceneBase : public vk::IRenderPass
 public:
     void setScene(CTempScene::Ptr vScene)
     {
-        m_pVertBuffer = vScene->generateVertexBuffer<SPointData_t>(m_AppInfo.pDevice, m_ActorDataPositionSet, m_VertexNum);
+        m_pVertBuffer = vScene->generateVertexBuffer<SPointData_t>(m_pDevice, m_ActorDataPositionSet, m_VertexNum);
     }
 
 protected:

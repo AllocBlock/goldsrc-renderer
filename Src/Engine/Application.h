@@ -24,23 +24,22 @@ const bool ENABLE_VALIDATION_LAYERS = false;
 class IApplication
 {
 public:
-    IApplication() = default;
+    IApplication();
     virtual ~IApplication() = default;
 
     void create(GLFWwindow* vWindow);
     void render();
     void waitDevice();
     void destroy();
-    vk::SAppInfo getAppInfo();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT vMessageSeverity, VkDebugUtilsMessageTypeFlagsEXT vMessageType, const VkDebugUtilsMessengerCallbackDataEXT* vpCallbackData, void* vpUserData);
 
 protected:
-    virtual void _createV();
-    virtual void _updateV(uint32_t vImageIndex);
-    virtual void _renderUIV() {};
-    virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex);
-    virtual void _destroyV();
+    virtual void _createV() = 0;
+    virtual void _updateV(uint32_t vImageIndex) = 0;
+    virtual void _renderUIV() {}
+    virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex) = 0;
+    virtual void _destroyV() = 0;
 
     GLFWwindow* m_pWindow = nullptr;
     vk::CInstance::Ptr m_pInstance = make<vk::CInstance>();
@@ -49,7 +48,7 @@ protected:
     vk::CPhysicalDevice::Ptr m_pPhysicalDevice = nullptr;
     vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
     vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
-    CSourcePort::Ptr m_pSwapchainPort = nullptr;
+    const CSourcePort::Ptr m_pSwapchainPort = make<CSourcePort>("SwapChain", SPortFormat::createAnyOfUsage(EUsage::UNDEFINED));
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
@@ -57,7 +56,8 @@ protected:
 
     const int m_MaxFrameInFlight = 2;
     int m_CurrentFrameIndex = 0;
-    bool m_FramebufferResized = false;
+
+    const CAppInfo::Ptr m_pAppInfo = make<CAppInfo>();
 
     const std::vector<const char*> m_ValidationLayers =
     {
@@ -80,4 +80,3 @@ private:
 
     std::vector<const char*> __getRequiredExtensions();
 };
-

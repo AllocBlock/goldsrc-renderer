@@ -32,8 +32,8 @@ protected:
 
 private:
     void __rerecordCommand();
-    void __createMaskImage();
-    void __createFramebuffers();
+    void __createMaskImage(VkExtent2D vExtent);
+    void __createFramebuffers(VkExtent2D vExtent);
 
     CCamera::Ptr m_pCamera = nullptr;
 

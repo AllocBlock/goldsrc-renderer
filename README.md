@@ -209,11 +209,25 @@
   - **问题：就算按上述方法做依旧非常慢...另外顺序很混乱，遇到了bug：打断点慢运行不触发，而无断点会触发的情况**
     - 这个是不是eventid名称生成的粒度不够？...太快了所以出问题...换一个思路吧不用时间了
   - **问题：hook如何销毁？重新连接后原来的hook失效了**
+    - 在外部clear
 
 #### image layout如何管理
   - 一个image可做多种用途（采样输入，渲染目标），在使用时最好是对应的layout，layout可以手动在command里转换，在renderpass渲染时也会指定一次layout转换，确认每个attachment输入和输出的layout
   - **解决方法：在PortFormat里加入Usage的信息，并在renderpass里做相应的转换**
     - **问题：在Renderpass里转换layout，说明输出的layout是固定的，如果一个port输出连接到了多个输入，而这几个输入所需格式各不相同怎么办？**
+
+#### 3.5版
+  - swapchain大部分对renderpass隐藏，变成通用的sourceport，唯一需要的先验是swapchain的image数量，这个单独设计一个update attribute即可
+    - 如果想把imagenum也隐掉（application每次都要调接口更新renderpass，而renderpass对application基类是未知的...），可以单独设计swapchain的port，让renderpass持有...?
+    - 可有的pass不依赖swapchain image num？....好像image num永远被依赖
+    - 临时给app加一个虚函数用来更新image num吧
+  - **问题：Port内部存不存储名称？**
+    - 不存储，外部用map管理，检索快但顺序乱了，不方便debug
+    - 存储，检索麻烦了，另外port名称对port来说是否是自身的属性？...
+    - 存储吧
+  - **问题：image extent的问题，屏幕extent先验**
+    - 首先不能只靠input port拿extent，有些pass没有input port，就需要知道屏幕尺寸
+      - 这两种pass的更新策略不同！前者依赖input，后者依赖屏幕尺寸
 
 ### 问题：如何管理场景
   - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理
@@ -224,16 +238,6 @@
   - 另外还可以考虑顺便实现static batching，也是现代引擎常用的方法，减少draw call
   - 还有部分需求是网状结构，很难处理
     - 比如对于一批物体，一方面希望控制每个物体的可见性，因此不方便拆分物体；另一方面希望实现同一纹理网格的batching，需要拆分物体...
-
-### 问题：如何管理渲染流程，自动串联pass
-  - Command buffer的顺序管理
-  - command buffer的更新
-    - 场景、设置的变化导致重录
-    - 依赖资源（图片，framebuffer）变化导致重录
-    - 是否让command buffer监听变化？需要设计一套依赖资源的集合，和port有点像...
-    - 多个资源的引用与更新.... 
-      - 第一版用于renderpass，定义一个更新结构体，每次更新穿这个结构体，虚函数自己根据状态判断
-      - 要不要也改成hook的形式
 
 ### 问题：Framebuffer的创建和更新
   - framebuffer目前需要到request前创建，它的更新怎么实现？
@@ -247,7 +251,18 @@
     - hook和trigger
     - **事件参数如何传递？**
 
-### 问题：renderpass重建，在何时？如何触发？
+
+### 问题：Renderpass设计相关
+#### 问题：如何管理渲染流程，自动串联pass
+  - Command buffer的顺序管理
+  - command buffer的更新
+    - 场景、设置的变化导致重录
+    - 依赖资源（图片，framebuffer）变化导致重录
+    - 是否让command buffer监听变化？需要设计一套依赖资源的集合，和port有点像...
+    - 多个资源的引用与更新.... 
+      - 第一版用于renderpass，定义一个更新结构体，每次更新穿这个结构体，虚函数自己根据状态判断
+      - 要不要也改成hook的形式
+#### 问题：renderpass重建，在何时？如何触发？
   - 第一版：
     - 用recreate虚函数表示，主要处理swapchain的变化，比如大小改变
     - 但现在引入了renderpass自身的变化，如果还是用recreate，不好区分谁变化了，导致多余的重建
@@ -300,6 +315,11 @@
         - 最佳时先全部port的update，再全部hook的update...但是每个函数里的邻接与hook是顺序的，不可拆分
         - 暂时先邻接吧
   - **解决方法：目前link是树状的，image update向子节点传播，link update向父节点和子节点传递（参数带有传播来源节点，从而避免重复触发）**
+  - **新问题：image和link两种update设计是否合理？**
+    - 目前PortSet只监听了link update
+    - 如果image update了也需要重建，但image是有数量的，每次更新其中一个image，一方面每次都触发更新，另一方面还没完全更新部分handle是无效的，如何处理？
+    - **解决：重新set前先clear使其为invalid状态，加上对PortSet image update的监听**
+    - renderpass的更新，实际输入和输出的更新可以分开...是否单独设计接口，而非直接用port的事件机制？
 
 ### 问题：在PortSet的基础上，如果pass之间有资源依赖，需要如何处理？
   - 例：shadowmap中，shade pass依赖shadow pass的shadow map，当port有效时，创建顺序是不定的，不能保证shadow pass先于shade pass
@@ -313,6 +333,14 @@
   - **预想解决方法：每个对象创建和销毁之间为一个Scope，通过Scope可以形成一个树状图，可以打印出来，从而找到对象在何处创建的**
     - 需要考虑反射，物体知道自己的名称
     - 如何自动构造Scope？
+
+### 问题：事件系统
+  - 如何设计一个方便的事件系统？可能需要处理以下问题
+    - 方便的定义事件，每个类所需事件不同，不想混到一起处理：宏来处理？
+    - 事件参数的自定义，这会影响事件函数签名，不好处理：可变参数？
+    - 一个思路：每类事件对应一个模板实例，专门处理一类事件，而需要处理这些事件的类就加这些事件的成员变量
+      - 问题是接口怎么办呢？要转发到成员变量上...用宏自动生成一下转发一下？
+    - 另一个思路：多继承，模板可以传字符串，但好像函数名称没办法..
 
 ### 问题：Actor设计
   - 目前场景中的物体包含了多个属性（变换、网格、物理），这些属性之间有引用，有必要引入Actor的概念了

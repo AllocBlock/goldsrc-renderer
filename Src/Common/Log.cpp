@@ -1,5 +1,7 @@
 #include "Log.h"
+
 #include <iostream>
+#include <string>
 
 namespace
 {
@@ -28,5 +30,5 @@ void Log::log(std::string vText)
 
 void Log::print(std::string vText, bool vEndOfLine)
 {
-    std::cout << vText << vEndOfLine ? "\n" : "";
+    std::cout << vText << (vEndOfLine ? "\n" : "");
 }

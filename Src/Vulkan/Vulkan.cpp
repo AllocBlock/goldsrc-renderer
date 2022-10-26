@@ -4,15 +4,17 @@
 #include <string>
 #include <fstream>
 
-bool vk::operator == (const VkExtent2D& v1, const VkExtent2D& v2)
+bool operator == (const VkExtent2D& v1, const VkExtent2D& v2)
 {
     return v1.width == v2.width && v1.height == v2.height;
 }
 
-bool vk::operator != (const VkExtent2D& v1, const VkExtent2D& v2)
+bool operator != (const VkExtent2D& v1, const VkExtent2D& v2)
 {
     return !(v1 == v2);
 }
+
+const VkExtent2D& vk::ZeroExtent = { 0, 0 };
 
 bool vk::isValidationLayersSupported(const std::vector<const char*>& vValidationLayers)
 {

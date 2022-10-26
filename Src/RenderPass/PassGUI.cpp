@@ -30,21 +30,22 @@ CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
 
 void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    if (vUpdateState.RenderpassUpdated || vUpdateState.CommandUpdated || vUpdateState.ImageNum.IsUpdated)
+    VkExtent2D RefExtent = { 0, 0 };
+    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
         if (isValid())
         {
-            uint32_t NumImage = static_cast<uint32_t>(m_AppInfo.ImageNum);
-            UI::init(m_AppInfo, m_pWindow, m_DescriptorPool, NumImage, get());
-            VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-            UI::addFont(gChineseFont, CommandBuffer);
-            m_Command.endSingleTimeBuffer(CommandBuffer);
+            __createFramebuffer(RefExtent);
+            if (!vUpdateState.InputImageUpdated)
+            {
+                UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_pAppInfo->getImageNum(), get());
+                VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
+                UI::addFont(gChineseFont, CommandBuffer);
+                m_Command.endSingleTimeBuffer(CommandBuffer);
+            }
         }
-    }
-
-    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
-    {
-        __createFramebuffer();
     }
 }
 
@@ -55,7 +56,7 @@ void CRenderPassGUI::_renderUIV()
 
 void CRenderPassGUI::_destroyV()
 {
-    if (*m_AppInfo.pDevice == VK_NULL_HANDLE) return;
+    if (*m_pDevice == VK_NULL_HANDLE) return;
 
     m_FramebufferSet.destroyAndClearAll();
     UI::destory();
@@ -70,7 +71,7 @@ std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vI
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
     UI::draw(CommandBuffer);
     end();
 
@@ -100,25 +101,25 @@ void CRenderPassGUI::__createDescriptorPool()
     PoolInfo.pPoolSizes = PoolSizes.data();
     PoolInfo.maxSets = static_cast<uint32_t>(PoolSizes.size() * 1000);
 
-    vk::checkError(vkCreateDescriptorPool(*m_AppInfo.pDevice, &PoolInfo, nullptr, &m_DescriptorPool));
+    vk::checkError(vkCreateDescriptorPool(*m_pDevice, &PoolInfo, nullptr, &m_DescriptorPool));
 }
 
 void CRenderPassGUI::__destroyDescriptorPool()
 {
     if (m_DescriptorPool != VK_NULL_HANDLE)
     {
-        vkDestroyDescriptorPool(*m_AppInfo.pDevice, m_DescriptorPool, nullptr);
+        vkDestroyDescriptorPool(*m_pDevice, m_DescriptorPool, nullptr);
         m_DescriptorPool = VK_NULL_HANDLE;
     }
 }
 
-void CRenderPassGUI::__createFramebuffer()
+void CRenderPassGUI::__createFramebuffer(VkExtent2D vExtent)
 {
     if (!isValid()) return;
 
     m_FramebufferSet.destroyAndClearAll();
 
-    uint32_t ImageNum = static_cast<uint32_t>(m_AppInfo.ImageNum);
+    uint32_t ImageNum = m_pAppInfo->getImageNum();
 
     m_FramebufferSet.init(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
@@ -128,6 +129,6 @@ void CRenderPassGUI::__createFramebuffer()
             m_pPortSet->getOutputPort("Main")->getImageV(i),
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }

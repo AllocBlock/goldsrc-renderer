@@ -21,14 +21,13 @@ CRenderPassDescriptor CRenderPassFullScreen::_getRenderPassDescV()
 
 void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    VkExtent2D RefExtent = { 0, 0 };
+    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+
     if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
     {
-        __createFramebuffers();
-
-        if (m_pPipeline)
-        {
-            __createPipeline();
-        }
+        __createFramebuffers(RefExtent);
+        __createPipeline(RefExtent);
     }
 }
 
@@ -42,7 +41,7 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = *m_pVertexBuffer;
@@ -68,23 +67,23 @@ void CRenderPassFullScreen::_destroyV()
     IRenderPass::_destroyV();
 }
 
-void CRenderPassFullScreen::__createPipeline()
+void CRenderPassFullScreen::__createPipeline(VkExtent2D vExtent)
 {
     _ASSERTE(isValid() && m_pPipeline);
-    m_pPipeline->create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
-    m_pPipeline->setImageNum(m_AppInfo.ImageNum);
+    m_pPipeline->create(m_pDevice, get(), vExtent);
+    m_pPipeline->setImageNum(m_pAppInfo->getImageNum());
 
     for (const auto& Callback : m_PipelineCreateCallbackSet)
         Callback();
 }
 
-void CRenderPassFullScreen::__createFramebuffers()
+void CRenderPassFullScreen::__createFramebuffers(VkExtent2D vExtent)
 {
     if (!isValid()) return;
 
     m_FramebufferSet.destroyAndClearAll();
 
-    size_t ImageNum = m_AppInfo.ImageNum;
+    size_t ImageNum = m_pAppInfo->getImageNum();
     m_FramebufferSet.init(ImageNum);
     for (size_t i = 0; i < ImageNum; ++i)
     {
@@ -93,7 +92,7 @@ void CRenderPassFullScreen::__createFramebuffers()
             m_pPortSet->getOutputPort("Main")->getImageV(i)
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }
 
@@ -106,7 +105,7 @@ void CRenderPassFullScreen::__createVertexBuffer()
     {
         VkDeviceSize BufferSize = sizeof(SFullScreenPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }

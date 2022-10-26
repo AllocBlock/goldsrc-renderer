@@ -25,17 +25,21 @@ CRenderPassDescriptor CRenderPassOutlineEdge::_getRenderPassDescV()
 
 void CRenderPassOutlineEdge::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    if (vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated || vUpdateState.ImageNum.IsUpdated)
+    VkExtent2D RefExtent = { 0, 0 };
+    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
-        __createFramebuffers();
-
-        if ((vUpdateState.RenderpassUpdated || vUpdateState.ImageExtent.IsUpdated) && isValid())
+        if (isValid())
         {
-            m_Pipeline.create(m_AppInfo.pDevice, get(), m_AppInfo.Extent);
+            __createFramebuffers(RefExtent);
+            if (!vUpdateState.InputImageUpdated)
+            {
+                m_Pipeline.create(m_pDevice, get(), RefExtent);
+                m_Pipeline.setImageNum(m_pAppInfo->getImageNum());
+                
+            }
         }
-
-        if (m_Pipeline.isValid())
-            m_Pipeline.setImageNum(m_AppInfo.ImageNum);
     }
 }
 
@@ -52,7 +56,7 @@ std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uin
     // FIXME: is update descriptor every frame slow?
     m_Pipeline.setInputImage(m_pPortSet->getInputPort("Mask")->getImageV(vImageIndex), vImageIndex);
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_AppInfo.Extent, { ClearValue });
+    begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = *m_pVertexBuffer;
@@ -77,22 +81,22 @@ void CRenderPassOutlineEdge::_destroyV()
     IRenderPass::_destroyV();
 }
 
-void CRenderPassOutlineEdge::__createFramebuffers()
+void CRenderPassOutlineEdge::__createFramebuffers(VkExtent2D vExtent)
 {
     if (!isValid()) return;
 
     m_FramebufferSet.destroyAndClearAll();
 
-    size_t ImageNum = m_AppInfo.ImageNum;
+    uint32_t ImageNum = m_pAppInfo->getImageNum();
     m_FramebufferSet.init(ImageNum);
-    for (size_t i = 0; i < ImageNum; ++i)
+    for (uint32_t i = 0; i < ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet =
         {
             m_pPortSet->getOutputPort("Main")->getImageV(i)
         };
 
-        m_FramebufferSet[i]->create(m_AppInfo.pDevice, get(), AttachmentSet, m_AppInfo.Extent);
+        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }
 
@@ -111,7 +115,7 @@ void CRenderPassOutlineEdge::__createVertexBuffer()
     {
         VkDeviceSize BufferSize = sizeof(CPipelineEdge::SPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
-        m_pVertexBuffer->create(m_AppInfo.pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+        m_pVertexBuffer->create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
 }
