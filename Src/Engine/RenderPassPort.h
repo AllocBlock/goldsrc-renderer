@@ -91,7 +91,7 @@ public:
     // if the link of this port is ready, means it has a source port as head and no in valid port before it
     virtual bool isLinkReadyV() const { return !m_ForceNotReady; }
     // if the image of this port is ready, means it all pass before this port is runnable
-    virtual bool isImageReadyV() const = 0;
+    virtual bool isImageReadyV() const { return !m_ForceNotReady; };
     bool isForceNotReady() const { return m_ForceNotReady; }
     void setForceNotReady(bool vForceNotReady);
 
@@ -144,6 +144,7 @@ public:
     virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_ActualExtent; }
     void setActualFormat(VkFormat vFormat) { m_ActualFormat = vFormat; }
     void setActualExtent(VkExtent2D vExtent) { m_ActualExtent = vExtent; }
+    void setImageNum(size_t vImageNum) { m_Format.Num = vImageNum; }
 
 private:
     std::map<size_t, VkImageView> m_ImageMap;
@@ -200,7 +201,8 @@ public:
     CPortSet() = delete;
     CPortSet(const SPortDescriptor& vDesc);
 
-    bool isReady();
+    bool isLinkReady();
+    bool isImageReady();
 
     bool hasInput(const std::string& vName) const;
     bool hasOutput(const std::string& vName) const;

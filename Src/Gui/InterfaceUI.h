@@ -30,7 +30,7 @@ namespace UI
     };
 
     void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass);
-    void addFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer);
+    void setFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer);
     void destory();
     void draw(VkCommandBuffer vCommandBuffer);
     void beginFrame(std::string vTitle = u8"Ä¬ÈÏ´°¿Ú");

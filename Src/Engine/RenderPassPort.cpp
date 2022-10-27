@@ -139,7 +139,7 @@ bool CSourcePort::isLinkReadyV() const
 bool CSourcePort::isImageReadyV() const
 {
     // has actual format and extent, image are all set
-    return CPort::isLinkReadyV() && hasActualFormatV() && hasActualExtentV() && m_Format.Num == m_ImageMap.size();
+    return CPort::isImageReadyV() && hasActualFormatV() && hasActualExtentV() && (m_Format.Num == 0 || m_Format.Num == m_ImageMap.size());
 }
 
 void CSourcePort::setImage(VkImageView vImage, size_t vIndex)
@@ -165,7 +165,7 @@ bool CRelayPort::isLinkReadyV() const
 
 bool CRelayPort::isImageReadyV() const
 {
-    return isLinkReadyV() && hasParent() && m_pParent.lock()->isImageReadyV();
+    return CPort::isImageReadyV() && isLinkReadyV() && hasParent() && m_pParent.lock()->isImageReadyV();
 }
 
 void SPortDescriptor::addInput(std::string vName, const SPortFormat& vFormat)
@@ -251,16 +251,21 @@ CPortSet::CPortSet(const SPortDescriptor& vDesc)
     }
 }
 
-bool CPortSet::isReady()
+bool CPortSet::isLinkReady()
 {
     for (const auto& pPort : m_InputPortSet)
-    {
         if (!pPort->isLinkReadyV()) return false;
-    }
     for (const auto& pPort : m_OutputPortSet)
-    {
         if (!pPort->isLinkReadyV()) return false;
-    }
+    return true;
+}
+
+bool CPortSet::isImageReady()
+{
+    for (const auto& pPort : m_InputPortSet)
+        if (!pPort->isImageReadyV()) return false;
+    for (const auto& pPort : m_OutputPortSet)
+        if (!pPort->isImageReadyV()) return false;
     return true;
 }
 

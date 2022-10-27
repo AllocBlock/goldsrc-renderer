@@ -30,19 +30,21 @@ CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
 
 void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    VkExtent2D RefExtent = { 0, 0 };
-    if (!_dumpInputPortExtent("Main", RefExtent)) return;
-
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
-        if (isValid())
-        {
+        VkExtent2D RefExtent = { 0, 0 };
+        bool HasExtent = _dumpInputPortExtent("Main", RefExtent);
+
+        if (HasExtent && isValid())
             __createFramebuffer(RefExtent);
-            if (!vUpdateState.InputImageUpdated)
+
+        if (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated)
+        {
+            if (isValid())
             {
                 UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_pAppInfo->getImageNum(), get());
                 VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-                UI::addFont(gChineseFont, CommandBuffer);
+                UI::setFont(gChineseFont, CommandBuffer);
                 m_Command.endSingleTimeBuffer(CommandBuffer);
             }
         }
@@ -56,8 +58,6 @@ void CRenderPassGUI::_renderUIV()
 
 void CRenderPassGUI::_destroyV()
 {
-    if (*m_pDevice == VK_NULL_HANDLE) return;
-
     m_FramebufferSet.destroyAndClearAll();
     UI::destory();
     __destroyDescriptorPool();
@@ -116,6 +116,7 @@ void CRenderPassGUI::__destroyDescriptorPool()
 void CRenderPassGUI::__createFramebuffer(VkExtent2D vExtent)
 {
     if (!isValid()) return;
+    if (!m_pPortSet->isImageReady()) return;
 
     m_FramebufferSet.destroyAndClearAll();
 

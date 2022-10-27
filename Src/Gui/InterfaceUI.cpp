@@ -110,31 +110,35 @@ void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool v
     InitInfo.CheckVkResultFn = nullptr;
     ImGui_ImplVulkan_Init(&InitInfo, vRenderPass);
 
-    if (!gIsInitted)
+    if (!gIsInitted && !gDefaultSampler.isValid())
     {
         // init default sampler
-        if (!gDefaultSampler.isValid())
-        {
-            const auto& Properties = vDevice->getPhysicalDevice()->getProperty();
-            VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
-                VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
-            );
-            gDefaultSampler.create(vDevice, SamplerInfo);
-        }
+        const auto& Properties = vDevice->getPhysicalDevice()->getProperty();
+        VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
+            VK_FILTER_NEAREST, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER, Properties.limits.maxSamplerAnisotropy
+        );
+        gDefaultSampler.create(vDevice, SamplerInfo);
     }
 
     gIsInitted = true;
 }
 
-void UI::addFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer)
+void UI::setFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer)
 {
+    // FIXME: is free of resources correct?
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
     ImGuiIO& IO = ImGui::GetIO();
+    IO.Fonts->Clear();
+
     IO.Fonts->AddFontFromFileTTF(vFontFile.c_str(), 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseFull());
-    ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer);
+    bool Success = ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer);
+    _ASSERTE(Success);
 }
 
 void UI::destory()
 {
+    _ASSERTE(gIsInitted);
+
     ImGui_ImplVulkan_Shutdown();
 
     ImGui_ImplGlfw_Shutdown();

@@ -173,7 +173,7 @@ void CShaderResourceDescriptor::clear()
     __destroySetSet();
     __destroyLayout();
     __destroyPool();
-    m_pDevice = VK_NULL_HANDLE;
+    m_pDevice = nullptr;
 }
 
 VkDescriptorSetLayout CShaderResourceDescriptor::getLayout() const 

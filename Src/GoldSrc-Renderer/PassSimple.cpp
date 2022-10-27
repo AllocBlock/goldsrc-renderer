@@ -58,7 +58,7 @@ void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState
     if (m_pCamera)
         m_pCamera->setAspect(RefExtent.width, RefExtent.height);
 
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
         if (RefExtent != vk::ZeroExtent)
             __createDepthResources(RefExtent); // extent

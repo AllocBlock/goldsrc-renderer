@@ -29,5 +29,5 @@ void CFrameBuffer::destroy()
     if (get()) vkDestroyFramebuffer(*m_pDevice, get(), nullptr);
     _setNull();
 
-    m_pDevice = VK_NULL_HANDLE;
+    m_pDevice = nullptr;
 }

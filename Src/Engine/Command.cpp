@@ -104,9 +104,9 @@ void CCommand::clear()
 {
     if (m_InUseSingleTimeNum != 0) throw "there still is in use single time command buffer";
     __destoryPool();
-    m_pDevice = VK_NULL_HANDLE;
     m_Queue = VK_NULL_HANDLE;
     m_QueueIndex = std::numeric_limits<uint32_t>::max();
+    m_pDevice = nullptr;
 }
 
 void CCommand::__allocBuffer(uint32_t vNum, ECommandBufferLevel vLevel, VkCommandBuffer* voData)

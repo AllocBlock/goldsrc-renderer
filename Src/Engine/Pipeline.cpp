@@ -61,6 +61,13 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     m_pDevice->destroyShaderModule(VertShaderModule);
     m_pDevice->destroyShaderModule(FragShaderModule);
 
+#ifdef _DEBUG
+    static int Count = 0;
+    std::cout << "create pipeline [" << Count << "] = 0x " << std::setbase(16) << (uint64_t)(m_Pipeline)
+    << ", layout = 0x" << (uint64_t)(m_PipelineLayout) << std::setbase(10) << std::endl;
+    Count++;
+#endif
+
     _createV();
 }
 
@@ -77,15 +84,16 @@ void IPipeline::destroy()
     _destroyV();
 
     m_ImageNum = 0;
-    
-    if (m_pDevice == VK_NULL_HANDLE) return;
     m_ShaderResourceDescriptor.clear();
 
-    vkDestroyPipeline(*m_pDevice, m_Pipeline, nullptr);
-    vkDestroyPipelineLayout(*m_pDevice, m_PipelineLayout, nullptr);
+    if (m_pDevice)
+    {
+        vkDestroyPipeline(*m_pDevice, m_Pipeline, nullptr);
+        vkDestroyPipelineLayout(*m_pDevice, m_PipelineLayout, nullptr);
+    }
     m_PipelineLayout = VK_NULL_HANDLE;
     m_Pipeline = VK_NULL_HANDLE;
-    m_pDevice = VK_NULL_HANDLE;
+    m_pDevice = nullptr;
 }
 
 void IPipeline::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)

@@ -145,13 +145,16 @@ void IApplication::__createSwapchain()
     m_pSwapchain->create(m_pDevice);
     const auto& Views = m_pSwapchain->getImageViews();
 
+    auto ImageNum = m_pSwapchain->getImageNum();
+
     m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat());
     m_pSwapchainPort->setActualExtent(m_pSwapchain->getExtent());
+    m_pSwapchainPort->setImageNum(ImageNum);
     m_pSwapchainPort->clearImage();
-    for (size_t i = 0; i < m_pSwapchain->getImageNum(); ++i)
+    for (size_t i = 0; i < ImageNum; ++i)
         m_pSwapchainPort->setImage(Views[i], i);
 
-    m_pAppInfo->setImageNum(m_pSwapchain->getImageNum());
+    m_pAppInfo->setImageNum(ImageNum);
     m_pAppInfo->setScreenExtent(m_pSwapchain->getExtent()); // for now, swapchain extent == screen extent
 }
 

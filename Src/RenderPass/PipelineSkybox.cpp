@@ -205,7 +205,6 @@ void CPipelineSkybox::_createResourceV(size_t vImageNum)
 
 void CPipelineSkybox::_destroyV()
 {
-    m_pDevice = nullptr;
     m_Sampler.destroy();
     m_SkyBoxImage.destroy();
     m_VertexBuffer.destroy();

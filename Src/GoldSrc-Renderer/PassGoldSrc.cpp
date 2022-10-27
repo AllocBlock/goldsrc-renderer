@@ -64,7 +64,7 @@ void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateStat
     if (m_pCamera)
         m_pCamera->setAspect(RefExtent.width, RefExtent.height);
 
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
         if (isValid())
         {
@@ -506,6 +506,7 @@ void CSceneGoldSrcRenderPass::__createDepthResources(VkExtent2D vExtent)
 void CSceneGoldSrcRenderPass::__createFramebuffers(VkExtent2D vExtent)
 {
     if (!isValid()) return;
+    if (!m_pPortSet->isImageReady()) return;
 
     m_pDevice->waitUntilIdle();
 

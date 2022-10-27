@@ -28,7 +28,7 @@ void CRenderPassOutlineEdge::_onUpdateV(const vk::SPassUpdateState& vUpdateState
     VkExtent2D RefExtent = { 0, 0 };
     if (!_dumpInputPortExtent("Main", RefExtent)) return;
 
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
         if (isValid())
         {
@@ -84,6 +84,7 @@ void CRenderPassOutlineEdge::_destroyV()
 void CRenderPassOutlineEdge::__createFramebuffers(VkExtent2D vExtent)
 {
     if (!isValid()) return;
+    if (!m_pPortSet->isImageReady()) return;
 
     m_FramebufferSet.destroyAndClearAll();
 

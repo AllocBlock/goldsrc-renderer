@@ -282,6 +282,7 @@
     - 另外，recreate的概念应该消除掉了，默认就是部分重建
       - 完成，全部改成onUpdate
       - 问题。onUpdate需要recreate，需要先判断销毁，而真正destroy又要判断一遍..
+    - **新问题：每次update时，renderpass都会检测是否需要重建，如果前后状态不一致则需要重建；但过程中pass会先断开连接再恢复连接，即使最初和最终的layout相同，但中间过程的layout不相同，导致先销毁再创建，而这次重建时多余的...如何处理**
 
 ### 问题：destroy和recreate如何方便的处理，指针置空的问题
   - 目前是IVulkanHandle+智能指针解决

@@ -71,7 +71,7 @@ void CLineRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     VkExtent2D RefExtent = {0, 0};
     if (!_dumpInputPortExtent("Main", RefExtent)) return;
 
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
+    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
         if (isValid())
         {

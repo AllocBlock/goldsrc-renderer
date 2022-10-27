@@ -161,8 +161,6 @@ void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
 
 void CPipelineSprite::_destroyV()
 {
-    if (m_pDevice == VK_NULL_HANDLE) return;
-
     m_Sampler.destroy();
     m_SpriteImageSet.destroyAndClearAll();
     m_PlaceholderImage.destroy();

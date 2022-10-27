@@ -81,7 +81,7 @@ void CSwapchain::destroy()
     if (get()) vkDestroySwapchainKHR(*m_pDevice, get(), nullptr);
     _setNull();
 
-    m_pDevice = VK_NULL_HANDLE;
+    m_pDevice = nullptr;
     m_ImageSet.destroyAndClearAll();
     m_ImageViewSet.clear();
     m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;
