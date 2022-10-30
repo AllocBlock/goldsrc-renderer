@@ -8,6 +8,8 @@
 
 #include <future>
 
+#include "Environment.h"
+
 CGUIMain::CGUIMain()
 {
     Log::setLogObserverFunc([=](std::string vText)
@@ -22,20 +24,41 @@ CGUIMain::CGUIMain()
 
     Scene::setGlobalReportProgressFunc(ProgressReportFunc);
 
-    static auto RequestFilePathFunc = [=](std::string vMessage, std::string vFilter) -> Scene::SRequestResultFilePath
+    static auto RequestFilePathFunc = [=](std::filesystem::path vOriginPath, const std::filesystem::path& vAdditionalSearchDir, std::string vMessage, std::string vFilter) -> Scene::SRequestResultFilePath
     {
-        auto Future = m_RequestPopupModal.show(u8"未找到文件", vMessage);
-        Scene::ERequestResultState ActionResult = Future.get();
-        if (ActionResult == Scene::ERequestResultState::CONTINUE)
+        size_t RetryTimes = 0;
+        while (true)
         {
-            auto SelectResult = Gui::createOpenFileDialog(vFilter);
-            if (SelectResult)
-                return { Scene::ERequestResultState::CONTINUE, SelectResult.FilePath };
+            std::filesystem::path FilePath;
+            if (Environment::findFile(vOriginPath, vAdditionalSearchDir, true, FilePath))
+            {
+                return { true, FilePath };
+            }
             else
-                return { Scene::ERequestResultState::CANCEL, "" };
+            {
+                std::string RetryString = (RetryTimes > 0 ? (u8"重试次数（" + std::to_string(RetryTimes) + u8"）") : "");
+                auto Future = m_RequestPopupModal.show(u8"未找到文件", vMessage + "\n" + RetryString);
+                ERequestAction ActionResult = Future.get();
+                
+                if (ActionResult == ERequestAction::MANUAL_FIND)
+                {
+                    auto SelectResult = Gui::createOpenFileDialog(vFilter);
+                    if (SelectResult)
+                        return { true, SelectResult.FilePath };
+                    else
+                        return { false, "" };
+                }
+                else if (ActionResult == ERequestAction::RETRY)
+                {
+                    ++RetryTimes;
+                    continue;
+                }
+                else if (ActionResult == ERequestAction::IGNORE_ || ActionResult == ERequestAction::CANCEL)
+                    return { false, "" };
+                else
+                    _SHOULD_NOT_GO_HERE;
+            }
         }
-        else
-            return { ActionResult, "" };
     };
 
     Scene::setGlobalRequestFilePathFunc(RequestFilePathFunc);
@@ -99,6 +122,7 @@ void CGUIMain::_renderUIV()
             UI::closeCurrentPopup();
             m_LoadingFilePath = "";
             m_LoadingProgressReport = "";
+
             const SResultReadScene& ResultScene = m_FileReadingFuture.get();
             if (ResultScene.Succeed)
             {
@@ -153,10 +177,6 @@ void CGUIMain::_renderUIV()
                     Writer.writeToFile(Result.FilePath);
                 }
             }
-            /*if (UI::menuItem(u8"退出"))
-            {
-                glfwSetWindowShouldClose(m_pWindow, GLFW_TRUE);
-            }*/
             UI::endMenu();
         }
         if (UI::beginMenu(u8"组件"))

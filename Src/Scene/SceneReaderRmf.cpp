@@ -31,20 +31,13 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
     Scene::reportProgress(u8"整理纹理中");
     m_pScene->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     m_TexNameToIndex["TextureNotFound"] = 0;
-    while (true)
+
+    Scene::SRequestResultFilePath FilePathResult = Scene::requestFilePath("", "", u8"添加纹理", "wad");
+    if (FilePathResult.Found)
     {
-        Scene::SRequestResultFilePath FilePathResult;
-        FilePathResult = Scene::requestFilePath(u8"添加纹理", "wad");
-        if (FilePathResult.State == Scene::ERequestResultState::CONTINUE)
-        {
-            CIOGoldsrcWad Wad;
-            GoldSrc::readWad(FilePathResult.Data, m_FilePath.parent_path(), Wad);
-            m_Wads.emplace_back(std::move(Wad));
-        }
-        else
-        {
-            break;
-        }
+        CIOGoldsrcWad Wad;
+        GoldSrc::readWad(FilePathResult.Data, m_FilePath.parent_path(), Wad);
+        m_Wads.emplace_back(std::move(Wad));
     }
 }
 

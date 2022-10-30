@@ -3,7 +3,7 @@
 #include "Environment.h"
 
 std::function<void(std::string)> g_pReportProgressFunc = nullptr;
-std::function<Scene::SRequestResultFilePath(std::string,std::string)> g_pRequestFilePathFunc = nullptr;
+std::function<Scene::SRequestResultFilePath(const std::filesystem::path&, const std::filesystem::path&, const std::string&, const std::string&)> g_pRequestFilePathFunc = nullptr;
 
 ptr<CIOImage> Scene::generateGrid(size_t vNumRow, size_t vNumCol, size_t vCellSize, uint8_t vBaseColor1[3], uint8_t vBaseColor2[3])
 {
@@ -135,38 +135,13 @@ void Scene::setGlobalReportProgressFunc(std::function<void(std::string)> vFunc)
     g_pReportProgressFunc = vFunc;
 }
 
-Scene::SRequestResultFilePath Scene::requestFilePath(std::string vMessage, std::string vFilter)
-{
-    if (g_pRequestFilePathFunc) return g_pRequestFilePathFunc(vMessage, vFilter);
-    else return { ERequestResultState::IGNORE_, "" };
-}
-
-void Scene::setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(std::string, std::string)> vFunc)
+void Scene::setGlobalRequestFilePathFunc(std::function<SRequestResultFilePath(const std::filesystem::path&, const std::filesystem::path&, const std::string&, const std::string&)> vFunc)
 {
     g_pRequestFilePathFunc = vFunc;
 }
 
-bool Scene::requestFilePathUntilCancel(std::filesystem::path vFilePath, std::filesystem::path vAdditionalSearchDir, std::string vFilter, std::filesystem::path& voFilePath)
+Scene::SRequestResultFilePath Scene::requestFilePath(const std::filesystem::path& vOriginPath, const std::filesystem::path& vAdditionalSearchDir, const std::string& vMessage, const std::string& vFilter)
 {
-    while (true)
-    {
-        if (Environment::findFile(vFilePath, vAdditionalSearchDir, true, vFilePath))
-        {
-            voFilePath = vFilePath;
-            return true;
-        }
-        else
-        {
-            Scene::SRequestResultFilePath FilePathResult;
-            FilePathResult = Scene::requestFilePath(u8"需要文件：" + vFilePath.u8string(), vFilter);
-            if (FilePathResult.State == Scene::ERequestResultState::CONTINUE)
-            {
-                vFilePath = FilePathResult.Data;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
+    if (g_pRequestFilePathFunc) return g_pRequestFilePathFunc(vOriginPath, vAdditionalSearchDir, vMessage, vFilter);
+    else return { false, "" };
 }

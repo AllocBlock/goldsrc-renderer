@@ -18,15 +18,15 @@ CActor<CMeshDataGoldSrc>::Ptr GoldSrc::createActorByMeshAndTag(const CMeshDataGo
 
 bool GoldSrc::readWad(std::filesystem::path vWadPath, std::filesystem::path vAdditionalSearchDir, CIOGoldsrcWad& voWad)
 {
-    std::filesystem::path RealWadPath;
-    if (!Scene::requestFilePathUntilCancel(vWadPath, vAdditionalSearchDir, "wad", RealWadPath))
+    auto RequestResult = Scene::requestFilePath(vWadPath, vAdditionalSearchDir, u8"需要纹理：" + vWadPath.filename().u8string(), "wad");
+    if (!RequestResult.Found)
     {
         Log::log("未找到WAD文件：" + vWadPath.u8string());
         return false;
     }
 
-    Scene::reportProgress(u8"[wad]读取" + RealWadPath.u8string() + u8"文件中");
-    voWad.read(RealWadPath);
+    Scene::reportProgress(u8"[wad]读取" + RequestResult.Data.u8string() + u8"文件中");
+    voWad.read(RequestResult.Data);
 
     return true;
 }

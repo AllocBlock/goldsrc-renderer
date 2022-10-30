@@ -660,11 +660,11 @@ void CSceneReaderBsp::__loadPointEntities()
             Sprite.Scale = (Entity.Properties.find("scale") != Entity.Properties.end()) ? std::atoi(Entity.Properties.at("scale").c_str()) : 1.0f;
             std::string Name = (Entity.Properties.find("model") != Entity.Properties.end()) ? Entity.Properties.at("model") : "";
 
-            std::filesystem::path RealSprPath;
-            if (Scene::requestFilePathUntilCancel(Name, m_FilePath.parent_path(), "spr", RealSprPath))
+            auto RequestResult = Scene::requestFilePath(Name, m_FilePath.parent_path(), u8"需要图标文件：" + Name, "spr");
+            if (RequestResult.Found)
             {
                 CIOGoldSrcSpr Spr;
-                Spr.read(RealSprPath);
+                Spr.read(RequestResult.Data);
                 uint32_t Width = 0, Height = 0;
                 Spr.getFrameSize(0, Width, Height);
                 auto pImage = make<CIOImage>();

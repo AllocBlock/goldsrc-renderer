@@ -37,7 +37,6 @@ void CRenderPassOutlineEdge::_onUpdateV(const vk::SPassUpdateState& vUpdateState
             {
                 m_Pipeline.create(m_pDevice, get(), RefExtent);
                 m_Pipeline.setImageNum(m_pAppInfo->getImageNum());
-                
             }
         }
     }
