@@ -707,5 +707,5 @@
   - 碰撞分board和narrow
   - 公用shader的管理（放置、查找、编译）
   - pipeline生命周期、renderpass生命周期
-    - 绘制port相关的流程图
+    - 绘制port相关的流程图，类型展示
   - renderpass，更新的分类，触发更新的原因整理

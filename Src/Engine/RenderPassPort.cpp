@@ -112,7 +112,7 @@ void CPort::_onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom)
     }
 }
 
-CSourcePort::CSourcePort(const std::string& vName, const SPortFormat& vFormat): CPort(vName, vFormat)
+CSourcePort::CSourcePort(const std::string& vName, const SPortFormat& vFormat, CPortSet* vBelongedSet) : CPort(vName, vFormat, vBelongedSet)
 {
     if (vFormat.Format != VkFormat::VK_FORMAT_UNDEFINED)
     {
@@ -221,8 +221,11 @@ bool SPortDescriptor::hasInputOutput(const std::string vName) const
     return std::find(m_InputOutputPortNameSet.begin(), m_InputOutputPortNameSet.end(), vName) != m_InputOutputPortNameSet.end();
 }
 
-CPortSet::CPortSet(const SPortDescriptor& vDesc)
+CPortSet::CPortSet(const SPortDescriptor& vDesc, vk::IRenderPass* vBelongedRenderPass):
+    m_pBelongedRenderPass(vBelongedRenderPass)
 {
+    _ASSERTE(vBelongedRenderPass);
+
     m_pImageUpdateCallbackFunc = [this]()
     {
         m_InputImageUpdateEventHandler.trigger();
@@ -390,7 +393,7 @@ void CPortSet::link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPortSe
 void CPortSet::__addInput(const std::string& vName, const SPortFormat& vFormat)
 {
     _ASSERTE(!hasInput(vName));
-    auto pPort = make<CRelayPort>(vName, vFormat);
+    auto pPort = make<CRelayPort>(vName, vFormat, this);
     pPort->hookImageUpdate(m_pImageUpdateCallbackFunc);
     pPort->hookLinkUpdate(m_pLinkUpdateCallbackFunc);
     m_InputPortSet.emplace_back(pPort);
@@ -399,7 +402,7 @@ void CPortSet::__addInput(const std::string& vName, const SPortFormat& vFormat)
 void CPortSet::__addOutput(const std::string& vName, const SPortFormat& vFormat)
 {
     _ASSERTE(!hasOutput(vName));
-    auto pPort = make<CSourcePort>(vName, vFormat);
+    auto pPort = make<CSourcePort>(vName, vFormat, this);
     pPort->hookLinkUpdate(m_pLinkUpdateCallbackFunc);
     m_OutputPortSet.emplace_back(pPort);
 }
@@ -408,7 +411,7 @@ void CPortSet::__addInputOutput(const std::string& vName, const SPortFormat& vFo
 {
     _ASSERTE(!hasOutput(vName));
     _ASSERTE(!hasInput(vName));
-    auto pPort = make<CRelayPort>(vName, vFormat);
+    auto pPort = make<CRelayPort>(vName, vFormat, this);
     pPort->hookImageUpdate(m_pImageUpdateCallbackFunc);
     pPort->hookLinkUpdate(m_pLinkUpdateCallbackFunc);
     m_InputPortSet.emplace_back(pPort);

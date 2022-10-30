@@ -38,7 +38,6 @@ protected:
     virtual void _createV() = 0;
     virtual void _updateV(uint32_t vImageIndex) = 0;
     virtual void _renderUIV() {}
-    virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex) = 0;
     virtual void _destroyV() = 0;
 
     GLFWwindow* m_pWindow = nullptr;
@@ -48,7 +47,7 @@ protected:
     vk::CPhysicalDevice::Ptr m_pPhysicalDevice = nullptr;
     vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
     vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
-    const CSourcePort::Ptr m_pSwapchainPort = make<CSourcePort>("SwapChain", SPortFormat::createAnyOfUsage(EUsage::UNDEFINED));
+    const CSourcePort::Ptr m_pSwapchainPort = make<CSourcePort>("SwapChain", SPortFormat::createAnyOfUsage(EUsage::UNDEFINED), nullptr);
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
@@ -77,6 +76,7 @@ private:
     void __destroySwapchain();
 
     void __recreateSwapchain();
+    std::vector<VkCommandBuffer> __sortCommandBuffers(uint32_t vImageIndex);
 
     std::vector<const char*> __getRequiredExtensions();
 };

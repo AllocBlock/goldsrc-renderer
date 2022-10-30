@@ -10,6 +10,13 @@
 
 #include "Event.h"
 
+class CPortSet;
+
+namespace vk
+{
+    class IRenderPass;
+}
+
 enum class EUsage
 {
     DONT_CARE,
@@ -63,7 +70,10 @@ public:
     _DEFINE_PTR(CPort);
 
     CPort() = delete;
-    CPort(const std::string& vName, const SPortFormat& vFormat) : m_Format(vFormat) { setName(vName); }
+    CPort(const std::string& vName, const SPortFormat& vFormat, CPortSet* vBelongedSet) : m_Format(vFormat), m_pBelongedSet(vBelongedSet)
+    {
+        setName(vName);
+    }
     virtual ~CPort() = default;
     
     _DEFINE_GETTER(Name, std::string)
@@ -106,6 +116,8 @@ public:
     void markAsSwapchainSource() { m_IsSwapchainSource = true; }
 
     bool isMatch(CPort::CPtr vPort) const { return m_Format.isMatch(vPort->getFormat()); }
+    
+    CPortSet* getBelongedPortSet() const { return m_pBelongedSet; }
 
 protected:
     // image update propagates to tail
@@ -115,6 +127,7 @@ protected:
     virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) override final;
 
     std::string m_Name = "";
+    CPortSet* const m_pBelongedSet;
     SPortFormat m_Format;
     wptr<CPort> m_pParent;
     std::vector<CPort::Ptr> m_ChildSet;
@@ -130,7 +143,7 @@ class CSourcePort : public CPort
 public:
     _DEFINE_PTR(CSourcePort);
 
-    CSourcePort(const std::string& vName, const SPortFormat& vFormat);
+    CSourcePort(const std::string& vName, const SPortFormat& vFormat, CPortSet* vBelongedSet);
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final;
     virtual bool isLinkReadyV() const override final;
@@ -158,7 +171,7 @@ class CRelayPort : public CPort
 public:
     _DEFINE_PTR(CRelayPort);
 
-    CRelayPort(const std::string& vName, const SPortFormat& vFormat) : CPort(vName, vFormat) {}
+    CRelayPort(const std::string& vName, const SPortFormat& vFormat, CPortSet* vBelongedSet) : CPort(vName, vFormat, vBelongedSet) {}
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final;
     virtual bool isLinkReadyV() const override final;
@@ -199,7 +212,7 @@ public:
     _DEFINE_PTR(CPortSet);
 
     CPortSet() = delete;
-    CPortSet(const SPortDescriptor& vDesc);
+    CPortSet(const SPortDescriptor& vDesc, vk::IRenderPass* vBelongedRenderPass);
 
     bool isLinkReady();
     bool isImageReady();
@@ -223,6 +236,8 @@ public:
     
     void unlinkAll(); // remove all parent of input and children of output
 
+    vk::IRenderPass* getBelongedRenderPass() const { return m_pBelongedRenderPass; }
+
     static void link(CPort::Ptr vOutputPort, CPort::Ptr vInputPort);
     static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPort::Ptr vInputPort);
     static void link(CPort::Ptr vOutputPort, CPortSet::Ptr vSet2, const std::string& vInputName);
@@ -235,6 +250,7 @@ private:
 
     CPort::Ptr __findPort(const std::string& vName, const std::vector<CPort::Ptr>& vPortSet) const;
 
+    vk::IRenderPass* const m_pBelongedRenderPass;
     std::function<void()> m_pImageUpdateCallbackFunc = nullptr;
     std::function<void(EventId_t, ILinkEvent::CPtr)> m_pLinkUpdateCallbackFunc = nullptr;
     std::vector<CPort::Ptr> m_InputPortSet;

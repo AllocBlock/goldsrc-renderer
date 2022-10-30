@@ -83,20 +83,6 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
     m_pPassOutlineEdge->update(vImageIndex);
 }
 
-std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBufferSetV(uint32_t vImageIndex)
-{
-    // FIXME: auto process
-    std::vector<VkCommandBuffer> SceneBuffers = m_pPassScene->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> OutlineMaskBuffers = m_pPassOutlineMask->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> OutlineEdgeBuffers = m_pPassOutlineEdge->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> Result = SceneBuffers;
-    Result.insert(Result.end(), OutlineMaskBuffers.begin(), OutlineMaskBuffers.end());
-    Result.insert(Result.end(), OutlineEdgeBuffers.begin(), OutlineEdgeBuffers.end());
-    Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
-    return Result;
-}
-
 void CApplicationGoldSrc::_renderUIV()
 {
     UI::beginFrame();

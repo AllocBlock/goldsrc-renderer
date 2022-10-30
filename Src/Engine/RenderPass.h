@@ -73,6 +73,8 @@ namespace vk
     class IRenderPass : public IVulkanHandle<VkRenderPass>, public IDrawableUI
     {
     public:
+        _DEFINE_PTR(IRenderPass);
+
         IRenderPass();
         virtual ~IRenderPass() = default;
 

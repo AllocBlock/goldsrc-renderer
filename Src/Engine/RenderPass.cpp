@@ -32,7 +32,7 @@ void IRenderPass::init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
     m_pAppInfo = vAppInfo;
 
     auto PortDesc = _getPortDescV();
-    m_pPortSet = make<CPortSet>(PortDesc);
+    m_pPortSet = make<CPortSet>(PortDesc, this);
 
     // FIXME: init first or create pass/command first
     _initV();
