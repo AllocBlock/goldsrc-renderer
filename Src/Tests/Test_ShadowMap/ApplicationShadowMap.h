@@ -26,6 +26,6 @@ private:
     ptr<CRenderPassShadowMap> m_pRenderPassShadowMap = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    CTempScene::Ptr m_pScene = nullptr;
+    CScene::Ptr m_pScene = nullptr;
 };
 

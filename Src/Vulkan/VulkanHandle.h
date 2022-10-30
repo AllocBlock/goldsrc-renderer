@@ -30,7 +30,7 @@ namespace vk
 
         T get() const { return m_Handle; }
         const T* getConstPtr() const { return &m_Handle; }
-        virtual bool isValid() const { return get() != VK_NULL_HANDLE; }
+        virtual bool isValid() const { return get() != VK_NULL_HANDLE; } // no V as postfix here as this virtual function's usage is limited, for convenient
 
         operator T() const { return get(); }
     protected:

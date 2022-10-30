@@ -63,6 +63,9 @@
     <ClInclude Include="PchVulkan.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="VertexBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vulkan.cpp">

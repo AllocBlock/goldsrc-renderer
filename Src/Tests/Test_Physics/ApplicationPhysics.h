@@ -1,7 +1,7 @@
 #pragma once
 #include "Application.h"
 #include "Interactor.h"
-#include "TempScene.h"
+#include "Scene.h"
 #include "PhysicsEngine.h"
 #include "PassShade.h"
 #include "PassVisPhysics.h"
@@ -32,6 +32,6 @@ private:
 
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    CTempScene<CMeshDataGeneral>::Ptr m_pScene = nullptr;
+    CScene<CMeshDataGeneral>::Ptr m_pScene = nullptr;
     CPhysicsEngine::Ptr m_pPhysicsEngine = nullptr;
 };

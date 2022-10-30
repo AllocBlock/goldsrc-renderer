@@ -59,7 +59,7 @@ ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
     auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
 
     m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CTempScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene = make<CScene<CMeshDataGoldSrc>>();
     m_pSceneInfo->pScene->addActor(pActor);
     m_pSceneInfo->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
 

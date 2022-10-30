@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderPass.h"
 #include "Camera.h"
-#include "Buffer.h"
+#include "VertexBuffer.h"
 #include "BoundingBox.h"
 #include "SceneInfoGoldSrc.h"
 
@@ -83,21 +83,16 @@ public:
 protected:
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override
     {
-        m_ActorDataInfoSet.clear();
-        m_VertexNum = 0;
-
         destroyAndClear(m_pVertexBuffer);
-        m_pVertexBuffer = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_pDevice, m_ActorDataInfoSet, m_VertexNum);
+        m_pVertexBuffer = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_pDevice);
     }
 
     void _recordRenderActorCommand(VkCommandBuffer vCommandBuffer, size_t vObjectIndex)
     {
-        _ASSERTE(vObjectIndex < m_ActorDataInfoSet.size());
-        const auto& Info = m_ActorDataInfoSet[vObjectIndex];
+        _ASSERTE(vObjectIndex < m_pVertexBuffer->getSegmentNum());
+        const auto& Info = m_pVertexBuffer->getSegmentInfo(vObjectIndex);
         vkCmdDraw(vCommandBuffer, Info.Num, 1, Info.First, 0);
     }
-
-    std::vector<SActorDataInfo> m_ActorDataInfoSet;
-    size_t m_VertexNum;
-    ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
+    
+    vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
 };

@@ -3,13 +3,13 @@
 #include "FrameBuffer.h"
 #include "Camera.h"
 #include "Buffer.h"
-#include "TempScene.h"
+#include "Scene.h"
 
 template <typename SPointData_t>
 class CRenderPassTempSceneBase : public vk::IRenderPass
 {
 public:
-    void setScene(CTempScene::Ptr vScene)
+    void setScene(CScene::Ptr vScene)
     {
         m_pVertBuffer = vScene->generateVertexBuffer<SPointData_t>(m_pDevice, m_ActorDataPositionSet, m_VertexNum);
     }

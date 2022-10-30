@@ -93,7 +93,7 @@ void CApplicationShadowMap::__linkPasses()
 
 void CApplicationShadowMap::__generateScene()
 {
-    m_pScene = make<CTempScene>();
+    m_pScene = make<CScene>();
 
     // Ground
     {

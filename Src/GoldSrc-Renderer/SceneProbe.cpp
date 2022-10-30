@@ -35,7 +35,7 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor<CMeshDa
 	return Hit;
 }
 
-bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CTempScene<CMeshDataGoldSrc>::Ptr vScene, CActor<CMeshDataGoldSrc>::Ptr& voActor, float& voNearestDistance)
+bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGoldSrc>::Ptr vScene, CActor<CMeshDataGoldSrc>::Ptr& voActor, float& voNearestDistance)
 {
 	if (!vScene || vScene->getActorNum() == 0) return false;
 	// normolize screen coordinate

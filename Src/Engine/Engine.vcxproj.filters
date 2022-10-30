@@ -164,7 +164,7 @@
     <ClInclude Include="PipelineDescriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TempScene.h">
+    <ClInclude Include="Scene.h">
       <Filter>头文件\Scene</Filter>
     </ClInclude>
     <ClInclude Include="BoundingBox.h">

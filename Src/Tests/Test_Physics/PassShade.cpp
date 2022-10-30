@@ -3,11 +3,10 @@
 #include "RenderPassDescriptor.h"
 #include "InterfaceUI.h"
 
-void CRenderPassShade::setScene(CTempScene<CMeshDataGeneral>::Ptr vScene)
+void CRenderPassShade::setScene(CScene<CMeshDataGeneral>::Ptr vScene)
 {
     m_pScene = vScene;
-    m_ActorDataPositionSet.clear();
-    m_pVertBuffer = vScene->generateVertexBuffer<CPipelineShade::SPointData>(m_pDevice, m_ActorDataPositionSet, m_VertexNum);
+    m_pVertBuffer = vScene->generateVertexBuffer<CPipelineShade::SPointData>(m_pDevice);
 }
 
 void CRenderPassShade::_initV()

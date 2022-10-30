@@ -266,7 +266,7 @@ void CSceneSimpleRenderPass::__calculateVisiableObjects()
 
         m_AreObjectsVisable[i] = false;
 
-        if (pActor->hasTag("sky") || m_ActorDataInfoSet[i].Num == 0)
+        if (pActor->hasTag("sky") || m_pVertexBuffer->getSegmentInfo(i).Num == 0)
             continue;
 
         if (m_EnableCulling)

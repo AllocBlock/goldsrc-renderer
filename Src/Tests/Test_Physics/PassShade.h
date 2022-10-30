@@ -5,14 +5,14 @@
 #include "Camera.h"
 #include "Buffer.h"
 #include "Image.h"
-#include "TempScene.h"
+#include "Scene.h"
 
 class CRenderPassShade : public vk::IRenderPass
 {
 public:
     CRenderPassShade() = default;
 
-    void setScene(CTempScene<CMeshDataGeneral>::Ptr vScene);
+    void setScene(CScene<CMeshDataGeneral>::Ptr vScene);
     void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; } 
 
 protected:
@@ -38,10 +38,8 @@ private:
     CPipelineShade m_PipelineShade;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
-    CTempScene<CMeshDataGeneral>::Ptr m_pScene = nullptr;
-    ptr<vk::CBuffer> m_pVertBuffer;
-    std::vector<SActorDataInfo> m_ActorDataPositionSet;
-    size_t m_VertexNum = 0;
+    CScene<CMeshDataGeneral>::Ptr m_pScene = nullptr;
+    ptr<vk::CVertexBuffer> m_pVertBuffer;
 
     vk::CImage m_DepthImage;
 

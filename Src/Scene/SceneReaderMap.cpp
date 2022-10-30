@@ -6,7 +6,7 @@
 ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
 {
     m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CTempScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene = make<CScene<CMeshDataGoldSrc>>();
 
     Scene::reportProgress(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(m_FilePath);

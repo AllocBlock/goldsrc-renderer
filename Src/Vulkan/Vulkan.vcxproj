@@ -105,6 +105,7 @@
     <ClInclude Include="Surface.h" />
     <ClInclude Include="Swapchain.h" />
     <ClInclude Include="UniformBuffer.h" />
+    <ClInclude Include="VertexBuffer.h" />
     <ClInclude Include="Vulkan.h" />
     <ClInclude Include="VulkanHandle.h" />
   </ItemGroup>

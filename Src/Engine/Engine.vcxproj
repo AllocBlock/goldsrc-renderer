@@ -137,7 +137,7 @@
     <ClInclude Include="Rotator.h" />
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />
-    <ClInclude Include="TempScene.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="Ticker.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="VertexAttributeDescriptor.h" />

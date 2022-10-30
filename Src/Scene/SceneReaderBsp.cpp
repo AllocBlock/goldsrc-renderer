@@ -20,7 +20,7 @@ glm::vec3 stringToVec3(std::string vString)
 ptr<SSceneInfoGoldSrc> CSceneReaderBsp::_readV()
 {
     m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CTempScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene = make<CScene<CMeshDataGoldSrc>>();
     
     __readBsp(m_FilePath);
     if (!m_Bsp.getLumps().m_LumpLighting.Lightmaps.empty())

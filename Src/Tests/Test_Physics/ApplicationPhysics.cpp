@@ -7,9 +7,9 @@
 
 using namespace vk;
 
-CTempScene<CMeshDataGeneral>::Ptr __generateScene()
+CScene<CMeshDataGeneral>::Ptr __generateScene()
 {
-    auto m_pScene = make<CTempScene<CMeshDataGeneral>>();
+    auto m_pScene = make<CScene<CMeshDataGeneral>>();
 
     // Ground
     {

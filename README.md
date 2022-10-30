@@ -701,7 +701,6 @@
   - Debug scope功能
   - 目前swapchain的extent变化是renderpass在做，而不是port在做....会不会不太好
   - 自动排列commandbuffer
-  - wad第一次搜寻找不到，重试后找到的问题
   - 最小化时，extent=(0,0)的处理
   - 动态shader编译
   - 三角形全部改为逆时针！
@@ -709,5 +708,4 @@
   - 公用shader的管理（放置、查找、编译）
   - pipeline生命周期、renderpass生命周期
     - 绘制port相关的流程图
-  - vertex buffer单独类
   - renderpass，更新的分类，触发更新的原因整理
