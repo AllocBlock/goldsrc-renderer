@@ -61,6 +61,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Vulkan;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>
