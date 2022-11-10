@@ -51,3 +51,16 @@ std::string Common::readFileAsString(const std::filesystem::path& vFilePath)
     std::ifstream file(vFilePath);
     return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 }
+
+std::vector<std::string> Common::split(const std::string& vStr, const std::string& vSplitter)
+{
+    size_t CurPos = 0, LastPos = 0;
+    std::vector<std::string> ResultSet;
+    std::string token;
+    while (CurPos != std::string::npos) {
+        CurPos = vStr.find(vSplitter, LastPos);
+        ResultSet.emplace_back(vStr.substr(LastPos, CurPos - LastPos));
+        LastPos = CurPos + vSplitter.length();
+    }
+    return ResultSet;
+}
