@@ -11,7 +11,7 @@ int main()
 	ptr<CApplicationGoldSrc> pApp = make<CApplicationGoldSrc>();
 	pApp->create(pWindow);
 	 
-	GLFW::startLoop(pWindow, [=]()
+	GLFW::startLoop(pWindow, [=]() 
 	{
 		pApp->render();
 	});

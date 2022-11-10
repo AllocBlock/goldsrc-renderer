@@ -142,8 +142,8 @@ CPipelineDescriptor CPipelineSkybox::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/skyShaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/skyShaderFrag.spv");
+    Descriptor.setVertShaderPath("shaders/skyShader.vert");
+    Descriptor.setFragShaderPath("shaders/skyShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);

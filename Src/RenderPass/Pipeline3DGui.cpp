@@ -69,8 +69,8 @@ CPipelineDescriptor CPipelineLine::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/lineShaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/lineShaderFrag.spv");
+    Descriptor.setVertShaderPath("shaders/lineShader.vert");
+    Descriptor.setFragShaderPath("shaders/lineShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, false);

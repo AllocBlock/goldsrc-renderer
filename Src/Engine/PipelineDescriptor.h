@@ -206,13 +206,15 @@ public:
         return PushConstantInfoSet;
     }
 
-    void setVertShaderPath(std::filesystem::path vShaderPath)
+    void setVertShaderPath(const std::filesystem::path& vShaderPath)
     {
+        _ASSERTE(vShaderPath.extension() == ".vert");
         m_VertShaderPath = __findShader(vShaderPath);
     }
 
-    void setFragShaderPath(std::filesystem::path vShaderPath)
+    void setFragShaderPath(const std::filesystem::path& vShaderPath)
     {
+        _ASSERTE(vShaderPath.extension() == ".frag");
         m_FragShaderPath = __findShader(vShaderPath);
     }
 

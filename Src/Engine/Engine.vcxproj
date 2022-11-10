@@ -99,6 +99,7 @@
     <ClCompile Include="BoundingBox.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
+    <ClCompile Include="ShaderCompiler.cpp" />
     <ClCompile Include="ShaderResourceDescriptor.cpp" />
     <ClCompile Include="GlobalSingleTimeBuffer.cpp" />
     <ClCompile Include="Application.cpp" />
@@ -123,6 +124,7 @@
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="ShaderCompiler.h" />
     <ClInclude Include="ShaderResourceDescriptor.h" />
     <ClInclude Include="GlobalSingleTimeBuffer.h" />
     <ClInclude Include="Collider.h" />

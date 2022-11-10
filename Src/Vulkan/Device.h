@@ -21,7 +21,7 @@ namespace vk
         VkQueue getPresentQueue() const;
         VkQueue getQueue(uint32_t vIndex) const;
 
-        VkShaderModule createShaderModule(const std::vector<char>& vShaderCode) const;
+        VkShaderModule createShaderModule(const std::vector<uint8_t>& vShaderCode) const;
         void destroyShaderModule(VkShaderModule vModule) const;
         VkSemaphore createSemaphore() const;
         void destroySemaphore(VkSemaphore vSemaphore) const;

@@ -18,7 +18,7 @@ float Common::mod(float vVal, float vMax)
     }
 }
 
-std::vector<char> Common::readFileAsChar(std::filesystem::path vFilePath)
+std::vector<uint8_t> Common::readFileAsByte(const std::filesystem::path& vFilePath)
 {
     if (!std::filesystem::exists(vFilePath))
     {
@@ -32,10 +32,22 @@ std::vector<char> Common::readFileAsChar(std::filesystem::path vFilePath)
         throw std::runtime_error(u8"读取文件失败：" + vFilePath.u8string());
 
     size_t FileSize = static_cast<size_t>(File.tellg());
-    std::vector<char> Buffer(FileSize);
+    std::vector<uint8_t> Buffer(FileSize);
     File.seekg(0);
-    File.read(Buffer.data(), FileSize);
+    File.read(reinterpret_cast<char*>(Buffer.data()), FileSize);
     File.close();
 
     return Buffer;
+}
+
+std::string Common::readFileAsString(const std::filesystem::path& vFilePath)
+{
+    if (!std::filesystem::exists(vFilePath))
+    {
+        std::filesystem::path FullPath = std::filesystem::absolute(vFilePath);
+        throw std::runtime_error(u8"未找到文件：" + FullPath.u8string());
+    }
+
+    std::ifstream file(vFilePath);
+    return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 }

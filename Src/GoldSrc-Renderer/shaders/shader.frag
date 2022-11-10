@@ -24,9 +24,11 @@ layout(push_constant) uniform SPushConstant
 	float Opacity;
 } uPushConstant;
 
+#define GAMMA 2.2
+
 float srgbToLinear(float v)
 {
-	return pow(v, 1/2.2);
+	return pow(v, 1/GAMMA);
 }
 
 vec3 srgbToLinear(vec3 vColor)
@@ -36,7 +38,7 @@ vec3 srgbToLinear(vec3 vColor)
 
 float linearToSrgb(float v)
 {
-	return pow(v, 2.2);
+	return pow(v, GAMMA);
 }
 
 vec3 linearToSrgb(vec3 vColor)

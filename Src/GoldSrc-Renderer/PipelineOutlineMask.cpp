@@ -68,8 +68,8 @@ CPipelineDescriptor CPipelineMask::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/outlineMaskShaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/outlineMaskShaderFrag.spv");
+    Descriptor.setVertShaderPath("shaders/outlineMaskShader.vert");
+    Descriptor.setFragShaderPath("shaders/outlineMaskShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
 

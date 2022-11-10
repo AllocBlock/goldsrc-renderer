@@ -1,4 +1,9 @@
 
+# 2022-11-10
+# This script is DEPRECATED as dynamic shader compile is implemented
+# But you can still use it if needed
+# -----------------------
+
 # this script help compile shader without configing all shader individually in VS
 # pass in dir
 

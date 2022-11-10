@@ -15,7 +15,8 @@
 namespace Common
 {
     float mod(float vVal, float vMax);
-    std::vector<char> readFileAsChar(std::filesystem::path vFilePath);
+    std::vector<uint8_t> readFileAsByte(const std::filesystem::path& vFilePath);
+    std::string readFileAsString(const std::filesystem::path& vFilePath);
 
     template <typename T>
     T lerp(T vA, T vB, float vFactor)

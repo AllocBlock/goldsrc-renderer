@@ -44,6 +44,7 @@
     <ClInclude Include="PipelineVisCollider.h" />
     <ClInclude Include="PassFullScreen.h" />
     <ClInclude Include="PassScene.h" />
+    <ClInclude Include="tonemap.glslh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PassGUI.cpp" />

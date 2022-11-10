@@ -6,8 +6,8 @@ class CPipelineBlendAdditive : public CPipelineGoldSrc
 protected:
     virtual void _dumpExtraPipelineDescriptionV(CPipelineDescriptor& vioDesc) override
     {
-        vioDesc.setVertShaderPath("shaders/shaderVert.spv");
-        vioDesc.setFragShaderPath("shaders/shaderFrag.spv");
+        vioDesc.setVertShaderPath("shaders/shader.vert");
+        vioDesc.setFragShaderPath("shaders/shader.frag");
 
         vioDesc.setEnableDepthTest(true);
         vioDesc.setEnableDepthWrite(false);

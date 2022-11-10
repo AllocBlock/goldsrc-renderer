@@ -32,8 +32,8 @@ CPipelineDescriptor CPipelineEdge::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/outlineEdgeShaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/outlineEdgeShaderFrag.spv");
+    Descriptor.setVertShaderPath("shaders/outlineEdgeShader.vert");
+    Descriptor.setFragShaderPath("shaders/outlineEdgeShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
 

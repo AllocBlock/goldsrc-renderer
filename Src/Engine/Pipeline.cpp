@@ -1,5 +1,6 @@
 #include "Pipeline.h"
 #include "Common.h"
+#include "ShaderCompiler.h"
 
 void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
 {
@@ -12,8 +13,8 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
 
     CPipelineDescriptor PipelineDescriptor = _getPipelineDescriptionV();
 
-    auto VertShaderCode = Common::readFileAsChar(PipelineDescriptor.getVertShaderPath());
-    auto FragShaderCode = Common::readFileAsChar(PipelineDescriptor.getFragShaderPath());
+    auto VertShaderCode = ShaderCompiler::requestSpirV(PipelineDescriptor.getVertShaderPath());
+    auto FragShaderCode = ShaderCompiler::requestSpirV(PipelineDescriptor.getFragShaderPath());
 
     VkShaderModule VertShaderModule = m_pDevice->createShaderModule(VertShaderCode);
     VkShaderModule FragShaderModule = m_pDevice->createShaderModule(FragShaderCode);

@@ -82,8 +82,8 @@ CPipelineDescriptor CPipelineSimple::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/simpleShaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/simpleShaderFrag.spv");
+    Descriptor.setVertShaderPath("shaders/simpleShader.vert");
+    Descriptor.setFragShaderPath("shaders/simpleShader.frag");
 
     Descriptor.setVertexInputInfo<SSimplePointData>();
 

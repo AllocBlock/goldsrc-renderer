@@ -45,6 +45,9 @@
     <ClInclude Include="PassScene.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="tonemap.glslh">
+      <Filter>资源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PipelineSkybox.cpp">

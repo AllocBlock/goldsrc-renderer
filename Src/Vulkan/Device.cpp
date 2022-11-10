@@ -98,7 +98,7 @@ VkQueue CDevice::getQueue(uint32_t vFamilyIndex) const
     return Queue;
 }
 
-VkShaderModule CDevice::createShaderModule(const std::vector<char>& vShaderCode) const
+VkShaderModule CDevice::createShaderModule(const std::vector<uint8_t>& vShaderCode) const
 {
     _ASSERTE(isValid());
 
