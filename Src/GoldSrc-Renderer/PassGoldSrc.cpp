@@ -20,6 +20,8 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
     m_AreObjectsVisable.clear();
     m_AreObjectsVisable.resize(m_pSceneInfo->pScene->getActorNum(), false);
 
+    m_CurTextureIndex = 0;
+
     __destroySceneResources();
     __createSceneResources();
     __updateTextureView();

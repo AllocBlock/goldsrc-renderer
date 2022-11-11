@@ -50,7 +50,6 @@
     - file dialog文件选择框基于nativefiledialog
   - 数学库：glm
   - 图片IO：stb_image (.jpg, .bmp, .png, .tga...), tinyexr (.exr)
-- （可选）Python，编译Shader的脚本，如果要绕过Python实现自动编译详见compileShader.py
 
 - 安装
   - 首先下载安装Vulkan https://github.com/microsoft/vcpkg/blob/master/ports/vulkan/usage
@@ -74,7 +73,6 @@
   vcpkg integrate install
   ```
   > 注意因为Vulkan并非下载源码安装，而是会去寻找本地已安装的SDK，所以才需要自己下载安装，此外安装后需要检查VULKAN_SDK环境变量是否正确
-  
 
 ## 架构图
 - Vulkan调用流程图
@@ -95,12 +93,8 @@
 ## TODO
   - Debug scope功能
   - 最小化时，extent=(0,0)的处理
-  - 动态shader编译
   - 三角形全部改为逆时针！
   - 碰撞分board和narrow
-  - 公用shader的管理（放置、查找、编译）
   - pipeline生命周期、renderpass生命周期
     - 绘制port相关的流程图，类型展示
   - renderpass，更新的分类，触发更新的原因整理
-  - shader header的处理，涉及整个shader管理（预处理、编译）
-    - 目前有重复编译的情况？花时间查一下

@@ -104,9 +104,9 @@ void CRenderPassOutlineEdge::__createVertexBuffer()
 {
     m_PointDataSet =
     {
-        CPipelineEdge::SPointData{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0, 0.0)},
-        CPipelineEdge::SPointData{glm::vec2(3.0f, -1.0f), glm::vec2(2.0, 0.0)},
-        CPipelineEdge::SPointData{glm::vec2(-1.0f, 3.0f), glm::vec2(0.0, 2.0)},
+        CPipelineEdge::SPointData{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
+        CPipelineEdge::SPointData{glm::vec2( 3.0f, -1.0f), glm::vec2(2.0f, 0.0f)},
+        CPipelineEdge::SPointData{glm::vec2(-1.0f,  3.0f), glm::vec2(0.0f, 2.0f)},
     };
     
     size_t VertexNum = m_PointDataSet.size();

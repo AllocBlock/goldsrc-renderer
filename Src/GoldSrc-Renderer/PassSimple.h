@@ -59,8 +59,6 @@ private:
     size_t __getActualTextureNum();
     void __updateDescriptorSets();
 
-    std::vector<SSimplePointData> __readPointData(ptr<CMeshDataGoldSrc> vpObject) const;
-
     struct
     {
         CPipelineSimple Main;

@@ -107,8 +107,6 @@ private:
     void __updateDescriptorSets();
     void __updateTextureView();
 
-    std::vector<SGoldSrcPointData> __readPointData(ptr<CMeshDataGoldSrc> vpObject) const;
-
     struct
     {
         CPipelineDepthTest DepthTest;
