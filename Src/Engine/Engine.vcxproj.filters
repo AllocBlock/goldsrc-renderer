@@ -96,6 +96,12 @@
     <ClCompile Include="ShaderCompiler.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderCompileCache.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderErrorParser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -174,6 +180,12 @@
       <Filter>头文件\Scene</Filter>
     </ClInclude>
     <ClInclude Include="ShaderCompiler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderCompileCache.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderErrorParser.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

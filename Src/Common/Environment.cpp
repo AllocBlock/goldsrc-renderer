@@ -1,6 +1,7 @@
 #include "Environment.h"
 #include <vector>
 #include <set>
+#include <cstdlib>
 
 std::set<std::filesystem::path> gPaths = { std::filesystem::current_path() };
 
@@ -90,4 +91,16 @@ void Environment::addPathToEnviroment(std::filesystem::path vPath)
     } // if not exist, it maybe a virtual path
 
 	gPaths.insert(vPath);
+}
+
+std::string Environment::getEnvironmentVariable(std::string vKey)
+{
+    const char* pResult = std::getenv(vKey.c_str());
+    return pResult ? std::string(pResult) : "";
+}
+
+int Environment::execute(const std::string& vCommand, const std::string& vOutputFile)
+{
+    std::string Command = vCommand + (vOutputFile.empty() ? "" : (" > \"" + vOutputFile + "\""));
+    return std::system(Command.c_str());
 }
