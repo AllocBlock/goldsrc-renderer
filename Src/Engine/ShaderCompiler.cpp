@@ -5,9 +5,6 @@
 #include "ShaderCompileCache.h"
 #include "ShaderErrorParser.h"
 
-#include <chrono>
-#include <sstream>
-
 bool gInited = false;
 std::filesystem::path gCompilePath = "";
 CShaderCompileCache gCompileCache = CShaderCompileCache();

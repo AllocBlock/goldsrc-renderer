@@ -1,4 +1,7 @@
 ﻿#include "ShaderErrorParser.h"
+#include "Common.h"
+
+#include <regex>
 
 std::vector<ShaderErrorParser::SShaderError> ShaderErrorParser::parse(const std::string& vErrorStr)
 {

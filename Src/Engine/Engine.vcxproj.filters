@@ -25,6 +25,12 @@
     <Filter Include="源文件\Physics">
       <UniqueIdentifier>{105377ca-b5f6-437e-aa0a-8e3de60fe372}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Shader">
+      <UniqueIdentifier>{40d316db-3a7f-4463-ac70-1bb2f188d79c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Shader">
+      <UniqueIdentifier>{4a42ddf8-2a75-46e4-a9b6-57936b7fd1a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Pipeline.cpp">
@@ -93,14 +99,14 @@
     <ClCompile Include="BoundingBox.cpp">
       <Filter>源文件\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderCompiler.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ShaderCompileCache.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderCompiler.cpp">
+      <Filter>源文件\Shader</Filter>
     </ClCompile>
     <ClCompile Include="ShaderErrorParser.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -179,14 +185,14 @@
     <ClInclude Include="BoundingBox.h">
       <Filter>头文件\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderCompiler.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ShaderCompileCache.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderCompiler.h">
+      <Filter>头文件\Shader</Filter>
     </ClInclude>
     <ClInclude Include="ShaderErrorParser.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

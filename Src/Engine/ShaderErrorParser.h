@@ -1,8 +1,6 @@
 ﻿#pragma once
-#include "Common.h"
 #include <string>
 #include <vector>
-#include <regex>
 
 namespace ShaderErrorParser
 {
