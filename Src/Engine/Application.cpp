@@ -7,7 +7,6 @@
 #include "RenderPass.h"
 
 #include <set>
-#include <stack>
 
 using namespace vk;
 

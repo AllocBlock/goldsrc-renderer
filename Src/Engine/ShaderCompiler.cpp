@@ -5,11 +5,14 @@
 #include "ShaderCompileCache.h"
 #include "ShaderErrorParser.h"
 
+#include <set>
+
 bool gInited = false;
 std::filesystem::path gCompilePath = "";
 CShaderCompileCache gCompileCache = CShaderCompileCache();
 std::filesystem::path gCompileCacheFile = "shaderCompileCache.txt";
 std::string gTempOutputFile = "CompileResult.temp.txt";
+std::set<std::filesystem::path> gHeaderDirSet;
 
 void __init()
 {
@@ -35,6 +38,9 @@ void __init()
 
     if (std::filesystem::exists(gCompileCacheFile))
         gCompileCache.load(gCompileCacheFile);
+
+    ShaderCompiler::addHeaderDir("./shaders");
+    ShaderCompiler::addHeaderDir("../RenderPass/shaders");
     gInited = true;
 }
 
@@ -55,6 +61,11 @@ bool __executeCompileWithOutput(const std::string& vCommand, std::string& voOutp
     return ExitCode == 0;
 }
 
+void ShaderCompiler::addHeaderDir(const std::filesystem::path& vPath)
+{
+    gHeaderDirSet.insert(Environment::normalizePath(vPath));
+}
+
 std::filesystem::path ShaderCompiler::compile(const std::filesystem::path& vPath)
 {
     if (!gInited) __init();
@@ -64,7 +75,14 @@ std::filesystem::path ShaderCompiler::compile(const std::filesystem::path& vPath
         throw std::runtime_error("File not found");
 
     auto OutputPath = __generateCompiledShaderPath(vPath);
-    std::string Cmd = gCompilePath.string() + " -V \"" + vPath.string() + "\" -o \"" + OutputPath.string() + "\"";
+    std::string Cmd = gCompilePath.string() + " "; // exe 
+    
+    for (const auto& Dir : gHeaderDirSet)
+        Cmd += "-I\"" + Dir.string() + "\" "; // additional include directory
+
+    Cmd += "-V \"" + vPath.string() + "\" "; // input
+    Cmd += "-o \"" + OutputPath.string() + "\" "; // output
+
     std::string Output;
     bool Success = __executeCompileWithOutput(Cmd, Output);
 

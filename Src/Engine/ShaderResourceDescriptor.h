@@ -70,4 +70,3 @@ private:
     std::vector<VkDescriptorSet> m_DescriptorSetSet;
     VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 };
-

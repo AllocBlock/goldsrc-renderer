@@ -195,7 +195,4 @@
       <Filter>头文件\Shader</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
-  </ItemGroup>
 </Project>

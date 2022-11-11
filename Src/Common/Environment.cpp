@@ -99,6 +99,11 @@ std::string Environment::getEnvironmentVariable(std::string vKey)
     return pResult ? std::string(pResult) : "";
 }
 
+std::filesystem::path Environment::normalizePath(const std::filesystem::path& vPath)
+{
+    return std::filesystem::weakly_canonical(std::filesystem::absolute(vPath));
+}
+
 int Environment::execute(const std::string& vCommand, const std::string& vOutputFile)
 {
     std::string Command = vCommand + (vOutputFile.empty() ? "" : (" > \"" + vOutputFile + "\""));

@@ -1,5 +1,6 @@
 #include "ShaderCompileCache.h"
 #include "Common.h"
+#include "Environment.h"
 
 #include <chrono>
 #include <sstream>
@@ -8,11 +9,6 @@
 using namespace std::chrono;
 
 const std::string gTimeStringFormat = "%Y-%m-%d_%H:%M:%S";
-
-std::filesystem::path __normalizePath(const std::filesystem::path& vPath)
-{
-    return std::filesystem::weakly_canonical(std::filesystem::absolute(vPath));
-}
 
 std::string __toTimeString(system_clock::time_point vTimestamp)
 {
@@ -67,13 +63,13 @@ void CShaderCompileCache::save(const std::filesystem::path& vPath)
 
 void CShaderCompileCache::add(const std::filesystem::path& vSourcePath, const std::filesystem::path& vBinPath)
 {
-    auto SrcPath = __normalizePath(vSourcePath);
-    m_CacheMap[SrcPath] = { __normalizePath(vBinPath), __getChangeTime(SrcPath) };
+    auto SrcPath = Environment::normalizePath(vSourcePath);
+    m_CacheMap[SrcPath] = { Environment::normalizePath(vBinPath), __getChangeTime(SrcPath) };
 }
 
 bool CShaderCompileCache::doesNeedRecompile(const std::filesystem::path& vPath)
 {
-    auto Path = __normalizePath(vPath);
+    auto Path = Environment::normalizePath(vPath);
     if (m_CacheMap.find(Path) == m_CacheMap.end()) return true; // no record, need recompile
 
     auto RecordTime = m_CacheMap.at(Path).ChangeTime;

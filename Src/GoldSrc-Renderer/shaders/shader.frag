@@ -1,5 +1,7 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : require
+
+#include "tonemap.glsl"
 
 layout(location = 0) in vec3 inFragColor;
 layout(location = 1) in vec3 inFragPosition;
@@ -24,39 +26,16 @@ layout(push_constant) uniform SPushConstant
 	float Opacity;
 } uPushConstant;
 
-#define GAMMA 2.2
-
-float srgbToLinear(float v)
-{
-	return pow(v, 1/GAMMA);
-}
-
-vec3 srgbToLinear(vec3 vColor)
-{
-	return vec3(srgbToLinear(vColor.r), srgbToLinear(vColor.g), srgbToLinear(vColor.b));
-}
-
-float linearToSrgb(float v)
-{
-	return pow(v, GAMMA);
-}
-
-vec3 linearToSrgb(vec3 vColor)
-{
-	return vec3(linearToSrgb(vColor.r), linearToSrgb(vColor.g), linearToSrgb(vColor.b));
-}
-
 void main()
 {
 	uint TexIndex = inFragTexIndex;
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
 	vec4 TexColor = texture(sampler2D(uTextures[inFragTexIndex], uTexSampler), inFragTexCoord);
-	//TexColor.rgb = srgbToLinear(TexColor.rgb);
 
     if (uPushConstant.UseLightmap)
 	{
 		vec3 LightmapColor = texture(sampler2D(uLightmap, uTexSampler), inFragLightmapCoord).xyz;
-		outColor = vec4(TexColor.rgb * LightmapColor, TexColor.a * uPushConstant.Opacity);
+		outColor = vec4(toGamma(TexColor.rgb * LightmapColor, GOLDSRC_GAMMA), TexColor.a * uPushConstant.Opacity);
 	}
 	else
 	{
@@ -79,6 +58,6 @@ void main()
 
 		float shadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
 		//outColor = vec4(linearToSrgb(TexColor.rgb * shadow), TexColor.a * uPushConstant.Opacity);
-		outColor = vec4(srgbToLinear(TexColor.rgb) * shadow, TexColor.a * uPushConstant.Opacity);
+		outColor = vec4(toGamma(TexColor.rgb * shadow, GOLDSRC_GAMMA), TexColor.a * uPushConstant.Opacity);
 	}
 }

@@ -44,7 +44,6 @@
     <ClInclude Include="PipelineVisCollider.h" />
     <ClInclude Include="PassFullScreen.h" />
     <ClInclude Include="PassScene.h" />
-    <ClInclude Include="tonemap.glslh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PassGUI.cpp" />
@@ -55,6 +54,9 @@
     <ClCompile Include="PipelineVisCollidePoint.cpp" />
     <ClCompile Include="PipelineVisCollider.cpp" />
     <ClCompile Include="RenderPassFullScreen.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\tonemap.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

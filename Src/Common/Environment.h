@@ -12,6 +12,6 @@ namespace Environment
 	void addPathToEnviroment(std::filesystem::path vPath);
 	
 	std::string getEnvironmentVariable(std::string vKey);
-
-	int execute(const std::string& vCommand, const std::string& vOutputFile = "");
+	std::filesystem::path normalizePath(const std::filesystem::path& vPath);
+    int execute(const std::string& vCommand, const std::string& vOutputFile = "");
 };

@@ -1,5 +1,4 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
 
 #define MAX_TEXTURE_NUM 16
 #define M_1_PI  0.318309886183790671538 // 1/pi

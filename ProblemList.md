@@ -337,10 +337,19 @@
   - 静态编译的问题：build才编译，有时代码不变shader修改了无法自动编译
   - 管理问题：公有shader的路径和编译如何处理？
   - 问题：include的路径管理，需要配合编译器的参数
+    - https://www.reddit.com/r/opengl/comments/r2iqx4/what_even_is_gl_google_include_directive/
+      - 建议用GL_ARB_shading_language_include，
+      - GL_GOOGLE_include_directive and GL_GOOGLE_cpp_style_line_directive are essentially worse specified versions of the ARB extension designed for glslang (the offline SPIR-V reference compiler).
+      - 但Khrono Vulkan的glslangValidator好像不支持
+    - https://github.com/KhronosGroup/glslang/issues/249
+    - 还是用 GL_GOOGLE_include_directive 吧
+    - 注意-I要在-V之前指定，-l已经包含在-V里了
   - 问题：避免重复编译，需要有缓存机制，只在发生修改时重新编译
   - 引入动态编译
   - 命令行的调用方法
     - std::system + >重定向输出
+  - 问题：include变了如何重新编译
+    - 得做一个include分析器....那不如干脆不用GL_GOOGLE_include_directive
 
 ## 问题：代码重构
   - 独立开发的好处：可以方便的重构，并且能在重构过程中暂停其他组件开发，以迭代的方式重构，无需考虑其他模块，等全部重构完成再去更新使用
