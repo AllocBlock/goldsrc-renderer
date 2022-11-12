@@ -160,7 +160,7 @@
     <ClInclude Include="PipelineBlendAdditive.h" />
     <ClInclude Include="PipelineBlendAlpha.h" />
     <ClInclude Include="PipelineBlendAlphaTest.h" />
-    <ClInclude Include="PipelineDepthTest.h" />
+    <ClInclude Include="PipelineNormal.h" />
     <ClInclude Include="PipelineGoldSrc.h" />
     <ClInclude Include="PipelineSimple.h" />
     <ClInclude Include="PointData.h" />
@@ -177,8 +177,8 @@
     <None Include="shaders\outlineEdgeShader.vert" />
     <None Include="shaders\outlineMaskShader.frag" />
     <None Include="shaders\outlineMaskShader.vert" />
-    <None Include="shaders\shader.frag" />
-    <None Include="shaders\shader.vert" />
+    <None Include="shaders\goldSrcNormalShader.frag" />
+    <None Include="shaders\goldSrcNormalShader.vert" />
     <None Include="shaders\simpleShader.frag" />
     <None Include="shaders\simpleShader.vert" />
     <None Include="shaders\skyShader.frag" />

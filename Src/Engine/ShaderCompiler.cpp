@@ -10,8 +10,8 @@
 bool gInited = false;
 std::filesystem::path gCompilePath = "";
 CShaderCompileCache gCompileCache = CShaderCompileCache();
-std::filesystem::path gCompileCacheFile = "shaderCompileCache.txt";
-std::string gTempOutputFile = "CompileResult.temp.txt";
+std::filesystem::path gCompileCacheFile = Environment::getTempFilePath("shaderCompileCache.txt");
+std::filesystem::path gTempOutputFile = Environment::getTempFilePath("CompileResult.temp.txt");
 std::set<std::filesystem::path> gHeaderDirSet;
 
 void __init()
@@ -48,15 +48,15 @@ std::filesystem::path __generateCompiledShaderPath(const std::filesystem::path& 
 {
     auto Ext = vPath.extension().string().substr(1);
     auto Postfix = char(std::toupper(Ext[0])) + Ext.substr(1);
-    auto NewPath = vPath;
+    auto NewPath = "compiledShaders" / vPath.filename();
     NewPath.replace_extension("");
     NewPath += Postfix + ".spv";
-    return NewPath;
+    return Environment::getTempFilePath(NewPath);
 }
 
 bool __executeCompileWithOutput(const std::string& vCommand, std::string& voOutput)
 {
-    int ExitCode = std::system((vCommand + " > " + gTempOutputFile).c_str());
+    int ExitCode = std::system((vCommand + " > \"" + gTempOutputFile.string() + "\"").c_str());
     voOutput = Common::readFileAsString(gTempOutputFile);
     return ExitCode == 0;
 }

@@ -3,7 +3,7 @@
 #include "PassScene.h"
 #include "FrameBuffer.h"
 #include "PipelineSkybox.h"
-#include "PipelineDepthTest.h"
+#include "PipelineNormal.h"
 #include "PipelineBlendAlpha.h"
 #include "PipelineBlendAlphaTest.h"
 #include "PipelineBlendAdditive.h"
@@ -109,7 +109,7 @@ private:
 
     struct
     {
-        CPipelineDepthTest DepthTest;
+        CPipelineNormal Normal;
         CPipelineBlendAlpha BlendTextureAlpha;
         CPipelineBlendAlphaTest BlendAlphaTest;
         CPipelineBlendAdditive BlendAdditive;
@@ -118,7 +118,7 @@ private:
 
         void destroy()
         {
-            DepthTest.destroy();
+            Normal.destroy();
             BlendTextureAlpha.destroy();
             BlendAlphaTest.destroy();
             BlendAdditive.destroy();

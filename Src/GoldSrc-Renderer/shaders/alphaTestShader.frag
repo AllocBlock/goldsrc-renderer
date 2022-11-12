@@ -28,7 +28,7 @@ void main()
 	uint TexIndex = inFragTexIndex;
 	if (TexIndex > MAX_TEXTURE_NUM) TexIndex = 0;
 	vec4 TexColor = texture(sampler2D(uTextures[inFragTexIndex], uTexSampler), inFragTexCoord);
-	if (TexColor.a == 0.0) discard;
+	if (TexColor.a < 0.5) discard;
 
     if (uPushConstant.UseLightmap)
 	{

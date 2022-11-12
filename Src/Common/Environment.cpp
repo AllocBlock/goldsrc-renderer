@@ -4,6 +4,7 @@
 #include <cstdlib>
 
 std::set<std::filesystem::path> gPaths = { std::filesystem::current_path() };
+std::filesystem::path gTempFileDir = "./Temp";
 
 std::filesystem::path __cleanAbsolutePrefix(const std::filesystem::path& vPath)
 {
@@ -108,4 +109,33 @@ int Environment::execute(const std::string& vCommand, const std::string& vOutput
 {
     std::string Command = vCommand + (vOutputFile.empty() ? "" : (" > \"" + vOutputFile + "\""));
     return std::system(Command.c_str());
+}
+
+std::vector<std::filesystem::path> __toElementVector(const std::filesystem::path& vDir)
+{
+    return std::vector<std::filesystem::path>(vDir.begin(), vDir.end());
+}
+
+bool __isBelow(const std::filesystem::path& vDir, const std::filesystem::path& vPath)
+{
+    auto DirElementSet = __toElementVector(Environment::normalizePath(vDir));
+    auto PathElementSet = __toElementVector(Environment::normalizePath(vPath));
+    
+    if (PathElementSet.size() < DirElementSet.size()) return false;
+    for (size_t i = 0; i < DirElementSet.size(); ++i)
+    {
+        if (DirElementSet[i] != PathElementSet[i]) return false;
+    }
+    return true;
+}
+
+std::filesystem::path Environment::getTempFilePath(const std::filesystem::path& vFileName)
+{
+    _ASSERTE(vFileName.is_relative());
+    std::filesystem::path TempFilePath = normalizePath(gTempFileDir / vFileName);
+    std::filesystem::path ParentDir = TempFilePath.parent_path();
+    if (!std::filesystem::exists(ParentDir))
+        std::filesystem::create_directories(ParentDir);
+    _ASSERTE(__isBelow(gTempFileDir, TempFilePath));
+    return TempFilePath;
 }

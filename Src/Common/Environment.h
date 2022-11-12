@@ -14,4 +14,6 @@ namespace Environment
 	std::string getEnvironmentVariable(std::string vKey);
 	std::filesystem::path normalizePath(const std::filesystem::path& vPath);
     int execute(const std::string& vCommand, const std::string& vOutputFile = "");
+
+	std::filesystem::path getTempFilePath(const std::filesystem::path& vFileName);
 };

@@ -71,10 +71,13 @@ bool CShaderCompileCache::doesNeedRecompile(const std::filesystem::path& vPath)
 {
     auto Path = Environment::normalizePath(vPath);
     if (m_CacheMap.find(Path) == m_CacheMap.end()) return true; // no record, need recompile
-
-    auto RecordTime = m_CacheMap.at(Path).ChangeTime;
+    
+    const SShaderCompileInfo& Record = m_CacheMap.at(Path);
+    auto RecordTime = Record.ChangeTime;
     auto CurTime = __getChangeTime(Path);
     if (RecordTime != CurTime) return true; // changed since last record, need recompile
+
+    if (!std::filesystem::exists(Record.BinPath)) return true; // bin file not exist, need recompile
 
     return false;
 }

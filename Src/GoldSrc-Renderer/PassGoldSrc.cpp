@@ -78,14 +78,14 @@ void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateStat
                 VkRenderPass RenderPass = get();
 
                 m_PipelineSet.Sky.create(m_pDevice, RenderPass, RefExtent);
-                m_PipelineSet.DepthTest.create(m_pDevice, RenderPass, RefExtent);
+                m_PipelineSet.Normal.create(m_pDevice, RenderPass, RefExtent);
                 m_PipelineSet.BlendTextureAlpha.create(m_pDevice, RenderPass, RefExtent);
                 m_PipelineSet.BlendAlphaTest.create(m_pDevice, RenderPass, RefExtent);
                 m_PipelineSet.BlendAdditive.create(m_pDevice, RenderPass, RefExtent);
                 m_PipelineSet.Sprite.create(m_pDevice, RenderPass, RefExtent);
 
                 uint32_t ImageNum = m_pAppInfo->getImageNum();
-                m_PipelineSet.DepthTest.setImageNum(ImageNum);
+                m_PipelineSet.Normal.setImageNum(ImageNum);
                 m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
                 m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
                 m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
@@ -245,15 +245,15 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 __renderByBspTree(vImageIndex);
             else
             {
-                m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
+                m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
 
-                m_PipelineSet.DepthTest.setOpacity(CommandBuffer, 1.0f);
+                m_PipelineSet.Normal.setOpacity(CommandBuffer, 1.0f);
 
                 for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
                 {
                     auto pActor = m_pSceneInfo->pScene->getActor(i);
                     bool EnableLightmap = pActor->getMesh()->getMeshData().getEnableLightmap();
-                    m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
+                    m_PipelineSet.Normal.setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
                     {
                         __recordObjectRenderCommand(vImageIndex, i);
@@ -295,7 +295,7 @@ void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
     if (m_pSceneInfo->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
-    m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
+    m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
 
     __renderTreeNode(vImageIndex, 0);
     __renderPointEntities(vImageIndex);
@@ -307,7 +307,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
-    m_PipelineSet.DepthTest.setOpacity(CommandBuffer, 1.0f);
+    m_PipelineSet.Normal.setOpacity(CommandBuffer, 1.0f);
 
     if (vNodeIndex >= m_pSceneInfo->BspTree.NodeNum) // if is leaf, render it
     {
@@ -320,7 +320,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
             isLeafVisable = true;
 
             bool EnableLightmap = m_pSceneInfo->pScene->getActor(ObjectIndex)->getMesh()->getMeshData().getEnableLightmap();
-            m_PipelineSet.DepthTest.setLightmapState(CommandBuffer, EnableLightmap);
+            m_PipelineSet.Normal.setLightmapState(CommandBuffer, EnableLightmap);
 
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
@@ -439,7 +439,7 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
     {
     case EGoldSrcRenderMode::NORMAL:
     {
-        pPipeline = &m_PipelineSet.DepthTest;
+        pPipeline = &m_PipelineSet.Normal;
         break;
     }
     case EGoldSrcRenderMode::COLOR:
@@ -480,7 +480,7 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
 void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
-    m_PipelineSet.DepthTest.bind(CommandBuffer, vImageIndex);
+    m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
 
     for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
@@ -551,7 +551,7 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
 void CSceneGoldSrcRenderPass::__updateDescriptorSets()
 {
     VkImageView Lightmap = (m_pSceneInfo && m_pSceneInfo->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
-    m_PipelineSet.DepthTest.updateDescriptorSet(m_TextureImageSet, Lightmap);
+    m_PipelineSet.Normal.updateDescriptorSet(m_TextureImageSet, Lightmap);
     m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(m_TextureImageSet, Lightmap);
     m_PipelineSet.BlendAlphaTest.updateDescriptorSet(m_TextureImageSet, Lightmap);
     m_PipelineSet.BlendAdditive.updateDescriptorSet(m_TextureImageSet, Lightmap);
@@ -574,10 +574,10 @@ void CSceneGoldSrcRenderPass::__updateTextureView()
 size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
 {
     size_t NumTexture = m_pSceneInfo ? m_pSceneInfo->TexImageSet.size() : 0;
-    if (NumTexture > CPipelineDepthTest::MaxTextureNum)
+    if (NumTexture > CPipelineNormal::MaxTextureNum)
     {
-        Log::log("警告: 纹理数量 = (" + std::to_string(NumTexture) + ") 大于限制数量 (" + std::to_string(CPipelineDepthTest::MaxTextureNum) + "), 多出的纹理将被忽略");
-        NumTexture = CPipelineDepthTest::MaxTextureNum;
+        Log::log("警告: 纹理数量 = (" + std::to_string(NumTexture) + ") 大于限制数量 (" + std::to_string(CPipelineNormal::MaxTextureNum) + "), 多出的纹理将被忽略");
+        NumTexture = CPipelineNormal::MaxTextureNum;
     }
     return NumTexture;
 }
@@ -661,7 +661,7 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     glm::mat4 Model = glm::mat4(1.0f);
-    m_PipelineSet.DepthTest.updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.Normal.updateUniformBuffer(vImageIndex, Model, m_pCamera);
     m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, m_pCamera);
     m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, m_pCamera);
     m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, m_pCamera);

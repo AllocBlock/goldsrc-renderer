@@ -131,7 +131,7 @@
     <ClInclude Include="PipelineBlendAlphaTest.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineDepthTest.h">
+    <ClInclude Include="PipelineNormal.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
     <ClInclude Include="PipelineSimple.h">
@@ -169,7 +169,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader.vert">
+    <None Include="shaders\goldSrcNormalShader.vert">
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\simpleShader.frag">
@@ -202,7 +202,7 @@
     <None Include="shaders\lineShader.vert">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="shaders\shader.frag">
+    <None Include="shaders\goldSrcNormalShader.frag">
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\outlineEdgeShader.frag">
