@@ -78,13 +78,11 @@
 - Vulkan依赖图
 ![](./Doc/VulkanReferenceGraph.png)
 - 数据流程图
-![](./Doc/ClassIncludeGraph.png)
+![](./Doc/DataFlowGraph.png)
 - 模块依赖
 ![](./Doc/ModuleDependency.png)
 - 渲染流程与生命周期图
-![](./Doc/ModuleDependency.png)
-
-- TODO: Renderpass, pipeline 生命周期图
+![](./Doc/RenderFlowAndLiveCycle.png)
 
 ## 遇到的有价值的问题
 - [问题列表](./ProblemList.md)
