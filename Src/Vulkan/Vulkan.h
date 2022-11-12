@@ -11,7 +11,6 @@ bool operator != (const VkExtent2D& v1, const VkExtent2D& v2);
 
 namespace vk
 {
-
     extern const VkExtent2D& ZeroExtent;
 
     struct SQueueFamilyIndices

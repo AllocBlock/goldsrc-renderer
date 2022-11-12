@@ -39,9 +39,6 @@
     <ClCompile Include="SceneInterface.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SceneReaderRmf.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="SceneReaderBase.cpp">
       <Filter>源文件\Reader</Filter>
     </ClCompile>
@@ -62,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="MeshDataGoldSrc.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneReaderRmf.cpp">
+      <Filter>源文件\Reader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

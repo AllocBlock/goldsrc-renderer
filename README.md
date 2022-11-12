@@ -75,11 +75,13 @@
   > 注意因为Vulkan并非下载源码安装，而是会去寻找本地已安装的SDK，所以才需要自己下载安装，此外安装后需要检查VULKAN_SDK环境变量是否正确
 
 ## 架构图
-- Vulkan调用流程图
+- Vulkan依赖图
 ![](./Doc/VulkanReferenceGraph.png)
 - 数据流程图
 ![](./Doc/ClassIncludeGraph.png)
 - 模块依赖
+![](./Doc/ModuleDependency.png)
+- 渲染流程与生命周期图
 ![](./Doc/ModuleDependency.png)
 
 - TODO: Renderpass, pipeline 生命周期图
@@ -97,4 +99,3 @@
   - 碰撞分board和narrow
   - pipeline生命周期、renderpass生命周期
     - 绘制port相关的流程图，类型展示
-  - renderpass，更新的分类，触发更新的原因整理
