@@ -15,7 +15,7 @@ void CRenderPassVisPhysics::_initV()
 {
 }
 
-SPortDescriptor CRenderPassVisPhysics::_getPortDescV()
+void CRenderPassVisPhysics::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));

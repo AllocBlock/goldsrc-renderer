@@ -22,11 +22,9 @@ void CRenderPassOutlineMask::_initV()
     __rerecordCommand();
 }
 
-SPortDescriptor CRenderPassOutlineMask::_getPortDescV()
+void CRenderPassOutlineMask::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    SPortDescriptor Ports;
-    Ports.addOutput("Mask", { VK_FORMAT_R8G8B8A8_UNORM, {0, 0}, 0, EUsage::WRITE });
-    return Ports;
+    vioDesc.addOutput("Mask", { VK_FORMAT_R8G8B8A8_UNORM, {0, 0}, 0, EUsage::WRITE });
 }
 
 CRenderPassDescriptor CRenderPassOutlineMask::_getRenderPassDescV()

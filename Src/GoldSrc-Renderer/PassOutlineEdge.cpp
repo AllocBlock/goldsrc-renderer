@@ -12,12 +12,10 @@ void CRenderPassOutlineEdge::_initV()
     __createVertexBuffer();
 }
 
-SPortDescriptor CRenderPassOutlineEdge::_getPortDescV()
+void CRenderPassOutlineEdge::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    SPortDescriptor Ports;
-    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    Ports.addInput("Mask", SPortFormat::createAnyOfUsage(EUsage::READ));
-    return Ports;
+    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    vioDesc.addInput("Mask", SPortFormat::createAnyOfUsage(EUsage::READ));
 }
 
 CRenderPassDescriptor CRenderPassOutlineEdge::_getRenderPassDescV()

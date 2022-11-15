@@ -52,12 +52,10 @@ void CLineRenderPass::_initV()
     __rerecordCommand();
 }
 
-SPortDescriptor CLineRenderPass::_getPortDescV()
+void CLineRenderPass::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    SPortDescriptor Ports;
-    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    Ports.addInput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EUsage::READ });
-    return Ports;
+    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    vioDesc.addInput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EUsage::READ });
 }
 
 CRenderPassDescriptor CLineRenderPass::_getRenderPassDescV()

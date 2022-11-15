@@ -32,7 +32,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual SPortDescriptor _getPortDescV() override;
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;

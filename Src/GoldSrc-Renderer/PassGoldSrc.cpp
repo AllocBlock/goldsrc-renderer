@@ -41,15 +41,12 @@ void CSceneGoldSrcRenderPass::_initV()
     rerecordCommand();
 }
 
-SPortDescriptor CSceneGoldSrcRenderPass::_getPortDescV()
+void CSceneGoldSrcRenderPass::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    SPortDescriptor Ports;
-    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 
     VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
-    
-    return Ports;
+    vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
 }
 
 CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()

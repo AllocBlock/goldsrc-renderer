@@ -48,7 +48,7 @@ void CRenderPassShadowMap::_initV()
     __createRecreateResources();
 }
 
-SPortDescriptor CRenderPassShadowMap::_getPortDescV()
+void CRenderPassShadowMap::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
     Ports.addOutput("ShadowMap", { m_ShadowMapFormat, m_ShadowMapExtent, 0, EUsage::READ });

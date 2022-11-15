@@ -1,7 +1,6 @@
 #pragma once
 #include "Command.h"
 #include "RenderPassSingle.h"
-#include "FrameBuffer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -16,7 +15,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual SPortDescriptor _getPortDescV() override;
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;

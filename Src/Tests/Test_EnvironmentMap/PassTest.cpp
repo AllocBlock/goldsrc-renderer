@@ -13,7 +13,7 @@ void CRenderPassSprite::_initV()
     __createRecreateResources();
 }
 
-SPortDescriptor CRenderPassSprite::_getPortDescV()
+void CRenderPassSprite::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));

@@ -26,7 +26,7 @@ void CRenderPassShade::_initV()
     );
 }
 
-SPortDescriptor CRenderPassShade::_getPortDescV()
+void CRenderPassShade::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
     Ports.addInput("ShadowMap", { gShadowMapImageFormat, {0, 0}, 1, EUsage::READ });

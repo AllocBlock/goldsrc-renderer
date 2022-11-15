@@ -36,7 +36,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual SPortDescriptor _getPortDescV() override;
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override; 
     virtual void _destroyV() override;
@@ -60,7 +60,7 @@ class CRenderPassFullScreenGeneral : public CRenderPassSingle
 {
 protected:
     virtual ptr<IPipeline> _initPipelineV() = 0;
-    virtual SPortDescriptor _getPortDescV() = 0;
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) = 0;
     virtual CRenderPassDescriptor _getRenderPassDescV() = 0;
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;

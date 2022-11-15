@@ -16,11 +16,9 @@ void CRenderPassGUI::_initV()
     __createDescriptorPool();
 }
 
-SPortDescriptor CRenderPassGUI::_getPortDescV()
+void CRenderPassGUI::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    SPortDescriptor Ports;
-    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    return Ports;
+    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 }
 
 CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()

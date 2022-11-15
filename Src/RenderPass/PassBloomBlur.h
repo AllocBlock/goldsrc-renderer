@@ -12,7 +12,7 @@ protected:
          return pPipeline;
     }
 
-    virtual SPortDescriptor _getPortDescV() override
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) override
     {
         SPortDescriptor Ports;
         Ports.addInput("Input", SPortFormat::createAnyOfUsage(EUsage::READ));

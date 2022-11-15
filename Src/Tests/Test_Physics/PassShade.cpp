@@ -13,7 +13,7 @@ void CRenderPassShade::_initV()
 {
 }
 
-SPortDescriptor CRenderPassShade::_getPortDescV()
+void CRenderPassShade::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));

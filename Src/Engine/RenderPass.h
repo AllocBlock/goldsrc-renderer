@@ -87,11 +87,11 @@ namespace vk
 
     protected:
         /*
-         * _getPortDescV:
+         * _createPortSetV:
          * triggers only once
-         * setup port info for PortSet
+         * setup PortSet
          */
-        virtual SPortDescriptor _getPortDescV() = 0;
+        virtual CPortSet::Ptr _createPortSetV() = 0;
 
         /*
          * _createV: 

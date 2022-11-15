@@ -1,8 +1,5 @@
 #pragma once
 #include "RenderPassSingle.h"
-#include "Vulkan.h"
-#include "Common.h"
-#include "FrameBuffer.h"
 #include "Buffer.h"
 #include "PipelineOutlineEdge.h"
 
@@ -10,7 +7,7 @@ class CRenderPassOutlineEdge : public CRenderPassSingle
 {
 protected:
     virtual void _initV() override;
-    virtual SPortDescriptor _getPortDescV() override;
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;

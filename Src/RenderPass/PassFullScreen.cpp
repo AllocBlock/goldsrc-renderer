@@ -7,11 +7,9 @@ void CRenderPassFullScreen::_initV()
     __createVertexBuffer();
 }
 
-SPortDescriptor CRenderPassFullScreen::_getPortDescV()
+void CRenderPassFullScreen::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    SPortDescriptor Ports;
-    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    return Ports;
+    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 }
 
 CRenderPassDescriptor CRenderPassFullScreen::_getRenderPassDescV()

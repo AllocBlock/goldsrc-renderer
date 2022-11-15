@@ -7,6 +7,20 @@ protected:
     static const std::vector<VkClearValue>& DefaultClearValueColor;
     static const std::vector<VkClearValue>& DefaultClearValueColorDepth;
 
+    virtual CPortSet::Ptr _createPortSetV() final
+    {
+        SPortDescriptor PortDesc;
+        _initPortDescV(PortDesc);
+        return make<CPortSet>(PortDesc, this);
+    }
+
+    /*
+     * _initPortDescV:
+     * triggers only once
+     * setup port info for PortSet
+     */
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) = 0;
+    
     virtual void _initV() override
     {
         m_ClearValueSet = _getClearValuesV();
