@@ -34,7 +34,7 @@ void CSceneGoldSrcRenderPass::rerecordCommand()
 
 void CSceneGoldSrcRenderPass::_initV()
 {
-    IRenderPass::_initV();
+    CRenderPassSceneTyped::_initV();
 
     __createSceneResources();
 
@@ -60,19 +60,23 @@ CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()
 
 void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    CRenderPassSingle::_onUpdateV(vUpdateState);
+
     VkExtent2D RefExtent = { 0, 0 };
-    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+    if (!_dumpReferenceExtentV(RefExtent)) return;
 
     if (m_pCamera)
         m_pCamera->setAspect(RefExtent.width, RefExtent.height);
+
+    if (vUpdateState.ScreenExtent.IsUpdated || !m_DepthImage.isValid())
+    {
+        __createDepthResources(RefExtent);
+    }
 
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
         if (isValid())
         {
-            if (RefExtent != vk::ZeroExtent)
-                __createDepthResources(RefExtent);
-            __createFramebuffers(RefExtent);
             if (!vUpdateState.InputImageUpdated)
             {
                 VkRenderPass RenderPass = get();
@@ -193,7 +197,6 @@ void CSceneGoldSrcRenderPass::_renderUIV()
 void CSceneGoldSrcRenderPass::_destroyV()
 {
     m_DepthImage.destroy();
-    m_FramebufferSet.destroyAndClearAll();
     m_PipelineSet.destroy();
 
     __destroySceneResources();
@@ -204,11 +207,9 @@ void CSceneGoldSrcRenderPass::_destroyV()
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(isValid());
-    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
 
     m_RenderedObjectSet.clear();
-
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_EnableBSP || m_EnableCulling || m_RerecordCommandTimes > 0)
@@ -223,7 +224,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
+        _beginWithFramebuffer(vImageIndex);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -266,7 +267,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
             __recordSpriteRenderCommand(vImageIndex);
 
-        _end();
+        _endWithFramebuffer();
     }
     return { CommandBuffer };
 }
@@ -294,7 +295,7 @@ void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeSet.clear();
     if (m_pSceneInfo->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
 
     __renderTreeNode(vImageIndex, 0);
@@ -305,7 +306,7 @@ void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     m_PipelineSet.Normal.setOpacity(CommandBuffer, 1.0f);
 
@@ -346,7 +347,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
 
 void CSceneGoldSrcRenderPass::__renderModels(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     // 这里去看了下Xash3D的源码，xash3d/engine/client/gl_rmain.c
     // 它是按照纹理、叠加和发光的顺序绘制
@@ -428,7 +429,7 @@ std::vector<size_t> CSceneGoldSrcRenderPass::__sortModelRenderSequence()
 
 void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     _ASSERTE(vModelIndex < m_pSceneInfo->BspTree.ModelInfos.size());
 
@@ -479,7 +480,7 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
 
 void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
 
     for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
@@ -492,7 +493,7 @@ void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
@@ -503,27 +504,6 @@ void CSceneGoldSrcRenderPass::__createDepthResources(VkExtent2D vExtent)
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
     Function::createDepthImage(m_DepthImage, m_pDevice, vExtent, NULL, DepthFormat);
     m_pPortSet->setOutput("Depth", m_DepthImage);
-}
-
-void CSceneGoldSrcRenderPass::__createFramebuffers(VkExtent2D vExtent)
-{
-    if (!isValid()) return;
-    if (!m_pPortSet->isImageReady()) return;
-
-    m_pDevice->waitUntilIdle();
-
-    m_FramebufferSet.destroyAndClearAll();
-    m_FramebufferSet.init(m_pAppInfo->getImageNum());
-    for (size_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(i),
-            m_pPortSet->getOutputPort("Depth")->getImageV(),
-        };
-
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
-    }
 }
 
 void CSceneGoldSrcRenderPass::__createTextureImages()
@@ -672,11 +652,11 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
 }
 void CSceneGoldSrcRenderPass::__recordSpriteRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     m_PipelineSet.Sprite.recordCommand(CommandBuffer, vImageIndex);
 }

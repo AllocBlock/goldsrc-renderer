@@ -85,9 +85,6 @@ namespace vk
         
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
 
-        static const std::vector<VkClearValue>& DefaultClearValueColor;
-        static const std::vector<VkClearValue>& DefaultClearValueColorDepth;
-
     protected:
         /*
          * _getPortDescV:
@@ -153,18 +150,12 @@ namespace vk
         CAppInfo::Ptr m_pAppInfo = nullptr;
         CPortSet::Ptr m_pPortSet = nullptr;
 
-        CCommand m_Command = CCommand();
-        std::string m_DefaultCommandName = "Default";
-
     private:
-        void __createCommandPoolAndBuffers(uint32_t vImageNum);
-        void __destroyCommandPoolAndBuffers();
         void __createRenderpass();
         void __destroyRenderpass();
         void __beginCommand(VkCommandBuffer vCommandBuffer);
         void __endCommand(VkCommandBuffer vCommandBuffer);
         
-        void __updateImageNum(uint32_t vImageNum);
         void __hookEvents();
         void __unhookEvents();
 

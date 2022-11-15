@@ -16,7 +16,8 @@ public:
     void rerecordCommand();
 
     bool getSkyState() const { return m_EnableSky; }
-    void setSkyState(bool vSkyState) {
+    void setSkyState(bool vSkyState)
+    {
         bool EnableSky = vSkyState && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
         if (EnableSky != m_EnableSky)
         {
@@ -40,11 +41,27 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
+    {
+        return _dumpInputPortExtent("Main", voExtent);
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+            m_pPortSet->getInputPort("Depth")->getImageV(),
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override
+    {
+        return DefaultClearValueColorDepth;
+    }
+
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
     void __createDepthResources(VkExtent2D vExtent);
-    void __createFramebuffers(VkExtent2D vExtent);
     void __createTextureImages();
 
     void __createSceneResources();
@@ -70,8 +87,6 @@ private:
             Sky.destroy();
         }
     } m_PipelineSet;
-
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
     vk::CImage m_DepthImage;

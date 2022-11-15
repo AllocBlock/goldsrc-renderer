@@ -9,7 +9,7 @@ const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 
 void CRenderPassGUI::_initV()
 {
-    IRenderPass::_initV();
+    CRenderPassSingle::_initV();
 
     _ASSERTE(m_pWindow);
     
@@ -30,13 +30,12 @@ CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
 
 void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    CRenderPassSingle::_onUpdateV(vUpdateState);
+
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
         VkExtent2D RefExtent = { 0, 0 };
         bool HasExtent = _dumpInputPortExtent("Main", RefExtent);
-
-        if (HasExtent && isValid())
-            __createFramebuffer(RefExtent);
 
         if (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated)
         {
@@ -58,10 +57,11 @@ void CRenderPassGUI::_renderUIV()
 
 void CRenderPassGUI::_destroyV()
 {
-    m_FramebufferSet.destroyAndClearAll();
     UI::destory();
     __destroyDescriptorPool();
     m_pWindow = nullptr;
+
+    CRenderPassSingle::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -69,11 +69,11 @@ std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vI
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
-    _begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
+    _beginWithFramebuffer(vImageIndex);
     UI::draw(CommandBuffer);
-    _end();
+    _endWithFramebuffer();
 
     return { CommandBuffer };
 }
@@ -110,26 +110,5 @@ void CRenderPassGUI::__destroyDescriptorPool()
     {
         vkDestroyDescriptorPool(*m_pDevice, m_DescriptorPool, nullptr);
         m_DescriptorPool = VK_NULL_HANDLE;
-    }
-}
-
-void CRenderPassGUI::__createFramebuffer(VkExtent2D vExtent)
-{
-    if (!isValid()) return;
-    if (!m_pPortSet->isImageReady()) return;
-
-    m_FramebufferSet.destroyAndClearAll();
-
-    uint32_t ImageNum = m_pAppInfo->getImageNum();
-
-    m_FramebufferSet.init(ImageNum);
-    for (size_t i = 0; i < ImageNum; ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(i),
-        };
-
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }

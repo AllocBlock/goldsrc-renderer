@@ -47,7 +47,7 @@ void CLineRenderPass::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 
 
 void CLineRenderPass::_initV()
 {
-    IRenderPass::_initV();
+    CRenderPassSingle::_initV();
 
     __rerecordCommand();
 }
@@ -68,14 +68,15 @@ CRenderPassDescriptor CLineRenderPass::_getRenderPassDescV()
 
 void CLineRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    CRenderPassSingle::_onUpdateV(vUpdateState);
+
     VkExtent2D RefExtent = {0, 0};
-    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+    if (!_dumpReferenceExtentV(RefExtent)) return;
 
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
         if (isValid())
         {
-            __createFramebuffers(RefExtent);
             if (!vUpdateState.InputImageUpdated)
             {
                 m_PipelineLine.create(m_pDevice, get(), RefExtent);
@@ -102,18 +103,14 @@ void CLineRenderPass::_renderUIV()
 
 void CLineRenderPass::_destroyV()
 {
-    m_FramebufferSet.destroyAndClearAll();
-
     m_PipelineLine.destroy();
 
-    IRenderPass::_destroyV();
+    CRenderPassSingle::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
-
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_RerecordCommandTimes > 0)
@@ -124,9 +121,9 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
     if (RerecordCommand)
     {
         // init
-        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], DefaultClearValueColorDepth);
+        _beginWithFramebuffer(vImageIndex);
         m_PipelineLine.recordCommand(CommandBuffer, vImageIndex);
-        _end();
+        _endWithFramebuffer();
     }
     return { CommandBuffer };
 }
@@ -134,23 +131,4 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
 void CLineRenderPass::__rerecordCommand()
 {
     m_RerecordCommandTimes = m_pAppInfo->getImageNum();
-}
-
-void CLineRenderPass::__createFramebuffers(VkExtent2D vExtent)
-{
-    if (!isValid()) return;
-
-    m_pDevice->waitUntilIdle();
-    m_FramebufferSet.destroyAndClearAll();
-    m_FramebufferSet.init(m_pAppInfo->getImageNum());
-    for (size_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(i),
-            m_pPortSet->getInputPort("Depth")->getImageV(),
-        };
-
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
-    }
 }

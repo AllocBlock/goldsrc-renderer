@@ -21,12 +21,13 @@ CRenderPassDescriptor CRenderPassFullScreen::_getRenderPassDescV()
 
 void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    CRenderPassSingle::_onUpdateV(vUpdateState);
+
     VkExtent2D RefExtent = { 0, 0 };
     if (!_dumpInputPortExtent("Main", RefExtent)) return;
 
     if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
     {
-        __createFramebuffers(RefExtent);
         __createPipeline(RefExtent);
     }
 }
@@ -34,14 +35,10 @@ void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(m_pPipeline->isValid());
-    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    _beginWithFramebuffer(vImageIndex);
 
-    VkClearValue ClearValue = {};
-    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-    _begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = *m_pVertexBuffer;
@@ -53,18 +50,16 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
         vkCmdDraw(CommandBuffer, uint32_t(VertexNum), 1, 0, 0);
     }
     
-    _end();
+    _endWithFramebuffer();
     return { CommandBuffer };
 }
 
 void CRenderPassFullScreen::_destroyV()
 {
-    m_FramebufferSet.destroyAndClearAll();
-    if (m_pPipeline) m_pPipeline->destroy();
-    m_pVertexBuffer->destroy();
-    m_pVertexBuffer = nullptr;
+    destroyAndClear(m_pPipeline);
+    destroyAndClear(m_pVertexBuffer);
 
-    IRenderPass::_destroyV();
+    CRenderPassSingle::_destroyV();
 }
 
 void CRenderPassFullScreen::__createPipeline(VkExtent2D vExtent)
@@ -75,25 +70,6 @@ void CRenderPassFullScreen::__createPipeline(VkExtent2D vExtent)
 
     for (const auto& Callback : m_PipelineCreateCallbackSet)
         Callback();
-}
-
-void CRenderPassFullScreen::__createFramebuffers(VkExtent2D vExtent)
-{
-    if (!isValid()) return;
-
-    m_FramebufferSet.destroyAndClearAll();
-
-    size_t ImageNum = m_pAppInfo->getImageNum();
-    m_FramebufferSet.init(ImageNum);
-    for (size_t i = 0; i < ImageNum; ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(i)
-        };
-
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
-    }
 }
 
 void CRenderPassFullScreen::__createVertexBuffer()
@@ -133,7 +109,6 @@ void CRenderPassFullScreenGeneral::_onUpdateV(const vk::SPassUpdateState& vUpdat
 
     if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
     {
-        __createFramebuffers(Extent);
         __createPipeline(Extent);
     }
 }
@@ -141,14 +116,10 @@ void CRenderPassFullScreenGeneral::_onUpdateV(const vk::SPassUpdateState& vUpdat
 std::vector<VkCommandBuffer> CRenderPassFullScreenGeneral::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(m_pPipeline->isValid());
-    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
 
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    _beginWithFramebuffer(vImageIndex);
 
-    VkClearValue ClearValue = {};
-    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-    _begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = *m_pVertexBuffer;
@@ -160,14 +131,13 @@ std::vector<VkCommandBuffer> CRenderPassFullScreenGeneral::_requestCommandBuffer
         vkCmdDraw(CommandBuffer, uint32_t(VertexNum), 1, 0, 0);
     }
     
-    _end();
+    _endWithFramebuffer();
     return { CommandBuffer };
 }
 
 void CRenderPassFullScreenGeneral::_destroyV()
 {
-    m_FramebufferSet.destroyAndClearAll();
-    if (m_pPipeline) m_pPipeline->destroy();
+    destroyAndClear(m_pPipeline);
     destroyAndClear(m_pVertexBuffer);
 
     IRenderPass::_destroyV();
@@ -178,21 +148,6 @@ void CRenderPassFullScreenGeneral::__createPipeline(VkExtent2D vExtent)
     _ASSERTE(isValid() && m_pPipeline);
     m_pPipeline->create(m_pDevice, get(), vExtent);
     m_pPipeline->setImageNum(m_pAppInfo->getImageNum());
-}
-
-void CRenderPassFullScreenGeneral::__createFramebuffers(VkExtent2D vExtent)
-{
-    if (!isValid()) return;
-
-    m_FramebufferSet.destroyAndClearAll();
-
-    size_t ImageNum = m_pAppInfo->getImageNum();
-    m_FramebufferSet.init(ImageNum);
-    for (size_t i = 0; i < ImageNum; ++i)
-    {
-        std::vector<VkImageView> AttachmentSet = _getAttachmentsV(i);
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
-    }
 }
 
 void CRenderPassFullScreenGeneral::__createVertexBuffer()

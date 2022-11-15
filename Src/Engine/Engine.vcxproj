@@ -99,6 +99,7 @@
     <ClCompile Include="BoundingBox.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
+    <ClCompile Include="RenderPassSingle.cpp" />
     <ClCompile Include="ShaderCompileCache.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
     <ClCompile Include="ShaderErrorParser.cpp" />

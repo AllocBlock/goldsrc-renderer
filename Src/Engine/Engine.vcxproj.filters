@@ -108,6 +108,9 @@
     <ClCompile Include="ShaderErrorParser.cpp">
       <Filter>源文件\Shader</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPassSingle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">

@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderPass.h"
+#include "RenderPassSingle.h"
 #include "FrameBuffer.h"
 #include "VertexBuffer.h"
 #include "Pipeline.h"
@@ -7,7 +7,7 @@
 
 #include <functional>
 
-class CRenderPassFullScreen : public vk::IRenderPass
+class CRenderPassFullScreen : public CRenderPassSingle
 {
 public:
     using PipelineCreateCallback_t = std::function<void()>;
@@ -45,29 +45,42 @@ protected:
 
 private:
     void __createPipeline(VkExtent2D vExtent);
-    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
 
     void __generateScene();
    
     ptr<IPipeline> m_pPipeline = nullptr;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
     std::vector<SFullScreenPointData> m_PointDataSet;
     std::vector<PipelineCreateCallback_t> m_PipelineCreateCallbackSet;
 };
 
-class CRenderPassFullScreenGeneral : public vk::IRenderPass
+class CRenderPassFullScreenGeneral : public CRenderPassSingle
 {
 protected:
     virtual ptr<IPipeline> _initPipelineV() = 0;
     virtual SPortDescriptor _getPortDescV() = 0;
     virtual CRenderPassDescriptor _getRenderPassDescV() = 0;
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) = 0;
-    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) = 0;
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+    
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override final
+    {
+        voExtent = m_pAppInfo->getScreenExtent();
+        return true;
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override final
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override final
+    {
+        return DefaultClearValueColor;
+    }
 
 private:
     virtual void _initV() override final;
@@ -76,13 +89,11 @@ private:
     
 private:
     void __createPipeline(VkExtent2D vExtent);
-    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
 
     void __generateScene();
 
     ptr<IPipeline> m_pPipeline = nullptr;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CVertexBufferTyped<SFullScreenPointData>> m_pVertexBuffer = nullptr;
 
     std::vector<SFullScreenPointData> m_PointDataSet;

@@ -29,7 +29,7 @@ void CSceneSimpleRenderPass::rerecordCommand()
 
 void CSceneSimpleRenderPass::_initV()
 {
-    IRenderPass::_initV();
+    CRenderPassSceneTyped::_initV();
 
     rerecordCommand();
 }
@@ -52,6 +52,8 @@ CRenderPassDescriptor CSceneSimpleRenderPass::_getRenderPassDescV()
 
 void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    CRenderPassSingle::_onUpdateV(vUpdateState);
+
     VkExtent2D RefExtent = { 0, 0 };
     if (!_dumpInputPortExtent("Main", RefExtent)) return;
 
@@ -64,7 +66,6 @@ void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState
             __createDepthResources(RefExtent); // extent
         if (isValid())
         {
-            __createFramebuffers(RefExtent);
             if (!vUpdateState.InputImageUpdated)
             {
                 m_PipelineSet.Main.create(m_pDevice, get(), RefExtent);
@@ -114,7 +115,6 @@ void CSceneSimpleRenderPass::_renderUIV()
 void CSceneSimpleRenderPass::_destroyV()
 {
     m_DepthImage.destroy();
-    m_FramebufferSet.destroyAndClearAll();
     m_PipelineSet.destroy();
 
     __destroySceneResources();
@@ -123,7 +123,7 @@ void CSceneSimpleRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_EnableCulling || m_RerecordCommandTimes > 0)
@@ -138,7 +138,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
+        _beginWithFramebuffer(vImageIndex);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -166,7 +166,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
             }
         }
 
-        _end();
+        _endWithFramebuffer();
     }
     return { CommandBuffer };
 }
@@ -191,7 +191,7 @@ void CSceneSimpleRenderPass::__destroySceneResources()
 
 void CSceneSimpleRenderPass::__recordRenderActorCommand(uint32_t vImageIndex, size_t vObjectIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
@@ -202,25 +202,6 @@ void CSceneSimpleRenderPass::__createDepthResources(VkExtent2D vExtent)
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
     Function::createDepthImage(m_DepthImage, m_pDevice, vExtent, NULL, DepthFormat);
     m_pPortSet->setOutput("Depth", m_DepthImage);
-}
-
-void CSceneSimpleRenderPass::__createFramebuffers(VkExtent2D vExtent)
-{
-    if (!isValid()) return;
-
-    m_FramebufferSet.destroyAndClearAll();
-
-    m_FramebufferSet.init(m_pAppInfo->getImageNum());
-    for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(i),
-            m_DepthImage
-        };
-
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
-    }
 }
 
 void CSceneSimpleRenderPass::__createTextureImages()
@@ -297,6 +278,6 @@ void CSceneSimpleRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 
 void CSceneSimpleRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
 }

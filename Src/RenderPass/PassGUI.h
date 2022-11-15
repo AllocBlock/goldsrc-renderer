@@ -1,12 +1,12 @@
 #pragma once
 #include "Command.h"
-#include "RenderPass.h"
+#include "RenderPassSingle.h"
 #include "FrameBuffer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class CRenderPassGUI final : public vk::IRenderPass
+class CRenderPassGUI final : public CRenderPassSingle
 {
 public:
     CRenderPassGUI() = default;
@@ -23,13 +23,27 @@ protected:
     virtual void _destroyV() override;
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+    
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
+    {
+        return _dumpInputPortExtent("Main", voExtent);
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override
+    {
+        return DefaultClearValueColor;
+    }
 
 private:
     void __createDescriptorPool();
     void __destroyDescriptorPool();
-    void __createFramebuffer(VkExtent2D vExtent);
 
     GLFWwindow* m_pWindow = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 };

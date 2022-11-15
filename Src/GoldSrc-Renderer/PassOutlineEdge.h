@@ -1,12 +1,12 @@
 #pragma once
+#include "RenderPassSingle.h"
 #include "Vulkan.h"
 #include "Common.h"
 #include "FrameBuffer.h"
 #include "Buffer.h"
-#include "RenderPass.h"
 #include "PipelineOutlineEdge.h"
 
-class CRenderPassOutlineEdge : public vk::IRenderPass
+class CRenderPassOutlineEdge : public CRenderPassSingle
 {
 protected:
     virtual void _initV() override;
@@ -17,12 +17,26 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
+    {
+        return _dumpInputPortExtent("Main", voExtent);
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Main")->getImageV(vIndex)
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override
+    {
+        return DefaultClearValueColor;
+    }
+
 private:
-    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
 
     CPipelineEdge m_Pipeline;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
     std::vector<CPipelineEdge::SPointData> m_PointDataSet;

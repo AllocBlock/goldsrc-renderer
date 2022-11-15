@@ -22,6 +22,11 @@ void CFrameBuffer::create(CDevice::CPtr vDevice, VkRenderPass vRenderPass, const
     FramebufferInfo.layers = 1;
 
     vk::checkError(vkCreateFramebuffer(*vDevice, &FramebufferInfo, nullptr, _getPtr()));
+#ifdef _DEBUG
+    static int Count = 0;
+    std::cout << "create framebuffer [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(get())  << " by 0x" << (uint64_t)(this) << std::setbase(10) << std::endl;
+    Count++;
+#endif
 }
 
 void CFrameBuffer::destroy()

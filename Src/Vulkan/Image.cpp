@@ -42,8 +42,8 @@ void CImage::create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, 
     __createImageView(vDevice, vViewInfo);
 #ifdef _DEBUG
     static int Count = 0;
-    std::cout << "create image [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_Image) << std::setbase(10) << std::endl;
-    std::cout << "create memory [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_Memory) << std::setbase(10) << std::endl;
+    std::cout << "create image [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_Image) << " by 0x" << (uint64_t)(this) << std::setbase(10) << std::endl;
+    std::cout << "create memory [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_Memory) << " by 0x" << (uint64_t)(this) << std::setbase(10) << std::endl;
     Count++;
 #endif
 }
@@ -257,7 +257,7 @@ void CImage::__createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vVie
 
 #ifdef _DEBUG
     static int Count = 0;
-    std::cout << "create image view[" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(get()) << std::setbase(10) << std::endl;
+    std::cout << "create image view[" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(get()) << " by 0x" << (uint64_t)(this) << std::setbase(10) << std::endl;
     Count++;
 #endif
 }

@@ -82,6 +82,12 @@ namespace vk
             return true;
         }
 
+        bool isAllValidAndNonEmpty() const
+        {
+            if (m_Set.empty()) return false;
+            return isAllValid();
+        }
+
         void destroyAndClearAll()
         {
             for (auto pHandle : m_Set)

@@ -1,14 +1,14 @@
 #pragma once
+#include "RenderPassSingle.h"
 #include "Vulkan.h"
 #include "Common.h"
 #include "FrameBuffer.h"
 #include "Camera.h"
 #include "Image.h"
-#include "RenderPass.h"
 #include "SceneInfoGoldSrc.h"
 #include "PipelineOutlineMask.h"
 
-class CRenderPassOutlineMask : public vk::IRenderPass
+class CRenderPassOutlineMask : public CRenderPassSingle
 {
 public:
     CRenderPassOutlineMask() = default;
@@ -30,16 +30,31 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
+    {
+        voExtent = m_pAppInfo->getScreenExtent();
+        return true;
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Mask")->getImageV(vIndex)
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override
+    {
+        return DefaultClearValueColor;
+    }
+
 private:
     void __rerecordCommand();
     void __createMaskImage(VkExtent2D vExtent);
-    void __createFramebuffers(VkExtent2D vExtent);
 
     CCamera::Ptr m_pCamera = nullptr;
 
     CPipelineMask m_PipelineMask;
     vk::CPointerSet<vk::CImage> m_MaskImageSet;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
     size_t m_RerecordCommandTimes = 0;
 };

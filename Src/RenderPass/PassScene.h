@@ -1,11 +1,11 @@
 #pragma once
-#include "RenderPass.h"
+#include "RenderPassSingle.h"
 #include "Camera.h"
 #include "VertexBuffer.h"
 #include "BoundingBox.h"
 #include "SceneInfoGoldSrc.h"
 
-class CRenderPassScene : public vk::IRenderPass
+class CRenderPassScene : public CRenderPassSingle
 {
 public:
     _DEFINE_PTR(CRenderPassScene);
@@ -41,6 +41,8 @@ public:
     virtual void _destroyV() override
     {
         destroyAndClear(m_pVertexBuffer);
+
+        CRenderPassScene::_destroyV();
     }
 
     template <typename MeshData_t>

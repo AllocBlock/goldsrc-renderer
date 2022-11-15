@@ -2,26 +2,6 @@
 
 using namespace vk;
 
-std::vector<VkClearValue> __createDefaultClearValueColor()
-{
-    VkClearValue Value;
-    Value.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-    return { Value };
-}
-
-std::vector<VkClearValue> __createDefaultClearValueColorDepth()
-{
-    std::vector<VkClearValue> ValueSet(2);
-    ValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    ValueSet[1].depthStencil = { 1.0f, 0 };
-
-    return ValueSet;
-}
-
-const std::vector<VkClearValue>& IRenderPass::DefaultClearValueColor = __createDefaultClearValueColor();
-const std::vector<VkClearValue>& IRenderPass::DefaultClearValueColorDepth = __createDefaultClearValueColorDepth();
-
 IRenderPass::IRenderPass()
 {
 }
@@ -38,7 +18,7 @@ void IRenderPass::init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
     _initV();
 
     __hookEvents();
-    __updateImageNum(m_pAppInfo->getImageNum());
+    __triggerImageNumUpdate(m_pAppInfo->getImageNum());
     __createRenderpass();
 }
 
@@ -58,7 +38,6 @@ void IRenderPass::destroy()
 {
     _destroyV();
     __destroyRenderpass();
-    __destroyCommandPoolAndBuffers();
     __unhookEvents();
     m_pPortSet->unlinkAll();
 }
@@ -105,18 +84,6 @@ bool IRenderPass::_dumpInputPortExtent(std::string vName, VkExtent2D& voExtent)
         voExtent = pRefPort->getActualExtentV();
     }
     return HasExtent;
-}
-
-void IRenderPass::__createCommandPoolAndBuffers(uint32_t vImageNum)
-{
-    __destroyCommandPoolAndBuffers();
-    m_Command.createPool(m_pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(vImageNum), ECommandBufferLevel::PRIMARY);
-}
-
-void IRenderPass::__destroyCommandPoolAndBuffers()
-{
-    m_Command.clear();
 }
 
 void IRenderPass::__createRenderpass()
@@ -167,16 +134,10 @@ void IRenderPass::__endCommand(VkCommandBuffer vCommandBuffer)
     vk::checkError(vkEndCommandBuffer(vCommandBuffer));
 }
 
-void IRenderPass::__updateImageNum(uint32_t vImageNum)
-{
-    __createCommandPoolAndBuffers(vImageNum);
-    __triggerImageNumUpdate(vImageNum);
-}
-
 void IRenderPass::__hookEvents()
 {
     m_ImageNumUpdateHookId = m_pAppInfo->hookImageNumUpdate([this](uint32_t vImageNum) 
-        { __updateImageNum(vImageNum); }
+        { __triggerImageNumUpdate(vImageNum); }
     );
     m_ScreenExtentUpdateHookId = m_pAppInfo->hookScreenExtentUpdate([this](VkExtent2D vExtent)      
         { __triggerScreenExtentUpdate(vExtent); }

@@ -76,12 +76,28 @@ protected:
     virtual void _destroyV() override;
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+    
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
+    {
+        return _dumpInputPortExtent("Main", voExtent);
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+            m_pPortSet->getOutputPort("Depth")->getImageV(),
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override
+    {
+        return DefaultClearValueColorDepth;
+    }
 
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
     void __createDepthResources(VkExtent2D vExtent);
-    void __createFramebuffers(VkExtent2D vExtent);
     void __createTextureImages();
     void __createLightmapImage();
 
@@ -126,8 +142,6 @@ private:
             Sky.destroy();
         }
     } m_PipelineSet;
-
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
     vk::CImage m_DepthImage;

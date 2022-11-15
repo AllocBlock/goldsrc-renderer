@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderPass.h"
+#include "RenderPassSingle.h"
 #include "FrameBuffer.h"
 #include "BoundingBox.h"
 #include "Camera.h"
@@ -8,7 +8,7 @@
 #include <vulkan/vulkan.h> 
 #include <glm/glm.hpp>
 
-class CLineRenderPass : public vk::IRenderPass
+class CLineRenderPass : public CRenderPassSingle
 {
 public:
     CLineRenderPass() = default;
@@ -30,12 +30,27 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
+    {
+        return _dumpInputPortExtent("Main", voExtent);
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+            m_pPortSet->getInputPort("Depth")->getImageV(),
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override
+    {
+        return DefaultClearValueColorDepth;
+    }
+
 private:
     void __rerecordCommand();
-    void __createFramebuffers(VkExtent2D vExtent);
 
     CPipelineLine m_PipelineLine;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
     size_t m_RerecordCommandTimes = 0;
     CCamera::CPtr m_pCamera = nullptr;

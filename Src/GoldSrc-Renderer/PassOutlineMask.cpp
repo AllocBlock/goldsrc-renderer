@@ -18,7 +18,7 @@ void CRenderPassOutlineMask::removeHighlight()
 
 void CRenderPassOutlineMask::_initV()
 {
-    IRenderPass::_initV();
+    CRenderPassSingle::_initV();
     __rerecordCommand();
 }
 
@@ -36,15 +36,19 @@ CRenderPassDescriptor CRenderPassOutlineMask::_getRenderPassDescV()
 
 void CRenderPassOutlineMask::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    CRenderPassSingle::_onUpdateV(vUpdateState);
+
     VkExtent2D RefExtent = m_pAppInfo->getScreenExtent();
+
+    if (vUpdateState.ScreenExtent.IsUpdated || !m_MaskImageSet.isAllValidAndNonEmpty())
+    {
+        __createMaskImage(RefExtent);
+    }
 
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
-        if (RefExtent != vk::ZeroExtent)
-            __createMaskImage(RefExtent);
         if (isValid())
         {
-            __createFramebuffers(RefExtent);
             if (!vUpdateState.InputImageUpdated)
             {
                 m_PipelineMask.create(m_pDevice, get(), RefExtent);
@@ -68,18 +72,15 @@ void CRenderPassOutlineMask::_renderUIV()
 
 void CRenderPassOutlineMask::_destroyV()
 {
-    m_FramebufferSet.destroyAndClearAll();
     m_MaskImageSet.destroyAndClearAll();
     m_PipelineMask.destroy();
 
-    IRenderPass::_destroyV();
+    CRenderPassSingle::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
-
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_RerecordCommandTimes > 0)
@@ -94,9 +95,9 @@ std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uin
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
+        _beginWithFramebuffer(vImageIndex);
         m_PipelineMask.recordCommand(CommandBuffer, vImageIndex);
-        _end();
+        _endWithFramebuffer();
     }
     return { CommandBuffer };
 }
@@ -135,23 +136,5 @@ void CRenderPassOutlineMask::__createMaskImage(VkExtent2D vExtent)
         m_MaskImageSet[i]->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 
         m_pPortSet->setOutput("Mask", *m_MaskImageSet[i], i);
-    }
-}
-
-void CRenderPassOutlineMask::__createFramebuffers(VkExtent2D vExtent)
-{
-    if (!isValid()) return;
-
-    m_pDevice->waitUntilIdle();
-    m_FramebufferSet.destroyAndClearAll();
-    m_FramebufferSet.init(m_pAppInfo->getImageNum());
-    for (uint32_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            m_pPortSet->getOutputPort("Mask")->getImageV(i),
-        };
-
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }
