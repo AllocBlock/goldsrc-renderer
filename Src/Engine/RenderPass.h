@@ -82,9 +82,6 @@ namespace vk
         void update(uint32_t vImageIndex);
         std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
         void destroy();
-
-        void begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues);
-        void end();
         
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
 
@@ -148,6 +145,8 @@ namespace vk
          */
         virtual void _onUpdateV(const SPassUpdateState& vUpdateState) {}
 
+        void _begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues);
+        void _end();
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 
         CDevice::CPtr m_pDevice = nullptr;

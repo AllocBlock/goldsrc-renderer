@@ -126,6 +126,7 @@
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="RenderPassSingle.h" />
     <ClInclude Include="ShaderCompileCache.h" />
     <ClInclude Include="ShaderCompiler.h" />
     <ClInclude Include="ShaderErrorParser.h" />

@@ -54,7 +54,7 @@ std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t
         vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
     }
     
-    end();
+    _end();
     return { CommandBuffer };
 }
 

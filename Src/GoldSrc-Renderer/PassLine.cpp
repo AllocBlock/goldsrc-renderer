@@ -124,9 +124,9 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
     if (RerecordCommand)
     {
         // init
-        begin(CommandBuffer, m_FramebufferSet[vImageIndex], DefaultClearValueColorDepth);
+        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], DefaultClearValueColorDepth);
         m_PipelineLine.recordCommand(CommandBuffer, vImageIndex);
-        end();
+        _end();
     }
     return { CommandBuffer };
 }

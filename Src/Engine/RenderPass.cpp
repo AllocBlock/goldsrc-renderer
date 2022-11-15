@@ -63,7 +63,7 @@ void IRenderPass::destroy()
     m_pPortSet->unlinkAll();
 }
 
-void IRenderPass::begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues)
+void IRenderPass::_begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues)
 {
     _ASSERTE(!m_Begined);
     _ASSERTE(isValid());
@@ -86,7 +86,7 @@ void IRenderPass::begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFram
     m_Begined = true;
 }
 
-void IRenderPass::end()
+void IRenderPass::_end()
 {
     _ASSERTE(m_Begined);
     vkCmdEndRenderPass(m_CurrentCommandBuffer);

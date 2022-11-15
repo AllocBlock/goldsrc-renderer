@@ -35,9 +35,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FullScreenPointData.h" />
+    <ClInclude Include="PassBloomBlur.h" />
+    <ClInclude Include="PassBloomBrightFilter.h" />
+    <ClInclude Include="PassBloomMerge.h" />
     <ClInclude Include="PassGUI.h" />
     <ClInclude Include="Pipeline3DGui.h" />
+    <ClInclude Include="PipelineBloomBlur.h" />
+    <ClInclude Include="PipelineBloomMerge.h" />
     <ClInclude Include="PipelineEnvironment.h" />
+    <ClInclude Include="PipelineBloomBrightFilter.h" />
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PipelineVisCollidePoint.h" />
@@ -53,7 +59,7 @@
     <ClCompile Include="PipelineSprite.cpp" />
     <ClCompile Include="PipelineVisCollidePoint.cpp" />
     <ClCompile Include="PipelineVisCollider.cpp" />
-    <ClCompile Include="RenderPassFullScreen.cpp" />
+    <ClCompile Include="PassFullScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\tonemap.glsl" />

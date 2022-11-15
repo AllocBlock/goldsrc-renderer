@@ -1,7 +1,7 @@
 #pragma once
 #include "RenderPass.h"
 #include "FrameBuffer.h"
-#include "Buffer.h"
+#include "VertexBuffer.h"
 #include "Pipeline.h"
 #include "FullScreenPointData.h"
 
@@ -13,13 +13,17 @@ public:
     using PipelineCreateCallback_t = std::function<void()>;
 
     // create pipeline instance but maybe not valid as renderpass maynot be valid
-    template <typename T>
-    ptr<T> initPipeline()
+    template <typename Pipeline_t>
+    ptr<Pipeline_t> initPipeline()
     {
+        static_assert(std::is_base_of<IPipeline, Pipeline_t>::value, "Full Screen Pass require pipeline type");
+
         if (m_pPipeline) m_pPipeline->destroy();
-        ptr<T> pPipeline = make<T>();
-        if (isValid())
-            __createPipeline();
+        ptr<Pipeline_t> pPipeline = make<Pipeline_t>();
+
+        // FIXME: how to get extent?
+        /*if (isValid())
+            __createPipeline();*/
         m_pPipeline = pPipeline;
         return pPipeline;
     }
@@ -54,3 +58,32 @@ private:
     std::vector<PipelineCreateCallback_t> m_PipelineCreateCallbackSet;
 };
 
+class CRenderPassFullScreenGeneral : public vk::IRenderPass
+{
+protected:
+    virtual ptr<IPipeline> _initPipelineV() = 0;
+    virtual SPortDescriptor _getPortDescV() = 0;
+    virtual CRenderPassDescriptor _getRenderPassDescV() = 0;
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) = 0;
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) = 0;
+
+    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
+
+private:
+    virtual void _initV() override final;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override final;
+    virtual void _destroyV() override final;
+    
+private:
+    void __createPipeline(VkExtent2D vExtent);
+    void __createFramebuffers(VkExtent2D vExtent);
+    void __createVertexBuffer();
+
+    void __generateScene();
+
+    ptr<IPipeline> m_pPipeline = nullptr;
+    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
+    ptr<vk::CVertexBufferTyped<SFullScreenPointData>> m_pVertexBuffer = nullptr;
+
+    std::vector<SFullScreenPointData> m_PointDataSet;
+};

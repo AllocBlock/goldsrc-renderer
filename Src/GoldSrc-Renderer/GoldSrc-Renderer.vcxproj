@@ -171,6 +171,8 @@
   <ItemGroup>
     <None Include="shaders\alphaTestShader.frag" />
     <None Include="shaders\alphaTestShader.vert" />
+    <None Include="shaders\bloomBrightFilter.frag" />
+    <None Include="shaders\fullScreen.vert" />
     <None Include="shaders\lineShader.frag" />
     <None Include="shaders\lineShader.vert" />
     <None Include="shaders\outlineEdgeShader.frag" />

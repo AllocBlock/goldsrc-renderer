@@ -94,9 +94,9 @@ std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uin
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
+        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
         m_PipelineMask.recordCommand(CommandBuffer, vImageIndex);
-        end();
+        _end();
     }
     return { CommandBuffer };
 }

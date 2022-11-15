@@ -12,6 +12,17 @@
 ## 算法：法线模型变换矩阵
 - 结论$$M=\text{inverse}(\text{Model})^T$$
 
+## 技术：Bloom
+- https://catlikecoding.com/unity/tutorials/advanced-rendering/bloom/
+- https://blog.csdn.net/jxw167/article/details/85691401
+- https://zhuanlan.zhihu.com/p/161887607
+- 算法分三步
+   1. 亮度过滤：保留高光，其他去除
+      - 0.2125 * R + 0.7154 * G + 0.0721 * B
+   2. 模糊
+      - 高斯或mipmap 
+   3. 合并
+
 ## 技术：物理模拟
 ### 概念
   #### 物体分类

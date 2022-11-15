@@ -58,7 +58,7 @@ std::vector<VkCommandBuffer> CRenderPassVisPhysics::_requestCommandBuffersV(uint
     // visualize collide point
     m_PipelineVisCollidePoint.record(CommandBuffer, vImageIndex, m_pCamera->getPos());
 
-    end();
+    _end();
     return { CommandBuffer };
 }
 

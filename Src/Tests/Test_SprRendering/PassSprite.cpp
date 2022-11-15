@@ -40,7 +40,7 @@ std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t
 
     begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, ClearValueSet);
     m_Pipeline.recordCommand(CommandBuffer, vImageIndex);
-    end();
+    _end();
     return { CommandBuffer };
 }
 

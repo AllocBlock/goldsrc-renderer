@@ -59,7 +59,7 @@ std::vector<VkCommandBuffer> CRenderPassShade::_requestCommandBuffersV(uint32_t 
         }
     }
 
-    end();
+    _end();
     return { CommandBuffer };
 }
 

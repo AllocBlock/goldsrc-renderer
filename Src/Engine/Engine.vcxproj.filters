@@ -194,5 +194,8 @@
     <ClInclude Include="ShaderErrorParser.h">
       <Filter>头文件\Shader</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPassSingle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

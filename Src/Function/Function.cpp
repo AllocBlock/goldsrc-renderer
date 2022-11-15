@@ -85,3 +85,26 @@ void Function::createDepthImage(vk::CImage& voImage, CDevice::CPtr vDevice, VkEx
     voImage.transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     endSingleTimeBuffer(CommandBuffer);
 }
+
+void Function::createImage2d(CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkFormat vFormat, VkImageUsageFlags vUsage)
+{
+    VkImageCreateInfo ImageInfo = {};
+    ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+    ImageInfo.extent.width = static_cast<uint32_t>(vExtent.width);
+    ImageInfo.extent.height = static_cast<uint32_t>(vExtent.height);
+    ImageInfo.extent.depth = 1;
+    ImageInfo.mipLevels = 1;
+    ImageInfo.arrayLayers = 1;
+    ImageInfo.format = vFormat;
+    ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageInfo.usage = vUsage;
+    ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    vk::SImageViewInfo ViewInfo;
+    ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+
+    voImage.create(vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+}

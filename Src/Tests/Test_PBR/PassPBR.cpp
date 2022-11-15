@@ -75,7 +75,7 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
         vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
     }
     
-    end();
+    _end();
     return { CommandBuffer };
 }
 

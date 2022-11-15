@@ -88,7 +88,7 @@ std::vector<VkCommandBuffer> CRenderPassShadowMap::_requestCommandBuffersV(uint3
         vkCmdDraw(CommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
     }
 
-    end();
+    _end();
 
     return { CommandBuffer };
 }

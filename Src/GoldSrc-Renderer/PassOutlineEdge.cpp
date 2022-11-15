@@ -55,7 +55,7 @@ std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uin
     // FIXME: is update descriptor every frame slow?
     m_Pipeline.setInputImage(m_pPortSet->getInputPort("Mask")->getImageV(vImageIndex), vImageIndex);
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
+    _begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
     if (m_pVertexBuffer->isValid())
     {
         VkBuffer VertBuffer = *m_pVertexBuffer;
@@ -67,7 +67,7 @@ std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uin
         vkCmdDraw(CommandBuffer, uint32_t(VertexNum), 1, 0, 0);
     }
 
-    end();
+    _end();
     return { CommandBuffer };
 }
 

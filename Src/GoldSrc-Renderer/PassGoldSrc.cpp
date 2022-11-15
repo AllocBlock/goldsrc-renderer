@@ -223,7 +223,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-        begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
+        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], ClearValueSet);
 
         if (m_EnableSky)
             __recordSkyRenderCommand(vImageIndex);
@@ -266,7 +266,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
             __recordSpriteRenderCommand(vImageIndex);
 
-        end();
+        _end();
     }
     return { CommandBuffer };
 }

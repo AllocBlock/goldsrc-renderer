@@ -71,9 +71,9 @@ std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vI
 
     VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
 
-    begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
+    _begin(CommandBuffer, m_FramebufferSet[vImageIndex], { ClearValue });
     UI::draw(CommandBuffer);
-    end();
+    _end();
 
     return { CommandBuffer };
 }

@@ -217,5 +217,11 @@
     <None Include="shaders\outlineMaskShader.vert">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="shaders\fullScreen.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\bloomBrightFilter.frag">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
