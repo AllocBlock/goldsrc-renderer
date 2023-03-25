@@ -35,6 +35,10 @@ void CSceneGoldSrcRenderPass::rerecordCommand()
 void CSceneGoldSrcRenderPass::_initV()
 {
     CRenderPassSceneTyped::_initV();
+    
+    VkExtent2D RefExtent = { 0, 0 };
+    _dumpReferenceExtentV(RefExtent);
+    m_DepthImageManager.init(RefExtent, false, [this](VkExtent2D vExtent) { return __createDepthResources(vExtent); });
 
     __createSceneResources();
 
@@ -65,10 +69,8 @@ void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateStat
     if (m_pCamera)
         m_pCamera->setAspect(RefExtent.width, RefExtent.height);
 
-    if (vUpdateState.ScreenExtent.IsUpdated || !m_DepthImage.isValid())
-    {
-        __createDepthResources(RefExtent);
-    }
+    m_DepthImageManager.updateV(vUpdateState);
+    m_DepthImageManager.updateExtent(RefExtent);
 
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
@@ -193,7 +195,7 @@ void CSceneGoldSrcRenderPass::_renderUIV()
 
 void CSceneGoldSrcRenderPass::_destroyV()
 {
-    m_DepthImage.destroy();
+    m_DepthImageManager.destroy();
     m_PipelineSet.destroy();
 
     __destroySceneResources();
@@ -494,13 +496,14 @@ void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, 
     _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
-void CSceneGoldSrcRenderPass::__createDepthResources(VkExtent2D vExtent)
+std::unique_ptr<vk::CImage> CSceneGoldSrcRenderPass::__createDepthResources(VkExtent2D vExtent)
 {
-    m_DepthImage.destroy();
+    auto pDepthImage = std::make_unique<vk::CImage>();
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    Function::createDepthImage(m_DepthImage, m_pDevice, vExtent, NULL, DepthFormat);
-    m_pPortSet->setOutput("Depth", m_DepthImage);
+    Function::createDepthImage(*pDepthImage, m_pDevice, vExtent, NULL, DepthFormat);
+    m_pPortSet->setOutput("Depth", *pDepthImage);
+    return pDepthImage;
 }
 
 void CSceneGoldSrcRenderPass::__createTextureImages()

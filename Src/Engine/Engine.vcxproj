@@ -99,6 +99,7 @@
     <ClCompile Include="BoundingBox.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
+    <ClCompile Include="DynamicResourceManager.cpp" />
     <ClCompile Include="RenderPassSingle.cpp" />
     <ClCompile Include="ShaderCompileCache.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
@@ -127,6 +128,7 @@
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="DynamicResourceManager.h" />
     <ClInclude Include="RenderPassSingle.h" />
     <ClInclude Include="ShaderCompileCache.h" />
     <ClInclude Include="ShaderCompiler.h" />

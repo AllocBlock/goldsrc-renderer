@@ -111,6 +111,9 @@
     <ClCompile Include="RenderPassSingle.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="DynamicResourceManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -198,6 +201,9 @@
       <Filter>头文件\Shader</Filter>
     </ClInclude>
     <ClInclude Include="RenderPassSingle.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicResourceManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

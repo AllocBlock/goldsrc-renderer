@@ -9,6 +9,7 @@
 #include "PipelineBlendAdditive.h"
 #include "PipelineSprite.h"
 #include "Image.h"
+#include "DynamicResourceManager.h"
 
 #include <vulkan/vulkan.h>
 #include <optional>
@@ -96,7 +97,7 @@ protected:
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
-    void __createDepthResources(VkExtent2D vExtent);
+    std::unique_ptr<vk::CImage> __createDepthResources(VkExtent2D vExtent);
     void __createTextureImages();
     void __createLightmapImage();
 
@@ -143,7 +144,7 @@ private:
     } m_PipelineSet;
     
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
-    vk::CImage m_DepthImage;
+    CDynamicTextureCreator m_DepthImageManager;
     vk::CImage m_LightmapImage;
 
     size_t m_RerecordCommandTimes = 0;
