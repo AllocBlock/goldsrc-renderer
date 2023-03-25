@@ -4,6 +4,7 @@
 #include "Image.h"
 #include "SceneInfoGoldSrc.h"
 #include "PipelineOutlineMask.h"
+#include "DynamicResourceManager.h"
 
 class CRenderPassOutlineMask : public CRenderPassSingle
 {
@@ -46,12 +47,12 @@ protected:
 
 private:
     void __rerecordCommand();
-    void __createMaskImage(VkExtent2D vExtent);
 
     CCamera::Ptr m_pCamera = nullptr;
 
     CPipelineMask m_PipelineMask;
-    vk::CPointerSet<vk::CImage> m_MaskImageSet;
+
+    CDynamicTextureCreator m_MaskImageCreator;
 
     size_t m_RerecordCommandTimes = 0;
 };

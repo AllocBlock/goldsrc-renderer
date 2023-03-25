@@ -38,7 +38,15 @@ void CSceneGoldSrcRenderPass::_initV()
     
     VkExtent2D RefExtent = { 0, 0 };
     _dumpReferenceExtentV(RefExtent);
-    m_DepthImageManager.init(RefExtent, false, [this](VkExtent2D vExtent) { return __createDepthResources(vExtent); });
+    m_DepthImageManager.init(RefExtent, false, 
+        [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
+        {
+            vImageSet.init(1);
+            VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
+            Function::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
+            m_pPortSet->setOutput("Depth", *vImageSet[0]);
+        }
+    );
 
     __createSceneResources();
 
@@ -494,16 +502,6 @@ void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, 
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
     _recordRenderActorCommand(CommandBuffer, vObjectIndex);
-}
-
-std::unique_ptr<vk::CImage> CSceneGoldSrcRenderPass::__createDepthResources(VkExtent2D vExtent)
-{
-    auto pDepthImage = std::make_unique<vk::CImage>();
-
-    VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    Function::createDepthImage(*pDepthImage, m_pDevice, vExtent, NULL, DepthFormat);
-    m_pPortSet->setOutput("Depth", *pDepthImage);
-    return pDepthImage;
 }
 
 void CSceneGoldSrcRenderPass::__createTextureImages()

@@ -107,6 +107,7 @@ public:
 
     const SPortFormat& getFormat() const { return m_Format; }
     virtual VkImageView getImageV(size_t vIndex = 0) const = 0;
+    virtual size_t getImageNumV() const = 0;
     virtual bool hasActualFormatV() const = 0;
     virtual VkFormat getActualFormatV() const = 0;
     virtual bool hasActualExtentV() const = 0;
@@ -146,6 +147,7 @@ public:
     CSourcePort(const std::string& vName, const SPortFormat& vFormat, CPortSet* vBelongedSet);
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final;
+    virtual size_t getImageNumV() const override final;
     virtual bool isLinkReadyV() const override final;
     virtual bool isImageReadyV() const override final;
     void setImage(VkImageView vImage, size_t vIndex = 0);
@@ -174,6 +176,7 @@ public:
     CRelayPort(const std::string& vName, const SPortFormat& vFormat, CPortSet* vBelongedSet) : CPort(vName, vFormat, vBelongedSet) {}
 
     virtual VkImageView getImageV(size_t vIndex = 0) const override final;
+    virtual size_t getImageNumV() const override final;
     virtual bool isLinkReadyV() const override final;
     virtual bool isImageReadyV() const override final;
 

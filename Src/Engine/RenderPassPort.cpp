@@ -131,6 +131,12 @@ VkImageView CSourcePort::getImageV(size_t vIndex) const
     return m_ImageMap.at(vIndex);
 }
 
+size_t CSourcePort::getImageNumV() const
+{
+    _ASSERTE(!m_pParent.expired());
+    return m_Format.Num;
+}
+
 bool CSourcePort::isLinkReadyV() const
 {
     return CPort::isLinkReadyV();
@@ -149,6 +155,12 @@ void CSourcePort::setImage(VkImageView vImage, size_t vIndex)
         m_ImageMap[vIndex] = vImage;
         _onImageUpdate();
     }
+}
+
+size_t CRelayPort::getImageNumV() const
+{
+    _ASSERTE(!m_pParent.expired());
+    return m_pParent.lock()->getImageNumV();
 }
 
 VkImageView CRelayPort::getImageV(size_t vIndex) const

@@ -25,5 +25,16 @@ namespace Common
         return static_cast<T>(vA * vFactor + vB * (1 - vFactor));
     }
 
+    template <typename T>
+    bool isVectorEqual(std::vector<T> vA, std::vector<T> vB)
+    {
+        size_t Num = vA.size();
+        if (Num != vB.size()) return false;
+        for (size_t i = 0; i < Num; ++i)
+            if (vA[i] != vB[i])
+                return false;
+        return true;
+    }
+
     constexpr float Acc = 1e-5f;
 }

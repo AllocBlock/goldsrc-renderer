@@ -97,7 +97,6 @@ protected:
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
-    std::unique_ptr<vk::CImage> __createDepthResources(VkExtent2D vExtent);
     void __createTextureImages();
     void __createLightmapImage();
 

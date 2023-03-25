@@ -8,6 +8,8 @@ class CDynamicResourceManager
 class CDynamicResource
 {
 public:
+    virtual ~CDynamicResource() = default;
+
     bool isReady() const { return m_IsReady; }
     virtual bool updateV(const vk::SPassUpdateState& vUpdateState) = 0;
 
@@ -18,7 +20,7 @@ protected:
 class CDynamicTexture : public CDynamicResource
 {
 public:
-    virtual VkImageView getImageViewV() = 0;
+    virtual VkImageView getImageViewV(uint32_t vIndex = 0) = 0;
 };
 
 class CDynamicTextureInputPort : public CDynamicTexture
@@ -27,46 +29,55 @@ public:
     CDynamicTextureInputPort(CPort::CPtr vInputPort)
     {
         m_pInputPort = vInputPort;
-        m_LastImageView = __getCurrentImageView();
+        m_LastImageViews = __getCurrentImageViews();
     }
 
-    virtual VkImageView getImageViewV()
+    virtual VkImageView getImageViewV(uint32_t vIndex = 0) override
     {
         _ASSERTE(isReady());
-        return m_LastImageView.value();
+        _ASSERTE(vIndex < m_LastImageViews.size());
+        return m_LastImageViews[vIndex];
     }
 
     virtual bool updateV(const vk::SPassUpdateState& vUpdateState) override
     {
         if (vUpdateState.InputImageUpdated)
         {
-            std::optional<VkImageView> currentImageView = __getCurrentImageView();
-            if (currentImageView != m_LastImageView)
+            auto currentImageView = __getCurrentImageViews();
+            if (!Common::isVectorEqual(currentImageView, m_LastImageViews))
             {
-                m_LastImageView = currentImageView;
-                m_IsReady = (currentImageView != std::nullopt);
+                m_LastImageViews = currentImageView;
+                m_IsReady = (currentImageView.size() > 0);
             }
         }
         return false;
     }
 
 private:
-    std::optional<VkImageView> __getCurrentImageView() const
+    std::vector<VkImageView> __getCurrentImageViews() const
     {
-        if (!m_pInputPort->isImageReadyV()) return std::nullopt;
-        return m_pInputPort->getImageV();
+        if (!m_pInputPort->isImageReadyV()) return {};
+        size_t ImageNum = m_pInputPort->getImageNumV();
+        if (ImageNum == 0) return {};
+        std::vector<VkImageView> Views;
+        for (size_t i = 0; i < ImageNum; ++i)
+        {
+            Views.push_back(m_pInputPort->getImageV(i));
+        }
+        return Views;
     }
 
     CPort::CPtr m_pInputPort = nullptr;
-    std::optional<VkImageView> m_LastImageView = std::nullopt;
+    std::vector<VkImageView> m_LastImageViews;
 };
 
 
 #include "Image.h"
+using CreateImageCallback_t = std::function<void(VkExtent2D, vk::CPointerSet<vk::CImage>&)>;
 class CDynamicTextureCreator : public CDynamicTexture
 {
 public:
-    void init(VkExtent2D vInitExtent, bool vKeepScreenSize, std::function<std::unique_ptr<vk::CImage>(VkExtent2D)> vOnCreateImageFunc)
+    void init(VkExtent2D vInitExtent, bool vKeepScreenSize, CreateImageCallback_t vOnCreateImageFunc)
     {
         m_Extent = vInitExtent;
         m_KeepScreenSize = vKeepScreenSize;
@@ -79,12 +90,12 @@ public:
         m_IsInitted = true;
     }
 
-    virtual VkImageView getImageViewV()
+    virtual VkImageView getImageViewV(uint32_t vIndex = 0) override
     {
         _ASSERTE(m_IsInitted);
         _ASSERTE(isReady());
-        _ASSERTE(m_pImage != nullptr);
-        return m_pImage->get();
+        _ASSERTE(m_ImageSet.isValid(vIndex));
+        return m_ImageSet[vIndex]->get();
     }
 
     virtual bool updateV(const vk::SPassUpdateState& vUpdateState) override
@@ -114,9 +125,7 @@ public:
 
     void destroy()
     {
-        _ASSERTE(m_IsInitted);
-        if (m_pImage)
-            m_pImage->destroy();
+        m_ImageSet.destroyAndClearAll();
     }
 
 private:
@@ -127,14 +136,13 @@ private:
 
     void __createOrRecreateImage()
     {
-        if (m_pImage)
-            destroy();
-        m_pImage = m_CreateImageFunc(m_Extent);
+        destroy();
+        m_CreateImageFunc(m_Extent, m_ImageSet);
     }
 
     bool m_IsInitted = false;
     VkExtent2D m_Extent = VkExtent2D{ 0, 0 };
     bool m_KeepScreenSize = false;
-    std::function<std::unique_ptr<vk::CImage>(VkExtent2D)> m_CreateImageFunc;
-    std::unique_ptr<vk::CImage> m_pImage = nullptr;
+    CreateImageCallback_t m_CreateImageFunc;
+    vk::CPointerSet<vk::CImage> m_ImageSet;
 };

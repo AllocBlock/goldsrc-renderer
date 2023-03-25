@@ -19,6 +19,40 @@ void CRenderPassOutlineMask::removeHighlight()
 void CRenderPassOutlineMask::_initV()
 {
     CRenderPassSingle::_initV();
+
+    m_MaskImageCreator.init(m_pAppInfo->getScreenExtent(), true, 
+        [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
+        {
+            VkFormat Format = m_pPortSet->getOutputFormat("Mask").Format;
+            
+            vImageSet.init(m_pAppInfo->getImageNum());
+            for (size_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
+            {
+                VkImageCreateInfo ImageInfo = {};
+                ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+                ImageInfo.imageType = VK_IMAGE_TYPE_2D;
+                ImageInfo.extent.width = static_cast<uint32_t>(vExtent.width);
+                ImageInfo.extent.height = static_cast<uint32_t>(vExtent.height);
+                ImageInfo.extent.depth = 1;
+                ImageInfo.mipLevels = 1;
+                ImageInfo.arrayLayers = 1;
+                ImageInfo.format = Format;
+                ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+                ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+                ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+                vk::SImageViewInfo ViewInfo;
+                ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+
+                vImageSet[i]->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
+
+                m_pPortSet->setOutput("Mask", *vImageSet[i], i);
+            }
+        }
+    );
+
     __rerecordCommand();
 }
 
@@ -38,10 +72,7 @@ void CRenderPassOutlineMask::_onUpdateV(const vk::SPassUpdateState& vUpdateState
 
     VkExtent2D RefExtent = m_pAppInfo->getScreenExtent();
 
-    if (vUpdateState.ScreenExtent.IsUpdated || !m_MaskImageSet.isAllValidAndNonEmpty())
-    {
-        __createMaskImage(RefExtent);
-    }
+    m_MaskImageCreator.updateV(vUpdateState);
 
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
     {
@@ -70,7 +101,7 @@ void CRenderPassOutlineMask::_renderUIV()
 
 void CRenderPassOutlineMask::_destroyV()
 {
-    m_MaskImageSet.destroyAndClearAll();
+    m_MaskImageCreator.destroy();
     m_PipelineMask.destroy();
 
     CRenderPassSingle::_destroyV();
@@ -103,36 +134,4 @@ std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uin
 void CRenderPassOutlineMask::__rerecordCommand()
 {
     m_RerecordCommandTimes = m_pAppInfo->getImageNum();
-}
-
-void CRenderPassOutlineMask::__createMaskImage(VkExtent2D vExtent)
-{
-    VkFormat Format = m_pPortSet->getOutputFormat("Mask").Format;
-
-    m_MaskImageSet.destroyAndClearAll();
-    m_MaskImageSet.init(m_pAppInfo->getImageNum());
-    for (size_t i = 0; i < m_pAppInfo->getImageNum(); ++i)
-    {
-        VkImageCreateInfo ImageInfo = {};
-        ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-        ImageInfo.extent.width = static_cast<uint32_t>(vExtent.width);
-        ImageInfo.extent.height = static_cast<uint32_t>(vExtent.height);
-        ImageInfo.extent.depth = 1;
-        ImageInfo.mipLevels = 1;
-        ImageInfo.arrayLayers = 1;
-        ImageInfo.format = Format;
-        ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-        ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-        ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        vk::SImageViewInfo ViewInfo;
-        ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-
-        m_MaskImageSet[i]->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-
-        m_pPortSet->setOutput("Mask", *m_MaskImageSet[i], i);
-    }
 }
