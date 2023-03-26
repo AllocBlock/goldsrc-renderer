@@ -86,4 +86,9 @@ protected:
     vk::CDevice::CPtr m_pDevice = nullptr;
     VkPipeline m_Pipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
+
+private:
+    // no copy
+    IPipeline(const IPipeline&) = delete;
+    IPipeline& operator=(const IPipeline&) = delete;
 };

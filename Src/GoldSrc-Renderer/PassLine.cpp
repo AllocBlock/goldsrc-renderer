@@ -27,13 +27,13 @@ void CLineRenderPass::setHighlightBoundingBox(SAABB vBoundingBox)
         Vertices[0], Vertices[4],  Vertices[1], Vertices[5],  Vertices[2], Vertices[6],  Vertices[3], Vertices[7]
     };
 
-    m_PipelineLine.setObject("HighlightBoundingBox", std::move(pObject));
+    m_PipelineCreator.get().setObject("HighlightBoundingBox", std::move(pObject));
     __rerecordCommand();
 }
 
 void CLineRenderPass::removeHighlightBoundingBox()
 {
-    m_PipelineLine.removeObject("HighlightBoundingBox");
+    m_PipelineCreator.get().removeObject("HighlightBoundingBox");
     __rerecordCommand();
 }
 
@@ -41,13 +41,27 @@ void CLineRenderPass::addGuiLine(std::string vName, glm::vec3 vStart, glm::vec3 
 {
     auto pObject = make<SGuiObject>();
     pObject->Data = { vStart, vEnd };
-    m_PipelineLine.setObject(vName, std::move(pObject));
+    m_PipelineCreator.get().setObject(vName, std::move(pObject));
     __rerecordCommand();
 }
 
 void CLineRenderPass::_initV()
 {
     CRenderPassSingle::_initV();
+
+    VkExtent2D RefExtent = { 0, 0 };
+    _dumpReferenceExtentV(RefExtent);
+
+    m_PipelineCreator.init(RefExtent, false, m_pAppInfo->getImageNum(),
+        [this](VkExtent2D vExtent, IPipeline& vPipeline)
+        {
+            if (isValid())
+            {
+                vPipeline.create(m_pDevice, get(), vExtent);
+                __rerecordCommand();
+            }
+        }
+    );
 
     __rerecordCommand();
 }
@@ -71,25 +85,14 @@ void CLineRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     VkExtent2D RefExtent = {0, 0};
     if (!_dumpReferenceExtentV(RefExtent)) return;
 
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
-    {
-        if (isValid())
-        {
-            if (!vUpdateState.InputImageUpdated)
-            {
-                m_PipelineLine.create(m_pDevice, get(), RefExtent);
-                m_PipelineLine.setImageNum(m_pAppInfo->getImageNum());
-            }
-        }
-
-        __rerecordCommand();
-    }
+    m_PipelineCreator.updateV(vUpdateState);
+    m_PipelineCreator.updateExtent(RefExtent);
 }
 
 void CLineRenderPass::_updateV(uint32_t vImageIndex)
 {
     _ASSERTE(m_pCamera);
-    m_PipelineLine.updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineCreator.get().updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
 void CLineRenderPass::_renderUIV()
@@ -101,7 +104,7 @@ void CLineRenderPass::_renderUIV()
 
 void CLineRenderPass::_destroyV()
 {
-    m_PipelineLine.destroy();
+    m_PipelineCreator.destroy();
 
     CRenderPassSingle::_destroyV();
 }
@@ -120,7 +123,7 @@ std::vector<VkCommandBuffer> CLineRenderPass::_requestCommandBuffersV(uint32_t v
     {
         // init
         _beginWithFramebuffer(vImageIndex);
-        m_PipelineLine.recordCommand(CommandBuffer, vImageIndex);
+        m_PipelineCreator.get().recordCommand(CommandBuffer, vImageIndex);
         _endWithFramebuffer();
     }
     return { CommandBuffer };

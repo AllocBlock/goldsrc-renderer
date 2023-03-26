@@ -2,6 +2,7 @@
 #include "RenderPassSingle.h"
 #include "Buffer.h"
 #include "PipelineOutlineEdge.h"
+#include "DynamicResourceManager.h"
 
 class CRenderPassOutlineEdge : public CRenderPassSingle
 {
@@ -33,7 +34,7 @@ protected:
 private:
     void __createVertexBuffer();
 
-    CPipelineEdge m_Pipeline;
+    CDynamicPipeline<CPipelineEdge> m_PipelineCreator;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
     std::vector<CPipelineEdge::SPointData> m_PointDataSet;

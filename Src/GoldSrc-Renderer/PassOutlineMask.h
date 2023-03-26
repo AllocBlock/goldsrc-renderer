@@ -50,8 +50,7 @@ private:
 
     CCamera::Ptr m_pCamera = nullptr;
 
-    CPipelineMask m_PipelineMask;
-
+    CDynamicPipeline<CPipelineMask> m_PipelineCreator;
     CDynamicTextureCreator m_MaskImageCreator;
 
     size_t m_RerecordCommandTimes = 0;

@@ -4,8 +4,9 @@
 #include "BoundingBox.h"
 #include "Camera.h"
 #include "Pipeline3DGui.h"
+#include "DynamicResourceManager.h"
 
-#include <vulkan/vulkan.h> 
+#include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 
 class CLineRenderPass : public CRenderPassSingle
@@ -49,8 +50,8 @@ protected:
 
 private:
     void __rerecordCommand();
-
-    CPipelineLine m_PipelineLine;
+    
+    CDynamicPipeline<CPipelineLine> m_PipelineCreator;
 
     size_t m_RerecordCommandTimes = 0;
     CCamera::CPtr m_pCamera = nullptr;

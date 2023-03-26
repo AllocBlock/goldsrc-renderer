@@ -118,18 +118,19 @@ private:
     void __recordSpriteRenderCommand(uint32_t vImageIndex);
     
     size_t __getActualTextureNum();
-    void __updatePipelines();
-    void __updateDescriptorSets();
+    void __updatePipelineResourceGoldSrc(CPipelineGoldSrc& vPipeline);
+    void __updatePipelineResourceSky(CPipelineSkybox& vPipeline);
+    void __updatePipelineResourceSprite(CPipelineSprite& vPipeline);
     void __updateTextureView();
 
     struct
     {
-        CPipelineNormal Normal;
-        CPipelineBlendAlpha BlendTextureAlpha;
-        CPipelineBlendAlphaTest BlendAlphaTest;
-        CPipelineBlendAdditive BlendAdditive;
-        CPipelineSprite Sprite;
-        CPipelineSkybox Sky;
+        CDynamicPipeline<CPipelineNormal> Normal;
+        CDynamicPipeline<CPipelineBlendAlpha> BlendTextureAlpha;
+        CDynamicPipeline<CPipelineBlendAlphaTest> BlendAlphaTest;
+        CDynamicPipeline<CPipelineBlendAdditive> BlendAdditive;
+        CDynamicPipeline<CPipelineSprite> Sprite;
+        CDynamicPipeline<CPipelineSkybox> Sky;
 
         void destroy()
         {

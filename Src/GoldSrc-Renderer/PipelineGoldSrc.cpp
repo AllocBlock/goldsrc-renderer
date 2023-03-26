@@ -26,8 +26,9 @@ namespace
     };
 }
 
-void CPipelineGoldSrc::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vTextureSet, VkImageView vLightmap)
+void CPipelineGoldSrc::__updateDescriptorSet()
 {
+    // FIXME: duplicate update exists
     size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
     for (size_t i = 0; i < DescriptorNum; ++i)
     {
@@ -36,7 +37,7 @@ void CPipelineGoldSrc::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vT
         WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
         WriteInfo.addWriteSampler(2, m_Sampler.get());
 
-        const size_t NumTexture = vTextureSet.size();
+        const size_t NumTexture = m_TextureSet.size();
 
         std::vector<VkImageView> TexImageViewSet(CPipelineGoldSrc::MaxTextureNum);
         for (size_t i = 0; i < CPipelineGoldSrc::MaxTextureNum; ++i)
@@ -50,10 +51,10 @@ void CPipelineGoldSrc::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vT
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = *vTextureSet[i];
+                TexImageViewSet[i] = m_TextureSet[i];
         }
         WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
-        VkImageView LightmapImageView = vLightmap == VK_NULL_HANDLE ? m_PlaceholderImage : vLightmap;
+        VkImageView LightmapImageView = m_LightmapTexture == VK_NULL_HANDLE ? m_PlaceholderImage : m_LightmapTexture;
         WriteInfo.addWriteImageAndSampler(4, LightmapImageView);
 
         m_ShaderResourceDescriptor.update(i, WriteInfo);
@@ -91,6 +92,29 @@ void CPipelineGoldSrc::setOpacity(VkCommandBuffer vCommandBuffer, float vOpacity
         m_Opacity = vOpacity;
         __updatePushConstant(vCommandBuffer, m_EnableLightmap, vOpacity);
     }
+}
+
+void CPipelineGoldSrc::setTextures(const vk::CPointerSet<vk::CImage>& vTextureSet)
+{
+    m_TextureSet.clear();
+    for (size_t i = 0; i < vTextureSet.size(); ++i)
+    {
+        m_TextureSet.emplace_back(*vTextureSet[i]);
+    }
+    __updateDescriptorSet();
+}
+
+void CPipelineGoldSrc::setLightmap(VkImageView vLightmap)
+{
+    m_LightmapTexture = vLightmap;
+    __updateDescriptorSet();
+}
+
+void CPipelineGoldSrc::clearResources()
+{
+    m_TextureSet.clear();
+    m_LightmapTexture = VK_NULL_HANDLE;
+    __updateDescriptorSet();
 }
 
 void CPipelineGoldSrc::_initShaderResourceDescriptorV()

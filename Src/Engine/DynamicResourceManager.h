@@ -79,6 +79,7 @@ class CDynamicTextureCreator : public CDynamicTexture
 public:
     void init(VkExtent2D vInitExtent, bool vKeepScreenSize, CreateImageCallback_t vOnCreateImageFunc)
     {
+        _ASSERTE(!m_IsInitted);
         m_Extent = vInitExtent;
         m_KeepScreenSize = vKeepScreenSize;
         m_CreateImageFunc = vOnCreateImageFunc;
@@ -145,4 +146,103 @@ private:
     bool m_KeepScreenSize = false;
     CreateImageCallback_t m_CreateImageFunc;
     vk::CPointerSet<vk::CImage> m_ImageSet;
+};
+
+template <typename Pipeline_t>
+using CreatePipelineCallback_t = std::function<void(VkExtent2D, Pipeline_t&)>;
+
+template <typename Pipeline_t>
+class CDynamicPipeline : public CDynamicResource
+{
+public:
+    void init(VkExtent2D vInitExtent, bool vKeepScreenSize, uint32_t vImageNum, CreatePipelineCallback_t<Pipeline_t> vCreateCallback)
+    {
+        _ASSERTE(!m_IsInitted);
+        m_Extent = vInitExtent;
+        m_KeepScreenSize = vKeepScreenSize;
+        m_ImageNum = vImageNum;
+        m_pCreateCallback = vCreateCallback;
+        m_IsInitted = true;
+    }
+
+    virtual bool updateV(const vk::SPassUpdateState& vUpdateState) override
+    {
+        _ASSERTE(m_IsInitted);
+        bool NeedRecreate = vUpdateState.RenderpassUpdated; // renderpass updated
+
+        // screen extent updated
+        if (m_KeepScreenSize && vUpdateState.ScreenExtent.IsUpdated && vUpdateState.ScreenExtent.Value != m_Extent)
+        {
+            NeedRecreate = true;
+            m_Extent = vUpdateState.ScreenExtent.Value;
+        }
+
+        if (vUpdateState.ImageNum.IsUpdated && vUpdateState.ImageNum.Value != m_ImageNum)
+        {
+            m_ImageNum = vUpdateState.ImageNum.Value;
+            if (m_Pipeline.isValid())
+            {
+                // only need to update image num
+                m_Pipeline.setImageNum(m_ImageNum);
+                return true;
+            }
+            NeedRecreate = true;
+        }
+
+        if (NeedRecreate)
+        {
+            recreate();
+            return true;
+        }
+        return false;
+    }
+
+    Pipeline_t& get()
+    {
+        _ASSERTE(m_IsInitted);
+        _ASSERTE(isReady());
+        return m_Pipeline;
+    }
+
+    bool updateExtent(VkExtent2D vNewExtent)
+    {
+        _ASSERTE(m_IsInitted);
+        if (m_Extent != vNewExtent)
+        {
+            m_Extent = vNewExtent;
+            recreate();
+            return true;
+        }
+        return false;
+    }
+
+    void recreate()
+    {
+        _ASSERTE(m_IsInitted);
+        if (m_Extent.width == 0 || m_Extent.height == 0 || m_ImageNum == 0)
+        {
+            m_Pipeline.destroy();
+        }
+        else
+        {
+            m_pCreateCallback(m_Extent, m_Pipeline);
+            if (m_Pipeline.isValid())
+                m_Pipeline.setImageNum(m_ImageNum);
+        }
+        m_IsReady = m_Pipeline.isValid();
+    }
+
+    void destroy()
+    {
+        m_Pipeline.destroy();
+    }
+
+protected:
+    bool m_IsInitted = false;
+    Pipeline_t m_Pipeline;
+
+    VkExtent2D m_Extent = VkExtent2D{ 0, 0 };
+    bool m_KeepScreenSize = false;
+    uint32_t m_ImageNum = 0;
+    CreatePipelineCallback_t<Pipeline_t> m_pCreateCallback = nullptr;
 };

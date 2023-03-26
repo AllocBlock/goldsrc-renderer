@@ -6,13 +6,13 @@
 
 void CRenderPassOutlineMask::setHighlightActor(CActor<CMeshDataGoldSrc>::Ptr vActor)
 {
-    m_PipelineMask.setActor(vActor);
+    m_PipelineCreator.get().setActor(vActor);
     __rerecordCommand();
 }
 
 void CRenderPassOutlineMask::removeHighlight()
 {
-    m_PipelineMask.removeObject();
+    m_PipelineCreator.get().removeObject();
     __rerecordCommand();
 }
 
@@ -53,6 +53,17 @@ void CRenderPassOutlineMask::_initV()
         }
     );
 
+    m_PipelineCreator.init(m_pAppInfo->getScreenExtent(), true, m_pAppInfo->getImageNum(),
+        [this](VkExtent2D vExtent, IPipeline& vPipeline)
+        {
+            if (isValid())
+            {
+                vPipeline.create(m_pDevice, get(), vExtent);
+                __rerecordCommand();
+            }
+        }
+    );
+
     __rerecordCommand();
 }
 
@@ -70,29 +81,14 @@ void CRenderPassOutlineMask::_onUpdateV(const vk::SPassUpdateState& vUpdateState
 {
     CRenderPassSingle::_onUpdateV(vUpdateState);
 
-    VkExtent2D RefExtent = m_pAppInfo->getScreenExtent();
-
     m_MaskImageCreator.updateV(vUpdateState);
-
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
-    {
-        if (isValid())
-        {
-            if (!vUpdateState.InputImageUpdated)
-            {
-                m_PipelineMask.create(m_pDevice, get(), RefExtent);
-                m_PipelineMask.setImageNum(m_pAppInfo->getImageNum());
-            }
-        }
-
-        __rerecordCommand();
-    }
+    m_PipelineCreator.updateV(vUpdateState);
 }
 
 void CRenderPassOutlineMask::_updateV(uint32_t vImageIndex)
 {
     _ASSERTE(m_pCamera);
-    m_PipelineMask.updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineCreator.get().updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
 void CRenderPassOutlineMask::_renderUIV()
@@ -102,7 +98,7 @@ void CRenderPassOutlineMask::_renderUIV()
 void CRenderPassOutlineMask::_destroyV()
 {
     m_MaskImageCreator.destroy();
-    m_PipelineMask.destroy();
+    m_PipelineCreator.destroy();
 
     CRenderPassSingle::_destroyV();
 }
@@ -125,7 +121,7 @@ std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uin
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
         _beginWithFramebuffer(vImageIndex);
-        m_PipelineMask.recordCommand(CommandBuffer, vImageIndex);
+        m_PipelineCreator.get().recordCommand(CommandBuffer, vImageIndex);
         _endWithFramebuffer();
     }
     return { CommandBuffer };

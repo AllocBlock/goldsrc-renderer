@@ -48,6 +48,45 @@ void CSceneGoldSrcRenderPass::_initV()
         }
     );
 
+    VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
+
+    auto CreateGoldSrcPipelineFunc = [this](VkExtent2D vExtent, CPipelineGoldSrc& vPipeline)
+    {
+        if (isValid())
+        {
+            vPipeline.create(m_pDevice, get(), vExtent);
+
+            VkImageView Lightmap = (m_pSceneInfo && m_pSceneInfo->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
+            __updatePipelineResourceGoldSrc(vPipeline);
+            rerecordCommand();
+        }
+    };
+
+    m_PipelineSet.Normal.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.BlendTextureAlpha.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.BlendAlphaTest.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.BlendAdditive.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.Sky.init(ScreenExtent, true, m_pAppInfo->getImageNum(), 
+        [this](VkExtent2D vExtent, CPipelineSkybox& vPipeline)
+        {
+            if (isValid())
+            {
+                vPipeline.create(m_pDevice, get(), vExtent);
+                __updatePipelineResourceSky(vPipeline);
+                rerecordCommand();
+            }
+        });
+    m_PipelineSet.Sprite.init(ScreenExtent, true, m_pAppInfo->getImageNum(),
+        [this](VkExtent2D vExtent, CPipelineSprite& vPipeline)
+        {
+            if (isValid())
+            {
+                vPipeline.create(m_pDevice, get(), vExtent);
+                __updatePipelineResourceSprite(vPipeline);
+                rerecordCommand();
+            }
+        });
+
     __createSceneResources();
 
     rerecordCommand();
@@ -80,39 +119,12 @@ void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateStat
     m_DepthImageManager.updateV(vUpdateState);
     m_DepthImageManager.updateExtent(RefExtent);
 
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
-    {
-        if (isValid())
-        {
-            if (!vUpdateState.InputImageUpdated)
-            {
-                VkRenderPass RenderPass = get();
-
-                m_PipelineSet.Sky.create(m_pDevice, RenderPass, RefExtent);
-                m_PipelineSet.Normal.create(m_pDevice, RenderPass, RefExtent);
-                m_PipelineSet.BlendTextureAlpha.create(m_pDevice, RenderPass, RefExtent);
-                m_PipelineSet.BlendAlphaTest.create(m_pDevice, RenderPass, RefExtent);
-                m_PipelineSet.BlendAdditive.create(m_pDevice, RenderPass, RefExtent);
-                m_PipelineSet.Sprite.create(m_pDevice, RenderPass, RefExtent);
-
-                uint32_t ImageNum = m_pAppInfo->getImageNum();
-                m_PipelineSet.Normal.setImageNum(ImageNum);
-                m_PipelineSet.BlendTextureAlpha.setImageNum(ImageNum);
-                m_PipelineSet.BlendAlphaTest.setImageNum(ImageNum);
-                m_PipelineSet.BlendAdditive.setImageNum(ImageNum);
-                m_PipelineSet.Sprite.setImageNum(ImageNum);
-                m_PipelineSet.Sky.setImageNum(ImageNum);
-
-                __updatePipelines();
-                __updateDescriptorSets();
-
-                m_PipelineSet.Sky.setImageNum(ImageNum);
-
-            }
-        }
-
-        rerecordCommand();
-    }
+    m_PipelineSet.Sky.updateV(vUpdateState);
+    m_PipelineSet.Normal.updateV(vUpdateState);
+    m_PipelineSet.BlendTextureAlpha.updateV(vUpdateState);
+    m_PipelineSet.BlendAlphaTest.updateV(vUpdateState);
+    m_PipelineSet.BlendAdditive.updateV(vUpdateState);
+    m_PipelineSet.Sprite.updateV(vUpdateState);
 }
 
 void CSceneGoldSrcRenderPass::_updateV(uint32_t vImageIndex)
@@ -253,15 +265,15 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 __renderByBspTree(vImageIndex);
             else
             {
-                m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
+                m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
 
-                m_PipelineSet.Normal.setOpacity(CommandBuffer, 1.0f);
+                m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
 
                 for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
                 {
                     auto pActor = m_pSceneInfo->pScene->getActor(i);
                     bool EnableLightmap = pActor->getMesh()->getMeshData().getEnableLightmap();
-                    m_PipelineSet.Normal.setLightmapState(CommandBuffer, EnableLightmap);
+                    m_PipelineSet.Normal.get().setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
                     {
                         __recordObjectRenderCommand(vImageIndex, i);
@@ -286,8 +298,19 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
 
     m_EnableSky = m_EnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
 
-    __updatePipelines();
-    __updateDescriptorSets();
+    if (m_PipelineSet.Normal.isReady())
+        __updatePipelineResourceGoldSrc(m_PipelineSet.Normal.get());
+    if (m_PipelineSet.BlendAdditive.isReady())
+        __updatePipelineResourceGoldSrc(m_PipelineSet.BlendAdditive.get());
+    if (m_PipelineSet.BlendAlphaTest.isReady())
+        __updatePipelineResourceGoldSrc(m_PipelineSet.BlendAlphaTest.get());
+    if (m_PipelineSet.BlendTextureAlpha.isReady())
+        __updatePipelineResourceGoldSrc(m_PipelineSet.BlendTextureAlpha.get());
+    if (m_PipelineSet.Sky.isReady())
+        __updatePipelineResourceSky(m_PipelineSet.Sky.get());
+    if (m_PipelineSet.Sprite.isReady())
+        __updatePipelineResourceSprite(m_PipelineSet.Sprite.get());
+
     rerecordCommand();
 }
 
@@ -303,7 +326,7 @@ void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
     if (m_pSceneInfo->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
+    m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
 
     __renderTreeNode(vImageIndex, 0);
     __renderPointEntities(vImageIndex);
@@ -315,7 +338,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
-    m_PipelineSet.Normal.setOpacity(CommandBuffer, 1.0f);
+    m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
 
     if (vNodeIndex >= m_pSceneInfo->BspTree.NodeNum) // if is leaf, render it
     {
@@ -328,7 +351,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
             isLeafVisable = true;
 
             bool EnableLightmap = m_pSceneInfo->pScene->getActor(ObjectIndex)->getMesh()->getMeshData().getEnableLightmap();
-            m_PipelineSet.Normal.setLightmapState(CommandBuffer, EnableLightmap);
+            m_PipelineSet.Normal.get().setLightmapState(CommandBuffer, EnableLightmap);
 
             __recordObjectRenderCommand(vImageIndex, ObjectIndex);
         }
@@ -447,24 +470,24 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
     {
     case EGoldSrcRenderMode::NORMAL:
     {
-        pPipeline = &m_PipelineSet.Normal;
+        pPipeline = &m_PipelineSet.Normal.get();
         break;
     }
     case EGoldSrcRenderMode::COLOR:
     case EGoldSrcRenderMode::TEXTURE:
     {
-        pPipeline = &m_PipelineSet.BlendTextureAlpha;
+        pPipeline = &m_PipelineSet.BlendTextureAlpha.get();
         break;
     }
     case EGoldSrcRenderMode::SOLID:
     {
-        pPipeline = &m_PipelineSet.BlendAlphaTest;
+        pPipeline = &m_PipelineSet.BlendAlphaTest.get();
         break;
     }
     case EGoldSrcRenderMode::ADDITIVE:
     case EGoldSrcRenderMode::GLOW:
     {
-        pPipeline = &m_PipelineSet.BlendAdditive;
+        pPipeline = &m_PipelineSet.BlendAdditive.get();
         break;
     }
     default:
@@ -488,7 +511,7 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
 void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Normal.bind(CommandBuffer, vImageIndex);
+    m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
 
     for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
@@ -526,15 +549,6 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
     }
 }
 
-void CSceneGoldSrcRenderPass::__updateDescriptorSets()
-{
-    VkImageView Lightmap = (m_pSceneInfo && m_pSceneInfo->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
-    m_PipelineSet.Normal.updateDescriptorSet(m_TextureImageSet, Lightmap);
-    m_PipelineSet.BlendTextureAlpha.updateDescriptorSet(m_TextureImageSet, Lightmap);
-    m_PipelineSet.BlendAlphaTest.updateDescriptorSet(m_TextureImageSet, Lightmap);
-    m_PipelineSet.BlendAdditive.updateDescriptorSet(m_TextureImageSet, Lightmap);
-}
-
 void CSceneGoldSrcRenderPass::__updateTextureView()
 {
     size_t ImageNum = m_pSceneInfo->TexImageSet.size();
@@ -560,17 +574,31 @@ size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
     return NumTexture;
 }
 
-void CSceneGoldSrcRenderPass::__updatePipelines()
+void CSceneGoldSrcRenderPass::__updatePipelineResourceGoldSrc(CPipelineGoldSrc& vPipeline)
+{
+    vPipeline.clearResources();
+    vPipeline.setTextures(m_TextureImageSet);
+    vPipeline.setLightmap(m_LightmapImage);
+}
+
+void CSceneGoldSrcRenderPass::__updatePipelineResourceSky(CPipelineSkybox& vPipeline)
 {
     if (m_pSceneInfo)
     {
-        if (m_pSceneInfo->UseSkyBox && m_PipelineSet.Sky.isValid())
+        if (m_pSceneInfo->UseSkyBox && vPipeline.isValid())
         {
-            m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
+            vPipeline.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
         }
-        if (!m_pSceneInfo->SprSet.empty() && m_PipelineSet.Sprite.isValid())
+    }
+}
+
+void CSceneGoldSrcRenderPass::__updatePipelineResourceSprite(CPipelineSprite& vPipeline)
+{
+    if (m_pSceneInfo)
+    {
+        if (!m_pSceneInfo->SprSet.empty() && vPipeline.isValid())
         {
-            m_PipelineSet.Sprite.setSprites(m_pSceneInfo->SprSet);
+            vPipeline.setSprites(m_pSceneInfo->SprSet);
         }
     }
 }
@@ -639,22 +667,22 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
 void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     glm::mat4 Model = glm::mat4(1.0f);
-    m_PipelineSet.Normal.updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineSet.Normal.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.BlendTextureAlpha.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.BlendAlphaTest.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.BlendAdditive.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.Sprite.get().updateUniformBuffer(vImageIndex, m_pCamera);
     if (m_EnableSky)
-        m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, m_pCamera);
+        m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
 void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
+    m_PipelineSet.Sky.get().recordCommand(CommandBuffer, vImageIndex);
 }
 void CSceneGoldSrcRenderPass::__recordSpriteRenderCommand(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sprite.recordCommand(CommandBuffer, vImageIndex);
+    m_PipelineSet.Sprite.get().recordCommand(CommandBuffer, vImageIndex);
 }
