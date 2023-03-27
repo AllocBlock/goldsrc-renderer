@@ -38,6 +38,7 @@ void CSceneGoldSrcRenderPass::_initV()
     
     VkExtent2D RefExtent = { 0, 0 };
     _dumpReferenceExtentV(RefExtent);
+
     m_DepthImageManager.init(RefExtent, false, 
         [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
         {
@@ -50,38 +51,34 @@ void CSceneGoldSrcRenderPass::_initV()
 
     VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
 
-    auto CreateGoldSrcPipelineFunc = [this](VkExtent2D vExtent, CPipelineGoldSrc& vPipeline)
+    auto CreateGoldSrcPipelineFunc = [this](CPipelineGoldSrc& vPipeline)
     {
-        if (isValid())
+        if (vPipeline.isValid())
         {
-            vPipeline.create(m_pDevice, get(), vExtent);
-
             VkImageView Lightmap = (m_pSceneInfo && m_pSceneInfo->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
             __updatePipelineResourceGoldSrc(vPipeline);
             rerecordCommand();
         }
     };
 
-    m_PipelineSet.Normal.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-    m_PipelineSet.BlendTextureAlpha.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-    m_PipelineSet.BlendAlphaTest.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-    m_PipelineSet.BlendAdditive.init(ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-    m_PipelineSet.Sky.init(ScreenExtent, true, m_pAppInfo->getImageNum(), 
-        [this](VkExtent2D vExtent, CPipelineSkybox& vPipeline)
+    m_PipelineSet.Normal.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.BlendTextureAlpha.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.BlendAlphaTest.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.BlendAdditive.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+    m_PipelineSet.Sky.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
+        [this](CPipelineSkybox& vPipeline)
         {
-            if (isValid())
+            if (vPipeline.isValid())
             {
-                vPipeline.create(m_pDevice, get(), vExtent);
                 __updatePipelineResourceSky(vPipeline);
                 rerecordCommand();
             }
         });
-    m_PipelineSet.Sprite.init(ScreenExtent, true, m_pAppInfo->getImageNum(),
-        [this](VkExtent2D vExtent, CPipelineSprite& vPipeline)
+    m_PipelineSet.Sprite.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
+        [this](CPipelineSprite& vPipeline)
         {
-            if (isValid())
+            if (vPipeline.isValid())
             {
-                vPipeline.create(m_pDevice, get(), vExtent);
                 __updatePipelineResourceSprite(vPipeline);
                 rerecordCommand();
             }

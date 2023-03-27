@@ -70,7 +70,7 @@ namespace vk
         bool RenderpassUpdated = false;
     };
 
-    class IRenderPass : public IVulkanHandle<VkRenderPass>, public IDrawableUI
+    class IRenderPass : public IVulkanHandle<VkRenderPass>, public IDrawableUI, public std::enable_shared_from_this<IRenderPass>
     {
     public:
         _DEFINE_PTR(IRenderPass);

@@ -19,37 +19,14 @@ namespace
     };
 }
 
-void CPipelineSimple::updateDescriptorSet(const vk::CPointerSet<vk::CImage>& vTextureSet)
+void CPipelineSimple::setTextures(const vk::CPointerSet<vk::CImage>& vTextureSet)
 {
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
+    m_TextureSet.clear();
+    for (size_t i = 0; i < vTextureSet.size(); ++i)
     {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
-        WriteInfo.addWriteSampler(2, m_Sampler.get());
-
-        //const size_t NumTexture = __getActualTextureNum();
-        const size_t NumTexture = vTextureSet.size();
-
-        std::vector<VkImageView> TexImageViewSet(CPipelineSimple::MaxTextureNum);
-        for (size_t i = 0; i < CPipelineSimple::MaxTextureNum; ++i)
-        {
-            // for unused element, fill like the first one (weird method but avoid validation warning)
-            if (i >= NumTexture)
-            {
-                if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = m_PlaceholderImage;
-                else
-                    TexImageViewSet[i] = TexImageViewSet[0];
-            }
-            else
-                TexImageViewSet[i] = *vTextureSet[i];
-        }
-        WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
-
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
+        m_TextureSet.emplace_back(*vTextureSet[i]);
     }
+    __updateDescriptorSet();
 }
 
 void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, CCamera::CPtr vCamera)
@@ -115,11 +92,46 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
 
     Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+
+    __updateDescriptorSet();
 }
 
 void CPipelineSimple::_destroyV()
 {
     __destroyResources();
+}
+
+void CPipelineSimple::__updateDescriptorSet()
+{
+    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
+    for (size_t i = 0; i < DescriptorNum; ++i)
+    {
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
+        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
+        WriteInfo.addWriteSampler(2, m_Sampler.get());
+
+        //const size_t NumTexture = __getActualTextureNum();
+        const size_t NumTexture = m_TextureSet.size();
+
+        std::vector<VkImageView> TexImageViewSet(CPipelineSimple::MaxTextureNum);
+        for (size_t i = 0; i < CPipelineSimple::MaxTextureNum; ++i)
+        {
+            // for unused element, fill like the first one (weird method but avoid validation warning)
+            if (i >= NumTexture)
+            {
+                if (i == 0) // no texture, use default placeholder texture
+                    TexImageViewSet[i] = m_PlaceholderImage;
+                else
+                    TexImageViewSet[i] = TexImageViewSet[0];
+            }
+            else
+                TexImageViewSet[i] = m_TextureSet[i];
+        }
+        WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
+
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
+    }
 }
 
 void CPipelineSimple::__destroyResources()

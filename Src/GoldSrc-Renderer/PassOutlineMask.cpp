@@ -53,15 +53,8 @@ void CRenderPassOutlineMask::_initV()
         }
     );
 
-    m_PipelineCreator.init(m_pAppInfo->getScreenExtent(), true, m_pAppInfo->getImageNum(),
-        [this](VkExtent2D vExtent, IPipeline& vPipeline)
-        {
-            if (isValid())
-            {
-                vPipeline.create(m_pDevice, get(), vExtent);
-                __rerecordCommand();
-            }
-        }
+    m_PipelineCreator.init(m_pDevice, weak_from_this(), m_pAppInfo->getScreenExtent(), true, m_pAppInfo->getImageNum(),
+        [this](IPipeline& vPipeline) { __rerecordCommand(); }
     );
 
     __rerecordCommand();

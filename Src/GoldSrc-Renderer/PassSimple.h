@@ -7,6 +7,7 @@
 #include "Image.h"
 #include "PipelineSkybox.h"
 #include "PipelineSimple.h"
+#include "DynamicResourceManager.h"
 
 class CSceneSimpleRenderPass : public CRenderPassSceneTyped<SSimplePointData>
 {
@@ -50,7 +51,7 @@ protected:
         return
         {
             m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
-            m_pPortSet->getInputPort("Depth")->getImageV(),
+            m_pPortSet->getOutputPort("Depth")->getImageV(),
         };
     }
     virtual std::vector<VkClearValue> _getClearValuesV() override
@@ -61,7 +62,6 @@ protected:
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
-    void __createDepthResources(VkExtent2D vExtent);
     void __createTextureImages();
 
     void __createSceneResources();
@@ -74,12 +74,11 @@ private:
     void __recordSkyRenderCommand(uint32_t vImageIndex);
     
     size_t __getActualTextureNum();
-    void __updateDescriptorSets();
 
     struct
     {
-        CPipelineSimple Main;
-        CPipelineSkybox Sky;
+        CDynamicPipeline<CPipelineSimple> Main;
+        CDynamicPipeline<CPipelineSkybox> Sky;
 
         void destroy()
         {
@@ -89,7 +88,7 @@ private:
     } m_PipelineSet;
 
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
-    vk::CImage m_DepthImage;
+    CDynamicTextureCreator m_DepthImageManager;
 
     size_t m_RerecordCommandTimes = 0;
     std::vector<bool> m_AreObjectsVisable;

@@ -52,16 +52,7 @@ void CLineRenderPass::_initV()
     VkExtent2D RefExtent = { 0, 0 };
     _dumpReferenceExtentV(RefExtent);
 
-    m_PipelineCreator.init(RefExtent, false, m_pAppInfo->getImageNum(),
-        [this](VkExtent2D vExtent, IPipeline& vPipeline)
-        {
-            if (isValid())
-            {
-                vPipeline.create(m_pDevice, get(), vExtent);
-                __rerecordCommand();
-            }
-        }
-    );
+    m_PipelineCreator.init(m_pDevice, weak_from_this(), RefExtent, false, m_pAppInfo->getImageNum());
 
     __rerecordCommand();
 }

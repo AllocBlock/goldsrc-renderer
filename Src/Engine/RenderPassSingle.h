@@ -1,6 +1,7 @@
 #pragma once
 #include "RenderPass.h"
 
+// render pass with single frame buffer
 class CRenderPassSingle : public vk::IRenderPass
 {
 protected:

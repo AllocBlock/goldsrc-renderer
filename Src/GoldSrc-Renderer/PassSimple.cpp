@@ -31,6 +31,36 @@ void CSceneSimpleRenderPass::_initV()
 {
     CRenderPassSceneTyped::_initV();
 
+    VkExtent2D RefExtent = { 0, 0 };
+    _dumpReferenceExtentV(RefExtent);
+
+    m_DepthImageManager.init(RefExtent, false,
+        [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
+        {
+            vImageSet.init(1);
+            VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
+            Function::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
+            m_pPortSet->setOutput("Depth", *vImageSet[0]);
+        }
+    );
+
+    VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
+
+    m_PipelineSet.Main.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), [this](CPipelineSimple& vPipeline)
+    {
+        if (vPipeline.isValid())
+            vPipeline.setTextures(m_TextureImageSet);
+        rerecordCommand();
+    });
+    m_PipelineSet.Sky.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), [this](CPipelineSkybox& vPipeline)
+    {
+        if (vPipeline.isValid() && m_pSceneInfo && m_pSceneInfo->UseSkyBox)
+        {
+            vPipeline.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
+        }
+        rerecordCommand();
+    });
+
     rerecordCommand();
 }
 
@@ -53,32 +83,16 @@ void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState
     CRenderPassSingle::_onUpdateV(vUpdateState);
 
     VkExtent2D RefExtent = { 0, 0 };
-    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+    if (!_dumpReferenceExtentV(RefExtent)) return;
+    
+    m_DepthImageManager.updateV(vUpdateState);
+    m_DepthImageManager.updateExtent(RefExtent);
 
     if (m_pCamera)
         m_pCamera->setAspect(RefExtent.width, RefExtent.height);
 
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.ScreenExtent.IsUpdated)
-    {
-        if (RefExtent != vk::ZeroExtent)
-            __createDepthResources(RefExtent); // extent
-        if (isValid())
-        {
-            if (!vUpdateState.InputImageUpdated)
-            {
-                m_PipelineSet.Main.create(m_pDevice, get(), RefExtent);
-                m_PipelineSet.Sky.create(m_pDevice, get(), RefExtent);
-                m_PipelineSet.Main.setImageNum(m_pAppInfo->getImageNum());
-                m_PipelineSet.Sky.setImageNum(m_pAppInfo->getImageNum());
-
-                if (m_pSceneInfo && m_pSceneInfo->UseSkyBox)
-                {
-                    m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
-                }
-            }
-        }
-        rerecordCommand();
-    }
+    m_PipelineSet.Main.updateV(vUpdateState);
+    m_PipelineSet.Sky.updateV(vUpdateState);
 }
 
 void CSceneSimpleRenderPass::_updateV(uint32_t vImageIndex)
@@ -112,7 +126,7 @@ void CSceneSimpleRenderPass::_renderUIV()
 
 void CSceneSimpleRenderPass::_destroyV()
 {
-    m_DepthImage.destroy();
+    m_DepthImageManager.destroy();
     m_PipelineSet.destroy();
 
     __destroySceneResources();
@@ -154,7 +168,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         if (Valid)
         {
             __calculateVisiableObjects();
-            m_PipelineSet.Main.bind(CommandBuffer, vImageIndex);
+            m_PipelineSet.Main.get().bind(CommandBuffer, vImageIndex);
             for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
                 if (m_AreObjectsVisable[i])
@@ -172,13 +186,15 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
 void CSceneSimpleRenderPass::__createSceneResources()
 {
     __createTextureImages();
-    __updateDescriptorSets();
 
     m_EnableSky = m_EnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
 
-    if (m_pSceneInfo && m_pSceneInfo->UseSkyBox && m_PipelineSet.Sky.isValid())
+    if (m_PipelineSet.Main.isReady())
+        m_PipelineSet.Main.get().setTextures(m_TextureImageSet);
+
+    if (m_pSceneInfo && m_pSceneInfo->UseSkyBox && m_PipelineSet.Sky.isReady())
     {
-        m_PipelineSet.Sky.setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
+        m_PipelineSet.Sky.get().setSkyBoxImage(m_pSceneInfo->SkyBoxImages);
     }
 }
 
@@ -193,15 +209,6 @@ void CSceneSimpleRenderPass::__recordRenderActorCommand(uint32_t vImageIndex, si
     _recordRenderActorCommand(CommandBuffer, vObjectIndex);
 }
 
-void CSceneSimpleRenderPass::__createDepthResources(VkExtent2D vExtent)
-{
-    m_DepthImage.destroy();
-
-    VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    Function::createDepthImage(m_DepthImage, m_pDevice, vExtent, NULL, DepthFormat);
-    m_pPortSet->setOutput("Depth", m_DepthImage);
-}
-
 void CSceneSimpleRenderPass::__createTextureImages()
 {
     size_t NumTexture = __getActualTextureNum();
@@ -213,11 +220,6 @@ void CSceneSimpleRenderPass::__createTextureImages()
              Function::createImageFromIOImage(*m_TextureImageSet[i], m_pDevice, m_pSceneInfo->TexImageSet[i]);
         }
     }
-}
-
-void CSceneSimpleRenderPass::__updateDescriptorSets()
-{
-    m_PipelineSet.Main.updateDescriptorSet(m_TextureImageSet);
 }
 
 size_t CSceneSimpleRenderPass::__getActualTextureNum()
@@ -269,13 +271,13 @@ void CSceneSimpleRenderPass::__calculateVisiableObjects()
 void CSceneSimpleRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     glm::mat4 Model = glm::mat4(1.0f);
-    m_PipelineSet.Main.updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.Main.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
     if (m_EnableSky)
-        m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, m_pCamera);
+        m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
 void CSceneSimpleRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sky.recordCommand(CommandBuffer, vImageIndex);
+    m_PipelineSet.Sky.get().recordCommand(CommandBuffer, vImageIndex);
 }

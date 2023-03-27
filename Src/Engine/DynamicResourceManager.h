@@ -139,6 +139,7 @@ private:
     {
         destroy();
         m_CreateImageFunc(m_Extent, m_ImageSet);
+        _ASSERTE(!m_ImageSet.empty() && m_ImageSet.isAllValid());
     }
 
     bool m_IsInitted = false;
@@ -149,18 +150,22 @@ private:
 };
 
 template <typename Pipeline_t>
-using CreatePipelineCallback_t = std::function<void(VkExtent2D, Pipeline_t&)>;
+using CreatePipelineCallback_t = std::function<void(Pipeline_t&)>;
 
 template <typename Pipeline_t>
 class CDynamicPipeline : public CDynamicResource
 {
 public:
-    void init(VkExtent2D vInitExtent, bool vKeepScreenSize, uint32_t vImageNum, CreatePipelineCallback_t<Pipeline_t> vCreateCallback)
+    void init(vk::CDevice::CPtr vDevice, std::weak_ptr<const vk::IRenderPass> vPass, VkExtent2D vInitExtent, bool vKeepScreenSize, uint32_t vImageNum, CreatePipelineCallback_t<Pipeline_t> vCreateCallback = nullptr)
     {
         _ASSERTE(!m_IsInitted);
+        _ASSERTE(!vPass.expired());
+        _ASSERTE(vDevice);
         m_Extent = vInitExtent;
         m_KeepScreenSize = vKeepScreenSize;
         m_ImageNum = vImageNum;
+        m_pPass = vPass;
+        m_pDevice = vDevice;
         m_pCreateCallback = vCreateCallback;
         m_IsInitted = true;
     }
@@ -225,10 +230,15 @@ public:
         }
         else
         {
-            m_pCreateCallback(m_Extent, m_Pipeline);
-            if (m_Pipeline.isValid())
+            auto pPass = m_pPass.lock();
+            if (pPass->isValid())
+            {
+                m_Pipeline.create(m_pDevice, pPass->get(), m_Extent);
                 m_Pipeline.setImageNum(m_ImageNum);
+            }
         }
+        if (m_pCreateCallback)
+            m_pCreateCallback(m_Pipeline);
         m_IsReady = m_Pipeline.isValid();
     }
 
@@ -244,5 +254,7 @@ protected:
     VkExtent2D m_Extent = VkExtent2D{ 0, 0 };
     bool m_KeepScreenSize = false;
     uint32_t m_ImageNum = 0;
+    std::weak_ptr<const vk::IRenderPass> m_pPass;
+    vk::CDevice::CPtr m_pDevice = nullptr;
     CreatePipelineCallback_t<Pipeline_t> m_pCreateCallback = nullptr;
 };

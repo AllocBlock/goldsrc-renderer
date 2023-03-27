@@ -48,6 +48,8 @@ public:
     VkDescriptorSet getDescriptorSet(size_t vIndex) const;
     size_t getDescriptorSetNum() const;
 
+    bool isReady(); // is shader resource ready (num > 0, and all are updated)
+
 private:
     struct SDescriptorInfo
     {
@@ -69,4 +71,7 @@ private:
     std::vector<VkDescriptorPoolSize> m_PoolSizeSet;
     std::vector<VkDescriptorSet> m_DescriptorSetSet;
     VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
+
+    std::vector<bool> m_IsUpdated;
+    bool m_IsReady; // is ready cache
 };
