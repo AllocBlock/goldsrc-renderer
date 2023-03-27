@@ -18,6 +18,8 @@ void CSwapchain::create(CDevice::Ptr vDevice)
     VkPresentModeKHR PresentMode = __chooseSwapPresentMode(SwapChainSupport.PresentModes);
     VkExtent2D Extent = __chooseSwapExtent(pWindow, SwapChainSupport.Capabilities);
 
+    _ASSERTE(Extent != vk::ZeroExtent);
+
     uint32_t NumImage = SwapChainSupport.Capabilities.minImageCount + 1;
     if (SwapChainSupport.Capabilities.maxImageCount > 0 &&
         NumImage > SwapChainSupport.Capabilities.maxImageCount)

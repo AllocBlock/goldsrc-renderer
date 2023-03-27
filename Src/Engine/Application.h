@@ -28,7 +28,8 @@ public:
     virtual ~IApplication() = default;
 
     void create(GLFWwindow* vWindow);
-    void render();
+    void tick();
+    void resize(uint32_t vWidth, uint32_t vHeight);
     void waitDevice();
     void destroy();
 
@@ -69,6 +70,7 @@ protected:
     };
 
 private:
+    void __render();
     void __createInstance();
     void __setupDebugMessenger();
     void __createSemaphores();
@@ -79,4 +81,6 @@ private:
     std::vector<VkCommandBuffer> __sortCommandBuffers(uint32_t vImageIndex);
 
     std::vector<const char*> __getRequiredExtensions();
+
+    bool m_Freezed = false; // when freezed, no rendering is performed
 };

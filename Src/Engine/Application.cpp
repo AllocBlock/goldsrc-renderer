@@ -61,7 +61,25 @@ void IApplication::destroy()
     m_CurrentFrameIndex = 0;
 }
 
-void IApplication::render()
+
+void IApplication::tick()
+{
+    if (!m_Freezed)
+    {
+        __render();
+    }
+}
+
+void IApplication::resize(uint32_t vWidth, uint32_t vHeight)
+{
+    // TIPS: no need to recreate swapchain, as extent is not changed, swapchain is valid
+    if (vWidth > 0 && vHeight > 0)
+        m_Freezed = false;
+    else
+        m_Freezed = true;
+}
+
+void IApplication::__render()
 {
     m_InFlightFenceSet[m_CurrentFrameIndex]->wait();
 

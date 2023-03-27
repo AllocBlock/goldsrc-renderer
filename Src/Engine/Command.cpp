@@ -37,6 +37,7 @@ void CCommand::createPool(CDevice::CPtr vDevice, ECommandType vType, uint32_t vQ
 
 void CCommand::createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel)
 {
+    _ASSERTE(vNum > 0);
     if (m_NameToBufferSetMap.find(vName) != m_NameToBufferSetMap.end())
     {
         __freeBufferSet(m_NameToBufferSetMap.at(vName));

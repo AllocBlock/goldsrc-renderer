@@ -30,9 +30,6 @@ void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
-        VkExtent2D RefExtent = { 0, 0 };
-        bool HasExtent = _dumpInputPortExtent("Main", RefExtent);
-
         if (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated)
         {
             if (isValid())

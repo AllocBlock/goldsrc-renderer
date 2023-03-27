@@ -45,7 +45,8 @@ protected:
         {
             VkExtent2D Extent;
             if (!_dumpReferenceExtentV(Extent)) return;
-            __createFramebuffers(Extent);
+            if (Extent != vk::ZeroExtent)
+                __createFramebuffers(Extent);
         }
     }
 
@@ -82,6 +83,7 @@ private:
     void __createCommandPoolAndBuffers(uint32_t vImageNum)
     {
         __destroyCommandPoolAndBuffers();
+        if (vImageNum == 0) return;
         m_Command.createPool(m_pDevice, ECommandType::RESETTABLE);
         m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(vImageNum), ECommandBufferLevel::PRIMARY);
     }
