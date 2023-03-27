@@ -71,13 +71,15 @@ CRenderPassDescriptor CLineRenderPass::_getRenderPassDescV()
 
 void CLineRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    m_PipelineCreator.updateV(vUpdateState);
 
     VkExtent2D RefExtent = {0, 0};
-    if (!_dumpReferenceExtentV(RefExtent)) return;
-
-    m_PipelineCreator.updateV(vUpdateState);
-    m_PipelineCreator.updateExtent(RefExtent);
+    if (_dumpReferenceExtentV(RefExtent))
+    {
+        m_PipelineCreator.updateExtent(RefExtent);
+    }
+    
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
 void CLineRenderPass::_updateV(uint32_t vImageIndex)

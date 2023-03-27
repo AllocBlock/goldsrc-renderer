@@ -105,23 +105,24 @@ CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()
 
 void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassSingle::_onUpdateV(vUpdateState);
-
-    VkExtent2D RefExtent = { 0, 0 };
-    if (!_dumpReferenceExtentV(RefExtent)) return;
-
-    if (m_pCamera)
-        m_pCamera->setAspect(RefExtent.width, RefExtent.height);
-
     m_DepthImageManager.updateV(vUpdateState);
-    m_DepthImageManager.updateExtent(RefExtent);
-
     m_PipelineSet.Sky.updateV(vUpdateState);
     m_PipelineSet.Normal.updateV(vUpdateState);
     m_PipelineSet.BlendTextureAlpha.updateV(vUpdateState);
     m_PipelineSet.BlendAlphaTest.updateV(vUpdateState);
     m_PipelineSet.BlendAdditive.updateV(vUpdateState);
     m_PipelineSet.Sprite.updateV(vUpdateState);
+
+    VkExtent2D RefExtent = { 0, 0 };
+    if (_dumpReferenceExtentV(RefExtent))
+    {
+        if (m_pCamera)
+            m_pCamera->setAspect(RefExtent.width, RefExtent.height);
+
+        m_DepthImageManager.updateExtent(RefExtent);
+    }
+
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
 void CSceneGoldSrcRenderPass::_updateV(uint32_t vImageIndex)

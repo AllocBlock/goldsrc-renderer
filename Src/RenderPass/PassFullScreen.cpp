@@ -103,12 +103,15 @@ void CRenderPassFullScreenGeneral::_initV()
 void CRenderPassFullScreenGeneral::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     VkExtent2D Extent;
-    if (!_dumpReferenceExtentV(Extent)) return;
-
-    if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
+    if (_dumpReferenceExtentV(Extent))
     {
-        __createPipeline(Extent);
+        if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
+        {
+            __createPipeline(Extent);
+        }
     }
+
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
 std::vector<VkCommandBuffer> CRenderPassFullScreenGeneral::_requestCommandBuffersV(uint32_t vImageIndex)

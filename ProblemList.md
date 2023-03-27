@@ -204,6 +204,7 @@
   - 主动创建的image
   - pipeline
   - command pool
+  - frame buffer
 - 依赖条件
   - swapchain framebuffer数量
   - 输入
@@ -219,6 +220,8 @@
 - **问题：Pipeline创建前，更新了Pipeline的资源，如何处理**
   - 更新资源时，保存这个资源，尝试更新，如果Pipeline已创建则更新，否则不更新
   - Pipeline创建后，立刻更新一次这个资源？这样设计显然有问题
+
+> 注意：framebuffer和其attachement都可能更新，而attachment应该先更新，否则framebuffer获取的attachement是过时的
 
 - Pipeline需要设计为缺失任何一个资源时都能运行的状态，这样方便处理资源更新
   - 比如，如果不满足这个要求，资源1和2更新为了资源a和资源b，此时资源1和2失效了，而在把资源1更新为资源a时会重新update descriptor，这是把已经失效的资源2传上去，所以会出问题。此时应该先清空资源，然后再一个个更新资源

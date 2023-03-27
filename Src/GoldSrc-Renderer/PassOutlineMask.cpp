@@ -72,10 +72,10 @@ CRenderPassDescriptor CRenderPassOutlineMask::_getRenderPassDescV()
 
 void CRenderPassOutlineMask::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassSingle::_onUpdateV(vUpdateState);
-
     m_MaskImageCreator.updateV(vUpdateState);
     m_PipelineCreator.updateV(vUpdateState);
+
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassOutlineMask::_updateV(uint32_t vImageIndex)

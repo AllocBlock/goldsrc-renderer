@@ -28,8 +28,6 @@ CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
 
 void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassSingle::_onUpdateV(vUpdateState);
-
     if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
     {
         VkExtent2D RefExtent = { 0, 0 };
@@ -46,6 +44,8 @@ void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
             }
         }
     }
+
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassGUI::_renderUIV()

@@ -30,13 +30,15 @@ CRenderPassDescriptor CRenderPassOutlineEdge::_getRenderPassDescV()
 
 void CRenderPassOutlineEdge::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    m_PipelineCreator.updateV(vUpdateState);
 
     VkExtent2D RefExtent = { 0, 0 };
-    if (!_dumpReferenceExtentV(RefExtent)) return;
+    if (_dumpReferenceExtentV(RefExtent))
+    {
+        m_PipelineCreator.updateExtent(RefExtent);
+    }
 
-    m_PipelineCreator.updateV(vUpdateState);
-    m_PipelineCreator.updateExtent(RefExtent);
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
 std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uint32_t vImageIndex)

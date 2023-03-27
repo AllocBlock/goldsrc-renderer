@@ -80,19 +80,21 @@ CRenderPassDescriptor CSceneSimpleRenderPass::_getRenderPassDescV()
 
 void CSceneSimpleRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassSingle::_onUpdateV(vUpdateState);
-
-    VkExtent2D RefExtent = { 0, 0 };
-    if (!_dumpReferenceExtentV(RefExtent)) return;
-    
     m_DepthImageManager.updateV(vUpdateState);
-    m_DepthImageManager.updateExtent(RefExtent);
-
-    if (m_pCamera)
-        m_pCamera->setAspect(RefExtent.width, RefExtent.height);
-
     m_PipelineSet.Main.updateV(vUpdateState);
     m_PipelineSet.Sky.updateV(vUpdateState);
+
+
+
+    VkExtent2D RefExtent = { 0, 0 };
+    if (_dumpReferenceExtentV(RefExtent))
+    {
+        if (m_pCamera)
+            m_pCamera->setAspect(RefExtent.width, RefExtent.height);
+        m_DepthImageManager.updateExtent(RefExtent);
+    }
+
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
 void CSceneSimpleRenderPass::_updateV(uint32_t vImageIndex)
