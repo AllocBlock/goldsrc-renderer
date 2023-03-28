@@ -14,6 +14,12 @@ public:
     _DEFINE_GETTER(ImageNum, uint32_t)
     _DEFINE_GETTER(ScreenExtent, VkExtent2D)
 
+    float getScreenAspect()
+    {
+        _ASSERTE(m_ScreenExtent.width > 0 && m_ScreenExtent.height > 0);
+        return m_ScreenExtent.width / m_ScreenExtent.height;
+    }
+
     CAppInfo() { clear(); }
 
 private:
