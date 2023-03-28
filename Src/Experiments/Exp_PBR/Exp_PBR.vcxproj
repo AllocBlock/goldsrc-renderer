@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{BA475F22-F6BC-4FE7-8B7E-5B498FF27A97}</ProjectGuid>
-    <RootNamespace>TestShadowMap</RootNamespace>
+    <ProjectGuid>{19498310-A186-4EA4-8268-23AEC051A5BF}</ProjectGuid>
+    <RootNamespace>ExpPBR</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -45,9 +45,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -55,7 +59,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -66,6 +70,10 @@
       <AdditionalDependencies>$(VULKAN_SDK)/Lib/vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
     <PreBuildEvent>
       <Command>
       </Command>
@@ -79,7 +87,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -90,26 +98,26 @@
       <AdditionalDependencies>$(VULKAN_SDK)/Lib/vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
     <PreBuildEvent>
       <Command>$(SolutionDir)Tools/compileShader.py $(ProjectDir)shaders</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ApplicationShadowMap.cpp" />
-    <ClCompile Include="PipelineShadowMap.cpp" />
-    <ClCompile Include="PassShade.cpp" />
-    <ClCompile Include="PassShadowMap.cpp" />
+    <ClCompile Include="ApplicationPBR.cpp" />
+    <ClCompile Include="MaterialPBR.cpp" />
+    <ClCompile Include="PassPBR.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PipelineShade.cpp" />
+    <ClCompile Include="PipelinePBS.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationShadowMap.h" />
-    <ClInclude Include="PassTempSceneBase.h" />
-    <ClInclude Include="PipelineShadowMap.h" />
-    <ClInclude Include="PassShade.h" />
-    <ClInclude Include="PassShadowMap.h" />
-    <ClInclude Include="PipelineShade.h" />
-    <ClInclude Include="ShadowMapDefines.h" />
+    <ClInclude Include="ApplicationPBR.h" />
+    <ClInclude Include="MaterialPBR.h" />
+    <ClInclude Include="PassPBR.h" />
+    <ClInclude Include="PipelinePBS.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.vcxproj">
@@ -132,10 +140,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\env.frag" />
+    <None Include="shaders\env.vert" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
-    <None Include="shaders\shadowMap.frag" />
-    <None Include="shaders\shadowMap.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

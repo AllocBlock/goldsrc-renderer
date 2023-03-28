@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{74a882ed-ade6-409e-9e99-1e3e29790da6}</ProjectGuid>
-    <RootNamespace>TestEnvironmentMap</RootNamespace>
+    <ProjectGuid>{44ED1403-9E9C-4B09-8DF2-22E1A2BDF710}</ProjectGuid>
+    <RootNamespace>ExpShadowMap</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -55,7 +55,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -79,7 +79,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Function;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Function;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -95,15 +95,15 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ApplicationEnvMap.cpp" />
-    <ClCompile Include="PassTest.cpp" />
+    <ClCompile Include="ApplicationSprite.cpp" />
+    <ClCompile Include="PipelineSprite.cpp" />
+    <ClCompile Include="PassSprite.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PipelineTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ApplicationEnvMap.h" />
-    <ClInclude Include="PassTest.h" />
-    <ClInclude Include="PipelineTest.h" />
+    <ClInclude Include="ApplicationSprite.h" />
+    <ClInclude Include="PipelineSprite.h" />
+    <ClInclude Include="PassSprite.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.vcxproj">
@@ -124,10 +124,16 @@
     <ProjectReference Include="..\..\RenderPass\RenderPass.vcxproj">
       <Project>{920d82f3-c77d-49a8-96d6-0eec00081511}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\Scene\Scene.vcxproj">
+      <Project>{eb9ba7fd-f347-4886-83bd-d119a929aa39}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Vulkan\Vulkan.vcxproj">
+      <Project>{117a19ef-c976-4370-b795-b58c27ee4ab0}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader.frag" />
-    <None Include="shaders\shader.vert" />
+    <None Include="shaders\sprShader.frag" />
+    <None Include="shaders\sprShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

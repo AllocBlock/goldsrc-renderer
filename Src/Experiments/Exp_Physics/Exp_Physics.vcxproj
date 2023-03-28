@@ -14,7 +14,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{C7A78ACB-69C8-456B-8B2F-822FACF9B0B4}</ProjectGuid>
-    <RootNamespace>TestPhysics</RootNamespace>
+    <RootNamespace>ExpPhysics</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

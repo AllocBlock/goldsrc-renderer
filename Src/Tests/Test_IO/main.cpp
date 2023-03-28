@@ -41,7 +41,7 @@ void testSaveSpr()
 void testFGD()
 {
     CIOGoldSrcForgeGameData FGD;
-    FGD.read("../../data/cs16_0.8.2.0_vl.fgd");
+    FGD.read("../../../Data/cs16_0.8.2.0_vl.fgd");
     std::cout << FGD.getEntityNum() << "\n";
 }
 
