@@ -20,7 +20,7 @@ private:
     uint32_t __requestTextureIndex(std::string vTextureName);
     glm::vec2 __getTexCoord(SRmfFace vFace, glm::vec3 vVertex);
 
-    ptr<SSceneInfoGoldSrc> m_pScene = nullptr;
+    ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
     const float m_SceneScale = 1.0f / 64.0f;
     CIOGoldSrcRmf m_Rmf;
     std::vector<CIOGoldsrcWad> m_Wads;

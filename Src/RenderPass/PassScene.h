@@ -85,6 +85,7 @@ public:
 protected:
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override
     {
+        m_pDevice->waitUntilIdle();
         destroyAndClear(m_pVertexBuffer);
         m_pVertexBuffer = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_pDevice);
     }

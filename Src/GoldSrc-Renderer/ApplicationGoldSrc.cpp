@@ -50,6 +50,7 @@ void CApplicationGoldSrc::_createV()
     m_pInteractor->setMouseCallback([this](GLFWwindow* vWindow, int vButton, int vAction)
         {
             if (!m_pSceneInfo || !m_pSceneInfo->pScene) return;
+            if (vButton != GLFW_MOUSE_BUTTON_LEFT || vAction != GLFW_RELEASE) return;
 
             double XPos = 0.0, YPos = 0.0;
             glfwGetCursorPos(vWindow, &XPos, &YPos);

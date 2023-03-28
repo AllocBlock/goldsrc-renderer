@@ -97,10 +97,13 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
     if (pInteractor->m_pMouseCallback)
 		pInteractor->m_pMouseCallback(vpWindow, vButton, vAction);
 
-	if (vAction == GLFW_PRESS)
-		pInteractor->__startMovingMode();
-	else if (vAction == GLFW_RELEASE)
-		pInteractor->__stopMovingMode();
+	if (vButton == GLFW_MOUSE_BUTTON_RIGHT)
+	{
+		if (vAction == GLFW_PRESS)
+			pInteractor->__startMovingMode();
+		else if (vAction == GLFW_RELEASE)
+			pInteractor->__stopMovingMode();
+	}
 }
 
 void CInteractor::update()

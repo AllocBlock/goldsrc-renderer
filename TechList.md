@@ -23,6 +23,17 @@
       - 高斯或mipmap 
    3. 合并
 
+## 技术：ray cast求交
+- 先coarse后fine，提升效率
+  - Coarse
+    - AABB、OBB、k-dop
+  - Fine
+    - 三角形求交
+- 建树
+  - bsp
+  - bvh
+  - kd-tree
+
 ## 技术：物理模拟
 ### 概念
   #### 物体分类

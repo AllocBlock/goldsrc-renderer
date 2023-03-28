@@ -13,7 +13,6 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
     CRenderPassSceneTyped::_loadSceneV(vScene);
 
-    m_pDevice->waitUntilIdle();
     if (m_pSceneInfo->BspTree.Nodes.empty()) m_EnableBSP = false;
     if (m_pSceneInfo->BspPvs.LeafNum == 0) m_EnablePVS = false;
 
