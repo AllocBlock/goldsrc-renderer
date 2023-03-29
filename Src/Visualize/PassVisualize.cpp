@@ -12,6 +12,18 @@ void CRenderPassVisualize::addTriangle(const Visualize::Triangle& vTriangle)
     __rerecordCommand();
 }
 
+void CRenderPassVisualize::addLine(const Visualize::Line& vLine)
+{
+    m_PipelineSet.Line.get().add(vLine);
+    __rerecordCommand();
+}
+
+void CRenderPassVisualize::addPoint(const Visualize::Point& vPoint)
+{
+    m_PipelineSet.Point.get().add(vPoint);
+    __rerecordCommand();
+}
+
 void CRenderPassVisualize::clearAll()
 {
     m_PipelineSet.Triangle.get().clear();

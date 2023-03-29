@@ -1,19 +1,18 @@
 #pragma once
 #include "PipelineVisualizePrimitive.h"
 
-class CPipelineTriangle : public CPipelineVisualizePrimitive
+class CPipelinePoint : public CPipelineVisualizePrimitive
 {
 public:
-    void add(const Visualize::Triangle& vTriangle)
+    void add(const Visualize::Point& vPoint)
     {
-        glm::vec3 Normal = glm::normalize(glm::cross(vTriangle.B - vTriangle.A, vTriangle.C - vTriangle.A));
-        m_Triangles.emplace_back(std::make_pair(vTriangle, Normal));
+        m_Points.emplace_back(vPoint);
         __updateVertexBuffer();
     }
 
     void clear()
     {
-        m_Triangles.clear();
+        m_Points.clear();
         __updateVertexBuffer();
     }
 
@@ -32,20 +31,17 @@ private:
         m_pDevice->waitUntilIdle();
         m_VertexBuffer.destroy();
 
-        m_VertexNum = m_Triangles.size() * 3;
+        m_VertexNum = m_Points.size();
         if (m_VertexNum > 0)
         {
             VkDeviceSize BufferSize = sizeof(CPipelineVisualizePrimitive::SPointData) * m_VertexNum;
 
             std::vector<CPipelineVisualizePrimitive::SPointData> Vertices;
-            for (const auto& Pair : m_Triangles)
+            for (const auto& Point : m_Points)
             {
-                const auto& Tri = Pair.first;
-                const auto& N = Pair.second;
+                glm::vec3 N = glm::vec3(0.0, 1.0, 0.0);
 
-                Vertices.push_back({ Tri.A, N });
-                Vertices.push_back({ Tri.B, N });
-                Vertices.push_back({ Tri.C, N });
+                Vertices.push_back({ Point, N });
             }
             _ASSERTE(BufferSize == Vertices.size() * sizeof(CPipelineVisualizePrimitive::SPointData));
 
@@ -55,5 +51,5 @@ private:
     }
 
 
-    std::vector<std::pair<Visualize::Triangle, glm::vec3>> m_Triangles;
+    std::vector<Visualize::Point> m_Points;
 };

@@ -24,6 +24,16 @@ public:
 		m_pApp->addTriangle(vTriangle);
 	}
 
+	void addLine(const Visualize::Line& vLine)
+	{
+		m_pApp->addLine(vLine);
+	}
+
+	void addPoint(const Visualize::Point& vPoint)
+	{
+		m_pApp->addPoint(vPoint);
+	}
+
 	void start()
 	{
 		_ASSERTE(m_IsInitted);

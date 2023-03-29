@@ -9,6 +9,8 @@ class CApplicationVisualize : public IApplication
 public:
     CApplicationVisualize() = default;
     void addTriangle(const Visualize::Triangle& vTriangle) { m_pPassVisualize->addTriangle(vTriangle); }
+    void addLine(const Visualize::Line& vLine) { m_pPassVisualize->addLine(vLine); }
+    void addPoint(const Visualize::Point& vPoint) { m_pPassVisualize->addPoint(vPoint); }
 
 protected:
     virtual void _createV() override;

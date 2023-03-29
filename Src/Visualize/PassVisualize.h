@@ -3,9 +3,11 @@
 #include "FrameBuffer.h"
 #include "BoundingBox.h"
 #include "Camera.h"
-#include "PipelineTriangle.h"
 #include "DynamicResourceManager.h"
 #include "VisualizePrimitive.h"
+#include "PipelineTriangle.h"
+#include "PipelineLine.h"
+#include "PipelinePoint.h"
 
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
@@ -18,6 +20,8 @@ public:
     _DEFINE_GETTER_SETTER_POINTER(Camera, CCamera::CPtr);
 
     void addTriangle(const Visualize::Triangle& vTriangle);
+    void addLine(const Visualize::Line& vLine);
+    void addPoint(const Visualize::Point& vPoint);
     void clearAll();
 
 protected:
@@ -53,10 +57,8 @@ private:
     struct
     {
         CDynamicPipeline<CPipelineTriangle> Triangle;
-    /*    CDynamicPipeline<CPipelineLine> Line;
-        CDynamicPipeline<CPipelinePoint> Point;*/
-        CDynamicPipeline<CPipelineTriangle> Line;
-        CDynamicPipeline<CPipelineTriangle> Point;
+        CDynamicPipeline<CPipelineLine> Line;
+        CDynamicPipeline<CPipelinePoint> Point;
     } m_PipelineSet;
 
     CDynamicTextureCreator m_DepthImageManager;

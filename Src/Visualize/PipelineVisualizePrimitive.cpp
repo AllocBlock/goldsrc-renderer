@@ -1,24 +1,7 @@
-#include "PipelineTriangle.h"
+#include "PipelineVisualizePrimitive.h"
 
 namespace
 {
-    struct SPointData
-    {
-        glm::vec3 Pos;
-        glm::vec3 Normal;
-
-        using PointData_t = SPointData;
-        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-        {
-            CVertexAttributeDescriptor Descriptor;
-            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-            Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
-            return Descriptor.generate();
-        }
-    };
-
     struct SUBOVert
     {
         alignas(16) glm::mat4 Proj;
@@ -32,7 +15,7 @@ namespace
     };
 }
 
-void CPipelineTriangle::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineVisualizePrimitive::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -45,7 +28,7 @@ void CPipelineTriangle::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr 
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineTriangle::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineVisualizePrimitive::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
 {
     bind(vCommandBuffer, vImageIndex);
 
@@ -58,20 +41,7 @@ void CPipelineTriangle::recordCommand(VkCommandBuffer vCommandBuffer, size_t vIm
     }
 }
 
-void CPipelineTriangle::add(const Visualize::Triangle& vTriangle)
-{
-    glm::vec3 Normal = glm::normalize(glm::cross(vTriangle.B - vTriangle.A, vTriangle.C - vTriangle.A));
-    m_Triangles.emplace_back(std::make_pair(vTriangle, Normal));
-    __updateVertexBuffer();
-}
-
-void CPipelineTriangle::clear()
-{
-    m_Triangles.clear();
-    __updateVertexBuffer();
-}
-
-void CPipelineTriangle::_initShaderResourceDescriptorV()
+void CPipelineVisualizePrimitive::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice != VK_NULL_HANDLE);
     m_ShaderResourceDescriptor.clear();
@@ -80,7 +50,7 @@ void CPipelineTriangle::_initShaderResourceDescriptorV()
     m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-CPipelineDescriptor CPipelineTriangle::_getPipelineDescriptionV()
+CPipelineDescriptor CPipelineVisualizePrimitive::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
@@ -96,7 +66,7 @@ CPipelineDescriptor CPipelineTriangle::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineTriangle::_createResourceV(size_t vImageNum)
+void CPipelineVisualizePrimitive::_createResourceV(size_t vImageNum)
 {
     m_VertUniformBufferSet.destroyAndClearAll();
     m_FragUniformBufferSet.destroyAndClearAll();
@@ -116,7 +86,7 @@ void CPipelineTriangle::_createResourceV(size_t vImageNum)
     __updateDescriptorSet();
 }
 
-void CPipelineTriangle::_destroyV()
+void CPipelineVisualizePrimitive::_destroyV()
 {
     m_VertexNum = 0;
     m_VertexBuffer.destroy();
@@ -124,7 +94,7 @@ void CPipelineTriangle::_destroyV()
     m_FragUniformBufferSet.destroyAndClearAll();
 }
 
-void CPipelineTriangle::__updateDescriptorSet()
+void CPipelineVisualizePrimitive::__updateDescriptorSet()
 {
     for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
     {
@@ -132,34 +102,5 @@ void CPipelineTriangle::__updateDescriptorSet()
         WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
         WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
         m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
-}
-
-void CPipelineTriangle::__updateVertexBuffer()
-{
-    m_pDevice->waitUntilIdle();
-    m_VertexBuffer.destroy();
-
-    m_VertexNum = m_Triangles.size() * 3;
-    if (m_VertexNum > 0)
-    {
-        VkDeviceSize BufferSize = sizeof(SPointData) * m_VertexNum;
-
-        std::vector<glm::vec3> RawData;
-        for (const auto& Pair : m_Triangles)
-        {
-            const auto& Tri = Pair.first;
-            const auto& N = Pair.second;
-            RawData.emplace_back(Tri.A);
-            RawData.emplace_back(Tri.B);
-            RawData.emplace_back(Tri.C);
-            RawData.emplace_back(N);
-            RawData.emplace_back(N);
-            RawData.emplace_back(N);
-        }
-        _ASSERTE(BufferSize == RawData.size() * sizeof(glm::vec3));
-
-        m_VertexBuffer.create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        m_VertexBuffer.stageFill(RawData.data(), BufferSize);
     }
 }

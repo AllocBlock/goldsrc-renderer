@@ -24,7 +24,7 @@
     <ClCompile Include="PassVisualize.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineTriangle.cpp">
+    <ClCompile Include="PipelineVisualizePrimitive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -45,6 +45,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Visualizer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineLine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineVisualizePrimitive.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelinePoint.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
