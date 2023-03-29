@@ -23,8 +23,4 @@ private:
     ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
     CCamera::Ptr m_pCamera = nullptr;
-
-    std::vector<Visualize::Triangle> m_Triangles;
-    std::vector<Visualize::Line> m_Lines;
-    std::vector<Visualize::Point> m_Points;
 };

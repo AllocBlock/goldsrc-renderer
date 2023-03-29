@@ -15,6 +15,7 @@ layout(location = 1) out vec3 outFragNormal;
 
 void main()
 {
+    gl_PointSize = 1;
     gl_Position = ubo.Project * ubo.View * ubo.Model * vec4(inPosition, 1.0);
 
     outFragPosition = (ubo.Model * vec4(inPosition, 1.0)).xyz;

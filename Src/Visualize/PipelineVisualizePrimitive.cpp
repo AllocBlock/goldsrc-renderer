@@ -28,7 +28,7 @@ void CPipelineVisualizePrimitive::updateUniformBuffer(uint32_t vImageIndex, CCam
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineVisualizePrimitive::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineVisualizePrimitive::recordCommandV(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
 {
     bind(vCommandBuffer, vImageIndex);
 

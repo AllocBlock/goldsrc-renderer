@@ -109,9 +109,9 @@ std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV(uint3
     {
         // init
         _beginWithFramebuffer(vImageIndex);
-        m_PipelineSet.Triangle.get().recordCommand(CommandBuffer, vImageIndex);
-        m_PipelineSet.Line.get().recordCommand(CommandBuffer, vImageIndex);
-        m_PipelineSet.Point.get().recordCommand(CommandBuffer, vImageIndex);
+        m_PipelineSet.Triangle.get().recordCommandV(CommandBuffer, vImageIndex);
+        m_PipelineSet.Line.get().recordCommandV(CommandBuffer, vImageIndex);
+        m_PipelineSet.Point.get().recordCommandV(CommandBuffer, vImageIndex);
         _endWithFramebuffer();
     }
     return { CommandBuffer };

@@ -136,6 +136,7 @@
     <ClInclude Include="PassVisualize.h" />
     <ClInclude Include="VisualizePrimitive.h" />
     <ClInclude Include="Visualizer.h" />
+    <ClInclude Include="PipelineVisualizePrimitiveTyped.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\simpleShader.frag" />
