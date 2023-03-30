@@ -2,38 +2,56 @@
 
 #include <stdexcept>
 
-#define ENABLE_BACK_FACE_CULLING
+//#define ENABLE_BACK_FACE_CULLING
 #define ENABLE_IN_BOX_INTERSECTION
+
+
+bool Math::intersectRayPlane(const glm::vec3& vOrigin, const glm::vec3& vDirection, const Plane& vPlane, float& voT)
+{
+    glm::vec4 Param = vPlane.getParam();
+    glm::vec3 D = glm::vec3(Param);
+    float d = Param.w;
+
+    float Divide = -glm::dot(D, vOrigin) - d;
+    float Divider = glm::dot(D, vDirection);
+    if (glm::abs(Divider) < Math::Acc)
+        return false;
+    float t = Divide / Divider;
+    if (t < 0.0) return false;
+
+    voT = t;
+    return true;
+}
 
 bool Math::intersectRayTriangle(
     const glm::vec3& vOrigin, const glm::vec3& vDirection,
     const glm::vec3& vA, const glm::vec3& vB, const glm::vec3& vC,
     float& voT, float& voU, float& voV)
 {
-    glm::vec3 E1 = vC - vA;
-    glm::vec3 E2 = vB - vA;
-    glm::vec3 P = glm::cross(vDirection, E2);
-    float det = glm::dot(E1, P);
+    glm::vec3 E1 = vB - vA;
+    glm::vec3 E2 = vC - vA;
+    glm::vec3 TriangleNormal = glm::normalize(glm::cross(E1, E2));
 #ifdef ENABLE_BACK_FACE_CULLING
-    // if the determinant is negative the triangle is backfacing
-    // if the determinant is close to 0, the ray misses the triangle
-    if (det < Math::Acc) return false;
-#else
-    // ray and triangle are parallel if det is close to 0
-    if (fabs(det) < Math::Acc) return false;
+    // if the normal is on same direction, the triangle is backfacing
+    if (glm::dot(TriangleNormal, vDirection) > 0) return false;
 #endif
-    float invDet = 1 / det;
 
-    glm::vec3 T = vOrigin - vA;
-    voU = glm::dot(T, P) * invDet;
-    if (voU < 0 || voU > 1) return false;
+    Plane TrianglePlane = Plane::createByNormalPoint(TriangleNormal, vA);
+    float t = 0;
+    bool IsIntersected = Math::intersectRayPlane(vOrigin, vDirection, TrianglePlane, t);
 
-    glm::vec3 Q = glm::cross(T, E1);
-    voV = glm::dot(vDirection, Q) * invDet;
-    if (voV < 0 || voU + voV > 1) return false;
+    if (!IsIntersected) return false;
 
-    voT = glm::dot(E2, Q) * invDet;
+    // is inside triangle
+    glm::vec3 Intersection = vOrigin + vDirection * t;
+    glm::vec3 V = Intersection - vA;
+    float u = glm::dot(V, E1) / glm::pow(glm::length(E1), 2);
+    float v = glm::dot(V, E2) / glm::pow(glm::length(E2), 2);
+    if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) return false;
 
+    voT = t;
+    voU = u;
+    voV = v;
     return true;
 }
 

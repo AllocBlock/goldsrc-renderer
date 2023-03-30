@@ -38,6 +38,8 @@ TEST(Algorithm, RayCast) {
         bool ExpectResult = ExpectedResults[i];
         EXPECT_EQ(Intersected, ExpectResult);
 
+        Math::intersectRayTriangle(Ray.first, Ray.second, Triangle[0], Triangle[1], Triangle[2], t, u, v);
+
         if (Intersected)
             IntersectedSet.emplace_back(Ray.first + Ray.second * t);
         else
@@ -52,7 +54,7 @@ TEST(Algorithm, RayCast) {
         bool Intersected = IntersectedSet[i].has_value();
         glm::vec3 RayColor = Intersected ? glm::vec3(0, 1, 0) : glm::vec3(1, 0, 0);
         Visualizer.addTriangle({ Triangle[0], Triangle[1], Triangle[2] }, glm::vec3(1, 1, 1));
-        Visualizer.addLine({ Ray.first, Ray.second }, RayColor);
+        Visualizer.addLine({ Ray.first, Ray.first + Ray.second * 10.0F }, RayColor);
         if (Intersected)
         {
             Visualizer.addPoint(IntersectedSet[i].value(), glm::vec3(0, 1, 0));
