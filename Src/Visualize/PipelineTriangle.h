@@ -19,18 +19,22 @@ protected:
     virtual CPipelineDescriptor _getPipelineDescriptionV() override
     {
         CPipelineDescriptor Descriptor = CPipelineVisualizePrimitiveTyped::_getPipelineDescriptionV();
+
+        Descriptor.setVertShaderPath("shaders/triangleShader.vert");
+        Descriptor.setFragShaderPath("shaders/triangleShader.frag");
+
         Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
 
         return Descriptor;
     }
     
-    virtual std::vector<CPipelineVisualizePrimitive::SPointData> _convertPrimitive2PointData(size_t vIndex, const Visualize::Triangle& vPrimitive) override
+    virtual std::vector<CPipelineVisualizePrimitive::SPointData> _convertPrimitive2PointData(size_t vIndex, const Visualize::Triangle& vPrimitive, const glm::vec3& vColor) override
     {
         const glm::vec3& N = m_Normals[vIndex / 3];
         return  {
-            {vPrimitive.A, N},
-            {vPrimitive.B, N},
-            {vPrimitive.C, N},
+            {vPrimitive.A, N, vColor},
+            {vPrimitive.B, N, vColor},
+            {vPrimitive.C, N, vColor},
         };
     }
 

@@ -16,6 +16,7 @@ public:
     {
         glm::vec3 Pos;
         glm::vec3 Normal;
+        glm::vec3 Color;
 
         using PointData_t = SPointData;
         _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
@@ -25,6 +26,7 @@ public:
             CVertexAttributeDescriptor Descriptor;
             Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
             Descriptor.add(_GET_ATTRIBUTE_INFO(Normal));
+            Descriptor.add(_GET_ATTRIBUTE_INFO(Color));
             return Descriptor.generate();
         }
     };

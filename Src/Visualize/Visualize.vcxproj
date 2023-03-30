@@ -139,8 +139,12 @@
     <ClInclude Include="PipelineVisualizePrimitiveTyped.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\simpleShader.frag" />
-    <None Include="shaders\simpleShader.vert" />
+    <None Include="shaders\lineShader.frag" />
+    <None Include="shaders\lineShader.vert" />
+    <None Include="shaders\pointShader.frag" />
+    <None Include="shaders\pointShader.vert" />
+    <None Include="shaders\triangleShader.frag" />
+    <None Include="shaders\triangleShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

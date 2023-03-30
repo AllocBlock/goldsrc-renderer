@@ -53,10 +53,6 @@ void CPipelineVisualizePrimitive::_initShaderResourceDescriptorV()
 CPipelineDescriptor CPipelineVisualizePrimitive::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
-
-    Descriptor.setVertShaderPath("shaders/simpleShader.vert");
-    Descriptor.setFragShaderPath("shaders/simpleShader.frag");
-
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
     Descriptor.setEnableDepthTest(true);

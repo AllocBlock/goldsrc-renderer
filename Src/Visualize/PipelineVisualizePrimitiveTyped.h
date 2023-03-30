@@ -5,9 +5,10 @@ template <typename Primitive_t>
 class CPipelineVisualizePrimitiveTyped : public CPipelineVisualizePrimitive
 {
 public:
-    void add(const Primitive_t& vPrimitive)
+    void add(const Primitive_t& vPrimitive, const glm::vec3& vColor = glm::vec3(1.0, 1.0, 1.0))
     {
         m_Primitives.emplace_back(vPrimitive);
+        m_Colors.emplace_back(vColor);
         m_NeedUpdateVertexBuffer = true;
         _onAddV(vPrimitive);
     }
@@ -15,6 +16,7 @@ public:
     void clear()
     {
         m_Primitives.clear();
+        m_Colors.clear();
         m_NeedUpdateVertexBuffer = true;
         _onClearV();
     }
@@ -33,7 +35,7 @@ public:
 protected:
     virtual void _onAddV(const Primitive_t& vPrimitive) {}
     virtual void _onClearV() {}
-    virtual std::vector<CPipelineVisualizePrimitive::SPointData> _convertPrimitive2PointData(size_t vIndex, const Primitive_t& vPrimitive) = 0;
+    virtual std::vector<CPipelineVisualizePrimitive::SPointData> _convertPrimitive2PointData(size_t vIndex, const Primitive_t& vPrimitive, const glm::vec3& vColor) = 0;
 
 private:
     void __updateVertexBuffer()
@@ -46,7 +48,7 @@ private:
             std::vector<CPipelineVisualizePrimitive::SPointData> Vertices;
             for (size_t i = 0; i < m_Primitives.size(); ++i)
             {
-                const auto& PointDatas = _convertPrimitive2PointData(i, m_Primitives[i]);
+                const auto& PointDatas = _convertPrimitive2PointData(i, m_Primitives[i], m_Colors[i]);
                 Vertices.insert(Vertices.end(), PointDatas.begin(), PointDatas.end());
             }
             m_VertexNum = Vertices.size();
@@ -61,4 +63,5 @@ private:
 
     bool m_NeedUpdateVertexBuffer = false;
     std::vector<Primitive_t> m_Primitives;
+    std::vector<glm::vec3> m_Colors;
 };

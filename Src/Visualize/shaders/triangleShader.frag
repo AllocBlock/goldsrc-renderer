@@ -2,6 +2,7 @@
 
 layout(location = 0) in vec3 inFragPosition;
 layout(location = 1) in vec3 inFragNormal;
+layout(location = 2) in vec3 inFragColor;
 
 layout(location = 0) out vec4 outColor;
 
@@ -30,6 +31,5 @@ void main()
 	}
 
 	float shade = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
-	vec3 color = vec3(1.0, 1.0, 1.0);
-	outColor = vec4(color * shade, 1.0);
+	outColor = vec4(inFragColor * shade, 1.0);
 }

@@ -6,21 +6,21 @@
 #include <vector>
 
 
-void CRenderPassVisualize::addTriangle(const Visualize::Triangle& vTriangle)
+void CRenderPassVisualize::addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor)
 {
-    m_PipelineSet.Triangle.get().add(vTriangle);
+    m_PipelineSet.Triangle.get().add(vTriangle, vColor);
     __rerecordCommand();
 }
 
-void CRenderPassVisualize::addLine(const Visualize::Line& vLine)
+void CRenderPassVisualize::addLine(const Visualize::Line& vLine, const glm::vec3& vColor)
 {
-    m_PipelineSet.Line.get().add(vLine);
+    m_PipelineSet.Line.get().add(vLine, vColor);
     __rerecordCommand();
 }
 
-void CRenderPassVisualize::addPoint(const Visualize::Point& vPoint)
+void CRenderPassVisualize::addPoint(const Visualize::Point& vPoint, const glm::vec3& vColor)
 {
-    m_PipelineSet.Point.get().add(vPoint);
+    m_PipelineSet.Point.get().add(vPoint, vColor);
     __rerecordCommand();
 }
 

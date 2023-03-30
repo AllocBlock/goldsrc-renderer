@@ -19,19 +19,19 @@ public:
 		m_IsInitted = true;
 	}
 
-	void addTriangle(const Visualize::Triangle& vTriangle)
+	void addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor)
 	{
-		m_pApp->addTriangle(vTriangle);
+		m_pApp->addTriangle(vTriangle, vColor);
 	}
 
-	void addLine(const Visualize::Line& vLine)
+	void addLine(const Visualize::Line& vLine, const glm::vec3& vColor)
 	{
-		m_pApp->addLine(vLine);
+		m_pApp->addLine(vLine, vColor);
 	}
 
-	void addPoint(const Visualize::Point& vPoint)
+	void addPoint(const Visualize::Point& vPoint, const glm::vec3& vColor)
 	{
-		m_pApp->addPoint(vPoint);
+		m_pApp->addPoint(vPoint, vColor);
 	}
 
 	void start()

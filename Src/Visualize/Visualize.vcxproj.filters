@@ -61,10 +61,22 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\simpleShader.frag">
+    <None Include="shaders\pointShader.frag">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="shaders\simpleShader.vert">
+    <None Include="shaders\pointShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\triangleShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\triangleShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\lineShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\lineShader.vert">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
