@@ -5,8 +5,10 @@
 #include "Camera.h"
 #include "VertexAttributeDescriptor.h"
 #include "VisualizePrimitive.h"
+#include "Environment.h"
 
 #include <map>
+#include <filesystem>
 #include <glm/glm.hpp>
 
 class CPipelineVisualizePrimitive : public IPipeline

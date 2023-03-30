@@ -17,7 +17,7 @@ public:
     float getScreenAspect()
     {
         _ASSERTE(m_ScreenExtent.width > 0 && m_ScreenExtent.height > 0);
-        return m_ScreenExtent.width / m_ScreenExtent.height;
+        return float(m_ScreenExtent.width) / m_ScreenExtent.height;
     }
 
     CAppInfo() { clear(); }

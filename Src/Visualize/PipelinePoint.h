@@ -9,8 +9,8 @@ protected:
     {
         CPipelineDescriptor Descriptor = CPipelineVisualizePrimitiveTyped::_getPipelineDescriptionV();
 
-        Descriptor.setVertShaderPath("shaders/pointShader.vert");
-        Descriptor.setFragShaderPath("shaders/pointShader.frag");
+        Descriptor.setVertShaderPath("pointShader.vert");
+        Descriptor.setFragShaderPath("pointShader.frag");
 
         Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_POINT_LIST, false);
 

@@ -208,12 +208,14 @@ public:
 
     void setVertShaderPath(const std::filesystem::path& vShaderPath)
     {
+        _ASSERTE(!vShaderPath.empty());
         _ASSERTE(vShaderPath.extension() == ".vert");
         m_VertShaderPath = __findShader(vShaderPath);
     }
 
     void setFragShaderPath(const std::filesystem::path& vShaderPath)
     {
+        _ASSERTE(!vShaderPath.empty());
         _ASSERTE(vShaderPath.extension() == ".frag");
         m_FragShaderPath = __findShader(vShaderPath);
     }

@@ -1,70 +1,62 @@
 #include "pch.h"
 #include "Maths.h"
+#include "Visualizer.h"
 #include <array>
-
-
+#include <optional>
 
 TEST(Algorithm, RayCast) {
 
-    std::vector<std::array<glm::vec3, 3>> Triangles = {
-        {glm::vec3(-1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)},
+    std::array<glm::vec3, 3> Triangle = {
+        glm::vec3(5.207108f, -1.792894f, -3.949748f),
+        glm::vec3(5.207108f, -1.792894f, 5.949748f),
+        glm::vec3(-1.792894f, 5.207108f, 1),
     };
 
-    std::vector<bool> DoesIntersects = {
-        true
-    };
-
-    // cube
-    // create plane and vertex buffer
-    std::vector<glm::vec3> VertexSet =
+    std::vector<std::pair<glm::vec3, glm::vec3>> Rays =
     {
-        { 1.0,  1.0,  1.0}, // 0
-        {-1.0,  1.0,  1.0}, // 1
-        {-1.0,  1.0, -1.0}, // 2
-        { 1.0,  1.0, -1.0}, // 3
-        { 1.0, -1.0,  1.0}, // 4
-        {-1.0, -1.0,  1.0}, // 5
-        {-1.0, -1.0, -1.0}, // 6
-        { 1.0, -1.0, -1.0}, // 7
+        { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+        { glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(-1.0f, -1.0f, 0.0f) },
+        { glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f) },
+        { glm::vec3(1.0f, 1.0f, -3.0f), glm::vec3(0.0f, 0.0f, 1.0f) },
+        { glm::vec3(2.0f, 2.0f, 3.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+        { glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-3.0f, -3.0f, -3.0f) },
+        { glm::vec3(1.0f, 1.0f, 3.0f), glm::vec3(-2.0f, -3.0f, 1.0f) },
     };
 
-    for (auto& Vertex : VertexSet)
-    {
-        Vertex = vSize * Vertex + vOrigin;
-    }
-
-    const std::vector<size_t> IndexSet =
-    {
-        4, 1, 0, 4, 5, 1, // +z
-        3, 6, 7, 3, 2, 6, // -z
-        0, 2, 3, 0, 1, 2, // +y
-        5, 7, 6, 5, 4, 7, // -y
-        4, 3, 7, 4, 0, 3, // +x
-        1, 6, 2, 1, 5, 6, // -x
+    std::vector<bool> ExpectedResults = {
+        false, false, true, false, true, true, false
     };
 
-    const std::vector<glm::vec3> NormalSet =
-    {
-        {0.0f, 0.0f, 1.0f},
-        {0.0f, 0.0f, -1.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, -1.0f, 0.0f},
-        {1.0f, 0.0f, 0.0f},
-        {-1.0f, 0.0f, 0.0f},
-    };
-
-
-    glm::vec3 Origin = glm::vec3(0, 0, 1);
-    glm::vec3 Direction = glm::vec3(0, 0, -1);
-
-    ASSERT_EQ(Triangles.size(), DoesIntersects.size());
+    ASSERT_EQ(ExpectedResults.size(), Rays.size());
 
     float t, u, v;
-    for (size_t i = 0; i < Triangles.size(); ++i)
+    std::vector<std::optional<glm::vec3>> IntersectedSet;
+    for (size_t i = 0; i < Rays.size(); ++i)
     {
-        const auto& Triangle = Triangles[i];
-        bool Intersected = Math::intersectRayTriangle(Origin, Direction, Triangle[0], Triangle[1], Triangle[2], t, u, v);
-        bool ExpectResult = DoesIntersects[i];
+        const auto& Ray = Rays[i];
+        bool Intersected = Math::intersectRayTriangle(Ray.first, Ray.second, Triangle[0], Triangle[1], Triangle[2], t, u, v);
+        bool ExpectResult = ExpectedResults[i];
         EXPECT_EQ(Intersected, ExpectResult);
+
+        if (Intersected)
+            IntersectedSet.emplace_back(Ray.first + Ray.second * t);
+        else
+            IntersectedSet.emplace_back(std::nullopt);
     }
+
+    CVisualizer Visualizer;
+    Visualizer.init();
+    for (size_t i = 0; i < Rays.size(); ++i)
+    {
+        const auto& Ray = Rays[i];
+        bool Intersected = IntersectedSet[i].has_value();
+        glm::vec3 RayColor = Intersected ? glm::vec3(0, 1, 0) : glm::vec3(1, 0, 0);
+        Visualizer.addTriangle({ Triangle[0], Triangle[1], Triangle[2] }, glm::vec3(1, 1, 1));
+        Visualizer.addLine({ Ray.first, Ray.second }, RayColor);
+        if (Intersected)
+        {
+            Visualizer.addPoint(IntersectedSet[i].value(), glm::vec3(0, 1, 0));
+        }
+    }
+    Visualizer.start();
 }

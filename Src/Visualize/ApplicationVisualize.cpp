@@ -1,6 +1,14 @@
 #include "ApplicationVisualize.h"
 #include "GlobalSingleTimeBuffer.h"
-#include "InterfaceUI.h"
+
+void CApplicationVisualize::addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor)
+{ m_pPassVisualize->addTriangle(vTriangle, vColor); }
+
+void CApplicationVisualize::addLine(const Visualize::Line& vLine, const glm::vec3& vColor)
+{ m_pPassVisualize->addLine(vLine, vColor); }
+
+void CApplicationVisualize::addPoint(const Visualize::Point& vPoint, const glm::vec3& vColor)
+{ m_pPassVisualize->addPoint(vPoint, vColor); }
 
 void CApplicationVisualize::_createV()
 {

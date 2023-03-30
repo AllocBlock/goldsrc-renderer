@@ -19,13 +19,13 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -56,7 +56,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -80,7 +80,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Engine;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -104,18 +104,6 @@
     <ProjectReference Include="..\Function\Function.vcxproj">
       <Project>{e36ebe08-0944-4e1a-86d2-509a565a49a3}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\Gui\Gui.vcxproj">
-      <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\IO\IO.vcxproj">
-      <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\RenderPass\RenderPass.vcxproj">
-      <Project>{920d82f3-c77d-49a8-96d6-0eec00081511}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Scene\Scene.vcxproj">
-      <Project>{eb9ba7fd-f347-4886-83bd-d119a929aa39}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\Vulkan\Vulkan.vcxproj">
       <Project>{117a19ef-c976-4370-b795-b58c27ee4ab0}</Project>
     </ProjectReference>
@@ -125,6 +113,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassVisualize.cpp" />
     <ClCompile Include="PipelineVisualizePrimitive.cpp" />
+    <ClCompile Include="Visualizer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationVisualize.h" />

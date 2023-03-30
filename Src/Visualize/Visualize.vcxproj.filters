@@ -27,6 +27,9 @@
     <ClCompile Include="PipelineVisualizePrimitive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Visualizer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationVisualize.h">

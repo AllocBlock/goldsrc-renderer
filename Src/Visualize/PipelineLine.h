@@ -9,8 +9,8 @@ protected:
     {
         CPipelineDescriptor Descriptor = CPipelineVisualizePrimitiveTyped::_getPipelineDescriptionV();
 
-        Descriptor.setVertShaderPath("shaders/lineShader.vert");
-        Descriptor.setFragShaderPath("shaders/lineShader.frag");
+        Descriptor.setVertShaderPath("lineShader.vert");
+        Descriptor.setFragShaderPath("lineShader.frag");
 
         Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, false);
 

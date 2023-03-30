@@ -13,6 +13,7 @@ namespace
     {
         alignas(16) glm::vec3 Eye;
     };
+
 }
 
 void CPipelineVisualizePrimitive::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
@@ -52,6 +53,10 @@ void CPipelineVisualizePrimitive::_initShaderResourceDescriptorV()
 
 CPipelineDescriptor CPipelineVisualizePrimitive::_getPipelineDescriptionV()
 {
+    // add shader search path
+    std::filesystem::path ShaderDirPath = std::filesystem::path(__FILE__).parent_path() / "shaders/";
+    Environment::addPathToEnviroment(ShaderDirPath);
+
     CPipelineDescriptor Descriptor;
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);

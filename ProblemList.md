@@ -386,6 +386,69 @@
   - 问题：include变了如何重新编译
     - 得做一个include分析器....那不如干脆不用GL_GOOGLE_include_directive
 
+## 问题：隐藏依赖类的header与细节：前向声明和Pointer to implementation
+假如有以下代码
+```C++
+// Control.h
+#include "MyRunner.h"
+
+class IControl
+{
+public:
+  IControl(); // init m_pRunner in cpp
+  ... // some function about control runner
+private:
+  MyRunner* m_pRunner = nullptr;
+}
+```
+实际上对Runner的初始化和访问都在cpp里，而这个Control.h不需要Runner的细节，但此时include Control.h顺带也include MyRunner.h了，增加了无用了链接
+这种情况可以用前向声明解决
+```C++
+class MyRunner; // forward declaration
+
+// Control.h
+class IControl
+{
+public:
+  IControl(); // init m_pRunner in cpp
+  ... // some function about control runner
+private:
+  MyRunner* m_pRunner = nullptr;
+}
+
+// Control.cpp
+#include "MyRunner.h"
+
+... // implement function
+```
+
+这个解决方法/设计模式有个名称，叫做**pimpl**，即“**Pointer to implementation**”，它不止用了前向声明，还做了一些操作让数据成员隐藏得更彻底
+```C++
+// --------------------
+// interface (widget.h)
+struct widget
+{
+    // public members
+private:
+    struct impl; // forward declaration of the implementation class
+    // One implementation example: see below for other design options and trade-offs
+    std::experimental::propagate_const< // const-forwarding pointer wrapper
+        std::unique_ptr<                // unique-ownership opaque pointer
+            impl>> pImpl;               // to the forward-declared implementation class
+};
+ 
+// ---------------------------
+// implementation (widget.cpp)
+struct widget::impl
+{
+    // implementation details
+};
+```
+
+- [知乎 指向实现的指针Pointer to implementation](https://zhuanlan.zhihu.com/p/447218570)
+- [pimpl介绍](https://en.cppreference.com/w/cpp/language/pimpl)
+
+
 ## 问题：代码重构
   - 独立开发的好处：可以方便的重构，并且能在重构过程中暂停其他组件开发，以迭代的方式重构，无需考虑其他模块，等全部重构完成再去更新使用
     - 这样不需要受其他地方设计的限制，因为不需要时刻保证其他模块能正常运行

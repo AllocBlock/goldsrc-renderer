@@ -20,8 +20,8 @@ protected:
     {
         CPipelineDescriptor Descriptor = CPipelineVisualizePrimitiveTyped::_getPipelineDescriptionV();
 
-        Descriptor.setVertShaderPath("shaders/triangleShader.vert");
-        Descriptor.setFragShaderPath("shaders/triangleShader.frag");
+        Descriptor.setVertShaderPath("triangleShader.vert");
+        Descriptor.setFragShaderPath("triangleShader.frag");
 
         Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);
 
