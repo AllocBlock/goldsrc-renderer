@@ -12,6 +12,9 @@ void CApplicationVisualize::addLine(const Visualize::Line& vLine, const glm::vec
 void CApplicationVisualize::addPoint(const Visualize::Point& vPoint, const glm::vec3& vColor)
 { m_pPassVisualize->addPoint(vPoint, vColor); }
 
+void CApplicationVisualize::addSphere(const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor)
+{ m_pPassVisualize->addSphere(vCenter, vScale, vColor); }
+
 void CApplicationVisualize::_createV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());

@@ -30,6 +30,9 @@
     <ClCompile Include="Visualizer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineVisualizePrimitiveInstanced.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationVisualize.h">
@@ -62,6 +65,12 @@
     <ClInclude Include="PipelineVisualizePrimitiveTyped.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineVisualizePrimitiveInstanced.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSphere.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\pointShader.frag">
@@ -80,6 +89,12 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\lineShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\instancedSurfaceShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\instancedSurfaceShader.vert">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

@@ -19,13 +19,13 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -114,13 +114,16 @@
     <ClCompile Include="PassVisualize.cpp" />
     <ClCompile Include="PipelineVisualizePrimitive.cpp" />
     <ClCompile Include="Visualizer.cpp" />
+    <ClCompile Include="PipelineVisualizePrimitiveInstanced.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationVisualize.h" />
     <ClInclude Include="PipelineLine.h" />
     <ClInclude Include="PipelinePoint.h" />
+    <ClInclude Include="PipelineSphere.h" />
     <ClInclude Include="PipelineTriangle.h" />
     <ClInclude Include="PipelineVisualizePrimitive.h" />
+    <ClInclude Include="PipelineVisualizePrimitiveInstanced.h" />
     <ClInclude Include="PointData.h" />
     <ClInclude Include="PassVisualize.h" />
     <ClInclude Include="VisualizePrimitive.h" />
@@ -128,6 +131,8 @@
     <ClInclude Include="PipelineVisualizePrimitiveTyped.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\instancedSurfaceShader.frag" />
+    <None Include="shaders\instancedSurfaceShader.vert" />
     <None Include="shaders\lineShader.frag" />
     <None Include="shaders\lineShader.vert" />
     <None Include="shaders\pointShader.frag" />

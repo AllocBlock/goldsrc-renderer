@@ -28,6 +28,10 @@ int main()
 			Visualizer.addPoint(P, Blue);
 		}
 	}
+
+	Visualizer.addSphere(glm::vec3(2, 0, 0), glm::vec3(1, 1, 1), glm::vec3(1, 1, 0));
+	Visualizer.addSphere(glm::vec3(3.5, 0, 0), glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 1, 1));
+	Visualizer.addSphere(glm::vec3(2, 0, 2), glm::vec3(0.6, 0.6, 0.6), glm::vec3(1, 0, 1));
 	Visualizer.start();
 	return 0;
 }

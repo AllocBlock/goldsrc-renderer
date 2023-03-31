@@ -28,6 +28,11 @@ void CVisualizer::addPoint(const Visualize::Point& vPoint, const glm::vec3& vCol
     m_pApp->addPoint(vPoint, vColor);
 }
 
+void CVisualizer::addSphere(const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor)
+{
+    m_pApp->addSphere(vCenter, vScale, vColor);
+}
+
 void CVisualizer::start()
 {
     _ASSERTE(m_IsInitted);
