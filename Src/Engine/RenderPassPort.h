@@ -33,7 +33,6 @@ struct SPortFormat
     VkFormat Format = VkFormat::VK_FORMAT_UNDEFINED; // VK_FORMAT_UNDEFINED for any
     VkExtent2D Extent = { 0, 0 }; // (0, 0) for any extent(>0)
     size_t Num = 1; // 0 for any num (>0)
-
     EUsage Usage = EUsage::DONT_CARE;
 
     bool isMatch(const SPortFormat& v) const;
@@ -113,8 +112,7 @@ public:
     virtual bool hasActualExtentV() const = 0;
     virtual VkExtent2D getActualExtentV() const = 0;
 
-    bool isSwapchainSource() const { return m_IsSwapchainSource; }
-    void markAsSwapchainSource() { m_IsSwapchainSource = true; }
+    virtual bool isStandaloneSourceV() const = 0;
 
     bool isMatch(CPort::CPtr vPort) const { return m_Format.isMatch(vPort->getFormat()); }
     
@@ -132,8 +130,6 @@ protected:
     SPortFormat m_Format;
     wptr<CPort> m_pParent;
     std::vector<CPort::Ptr> m_ChildSet;
-
-    bool m_IsSwapchainSource = false;
 
 private:
     bool m_ForceNotReady = false;
@@ -160,6 +156,8 @@ public:
     void setActualFormat(VkFormat vFormat) { m_ActualFormat = vFormat; }
     void setActualExtent(VkExtent2D vExtent) { m_ActualExtent = vExtent; }
     void setImageNum(size_t vImageNum) { m_Format.Num = vImageNum; }
+    
+    virtual bool isStandaloneSourceV() const { return m_pBelongedSet == nullptr; }
 
 private:
     std::map<size_t, VkImageView> m_ImageMap;
@@ -185,6 +183,8 @@ public:
     virtual VkFormat getActualFormatV() const override final { _ASSERTE(hasActualFormatV()); return m_pParent.lock()->getActualFormatV(); }
     virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_pParent.lock()->getActualExtentV();
     }
+
+    virtual bool isStandaloneSourceV() const { return false; }
 };
 
 class SPortDescriptor

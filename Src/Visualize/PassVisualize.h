@@ -43,7 +43,7 @@ protected:
         return
         {
             m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
-            m_pPortSet->getOutputPort("Depth")->getImageV(),
+            m_pPortSet->getInputPort("Depth")->getImageV(),
         };
     }
     virtual std::vector<VkClearValue> _getClearValuesV() override
@@ -60,8 +60,6 @@ private:
         CDynamicPipeline<CPipelineLine> Line;
         CDynamicPipeline<CPipelinePoint> Point;
     } m_PipelineSet;
-
-    CDynamicTextureCreator m_DepthImageManager;
 
     size_t m_RerecordCommandTimes = 0;
     CCamera::CPtr m_pCamera = nullptr;

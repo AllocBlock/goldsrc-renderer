@@ -109,10 +109,10 @@ public:
         return false;
     }
 
-    bool updateExtent(VkExtent2D vNewExtent)
+    bool updateExtent(VkExtent2D vNewExtent, bool vForceUpdate = false)
     {
         _ASSERTE(m_IsInitted);
-        if (m_Extent != vNewExtent)
+        if (vForceUpdate || m_Extent != vNewExtent)
         {
             m_Extent = vNewExtent;
             if (__isCreatable())

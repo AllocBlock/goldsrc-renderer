@@ -12,7 +12,6 @@ using namespace vk;
 
 IApplication::IApplication()
 {
-    m_pSwapchainPort->markAsSwapchainSource();
 }
 
 void IApplication::create(GLFWwindow* vWindow)
@@ -72,9 +71,12 @@ void IApplication::tick()
 
 void IApplication::resize(uint32_t vWidth, uint32_t vHeight)
 {
-    // TIPS: no need to recreate swapchain, as extent is not changed, swapchain is valid
+    // TIPS: no need to recreate swapchain when minimization, swapchain is still valid
     if (vWidth > 0 && vHeight > 0)
+    {
         m_Freezed = false;
+        _onResizeV();
+    }
     else
         m_Freezed = true;
 }

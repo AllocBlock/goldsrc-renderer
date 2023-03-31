@@ -17,10 +17,15 @@ protected:
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
+    virtual void _onResizeV() override;
+
 private:
     void __linkPasses();
 
+    CDynamicTextureCreator m_DepthImageManager;
+    CSourcePort::Ptr m_pDepthPort = nullptr;
     ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
+
     ptr<CInteractor> m_pInteractor = nullptr;
     CCamera::Ptr m_pCamera = nullptr;
 };

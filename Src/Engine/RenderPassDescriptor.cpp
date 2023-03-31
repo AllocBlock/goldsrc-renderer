@@ -9,16 +9,18 @@ SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bo
         return SAttachementInfo();
     }
 
-    bool IsBegin = (vPort->isRoot() || (vPort->hasParent() && vPort->getParent()->isSwapchainSource()));
+    bool IsBegin = (vPort->isRoot() || (vPort->hasParent() && vPort->getParent()->isStandaloneSourceV()));
     bool IsEnd = vPort->isTail();
 
-    EUsage CurUsage = EUsage::UNDEFINED;
-    if (!IsBegin)
+    EUsage CurUsage;
+    if (!IsBegin || vIsDepth) // FIXME: it seems only swapchain image is undefine at start? for now standalone color attachement usage is wrong, how to handle this?
     {
         CurUsage = vPort->getFormat().Usage;
     }
+    else
+        CurUsage = EUsage::UNDEFINED;
 
-    EUsage NextUsage = EUsage::PRESENTATION;
+    EUsage NextUsage = vIsDepth ? CurUsage : EUsage::PRESENTATION; // for color attachment, used to present; for depth, keep
     if (!IsEnd)
     {
         _ASSERTE(vPort->getChildNum() > 0);
@@ -27,7 +29,7 @@ SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bo
         {
             if (NextUsage != vPort->getChild(i)->getFormat().Usage)
             {
-                throw std::runtime_error("Error: Output port connects to multiple ports with different layout requirments!");
+                throw std::runtime_error("Error: Output port connects to multiple ports with different layout requirements!");
             }
         }
     }
@@ -107,7 +109,7 @@ CRenderPassDescriptor CRenderPassDescriptor::generateSingleSubpassDesc(CPort::Pt
 
 VkAttachmentDescription CRenderPassDescriptor::__createAttachmentDescription(const SAttachementInfo& vInfo, bool vIsDepth)
 {
-    VkAttachmentStoreOp StoreOp = vIsDepth ? VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE : VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
+    VkAttachmentStoreOp StoreOp = VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
 
     // if it's begin clear it, otherwise load it
     VkAttachmentLoadOp LoadOp = vInfo.IsBegin ? VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR : VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_LOAD;

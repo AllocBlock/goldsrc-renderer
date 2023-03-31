@@ -137,6 +137,8 @@ void CImage::transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNew
 {
     if (!isValid()) throw "NULL image handle";
 
+    _ASSERTE(m_Layout != vNewLayout); // already transited
+
     vMipLevelCount = std::min<uint32_t>(vMipLevelCount, m_MipmapLevelNum - vStartMipLevel);
 
     VkImageMemoryBarrier Barrier = {};

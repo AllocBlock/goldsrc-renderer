@@ -37,16 +37,6 @@ void CRenderPassVisualize::_initV()
 
     VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
     
-    m_DepthImageManager.init(ScreenExtent, false,
-        [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
-        {
-            vImageSet.init(1);
-            VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-            Function::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
-            m_pPortSet->setOutput("Depth", *vImageSet[0]);
-        }
-    );
-    
     m_PipelineSet.Triangle.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum());
     m_PipelineSet.Line.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum());
     m_PipelineSet.Point.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum());
@@ -57,18 +47,17 @@ void CRenderPassVisualize::_initV()
 void CRenderPassVisualize::_initPortDescV(SPortDescriptor& vioDesc)
 {
     vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    vioDesc.addOutput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EUsage::WRITE });
+    vioDesc.addInput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EUsage::WRITE });
 }
 
 CRenderPassDescriptor CRenderPassVisualize::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
-                                                            m_pPortSet->getOutputPort("Depth"));
+                                                            m_pPortSet->getInputPort("Depth"));
 }
 
 void CRenderPassVisualize::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    m_DepthImageManager.updateV(vUpdateState);
     m_PipelineSet.Triangle.updateV(vUpdateState);
     m_PipelineSet.Line.updateV(vUpdateState);
     m_PipelineSet.Point.updateV(vUpdateState);
@@ -86,7 +75,6 @@ void CRenderPassVisualize::_updateV(uint32_t vImageIndex)
 
 void CRenderPassVisualize::_destroyV()
 {
-    m_DepthImageManager.destroy();
     m_PipelineSet.Triangle.destroy();
     m_PipelineSet.Line.destroy();
     m_PipelineSet.Point.destroy();
