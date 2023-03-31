@@ -7,6 +7,7 @@
 #include "PassGUI.h"
 #include "PassOutlineMask.h"
 #include "PassOutlineEdge.h"
+#include "PassVisualize.h"
 
 class CApplicationGoldSrc : public IApplication
 {
@@ -27,6 +28,7 @@ private:
     ptr<CRenderPassGUI> m_pPassGUI = nullptr;
     ptr<CRenderPassOutlineMask> m_pPassOutlineMask = nullptr;
     ptr<CRenderPassOutlineEdge> m_pPassOutlineEdge = nullptr;
+    ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
     ptr<CGUIMain> m_pMainUI = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
     CCamera::Ptr m_pCamera = nullptr;

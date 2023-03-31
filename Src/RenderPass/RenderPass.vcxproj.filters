@@ -33,9 +33,6 @@
     <ClInclude Include="FullScreenPointData.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Pipeline3DGui.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineVisCollider.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -80,9 +77,6 @@
     <ClCompile Include="PassFullScreen.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Pipeline3DGui.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineVisCollider.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -95,6 +89,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\tonemap.glsl">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visColliderShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visCollidePointShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visCollidePointShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\visColliderShader.frag">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

@@ -25,6 +25,10 @@ void CApplicationGoldSrc::_createV()
     m_pPassOutlineEdge = make<CRenderPassOutlineEdge>();
     m_pPassOutlineEdge->init(m_pDevice, m_pAppInfo);
 
+    m_pPassVisualize = make<CRenderPassVisualize>();
+    m_pPassVisualize->init(m_pDevice, m_pAppInfo);
+    m_pPassVisualize->setCamera(m_pCamera);
+
     m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
     m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
@@ -59,10 +63,11 @@ void CApplicationGoldSrc::_createV()
             glm::vec2 NDC = glm::vec2(XPos / WindowWidth * 2 - 1.0, YPos / WindowHeight * 2 - 1.0);
 
             CActor<CMeshDataGoldSrc>::Ptr pNearestActor = nullptr;
-            float NearestIntersection = 0.0f;
+            glm::vec3 NearestIntersection;
             if (SceneProbe::select(NDC, m_pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {
                 m_pPassOutlineMask->setHighlightActor(pNearestActor);
+                m_pPassVisualize->addLine(m_pCamera->getPos(), NearestIntersection, glm::vec3(0.0, 1.0, 0.0));
             }
         });
 
@@ -82,6 +87,7 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
     m_pPassScene->update(vImageIndex);
     m_pPassOutlineMask->update(vImageIndex);
     m_pPassOutlineEdge->update(vImageIndex);
+    m_pPassVisualize->update(vImageIndex);
 }
 
 void CApplicationGoldSrc::_renderUIV()
@@ -97,6 +103,7 @@ void CApplicationGoldSrc::_destroyV()
     destroyAndClear(m_pPassOutlineMask);
     destroyAndClear(m_pPassOutlineEdge);
     destroyAndClear(m_pPassGUI);
+    destroyAndClear(m_pPassVisualize);
 
     cleanGlobalCommandBuffer();
 }
@@ -136,22 +143,27 @@ void CApplicationGoldSrc::__linkPasses()
     auto pPortScene = m_pPassScene->getPortSet();
     auto pPortOutlineMask = m_pPassOutlineMask->getPortSet();
     auto pPortOutlineEdge = m_pPassOutlineEdge->getPortSet();
+    auto pPortVisualize = m_pPassVisualize->getPortSet();
     auto pPortGui = m_pPassGUI->getPortSet();
     m_pSwapchainPort->unlinkAll();
     pPortScene->unlinkAll();
     pPortOutlineMask->unlinkAll();
     pPortOutlineEdge->unlinkAll();
+    pPortVisualize->unlinkAll();
     pPortGui->unlinkAll();
 
     m_pSwapchainPort->setForceNotReady(true);
     CPortSet::link(m_pSwapchainPort, pPortScene, "Main");
     CPortSet::link(pPortOutlineMask, "Mask", pPortOutlineEdge, "Mask");
     CPortSet::link(pPortScene, "Main", pPortOutlineEdge, "Main");
-    CPortSet::link(pPortOutlineEdge, "Main", pPortGui, "Main");
+    CPortSet::link(pPortOutlineEdge, "Main", pPortVisualize, "Main");
+    CPortSet::link(pPortVisualize, "Main", pPortGui, "Main");
+    CPortSet::link(pPortScene, "Depth", pPortVisualize, "Depth");
     m_pSwapchainPort->setForceNotReady(false);
 
     _ASSERTE(m_pPassScene->isValid());
     _ASSERTE(m_pPassOutlineMask->isValid());
     _ASSERTE(m_pPassOutlineEdge->isValid());
+    _ASSERTE(m_pPassVisualize->isValid());
     _ASSERTE(m_pPassGUI->isValid());
 }

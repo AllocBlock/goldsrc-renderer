@@ -31,5 +31,5 @@ namespace Math
         const glm::vec3& vA, const glm::vec3& vB, const glm::vec3& vC,
         float& voT, float& voU, float& voV);
 
-    bool intersectRayBoundingBox(glm::vec3 vOrigin, glm::vec3 vDirection, SAABB vBB, float& voNearT, float& voFarT);
+    bool intersectRayAABB(glm::vec3 vOrigin, glm::vec3 vDirection, SAABB vAABB, bool vAllowInside, float& voNearT, float& voFarT);
 };

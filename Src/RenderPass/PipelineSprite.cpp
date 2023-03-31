@@ -4,8 +4,6 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-#include "Pipeline3DGui.h"
-
 const size_t CPipelineSprite::MaxSpriteNum = 2048;
 
 namespace

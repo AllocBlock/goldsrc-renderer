@@ -72,9 +72,6 @@
     <ClCompile Include="SceneProbe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PassLine.cpp">
-      <Filter>源文件\RenderPass</Filter>
-    </ClCompile>
     <ClCompile Include="GuiRequestPopupModal.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
@@ -146,9 +143,6 @@
     <ClInclude Include="SceneProbe.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PassLine.h">
-      <Filter>头文件\RenderPass</Filter>
-    </ClInclude>
     <ClInclude Include="GuiRequestPopupModal.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
@@ -194,12 +188,6 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\alphaTestShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\lineShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\lineShader.vert">
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\goldSrcNormalShader.frag">

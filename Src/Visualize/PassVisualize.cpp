@@ -11,10 +11,21 @@ void CRenderPassVisualize::addTriangle(const Visualize::Triangle& vTriangle, con
     __rerecordCommand();
 }
 
+
+void CRenderPassVisualize::addTriangle(const glm::vec3& vA, const glm::vec3& vB, const glm::vec3& vC, const glm::vec3& vColor)
+{
+    addTriangle(Visualize::Triangle{ vA, vB, vC }, vColor);
+}
+
 void CRenderPassVisualize::addLine(const Visualize::Line& vLine, const glm::vec3& vColor)
 {
     m_PipelineSet.Line.get().add(vLine, vColor);
     __rerecordCommand();
+}
+
+void CRenderPassVisualize::addLine(const glm::vec3& vStart, const glm::vec3& vEnd, const glm::vec3& vColor)
+{
+    addLine(Visualize::Line{ vStart, vEnd }, vColor);
 }
 
 void CRenderPassVisualize::addPoint(const Visualize::Point& vPoint, const glm::vec3& vColor)

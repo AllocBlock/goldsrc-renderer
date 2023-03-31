@@ -9,9 +9,8 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor<CMeshDa
 	// check bounding box first
 	auto AABB = vActor->getAABB();
 	if (!AABB.IsValid) return false;
-	float FarT = -INFINITY;
-	voNearT = INFINITY;
-	if (!Math::intersectRayBoundingBox(vOrigin, vDirection, AABB, voNearT, FarT))
+	float FarT, NearT;
+	if (!Math::intersectRayAABB(vOrigin, vDirection, AABB, true, NearT, FarT))
 	{
 		return false;
 	}
@@ -22,20 +21,24 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor<CMeshDa
 	auto PosSet = MeshData.getVertexArray();
 
 	bool Hit = false;
+	NearT = INFINITY;
 	float CurT = 0, u = 0, v = 0;
 	for (size_t i = 0; i < PosSet->size(); i += 3)
 	{
 		if (Math::intersectRayTriangle(vOrigin, vDirection, PosSet->get(i), PosSet->get(i + 1), PosSet->get(i + 2), CurT, u, v))
 		{
 			Hit = true;
-			if (CurT < voNearT) voNearT = CurT;
+			if (CurT < NearT) NearT = CurT;
 		}
 	}
 
-	return Hit;
+	if(!Hit) return false;
+	
+	voNearT = NearT;
+	return true;
 }
 
-bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGoldSrc>::Ptr vScene, CActor<CMeshDataGoldSrc>::Ptr& voActor, float& voNearestDistance)
+bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGoldSrc>::Ptr vScene, CActor<CMeshDataGoldSrc>::Ptr& voActor, glm::vec3& voNearestIntersection)
 {
 	if (!vScene || vScene->getActorNum() == 0) return false;
 	// normolize screen coordinate
@@ -55,14 +58,13 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGo
 
 	float NearestDistance = INFINITY;
     CActor<CMeshDataGoldSrc>::Ptr pNearestActor = nullptr;
-
+	float t = 0;
 	for (size_t i = 0; i < vScene->getActorNum(); ++i)
 	{
 		auto pActor = vScene->getActor(i);
 		std::optional<SAABB> BB = pActor->getAABB();
 		if (BB == std::nullopt) continue;
 		// find neareset
-		float t = 0;
 		bool HasIntersection = __intersectRayActor(EyePos, Direction, pActor, t);
 		if (HasIntersection && t < NearestDistance)
 		{
@@ -73,7 +75,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGo
 
     if (pNearestActor)
     {
-        voNearestDistance = NearestDistance;
+		voNearestIntersection = EyePos + Direction * NearestDistance;
         voActor = pNearestActor;
         return true;
     }

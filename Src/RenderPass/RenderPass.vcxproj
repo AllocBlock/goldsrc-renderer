@@ -39,7 +39,6 @@
     <ClInclude Include="PassBloomBrightFilter.h" />
     <ClInclude Include="PassBloomMerge.h" />
     <ClInclude Include="PassGUI.h" />
-    <ClInclude Include="Pipeline3DGui.h" />
     <ClInclude Include="PipelineBloomBlur.h" />
     <ClInclude Include="PipelineBloomMerge.h" />
     <ClInclude Include="PipelineEnvironment.h" />
@@ -53,7 +52,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PassGUI.cpp" />
-    <ClCompile Include="Pipeline3DGui.cpp" />
     <ClCompile Include="PipelineEnvironment.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />
@@ -63,6 +61,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\tonemap.glsl" />
+    <None Include="shaders\visCollidePointShader.frag" />
+    <None Include="shaders\visCollidePointShader.vert" />
+    <None Include="shaders\visColliderShader.frag" />
+    <None Include="shaders\visColliderShader.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

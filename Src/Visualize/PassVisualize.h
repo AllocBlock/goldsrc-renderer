@@ -20,7 +20,9 @@ public:
     _DEFINE_GETTER_SETTER_POINTER(Camera, CCamera::CPtr);
 
     void addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor);
+    void addTriangle(const glm::vec3& vA, const glm::vec3& vB, const glm::vec3& vC, const glm::vec3& vColor);
     void addLine(const Visualize::Line& vLine, const glm::vec3& vColor);
+    void addLine(const glm::vec3& vStart, const glm::vec3& vEnd, const glm::vec3& vColor);
     void addPoint(const Visualize::Point& vPoint, const glm::vec3& vColor);
     void clearAll();
 

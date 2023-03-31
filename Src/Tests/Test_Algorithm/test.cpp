@@ -4,8 +4,9 @@
 #include <array>
 #include <optional>
 
-TEST(Algorithm, RayCast) {
+//#define _DEBUG_VISUALIZE
 
+TEST(Algorithm, RayCastTriangle) {
     std::array<glm::vec3, 3> Triangle = {
         glm::vec3(5.207108f, -1.792894f, -3.949748f),
         glm::vec3(5.207108f, -1.792894f, 5.949748f),
@@ -30,7 +31,10 @@ TEST(Algorithm, RayCast) {
     ASSERT_EQ(ExpectedResults.size(), Rays.size());
 
     float t, u, v;
+#ifdef _DEBUG_VISUALIZE
     std::vector<std::optional<glm::vec3>> IntersectedSet;
+#endif
+
     for (size_t i = 0; i < Rays.size(); ++i)
     {
         const auto& Ray = Rays[i];
@@ -38,14 +42,16 @@ TEST(Algorithm, RayCast) {
         bool ExpectResult = ExpectedResults[i];
         EXPECT_EQ(Intersected, ExpectResult);
 
-        Math::intersectRayTriangle(Ray.first, Ray.second, Triangle[0], Triangle[1], Triangle[2], t, u, v);
-
+#ifdef _DEBUG_VISUALIZE
         if (Intersected)
             IntersectedSet.emplace_back(Ray.first + Ray.second * t);
         else
             IntersectedSet.emplace_back(std::nullopt);
+#endif
+
     }
 
+#ifdef _DEBUG_VISUALIZE
     CVisualizer Visualizer;
     Visualizer.init();
     for (size_t i = 0; i < Rays.size(); ++i)
@@ -61,4 +67,34 @@ TEST(Algorithm, RayCast) {
         }
     }
     Visualizer.start();
+#endif
+}
+
+
+TEST(Algorithm, RayCastAABB) {
+    SAABB AABB = SAABB(glm::vec3(0.5, 0.5, 0.5), glm::vec3(2.0, 2.0, 2.0));
+
+    std::vector<std::pair<glm::vec3, glm::vec3>> Rays =
+    {
+        { glm::vec3(-2, -2, -2), glm::vec3(2, 2, 2) },
+        { glm::vec3(0, 0, 0), glm::vec3(0, 1, 0) },
+        { glm::vec3(0, 0, 0), glm::vec3(-1, 0, 0) },
+        { glm::vec3(1, 1, 1), glm::vec3(1, 1, 0) },
+        { glm::vec3(0.4, 1, 1), glm::vec3(-1, 0, 0) },
+};
+
+    std::vector<bool> ExpectedResults = {
+        true, false, false, true, false
+    };
+
+    ASSERT_EQ(ExpectedResults.size(), Rays.size());
+
+    float NearT, FarT;
+    for (size_t i = 0; i < Rays.size(); ++i)
+    {
+        const auto& Ray = Rays[i];
+        bool Intersected = Math::intersectRayAABB(Ray.first, Ray.second, AABB, true, NearT, FarT);
+        bool ExpectResult = ExpectedResults[i];
+        EXPECT_EQ(Intersected, ExpectResult);
+    }
 }

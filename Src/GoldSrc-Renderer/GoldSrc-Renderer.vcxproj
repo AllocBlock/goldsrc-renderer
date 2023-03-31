@@ -56,7 +56,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(SolutionDir)Src/Visualize;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -80,7 +80,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Gui;$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Scene;$(SolutionDir)Src/IO;$(SolutionDir)Src/Engine;$(SolutionDir)Src/RenderPass;$(SolutionDir)Src/Function;$(SolutionDir)Src/Visualize;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +116,9 @@
     <ProjectReference Include="..\Scene\Scene.vcxproj">
       <Project>{eb9ba7fd-f347-4886-83bd-d119a929aa39}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Visualize\Visualize.vcxproj">
+      <Project>{eb282be3-16f3-4aa0-a263-d56b3422d05c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Vulkan\Vulkan.vcxproj">
       <Project>{117a19ef-c976-4370-b795-b58c27ee4ab0}</Project>
     </ProjectReference>
@@ -131,7 +134,6 @@
     <ClCompile Include="GuiTextureViewer.cpp" />
     <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PassLine.cpp" />
     <ClCompile Include="PassOutlineMask.cpp" />
     <ClCompile Include="PassOutlineEdge.cpp" />
     <ClCompile Include="PipelineGoldSrc.cpp" />
@@ -152,7 +154,6 @@
     <ClInclude Include="GuiRenderer.h" />
     <ClInclude Include="GuiTextureViewer.h" />
     <ClInclude Include="GuiRequestPopupModal.h" />
-    <ClInclude Include="PassLine.h" />
     <ClInclude Include="PassOutlineEdge.h" />
     <ClInclude Include="PassOutlineMask.h" />
     <ClInclude Include="PipelineOutlineMask.h" />
@@ -173,8 +174,6 @@
     <None Include="shaders\alphaTestShader.vert" />
     <None Include="shaders\bloomBrightFilter.frag" />
     <None Include="shaders\fullScreen.vert" />
-    <None Include="shaders\lineShader.frag" />
-    <None Include="shaders\lineShader.vert" />
     <None Include="shaders\outlineEdgeShader.frag" />
     <None Include="shaders\outlineEdgeShader.vert" />
     <None Include="shaders\outlineMaskShader.frag" />
