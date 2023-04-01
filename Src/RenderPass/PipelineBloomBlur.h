@@ -45,8 +45,8 @@ protected:
     {
         CPipelineDescriptor Descriptor;
 
-        Descriptor.setVertShaderPath("shaders/fullScreen.vert");
-        Descriptor.setFragShaderPath("shaders/bloomBlur.frag");
+        Descriptor.setVertShaderPath("fullScreen.vert");
+        Descriptor.setFragShaderPath("bloomBlur.frag");
 
         Descriptor.setVertexInputInfo<SFullScreenPointData>();
 

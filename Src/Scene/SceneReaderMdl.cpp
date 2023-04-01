@@ -31,9 +31,9 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMdl::_readV()
     return pSceneInfo;
 }
 
-CActor<CMeshDataGoldSrc>::Ptr CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
+CActor::Ptr CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
 {
-    CMeshDataGoldSrc MeshData;
+    CMeshData MeshData;
 
     for (const auto& Model : vBodyPart.ModelSet)
     {
@@ -43,7 +43,7 @@ CActor<CMeshDataGoldSrc>::Ptr CSceneReaderMdl::__readBodyPart(const SMdlBodyPart
     return GoldSrc::createActorByMeshAndTag(MeshData, { "model" });
 }
 
-void CSceneReaderMdl::__appendModelData(const SMdlModel& vModel, CMeshDataGoldSrc& vioMeshData)
+void CSceneReaderMdl::__appendModelData(const SMdlModel& vModel, CMeshData& vioMeshData)
 {
     auto pVertexArray = vioMeshData.getVertexArray();
     auto pColorArray = vioMeshData.getColorArray();

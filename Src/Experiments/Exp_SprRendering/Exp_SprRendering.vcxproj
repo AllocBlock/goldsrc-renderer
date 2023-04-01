@@ -96,14 +96,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ApplicationSprite.cpp" />
-    <ClCompile Include="PipelineSprite.cpp" />
-    <ClCompile Include="PassSprite.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationSprite.h" />
-    <ClInclude Include="PipelineSprite.h" />
-    <ClInclude Include="PassSprite.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.vcxproj">
@@ -130,10 +126,6 @@
     <ProjectReference Include="..\..\Vulkan\Vulkan.vcxproj">
       <Project>{117a19ef-c976-4370-b795-b58c27ee4ab0}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\sprShader.frag" />
-    <None Include="shaders\sprShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

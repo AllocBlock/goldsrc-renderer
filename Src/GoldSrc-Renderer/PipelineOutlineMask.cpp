@@ -46,7 +46,7 @@ void CPipelineMask::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
     }
 }
 
-void CPipelineMask::setActor(CActor<CMeshDataGoldSrc>::Ptr vActor)
+void CPipelineMask::setActor(CActor::Ptr vActor)
 {
     __updateVertexBuffer(vActor);
 }
@@ -68,8 +68,8 @@ CPipelineDescriptor CPipelineMask::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/outlineMaskShader.vert");
-    Descriptor.setFragShaderPath("shaders/outlineMaskShader.frag");
+    Descriptor.setVertShaderPath("outlineMaskShader.vert");
+    Descriptor.setFragShaderPath("outlineMaskShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
 
@@ -116,14 +116,14 @@ void CPipelineMask::__updateDescriptorSet()
     }
 }
 
-void CPipelineMask::__updateVertexBuffer(CActor<CMeshDataGoldSrc>::Ptr vActor)
+void CPipelineMask::__updateVertexBuffer(CActor::Ptr vActor)
 {
     m_pDevice->waitUntilIdle();
     m_VertexBuffer.destroy();
 
     if (vActor)
     {
-        auto MeshData = vActor->getMesh()->getMeshData();
+        auto MeshData = vActor->getMesh()->getMeshDataV();
 
         auto pVertexArray = MeshData.getVertexArray();
         size_t NumVertex = pVertexArray->size();

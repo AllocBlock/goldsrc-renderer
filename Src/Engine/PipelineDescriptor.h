@@ -302,8 +302,8 @@ private:
         std::filesystem::path FoundShaderPath;
         std::vector<std::filesystem::path> ShaderDirSet = 
             {
-            "./",
-            "../RenderPass/"
+            "./shaders/",
+            "../RenderPass/shaders/"
             };
 
         if (Environment::findFile(vShaderPath, ShaderDirSet, true, FoundShaderPath))

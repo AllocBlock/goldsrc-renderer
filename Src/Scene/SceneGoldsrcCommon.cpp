@@ -2,10 +2,10 @@
 #include "SceneGoldsrcCommon.h"
 #include "Log.h"
 
-CActor<CMeshDataGoldSrc>::Ptr GoldSrc::createActorByMeshAndTag(const CMeshDataGoldSrc& vMeshData, const std::vector<std::string> vTagSet)
+CActor::Ptr GoldSrc::createActorByMeshAndTag(const CMeshData& vMeshData, const std::vector<std::string> vTagSet)
 {
-    auto pActor = make<CActor<CMeshDataGoldSrc>>();
-    auto pMesh = make<CMeshTriangleList<CMeshDataGoldSrc>>();
+    auto pActor = make<CActor>();
+    auto pMesh = make<CMeshTriangleList>();
 
     pMesh->setMeshData(vMeshData);
     pActor->setMesh(pMesh);

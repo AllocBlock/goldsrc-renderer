@@ -57,9 +57,6 @@
     <ClCompile Include="SceneObjWriter.cpp">
       <Filter>源文件\Writer</Filter>
     </ClCompile>
-    <ClCompile Include="MeshDataGoldSrc.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="SceneReaderRmf.cpp">
       <Filter>源文件\Reader</Filter>
     </ClCompile>
@@ -97,9 +94,6 @@
     </ClInclude>
     <ClInclude Include="SceneObjWriter.h">
       <Filter>头文件\Writer</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshDataGoldSrc.h">
-      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

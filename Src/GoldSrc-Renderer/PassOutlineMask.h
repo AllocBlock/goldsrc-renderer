@@ -14,7 +14,7 @@ public:
     CCamera::Ptr getCamera() { return m_pCamera; }
     void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; }
 
-    void setHighlightActor(CActor<CMeshDataGoldSrc>::Ptr vActor);
+    void setHighlightActor(CActor::Ptr vActor);
     void removeHighlight();
 
 protected:

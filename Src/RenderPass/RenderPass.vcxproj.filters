@@ -63,6 +63,9 @@
     <ClInclude Include="PassBloomMerge.h">
       <Filter>头文件\Bloom</Filter>
     </ClInclude>
+    <ClInclude Include="PassSprite.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PipelineSkybox.cpp">
@@ -86,6 +89,9 @@
     <ClCompile Include="PassGUI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PassSprite.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\tonemap.glsl">
@@ -101,6 +107,12 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\visColliderShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\sprShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\sprShader.vert">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

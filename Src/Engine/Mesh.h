@@ -15,14 +15,14 @@ enum class E3DObjectPrimitiveType
     INDEXED_TRIAGNLE_LIST,
 };
 
-class CMeshDataGeneral
+class CMeshData
 {
 public:
-    _DEFINE_PTR(CMeshDataGeneral);
+    _DEFINE_PTR(CMeshData);
 
     bool getVisibleState() { return m_IsVisible; }
     void setVisibleState(bool vState) { m_IsVisible = vState; }
-    CMeshDataGeneral copy();
+    CMeshData copy();
 
     _DEFINE_GETTER_SETTER_POINTER(VertexArray, IDataArray<glm::vec3>::Ptr)
     _DEFINE_GETTER_SETTER_POINTER(NormalArray, IDataArray<glm::vec3>::Ptr)
@@ -30,6 +30,12 @@ public:
     _DEFINE_GETTER_SETTER_POINTER(TexCoordArray, IDataArray<glm::vec2>::Ptr)
     _DEFINE_GETTER_SETTER_POINTER(TexIndexArray, IDataArray<uint32_t>::Ptr)
     _DEFINE_GETTER_SETTER(PrimitiveType, E3DObjectPrimitiveType)
+    _DEFINE_GETTER_SETTER(EnableLightmap, bool)
+    _DEFINE_GETTER_SETTER_POINTER(LightmapIndexArray, IDataArray<uint32_t>::Ptr)
+    _DEFINE_GETTER_SETTER_POINTER(LightmapTexCoordArray, IDataArray<glm::vec2>::Ptr)
+
+    static const uint32_t InvalidLightmapIndex;
+
         
     SAABB getAABB() const
     {
@@ -51,16 +57,19 @@ public:
     }
 
 protected:
-    bool m_IsVisible = true;
+    bool m_IsVisible = true; // TODO: move to actor
     E3DObjectPrimitiveType m_PrimitiveType = E3DObjectPrimitiveType::TRIAGNLE_LIST;
     IDataArray<glm::vec3>::Ptr m_pVertexArray = make<CGeneralDataArray<glm::vec3>>();
     IDataArray<glm::vec3>::Ptr m_pNormalArray = make<CGeneralDataArray<glm::vec3>>();
     IDataArray<glm::vec3>::Ptr m_pColorArray = make<CGeneralDataArray<glm::vec3>>();
     IDataArray<glm::vec2>::Ptr m_pTexCoordArray = make<CGeneralDataArray<glm::vec2>>();
     IDataArray<uint32_t>::Ptr m_pTexIndexArray = make<CGeneralDataArray<glm::uint32_t>>();
+    
+    bool m_EnableLightmap = false; // TODO: define by light map related array validation?
+    IDataArray<uint32_t>::Ptr m_pLightmapIndexArray = make<CGeneralDataArray<uint32_t>>();
+    IDataArray<glm::vec2>::Ptr m_pLightmapTexCoordArray = make<CGeneralDataArray<glm::vec2>>();
 };
 
-template <typename MeshData_t = CMeshDataGeneral>
 class CMesh
 {
 public:
@@ -69,25 +78,24 @@ public:
 
     _DEFINE_GETTER_SETTER(Name, std::string)
 
-    virtual MeshData_t getMeshData() const = 0; // FIXME: use pointer or not? which mean will the data be updated after returned?
+    virtual CMeshData getMeshDataV() const = 0; // FIXME: use pointer or not? which mean will the data be updated after returned?
 
     SAABB getAABB() const
     {
         // FIXME: bad design, how to update AABB?
-        return getMeshData().getAABB();
+        return getMeshDataV().getAABB();
     }
 
 private:
 	std::string m_Name = "Default Mesh";
 };
 
-template <typename MeshData_t = CMeshDataGeneral>
-class CMeshTriangleList : public CMesh<MeshData_t>
+class CMeshTriangleList : public CMesh
 {
 public:
     _DEFINE_PTR(CMeshTriangleList);
 
-    virtual MeshData_t getMeshData() const override
+    virtual CMeshData getMeshDataV() const override
     {
         return m_Data;
     }
@@ -107,49 +115,49 @@ public:
         }
     }
 
-    void setMeshData(MeshData_t vData)
+    void setMeshData(CMeshData vData)
     {
         m_Data = std::move(vData);
     }
 
 private:
-    MeshData_t m_Data;
+    CMeshData m_Data;
 };
 
 // TODO: move to basic shape, which provide mesh and collider generation
-class CMeshBasicQuad : public CMesh<CMeshDataGeneral>
+class CMeshBasicQuad : public CMesh
 {
 public:
     _DEFINE_PTR(CMeshBasicQuad);
 
-    static CMeshDataGeneral MeshData;
+    static CMeshData MeshData;
 
-    virtual CMeshDataGeneral getMeshData() const override;
+    virtual CMeshData getMeshDataV() const override;
 };
 
 // TODO: move to basic shape, which provide mesh and collider generation
-class CMeshBasicCube : public CMesh<CMeshDataGeneral>
+class CMeshBasicCube : public CMesh
 {
 public:
     _DEFINE_PTR(CMeshBasicCube);
 
-    static CMeshDataGeneral MeshData;
+    static CMeshData MeshData;
 
-    virtual CMeshDataGeneral getMeshData() const override;
+    virtual CMeshData getMeshDataV() const override;
 };
 
 // TODO: move to basic shape, which provide mesh and collider generation
-class CMeshBasicSphere : public CMesh<CMeshDataGeneral>
+class CMeshBasicSphere : public CMesh
 {
 public:
     _DEFINE_PTR(CMeshBasicCube);
 
-    static CMeshDataGeneral MeshData;
+    static CMeshData MeshData;
 
-    virtual CMeshDataGeneral getMeshData() const override;
+    virtual CMeshData getMeshDataV() const override;
 };
 
 namespace Mesh
 {
-    CMeshTriangleList<CMeshDataGeneral>::Ptr bakeTransform(CMesh<CMeshDataGeneral>::CPtr vMesh, cptr<STransform> vTransform);
+    CMeshTriangleList::Ptr bakeTransform(CMesh::CPtr vMesh, cptr<STransform> vTransform);
 }

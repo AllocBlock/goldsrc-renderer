@@ -6,7 +6,7 @@
 ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
 {
     m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene = make<CScene>();
 
     Scene::reportProgress(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(m_FilePath);
@@ -56,7 +56,7 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
         glm::vec3 Normal = Polygon.getNormal();
         
         // non-indexed data
-        auto MeshData = CMeshDataGoldSrc();
+        auto MeshData = CMeshData();
         auto pVertexArray = MeshData.getVertexArray();
         auto pColorArray = MeshData.getColorArray();
         auto pNormalArray = MeshData.getNormalArray();

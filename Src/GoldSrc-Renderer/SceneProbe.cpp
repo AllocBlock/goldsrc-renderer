@@ -4,7 +4,7 @@
 #include <glm/matrix.hpp>
 #include <optional>
 
-bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor<CMeshDataGoldSrc>::Ptr vActor, float& voNearT)
+bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vActor, float& voNearT)
 {
 	// check bounding box first
 	auto AABB = vActor->getAABB();
@@ -15,7 +15,7 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor<CMeshDa
 		return false;
 	}
 
-	auto MeshData = vActor->getMesh()->getMeshData();
+	auto MeshData = vActor->getMesh()->getMeshDataV();
 	// intersect each triangle
 	_ASSERTE(MeshData.getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST); // FIXME: only support triangle list for now
 	auto PosSet = MeshData.getVertexArray();
@@ -38,7 +38,7 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor<CMeshDa
 	return true;
 }
 
-bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGoldSrc>::Ptr vScene, CActor<CMeshDataGoldSrc>::Ptr& voActor, glm::vec3& voNearestIntersection)
+bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene, CActor::Ptr& voActor, glm::vec3& voNearestIntersection)
 {
 	if (!vScene || vScene->getActorNum() == 0) return false;
 	// normolize screen coordinate
@@ -57,7 +57,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGo
 	glm::vec3 Direction = glm::normalize(WorldPos - EyePos);
 
 	float NearestDistance = INFINITY;
-    CActor<CMeshDataGoldSrc>::Ptr pNearestActor = nullptr;
+    CActor::Ptr pNearestActor = nullptr;
 	float t = 0;
 	for (size_t i = 0; i < vScene->getActorNum(); ++i)
 	{

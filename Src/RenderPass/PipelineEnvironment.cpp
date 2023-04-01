@@ -31,8 +31,8 @@ CPipelineDescriptor CPipelineEnvironment::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/env.vert");
-    Descriptor.setFragShaderPath("shaders/env.frag");
+    Descriptor.setVertShaderPath("env.vert");
+    Descriptor.setFragShaderPath("env.frag");
 
     Descriptor.setVertexInputInfo<SFullScreenPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);

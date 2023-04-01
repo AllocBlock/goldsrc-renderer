@@ -2,7 +2,9 @@
 
 #include "BasicMesh.h"
 
-CMeshDataGeneral __convertBasicMeshToMeshData(const std::vector<BasicMesh::SVertex>& vBasicMesh)
+const uint32_t CMeshData::InvalidLightmapIndex = std::numeric_limits<uint32_t>::max();
+
+CMeshData __convertBasicMeshToMeshData(const std::vector<BasicMesh::SVertex>& vBasicMesh)
 {
     auto pVertexArray = make<CGeneralDataArray<glm::vec3>>();
     auto pNormalArray = make<CGeneralDataArray<glm::vec3>>();
@@ -12,19 +14,19 @@ CMeshDataGeneral __convertBasicMeshToMeshData(const std::vector<BasicMesh::SVert
         pNormalArray->append(Vertex.Normal);
     } 
 
-    auto MeshData = CMeshDataGeneral();
+    auto MeshData = CMeshData();
     MeshData.setVertexArray(pVertexArray);
     MeshData.setNormalArray(pNormalArray);
     return MeshData;
 }
 
-CMeshDataGeneral CMeshBasicQuad::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitQuadFaceSet());
-CMeshDataGeneral CMeshBasicCube::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitCubeFaceSet());
-CMeshDataGeneral CMeshBasicSphere::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitSphereFaceSet());
+CMeshData CMeshBasicQuad::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitQuadFaceSet());
+CMeshData CMeshBasicCube::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitCubeFaceSet());
+CMeshData CMeshBasicSphere::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitSphereFaceSet());
 
-CMeshDataGeneral CMeshDataGeneral::copy()
+CMeshData CMeshData::copy()
 {
-    CMeshDataGeneral NewData;
+    CMeshData NewData;
     NewData.m_PrimitiveType = m_PrimitiveType;
     NewData.m_pVertexArray = m_pVertexArray->copy();
     NewData.m_pNormalArray = m_pNormalArray->copy();
@@ -35,25 +37,25 @@ CMeshDataGeneral CMeshDataGeneral::copy()
     return NewData;
 }
 
-CMeshDataGeneral CMeshBasicQuad::getMeshData() const
+CMeshData CMeshBasicQuad::getMeshDataV() const
 {
     return CMeshBasicQuad::MeshData;
 }
 
-CMeshDataGeneral CMeshBasicCube::getMeshData() const
+CMeshData CMeshBasicCube::getMeshDataV() const
 {
     return CMeshBasicCube::MeshData;
 }
 
-CMeshDataGeneral CMeshBasicSphere::getMeshData() const
+CMeshData CMeshBasicSphere::getMeshDataV() const
 {
     return CMeshBasicSphere::MeshData;
 }
 
-CMeshTriangleList<CMeshDataGeneral>::Ptr Mesh::bakeTransform(CMesh<CMeshDataGeneral>::CPtr vMesh, cptr<STransform> vTransform)
+CMeshTriangleList::Ptr Mesh::bakeTransform(CMesh::CPtr vMesh, cptr<STransform> vTransform)
 {
-    auto pMesh = make<CMeshTriangleList<CMeshDataGeneral>>();
-    CMeshDataGeneral Data = vMesh->getMeshData().copy();
+    auto pMesh = make<CMeshTriangleList>();
+    CMeshData Data = vMesh->getMeshDataV().copy();
 
     auto pVertArray = Data.getVertexArray();
     auto pNormalArray = Data.getNormalArray();

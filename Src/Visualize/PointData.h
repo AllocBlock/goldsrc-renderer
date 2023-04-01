@@ -28,7 +28,7 @@ struct SGoldSrcPointData
         return Descriptor.generate();
     }
     
-    static std::vector<SGoldSrcPointData> extractFromMeshData(const CMeshDataGoldSrc& vMeshData)
+    static std::vector<SGoldSrcPointData> extractFromMeshData(const CMeshData& vMeshData)
     {
         auto pVertexArray = vMeshData.getVertexArray();
         auto pColorArray = vMeshData.getColorArray();
@@ -78,7 +78,7 @@ struct SSimplePointData
         return Descriptor.generate();
     }
 
-    static std::vector<SSimplePointData> extractFromMeshData(const CMeshDataGoldSrc& vMeshData)
+    static std::vector<SSimplePointData> extractFromMeshData(const CMeshData& vMeshData)
     {
         auto pVertexArray = vMeshData.getVertexArray();
         auto pNormalArray = vMeshData.getNormalArray();

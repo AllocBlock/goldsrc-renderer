@@ -12,7 +12,7 @@ class CRenderPassShade : public vk::IRenderPass
 public:
     CRenderPassShade() = default;
 
-    void setScene(CScene<CMeshDataGeneral>::Ptr vScene);
+    void setScene(CScene<CMeshData>::Ptr vScene);
     void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; } 
 
 protected:
@@ -38,7 +38,7 @@ private:
     CPipelineShade m_PipelineShade;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
-    CScene<CMeshDataGeneral>::Ptr m_pScene = nullptr;
+    CScene<CMeshData>::Ptr m_pScene = nullptr;
     ptr<vk::CVertexBuffer> m_pVertBuffer;
 
     vk::CImage m_DepthImage;

@@ -126,10 +126,5 @@ std::vector<VkClearValue> CRenderPassSprite::_getClearValuesV()
 
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    glm::mat4 View = m_pCamera->getViewMat();
-    glm::mat4 Proj = m_pCamera->getProjMat();
-    glm::vec3 EyePos = m_pCamera->getPos();
-    glm::vec3 EyeDirection = m_pCamera->getFront();
-
-    m_PipelineSpriteCreator.get().updateUniformBuffer(vImageIndex, View, Proj, EyePos, EyeDirection);
+    m_PipelineSpriteCreator.get().updateUniformBuffer(vImageIndex, m_pCamera);
 }

@@ -7,14 +7,14 @@
 
 using namespace vk;
 
-CScene<CMeshDataGeneral>::Ptr __generateScene()
+CScene<CMeshData>::Ptr __generateScene()
 {
-    auto m_pScene = make<CScene<CMeshDataGeneral>>();
+    auto m_pScene = make<CScene<CMeshData>>();
 
     // Ground
     {
         auto pGroundMesh = make<CMeshBasicQuad>();
-        auto pGroundActor = make<CActor<CMeshDataGeneral>>("Ground");
+        auto pGroundActor = make<CActor<CMeshData>>("Ground");
         pGroundActor->setMesh(pGroundMesh);
         pGroundActor->getPhysicsState()->IsStatic = true;
         pGroundActor->getPhysicsState()->pCollider = make<CColliderBasic>(pGroundActor->getTransform(), EBasicColliderType::PLANE);
@@ -35,7 +35,7 @@ CScene<CMeshDataGeneral>::Ptr __generateScene()
     // Quad
     {
         auto pQuadMesh1 = make<CMeshBasicQuad>();
-        auto pQuadActor1 = make<CActor<CMeshDataGeneral>>("Quad1");
+        auto pQuadActor1 = make<CActor<CMeshData>>("Quad1");
         pQuadActor1->setMesh(pQuadMesh1);
         pQuadActor1->getPhysicsState()->pCollider = make<CColliderBasic>(pQuadActor1->getTransform(), EBasicColliderType::QUAD);
 

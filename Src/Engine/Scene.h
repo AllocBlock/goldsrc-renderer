@@ -5,26 +5,25 @@
 #include "Actor.h"
 #include "VertexBuffer.h"
 
-template <typename MeshData_t = CMeshDataGeneral>
 class CScene
 {
 public:
     _DEFINE_PTR(CScene);
 
-    void addActor(ptr<CActor<MeshData_t>> vActor)
+    void addActor(CActor::Ptr vActor)
     {
         m_ActorSet.emplace_back(vActor);
     }
 
     size_t getActorNum() { return m_ActorSet.size(); }
-    ptr<CActor<MeshData_t>> getActor(size_t vIndex)
+    CActor::Ptr getActor(size_t vIndex)
     {
         _ASSERTE(vIndex < m_ActorSet.size());
         return m_ActorSet[vIndex];
     }
 
     // return first found actor
-    ptr<CActor<MeshData_t>> findActor(std::string vName)
+    CActor::Ptr findActor(std::string vName)
     {
         for (auto pActor : m_ActorSet)
             if (pActor->getName() == vName)
@@ -44,7 +43,7 @@ public:
         for (auto pActor : m_ActorSet)
         {
             auto pMesh = pActor->getMesh();
-            auto MeshData = pMesh->getMeshData();
+            auto MeshData = pMesh->getMeshDataV();
             const auto& Data = PointData_t::extractFromMeshData(MeshData);
             DataSet.emplace_back(Data);
         }
@@ -63,5 +62,5 @@ public:
     }
 
 private:
-    std::vector<ptr<CActor<MeshData_t>>> m_ActorSet;
+    std::vector<CActor::Ptr> m_ActorSet;
 };

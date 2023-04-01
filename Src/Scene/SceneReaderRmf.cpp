@@ -5,7 +5,7 @@
 ptr<SSceneInfoGoldSrc> CSceneReaderRmf::_readV()
 {
     m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene = make<CScene>();
     
     __readRmf(m_FilePath);
     __readWadsAndInitTextures();
@@ -81,7 +81,7 @@ void CSceneReaderRmf::__readObject(ptr<SRmfObject> vpObject)
 
 void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
 {
-    CMeshDataGoldSrc MeshData = CMeshDataGoldSrc();
+    CMeshData MeshData = CMeshData();
     for (const SRmfFace& Face : vpSolid->Faces)
         __readSolidFace(Face, MeshData);
 
@@ -89,7 +89,7 @@ void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
     m_pSceneInfo->pScene->addActor(pActor);
 }
 
-void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, CMeshDataGoldSrc& vioMeshData)
+void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, CMeshData& vioMeshData)
 {
     uint32_t TexIndex = __requestTextureIndex(vFace.TextureName);
 

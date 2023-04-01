@@ -8,7 +8,6 @@
 #include <string>
 #include <set>
 
-template <typename MeshData_t = CMeshDataGeneral>
 class CActor
 {
 public:
@@ -20,7 +19,7 @@ public:
 	}
 
 	_DEFINE_GETTER_SETTER(Name, std::string)
-	_DEFINE_GETTER_SETTER_POINTER(Mesh, cptr<CMesh<MeshData_t>>)
+	_DEFINE_GETTER_SETTER_POINTER(Mesh, cptr<CMesh>)
 
 	_DEFINE_GETTER_POINTER(Transform, ptr<STransform>)
     _DEFINE_GETTER_POINTER(PhysicsState, ptr<SPhysicsStateRigidBody>)
@@ -78,7 +77,7 @@ public:
 private:
 	std::string m_Name;
 	const ptr<STransform> m_pTransform = make<STransform>();
-	cptr<CMesh<MeshData_t>> m_pMesh = nullptr;
+	cptr<CMesh> m_pMesh = nullptr;
 	const ptr<SPhysicsStateRigidBody> m_pPhysicsState = make<SPhysicsStateRigidBody>();
 
 	std::set<std::string> m_TagSet;

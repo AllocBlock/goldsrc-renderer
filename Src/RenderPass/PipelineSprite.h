@@ -1,5 +1,6 @@
 #pragma once
 #include "Pipeline.h"
+#include "IOImage.h"
 #include "SceneInfoGoldSrc.h"
 #include "Image.h"
 #include "Buffer.h"
@@ -19,12 +20,13 @@ public:
 protected:
     virtual void _initShaderResourceDescriptorV() override;
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;
+    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer);
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override;
     virtual void _destroyV() override;
 
-    static const size_t MaxSpriteNum;
 private:
+    static const size_t MaxSpriteNum;
+
     struct SSpritePushConstant
     {
         uint32_t TexIndex = 0;
@@ -37,11 +39,12 @@ private:
     void __updateDescriptorSet();
 
     vk::CSampler m_Sampler;
-    vk::CPointerSet<vk::CImage> m_SpriteImageSet;
     vk::CImage m_PlaceholderImage;
-    std::vector<SSpritePushConstant> m_SpriteSequence;
-    vk::CBuffer m_VertexBuffer;
+    ptr<vk::CBuffer> m_pVertexDataBuffer;
     size_t m_VertexNum = 0;
     vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+
+    vk::CPointerSet<vk::CImage> m_SpriteImageSet;
+    std::vector<SSpritePushConstant> m_SpriteSequence;
 };
 

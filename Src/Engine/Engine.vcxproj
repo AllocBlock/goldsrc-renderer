@@ -128,6 +128,7 @@
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="ComponentMeshRenderer.h" />
     <ClInclude Include="DynamicResourceManager.h" />
     <ClInclude Include="RenderPassSingle.h" />
     <ClInclude Include="ShaderCompileCache.h" />
@@ -153,6 +154,7 @@
     <ClInclude Include="Transform.h" />
     <ClInclude Include="VertexAttributeDescriptor.h" />
     <ClInclude Include="RenderPassDescriptor.h" />
+    <ClInclude Include="Component.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

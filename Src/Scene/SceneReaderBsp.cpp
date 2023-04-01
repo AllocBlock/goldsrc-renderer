@@ -20,7 +20,7 @@ glm::vec3 stringToVec3(std::string vString)
 ptr<SSceneInfoGoldSrc> CSceneReaderBsp::_readV()
 {
     m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene = make<CScene>();
     
     __readBsp(m_FilePath);
     if (!m_Bsp.getLumps().m_LumpLighting.Lightmaps.empty())
@@ -103,15 +103,15 @@ void CSceneReaderBsp::__readTextures()
     m_pSceneInfo->TexImageSet = std::move(TexImageSet);
 }
 
-std::vector<CActor<CMeshDataGoldSrc>::Ptr> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
+std::vector<CActor::Ptr> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     _ASSERTE(vLeafIndex < Lumps.m_LumpLeaf.Leaves.size());
     const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
 
-    auto MeshDataNormalPart = CMeshDataGoldSrc();
-    auto MeshDataSkyPart = CMeshDataGoldSrc();
+    auto MeshDataNormalPart = CMeshData();
+    auto MeshDataSkyPart = CMeshData();
 
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -138,12 +138,12 @@ std::vector<CActor<CMeshDataGoldSrc>::Ptr> CSceneReaderBsp::__loadLeaf(size_t vL
     return { pActorNormalPart, pActorSkyPart };
 }
 
-std::vector<CActor<CMeshDataGoldSrc>::Ptr> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+std::vector<CActor::Ptr> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    auto MeshDataNormalPart = CMeshDataGoldSrc();
-    auto MeshDataSkyPart = CMeshDataGoldSrc();
+    auto MeshDataNormalPart = CMeshData();
+    auto MeshDataSkyPart = CMeshData();
     
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
     size_t TexWidth, TexHeight;
@@ -460,7 +460,7 @@ std::pair<uint32_t, std::vector<glm::vec2>> CSceneReaderBsp::__getAndAppendBspFa
     }
     else
     {
-        return std::make_pair(CMeshDataGoldSrc::InvalidLightmapIndex, std::vector<glm::vec2>{});
+        return std::make_pair(CMeshData::InvalidLightmapIndex, std::vector<glm::vec2>{});
     }
 }
 
@@ -482,7 +482,7 @@ void CSceneReaderBsp::__getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& 
     voName = BspTexture.Name;
 }
 
-void CSceneReaderBsp::__appendBspFaceToObject(CMeshDataGoldSrc& vioMeshData, uint32_t vFaceIndex)
+void CSceneReaderBsp::__appendBspFaceToObject(CMeshData& vioMeshData, uint32_t vFaceIndex)
 {
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -494,7 +494,7 @@ void CSceneReaderBsp::__appendBspFaceToObject(CMeshDataGoldSrc& vioMeshData, uin
 
     auto [LightmapIndex, LightmapCoords] = __getAndAppendBspFaceLightmap(vFaceIndex, TexCoords);
     uint32_t TexIndex = m_TexNameToIndex[TexName];
-    if (LightmapIndex == CMeshDataGoldSrc::InvalidLightmapIndex)
+    if (LightmapIndex == CMeshData::InvalidLightmapIndex)
     {
         LightmapCoords.resize(TexCoords.size(), glm::vec2(0.0, 0.0));
     }
@@ -545,7 +545,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
     for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
         auto pMesh = m_pSceneInfo->pScene->getActor(i)->getMesh();
-        auto MeshData = pMesh->getMeshData(); // TODO: edit is messed up when try to change data after creation, how to handle?
+        auto MeshData = pMesh->getMeshDataV(); // TODO: edit is messed up when try to change data after creation, how to handle?
 
         if (!MeshData.getEnableLightmap()) continue;
 
@@ -555,7 +555,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
         for (size_t i = 0; i < pLightmapIndexArray->size(); ++i)
         {
             uint32_t LightmapIndex = pLightmapIndexArray->get(i);
-            if (LightmapIndex == CMeshDataGoldSrc::InvalidLightmapIndex) continue;
+            if (LightmapIndex == CMeshData::InvalidLightmapIndex) continue;
 
             pLightmapTexCoordArray->set(i, m_pSceneInfo->pLightmap->getAcutalLightmapCoord(LightmapIndex, pLightmapTexCoordArray->get(i)));
         }
@@ -679,7 +679,7 @@ void CSceneReaderBsp::__loadPointEntities()
             }
         }
 
-        auto MeshDataEntityCube = CMeshDataGoldSrc();
+        auto MeshDataEntityCube = CMeshData();
         const float Size = 0.2f;
         __appendCube(Origin * m_SceneScale, Size, MeshDataEntityCube);
 
@@ -693,7 +693,7 @@ void CSceneReaderBsp::__loadPointEntities()
     }
 }
 
-void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, CMeshDataGoldSrc& vioMeshData)
+void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, CMeshData& vioMeshData)
 {
     // create plane and vertex buffer
     std::vector<glm::vec3> VertexSet =

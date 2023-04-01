@@ -31,6 +31,12 @@
     <Filter Include="源文件\Shader">
       <UniqueIdentifier>{4a42ddf8-2a75-46e4-a9b6-57936b7fd1a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Scene\Components">
+      <UniqueIdentifier>{639e3b20-be0e-489c-8e23-8d437fddb0de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Scene\Components">
+      <UniqueIdentifier>{0c5073ed-c1f4-4c6c-ace9-fa36bcf30036}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Pipeline.cpp">
@@ -84,12 +90,6 @@
     <ClCompile Include="Collider.cpp">
       <Filter>源文件\Physics</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>源文件\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>源文件\Scene</Filter>
-    </ClCompile>
     <ClCompile Include="Rotator.cpp">
       <Filter>源文件\Scene</Filter>
     </ClCompile>
@@ -113,6 +113,12 @@
     </ClCompile>
     <ClCompile Include="DynamicResourceManager.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>源文件\Scene\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>源文件\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -170,12 +176,6 @@
     <ClInclude Include="PhysicsState.h">
       <Filter>头文件\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>头文件\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>头文件\Scene</Filter>
-    </ClInclude>
     <ClInclude Include="Rotator.h">
       <Filter>头文件\Scene</Filter>
     </ClInclude>
@@ -205,6 +205,18 @@
     </ClInclude>
     <ClInclude Include="DynamicResourceManager.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>头文件\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>头文件\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentMeshRenderer.h">
+      <Filter>头文件\Scene\Components</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

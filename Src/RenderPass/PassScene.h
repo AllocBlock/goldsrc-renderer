@@ -44,9 +44,8 @@ public:
 
         CRenderPassScene::_destroyV();
     }
-
-    template <typename MeshData_t>
-    static bool isActorInSight(ptr<CActor<MeshData_t>> vActor, const SFrustum& vFrustum)
+    
+    static bool isActorInSight(CActor::Ptr vActor, const SFrustum& vFrustum)
     {
         // AABB frustum culling
         const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;

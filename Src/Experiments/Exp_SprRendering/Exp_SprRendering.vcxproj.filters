@@ -21,30 +21,10 @@
     <ClCompile Include="ApplicationSprite.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PassSprite.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PipelineSprite.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationSprite.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PassSprite.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineSprite.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\sprShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\sprShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
   </ItemGroup>
 </Project>

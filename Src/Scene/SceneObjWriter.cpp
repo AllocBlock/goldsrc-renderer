@@ -7,7 +7,7 @@ void CSceneObjWriter::addSceneInfo(ptr<SSceneInfoGoldSrc> vSceneInfo)
     for (size_t i = 0; i < vSceneInfo->pScene->getActorNum(); ++i)
     {
         auto pActor = vSceneInfo->pScene->getActor(i);
-        auto MeshData = pActor->getMesh()->getMeshData();
+        auto MeshData = pActor->getMesh()->getMeshDataV();
         auto pTexIndexArray = MeshData.getTexIndexArray();
 
         CIOImage::Ptr pImage = nullptr;

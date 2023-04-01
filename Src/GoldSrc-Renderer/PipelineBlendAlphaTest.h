@@ -7,8 +7,8 @@ class CPipelineBlendAlphaTest : public CPipelineGoldSrc
 protected:
     virtual void _dumpExtraPipelineDescriptionV(CPipelineDescriptor& vioDesc) override
     {
-        vioDesc.setVertShaderPath("shaders/alphaTestShader.vert");
-        vioDesc.setFragShaderPath("shaders/alphaTestShader.frag");
+        vioDesc.setVertShaderPath("alphaTestShader.vert");
+        vioDesc.setFragShaderPath("alphaTestShader.frag");
 
         vioDesc.setEnableDepthTest(true);
         vioDesc.setEnableDepthWrite(true);

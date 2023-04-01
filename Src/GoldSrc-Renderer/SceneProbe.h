@@ -4,5 +4,5 @@
 
 namespace SceneProbe
 {
-	bool select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene<CMeshDataGoldSrc>::Ptr vScene, CActor<CMeshDataGoldSrc>::Ptr& voActor, glm::vec3& voNearestIntersection);
+	bool select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene, CActor::Ptr& voActor, glm::vec3& voNearestIntersection);
 };

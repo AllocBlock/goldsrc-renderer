@@ -10,7 +10,7 @@ ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
     Obj.read(m_FilePath);
 
     Scene::reportProgress(u8"∂¡»°≥°æ∞÷–");
-    CMeshDataGoldSrc MeshData = CMeshDataGoldSrc();
+    CMeshData MeshData = CMeshData();
     const uint32_t TexIndex = 0;
 
     auto pVertexArray = MeshData.getVertexArray();
@@ -59,7 +59,7 @@ ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
     auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
 
     m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene<CMeshDataGoldSrc>>();
+    m_pSceneInfo->pScene = make<CScene>();
     m_pSceneInfo->pScene->addActor(pActor);
     m_pSceneInfo->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
 

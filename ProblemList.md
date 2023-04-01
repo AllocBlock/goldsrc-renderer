@@ -290,19 +290,23 @@
       - 问题是接口怎么办呢？要转发到成员变量上...用宏自动生成一下转发一下？
     - 另一个思路：多继承，模板可以传字符串，但好像函数名称没办法..
 
+## 问题：静态资源管理
+- 如何管理静态资源的加载、索引？如图片
+
 ## 问题：Actor设计
   - 目前场景中的物体包含了多个属性（变换、网格、物理），这些属性之间有引用，有必要引入Actor的概念了
 ### 1 Actor属性
   - 在Unity中，变换是Actor的原生组件，必须包含；而在Unreal中，变换组件非必须，但大多数Actor自带
     - Unity没有根组件，而Unreal有
   - Actor
-    - Transform
+    - Transform 物体变换（Transform单独处理，不属于组件，它作为其他组件的父组件，只有它能有子组件）
       - Translate
       - Rotate
       - Scale
-    - Mesh (BasicShape/TriangleList)
+    - Mesh Renderer (BasicShape/TriangleList) 网格渲染
       - MeshData (静态或动态生成)
-    - Collider
+    - Icon Renderer 图标渲染
+    - Collider 碰撞体
 ### 2 Actor嵌套的变换，以及世界坐标、局部坐标的区分
 ### 3 Actor渲染
   - 还没有抽象出材质，暂时是Renderpass遍历所有Actor，固定渲染流程
@@ -320,6 +324,12 @@
         - PointData能否自动生成布局？目前只有内存布局，没有语义（每块内存对应了什么）
           - **目前是在PointData内部实现转换**
     - 问题2：多个网格数据可能需要合并到一个VertexBuffer
+  - **问题：是否所有数据使用同样的MeshData结构**
+    - 常规的Mesh网格包含顶点、法向等等信息
+    - 但金源网格包含Lightmap信息，这个怎么处理？如果不统一MeshData，就需要做反射来告诉外界包含哪些数据？
+    - 或者完全动态的Mesh的字段信息，通过枚举访问？但对应的数据是不同的（如顶点是vec3，uv是vec2，纹理索引是uint） C++能做到吗？
+      - 本质和所有字段全部考虑是一样的..
+    - **方法：同一个MeshData包含所有字段**
 
 ~~## 问题：网格和物理的对应关系~~
 ~~- 网格和碰撞体分离，一个网格可以包含一个碰撞体~~

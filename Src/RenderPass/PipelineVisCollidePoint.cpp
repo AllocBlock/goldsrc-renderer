@@ -78,8 +78,8 @@ CPipelineDescriptor CPipelineVisCollidePoint::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/visCollidePointShader.vert");
-    Descriptor.setFragShaderPath("shaders/visCollidePointShader.frag");
+    Descriptor.setVertShaderPath("visCollidePointShader.vert");
+    Descriptor.setFragShaderPath("visCollidePointShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_LINE_LIST, false);

@@ -92,7 +92,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="MeshDataGoldSrc.cpp" />
     <ClCompile Include="SceneInterface.cpp" />
     <ClCompile Include="SceneObjWriter.cpp" />
     <ClCompile Include="SceneReaderMap.cpp" />
@@ -106,7 +105,6 @@
     <ClCompile Include="SceneReaderRmf.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MeshDataGoldSrc.h" />
     <ClInclude Include="SceneObjWriter.h" />
     <ClInclude Include="SceneReaderMap.h" />
     <ClInclude Include="SceneInfoGoldSrc.h" />

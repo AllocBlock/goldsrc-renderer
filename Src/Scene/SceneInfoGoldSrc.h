@@ -1,6 +1,5 @@
 #pragma once
 #include "IOImage.h"
-#include "MeshDataGoldSrc.h"
 #include "Scene.h"
 #include "BoundingBox.h"
 
@@ -98,7 +97,7 @@ struct SGoldSrcSprite
 
 struct SSceneInfoGoldSrc
 {
-    CScene<CMeshDataGoldSrc>::Ptr pScene = nullptr;
+    CScene::Ptr pScene = nullptr;
     std::vector<ptr<CIOImage>> TexImageSet;
     std::vector<SGoldSrcSprite> SprSet;
 

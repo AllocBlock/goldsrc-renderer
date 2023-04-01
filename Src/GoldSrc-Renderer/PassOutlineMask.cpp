@@ -4,7 +4,7 @@
 
 #include <vector>
 
-void CRenderPassOutlineMask::setHighlightActor(CActor<CMeshDataGoldSrc>::Ptr vActor)
+void CRenderPassOutlineMask::setHighlightActor(CActor::Ptr vActor)
 {
     m_PipelineCreator.get().setActor(vActor);
     __rerecordCommand();

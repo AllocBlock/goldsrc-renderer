@@ -62,7 +62,7 @@ void CApplicationGoldSrc::_createV()
             glfwGetFramebufferSize(vWindow, &WindowWidth, &WindowHeight);
             glm::vec2 NDC = glm::vec2(XPos / WindowWidth * 2 - 1.0, YPos / WindowHeight * 2 - 1.0);
 
-            CActor<CMeshDataGoldSrc>::Ptr pNearestActor = nullptr;
+            CActor::Ptr pNearestActor = nullptr;
             glm::vec3 NearestIntersection;
             if (SceneProbe::select(NDC, m_pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {

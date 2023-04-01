@@ -8,6 +8,9 @@ using namespace vk;
 void CApplicationSprite::_createV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    
+    std::filesystem::path ShaderDirPath = std::filesystem::path(__FILE__).parent_path() / "../../RenderPass/shaders/";
+    Environment::addPathToEnviroment(ShaderDirPath);
 
     VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
 
