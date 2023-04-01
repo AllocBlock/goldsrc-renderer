@@ -33,6 +33,11 @@ void CVisualizer::addSphere(const glm::vec3& vCenter, const glm::vec3& vScale, c
     m_pApp->addSphere(vCenter, vScale, vColor);
 }
 
+void CVisualizer::addCube(const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor)
+{
+    m_pApp->addCube(vCenter, vScale, vColor);
+}
+
 void CVisualizer::start()
 {
     _ASSERTE(m_IsInitted);

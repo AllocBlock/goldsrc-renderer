@@ -114,16 +114,15 @@
     <ClCompile Include="PassVisualize.cpp" />
     <ClCompile Include="PipelineVisualizePrimitive.cpp" />
     <ClCompile Include="Visualizer.cpp" />
-    <ClCompile Include="PipelineVisualizePrimitiveInstanced.cpp" />
+    <ClCompile Include="PipelineVisualize3DPrimitive.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationVisualize.h" />
     <ClInclude Include="PipelineLine.h" />
     <ClInclude Include="PipelinePoint.h" />
-    <ClInclude Include="PipelineSphere.h" />
     <ClInclude Include="PipelineTriangle.h" />
     <ClInclude Include="PipelineVisualizePrimitive.h" />
-    <ClInclude Include="PipelineVisualizePrimitiveInstanced.h" />
+    <ClInclude Include="PipelineVisualize3DPrimitive.h" />
     <ClInclude Include="PointData.h" />
     <ClInclude Include="PassVisualize.h" />
     <ClInclude Include="VisualizePrimitive.h" />

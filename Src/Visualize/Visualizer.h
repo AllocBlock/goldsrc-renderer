@@ -13,6 +13,7 @@ public:
     void addLine(const Visualize::Line& vLine, const glm::vec3& vColor);
     void addPoint(const Visualize::Point& vPoint, const glm::vec3& vColor);
     void addSphere(const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor);
+    void addCube(const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor);
     void start();
 
 private:

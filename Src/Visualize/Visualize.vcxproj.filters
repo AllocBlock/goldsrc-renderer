@@ -30,7 +30,7 @@
     <ClCompile Include="Visualizer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PipelineVisualizePrimitiveInstanced.cpp">
+    <ClCompile Include="PipelineVisualize3DPrimitive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,10 +65,7 @@
     <ClInclude Include="PipelineVisualizePrimitiveTyped.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PipelineVisualizePrimitiveInstanced.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineSphere.h">
+    <ClInclude Include="PipelineVisualize3DPrimitive.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

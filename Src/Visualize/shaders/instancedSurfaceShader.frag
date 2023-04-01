@@ -22,13 +22,8 @@ void main()
 	vec3 H = normalize(L + V);
 
 	float ambient = 1.0;
-	float diffuse = dot(L, N);
-	float specular = pow(dot(N, H), 40.0);
-	if (diffuse <= 0.0)
-	{
-		diffuse = 0.0;
-		specular = 0.0;
-	}
+	float diffuse = max(0, dot(L, N));
+	float specular = pow(max(0, dot(N, H)), 40.0);
 
 	float shade = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
 	outColor = vec4(inFragColor * shade, 1.0);
