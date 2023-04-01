@@ -94,8 +94,8 @@ CPipelineDescriptor CPipelineSprite::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/sprShaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/sprShaderFrag.spv");
+    Descriptor.setVertShaderPath("shaders/sprShader.vert");
+    Descriptor.setFragShaderPath("shaders/sprShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.addPushConstant<SSpritePushConstant>(VK_SHADER_STAGE_VERTEX_BIT);

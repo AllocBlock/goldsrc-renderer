@@ -96,8 +96,5 @@
 
 ## TODO
   - Debug scope功能
-  - 最小化时，extent=(0,0)的处理
-  - 三角形全部改为逆时针！
+  - 三角形全部改为逆时针，坐标轴改从z-up转换为统一y-up
   - 碰撞分board和narrow
-  - pipeline生命周期、renderpass生命周期
-    - 绘制port相关的流程图，类型展示

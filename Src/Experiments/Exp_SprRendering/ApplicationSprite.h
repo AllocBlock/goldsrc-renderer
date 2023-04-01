@@ -13,13 +13,14 @@ protected:
     virtual void _createV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
-    virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
 private:
     void __linkPasses();
 
+    CCamera::Ptr m_pCamera = nullptr;
+
     ptr<CRenderPassGUI> m_pPassGUI = nullptr;
-    ptr<CRenderPassSprite> m_pPassMain = nullptr;
+    ptr<CRenderPassSprite> m_pPassSprite = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 };

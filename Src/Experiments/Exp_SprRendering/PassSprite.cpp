@@ -3,26 +3,73 @@
 #include "RenderPassDescriptor.h"
 #include "Function.h"
 
-void CRenderPassSprite::_initV()
+CRenderPassSprite::CRenderPassSprite()
 {
-    m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
-    m_pCamera->setPos(glm::vec3(1.0, 0.0, 0.0));
-    m_pCamera->setAt(glm::vec3(0.0, 0.0, 0.0));
-    
-    __createRecreateResources();
+    m_SpriteSet =
+    {
+        {
+            glm::vec3(0.0, 0.0, 0.0),
+            glm::vec3(0.0, 0.0, 0.0),
+            1.0,
+            EGoldSrcSpriteType::PARALLEL,
+            Scene::generateBlackPurpleGrid(16, 16, 4),
+        },
+        {
+            glm::vec3(0.0, 3.0, 0.0),
+            glm::vec3(0.0, 0.0, 0.0),
+            0.5,
+            EGoldSrcSpriteType::PARALLEL,
+            Scene::generateDiagonalGradientGrid(64, 64, 255, 0, 0, 0, 255, 0),
+        },
+        {
+            glm::vec3(0.0, 6.0, 0.0),
+            glm::vec3(0.0, 0.0, 0.0),
+            1.0,
+            EGoldSrcSpriteType::PARALLEL_UP_RIGHT,
+            Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 0),
+        },
+        {
+            glm::vec3(0.0, 9.0, 0.0),
+            glm::vec3(-90.0, 0.0, 0.0),
+            1.0,
+            EGoldSrcSpriteType::PARALLEL_ORIENTED,
+            Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 255),
+        },
+        {
+            glm::vec3(0.0, 12.0, 0.0),
+            glm::vec3(-90.0, 0.0, 0.0),
+            1.0,
+            EGoldSrcSpriteType::ORIENTED,
+            Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 255, 0, 0, 255),
+        },
+        {
+            glm::vec3(0.0, 15.0, 0.0),
+            glm::vec3(0.0, 0.0, 0.0),
+            1.0,
+            EGoldSrcSpriteType::FACING_UP_RIGHT,
+            Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 0, 255, 0, 255),
+        }
+    };
 }
 
-void CRenderPassSprite::_initPortDescV(SPortDescriptor vDesc)
+
+void CRenderPassSprite::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    SPortDescriptor Ports;
-    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    return Ports;
+    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 }
 
 CRenderPassDescriptor CRenderPassSprite::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
+}
+
+void CRenderPassSprite::_initV()
+{
+    CRenderPassSingle::_initV();
+
+    m_PipelineSpriteCreator.init(m_pDevice, weak_from_this(), m_pAppInfo->getScreenExtent(), true, m_pAppInfo->getImageNum(),
+        [this](CPipelineSprite& vPipeline) { vPipeline.setSprites(m_SpriteSet); }
+    );
 }
 
 void CRenderPassSprite::_updateV(uint32_t vImageIndex)
@@ -32,125 +79,57 @@ void CRenderPassSprite::_updateV(uint32_t vImageIndex)
 
 std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     std::vector<VkClearValue> ClearValueSet(2);
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, ClearValueSet);
-    m_Pipeline.recordCommand(CommandBuffer, vImageIndex);
-    _end();
+    _beginWithFramebuffer(vImageIndex);
+    m_PipelineSpriteCreator.get().recordCommand(CommandBuffer, vImageIndex);
+    _endWithFramebuffer();
     return { CommandBuffer };
 }
 
 void CRenderPassSprite::_destroyV()
 {
-    __destroyRecreateResources();
+    m_PipelineSpriteCreator.destroy();
 
-    IRenderPass::_destroyV();
+    CRenderPassSingle::_destroyV();
 }
 
 void CRenderPassSprite::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    __destroyRecreateResources();
-    __createRecreateResources();
+    m_PipelineSpriteCreator.updateV(vUpdateState);
+
+    CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
-void CRenderPassSprite::__createGraphicsPipeline()
+bool CRenderPassSprite::_dumpReferenceExtentV(VkExtent2D& voExtent)
 {
-    m_Pipeline.create(m_pDevice, get(), m_FirstInputExtent);
+    voExtent = m_pAppInfo->getScreenExtent();
+    return true;
 }
 
-void CRenderPassSprite::__createFramebuffers()
+std::vector<VkImageView> CRenderPassSprite::_getAttachmentsV(uint32_t vIndex)
 {
-    _ASSERTE(isValid());
-
-    uint32_t ImageNum = m_pAppInfo->getImageNum();
-    m_FramebufferSet.init(ImageNum);
-    for (uint32_t i = 0; i < ImageNum; ++i)
+    return
     {
-        std::vector<VkImageView> Attachments =
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(i),
-        };
-        
-        m_FramebufferSet[i]->create(m_pDevice, get(), Attachments, m_FirstInputExtent);
-    }
+        m_pPortSet->getOutputPort("Main")->getImageV(vIndex)
+    };
 }
 
-void CRenderPassSprite::__createRecreateResources()
+std::vector<VkClearValue> CRenderPassSprite::_getClearValuesV()
 {
-    if (isValid())
-    {
-        __createFramebuffers();
-        __createGraphicsPipeline();
-        m_Pipeline.setImageNum(m_pAppInfo->getImageNum());
-
-        const std::vector<SGoldSrcSprite> SpriteSet =
-        {
-            {
-                glm::vec3(0.0, 0.0, 0.0),
-                glm::vec3(0.0, 0.0, 0.0),
-                1.0,
-                EGoldSrcSpriteType::PARALLEL,
-                Scene::generateBlackPurpleGrid(16, 16, 4),
-            },
-            {
-                glm::vec3(0.0, 3.0, 0.0),
-                glm::vec3(0.0, 0.0, 0.0),
-                0.5,
-                EGoldSrcSpriteType::PARALLEL,
-                Scene::generateDiagonalGradientGrid(64, 64, 255, 0, 0, 0, 255, 0),
-            },
-            {
-                glm::vec3(0.0, 6.0, 0.0),
-                glm::vec3(0.0, 0.0, 0.0),
-                1.0,
-                EGoldSrcSpriteType::PARALLEL_UP_RIGHT,
-                Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 0),
-            },
-            {
-                glm::vec3(0.0, 9.0, 0.0),
-                glm::vec3(-90.0, 0.0, 0.0),
-                1.0,
-                EGoldSrcSpriteType::PARALLEL_ORIENTED,
-                Scene::generateDiagonalGradientGrid(64, 64, 255, 255, 0, 0, 255, 255),
-            },
-            {
-                glm::vec3(0.0, 12.0, 0.0),
-                glm::vec3(-90.0, 0.0, 0.0),
-                1.0,
-                EGoldSrcSpriteType::ORIENTED,
-                Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 255, 0, 0, 255),
-            },
-            {
-                glm::vec3(0.0, 15.0, 0.0),
-                glm::vec3(0.0, 0.0, 0.0),
-                1.0,
-                EGoldSrcSpriteType::FACING_UP_RIGHT,
-                Scene::generateDiagonalGradientGrid(64, 64, 0, 255, 0, 255, 0, 255),
-            }
-        };
-
-        m_Pipeline.setSprites(SpriteSet);
-    }
-}
-
-void CRenderPassSprite::__destroyRecreateResources()
-{
-    m_FramebufferSet.destroyAndClearAll();
-    m_Pipeline.destroy();
+    return DefaultClearValueColor;
 }
 
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
-
     glm::mat4 View = m_pCamera->getViewMat();
     glm::mat4 Proj = m_pCamera->getProjMat();
     glm::vec3 EyePos = m_pCamera->getPos();
     glm::vec3 EyeDirection = m_pCamera->getFront();
 
-    m_Pipeline.updateUniformBuffer(vImageIndex, View, Proj, EyePos, EyeDirection);
+    m_PipelineSpriteCreator.get().updateUniformBuffer(vImageIndex, View, Proj, EyePos, EyeDirection);
 }

@@ -10,7 +10,10 @@ int main()
 
 	GLFW::startLoop(pWindow, [=]()
 	{
-		pApp->render();
+		pApp->tick();
+	}, [=](int vWidth, int vHeight)
+	{
+		pApp->resize(vWidth, vHeight);
 	});
 
 	pApp->waitDevice();
