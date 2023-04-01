@@ -43,7 +43,7 @@ struct SBspTree
     std::vector<SBspTreeNode> Nodes;
     std::map<size_t, std::vector<size_t>> LeafIndexToObjectIndices;
     std::map<size_t, std::vector<size_t>> ModelIndexToObjectIndex;
-    std::vector<SModelInfo> ModelInfos;
+    std::vector<SModelInfo> ModelInfos; // TIPS: one model can contain multiple parts(actors)
 
     uint32_t getPointLeaf(glm::vec3 vPoint);
 };

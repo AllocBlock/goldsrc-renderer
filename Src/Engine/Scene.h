@@ -3,6 +3,7 @@
 #include "Device.h"
 #include "Log.h"
 #include "Actor.h"
+#include "ComponentMeshRenderer.h"
 #include "VertexBuffer.h"
 
 class CScene
@@ -42,7 +43,13 @@ public:
         std::vector<std::vector<PointData_t>> DataSet;
         for (auto pActor : m_ActorSet)
         {
-            auto pMesh = pActor->getMesh();
+            auto pTransform = pActor->getTransform();
+            auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+            if (!pMeshRenderer) continue;
+
+            auto pMesh = pMeshRenderer->getMesh();
+            if (!pMesh) continue;
+            
             auto MeshData = pMesh->getMeshDataV();
             const auto& Data = PointData_t::extractFromMeshData(MeshData);
             DataSet.emplace_back(Data);

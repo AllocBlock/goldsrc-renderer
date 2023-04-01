@@ -2,73 +2,73 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-glm::vec3 STransform::getAbsoluteTranslate() const
+glm::vec3 CTransform::getAbsoluteTranslate() const
 {
-    if (pParent)
-        return pParent->getAbsoluteTranslate() + Translate;
+    if (!m_pParent.expired())
+        return m_pParent.lock()->getAbsoluteTranslate() + m_Translate;
     else
-        return Translate;
+        return m_Translate;
 }
 
-CRotator STransform::getAbsoluteRotate() const
+CRotator CTransform::getAbsoluteRotate() const
 {
-    if (pParent)
-        return pParent->getAbsoluteRotate() * Rotate;
+    if (!m_pParent.expired())
+        return m_pParent.lock()->getAbsoluteRotate() * m_Rotate;
     else
-        return Rotate;
+        return m_Rotate;
 }
 
-glm::vec3 STransform::getAbsoluteScale() const
+glm::vec3 CTransform::getAbsoluteScale() const
 {
-    if (pParent)
-        return pParent->getAbsoluteScale() + Scale;
+    if (!m_pParent.expired())
+        return m_pParent.lock()->getAbsoluteScale() + m_Scale;
     else
-        return Scale;
+        return m_Scale;
 }
 
-glm::mat4 STransform::getRelativeModelMat4() const
+glm::mat4 CTransform::getRelativeModelMat4() const
 {
     glm::mat4 Result = glm::mat4(1.0f);
-    Result = glm::translate(Result, Translate); // be care that the api applys reversely, translate is the last
-    Result *= Rotate.getRotateMatrix();
-    Result = glm::scale(Result, Scale);
+    Result = glm::translate(Result, m_Translate); // be care that the api applys reversely, translate is the last
+    Result *= m_Rotate.getRotateMatrix();
+    Result = glm::scale(Result, m_Scale);
     return Result;
 }
 
-glm::mat4 STransform::getAbsoluteModelMat4() const
+glm::mat4 CTransform::getAbsoluteModelMat4() const
 {
-    if (pParent)
-        return pParent->getAbsoluteModelMat4() * getRelativeModelMat4();
+    if (!m_pParent.expired())
+        return m_pParent.lock()->getAbsoluteModelMat4() * getRelativeModelMat4();
     else
         return getRelativeModelMat4();
 }
 
-glm::vec3 STransform::applyRelativeOnPoint(glm::vec3 vPoint) const
+glm::vec3 CTransform::applyRelativeOnPoint(glm::vec3 vPoint) const
 {
     return glm::vec3(__applyRelative(glm::vec4(vPoint, 1.0f)));
 }
 
-glm::vec3 STransform::applyRelativeOnVector(glm::vec3 vVector) const
+glm::vec3 CTransform::applyRelativeOnVector(glm::vec3 vVector) const
 {
     return glm::vec3(__applyRelative(glm::vec4(vVector, 0.0f)));
 }
 
-glm::vec4 STransform::__applyRelative(glm::vec4 vValue) const
+glm::vec4 CTransform::__applyRelative(glm::vec4 vValue) const
 {
     return getRelativeModelMat4() * vValue;
 }
 
-glm::vec3 STransform::applyAbsoluteOnPoint(glm::vec3 vPoint) const
+glm::vec3 CTransform::applyAbsoluteOnPoint(glm::vec3 vPoint) const
 {
     return glm::vec3(__applyAbsolute(glm::vec4(vPoint, 1.0f)));
 }
 
-glm::vec3 STransform::applyAbsoluteOnVector(glm::vec3 vVector) const
+glm::vec3 CTransform::applyAbsoluteOnVector(glm::vec3 vVector) const
 {
     return glm::vec3(__applyAbsolute(glm::vec4(vVector, 0.0f)));
 }
 
-glm::vec4 STransform::__applyAbsolute(glm::vec4 vValue) const
+glm::vec4 CTransform::__applyAbsolute(glm::vec4 vValue) const
 {
     return getAbsoluteModelMat4() * vValue;
 }

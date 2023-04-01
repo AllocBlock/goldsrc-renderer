@@ -12,7 +12,7 @@ class CPipelineVisCollider : public IPipeline
 public:
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void startRecord(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
-    void drawCollider(ICollider::CPtr vCollider);
+    void drawCollider(CComponentCollider::CPtr vCollider);
     void endRecord();
 
 protected:

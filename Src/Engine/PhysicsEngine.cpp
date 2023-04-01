@@ -89,7 +89,7 @@ void CPhysicsEngine::update(float vDeltaTime) const
         glm::vec3 DeltaPos = pRigid->Velocity * dt + 0.5f * A * dt * dt;
             
         pRigid->Velocity += DeltaSpeed;
-        pRigid->pTargetTransform->Translate += DeltaPos;
+        pRigid->pTargetTransform->setTranslate(pRigid->pTargetTransform->getTranslate() + DeltaPos);
 
         // 5. update rotation
         glm::vec3 DeltaAngularVelocity = Alpha * dt;
@@ -104,8 +104,8 @@ void CPhysicsEngine::update(float vDeltaTime) const
         else
             DeltaRotation = glm::quat(glm::cos(HalfTheta), glm::sin(HalfTheta) * glm::normalize(DeltaAngular));
         
-        glm::quat NewRotation = DeltaRotation * pRigid->pTargetTransform->Rotate.getQuaternion();
-        pRigid->pTargetTransform->Rotate.setByQuaternion(NewRotation);
+        glm::quat NewRotation = DeltaRotation * pRigid->pTargetTransform->getRotate().getQuaternion();
+        pRigid->pTargetTransform->setRotate(NewRotation);
 
         pRigid->AngularVelocity += DeltaAngularVelocity;
     }

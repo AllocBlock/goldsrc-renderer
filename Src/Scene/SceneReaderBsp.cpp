@@ -9,6 +9,8 @@
 
 #include <sstream>
 
+#include "ComponentMeshRenderer.h"
+
 glm::vec3 stringToVec3(std::string vString)
 {
     std::istringstream StringStream(vString);
@@ -246,27 +248,29 @@ void CSceneReaderBsp::__loadBspTree()
         // load entities data and calculate bounding box
         auto ModelActorSet = __loadEntity(i);
         std::vector<size_t> ObjectIndices;
-        SAABB TotalBoundingBox =
+        SAABB TotalAABB =
         {
             {INFINITY, INFINITY, INFINITY},
             {-INFINITY, -INFINITY, -INFINITY},
         };
         for (auto pModelActor : ModelActorSet)
         {
-            SAABB BoundingBox = pModelActor->getAABB();
-            if (!BoundingBox.IsValid) continue;
-            TotalBoundingBox.Min.x = std::min<float>(TotalBoundingBox.Min.x, BoundingBox.Min.x);
-            TotalBoundingBox.Min.y = std::min<float>(TotalBoundingBox.Min.y, BoundingBox.Min.y);
-            TotalBoundingBox.Min.z = std::min<float>(TotalBoundingBox.Min.z, BoundingBox.Min.z);
-            TotalBoundingBox.Max.x = std::max<float>(TotalBoundingBox.Max.x, BoundingBox.Max.x);
-            TotalBoundingBox.Max.y = std::max<float>(TotalBoundingBox.Max.y, BoundingBox.Max.y);
-            TotalBoundingBox.Max.z = std::max<float>(TotalBoundingBox.Max.z, BoundingBox.Max.z);
+            auto pTransform = pModelActor->getTransform();
+            auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+            if (!pMeshRenderer) continue;
+
+            auto pMesh = pMeshRenderer->getMesh();
+            if (!pMesh) continue;
+
+            SAABB AABB = pMesh->getAABB();
+            if (!AABB.IsValid) continue;
+            TotalAABB.applyUnion(AABB);
             ObjectIndices.emplace_back(pScene->getActorNum());
             pScene->addActor(pModelActor);
         }
 
         BspTree.ModelIndexToObjectIndex[i] = ObjectIndices;
-        BspTree.ModelInfos[i].BoundingBox = TotalBoundingBox;
+        BspTree.ModelInfos[i].BoundingBox = TotalAABB;
         BspTree.ModelInfos[i].RenderMode = RenderMode;
         BspTree.ModelInfos[i].Opacity = Opacity;
     }
@@ -544,8 +548,16 @@ void CSceneReaderBsp::__correntLightmapCoords()
 
     for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
-        auto pMesh = m_pSceneInfo->pScene->getActor(i)->getMesh();
-        auto MeshData = pMesh->getMeshDataV(); // TODO: edit is messed up when try to change data after creation, how to handle?
+        auto pActor = m_pSceneInfo->pScene->getActor(i);
+
+        auto pTransform = pActor->getTransform();
+        auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+        if (!pMeshRenderer) continue;
+
+        auto pMesh = pMeshRenderer->getMesh();
+        if (!pMesh) continue;
+
+        const auto& MeshData = pMesh->getMeshDataV();
 
         if (!MeshData.getEnableLightmap()) continue;
 

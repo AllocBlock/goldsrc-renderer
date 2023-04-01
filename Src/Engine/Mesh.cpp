@@ -52,7 +52,7 @@ CMeshData CMeshBasicSphere::getMeshDataV() const
     return CMeshBasicSphere::MeshData;
 }
 
-CMeshTriangleList::Ptr Mesh::bakeTransform(CMesh::CPtr vMesh, cptr<STransform> vTransform)
+CMeshTriangleList::Ptr Mesh::bakeTransform(CMesh::CPtr vMesh, cptr<CTransform> vTransform)
 {
     auto pMesh = make<CMeshTriangleList>();
     CMeshData Data = vMesh->getMeshDataV().copy();

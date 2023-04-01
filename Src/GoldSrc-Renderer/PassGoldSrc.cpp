@@ -268,12 +268,9 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
                 for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
                 {
-                    auto pActor = m_pSceneInfo->pScene->getActor(i);
-                    bool EnableLightmap = pActor->getMesh()->getMeshDataV().getEnableLightmap();
-                    m_PipelineSet.Normal.get().setLightmapState(CommandBuffer, EnableLightmap);
                     if (m_AreObjectsVisable[i])
                     {
-                        __recordObjectRenderCommand(vImageIndex, i);
+                        __renderActorByPipeine(vImageIndex, i, CommandBuffer, m_PipelineSet.Normal.get());
                         m_RenderedObjectSet.insert(i);
                     }
                 }
@@ -347,10 +344,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
             m_RenderedObjectSet.insert(ObjectIndex);
             isLeafVisable = true;
 
-            bool EnableLightmap = m_pSceneInfo->pScene->getActor(ObjectIndex)->getMesh()->getMeshDataV().getEnableLightmap();
-            m_PipelineSet.Normal.get().setLightmapState(CommandBuffer, EnableLightmap);
-
-            __recordObjectRenderCommand(vImageIndex, ObjectIndex);
+            __renderActorByPipeine(vImageIndex, ObjectIndex, CommandBuffer, m_PipelineSet.Normal.get());
         }
         if (isLeafVisable)
             m_RenderNodeSet.insert(LeafIndex);
@@ -391,6 +385,22 @@ void CSceneGoldSrcRenderPass::__renderModels(uint32_t vImageIndex)
 void CSceneGoldSrcRenderPass::__renderSprites(uint32_t vImageIndex)
 {
 
+}
+
+void CSceneGoldSrcRenderPass::__renderActorByPipeine(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline)
+{
+    auto pActor = m_pSceneInfo->pScene->getActor(vActorIndex);
+
+    auto pTransform = pActor->getTransform();
+    auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+    if (!pMeshRenderer) return;
+
+    auto pMesh = pMeshRenderer->getMesh();
+    if (!pMesh) return;
+
+    bool EnableLightmap = pMesh->getMeshDataV().getEnableLightmap();
+    vPipeline.setLightmapState(vCommandBuffer, EnableLightmap);
+    __recordObjectRenderCommand(vImageIndex, vActorIndex);
 }
 
 struct SModelSortInfo
@@ -498,10 +508,7 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
     for (size_t ObjectIndex : ObjectIndices)
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
-
-        bool EnableLightmap = m_pSceneInfo->pScene->getActor(ObjectIndex)->getMesh()->getMeshDataV().getEnableLightmap();
-        pPipeline->setLightmapState(CommandBuffer, EnableLightmap);
-        __recordObjectRenderCommand(vImageIndex, ObjectIndex);
+        __renderActorByPipeine(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
     }
 }
 

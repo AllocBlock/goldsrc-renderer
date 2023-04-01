@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "VertexBuffer.h"
 #include "BoundingBox.h"
+#include "ComponentMeshRenderer.h"
 #include "SceneInfoGoldSrc.h"
 
 class CRenderPassScene : public CRenderPassSingle
@@ -47,17 +48,26 @@ public:
     
     static bool isActorInSight(CActor::Ptr vActor, const SFrustum& vFrustum)
     {
+        auto pTransform = vActor->getTransform();
+        auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+        if (!pMeshRenderer) return false;
+
+        auto pMesh = pMeshRenderer->getMesh();
+        if (!pMesh) return false;
+
+        auto AABB = pMesh->getAABB();
+        if (!AABB.IsValid) return false;
+
         // AABB frustum culling
         const std::array<glm::vec4, 6>& FrustumPlanes = vFrustum.Planes;
-        SAABB BoundingBox = vActor->getAABB();
-        if (!BoundingBox.IsValid) return false;
+        if (!AABB.IsValid) return false;
 
         std::array<glm::vec3, 8> BoundPoints = {};
         for (int i = 0; i < 8; ++i)
         {
-            float X = ((i & 1) ? BoundingBox.Min.x : BoundingBox.Max.x);
-            float Y = ((i & 2) ? BoundingBox.Min.y : BoundingBox.Max.y);
-            float Z = ((i & 4) ? BoundingBox.Min.z : BoundingBox.Max.z);
+            float X = ((i & 1) ? AABB.Min.x : AABB.Max.x);
+            float Y = ((i & 2) ? AABB.Min.y : AABB.Max.y);
+            float Z = ((i & 4) ? AABB.Min.z : AABB.Max.z);
             BoundPoints[i] = glm::vec3(X, Y, Z);
         }
 

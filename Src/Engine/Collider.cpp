@@ -1,6 +1,7 @@
 #include "Collider.h"
 #include "BasicMesh.h"
 #include "Common.h"
+#include "Transform.h"
 
 bool __collideSphereToSphere(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
@@ -27,7 +28,7 @@ bool __collideSphereToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, gl
 		glm::vec3 SphereCenter = vA->getTransform()->getAbsoluteTranslate();
 	    float SphereRadius = vA->getTransform()->getAbsoluteScale().x; // FIXME: what if different scale?
 		glm::vec3 PlaneCenter = vB->getTransform()->getAbsoluteTranslate();
-		glm::vec3 PlaneDirection = glm::normalize(vB->getTransform()->Rotate.getRotateMatrix() * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
+		glm::vec3 PlaneDirection = glm::normalize(vB->getTransform()->getRotate().getRotateMatrix() * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f));
 
 		float SignedDistance = glm::dot(SphereCenter - PlaneCenter, PlaneDirection);
 		float d = abs(SignedDistance);
@@ -80,8 +81,8 @@ bool __collideQuadToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm:
 {
 	if (vA->getType() == EBasicColliderType::QUAD && vB->getType() == EBasicColliderType::PLANE)
 	{
-		const glm::vec3 PlaneCenter = vB->getTransform()->Translate;
-		const glm::vec3 PlaneNormal = vB->getTransform()->Rotate.getOrientation();
+		const glm::vec3 PlaneCenter = vB->getTransform()->getTranslate();
+		const glm::vec3 PlaneNormal = vB->getTransform()->getRotate().getOrientation();
 
 		glm::vec3 SumPosition = glm::vec3(0.0f);
 		glm::vec3 SumNormal = glm::vec3(0.0f);
@@ -124,7 +125,7 @@ bool __collideQuadToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm:
 		throw std::runtime_error("Unsupported collider type");
 }
 
-bool collide(ICollider::CPtr vA, ICollider::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
+bool collide(CComponentCollider::CPtr vA, CComponentCollider::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
 	if (!vA || !vB) return false;
 

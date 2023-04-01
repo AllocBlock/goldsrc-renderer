@@ -2,6 +2,7 @@
 #include "SceneInfoGoldSrc.h"
 #include "SceneReaderBase.h"
 #include "IOGoldSrcBsp.h"
+#include "Mesh.h"
 
 #include <map>
 #include <memory>

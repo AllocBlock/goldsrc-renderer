@@ -1,5 +1,6 @@
 #include "SceneProbe.h"
 #include "Maths.h"
+#include "ComponentMeshRenderer.h"
 
 #include <glm/matrix.hpp>
 #include <optional>
@@ -7,15 +8,23 @@
 bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vActor, float& voNearT)
 {
 	// check bounding box first
-	auto AABB = vActor->getAABB();
+	auto pTransform = vActor->getTransform();
+	auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+	if (!pMeshRenderer) return false;
+
+	auto pMesh = pMeshRenderer->getMesh();
+	if (!pMesh) return false;
+
+	auto AABB = pMesh->getAABB();
 	if (!AABB.IsValid) return false;
+
 	float FarT, NearT;
 	if (!Math::intersectRayAABB(vOrigin, vDirection, AABB, true, NearT, FarT))
 	{
 		return false;
 	}
 
-	auto MeshData = vActor->getMesh()->getMeshDataV();
+	auto MeshData = pMesh->getMeshDataV();
 	// intersect each triangle
 	_ASSERTE(MeshData.getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST); // FIXME: only support triangle list for now
 	auto PosSet = MeshData.getVertexArray();
@@ -62,8 +71,6 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene
 	for (size_t i = 0; i < vScene->getActorNum(); ++i)
 	{
 		auto pActor = vScene->getActor(i);
-		std::optional<SAABB> BB = pActor->getAABB();
-		if (BB == std::nullopt) continue;
 		// find neareset
 		bool HasIntersection = __intersectRayActor(EyePos, Direction, pActor, t);
 		if (HasIntersection && t < NearestDistance)

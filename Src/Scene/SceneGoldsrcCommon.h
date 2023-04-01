@@ -1,6 +1,7 @@
 #pragma once
 #include "IOGoldsrcWad.h"
 #include "Actor.h"
+#include "Mesh.h"
 
 #include <vector>
 #include <filesystem>

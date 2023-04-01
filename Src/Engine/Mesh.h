@@ -159,5 +159,5 @@ public:
 
 namespace Mesh
 {
-    CMeshTriangleList::Ptr bakeTransform(CMesh::CPtr vMesh, cptr<STransform> vTransform);
+    CMeshTriangleList::Ptr bakeTransform(CMesh::CPtr vMesh, cptr<CTransform> vTransform);
 }

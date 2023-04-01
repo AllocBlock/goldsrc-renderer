@@ -1,14 +1,24 @@
 #pragma once
 #include "Common.h"
-#include "Transform.h"
 
+class CTransform; // avoid mutual include
 class IComponent
 {
 public:
-    _DEFINE_GETTER_SETTER_POINTER(Parent, ptr<STransform>);
-    ptr<STransform> getTransform() { return m_pParent; }
-    void attachTo(ptr<STransform> vTransform) { m_pParent = vTransform; }
+    _DEFINE_PTR(IComponent);
+
+    ptr<CTransform> getTransform() const { return m_pParent.expired() ? nullptr : m_pParent.lock(); }
+
+protected:
+    virtual std::string _getNameV() const = 0;
 
 private:
-    ptr<STransform> m_pParent = nullptr;
+    void __setParent(wptr<CTransform> vTransform)
+    {
+        _ASSERTE(m_pParent.expired()); // do not allow change of parent for now
+        m_pParent = vTransform;
+    }
+
+    friend CTransform;
+    wptr<CTransform> m_pParent;
 };

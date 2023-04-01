@@ -1,6 +1,7 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 #include "Log.h"
+#include "ComponentMeshRenderer.h"
 
 CActor::Ptr GoldSrc::createActorByMeshAndTag(const CMeshData& vMeshData, const std::vector<std::string> vTagSet)
 {
@@ -8,7 +9,11 @@ CActor::Ptr GoldSrc::createActorByMeshAndTag(const CMeshData& vMeshData, const s
     auto pMesh = make<CMeshTriangleList>();
 
     pMesh->setMeshData(vMeshData);
-    pActor->setMesh(pMesh);
+
+    auto pMeshRenderer = make<CComponentMeshRenderer>();
+    pMeshRenderer->setMesh(pMesh);
+
+    pActor->getTransform()->addComponent(pMeshRenderer);
 
     for (const auto& vTag : vTagSet)
         pActor->addTag(vTag);

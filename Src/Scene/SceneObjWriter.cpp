@@ -1,4 +1,6 @@
 #include "SceneObjWriter.h"
+#include "ComponentMeshRenderer.h"
+
 #include <set>
 #include <fstream>
 
@@ -7,7 +9,15 @@ void CSceneObjWriter::addSceneInfo(ptr<SSceneInfoGoldSrc> vSceneInfo)
     for (size_t i = 0; i < vSceneInfo->pScene->getActorNum(); ++i)
     {
         auto pActor = vSceneInfo->pScene->getActor(i);
-        auto MeshData = pActor->getMesh()->getMeshDataV();
+
+        auto pTransform = pActor->getTransform();
+        auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+        if (!pMeshRenderer) continue;
+
+        auto pMesh = pMeshRenderer->getMesh();
+        if (!pMesh) continue;
+
+        const auto& MeshData = pMesh->getMeshDataV();
         auto pTexIndexArray = MeshData.getTexIndexArray();
 
         CIOImage::Ptr pImage = nullptr;

@@ -1,4 +1,6 @@
 #include "PipelineOutlineMask.h"
+
+#include "ComponentMeshRenderer.h"
 #include "VertexAttributeDescriptor.h"
 
 namespace
@@ -121,25 +123,27 @@ void CPipelineMask::__updateVertexBuffer(CActor::Ptr vActor)
     m_pDevice->waitUntilIdle();
     m_VertexBuffer.destroy();
 
-    if (vActor)
-    {
-        auto MeshData = vActor->getMesh()->getMeshDataV();
+    m_VertexNum = 0;
 
-        auto pVertexArray = MeshData.getVertexArray();
-        size_t NumVertex = pVertexArray->size();
-        VkDeviceSize BufferSize = sizeof(SPointData) * NumVertex;
+    auto pTransform = vActor->getTransform();
+    auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+    if (!pMeshRenderer) return;
 
-        std::vector<SPointData> PointData(NumVertex);
-        for (size_t i = 0; i < NumVertex; ++i)
-            PointData[i].Pos = pVertexArray->get(i);
+    auto pMesh = pMeshRenderer->getMesh();
+    if (!pMesh) return;
 
-        m_VertexBuffer.create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        m_VertexBuffer.stageFill(PointData.data(), BufferSize);
+    auto MeshData = pMesh->getMeshDataV();
 
-        m_VertexNum = NumVertex;
-    }
-    else
-    {
-        m_VertexNum = 0;
-    }
+    auto pVertexArray = MeshData.getVertexArray();
+    size_t NumVertex = pVertexArray->size();
+    VkDeviceSize BufferSize = sizeof(SPointData) * NumVertex;
+
+    std::vector<SPointData> PointData(NumVertex);
+    for (size_t i = 0; i < NumVertex; ++i)
+        PointData[i].Pos = pVertexArray->get(i);
+
+    m_VertexBuffer.create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    m_VertexBuffer.stageFill(PointData.data(), BufferSize);
+
+    m_VertexNum = NumVertex;
 }

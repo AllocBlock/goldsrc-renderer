@@ -1,6 +1,7 @@
 #include "PipelineVisCollider.h"
 #include "VertexAttributeDescriptor.h"
 #include "BasicMesh.h"
+#include "Transform.h"
 
 namespace
 {
@@ -61,7 +62,7 @@ void CPipelineVisCollider::startRecord(VkCommandBuffer vCommandBuffer, size_t vI
     vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
 }
 
-void CPipelineVisCollider::drawCollider(ICollider::CPtr vCollider)
+void CPipelineVisCollider::drawCollider(CComponentCollider::CPtr vCollider)
 {
     _ASSERTE(m_CurCommandBuffer);
 

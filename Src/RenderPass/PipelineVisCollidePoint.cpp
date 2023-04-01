@@ -1,5 +1,6 @@
 #include "PipelineVisCollidePoint.h"
 #include "VertexAttributeDescriptor.h"
+#include "Transform.h"
 
 namespace
 {
@@ -52,13 +53,13 @@ void CPipelineVisCollidePoint::record(VkCommandBuffer vCommandBuffer, size_t vIm
     vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
 
     SPushConstant Constant;
-    STransform Transform;
+    CTransform Transform;
 
     float DeltaTime = m_Ticker.update();
     for (SCollidePointInfo& Info : m_CollidePointInfoSet)
     {
-        Transform.Translate = Info.Pos;
-        Transform.Rotate = CRotator::createVectorToVector(glm::vec3(0, 0, 1), Info.Normal);
+        Transform.setTranslate(Info.Pos);
+        Transform.setRotate(CRotator::createVectorToVector(glm::vec3(0, 0, 1), Info.Normal));
         Constant.Model = Transform.getAbsoluteModelMat4();
 
         pushConstant(vCommandBuffer, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, Constant);
