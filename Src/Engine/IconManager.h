@@ -6,6 +6,8 @@
 enum class EIcon
 {
     TIP = 0,
+    QUESTION,
+    ALERT,
     MAX_NUM
 };
 

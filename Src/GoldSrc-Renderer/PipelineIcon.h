@@ -45,7 +45,7 @@ private:
     vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
 
     uint32_t m_IconNum = 0;
-    vk::CPointerSet<vk::CImage> m_SpriteImageSet;
+    vk::CPointerSet<vk::CImage> m_IconImageSet;
     std::map<EIcon, uint32_t> m_IconIndexMap;
 
     std::vector<SIconInfo> m_IconInfoSet;

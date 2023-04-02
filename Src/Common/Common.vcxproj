@@ -19,6 +19,7 @@
     <ClInclude Include="GeneralDataArray.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="SingleValueDataArray.h" />
+    <ClInclude Include="Random.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
@@ -27,6 +28,7 @@
     <ClCompile Include="Event.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Pointer.h" />
+    <ClCompile Include="Random.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

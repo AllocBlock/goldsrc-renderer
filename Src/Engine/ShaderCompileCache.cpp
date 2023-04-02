@@ -1,4 +1,6 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "ShaderCompileCache.h"
+
 #include "Common.h"
 #include "Environment.h"
 

@@ -75,7 +75,7 @@ void CPipelineIcon::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
         Constant.BlendType = 0x00;
         for (const auto& IconInfo : m_IconInfoSet)
         {
-            Constant.TexIndex = m_IconIndexMap[IconInfo.Icon];
+            Constant.TexIndex = m_IconIndexMap.at(IconInfo.Icon);
             Constant.Position = IconInfo.Position;
             pushConstant(vCommandBuffer, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
             vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
@@ -163,7 +163,7 @@ void CPipelineIcon::_createResourceV(size_t vImageNum)
 void CPipelineIcon::_destroyV()
 {
     m_Sampler.destroy();
-    m_SpriteImageSet.destroyAndClearAll();
+    m_IconImageSet.destroyAndClearAll();
     m_PlaceholderImage.destroy();
 
     destroyAndClear(m_pVertexDataBuffer);
@@ -176,12 +176,13 @@ void CPipelineIcon::__createIconResources()
     auto pIconManager = CIconManager::getInstance();
 
     m_IconNum = uint32_t(EIcon::MAX_NUM);
-    m_SpriteImageSet.init(m_IconNum);
+    m_IconImageSet.init(m_IconNum);
     for (uint32_t i = 0; i < m_IconNum; ++i)
     {
         EIcon Icon = EIcon(i);
         auto pImage = pIconManager->getImage(Icon);
-        Function::createImageFromIOImage(*m_SpriteImageSet[i], m_pDevice, pImage);
+        Function::createImageFromIOImage(*m_IconImageSet[i], m_pDevice, pImage);
+        m_IconIndexMap[Icon] = i;
     }
     __updateDescriptorSet();
 }
@@ -195,7 +196,7 @@ void CPipelineIcon::__updateDescriptorSet()
         WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
         WriteInfo.addWriteSampler(1, m_Sampler);
 
-        const size_t NumTexture = m_SpriteImageSet.size();
+        const size_t NumTexture = m_IconImageSet.size();
         std::vector<VkImageView> TexImageViewSet(CPipelineIcon::MaxIconNum);
         for (size_t i = 0; i < CPipelineIcon::MaxIconNum; ++i)
         {
@@ -208,7 +209,7 @@ void CPipelineIcon::__updateDescriptorSet()
                     TexImageViewSet[i] = TexImageViewSet[0];
             }
             else
-                TexImageViewSet[i] = *m_SpriteImageSet[i];
+                TexImageViewSet[i] = *m_IconImageSet[i];
         }
 
         WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);

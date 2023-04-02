@@ -40,6 +40,8 @@ public:
 
             auto MeshData = pMesh->getMeshDataV();
             const auto& Data = PointData_t::extractFromMeshData(MeshData);
+            if (Data.empty()) continue;
+
             DataSet.emplace_back(Data);
             ActorSegmentMap[pActor] = DataSet.size() - 1;
         }
