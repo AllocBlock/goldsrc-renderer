@@ -46,8 +46,8 @@ struct SGoldSrcPointData
         if (HasLightmap)
         {
             _ASSERTE(NumPoint == pLightmapCoordArray->size());
-            _ASSERTE(NumPoint == pTexIndexArray->size());
         }
+        _ASSERTE(NumPoint == pTexIndexArray->size());
 
         std::vector<SGoldSrcPointData> PointData(NumPoint);
         for (size_t i = 0; i < NumPoint; ++i)

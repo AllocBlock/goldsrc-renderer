@@ -134,6 +134,7 @@
     <ClCompile Include="GuiTextureViewer.cpp" />
     <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PassGoldSrcDeprecated.cpp" />
     <ClCompile Include="PassOutlineMask.cpp" />
     <ClCompile Include="PassOutlineEdge.cpp" />
     <ClCompile Include="PipelineGoldSrc.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="GuiRenderer.h" />
     <ClInclude Include="GuiTextureViewer.h" />
     <ClInclude Include="GuiRequestPopupModal.h" />
+    <ClInclude Include="PassGoldSrcDeprecated.h" />
     <ClInclude Include="PassOutlineEdge.h" />
     <ClInclude Include="PassOutlineMask.h" />
     <ClInclude Include="PipelineIcon.h" />

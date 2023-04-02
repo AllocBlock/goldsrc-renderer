@@ -93,6 +93,9 @@
     <ClCompile Include="PipelineIcon.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
+    <ClCompile Include="PassGoldSrcDeprecated.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h">
@@ -166,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="PipelineIcon.h">
       <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PassGoldSrcDeprecated.h">
+      <Filter>头文件\RenderPass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

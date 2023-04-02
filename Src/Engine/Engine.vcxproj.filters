@@ -126,6 +126,9 @@
     <ClCompile Include="IconManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>源文件\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">

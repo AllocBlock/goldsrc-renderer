@@ -12,37 +12,20 @@ class CScene
 public:
     _DEFINE_PTR(CScene);
 
-    void addActor(CActor::Ptr vActor)
-    {
-        m_ActorSet.emplace_back(vActor);
-    }
-
-    size_t getActorNum() { return m_ActorSet.size(); }
-    CActor::Ptr getActor(size_t vIndex)
-    {
-        _ASSERTE(vIndex < m_ActorSet.size());
-        return m_ActorSet[vIndex];
-    }
-
+    void addActor(CActor::Ptr vActor);
+    size_t getActorNum();
+    CActor::Ptr getActor(size_t vIndex);
     // return first found actor
-    CActor::Ptr findActor(std::string vName)
-    {
-        for (auto pActor : m_ActorSet)
-            if (pActor->getName() == vName)
-                return pActor;
-        return nullptr;
-    }
-
-    void clear()
-    {
-        m_ActorSet.clear();
-    }
+    CActor::Ptr findActor(std::string vName);
+    void clear();
 
     // create vertex buffer of scene, each actor's mesh data is write to the buffer as a segment
     // a actor to segment map is returned, too
     // actor without mesh will not be in the buffer nor the map
+
     template <typename PointData_t>
-    std::pair<ptr<vk::CVertexBufferTyped<PointData_t>>, std::map<CActor::Ptr, size_t>> generateVertexBuffer(vk::CDevice::CPtr vDevice)
+    std::pair<ptr<vk::CVertexBufferTyped<PointData_t>>, std::map<CActor::Ptr, size_t>> generateVertexBuffer(
+        vk::CDevice::CPtr vDevice)
     {
         std::map<CActor::Ptr, size_t> ActorSegmentMap;
         std::vector<std::vector<PointData_t>> DataSet;
@@ -54,13 +37,13 @@ public:
 
             auto pMesh = pMeshRenderer->getMesh();
             if (!pMesh) continue;
-            
+
             auto MeshData = pMesh->getMeshDataV();
             const auto& Data = PointData_t::extractFromMeshData(MeshData);
             DataSet.emplace_back(Data);
             ActorSegmentMap[pActor] = DataSet.size() - 1;
         }
-        
+
         auto pVertBuffer = make<vk::CVertexBufferTyped<PointData_t>>();
         if (!pVertBuffer->create(vDevice, DataSet))
         {
@@ -73,6 +56,7 @@ public:
 
         return std::make_pair(pVertBuffer, ActorSegmentMap);
     }
+
 
 private:
     std::vector<CActor::Ptr> m_ActorSet;

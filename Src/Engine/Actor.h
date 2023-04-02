@@ -17,6 +17,7 @@ public:
 	}
 
 	_DEFINE_GETTER_SETTER(Name, std::string)
+	_DEFINE_GETTER_SETTER(Visible, bool)
 	_DEFINE_GETTER_POINTER(Transform, ptr<CTransform>)
 
 	void addTag(const std::string& vTag) { m_TagSet.insert(vTag); }
@@ -26,6 +27,7 @@ public:
 
 private:
 	std::string m_Name;
+	bool m_Visible = true;
 	CTransform::Ptr m_pTransform;
 	std::set<std::string> m_TagSet;
 };

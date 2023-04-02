@@ -12,13 +12,7 @@
 void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
     CRenderPassSceneTyped::_loadSceneV(vScene);
-
-    if (m_pSceneInfo->BspTree.Nodes.empty()) m_EnableBSP = false;
-    if (m_pSceneInfo->BspPvs.LeafNum == 0) m_EnablePVS = false;
-
-    m_AreObjectsVisable.clear();
-    m_AreObjectsVisable.resize(m_pSceneInfo->pScene->getActorNum(), false);
-
+    
     m_CurTextureIndex = 0;
 
     __destroySceneResources();
@@ -133,66 +127,9 @@ void CSceneGoldSrcRenderPass::_renderUIV()
 {
     if (UI::collapse(u8"仿金源"))
     {
-        bool EnableBSP = getBSPState();
-        UI::toggle(u8"使用BSP树渲染（支持实体渲染模式）", EnableBSP);
-        setBSPState(EnableBSP);
-
         bool SkyRendering = getSkyState();
         UI::toggle(u8"开启天空渲染", SkyRendering);
         setSkyState(SkyRendering);
-
-        bool Culling = getCullingState();
-        UI::toggle(u8"开启剔除", Culling);
-        setCullingState(Culling);
-        Culling = getCullingState();
-
-        if (Culling)
-        {
-            UI::indent(20.0f);
-            bool FrustumCulling = getFrustumCullingState();
-            UI::toggle(u8"CPU视锥剔除", FrustumCulling);
-            setFrustumCullingState(FrustumCulling);
-
-            bool PVS = getPVSState();
-            UI::toggle(u8"PVS剔除", PVS);
-            setPVSState(PVS);
-            UI::unindent();
-        }
-
-        std::optional<uint32_t> CameraNodeIndex = getCameraNodeIndex();
-        if (CameraNodeIndex == std::nullopt)
-            UI::text(u8"相机所处节点：-");
-        else
-            UI::text((u8"相机所处节点：" + std::to_string(CameraNodeIndex.value())).c_str());
-
-        if (!getBSPState())
-        {
-            std::set<size_t> RenderObjectList = getRenderedObjectSet();
-            UI::text((u8"渲染物体数：" + std::to_string(RenderObjectList.size())).c_str());
-            if (!RenderObjectList.empty())
-            {
-                std::string RenderNodeListStr = "";
-                for (size_t ObjectIndex : RenderObjectList)
-                {
-                    RenderNodeListStr += std::to_string(ObjectIndex) + ", ";
-                }
-                UI::text((u8"渲染物体：" + RenderNodeListStr).c_str(), true);
-            }
-        }
-        else
-        {
-            std::set<uint32_t> RenderNodeList = getRenderedNodeList();
-            UI::text((u8"渲染节点数：" + std::to_string(RenderNodeList.size())).c_str());
-            if (!RenderNodeList.empty())
-            {
-                std::string RenderNodeListStr = "";
-                for (uint32_t NodeIndex : RenderNodeList)
-                {
-                    RenderNodeListStr += std::to_string(NodeIndex) + ", ";
-                }
-                UI::text((u8"渲染节点：" + RenderNodeListStr).c_str(), true);
-            }
-        }
     }
 
     UI::beginWindow(u8"纹理");
@@ -223,12 +160,11 @@ void CSceneGoldSrcRenderPass::_destroyV()
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(isValid());
-
-    m_RenderedObjectSet.clear();
+    
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
-    if (m_EnableBSP || m_EnableCulling || m_RerecordCommandTimes > 0)
+    if (m_RerecordCommandTimes > 0)
     {
         RerecordCommand = true;
         if (m_RerecordCommandTimes > 0) --m_RerecordCommandTimes;
@@ -242,9 +178,13 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
         _beginWithFramebuffer(vImageIndex);
 
+        // 1. sky
         if (m_EnableSky)
-            __recordSkyRenderCommand(vImageIndex);
+        {
+            m_PipelineSet.Sky.get().recordCommand(CommandBuffer, vImageIndex);
+        }
 
+        // 2. scene mesh
         bool Valid = true;
         VkDeviceSize Offsets[] = { 0 };
         if (isNonEmptyAndValid(m_pVertexBuffer))
@@ -257,30 +197,33 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
         if (Valid)
         {
-            __calculateVisiableObjects();
-            if (m_EnableBSP)
-                __renderByBspTree(vImageIndex);
-            else
+            m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
+            m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
+
+            for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
-                m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
+                auto pActor = m_pSceneInfo->pScene->getActor(i);
+                if (!pActor->getVisible()) continue;
 
-                m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
+                auto pTransform = pActor->getTransform();
+                auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+                if (!pMeshRenderer) continue;
 
-                for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
-                {
-                    if (m_AreObjectsVisable[i])
-                    {
-                        __renderActorByPipeline(vImageIndex, i, CommandBuffer, m_PipelineSet.Normal.get());
-                        m_RenderedObjectSet.insert(i);
-                    }
-                }
+                auto pMesh = pMeshRenderer->getMesh();
+                if (!pMesh) continue;
+
+                bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
+                m_PipelineSet.Normal.get().setLightmapState(CommandBuffer, EnableLightmap);
+                __drawActor(vImageIndex, pActor);
             }
         }
 
+        // 3. sprite and icon
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
-            __recordSpriteRenderCommand(vImageIndex);
+        {
+            m_PipelineSet.Sprite.get().recordCommand(CommandBuffer, vImageIndex);
+        }
 
-        // render icon
         if (m_pSceneInfo)
         {
             auto& PipelineIcon = m_PipelineSet.Icon.get();
@@ -288,6 +231,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
             for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
                 auto pActor = m_pSceneInfo->pScene->getActor(i);
+                if (!pActor->getVisible()) continue;
 
                 auto pTransform = pActor->getTransform();
                 auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
@@ -334,95 +278,6 @@ void CSceneGoldSrcRenderPass::__destroySceneResources()
     m_LightmapImage.destroy();
 }
 
-void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
-{
-    m_RenderNodeSet.clear();
-    if (m_pSceneInfo->BspTree.Nodes.empty()) throw "场景不含BSP数据";
-
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
-
-    __renderTreeNode(vImageIndex, 0);
-    //__renderPointEntities(vImageIndex);
-    __renderModels(vImageIndex);
-    __renderSprites(vImageIndex);
-}
-
-void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
-{
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-
-    m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
-
-    if (vNodeIndex >= m_pSceneInfo->BspTree.NodeNum) // if is leaf, render it
-    {
-        uint32_t LeafIndex = static_cast<uint32_t>(vNodeIndex - m_pSceneInfo->BspTree.NodeNum);
-        bool isLeafVisable = false;
-        for (size_t ObjectIndex : m_pSceneInfo->BspTree.LeafIndexToObjectIndices.at(LeafIndex))
-        {
-            if (!m_AreObjectsVisable[ObjectIndex]) continue;
-            m_RenderedObjectSet.insert(ObjectIndex);
-            isLeafVisable = true;
-
-            __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, m_PipelineSet.Normal.get());
-        }
-        if (isLeafVisable)
-            m_RenderNodeSet.insert(LeafIndex);
-    }
-    else
-    {
-        const SBspTreeNode& Node = m_pSceneInfo->BspTree.Nodes[vNodeIndex];
-        glm::vec3 CameraPos = m_pCamera->getPos();
-        if (Node.isPointFrontOfPlane(CameraPos))
-        {
-            __renderTreeNode(vImageIndex, Node.Back.value());
-            __renderTreeNode(vImageIndex, Node.Front.value());
-        }
-        else
-        {
-            __renderTreeNode(vImageIndex, Node.Front.value());
-            __renderTreeNode(vImageIndex, Node.Back.value());
-        }
-    }
-}
-
-void CSceneGoldSrcRenderPass::__renderModels(uint32_t vImageIndex)
-{
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-
-    // 这里去看了下Xash3D的源码，xash3d/engine/client/gl_rmain.c
-    // 它是按照纹理、叠加和发光的顺序绘制
-    // 
-    // 也对实体进行简单的按距离排序
-    auto SortedModelSet = __sortModelRenderSequence();
-
-    for (size_t ModelIndex : SortedModelSet)
-    {
-        __renderModel(vImageIndex, ModelIndex);
-    }
-}
-
-void CSceneGoldSrcRenderPass::__renderSprites(uint32_t vImageIndex)
-{
-
-}
-
-void CSceneGoldSrcRenderPass::__renderActorByPipeline(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline)
-{
-    auto pActor = m_pSceneInfo->pScene->getActor(vActorIndex);
-
-    auto pTransform = pActor->getTransform();
-    auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
-    if (!pMeshRenderer) return;
-
-    auto pMesh = pMeshRenderer->getMesh();
-    if (!pMesh) return;
-
-    bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
-    vPipeline.setLightmapState(vCommandBuffer, EnableLightmap);
-    __drawActor(vImageIndex, pActor);
-}
-
 struct SModelSortInfo
 {
     size_t Index;
@@ -447,103 +302,54 @@ struct SModelSortInfo
     }
 };
 
-std::vector<size_t> CSceneGoldSrcRenderPass::__sortModelRenderSequence()
-{
-    std::vector<SModelSortInfo> InfoForSort;
-    glm::vec3 CameraPos = m_pCamera->getPos();
-    for (size_t i = 0; i < m_pSceneInfo->BspTree.ModelNum; ++i)
-    {
-        const SModelInfo& ModelInfo = m_pSceneInfo->BspTree.ModelInfos[i];
-        SAABB BoundingBox = ModelInfo.BoundingBox;
-        glm::vec3 Center = (BoundingBox.Min + BoundingBox.Max) * 0.5f;
-        float Distance = glm::distance(Center, CameraPos);
-
-        InfoForSort.emplace_back(SModelSortInfo{ i, ModelInfo.RenderMode, Distance });
-    }
-
-    // simple sort, may cause artifact if objects collapse
-    std::sort(
-        InfoForSort.begin(),
-        InfoForSort.end(),
-        [](const SModelSortInfo& vA, const SModelSortInfo& vB)->bool
-        {
-            int ModePrioA = vA.getRenderModePriority();
-            int ModePrioB = vB.getRenderModePriority();
-            if (ModePrioA < ModePrioB) return true;
-            else if (ModePrioA == ModePrioB) return vA.Distance > vB.Distance;
-            else return false;
-        }
-    );
-
-    std::vector<size_t> SortedModelSet;
-    for (const SModelSortInfo& Info : InfoForSort)
-    {
-        SortedModelSet.emplace_back(Info.Index);
-    }
-
-    return SortedModelSet;
-}
-
-void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
-{
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-
-    _ASSERTE(vModelIndex < m_pSceneInfo->BspTree.ModelInfos.size());
-
-    const SModelInfo& ModelInfo = m_pSceneInfo->BspTree.ModelInfos[vModelIndex];
-    CPipelineGoldSrc* pPipeline = nullptr;
-
-    switch (ModelInfo.RenderMode)
-    {
-    case EGoldSrcRenderMode::NORMAL:
-    {
-        pPipeline = &m_PipelineSet.Normal.get();
-        break;
-    }
-    case EGoldSrcRenderMode::COLOR:
-    case EGoldSrcRenderMode::TEXTURE:
-    {
-        pPipeline = &m_PipelineSet.BlendTextureAlpha.get();
-        break;
-    }
-    case EGoldSrcRenderMode::SOLID:
-    {
-        pPipeline = &m_PipelineSet.BlendAlphaTest.get();
-        break;
-    }
-    case EGoldSrcRenderMode::ADDITIVE:
-    case EGoldSrcRenderMode::GLOW:
-    {
-        pPipeline = &m_PipelineSet.BlendAdditive.get();
-        break;
-    }
-    default:
-        break;
-    }
-
-    pPipeline->bind(CommandBuffer, vImageIndex);
-    pPipeline->setOpacity(CommandBuffer, ModelInfo.Opacity);
-
-    std::vector<size_t> ObjectIndices = m_pSceneInfo->BspTree.ModelIndexToObjectIndex[vModelIndex];
-    for (size_t ObjectIndex : ObjectIndices)
-    {
-        if (!m_AreObjectsVisable[ObjectIndex]) continue;
-        __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
-    }
-}
-
-void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
-{
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
-
-    for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
-    {
-        if (!m_AreObjectsVisable[i]) continue;
-        else if (m_pSceneInfo->pScene->getActor(i)->hasTag("point_entity")) continue;
-        __drawActor(vImageIndex, m_pSceneInfo->pScene->getActor(i));
-    }
-}
+// FIXME: restore this part later
+//void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
+//{
+//    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+//
+//    _ASSERTE(vModelIndex < m_pSceneInfo->BspTree.ModelInfos.size());
+//
+//    const SModelInfo& ModelInfo = m_pSceneInfo->BspTree.ModelInfos[vModelIndex];
+//    CPipelineGoldSrc* pPipeline = nullptr;
+//
+//    switch (ModelInfo.RenderMode)
+//    {
+//    case EGoldSrcRenderMode::NORMAL:
+//    {
+//        pPipeline = &m_PipelineSet.Normal.get();
+//        break;
+//    }
+//    case EGoldSrcRenderMode::COLOR:
+//    case EGoldSrcRenderMode::TEXTURE:
+//    {
+//        pPipeline = &m_PipelineSet.BlendTextureAlpha.get();
+//        break;
+//    }
+//    case EGoldSrcRenderMode::SOLID:
+//    {
+//        pPipeline = &m_PipelineSet.BlendAlphaTest.get();
+//        break;
+//    }
+//    case EGoldSrcRenderMode::ADDITIVE:
+//    case EGoldSrcRenderMode::GLOW:
+//    {
+//        pPipeline = &m_PipelineSet.BlendAdditive.get();
+//        break;
+//    }
+//    default:
+//        break;
+//    }
+//
+//    pPipeline->bind(CommandBuffer, vImageIndex);
+//    pPipeline->setOpacity(CommandBuffer, ModelInfo.Opacity);
+//
+//    std::vector<size_t> ObjectIndices = m_pSceneInfo->BspTree.ModelIndexToObjectIndex[vModelIndex];
+//    for (size_t ObjectIndex : ObjectIndices)
+//    {
+//        if (!m_AreObjectsVisable[ObjectIndex]) continue;
+//        __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
+//    }
+//}
 
 void CSceneGoldSrcRenderPass::__drawActor(uint32_t vImageIndex, CActor::Ptr vActor)
 {
@@ -627,67 +433,6 @@ void CSceneGoldSrcRenderPass::__updatePipelineResourceSprite(CPipelineSprite& vP
     }
 }
 
-void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
-{
-    if (!m_pSceneInfo) return;
-
-    SFrustum Frustum = m_pCamera->getFrustum();
-
-    bool UsePVS = (m_EnableBSP || m_EnableCulling) && m_EnablePVS;
-
-    if (UsePVS)
-        m_CameraNodeIndex = m_pSceneInfo->BspTree.getPointLeaf(m_pCamera->getPos());
-    else
-        m_CameraNodeIndex = std::nullopt;
-
-    // calculate PVS
-    std::vector<bool> PVS;
-    if (UsePVS)
-    {
-        PVS.resize(m_pSceneInfo->pScene->getActorNum(), true);
-        for (size_t i = 0; i < m_pSceneInfo->BspTree.LeafNum; ++i)
-        {
-            if (!m_pSceneInfo->BspPvs.isLeafVisiable(m_CameraNodeIndex.value(), static_cast<uint32_t>(i)))
-            {
-                std::vector<size_t> LeafObjectIndices = m_pSceneInfo->BspTree.LeafIndexToObjectIndices[i];
-                for (size_t LeafObjectIndex : LeafObjectIndices)
-                    PVS[LeafObjectIndex] = false;
-            }
-        }
-    }
-
-    for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
-    {
-        auto pActor = m_pSceneInfo->pScene->getActor(i);
-        m_AreObjectsVisable[i] = false;
-
-        if (pActor->hasTag("sky") || m_ActorSegmentMap.find(pActor) == m_ActorSegmentMap.end())
-            continue;
-        
-        if (m_EnableCulling)
-        {
-            if (m_EnableBSP && i >= m_pSceneInfo->BspTree.NodeNum + m_pSceneInfo->BspTree.LeafNum) // ignore culling for model for now
-            {
-                m_AreObjectsVisable[i] = true;
-                continue;
-            }
-
-            // frustum culling: don't draw object outside of view (judge by bounding box)
-            if (m_EnableFrustumCulling)
-                if (!isActorInSight(pActor, Frustum))
-                    continue;
-
-            // PVS culling
-            if (UsePVS)
-                if (!PVS[i])
-                    continue;
-            
-        }
-
-        m_AreObjectsVisable[i] = true;
-    }
-}
-
 void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     glm::mat4 Model = glm::mat4(1.0f);
@@ -699,15 +444,4 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
     if (m_EnableSky)
         m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, m_pCamera);
     m_PipelineSet.Icon.get().updateUniformBuffer(vImageIndex, m_pCamera);
-}
-
-void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
-{
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sky.get().recordCommand(CommandBuffer, vImageIndex);
-}
-void CSceneGoldSrcRenderPass::__recordSpriteRenderCommand(uint32_t vImageIndex)
-{
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sprite.get().recordCommand(CommandBuffer, vImageIndex);
 }

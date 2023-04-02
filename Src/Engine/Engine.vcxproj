@@ -123,6 +123,7 @@
     <ClCompile Include="VertexAttributeDescriptor.cpp" />
     <ClCompile Include="StaticResource.cpp" />
     <ClCompile Include="IconManager.cpp" />
+    <ClCompile Include="Scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />

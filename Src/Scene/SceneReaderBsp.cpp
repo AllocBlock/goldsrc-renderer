@@ -136,6 +136,7 @@ std::vector<CActor::Ptr> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
     
     auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "brush" });
     auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
+    pActorSkyPart->setVisible(false);
 
     return { pActorNormalPart, pActorSkyPart };
 }
@@ -162,6 +163,7 @@ std::vector<CActor::Ptr> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
     
     auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "entity" });
     auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
+    pActorSkyPart->setVisible(false);
 
     return { pActorNormalPart, pActorSkyPart };
 }
