@@ -90,6 +90,9 @@
     <ClCompile Include="PipelineOutlineEdge.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineIcon.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h">
@@ -161,6 +164,9 @@
     <ClInclude Include="PassOutlineMask.h">
       <Filter>头文件\RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineIcon.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\goldSrcNormalShader.vert">
@@ -209,6 +215,12 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\bloomBrightFilter.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\iconShader.vert">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\iconShader.frag">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

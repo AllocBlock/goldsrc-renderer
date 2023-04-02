@@ -26,6 +26,9 @@ bool CIOBase::read()
 bool CIOBase::read(std::filesystem::path vFilePath)
 {
 	m_FilePath = vFilePath;
+    if (!std::filesystem::exists(m_FilePath))
+        throw std::runtime_error("File not exist");
+
     return _readV(m_FilePath);
 }
 

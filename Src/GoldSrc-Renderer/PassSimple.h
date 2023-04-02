@@ -69,7 +69,7 @@ private:
 
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
-    void __recordRenderActorCommand(uint32_t vImageIndex, size_t vObjectIndex);
+    void __drawActor(uint32_t vImageIndex, CActor::Ptr vActor);
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
     

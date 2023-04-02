@@ -96,15 +96,19 @@ protected:
     {
         m_pDevice->waitUntilIdle();
         destroyAndClear(m_pVertexBuffer);
-        m_pVertexBuffer = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_pDevice);
+        const auto& Pair = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_pDevice);
+        m_pVertexBuffer = Pair.first;
+        m_ActorSegmentMap = Pair.second;
     }
 
-    void _recordRenderActorCommand(VkCommandBuffer vCommandBuffer, size_t vObjectIndex)
+    void _drawActor(VkCommandBuffer vCommandBuffer, CActor::Ptr vActor)
     {
-        _ASSERTE(vObjectIndex < m_pVertexBuffer->getSegmentNum());
-        const auto& Info = m_pVertexBuffer->getSegmentInfo(vObjectIndex);
+        _ASSERTE(m_ActorSegmentMap.find(vActor) != m_ActorSegmentMap.end());
+        size_t SegIndex = m_ActorSegmentMap.at(vActor);
+        const auto& Info = m_pVertexBuffer->getSegmentInfo(SegIndex);
         vkCmdDraw(vCommandBuffer, Info.Num, 1, Info.First, 0);
     }
     
     vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
+    std::map<CActor::Ptr, size_t> m_ActorSegmentMap;
 };

@@ -41,8 +41,13 @@ struct SGoldSrcPointData
         _ASSERTE(NumPoint == pColorArray->size());
         _ASSERTE(NumPoint == pNormalArray->size());
         _ASSERTE(NumPoint == pTexCoordArray->size());
-        _ASSERTE(NumPoint == pLightmapCoordArray->size());
-        _ASSERTE(NumPoint == pTexIndexArray->size());
+
+        bool HasLightmap = vMeshData.hasLightmap();
+        if (HasLightmap)
+        {
+            _ASSERTE(NumPoint == pLightmapCoordArray->size());
+            _ASSERTE(NumPoint == pTexIndexArray->size());
+        }
 
         std::vector<SGoldSrcPointData> PointData(NumPoint);
         for (size_t i = 0; i < NumPoint; ++i)
@@ -51,7 +56,7 @@ struct SGoldSrcPointData
             PointData[i].Color = pColorArray->get(i);
             PointData[i].Normal = pNormalArray->get(i);
             PointData[i].TexCoord = pTexCoordArray->get(i);
-            PointData[i].LightmapCoord = pLightmapCoordArray->get(i);
+            PointData[i].LightmapCoord = HasLightmap ? pLightmapCoordArray->get(i) : glm::vec2(0.0, 0.0);
             PointData[i].TexIndex = pTexIndexArray->get(i);
         }
         return PointData;

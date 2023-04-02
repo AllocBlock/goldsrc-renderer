@@ -82,6 +82,11 @@ void CSceneGoldSrcRenderPass::_initV()
                 rerecordCommand();
             }
         });
+    m_PipelineSet.Icon.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
+        [this](IPipeline& vPipeline)
+        {
+            rerecordCommand();
+        });
 
     __createSceneResources();
 
@@ -105,12 +110,7 @@ CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()
 void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     m_DepthImageManager.updateV(vUpdateState);
-    m_PipelineSet.Sky.updateV(vUpdateState);
-    m_PipelineSet.Normal.updateV(vUpdateState);
-    m_PipelineSet.BlendTextureAlpha.updateV(vUpdateState);
-    m_PipelineSet.BlendAlphaTest.updateV(vUpdateState);
-    m_PipelineSet.BlendAdditive.updateV(vUpdateState);
-    m_PipelineSet.Sprite.updateV(vUpdateState);
+    m_PipelineSet.update(vUpdateState);
 
     VkExtent2D RefExtent = { 0, 0 };
     if (_dumpReferenceExtentV(RefExtent))
@@ -270,7 +270,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 {
                     if (m_AreObjectsVisable[i])
                     {
-                        __renderActorByPipeine(vImageIndex, i, CommandBuffer, m_PipelineSet.Normal.get());
+                        __renderActorByPipeline(vImageIndex, i, CommandBuffer, m_PipelineSet.Normal.get());
                         m_RenderedObjectSet.insert(i);
                     }
                 }
@@ -279,6 +279,26 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
             __recordSpriteRenderCommand(vImageIndex);
+
+        // render icon
+        if (m_pSceneInfo)
+        {
+            auto& PipelineIcon = m_PipelineSet.Icon.get();
+            PipelineIcon.clear();
+            for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
+            {
+                auto pActor = m_pSceneInfo->pScene->getActor(i);
+
+                auto pTransform = pActor->getTransform();
+                auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+                if (pMeshRenderer) continue;
+                // TODO: change to find if there is icon renderer!
+
+                glm::vec3 Position = pActor->getTransform()->getAbsoluteTranslate();
+                PipelineIcon.addIcon(EIcon::TIP, Position);
+            }
+            PipelineIcon.recordCommand(CommandBuffer, vImageIndex);
+        }
 
         _endWithFramebuffer();
     }
@@ -323,7 +343,7 @@ void CSceneGoldSrcRenderPass::__renderByBspTree(uint32_t vImageIndex)
     m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
 
     __renderTreeNode(vImageIndex, 0);
-    __renderPointEntities(vImageIndex);
+    //__renderPointEntities(vImageIndex);
     __renderModels(vImageIndex);
     __renderSprites(vImageIndex);
 }
@@ -344,7 +364,7 @@ void CSceneGoldSrcRenderPass::__renderTreeNode(uint32_t vImageIndex, uint32_t vN
             m_RenderedObjectSet.insert(ObjectIndex);
             isLeafVisable = true;
 
-            __renderActorByPipeine(vImageIndex, ObjectIndex, CommandBuffer, m_PipelineSet.Normal.get());
+            __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, m_PipelineSet.Normal.get());
         }
         if (isLeafVisable)
             m_RenderNodeSet.insert(LeafIndex);
@@ -387,7 +407,7 @@ void CSceneGoldSrcRenderPass::__renderSprites(uint32_t vImageIndex)
 
 }
 
-void CSceneGoldSrcRenderPass::__renderActorByPipeine(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline)
+void CSceneGoldSrcRenderPass::__renderActorByPipeline(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline)
 {
     auto pActor = m_pSceneInfo->pScene->getActor(vActorIndex);
 
@@ -398,9 +418,9 @@ void CSceneGoldSrcRenderPass::__renderActorByPipeine(uint32_t vImageIndex, size_
     auto pMesh = pMeshRenderer->getMesh();
     if (!pMesh) return;
 
-    bool EnableLightmap = pMesh->getMeshDataV().getEnableLightmap();
+    bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
     vPipeline.setLightmapState(vCommandBuffer, EnableLightmap);
-    __recordObjectRenderCommand(vImageIndex, vActorIndex);
+    __drawActor(vImageIndex, pActor);
 }
 
 struct SModelSortInfo
@@ -508,7 +528,7 @@ void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelI
     for (size_t ObjectIndex : ObjectIndices)
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
-        __renderActorByPipeine(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
+        __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
     }
 }
 
@@ -521,14 +541,14 @@ void CSceneGoldSrcRenderPass::__renderPointEntities(uint32_t vImageIndex)
     {
         if (!m_AreObjectsVisable[i]) continue;
         else if (m_pSceneInfo->pScene->getActor(i)->hasTag("point_entity")) continue;
-        __recordObjectRenderCommand(vImageIndex, i);
+        __drawActor(vImageIndex, m_pSceneInfo->pScene->getActor(i));
     }
 }
 
-void CSceneGoldSrcRenderPass::__recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex)
+void CSceneGoldSrcRenderPass::__drawActor(uint32_t vImageIndex, CActor::Ptr vActor)
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    _recordRenderActorCommand(CommandBuffer, vObjectIndex);
+    _drawActor(CommandBuffer, vActor);
 }
 
 void CSceneGoldSrcRenderPass::__createTextureImages()
@@ -641,7 +661,7 @@ void CSceneGoldSrcRenderPass::__calculateVisiableObjects()
         auto pActor = m_pSceneInfo->pScene->getActor(i);
         m_AreObjectsVisable[i] = false;
 
-        if (pActor->hasTag("sky") || m_pVertexBuffer->getSegmentInfo(i).Num == 0)
+        if (pActor->hasTag("sky") || m_ActorSegmentMap.find(pActor) == m_ActorSegmentMap.end())
             continue;
         
         if (m_EnableCulling)
@@ -678,6 +698,7 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
     m_PipelineSet.Sprite.get().updateUniformBuffer(vImageIndex, m_pCamera);
     if (m_EnableSky)
         m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineSet.Icon.get().updateUniformBuffer(vImageIndex, m_pCamera);
 }
 
 void CSceneGoldSrcRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)

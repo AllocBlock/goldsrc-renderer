@@ -57,7 +57,7 @@
       </SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Gui;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Gui;$(SolutionDir)Src/IO;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile />
@@ -80,7 +80,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Gui;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Src/Common;$(SolutionDir)Src/Vulkan;$(SolutionDir)Src/Gui;$(SolutionDir)Src/IO;$(VULKAN_SDK)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -121,6 +121,8 @@
     <ClCompile Include="Ticker.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="VertexAttributeDescriptor.cpp" />
+    <ClCompile Include="StaticResource.cpp" />
+    <ClCompile Include="IconManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
@@ -155,6 +157,8 @@
     <ClInclude Include="VertexAttributeDescriptor.h" />
     <ClInclude Include="RenderPassDescriptor.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="StaticResource.h" />
+    <ClInclude Include="IconManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
@@ -162,6 +166,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Gui\Gui.vcxproj">
       <Project>{355ff34e-0933-40e2-b479-962b2c48ce13}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\IO\IO.vcxproj">
+      <Project>{910218dd-1c85-49c4-bf0b-81ca0be1b4c2}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Vulkan\Vulkan.vcxproj">
       <Project>{117a19ef-c976-4370-b795-b58c27ee4ab0}</Project>

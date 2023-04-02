@@ -137,6 +137,7 @@
     <ClCompile Include="PassOutlineMask.cpp" />
     <ClCompile Include="PassOutlineEdge.cpp" />
     <ClCompile Include="PipelineGoldSrc.cpp" />
+    <ClCompile Include="PipelineIcon.cpp" />
     <ClCompile Include="PipelineOutlineEdge.cpp" />
     <ClCompile Include="PipelineOutlineMask.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="GuiRequestPopupModal.h" />
     <ClInclude Include="PassOutlineEdge.h" />
     <ClInclude Include="PassOutlineMask.h" />
+    <ClInclude Include="PipelineIcon.h" />
     <ClInclude Include="PipelineOutlineMask.h" />
     <ClInclude Include="PipelineOutlineEdge.h" />
     <ClInclude Include="PipelineBlendAdditive.h" />
@@ -174,6 +176,8 @@
     <None Include="shaders\alphaTestShader.vert" />
     <None Include="shaders\bloomBrightFilter.frag" />
     <None Include="shaders\fullScreen.vert" />
+    <None Include="shaders\iconShader.frag" />
+    <None Include="shaders\iconShader.vert" />
     <None Include="shaders\outlineEdgeShader.frag" />
     <None Include="shaders\outlineEdgeShader.vert" />
     <None Include="shaders\outlineMaskShader.frag" />

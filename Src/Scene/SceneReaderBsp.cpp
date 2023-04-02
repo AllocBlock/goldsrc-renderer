@@ -387,6 +387,7 @@ std::vector<glm::vec2> CSceneReaderBsp::__getBspFaceUnnormalizedTexCoords(size_t
 }
 
 // vTexCoords should contain unnormalized texcoords to avoid known of texture width and height
+// return CMeshData::InvalidLightmapIndex, {} if no lightmap found
 std::pair<uint32_t, std::vector<glm::vec2>> CSceneReaderBsp::__getAndAppendBspFaceLightmap(size_t vFaceIndex, const std::vector<glm::vec2>& vTexCoords)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
@@ -498,14 +499,8 @@ void CSceneReaderBsp::__appendBspFaceToObject(CMeshData& vioMeshData, uint32_t v
 
     auto [LightmapIndex, LightmapCoords] = __getAndAppendBspFaceLightmap(vFaceIndex, TexCoords);
     uint32_t TexIndex = m_TexNameToIndex[TexName];
-    if (LightmapIndex == CMeshData::InvalidLightmapIndex)
-    {
-        LightmapCoords.resize(TexCoords.size(), glm::vec2(0.0, 0.0));
-    }
-    else
-    {
-        vioMeshData.setEnableLightmap(true);
-    }
+
+    bool HasLightMap = (LightmapIndex != CMeshData::InvalidLightmapIndex);
     
     // scale texture coordinates
     for (glm::vec2& TexCoord : TexCoords)
@@ -535,10 +530,13 @@ void CSceneReaderBsp::__appendBspFaceToObject(CMeshData& vioMeshData, uint32_t v
         pTexCoordArray->append(TexCoords[k]);
         pTexIndexArray->append(TexIndex, 3);
 
-        pLightmapIndexArray->append(LightmapIndex, 3);
-        pLightmapCoordArray->append(LightmapCoords[0]);
-        pLightmapCoordArray->append(LightmapCoords[k - 1]);
-        pLightmapCoordArray->append(LightmapCoords[k]);
+        if (HasLightMap)
+        {
+            pLightmapIndexArray->append(LightmapIndex, 3);
+            pLightmapCoordArray->append(LightmapCoords[0]);
+            pLightmapCoordArray->append(LightmapCoords[k - 1]);
+            pLightmapCoordArray->append(LightmapCoords[k]);
+        }
     }
 }
 
@@ -559,7 +557,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
 
         const auto& MeshData = pMesh->getMeshDataV();
 
-        if (!MeshData.getEnableLightmap()) continue;
+        if (!MeshData.hasLightmap()) continue;
 
         auto pLightmapIndexArray = MeshData.getLightmapIndexArray();
         auto pLightmapTexCoordArray = MeshData.getLightmapTexCoordArray();
@@ -567,7 +565,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
         for (size_t i = 0; i < pLightmapIndexArray->size(); ++i)
         {
             uint32_t LightmapIndex = pLightmapIndexArray->get(i);
-            if (LightmapIndex == CMeshData::InvalidLightmapIndex) continue;
+            _ASSERTE(LightmapIndex != CMeshData::InvalidLightmapIndex);
 
             pLightmapTexCoordArray->set(i, m_pSceneInfo->pLightmap->getAcutalLightmapCoord(LightmapIndex, pLightmapTexCoordArray->get(i)));
         }
@@ -690,18 +688,17 @@ void CSceneReaderBsp::__loadPointEntities()
                 m_pSceneInfo->SprSet.emplace_back(Sprite);
             }
         }
-
-        auto MeshDataEntityCube = CMeshData();
-        const float Size = 0.2f;
-        __appendCube(Origin * m_SceneScale, Size, MeshDataEntityCube);
-
-        auto pCubeActor = GoldSrc::createActorByMeshAndTag(MeshDataEntityCube, { "point_entity" });
+        
+        auto pPointEntityActor = make<CActor>();
+        pPointEntityActor->getTransform()->setTranslate(Origin * m_SceneScale);
+        pPointEntityActor->getTransform()->setScale(glm::vec3(0.2f));
+        pPointEntityActor->addTag("point_entity");
         if (!Name.empty())
         {
-            pCubeActor->setName(Entity.Properties.at("classname"));
+            pPointEntityActor->setName(Entity.Properties.at("classname"));
         }
 
-        m_pSceneInfo->pScene->addActor(pCubeActor);
+        m_pSceneInfo->pScene->addActor(pPointEntityActor);
     }
 }
 

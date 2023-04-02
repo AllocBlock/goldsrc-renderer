@@ -120,6 +120,12 @@
     <ClCompile Include="Mesh.cpp">
       <Filter>源文件\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="StaticResource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="IconManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -217,6 +223,12 @@
     </ClInclude>
     <ClInclude Include="ComponentMeshRenderer.h">
       <Filter>头文件\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticResource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IconManager.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

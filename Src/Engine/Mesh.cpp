@@ -24,7 +24,7 @@ CMeshData CMeshBasicQuad::MeshData = __convertBasicMeshToMeshData(BasicMesh::get
 CMeshData CMeshBasicCube::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitCubeFaceSet());
 CMeshData CMeshBasicSphere::MeshData = __convertBasicMeshToMeshData(BasicMesh::getUnitSphereFaceSet());
 
-CMeshData CMeshData::copy()
+CMeshData CMeshData::copyDeeply()
 {
     CMeshData NewData;
     NewData.m_PrimitiveType = m_PrimitiveType;
@@ -33,6 +33,7 @@ CMeshData CMeshData::copy()
     NewData.m_pColorArray = m_pColorArray->copy();
     NewData.m_pTexCoordArray = m_pTexCoordArray->copy();
     NewData.m_pTexIndexArray = m_pTexIndexArray->copy();
+    NewData.m_pLightmapTexCoordArray = m_pLightmapTexCoordArray->copy();
 
     return NewData;
 }
@@ -55,7 +56,7 @@ CMeshData CMeshBasicSphere::getMeshDataV() const
 CMeshTriangleList::Ptr Mesh::bakeTransform(CMesh::CPtr vMesh, cptr<CTransform> vTransform)
 {
     auto pMesh = make<CMeshTriangleList>();
-    CMeshData Data = vMesh->getMeshDataV().copy();
+    CMeshData Data = vMesh->getMeshDataV().copyDeeply();
 
     auto pVertArray = Data.getVertexArray();
     auto pNormalArray = Data.getNormalArray();

@@ -175,7 +175,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
             {
                 if (m_AreObjectsVisable[i])
                 {
-                    __recordRenderActorCommand(vImageIndex, i);
+                    __drawActor(vImageIndex, m_pSceneInfo->pScene->getActor(i));
                 }
             }
         }
@@ -205,10 +205,10 @@ void CSceneSimpleRenderPass::__destroySceneResources()
     m_TextureImageSet.destroyAndClearAll();
 }
 
-void CSceneSimpleRenderPass::__recordRenderActorCommand(uint32_t vImageIndex, size_t vObjectIndex)
+void CSceneSimpleRenderPass::__drawActor(uint32_t vImageIndex, CActor::Ptr vActor)
 {
     VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    _recordRenderActorCommand(CommandBuffer, vObjectIndex);
+    _drawActor(CommandBuffer, vActor);
 }
 
 void CSceneSimpleRenderPass::__createTextureImages()
@@ -249,7 +249,7 @@ void CSceneSimpleRenderPass::__calculateVisiableObjects()
 
         m_AreObjectsVisable[i] = false;
 
-        if (pActor->hasTag("sky") || m_pVertexBuffer->getSegmentInfo(i).Num == 0)
+        if (pActor->hasTag("sky") || m_ActorSegmentMap.find(pActor) == m_ActorSegmentMap.end())
             continue;
 
         if (m_EnableCulling)

@@ -4,6 +4,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include "IconManager.h"
+
 int main()
 {
 	GLFW::init();

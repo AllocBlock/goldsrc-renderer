@@ -15,27 +15,22 @@ enum class E3DObjectPrimitiveType
     INDEXED_TRIAGNLE_LIST,
 };
 
+#define _DEFINE_MESH_DATA_ARRAY_PROPERTY(Name, Type) public: _DEFINE_GETTER_SETTER_POINTER(Name, IDataArray<##Type##>::Ptr) private: IDataArray<##Type##>::Ptr m_p##Name = make<CGeneralDataArray<Type>>();
+
 class CMeshData
 {
 public:
     _DEFINE_PTR(CMeshData);
 
-    bool getVisibleState() { return m_IsVisible; }
-    void setVisibleState(bool vState) { m_IsVisible = vState; }
-    CMeshData copy();
-
-    _DEFINE_GETTER_SETTER_POINTER(VertexArray, IDataArray<glm::vec3>::Ptr)
-    _DEFINE_GETTER_SETTER_POINTER(NormalArray, IDataArray<glm::vec3>::Ptr)
-    _DEFINE_GETTER_SETTER_POINTER(ColorArray, IDataArray<glm::vec3>::Ptr)
-    _DEFINE_GETTER_SETTER_POINTER(TexCoordArray, IDataArray<glm::vec2>::Ptr)
-    _DEFINE_GETTER_SETTER_POINTER(TexIndexArray, IDataArray<uint32_t>::Ptr)
+    CMeshData copyDeeply();
+    
     _DEFINE_GETTER_SETTER(PrimitiveType, E3DObjectPrimitiveType)
-    _DEFINE_GETTER_SETTER(EnableLightmap, bool)
-    _DEFINE_GETTER_SETTER_POINTER(LightmapIndexArray, IDataArray<uint32_t>::Ptr)
-    _DEFINE_GETTER_SETTER_POINTER(LightmapTexCoordArray, IDataArray<glm::vec2>::Ptr)
 
     static const uint32_t InvalidLightmapIndex;
-
+    bool hasLightmap() const
+    {
+        return !m_pLightmapTexCoordArray->empty();
+    }
         
     SAABB getAABB() const
     {
@@ -56,18 +51,16 @@ public:
         return SAABB(Min, Max);
     }
 
-protected:
-    bool m_IsVisible = true; // TODO: move to actor
+private:
     E3DObjectPrimitiveType m_PrimitiveType = E3DObjectPrimitiveType::TRIAGNLE_LIST;
-    IDataArray<glm::vec3>::Ptr m_pVertexArray = make<CGeneralDataArray<glm::vec3>>();
-    IDataArray<glm::vec3>::Ptr m_pNormalArray = make<CGeneralDataArray<glm::vec3>>();
-    IDataArray<glm::vec3>::Ptr m_pColorArray = make<CGeneralDataArray<glm::vec3>>();
-    IDataArray<glm::vec2>::Ptr m_pTexCoordArray = make<CGeneralDataArray<glm::vec2>>();
-    IDataArray<uint32_t>::Ptr m_pTexIndexArray = make<CGeneralDataArray<glm::uint32_t>>();
-    
-    bool m_EnableLightmap = false; // TODO: define by light map related array validation?
-    IDataArray<uint32_t>::Ptr m_pLightmapIndexArray = make<CGeneralDataArray<uint32_t>>();
-    IDataArray<glm::vec2>::Ptr m_pLightmapTexCoordArray = make<CGeneralDataArray<glm::vec2>>();
+
+    _DEFINE_MESH_DATA_ARRAY_PROPERTY(VertexArray, glm::vec3)
+    _DEFINE_MESH_DATA_ARRAY_PROPERTY(NormalArray, glm::vec3)
+    _DEFINE_MESH_DATA_ARRAY_PROPERTY(ColorArray, glm::vec3)
+    _DEFINE_MESH_DATA_ARRAY_PROPERTY(TexIndexArray, uint32_t)
+    _DEFINE_MESH_DATA_ARRAY_PROPERTY(TexCoordArray, glm::vec2)
+    _DEFINE_MESH_DATA_ARRAY_PROPERTY(LightmapIndexArray, uint32_t)
+    _DEFINE_MESH_DATA_ARRAY_PROPERTY(LightmapTexCoordArray, glm::vec2)
 };
 
 class CMesh

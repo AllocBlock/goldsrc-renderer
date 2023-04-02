@@ -5,6 +5,7 @@
 #include "Actor.h"
 #include "ComponentMeshRenderer.h"
 #include "VertexBuffer.h"
+#include <map>
 
 class CScene
 {
@@ -37,9 +38,13 @@ public:
         m_ActorSet.clear();
     }
 
+    // create vertex buffer of scene, each actor's mesh data is write to the buffer as a segment
+    // a actor to segment map is returned, too
+    // actor without mesh will not be in the buffer nor the map
     template <typename PointData_t>
-    ptr<vk::CVertexBufferTyped<PointData_t>> generateVertexBuffer(vk::CDevice::CPtr vDevice)
+    std::pair<ptr<vk::CVertexBufferTyped<PointData_t>>, std::map<CActor::Ptr, size_t>> generateVertexBuffer(vk::CDevice::CPtr vDevice)
     {
+        std::map<CActor::Ptr, size_t> ActorSegmentMap;
         std::vector<std::vector<PointData_t>> DataSet;
         for (auto pActor : m_ActorSet)
         {
@@ -53,6 +58,7 @@ public:
             auto MeshData = pMesh->getMeshDataV();
             const auto& Data = PointData_t::extractFromMeshData(MeshData);
             DataSet.emplace_back(Data);
+            ActorSegmentMap[pActor] = DataSet.size() - 1;
         }
         
         auto pVertBuffer = make<vk::CVertexBufferTyped<PointData_t>>();
@@ -62,10 +68,10 @@ public:
             {
                 Log::log("Warning: vertex buffer contains no vertex");
             }
-            return nullptr;
+            return std::make_pair(nullptr, ActorSegmentMap);
         }
 
-        return pVertBuffer;
+        return std::make_pair(pVertBuffer, ActorSegmentMap);
     }
 
 private:

@@ -8,6 +8,7 @@
 #include "PipelineBlendAlphaTest.h"
 #include "PipelineBlendAdditive.h"
 #include "PipelineSprite.h"
+#include "PipelineIcon.h"
 #include "Image.h"
 #include "DynamicResourceManager.h"
 
@@ -109,10 +110,10 @@ private:
     void __renderModel(uint32_t vImageIndex, size_t vModelIndex);
     void __renderPointEntities(uint32_t vImageIndex);
     void __renderSprites(uint32_t vImageIndex);
-    void __renderActorByPipeine(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline);
+    void __renderActorByPipeline(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline);
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
-    void __recordObjectRenderCommand(uint32_t vImageIndex, size_t vObjectIndex);
+    void __drawActor(uint32_t vImageIndex, CActor::Ptr vActor);
     std::vector<size_t> __sortModelRenderSequence();
 
     void __recordSkyRenderCommand(uint32_t vImageIndex);
@@ -132,6 +133,18 @@ private:
         CDynamicPipeline<CPipelineBlendAdditive> BlendAdditive;
         CDynamicPipeline<CPipelineSprite> Sprite;
         CDynamicPipeline<CPipelineSkybox> Sky;
+        CDynamicPipeline<CPipelineIcon> Icon;
+
+        void update(const vk::SPassUpdateState& vUpdateState)
+        {
+            Sky.updateV(vUpdateState);
+            Normal.updateV(vUpdateState);
+            BlendTextureAlpha.updateV(vUpdateState);
+            BlendAlphaTest.updateV(vUpdateState);
+            BlendAdditive.updateV(vUpdateState);
+            Sprite.updateV(vUpdateState);
+            Icon.updateV(vUpdateState);
+        }
 
         void destroy()
         {
@@ -141,6 +154,7 @@ private:
             BlendAdditive.destroy();
             Sprite.destroy();
             Sky.destroy();
+            Icon.destroy();
         }
     } m_PipelineSet;
     
