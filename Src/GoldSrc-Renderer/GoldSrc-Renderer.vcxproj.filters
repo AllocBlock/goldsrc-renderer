@@ -173,6 +173,9 @@
     <ClInclude Include="PassGoldSrcDeprecated.h">
       <Filter>头文件\RenderPass</Filter>
     </ClInclude>
+    <ClInclude Include="GuiScene.h">
+      <Filter>头文件\Gui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\goldSrcNormalShader.vert">

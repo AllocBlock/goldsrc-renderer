@@ -13,10 +13,10 @@ public:
     _DEFINE_PTR(CScene);
 
     void addActor(CActor::Ptr vActor);
-    size_t getActorNum();
-    CActor::Ptr getActor(size_t vIndex);
+    size_t getActorNum() const;
+    CActor::Ptr getActor(size_t vIndex) const;
     // return first found actor
-    CActor::Ptr findActor(std::string vName);
+    CActor::Ptr findActor(std::string vName) const;
     void clear();
 
     // create vertex buffer of scene, each actor's mesh data is write to the buffer as a segment

@@ -27,6 +27,7 @@ public:
     }
 
     static CRotator createVectorToVector(glm::vec3 vStart, glm::vec3 vTarget);
+    static CRotator createEulerDegrees(glm::vec3 vEulerDegree) { return CRotator(vEulerDegree * glm::pi<float>() / 180.0f); }
 
 private:
     glm::quat m_Quaternion = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);

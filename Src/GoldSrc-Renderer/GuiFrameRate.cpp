@@ -20,7 +20,7 @@ void CGuiFrameRate::draw()
         m_SavedFrameRates.erase(m_SavedFrameRates.begin(), m_SavedFrameRates.begin() + 1);
     }
     
-    UI::beginWindow(u8"Ö¡ï¿½ï¿½", nullptr, UI::EWindowFlag::ALWAYS_AUTO_RESIZE | UI::EWindowFlag::NO_RESIZE);
+    UI::beginWindow(u8"Ö¡ÂÊ", nullptr, UI::EWindowFlag::ALWAYS_AUTO_RESIZE | UI::EWindowFlag::NO_RESIZE);
     UI::text(u8"ÊµÊ±FPS: " + std::to_string(RealtimeFPS));
     double AverageDeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastAverageTimeStamp).count()) / 1e6;
     static double DisplayedAverageFrameRate = 0.0;
@@ -32,9 +32,8 @@ void CGuiFrameRate::draw()
             DisplayedAverageFrameRate += m_SavedFrameRates[i];
         DisplayedAverageFrameRate /= std::min<size_t>(m_AverageFrameRateInCountNum, m_SavedFrameRates.size());
     }
-    UI::text(u8"Æ½ï¿½ï¿½FPS: " + std::to_string(DisplayedAverageFrameRate));
-
-    UI::plotLines(u8"Ö¡ï¿½ï¿½Í¼", m_SavedFrameRates);
+    UI::text(u8"Æ½¾ùFPS: " + std::to_string(DisplayedAverageFrameRate));
+    UI::plotLines(u8"Ö¡ÂÊÍ¼", m_SavedFrameRates);
     UI::endWindow();
     m_LastTimeStamp = CurTimeStamp;
 }

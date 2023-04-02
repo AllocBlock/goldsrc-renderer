@@ -205,6 +205,11 @@ bool UI::input(std::string vName, float& vioValue, float vStep)
     return ImGui::InputFloat(vName.c_str(), &vioValue, vStep);
 }
 
+bool UI::input(std::string vName, glm::vec3& vioValue)
+{
+    return ImGui::InputFloat3(vName.c_str(), glm::value_ptr(vioValue));
+}
+
 bool UI::drag(std::string vName, float& vioValue, float vStep, float vMin, float vMax)
 {
     return ImGui::DragFloat(vName.c_str(), &vioValue, vStep, vMin, vMax);

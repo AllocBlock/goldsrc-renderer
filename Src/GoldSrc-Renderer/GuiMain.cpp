@@ -129,6 +129,8 @@ void CGUIMain::_renderUIV()
                 _ASSERTE(m_ReadSceneCallback);
                 m_ReadSceneCallback(ResultScene.pSceneInfo);
                 m_pCurSceneInfo = ResultScene.pSceneInfo;
+                
+                m_GUIScene.setScene(ResultScene.pSceneInfo->pScene);
             }
             else
                 showAlert(ResultScene.Message);
@@ -184,6 +186,7 @@ void CGUIMain::_renderUIV()
             UI::menuItem(u8"FGD", &m_Control.ShowWidgetFGD);
             UI::menuItem(u8"帧率", &m_Control.ShowWidgetFrameRate);
             UI::menuItem(u8"日志", &m_Control.ShowWidgetLog);
+            UI::menuItem(u8"场景", &m_Control.ShowWidgetScene);
             
             UI::endMenu();
         }
@@ -243,6 +246,9 @@ void CGUIMain::_renderUIV()
 
     // 日志
     if (m_Control.ShowWidgetLog) m_GUILog.draw();
+
+    // 场景
+    if (m_Control.ShowWidgetScene) m_GUIScene.draw();
 
     // DEBUG
     if (UI::button("test alert"))

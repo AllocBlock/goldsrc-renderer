@@ -22,7 +22,7 @@ void CGuiLog::draw()
 {
     if (m_Open)
     {
-        UI::beginWindow(u8"ï¿½ï¿½Ö¾");
+        UI::beginWindow(u8"ÈÕÖ¾");
         for (size_t i = 0; i < m_Logs.size(); ++i)
         {
             UI::text(m_Logs[i], true);
@@ -42,12 +42,12 @@ std::string CGuiLog::__getCurrentTime()
     tm LocalTime;
     localtime_s(&LocalTime, &Time);
     std::string Result = u8"[";
-    Result += std::to_string(1900 + LocalTime.tm_year) + u8"ï¿½ï¿½";
-    Result += std::to_string(1 + LocalTime.tm_mon) + u8"ï¿½ï¿½";
-    Result += std::to_string(LocalTime.tm_mday) + u8"ï¿½ï¿½ ";
+    Result += std::to_string(1900 + LocalTime.tm_year) + u8"Äê";
+    Result += std::to_string(1 + LocalTime.tm_mon) + u8"ÔÂ";
+    Result += std::to_string(LocalTime.tm_mday) + u8"ÈÕ ";
     Result += std::to_string(LocalTime.tm_hour) + u8"Ê±";
-    Result += std::to_string(LocalTime.tm_min) + u8"ï¿½ï¿½";
-    Result += std::to_string(LocalTime.tm_sec) + u8"ï¿½ï¿½";
+    Result += std::to_string(LocalTime.tm_min) + u8"·Ö";
+    Result += std::to_string(LocalTime.tm_sec) + u8"Ãë";
     Result += u8"] ";
     return Result;
 }

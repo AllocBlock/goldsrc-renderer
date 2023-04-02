@@ -5,6 +5,7 @@
 #include "GuiFrameRate.h"
 #include "GuiLog.h"
 #include "GuiFGD.h"
+#include "GuiScene.h"
 #include "GuiRequestPopupModal.h"
 #include "SceneInfoGoldSrc.h"
 
@@ -66,6 +67,7 @@ private:
     CGuiFrameRate m_GUIFrameRate = CGuiFrameRate();
     CGuiLog m_GUILog = CGuiLog();
     CGuiFGD m_FGD;
+    CGuiScene m_GUIScene;
     CGuiRequestPopupModal m_RequestPopupModal;
 
     ptr<SSceneInfoGoldSrc> m_pCurSceneInfo = nullptr;
@@ -75,6 +77,7 @@ private:
         bool ShowWidgetFGD = false;
         bool ShowWidgetLog = false;
         bool ShowWidgetFrameRate = false;
+        bool ShowWidgetScene = false;
     } m_Control;
 
     ERenderMethod m_RenderMethod = ERenderMethod::BSP;

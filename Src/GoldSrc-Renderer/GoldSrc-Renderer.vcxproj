@@ -172,6 +172,7 @@
     <ClInclude Include="SceneProbe.h" />
     <ClInclude Include="PassSimple.h" />
     <ClInclude Include="PassGoldSrc.h" />
+    <ClInclude Include="GuiScene.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\alphaTestShader.frag" />
