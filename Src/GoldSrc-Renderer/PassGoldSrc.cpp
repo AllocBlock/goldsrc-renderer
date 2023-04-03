@@ -5,6 +5,7 @@
 #include "RenderPassDescriptor.h"
 #include "Log.h"
 #include "Random.h"
+#include "ComponentIconRenderer.h"
 
 #include <vector>
 #include <set>
@@ -234,13 +235,12 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 auto pActor = m_pSceneInfo->pScene->getActor(i);
                 if (!pActor->getVisible()) continue;
 
-                if (!pActor->hasTag("point_entity")) continue;
-                // TODO: change to find if there is icon renderer!
+                auto pIconRenderer = pActor->getTransform()->findComponent<CComponentIconRenderer>();
+                if (!pIconRenderer || !pIconRenderer->hasIcon()) continue;
 
+                EIcon Icon = pIconRenderer->getIcon();
                 glm::vec3 Position = pActor->getTransform()->getAbsoluteTranslate();
-                //EIcon RandomIcon = EIcon(Random::GenerateIntegar(0, int(EIcon::MAX_NUM)));
-                EIcon RandomIcon = EIcon(i % int(EIcon::MAX_NUM));
-                PipelineIcon.addIcon(RandomIcon, Position);
+                PipelineIcon.addIcon(Icon, Position);
             }
             PipelineIcon.recordCommand(pCommandBuffer, vImageIndex);
         }

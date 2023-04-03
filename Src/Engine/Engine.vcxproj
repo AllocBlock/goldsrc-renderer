@@ -131,6 +131,7 @@
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="ComponentIconRenderer.h" />
     <ClInclude Include="ComponentMeshRenderer.h" />
     <ClInclude Include="DynamicResourceManager.h" />
     <ClInclude Include="RenderPassSingle.h" />

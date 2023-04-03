@@ -233,5 +233,8 @@
     <ClInclude Include="IconManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ComponentIconRenderer.h">
+      <Filter>头文件\Scene\Components</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

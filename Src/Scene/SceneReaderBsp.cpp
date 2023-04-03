@@ -6,10 +6,10 @@
 #include "IOGoldSrcSpr.h"
 #include "Environment.h"
 #include "Log.h"
+#include "ComponentMeshRenderer.h"
+#include "ComponentIconRenderer.h"
 
 #include <sstream>
-
-#include "ComponentMeshRenderer.h"
 
 glm::vec3 stringToVec3(std::string vString)
 {
@@ -699,6 +699,10 @@ void CSceneReaderBsp::__loadPointEntities()
         {
             pPointEntityActor->setName(Entity.Properties.at("classname"));
         }
+
+        auto pIconRenderer = make<CComponentIconRenderer>();
+        pIconRenderer->setIcon(EIcon::TIP);
+        pPointEntityActor->getTransform()->addComponent(pIconRenderer);
 
         m_pSceneInfo->pScene->addActor(pPointEntityActor);
     }

@@ -6,6 +6,7 @@ class IComponent
 {
 public:
     _DEFINE_PTR(IComponent);
+    virtual ~IComponent() = default;
 
     ptr<CTransform> getTransform() const { return m_pParent.expired() ? nullptr : m_pParent.lock(); }
 
