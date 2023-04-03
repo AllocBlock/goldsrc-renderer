@@ -14,8 +14,8 @@ layout(push_constant) uniform SPushConstant
 {
     uint TexIndex;
     uint BlendType;
+    float Scale;
     vec3 Position;
-    vec3 Scale;
 } uPushConstant;
 
 #define _BLEND_TYPE_NORMAL 0x00

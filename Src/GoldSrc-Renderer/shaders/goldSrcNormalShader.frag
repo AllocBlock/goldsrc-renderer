@@ -56,8 +56,8 @@ void main()
 			specular = 0.0;
 		}
 
-		float shadow = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
-		//outColor = vec4(linearToSrgb(TexColor.rgb * shadow), TexColor.a * uPushConstant.Opacity);
-		outColor = vec4(toGamma(TexColor.rgb * shadow, GOLDSRC_GAMMA), TexColor.a * uPushConstant.Opacity);
+		float shade = ambient * 0.5 + diffuse * 0.3 + specular * 0.2;
+		//outColor = vec4(linearToSrgb(TexColor.rgb * shade), TexColor.a * uPushConstant.Opacity);
+		outColor = vec4(toGamma(TexColor.rgb * shade, GOLDSRC_GAMMA), TexColor.a * uPushConstant.Opacity);
 	}
 }

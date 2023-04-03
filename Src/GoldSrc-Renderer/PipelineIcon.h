@@ -14,7 +14,7 @@
 class CPipelineIcon : public IPipeline
 {
 public:
-    void addIcon(EIcon vIcon, glm::vec3 vPosition);
+    void addIcon(EIcon vIcon, glm::vec3 vPosition, float vScale = 32.0f);
     void clear();
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
     void recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
@@ -33,6 +33,7 @@ private:
     {
         EIcon Icon;
         glm::vec3 Position;
+        float Scale;
     };
 
     void __createIconResources();

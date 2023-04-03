@@ -17,15 +17,15 @@ layout(push_constant) uniform SPushConstant
 {
     uint TexIndex;
     uint BlendType;
+    float Scale;
     vec3 Position;
-    vec3 Scale;
 } uPushConstant;
 
 void main()
 {
     vec3 X = normalize(ubo.EyePosition - uPushConstant.Position);
-    vec3 Y = normalize(cross(vec3(0.0, 0.0, 1.0), X));
-    vec3 Z = normalize(cross(X, Y));
+    vec3 Z = normalize(cross(X, vec3(0.0, 1.0, 0.0)));
+    vec3 Y = normalize(cross(Z, X));
     mat3 Rotate = mat3(X, Y, Z);
     vec3 World = (Rotate * inPosition * uPushConstant.Scale) + uPushConstant.Position;
 

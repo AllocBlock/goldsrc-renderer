@@ -39,6 +39,9 @@ CActor::Ptr CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
     {
         __appendModelData(Model, MeshData);
     }
+    
+    // to y-up
+    GoldSrc::toYupCounterClockwise(MeshData);
 
     return GoldSrc::createActorByMeshAndTag(MeshData, { "model" });
 }
@@ -49,7 +52,6 @@ void CSceneReaderMdl::__appendModelData(const SMdlModel& vModel, CMeshData& vioM
     auto pColorArray = vioMeshData.getColorArray();
     auto pNormalArray = vioMeshData.getNormalArray();
     auto pTexCoordArray = vioMeshData.getTexCoordArray();
-    auto pLightmapCoordArray = vioMeshData.getLightmapTexCoordArray();
     auto pTexIndexArray = vioMeshData.getTexIndexArray();
 
     auto TextureSet = m_pIOMdl->getTextures();
@@ -81,7 +83,6 @@ void CSceneReaderMdl::__appendModelData(const SMdlModel& vModel, CMeshData& vioM
             pColorArray->append(Normal);
             pNormalArray->append(glm::vec3(1.0, 1.0, 1.0));
             pTexCoordArray->append(TexCoord);
-            pLightmapCoordArray->append(glm::vec2(0.0, 0.0));
             pTexIndexArray->append(TextureIndex);
         }
     }

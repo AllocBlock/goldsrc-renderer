@@ -240,7 +240,8 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
                 EIcon Icon = pIconRenderer->getIcon();
                 glm::vec3 Position = pActor->getTransform()->getAbsoluteTranslate();
-                PipelineIcon.addIcon(Icon, Position);
+                glm::vec3 Scale = pActor->getTransform()->getAbsoluteScale();
+                PipelineIcon.addIcon(Icon, Position, glm::max(Scale.x, glm::max(Scale.y, Scale.z)));
             }
             PipelineIcon.recordCommand(pCommandBuffer, vImageIndex);
         }

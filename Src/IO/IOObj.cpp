@@ -107,21 +107,6 @@ bool CIOObj::_readV(std::filesystem::path vFilePath) {
         }
     }
 
-    // 缩放范围到[0, 1]
-    float MaxX, MinX, MaxY, MinY, MaxZ, MinZ;
-    MinX = MinY = MinZ = INFINITY;
-    MaxX = MaxY = MaxZ = -INFINITY;
-    for (glm::vec3 Vertex : m_pObj->Vertices)
-    {
-        MaxX = std::max<float>(MaxX, Vertex.x);
-        MinX = std::min<float>(MinX, Vertex.x);
-        MaxY = std::max<float>(MaxY, Vertex.y);
-        MinY = std::min<float>(MinY, Vertex.y);
-        MaxZ = std::max<float>(MaxZ, Vertex.z);
-        MinZ = std::min<float>(MinZ, Vertex.z);;
-    }
-    m_ScaleFactor = std::max<float>(MaxX - MinX, std::max<float>(MaxY - MinY, MaxZ - MinZ));
-
     return true;
 }
 
@@ -137,39 +122,41 @@ size_t CIOObj::getFaceNodeNum(size_t vFaceIndex) const
     return m_pObj->Faces[vFaceIndex].Nodes.size();
 }
 
-glm::vec3 CIOObj::getVertex(size_t vFaceIndex, size_t vNodeIndex) const
+bool CIOObj::dumpVertex(size_t vFaceIndex, size_t vNodeIndex, glm::vec3& voVertex) const
 {
     if (!m_pObj || 
         vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
         vNodeIndex < 0 || vNodeIndex >= m_pObj->Faces[vFaceIndex].Nodes.size())
-        return glm::vec3(NAN, NAN, NAN);
+        return false;
     uint32_t VertexId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].VectexId;
-    return m_pObj->Vertices[VertexId - 1] / m_ScaleFactor;
+    voVertex = m_pObj->Vertices[VertexId - 1];
+    return true;
 }
 
-glm::vec2 CIOObj::getTexCoord(size_t vFaceIndex, size_t vNodeIndex) const
+bool CIOObj::dumpTexCoord(size_t vFaceIndex, size_t vNodeIndex, glm::vec2& voTexCoord) const
 {
     if (!m_pObj ||
         vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
         vNodeIndex < 0 || vNodeIndex >= m_pObj->Faces[vFaceIndex].Nodes.size())
-        return glm::vec2(NAN, NAN);
+        return false;
     uint32_t TexCoordId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].TexCoordId;
     if (TexCoordId == 0)
-        return glm::vec2(NAN, NAN);
+        return false;
     // 纹理映射方式不同，obj->vulkan
-    glm::vec2 TexCoor = m_pObj->TexCoords[TexCoordId - 1];
-    TexCoor.y = 1.0f - TexCoor.y;
-    return TexCoor;
+    voTexCoord = m_pObj->TexCoords[TexCoordId - 1];
+    voTexCoord.y = 1.0f - voTexCoord.y;
+    return true;
 }
 
-glm::vec3 CIOObj::getNormal(size_t vFaceIndex, size_t vNodeIndex) const
+bool CIOObj::dumpNormal(size_t vFaceIndex, size_t vNodeIndex, glm::vec3& voNormal) const
 {
     if (!m_pObj ||
         vFaceIndex < 0 || vFaceIndex >= getFaceNum() ||
         vNodeIndex < 0 || vNodeIndex >= m_pObj->Faces[vFaceIndex].Nodes.size())
-        return glm::vec3(NAN, NAN, NAN);
+        return false;
     uint32_t NormalId = m_pObj->Faces[vFaceIndex].Nodes[vNodeIndex].NormalId;
     if (NormalId == 0)
-        return glm::vec3(NAN, NAN, NAN);
-    return m_pObj->Normals[NormalId - 1];
+        return false;
+    voNormal = m_pObj->Normals[NormalId - 1];
+    return true;
 }

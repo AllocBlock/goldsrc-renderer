@@ -39,9 +39,9 @@ public:
 
     size_t getFaceNum() const;
     size_t getFaceNodeNum(size_t vFaceIndex) const;
-    glm::vec3 getVertex(size_t vFaceIndex, size_t vNodeIndex) const;
-    glm::vec2 getTexCoord(size_t vFaceIndex, size_t vNodeIndex) const;
-    glm::vec3 getNormal(size_t vFaceIndex, size_t vNodeIndex) const;
+    bool dumpVertex(size_t vFaceIndex, size_t vNodeIndex, glm::vec3& voVertex) const;
+    bool dumpTexCoord(size_t vFaceIndex, size_t vNodeIndex, glm::vec2& voTexCoord) const;
+    bool dumpNormal(size_t vFaceIndex, size_t vNodeIndex, glm::vec3& voNormal) const;
 
     const std::vector<glm::vec3>& getVertices() { return m_pObj->Vertices; }
     const std::vector<glm::vec3>& getNormals() { return m_pObj->Normals; }
@@ -54,5 +54,4 @@ protected:
 private:
     ptr<SObj> m_pObj = nullptr;
     ptr<CIOMtl> m_pMtl = nullptr;
-    float m_ScaleFactor = 1.0;
 };

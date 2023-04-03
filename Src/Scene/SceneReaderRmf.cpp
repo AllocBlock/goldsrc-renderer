@@ -84,6 +84,9 @@ void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
     CMeshData MeshData = CMeshData();
     for (const SRmfFace& Face : vpSolid->Faces)
         __readSolidFace(Face, MeshData);
+    
+    // to y-up
+    GoldSrc::toYupCounterClockwise(MeshData);
 
     auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
     m_pSceneInfo->pScene->addActor(pActor);
@@ -108,7 +111,6 @@ void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, CMeshData& vioMeshD
     auto pColorArray = vioMeshData.getColorArray();
     auto pNormalArray = vioMeshData.getNormalArray();
     auto pTexCoordArray = vioMeshData.getTexCoordArray();
-    auto pLightmapCoordArray = vioMeshData.getLightmapTexCoordArray();
     auto pTexIndexArray = vioMeshData.getTexIndexArray();
     for (size_t k = 2; k < Vertices.size(); ++k)
     {
@@ -120,7 +122,6 @@ void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, CMeshData& vioMeshD
         pTexCoordArray->append(TexCoords[0]);
         pTexCoordArray->append(TexCoords[k - 1]);
         pTexCoordArray->append(TexCoords[k]);
-        pLightmapCoordArray->append(glm::vec2(0.0, 0.0), 3);
         pTexIndexArray->append(TexIndex, 3);
     }
 }

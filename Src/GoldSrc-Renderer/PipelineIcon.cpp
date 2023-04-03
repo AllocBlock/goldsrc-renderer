@@ -33,16 +33,16 @@ namespace
     {
         uint32_t TexIndex = 0;
         uint32_t BlendType = 0;
+        float Scale = 1.0f;
         alignas(16) glm::vec3 Position = glm::vec3(0.0f);
-        alignas(16) glm::vec3 Scale = glm::vec3(1.0f);
     };
 }
 
 const size_t CPipelineIcon::MaxIconNum = 128;
 
-void CPipelineIcon::addIcon(EIcon vIcon, glm::vec3 vPosition)
+void CPipelineIcon::addIcon(EIcon vIcon, glm::vec3 vPosition, float vScale)
 {
-    m_IconInfoSet.push_back({ vIcon, vPosition });
+    m_IconInfoSet.push_back({ vIcon, vPosition, vScale });
 }
 
 void CPipelineIcon::clear()
@@ -71,12 +71,12 @@ void CPipelineIcon::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vIm
         auto pIconManager = CIconManager::getInstance();
 
         SPushConstant Constant;
-        Constant.Scale = glm::vec3(1.0f);
         for (const auto& IconInfo : m_IconInfoSet)
         {
             Constant.BlendType = uint32_t(pIconManager->getRenderType(IconInfo.Icon));
             Constant.TexIndex = m_IconIndexMap.at(IconInfo.Icon);
             Constant.Position = IconInfo.Position;
+            Constant.Scale = IconInfo.Scale;
             vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
             vCommandBuffer->draw(0, static_cast<uint32_t>(m_VertexNum));
         }
@@ -128,12 +128,12 @@ void CPipelineIcon::_createResourceV(size_t vImageNum)
     // create unit square facing positive x-axis
     const std::vector<SPointData> PointData =
     {
-        {{0.0,  1.0,  1.0 }, {1.0, 0.0}},
-        {{0.0,  1.0, -1.0 }, {1.0, 1.0}},
-        {{0.0, -1.0, -1.0 }, {0.0, 1.0}},
-        {{0.0,  1.0,  1.0 }, {1.0, 0.0}},
-        {{0.0, -1.0, -1.0 }, {0.0, 1.0}},
-        {{0.0, -1.0,  1.0 }, {0.0, 0.0}},
+        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
+        {{0.0,  1.0,  1.0 }, {0.0, 0.0}},
+        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
+        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
+        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
+        {{0.0, -1.0, -1.0 }, {1.0, 1.0}},
     };
 
     VkDeviceSize DataSize = sizeof(SPointData) * PointData.size();

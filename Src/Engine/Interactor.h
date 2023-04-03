@@ -58,7 +58,7 @@ private:
 	GLFWwindow* m_pWindow = nullptr;
 	CCamera::Ptr m_pCamera = nullptr;
 
-	float m_Speed = 3.0;
+	float m_Speed = 3.0f;
 	const float m_BoostScale = 3.0f;
 	const float m_CrawlScale = 0.5f;
 	const float m_HorizontalSensetivity = 0.1f;

@@ -17,7 +17,6 @@ ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
     auto pColorArray = MeshData.getColorArray();
     auto pNormalArray = MeshData.getNormalArray();
     auto pTexCoordArray = MeshData.getTexCoordArray();
-    auto pLightmapCoordArray = MeshData.getLightmapTexCoordArray();
     auto pTexIndexArray = MeshData.getTexIndexArray();
 
     const std::vector<SObjFace>& Faces = Obj.getFaces();
@@ -31,14 +30,17 @@ ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
         std::vector<glm::vec3> Normals(NodeNum);
         std::vector<glm::vec2> TexCoords(NodeNum);
 
-        // get data backwards to form clockwise points
+        // TODO: calc face normal if no normal in file
         for (size_t k = 0; k < NodeNum; ++k)
         {
-            Vertices.emplace_back(Obj.getVertex(i, NodeNum - k - 1));
-            Normals.emplace_back(Obj.getNormal(i, NodeNum - k - 1));
-            TexCoords.emplace_back(Obj.getTexCoord(i, NodeNum - k - 1));
+            Obj.dumpVertex(i, k, Vertices[k]);
+            if (!Obj.dumpNormal(i, k, Normals[k]))
+                Normals[k] = glm::vec3(0, 0, 0);
+            if (!Obj.dumpTexCoord(i, k, TexCoords[k]))
+                TexCoords[k] = glm::vec2(0, 0);
         }
 
+        // FIXME: concave polygon should not use this triangulation
         for (size_t k = 2; k < Face.Nodes.size(); ++k)
         {
             pVertexArray->append(Vertices[0]);
@@ -51,7 +53,6 @@ ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
             pTexCoordArray->append(TexCoords[0]);
             pTexCoordArray->append(TexCoords[k - 1]);
             pTexCoordArray->append(TexCoords[k]);
-            pLightmapCoordArray->append(glm::vec2(0.0, 0.0), 3);
             pTexIndexArray->append(TexIndex, 3);
         }
     }

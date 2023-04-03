@@ -137,6 +137,10 @@ std::vector<CActor::Ptr> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
     auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "brush" });
     auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
     pActorSkyPart->setVisible(false);
+    
+    // to y-up counter clock wise
+    GoldSrc::toYupCounterClockwise(MeshDataNormalPart);
+    GoldSrc::toYupCounterClockwise(MeshDataSkyPart);
 
     return { pActorNormalPart, pActorSkyPart };
 }
@@ -164,6 +168,10 @@ std::vector<CActor::Ptr> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
     auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "entity" });
     auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
     pActorSkyPart->setVisible(false);
+
+    // to y-up counter clock wise
+    GoldSrc::toYupCounterClockwise(MeshDataNormalPart);
+    GoldSrc::toYupCounterClockwise(MeshDataSkyPart);
 
     return { pActorNormalPart, pActorSkyPart };
 }
@@ -692,7 +700,7 @@ void CSceneReaderBsp::__loadPointEntities()
         }
         
         auto pPointEntityActor = make<CActor>();
-        pPointEntityActor->getTransform()->setTranslate(Origin * m_SceneScale);
+        pPointEntityActor->getTransform()->setTranslate(GoldSrc::toYup(Origin * m_SceneScale));
         pPointEntityActor->getTransform()->setScale(glm::vec3(0.2f));
         pPointEntityActor->addTag("point_entity");
         if (!Name.empty())

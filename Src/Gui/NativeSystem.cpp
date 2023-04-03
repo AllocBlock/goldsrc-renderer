@@ -26,9 +26,11 @@ EFileDialogResult Gui::createSaveFileDialog(std::string vFilter)
 
 	EFileDialogResult Result;
 	Result.Action = (NfdResult == nfdresult_t::NFD_OKAY ? EDialogAction::CONFIRM : EDialogAction::CANCEL);
-	Result.FilePath = pOutPath;
 
 	if (Result.Action == EDialogAction::CONFIRM)
+	{
+		Result.FilePath = pOutPath;
 		gLastLoadPath = Result.FilePath;
+	}
 	return Result;
 }

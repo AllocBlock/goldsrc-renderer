@@ -61,7 +61,6 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
         auto pColorArray = MeshData.getColorArray();
         auto pNormalArray = MeshData.getNormalArray();
         auto pTexCoordArray = MeshData.getTexCoordArray();
-        auto pLightmapCoordArray = MeshData.getLightmapTexCoordArray();
         auto pTexIndexArray = MeshData.getTexIndexArray();
         for (size_t k = 2; k < Polygon.Vertices.size(); ++k)
         {
@@ -73,9 +72,11 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
             pTexCoordArray->append(TexCoords[0]);
             pTexCoordArray->append(TexCoords[k - 1]);
             pTexCoordArray->append(TexCoords[k]);
-            pLightmapCoordArray->append(glm::vec2(0.0, 0.0), 3);
             pTexIndexArray->append(TexIndex, 3);
         }
+
+        // to y-up
+        GoldSrc::toYupCounterClockwise(MeshData);
 
         auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
         m_pSceneInfo->pScene->addActor(pActor);

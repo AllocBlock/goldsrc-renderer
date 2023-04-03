@@ -20,7 +20,7 @@ public:
     
     // TIPS: default backface culling
     _DEFINE_GETTER_SETTER(RasterCullMode, VkCullModeFlags)
-    // TIPS: default clockwise
+    // TIPS: default counter clockwise
     _DEFINE_GETTER_SETTER(RasterFrontFace, VkFrontFace)
 
     // TIPS: default on
@@ -115,10 +115,9 @@ public:
         return ViewportInfo;
     }
 
-    // TIPS: default clockwise and backface culling
+    // TIPS: default counter clockwise and backface culling
     VkPipelineRasterizationStateCreateInfo getRasterizationStageInfo() const
     {
-        // default clockwise, back culling, no depth bias
         VkPipelineRasterizationStateCreateInfo RasterizerInfo = {};
         RasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         RasterizerInfo.depthClampEnable = VK_FALSE;
@@ -330,7 +329,7 @@ private:
     VkRect2D m_TempScissor;
 
     VkCullModeFlags m_RasterCullMode = VkCullModeFlagBits::VK_CULL_MODE_BACK_BIT;
-    VkFrontFace m_RasterFrontFace = VkFrontFace::VK_FRONT_FACE_CLOCKWISE;
+    VkFrontFace m_RasterFrontFace = VkFrontFace::VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
     bool m_EnableDepthWrite = true;
     bool m_EnableDepthTest = true;

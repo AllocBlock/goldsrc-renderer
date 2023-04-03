@@ -85,8 +85,8 @@ void CRenderPassFullScreen::__generateScene()
     m_PointDataSet =
     {
         SFullScreenPointData{glm::vec2(-1.0f, -1.0f)},
-        SFullScreenPointData{glm::vec2(3.0f, -1.0f)},
         SFullScreenPointData{glm::vec2(-1.0f, 3.0f)},
+        SFullScreenPointData{glm::vec2(3.0f, -1.0f)},
     };
 }
 

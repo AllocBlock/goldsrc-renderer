@@ -82,7 +82,7 @@ void CInteractor::onMouseMove(GLFWwindow* vpWindow, double vPosX, double vPosY)
 	if (!pInteractor->m_Enabled || !pInteractor->m_IsMoving) return;
 
 	CCamera::Ptr pCamera = pInteractor->m_pCamera;
-	pCamera->setPhi(pInteractor->m_LastPhi + (pInteractor->m_LastMousePosX - PosX) * pInteractor->m_HorizontalSensetivity);
+	pCamera->setPhi(pInteractor->m_LastPhi - (pInteractor->m_LastMousePosX - PosX) * pInteractor->m_HorizontalSensetivity);
 	pCamera->setTheta(glm::clamp(pInteractor->m_LastTheta - (pInteractor->m_LastMousePosY - PosY) * pInteractor->m_VerticalSensetivity, 1.0f, 179.0f));
 }
 
@@ -131,7 +131,7 @@ void CInteractor::_renderUIV()
 		UI::bulletText(u8"移动鼠标转动视角");
 		UI::split();
 
-		UI::slider(u8"速度", m_Speed, 0.1f, 10.0f, "%.1f");
+		UI::slider(u8"速度", m_Speed, 100.0f, 2000.0f, "%.1f");
 	}
 }
 
