@@ -111,7 +111,7 @@ void CRenderPassVisualize::_destroyV()
 
 std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_RerecordCommandTimes > 0)
@@ -123,13 +123,13 @@ std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV(uint3
     {
         // init
         _beginWithFramebuffer(vImageIndex);
-        m_PipelineSet.Triangle.get().recordCommandV(CommandBuffer, vImageIndex);
-        m_PipelineSet.Line.get().recordCommandV(CommandBuffer, vImageIndex);
-        m_PipelineSet.Point.get().recordCommandV(CommandBuffer, vImageIndex);
-        m_PipelineSet.Primitive3D.get().recordCommand(CommandBuffer, vImageIndex);
+        m_PipelineSet.Triangle.get().recordCommandV(pCommandBuffer, vImageIndex);
+        m_PipelineSet.Line.get().recordCommandV(pCommandBuffer, vImageIndex);
+        m_PipelineSet.Point.get().recordCommandV(pCommandBuffer, vImageIndex);
+        m_PipelineSet.Primitive3D.get().recordCommand(pCommandBuffer, vImageIndex);
         _endWithFramebuffer();
     }
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassVisualize::__rerecordCommand()

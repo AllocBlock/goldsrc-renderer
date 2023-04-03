@@ -35,16 +35,13 @@ void CPipelineMask::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCam
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineMask::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineMask::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     if (m_VertexNum > 0)
     {
         bind(vCommandBuffer, vImageIndex);
-
-        VkDeviceSize Offsets[] = { 0 };
-        VkBuffer Buffer = m_VertexBuffer;
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
-        vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
+        vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
+        vCommandBuffer->draw(0, m_VertexNum);
     }
 }
 
@@ -145,5 +142,5 @@ void CPipelineMask::__updateVertexBuffer(CActor::Ptr vActor)
     m_VertexBuffer.create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     m_VertexBuffer.stageFill(PointData.data(), BufferSize);
 
-    m_VertexNum = NumVertex;
+    m_VertexNum = uint32_t(NumVertex);
 }

@@ -1,7 +1,6 @@
 #include "PchVulkan.h"
 #include "Buffer.h"
 #include "Vulkan.h"
-
 using namespace vk;
 
 void CBuffer::create(CDevice::CPtr vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties)
@@ -49,13 +48,13 @@ bool CBuffer::isValid() const
     return IVulkanHandle::isValid() && m_Memory != VK_NULL_HANDLE;
 }
 
-void CBuffer::copyFrom(VkCommandBuffer vCommandBuffer, VkBuffer vSrcBuffer, VkDeviceSize vSize)
+void CBuffer::copyFrom(CCommandBuffer::Ptr vCommandBuffer, VkBuffer vSrcBuffer, VkDeviceSize vSize)
 {
     _ASSERTE(isValid());
     if (vSize > m_Size) throw "Size overflowed";
     VkBufferCopy CopyRegion = {};
     CopyRegion.size = vSize;
-    vkCmdCopyBuffer(vCommandBuffer, vSrcBuffer, get(), 1, &CopyRegion);
+    vCommandBuffer->copyBuffer(vSrcBuffer, get(), CopyRegion);
 }
 
 void CBuffer::copyToHost(VkDeviceSize vSize, void* vPtr)
@@ -85,9 +84,10 @@ void CBuffer::stageFill(const void* vData, VkDeviceSize vSize)
     StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
+    CCommandBuffer::Ptr CommandBuffer = vk::beginSingleTimeBuffer();
     copyFrom(CommandBuffer, StageBuffer.get(), vSize);
     vk::endSingleTimeBuffer(CommandBuffer);
+    CommandBuffer = nullptr;
 
     StageBuffer.destroy();
 }

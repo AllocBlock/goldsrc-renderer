@@ -13,7 +13,7 @@ public:
 
     void addCollidePoint(glm::vec3 vPos, glm::vec3 vNormal, float vShowTime = 5.0f);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void record(VkCommandBuffer vCommandBuffer, size_t vImageIndex, glm::vec3 vEyePos);
+    void record(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex, glm::vec3 vEyePos);
 
 protected:
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;

@@ -41,13 +41,15 @@ void IRenderPass::destroy()
     m_pPortSet->unlinkAll();
 }
 
-void IRenderPass::_begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues)
+void IRenderPass::_begin(CCommandBuffer::Ptr vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues)
 {
     _ASSERTE(!m_Begined);
     _ASSERTE(isValid());
+    if (m_pCurrentCommandBuffer != nullptr)
+        throw std::runtime_error("Already begun with another command buffer");
 
     // only need one command one pass, so begin/end command buffer at same time with renderpass
-    __beginCommand(vCommandBuffer);
+    vCommandBuffer->begin();
 
     VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -58,18 +60,18 @@ void IRenderPass::_begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFra
     RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(vClearValues.size());
     RenderPassBeginInfo.pClearValues = vClearValues.data();
 
-    vkCmdBeginRenderPass(vCommandBuffer, &RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vCommandBuffer->beginRenderPass(RenderPassBeginInfo, false);
 
-    m_CurrentCommandBuffer = vCommandBuffer;
+    m_pCurrentCommandBuffer = vCommandBuffer;
     m_Begined = true;
 }
 
 void IRenderPass::_end()
 {
     _ASSERTE(m_Begined);
-    vkCmdEndRenderPass(m_CurrentCommandBuffer);
-    __endCommand(m_CurrentCommandBuffer);
-    m_CurrentCommandBuffer = VK_NULL_HANDLE;
+    m_pCurrentCommandBuffer->endRenderPass();
+    m_pCurrentCommandBuffer->end();
+    m_pCurrentCommandBuffer = nullptr;
     m_Begined = false;
 }
 
@@ -116,21 +118,6 @@ void IRenderPass::__destroyRenderpass()
         vkDestroyRenderPass(*m_pDevice, get(), nullptr);
         _setNull();
     }
-}
-
-void IRenderPass::__beginCommand(VkCommandBuffer vCommandBuffer)
-{
-    VkCommandBufferBeginInfo CommandBufferBeginInfo = {};
-    CommandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    CommandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT; // TODO: more flag options?
-
-    vk::checkError(vkBeginCommandBuffer(vCommandBuffer, &CommandBufferBeginInfo));
-}
-
-
-void IRenderPass::__endCommand(VkCommandBuffer vCommandBuffer)
-{
-    vk::checkError(vkEndCommandBuffer(vCommandBuffer));
 }
 
 void IRenderPass::__hookEvents()

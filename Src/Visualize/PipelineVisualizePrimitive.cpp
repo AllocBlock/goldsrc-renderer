@@ -29,16 +29,14 @@ void CPipelineVisualizePrimitive::updateUniformBuffer(uint32_t vImageIndex, CCam
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineVisualizePrimitive::recordCommandV(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineVisualizePrimitive::recordCommandV(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     bind(vCommandBuffer, vImageIndex);
-
-    VkDeviceSize Offsets[] = { 0 };
+    
     if (m_VertexNum > 0)
     {
-        VkBuffer Buffer = m_VertexBuffer;
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
-        vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
+        vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
+        vCommandBuffer->draw(0, m_VertexNum);
     }
 }
 

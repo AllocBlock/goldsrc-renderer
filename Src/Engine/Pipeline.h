@@ -4,6 +4,7 @@
 #include "ShaderResourceDescriptor.h"
 #include "Device.h"
 #include "PipelineDescriptor.h"
+#include "CommandBuffer.h"
 
 #include <filesystem>
 #include <vulkan/vulkan.h> 
@@ -17,14 +18,8 @@ public:
     void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void setImageNum(uint32_t vImageNum);
     void destroy();
-    void bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
+    void bind(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
     bool isValid() const { return m_Pipeline != VK_NULL_HANDLE; }
-
-    template <typename T>
-    void pushConstant(VkCommandBuffer vCommandBuffer, VkShaderStageFlags vState, T vPushConstant)
-    {
-        vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, vState, 0, sizeof(vPushConstant), &vPushConstant);
-    }
 
     const CShaderResourceDescriptor& getDescriptor() const { return m_ShaderResourceDescriptor; }
 
@@ -69,7 +64,7 @@ protected:
     * triggers multiple times
     * trigger after each bind action to give the push constant initial data
     */
-    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) {}
+    virtual void _initPushConstantV(CCommandBuffer::Ptr vCommandBuffer) {}
 
     /*
     * _destroyV:

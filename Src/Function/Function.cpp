@@ -43,11 +43,11 @@ void Function::createImageFromIOImage(vk::CImage& voImage, CDevice::CPtr vDevice
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
     voImage.create(vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-    VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
+    CCommandBuffer::Ptr pCommandBuffer = vk::beginSingleTimeBuffer();
     voImage.stageFill(vImage->getData(), DataSize, vMipLevel > 1 ? false : true);
     if (vMipLevel > 1)
-        voImage.generateMipmaps(CommandBuffer);
-    vk::endSingleTimeBuffer(CommandBuffer);
+        voImage.generateMipmaps(pCommandBuffer);
+    vk::endSingleTimeBuffer(pCommandBuffer);
 }
 
 void Function::createPlaceholderImage(vk::CImage& voImage, CDevice::CPtr vDevice)
@@ -82,9 +82,9 @@ void Function::createDepthImage(vk::CImage& voImage, CDevice::CPtr vDevice, VkEx
 
     voImage.create(vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 
-    VkCommandBuffer CommandBuffer = beginSingleTimeBuffer();
-    voImage.transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-    endSingleTimeBuffer(CommandBuffer);
+    CCommandBuffer::Ptr pCommandBuffer = beginSingleTimeBuffer();
+    voImage.transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    endSingleTimeBuffer(pCommandBuffer);
 }
 
 void Function::createImage2d(CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkFormat vFormat, VkImageUsageFlags vUsage)

@@ -20,7 +20,8 @@ void CRenderPassShadowMap::exportShadowMapToFile(std::string vFileName)
     CopyRegion.imageOffset = VkOffset3D{ 0, 0, 0 };
     CopyRegion.imageExtent = VkExtent3D{ m_ShadowMapExtent.width, m_ShadowMapExtent.height, 1 };
 
-    VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
+    CCommandBuffer::Ptr pCommandBuffer = vk::beginSingleTimeBuffer();
+    pCommandBuffer->copy
     m_ShadowMapImageSet[0]->copyToBuffer(CommandBuffer, CopyRegion, StageBuffer.get());
     vk::endSingleTimeBuffer(CommandBuffer);
 

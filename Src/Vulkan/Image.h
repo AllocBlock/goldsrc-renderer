@@ -1,6 +1,7 @@
 #pragma once
 #include "PchVulkan.h"
 #include "Device.h"
+#include "CommandBuffer.h"
 
 namespace vk
 {
@@ -21,11 +22,11 @@ namespace vk
         void createFromImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
         void destroy();
         bool isValid() const override;
-        void copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
+        void copyFromBuffer(CCommandBuffer::Ptr vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
         void stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayout = true);
-        void transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
-        void copyToBuffer(VkCommandBuffer vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
-        void generateMipmaps(VkCommandBuffer vCommandBuffer);
+        void transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
+        void copyToBuffer(CCommandBuffer::Ptr vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
+        void generateMipmaps(CCommandBuffer::Ptr vCommandBuffer);
         uint32_t getMipmapLevelNum() const { return m_MipmapLevelNum; }
 
         VkImage getImage() const { return m_Image; }

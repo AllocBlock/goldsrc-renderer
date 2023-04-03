@@ -97,11 +97,10 @@ void IPipeline::destroy()
     m_pDevice = nullptr;
 }
 
-void IPipeline::bind(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void IPipeline::bind(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     _ASSERTE(m_ShaderResourceDescriptor.isReady());
     const auto& DescriptorSet = m_ShaderResourceDescriptor.getDescriptorSet(vImageIndex);
-    vkCmdBindPipeline(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-    vkCmdBindDescriptorSets(vCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
+    vCommandBuffer->bindPipeline(m_Pipeline, m_PipelineLayout, DescriptorSet);
     _initPushConstantV(vCommandBuffer);
 }

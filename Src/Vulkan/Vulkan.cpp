@@ -53,13 +53,13 @@ void vk::removeSingleTimeBufferFunc()
     g_EndFunc = nullptr;
 }
 
-VkCommandBuffer vk::beginSingleTimeBuffer()
+ptr<CCommandBuffer> vk::beginSingleTimeBuffer()
 {
     _ASSERTE(g_BeginFunc != nullptr);
     return g_BeginFunc();
 }
 
-void vk::endSingleTimeBuffer(VkCommandBuffer vCommandBuffer)
+void vk::endSingleTimeBuffer(ptr<CCommandBuffer>& vCommandBuffer)
 {
     _ASSERTE(g_EndFunc != nullptr);
     g_EndFunc(vCommandBuffer);

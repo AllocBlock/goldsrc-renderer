@@ -34,7 +34,7 @@ public:
     };
 
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    virtual void recordCommandV(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
+    virtual void recordCommandV(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;

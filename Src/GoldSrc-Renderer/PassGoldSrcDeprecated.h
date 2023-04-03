@@ -110,7 +110,7 @@ private:
     void __renderModel(uint32_t vImageIndex, size_t vModelIndex);
     void __renderPointEntities(uint32_t vImageIndex);
     void __renderSprites(uint32_t vImageIndex);
-    void __renderActorByPipeline(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline);
+    void __renderActorByPipeline(uint32_t vImageIndex, size_t vActorIndex, CCommandBuffer::Ptr vCommandBuffer, CPipelineGoldSrc& vPipeline);
     void __updateAllUniformBuffer(uint32_t vImageIndex);
     void __calculateVisiableObjects();
     void __drawActor(uint32_t vImageIndex, CActor::Ptr vActor);

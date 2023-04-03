@@ -94,6 +94,7 @@
   <ItemGroup>
     <ClInclude Include="AppInfo.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="CommandBuffer.h" />
     <ClInclude Include="DebugMessenger.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Fence.h" />
@@ -112,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="CommandBuffer.cpp" />
     <ClCompile Include="PhysicalDevice.cpp" />
     <ClCompile Include="DebugMessenger.cpp" />
     <ClCompile Include="Device.cpp" />

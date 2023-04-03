@@ -11,7 +11,7 @@ class CPipelineVisCollider : public IPipeline
 {
 public:
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void startRecord(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
+    void startRecord(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
     void drawCollider(CComponentCollider::CPtr vCollider);
     void endRecord();
 
@@ -36,5 +36,5 @@ private:
     vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
 
-    VkCommandBuffer m_CurCommandBuffer = VK_NULL_HANDLE;
+    CCommandBuffer::Ptr m_CurCommandBuffer = nullptr;
 };

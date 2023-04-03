@@ -13,6 +13,9 @@ namespace Pointer
     template <class T>
     using wptr = std::weak_ptr<T>;
 
+    template <class T>
+    using uptr = std::unique_ptr<T>;
+
 #ifndef _MAKE_PTR
 #define _MAKE_PTR
     template <class T, class... _Types>

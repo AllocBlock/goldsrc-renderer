@@ -1,5 +1,6 @@
 #pragma once
 #include "Device.h"
+#include "CommandBuffer.h"
 
 #include <filesystem>
 #include <map>
@@ -25,10 +26,10 @@ public:
 
     void createPool(vk::CDevice::CPtr vDevice, ECommandType vType, uint32_t vQueueIndex = std::numeric_limits<uint32_t>::max());
     void createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel);
-    VkCommandBuffer getCommandBuffer(std::string vName, uint32_t vIndex) const;
+    CCommandBuffer::Ptr getCommandBuffer(std::string vName, uint32_t vIndex) const;
     size_t getCommandBufferSize(std::string vName) const;
-    VkCommandBuffer beginSingleTimeBuffer();
-    void endSingleTimeBuffer(VkCommandBuffer vCommandBuffer);
+    CCommandBuffer::Ptr beginSingleTimeBuffer();
+    void endSingleTimeBuffer(CCommandBuffer::Ptr& vioCommandBuffer);
     void clear();
 
 private:
@@ -41,6 +42,6 @@ private:
     VkCommandPool m_CommandPool = VK_NULL_HANDLE;
     uint32_t m_QueueIndex = std::numeric_limits<uint32_t>::max();
     VkQueue m_Queue = VK_NULL_HANDLE;
-    std::map<std::string, std::vector<VkCommandBuffer>> m_NameToBufferSetMap;
+    std::map<std::string, std::vector<CCommandBuffer::Ptr>> m_NameToBufferSetMap;
     size_t m_InUseSingleTimeNum = 0;
 };

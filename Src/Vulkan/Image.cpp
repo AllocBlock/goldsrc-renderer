@@ -88,7 +88,7 @@ bool CImage::isValid() const
     else return m_Image != VK_NULL_HANDLE && m_Memory != VK_NULL_HANDLE && get() != VK_NULL_HANDLE;
 }
 
-void CImage::copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight)
+void CImage::copyFromBuffer(CCommandBuffer::Ptr vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight)
 {
     VkBufferImageCopy Region = {};
     Region.bufferOffset = 0;
@@ -103,7 +103,7 @@ void CImage::copyFromBuffer(VkCommandBuffer vCommandBuffer, VkBuffer vBuffer, si
     Region.imageOffset = { 0, 0, 0 };
     Region.imageExtent = { static_cast<uint32_t>(vWidth), static_cast<uint32_t>(vHeight), 1 };
 
-    vkCmdCopyBufferToImage(vCommandBuffer, vBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
+    vCommandBuffer->copyBufferToImage(vBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, Region);
     m_Layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 }
 
@@ -115,7 +115,7 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
+    CCommandBuffer::Ptr CommandBuffer = vk::beginSingleTimeBuffer();
     transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyFromBuffer(CommandBuffer, StageBuffer.get(), m_Width, m_Height);
     if (vToShaderLayout)
@@ -125,15 +125,15 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     StageBuffer.destroy();
 }
 
-void CImage::copyToBuffer(VkCommandBuffer vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer)
+void CImage::copyToBuffer(CCommandBuffer::Ptr vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer)
 {
     VkImageLayout OriginalLayout = m_Layout;
     transitionLayout(vCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    vkCmdCopyImageToBuffer(vCommandBuffer, m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vTargetBuffer, 1, &vCopyRegion);
+    vCommandBuffer->copyImageToBuffer(m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vTargetBuffer, vCopyRegion);
     transitionLayout(vCommandBuffer, OriginalLayout);
 }
 
-void CImage::transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel, uint32_t vMipLevelCount)
+void CImage::transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel, uint32_t vMipLevelCount)
 {
     if (!isValid()) throw "NULL image handle";
 
@@ -230,15 +230,7 @@ void CImage::transitionLayout(VkCommandBuffer vCommandBuffer, VkImageLayout vNew
         throw std::runtime_error(u8"不支持该布局转换");
     }
 
-    vkCmdPipelineBarrier(
-        vCommandBuffer,
-        SrcStage, DestStage,
-        0,
-        0, nullptr,
-        0, nullptr,
-        1, &Barrier
-    );
-
+    vCommandBuffer->addImageMemoryBarrier(SrcStage, DestStage, Barrier);
     m_Layout = vNewLayout;
 }
 
@@ -264,7 +256,7 @@ void CImage::__createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vVie
 #endif
 }
 
-void CImage::generateMipmaps(VkCommandBuffer vCommandBuffer)
+void CImage::generateMipmaps(CCommandBuffer::Ptr vCommandBuffer)
 {
     _ASSERTE(m_MipmapLevelNum > 1);
     _ASSERTE(m_Layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -298,11 +290,7 @@ void CImage::generateMipmaps(VkCommandBuffer vCommandBuffer)
         Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         Barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-        vkCmdPipelineBarrier(vCommandBuffer,
-            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-            0, nullptr,
-            0, nullptr,
-            1, &Barrier);
+        vCommandBuffer->addImageMemoryBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, Barrier);
 
         VkImageBlit Blit{};
         Blit.srcOffsets[0] = { 0, 0, 0 };
@@ -318,22 +306,18 @@ void CImage::generateMipmaps(VkCommandBuffer vCommandBuffer)
         Blit.dstSubresource.baseArrayLayer = 0;
         Blit.dstSubresource.layerCount = 1;
 
-        vkCmdBlitImage(vCommandBuffer,
+        vCommandBuffer->blitImage(
             m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             m_Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            1, &Blit,
-            VK_FILTER_LINEAR);
+            Blit, VK_FILTER_LINEAR
+        );
 
         Barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         Barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         Barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-        vkCmdPipelineBarrier(vCommandBuffer,
-            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-            0, nullptr,
-            0, nullptr,
-            1, &Barrier);
+        vCommandBuffer->addImageMemoryBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, Barrier);
 
         if (MipWidth > 1) MipWidth /= 2;
         if (MipHeight > 1) MipHeight /= 2;
@@ -345,11 +329,7 @@ void CImage::generateMipmaps(VkCommandBuffer vCommandBuffer)
     Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
     Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-    vkCmdPipelineBarrier(vCommandBuffer,
-        VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-        0, nullptr,
-        0, nullptr,
-        1, &Barrier);
+    vCommandBuffer->addImageMemoryBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, Barrier);
 
     m_Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }

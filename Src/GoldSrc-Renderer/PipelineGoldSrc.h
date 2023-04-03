@@ -10,8 +10,8 @@
 class CPipelineGoldSrc : public IPipeline
 {
 public:
-    void setLightmapState(VkCommandBuffer vCommandBuffer, bool vEnable);
-    void setOpacity(VkCommandBuffer vCommandBuffer, float vOpacity);
+    void setLightmapState(CCommandBuffer::Ptr vCommandBuffer, bool vEnable);
+    void setOpacity(CCommandBuffer::Ptr vCommandBuffer, float vOpacity);
     void setTextures(const vk::CPointerSet<vk::CImage>& vTextureSet);
     void setLightmap(VkImageView vLightmap);
     void clearResources();
@@ -23,7 +23,7 @@ protected:
     virtual void _initShaderResourceDescriptorV() override;
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;
     virtual void _createResourceV(size_t vImageNum) override;
-    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer) override;
+    virtual void _initPushConstantV(CCommandBuffer::Ptr vCommandBuffer) override;
     virtual void _destroyV() override;
 
     virtual void _dumpExtraPipelineDescriptionV(CPipelineDescriptor& vioDesc) = 0;
@@ -31,7 +31,7 @@ protected:
 private:
     void __destroyResources();
     void __updateDescriptorSet();
-    void __updatePushConstant(VkCommandBuffer vCommandBuffer, bool vEnableLightmap, float vOpacity);
+    void __updatePushConstant(CCommandBuffer::Ptr vCommandBuffer, bool vEnableLightmap, float vOpacity);
     
     bool m_EnableLightmap = false;
     float m_Opacity = 1.0f;

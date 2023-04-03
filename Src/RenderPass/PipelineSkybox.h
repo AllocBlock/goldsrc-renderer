@@ -14,15 +14,13 @@ class CPipelineSkybox : public IPipeline
 public:
     void setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+    void recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
     {
         if (m_VertexBuffer.isValid() && m_SkyBoxImage.isValid())
         {
-            VkBuffer VertBuffer = m_VertexBuffer;
-            const VkDeviceSize Offsets[] = { 0 };
             bind(vCommandBuffer, vImageIndex);
-            vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &VertBuffer, Offsets);
-            vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
+            vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
+            vCommandBuffer->draw(0, static_cast<uint32_t>(m_VertexNum));
         }
     }
 

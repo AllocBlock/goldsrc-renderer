@@ -61,14 +61,12 @@ void CPipelineIcon::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCam
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineIcon::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineIcon::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     if (m_pVertexDataBuffer->isValid())
     {
-        VkBuffer Buffer = *m_pVertexDataBuffer;
-        const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
+        vCommandBuffer->bindVertexBuffer(*m_pVertexDataBuffer);
 
         SPushConstant Constant;
         Constant.Scale = glm::vec3(1.0f);
@@ -77,8 +75,8 @@ void CPipelineIcon::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageI
         {
             Constant.TexIndex = m_IconIndexMap.at(IconInfo.Icon);
             Constant.Position = IconInfo.Position;
-            pushConstant(vCommandBuffer, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
-            vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
+            vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
+            vCommandBuffer->draw(0, static_cast<uint32_t>(m_VertexNum));
         }
     }
 }
@@ -112,10 +110,10 @@ CPipelineDescriptor CPipelineIcon::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineIcon::_initPushConstantV(VkCommandBuffer vCommandBuffer)
+void CPipelineIcon::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
 {
     SPushConstant Data;
-    pushConstant(vCommandBuffer, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Data);
+    vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Data);
 }
 
 void CPipelineIcon::_createResourceV(size_t vImageNum)

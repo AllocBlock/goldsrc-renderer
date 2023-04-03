@@ -162,7 +162,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 {
     _ASSERTE(isValid());
     
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_RerecordCommandTimes > 0)
@@ -182,7 +182,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         // 1. sky
         if (m_EnableSky)
         {
-            m_PipelineSet.Sky.get().recordCommand(CommandBuffer, vImageIndex);
+            m_PipelineSet.Sky.get().recordCommand(pCommandBuffer, vImageIndex);
         }
 
         // 2. scene mesh
@@ -190,16 +190,15 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         VkDeviceSize Offsets[] = { 0 };
         if (isNonEmptyAndValid(m_pVertexBuffer))
         {
-            VkBuffer VertBuffer = *m_pVertexBuffer;
-            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
+            pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
         }
         else
             Valid = false;
 
         if (Valid)
         {
-            m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
-            m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
+            m_PipelineSet.Normal.get().bind(pCommandBuffer, vImageIndex);
+            m_PipelineSet.Normal.get().setOpacity(pCommandBuffer, 1.0f);
 
             for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
@@ -215,7 +214,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 if (!pMesh) continue;
 
                 bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
-                m_PipelineSet.Normal.get().setLightmapState(CommandBuffer, EnableLightmap);
+                m_PipelineSet.Normal.get().setLightmapState(pCommandBuffer, EnableLightmap);
                 __drawActor(vImageIndex, pActor);
             }
         }
@@ -223,7 +222,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         // 3. sprite and icon
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
         {
-            m_PipelineSet.Sprite.get().recordCommand(CommandBuffer, vImageIndex);
+            m_PipelineSet.Sprite.get().recordCommand(pCommandBuffer, vImageIndex);
         }
 
         if (m_pSceneInfo)
@@ -243,12 +242,12 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 EIcon RandomIcon = EIcon(i % int(EIcon::MAX_NUM));
                 PipelineIcon.addIcon(RandomIcon, Position);
             }
-            PipelineIcon.recordCommand(CommandBuffer, vImageIndex);
+            PipelineIcon.recordCommand(pCommandBuffer, vImageIndex);
         }
 
         _endWithFramebuffer();
     }
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CSceneGoldSrcRenderPass::__createSceneResources()
@@ -355,8 +354,8 @@ struct SModelSortInfo
 
 void CSceneGoldSrcRenderPass::__drawActor(uint32_t vImageIndex, CActor::Ptr vActor)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    _drawActor(CommandBuffer, vActor);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    _drawActor(pCommandBuffer, vActor);
 }
 
 void CSceneGoldSrcRenderPass::__createTextureImages()

@@ -79,16 +79,16 @@ void CRenderPassSprite::_updateV(uint32_t vImageIndex)
 
 std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     std::vector<VkClearValue> ClearValueSet(2);
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
     _beginWithFramebuffer(vImageIndex);
-    m_PipelineSpriteCreator.get().recordCommand(CommandBuffer, vImageIndex);
+    m_PipelineSpriteCreator.get().recordCommand(pCommandBuffer, vImageIndex);
     _endWithFramebuffer();
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassSprite::_destroyV()

@@ -34,22 +34,18 @@ std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint
 {
     _ASSERTE(m_pPipeline->isValid());
 
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
     _beginWithFramebuffer(vImageIndex);
 
     if (m_pVertexBuffer->isValid())
     {
-        VkBuffer VertBuffer = *m_pVertexBuffer;
-        VkDeviceSize Offsets[] = { 0 };
-        vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
-        m_pPipeline->bind(CommandBuffer, vImageIndex);
-
-        size_t VertexNum = m_PointDataSet.size();
-        vkCmdDraw(CommandBuffer, uint32_t(VertexNum), 1, 0, 0);
+        pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+        m_pPipeline->bind(pCommandBuffer, vImageIndex);
+        pCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
     }
     
     _endWithFramebuffer();
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassFullScreen::_destroyV()
@@ -118,22 +114,18 @@ std::vector<VkCommandBuffer> CRenderPassFullScreenGeneral::_requestCommandBuffer
 {
     _ASSERTE(m_pPipeline->isValid());
 
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
     _beginWithFramebuffer(vImageIndex);
 
     if (m_pVertexBuffer->isValid())
     {
-        VkBuffer VertBuffer = *m_pVertexBuffer;
-        VkDeviceSize Offsets[] = { 0 };
-        vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
-        m_pPipeline->bind(CommandBuffer, vImageIndex);
-
-        size_t VertexNum = m_PointDataSet.size();
-        vkCmdDraw(CommandBuffer, uint32_t(VertexNum), 1, 0, 0);
+        pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+        m_pPipeline->bind(pCommandBuffer, vImageIndex);
+        pCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
     }
     
     _endWithFramebuffer();
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassFullScreenGeneral::_destroyV()

@@ -9,7 +9,7 @@ class CPipelineMask : public IPipeline
 {
 public:
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
+    void recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
     void setActor(CActor::Ptr vActor);
     void removeObject();
 
@@ -23,7 +23,7 @@ private:
     void __updateDescriptorSet();
     void __updateVertexBuffer(CActor::Ptr vActor);
 
-    size_t m_VertexNum = 0;
+    uint32_t m_VertexNum = 0;
     vk::CBuffer m_VertexBuffer;
     vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
 };

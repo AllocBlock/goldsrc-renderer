@@ -101,12 +101,12 @@ protected:
         m_ActorSegmentMap = Pair.second;
     }
 
-    void _drawActor(VkCommandBuffer vCommandBuffer, CActor::Ptr vActor)
+    void _drawActor(CCommandBuffer::Ptr vCommandBuffer, CActor::Ptr vActor)
     {
         _ASSERTE(m_ActorSegmentMap.find(vActor) != m_ActorSegmentMap.end());
         size_t SegIndex = m_ActorSegmentMap.at(vActor);
         const auto& Info = m_pVertexBuffer->getSegmentInfo(SegIndex);
-        vkCmdDraw(vCommandBuffer, Info.Num, 1, Info.First, 0);
+        vCommandBuffer->draw(Info.First, Info.Num);
     }
     
     vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;

@@ -15,12 +15,12 @@ class CPipelineSprite : public IPipeline
 public:
     void setSprites(const std::vector<SGoldSrcSprite>& vSpriteSet);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex);
+    void recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;
-    virtual void _initPushConstantV(VkCommandBuffer vCommandBuffer);
+    virtual void _initPushConstantV(CCommandBuffer::Ptr vCommandBuffer) override;
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _destroyV() override;
 

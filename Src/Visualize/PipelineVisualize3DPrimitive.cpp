@@ -67,15 +67,13 @@ void CPipelineVisualize3DPrimitive::updateUniformBuffer(uint32_t vImageIndex, CC
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineVisualize3DPrimitive::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineVisualize3DPrimitive::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     bind(vCommandBuffer, vImageIndex);
-
-    VkDeviceSize Offsets[] = { 0 };
+    
     if (m_VertexNum > 0)
     {
-        VkBuffer Buffer = m_VertexBuffer;
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
+        vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
 
         // TODO: push constant, not actually instancing...which is faster?
         SPushConstant Constant;
@@ -88,8 +86,8 @@ void CPipelineVisualize3DPrimitive::recordCommand(VkCommandBuffer vCommandBuffer
             {
                 Constant.Model = glm::scale(glm::translate(glm::mat4(1.0f), Primitive.Center), Primitive.Scale); // scale then translate
                 Constant.Color = Primitive.Color;
-                pushConstant(vCommandBuffer, VK_SHADER_STAGE_VERTEX_BIT, Constant);
-                vkCmdDraw(vCommandBuffer, DataInfo.Count, 1, DataInfo.Start, 0);
+                vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT, Constant);
+                vCommandBuffer->draw(DataInfo.Start, DataInfo.Count);
             }
         }
     }
@@ -165,11 +163,11 @@ void CPipelineVisualize3DPrimitive::__updateDescriptorSet()
     }
 }
 
-void CPipelineVisualize3DPrimitive::_initPushConstantV(VkCommandBuffer vCommandBuffer)
+void CPipelineVisualize3DPrimitive::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
 {
     SPushConstant Data;
     Data.Model = glm::mat4(1.0f);
-    vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(Data), &Data);
+    vCommandBuffer->pushConstant(VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, Data);
 }
 
 void __generateSphereHelper(std::vector<SPointData>& vioVertexSet, const std::array<glm::vec3, 3>& vFace, uint32_t vLeftDepth)

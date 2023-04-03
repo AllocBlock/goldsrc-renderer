@@ -123,7 +123,7 @@ void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool v
     gIsInitted = true;
 }
 
-void UI::setFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer)
+void UI::setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer)
 {
     // FIXME: is free of resources correct?
     ImGui_ImplVulkan_DestroyFontUploadObjects();
@@ -131,7 +131,7 @@ void UI::setFont(std::string vFontFile, VkCommandBuffer vSingleTimeCommandBuffer
     IO.Fonts->Clear();
 
     IO.Fonts->AddFontFromFileTTF(vFontFile.c_str(), 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseFull());
-    bool Success = ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer);
+    bool Success = ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer->get());
     _ASSERTE(Success);
 }
 
@@ -149,11 +149,11 @@ void UI::destory()
     gIsInitted = false;
 }
 
-void UI::draw(VkCommandBuffer vCommandBuffer)
+void UI::draw(CCommandBuffer::Ptr vCommandBuffer)
 {
     auto pDrawData = ImGui::GetDrawData();
     if (pDrawData)
-        ImGui_ImplVulkan_RenderDrawData(pDrawData, vCommandBuffer);
+        ImGui_ImplVulkan_RenderDrawData(pDrawData, vCommandBuffer->get());
 }
 
 void UI::beginFrame(std::string vTitle)

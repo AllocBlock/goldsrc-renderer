@@ -52,14 +52,11 @@ void CPipelineVisCollider::updateUniformBuffer(uint32_t vImageIndex, CCamera::CP
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineVisCollider::startRecord(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineVisCollider::startRecord(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     m_CurCommandBuffer = vCommandBuffer;
     bind(vCommandBuffer, vImageIndex);
-
-    VkDeviceSize Offsets[] = { 0 };
-    VkBuffer Buffer = m_VertexBuffer;
-    vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
+    vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
 }
 
 void CPipelineVisCollider::drawCollider(CComponentCollider::CPtr vCollider)
@@ -81,13 +78,13 @@ void CPipelineVisCollider::drawCollider(CComponentCollider::CPtr vCollider)
     Constant.NormalModel = glm::transpose(glm::inverse(Constant.Model));
 
     const auto& DataPos = m_TypeVertexDataPosMap.at(Type);
-    pushConstant(m_CurCommandBuffer, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, Constant);
-    vkCmdDraw(m_CurCommandBuffer, DataPos.Count, 1, DataPos.First, 0);
+    m_CurCommandBuffer->pushConstant(VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, Constant);
+    m_CurCommandBuffer->draw(DataPos.First, DataPos.Count);
 }
 
 void CPipelineVisCollider::endRecord()
 {
-    m_CurCommandBuffer = VK_NULL_HANDLE;
+    m_CurCommandBuffer = nullptr;
 }
 
 CPipelineDescriptor CPipelineVisCollider::_getPipelineDescriptionV()

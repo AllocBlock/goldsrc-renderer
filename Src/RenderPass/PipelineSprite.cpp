@@ -62,18 +62,16 @@ void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineSprite::recordCommand(VkCommandBuffer vCommandBuffer, size_t vImageIndex)
+void CPipelineSprite::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     if (m_pVertexDataBuffer->isValid())
     {
-        VkBuffer Buffer = *m_pVertexDataBuffer;
-        const VkDeviceSize Offsets[] = { 0 };
         bind(vCommandBuffer, vImageIndex);
-        vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
+        vCommandBuffer->bindVertexBuffer(*m_pVertexDataBuffer);
         for (auto& PushConstant : m_SpriteSequence)
         {
-            vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstant), &PushConstant);
-            vkCmdDraw(vCommandBuffer, static_cast<uint32_t>(m_VertexNum), 1, 0, 0);
+            vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+            vCommandBuffer->draw(0, static_cast<uint32_t>(m_VertexNum));
         }
     }
 }
@@ -110,10 +108,10 @@ CPipelineDescriptor CPipelineSprite::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineSprite::_initPushConstantV(VkCommandBuffer vCommandBuffer)
+void CPipelineSprite::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
 {
     SSpritePushConstant Data;
-    vkCmdPushConstants(vCommandBuffer, m_PipelineLayout, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT | VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Data), &Data);
+    vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Data);
 }
 
 void CPipelineSprite::_createResourceV(size_t vImageNum)

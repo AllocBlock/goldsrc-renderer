@@ -98,7 +98,7 @@ void CRenderPassOutlineMask::_destroyV()
 
 std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_RerecordCommandTimes > 0)
@@ -114,10 +114,10 @@ std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uin
         ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
         _beginWithFramebuffer(vImageIndex);
-        m_PipelineCreator.get().recordCommand(CommandBuffer, vImageIndex);
+        m_PipelineCreator.get().recordCommand(pCommandBuffer, vImageIndex);
         _endWithFramebuffer();
     }
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassOutlineMask::__rerecordCommand()

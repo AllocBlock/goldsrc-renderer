@@ -142,7 +142,7 @@ namespace vk
          */
         virtual void _onUpdateV(const SPassUpdateState& vUpdateState) {}
 
-        void _begin(VkCommandBuffer vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues);
+        void _begin(CCommandBuffer::Ptr vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues);
         void _end();
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 
@@ -153,8 +153,6 @@ namespace vk
     private:
         void __createRenderpass();
         void __destroyRenderpass();
-        void __beginCommand(VkCommandBuffer vCommandBuffer);
-        void __endCommand(VkCommandBuffer vCommandBuffer);
         
         void __hookEvents();
         void __unhookEvents();
@@ -165,7 +163,7 @@ namespace vk
         void __triggerRenderpassUpdate();
 
         bool m_Begined = false;
-        VkCommandBuffer m_CurrentCommandBuffer = VK_NULL_HANDLE;
+        CCommandBuffer::Ptr m_pCurrentCommandBuffer = nullptr;
         CRenderPassDescriptor m_CurPassDesc = CRenderPassDescriptor(false);
 
         HookId_t m_ImageNumUpdateHookId = 0;

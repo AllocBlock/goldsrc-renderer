@@ -225,7 +225,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPassDeprecated::_requestCommandB
     _ASSERTE(isValid());
 
     m_RenderedObjectSet.clear();
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_EnableBSP || m_EnableCulling || m_RerecordCommandTimes > 0)
@@ -246,11 +246,9 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPassDeprecated::_requestCommandB
             __recordSkyRenderCommand(vImageIndex);
 
         bool Valid = true;
-        VkDeviceSize Offsets[] = { 0 };
         if (isNonEmptyAndValid(m_pVertexBuffer))
         {
-            VkBuffer VertBuffer = *m_pVertexBuffer;
-            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
+            pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
         }
         else
             Valid = false;
@@ -262,15 +260,15 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPassDeprecated::_requestCommandB
                 __renderByBspTree(vImageIndex);
             else
             {
-                m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
+                m_PipelineSet.Normal.get().bind(pCommandBuffer, vImageIndex);
 
-                m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
+                m_PipelineSet.Normal.get().setOpacity(pCommandBuffer, 1.0f);
 
                 for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
                 {
                     if (m_AreObjectsVisable[i])
                     {
-                        __renderActorByPipeline(vImageIndex, i, CommandBuffer, m_PipelineSet.Normal.get());
+                        __renderActorByPipeline(vImageIndex, i, pCommandBuffer, m_PipelineSet.Normal.get());
                         m_RenderedObjectSet.insert(i);
                     }
                 }
@@ -297,12 +295,12 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPassDeprecated::_requestCommandB
                 glm::vec3 Position = pActor->getTransform()->getAbsoluteTranslate();
                 PipelineIcon.addIcon(EIcon::TIP, Position);
             }
-            PipelineIcon.recordCommand(CommandBuffer, vImageIndex);
+            PipelineIcon.recordCommand(pCommandBuffer, vImageIndex);
         }
 
         _endWithFramebuffer();
     }
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CSceneGoldSrcRenderPassDeprecated::__createSceneResources()
@@ -339,8 +337,8 @@ void CSceneGoldSrcRenderPassDeprecated::__renderByBspTree(uint32_t vImageIndex)
     m_RenderNodeSet.clear();
     if (m_pSceneInfo->BspTree.Nodes.empty()) throw "场景不含BSP数据";
 
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    m_PipelineSet.Normal.get().bind(pCommandBuffer, vImageIndex);
 
     __renderTreeNode(vImageIndex, 0);
     //__renderPointEntities(vImageIndex);
@@ -350,9 +348,9 @@ void CSceneGoldSrcRenderPassDeprecated::__renderByBspTree(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPassDeprecated::__renderTreeNode(uint32_t vImageIndex, uint32_t vNodeIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
-    m_PipelineSet.Normal.get().setOpacity(CommandBuffer, 1.0f);
+    m_PipelineSet.Normal.get().setOpacity(pCommandBuffer, 1.0f);
 
     if (vNodeIndex >= m_pSceneInfo->BspTree.NodeNum) // if is leaf, render it
     {
@@ -364,7 +362,7 @@ void CSceneGoldSrcRenderPassDeprecated::__renderTreeNode(uint32_t vImageIndex, u
             m_RenderedObjectSet.insert(ObjectIndex);
             isLeafVisable = true;
 
-            __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, m_PipelineSet.Normal.get());
+            __renderActorByPipeline(vImageIndex, ObjectIndex, pCommandBuffer, m_PipelineSet.Normal.get());
         }
         if (isLeafVisable)
             m_RenderNodeSet.insert(LeafIndex);
@@ -388,7 +386,7 @@ void CSceneGoldSrcRenderPassDeprecated::__renderTreeNode(uint32_t vImageIndex, u
 
 void CSceneGoldSrcRenderPassDeprecated::__renderModels(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     // 这里去看了下Xash3D的源码，xash3d/engine/client/gl_rmain.c
     // 它是按照纹理、叠加和发光的顺序绘制
@@ -407,7 +405,7 @@ void CSceneGoldSrcRenderPassDeprecated::__renderSprites(uint32_t vImageIndex)
 
 }
 
-void CSceneGoldSrcRenderPassDeprecated::__renderActorByPipeline(uint32_t vImageIndex, size_t vActorIndex, VkCommandBuffer vCommandBuffer, CPipelineGoldSrc& vPipeline)
+void CSceneGoldSrcRenderPassDeprecated::__renderActorByPipeline(uint32_t vImageIndex, size_t vActorIndex, CCommandBuffer::Ptr vCommandBuffer, CPipelineGoldSrc& vPipeline)
 {
     auto pActor = m_pSceneInfo->pScene->getActor(vActorIndex);
 
@@ -486,7 +484,7 @@ std::vector<size_t> CSceneGoldSrcRenderPassDeprecated::__sortModelRenderSequence
 
 void CSceneGoldSrcRenderPassDeprecated::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     _ASSERTE(vModelIndex < m_pSceneInfo->BspTree.ModelInfos.size());
 
@@ -521,21 +519,21 @@ void CSceneGoldSrcRenderPassDeprecated::__renderModel(uint32_t vImageIndex, size
         break;
     }
 
-    pPipeline->bind(CommandBuffer, vImageIndex);
-    pPipeline->setOpacity(CommandBuffer, ModelInfo.Opacity);
+    pPipeline->bind(pCommandBuffer, vImageIndex);
+    pPipeline->setOpacity(pCommandBuffer, ModelInfo.Opacity);
 
     std::vector<size_t> ObjectIndices = m_pSceneInfo->BspTree.ModelIndexToObjectIndex[vModelIndex];
     for (size_t ObjectIndex : ObjectIndices)
     {
         if (!m_AreObjectsVisable[ObjectIndex]) continue;
-        __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
+        __renderActorByPipeline(vImageIndex, ObjectIndex, pCommandBuffer, *pPipeline);
     }
 }
 
 void CSceneGoldSrcRenderPassDeprecated::__renderPointEntities(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Normal.get().bind(CommandBuffer, vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    m_PipelineSet.Normal.get().bind(pCommandBuffer, vImageIndex);
 
     for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
     {
@@ -547,8 +545,8 @@ void CSceneGoldSrcRenderPassDeprecated::__renderPointEntities(uint32_t vImageInd
 
 void CSceneGoldSrcRenderPassDeprecated::__drawActor(uint32_t vImageIndex, CActor::Ptr vActor)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    _drawActor(CommandBuffer, vActor);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    _drawActor(pCommandBuffer, vActor);
 }
 
 void CSceneGoldSrcRenderPassDeprecated::__createTextureImages()
@@ -703,11 +701,11 @@ void CSceneGoldSrcRenderPassDeprecated::__updateAllUniformBuffer(uint32_t vImage
 
 void CSceneGoldSrcRenderPassDeprecated::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sky.get().recordCommand(CommandBuffer, vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    m_PipelineSet.Sky.get().recordCommand(pCommandBuffer, vImageIndex);
 }
 void CSceneGoldSrcRenderPassDeprecated::__recordSpriteRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sprite.get().recordCommand(CommandBuffer, vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    m_PipelineSet.Sprite.get().recordCommand(pCommandBuffer, vImageIndex);
 }

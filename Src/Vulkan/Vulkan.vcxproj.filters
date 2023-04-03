@@ -66,6 +66,9 @@
     <ClInclude Include="VertexBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CommandBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vulkan.cpp">
@@ -105,6 +108,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PhysicalDevice.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

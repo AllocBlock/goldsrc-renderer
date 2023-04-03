@@ -9,6 +9,8 @@
 bool operator == (const VkExtent2D& v1, const VkExtent2D& v2);
 bool operator != (const VkExtent2D& v1, const VkExtent2D& v2);
 
+class CCommandBuffer; // forward declaration
+
 namespace vk
 {
     extern const VkExtent2D& ZeroExtent;
@@ -31,14 +33,14 @@ namespace vk
         std::vector<VkPresentModeKHR> PresentModes;
     };
 
-    using beginSingleTimeBufferFunc_t = std::function<VkCommandBuffer()>;
-    using endSingleTimeBufferFunc_t = std::function<void(VkCommandBuffer)>;
+    using beginSingleTimeBufferFunc_t = std::function<ptr<CCommandBuffer>()>;
+    using endSingleTimeBufferFunc_t = std::function<void(ptr<CCommandBuffer>&)>;
 
     inline void checkError(VkResult vResult) { if (vResult) throw std::runtime_error(u8"vulkan·µ»Ø´íÎó"); }
     bool isValidationLayersSupported(const std::vector<const char*>& vValidationLayers);
 
     void setSingleTimeBufferFunc(beginSingleTimeBufferFunc_t vBeginFunc, endSingleTimeBufferFunc_t vEndFunc);
     void removeSingleTimeBufferFunc();
-    VkCommandBuffer beginSingleTimeBuffer();
-    void endSingleTimeBuffer(VkCommandBuffer vCommandBuffer);
+    ptr<CCommandBuffer> beginSingleTimeBuffer();
+    void endSingleTimeBuffer(ptr<CCommandBuffer>& voCommandBuffer);
 }

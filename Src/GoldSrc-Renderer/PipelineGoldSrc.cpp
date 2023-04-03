@@ -74,7 +74,7 @@ void CPipelineGoldSrc::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vMode
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineGoldSrc::setLightmapState(VkCommandBuffer vCommandBuffer, bool vEnable)
+void CPipelineGoldSrc::setLightmapState(CCommandBuffer::Ptr vCommandBuffer, bool vEnable)
 {
     if (m_EnableLightmap == vEnable) return;
     else
@@ -84,7 +84,7 @@ void CPipelineGoldSrc::setLightmapState(VkCommandBuffer vCommandBuffer, bool vEn
     }
 }
 
-void CPipelineGoldSrc::setOpacity(VkCommandBuffer vCommandBuffer, float vOpacity)
+void CPipelineGoldSrc::setOpacity(CCommandBuffer::Ptr vCommandBuffer, float vOpacity)
 {
     if (m_Opacity == vOpacity) return;
     else
@@ -171,7 +171,7 @@ void CPipelineGoldSrc::_createResourceV(size_t vImageNum)
     Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
-void CPipelineGoldSrc::_initPushConstantV(VkCommandBuffer vCommandBuffer)
+void CPipelineGoldSrc::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
 {
     m_EnableLightmap = false;
     m_Opacity = 1.0;
@@ -192,10 +192,10 @@ void CPipelineGoldSrc::__destroyResources()
     m_Sampler.destroy();
 }
 
-void CPipelineGoldSrc::__updatePushConstant(VkCommandBuffer vCommandBuffer, bool vEnableLightmap, float vOpacity)
+void CPipelineGoldSrc::__updatePushConstant(CCommandBuffer::Ptr vCommandBuffer, bool vEnableLightmap, float vOpacity)
 {
     SPushConstant PushConstant;
     PushConstant.UseLightmap = vEnableLightmap;
     PushConstant.Opacity = vOpacity;
-    pushConstant(vCommandBuffer, VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
+    vCommandBuffer->pushConstant(VK_SHADER_STAGE_FRAGMENT_BIT, PushConstant);
 }

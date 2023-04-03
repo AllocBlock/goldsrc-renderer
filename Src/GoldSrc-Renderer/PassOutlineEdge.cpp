@@ -45,10 +45,7 @@ std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uin
 {
     _ASSERTE(m_PipelineCreator.isReady());
 
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-
-    VkClearValue ClearValue = {};
-    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     // FIXME: is update descriptor every frame slow?
     auto& Pipeline = m_PipelineCreator.get();
@@ -57,17 +54,13 @@ std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uin
     _beginWithFramebuffer(vImageIndex);
     if (m_pVertexBuffer->isValid())
     {
-        VkBuffer VertBuffer = *m_pVertexBuffer;
-        VkDeviceSize Offsets[] = { 0 };
-        vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
-        Pipeline.bind(CommandBuffer, vImageIndex);
-
-        size_t VertexNum = m_PointDataSet.size();
-        vkCmdDraw(CommandBuffer, uint32_t(VertexNum), 1, 0, 0);
+        pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+        Pipeline.bind(pCommandBuffer, vImageIndex);
+        pCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
     }
 
     _endWithFramebuffer();
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassOutlineEdge::_destroyV()

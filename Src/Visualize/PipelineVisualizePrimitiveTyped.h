@@ -21,7 +21,7 @@ public:
         _onClearV();
     }
 
-    virtual void recordCommandV(VkCommandBuffer vCommandBuffer, size_t vImageIndex) override
+    virtual void recordCommandV(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex) override
     {
         if (m_NeedUpdateVertexBuffer)
         {

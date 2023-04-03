@@ -35,9 +35,9 @@ void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
             if (isValid())
             {
                 UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_pAppInfo->getImageNum(), get());
-                VkCommandBuffer CommandBuffer = m_Command.beginSingleTimeBuffer();
-                UI::setFont(gChineseFont, CommandBuffer);
-                m_Command.endSingleTimeBuffer(CommandBuffer);
+                CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
+                UI::setFont(gChineseFont, pCommandBuffer);
+                m_Command.endSingleTimeBuffer(pCommandBuffer);
             }
         }
     }
@@ -64,13 +64,13 @@ std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vI
     VkClearValue ClearValue = {};
     ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     _beginWithFramebuffer(vImageIndex);
-    UI::draw(CommandBuffer);
+    UI::draw(pCommandBuffer);
     _endWithFramebuffer();
 
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassGUI::__createDescriptorPool()

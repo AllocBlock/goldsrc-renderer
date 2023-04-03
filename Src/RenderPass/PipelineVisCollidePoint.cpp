@@ -44,13 +44,10 @@ void CPipelineVisCollidePoint::updateUniformBuffer(uint32_t vImageIndex, CCamera
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineVisCollidePoint::record(VkCommandBuffer vCommandBuffer, size_t vImageIndex, glm::vec3 vEyePos)
+void CPipelineVisCollidePoint::record(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex, glm::vec3 vEyePos)
 {
     bind(vCommandBuffer, vImageIndex);
-
-    VkDeviceSize Offsets[] = { 0 };
-    VkBuffer Buffer = m_VertexBuffer;
-    vkCmdBindVertexBuffers(vCommandBuffer, 0, 1, &Buffer, Offsets);
+    vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
 
     SPushConstant Constant;
     CTransform Transform;
@@ -62,8 +59,8 @@ void CPipelineVisCollidePoint::record(VkCommandBuffer vCommandBuffer, size_t vIm
         Transform.setRotate(CRotator::createVectorToVector(glm::vec3(0, 0, 1), Info.Normal));
         Constant.Model = Transform.getAbsoluteModelMat4();
 
-        pushConstant(vCommandBuffer, VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, Constant);
-        vkCmdDraw(vCommandBuffer, m_VertexNum, 1, 0, 0);
+        vCommandBuffer->pushConstant(VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, Constant);
+        vCommandBuffer->draw(0, m_VertexNum);
 
         Info.LeftTime -= DeltaTime;
     }

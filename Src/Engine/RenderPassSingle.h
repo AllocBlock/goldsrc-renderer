@@ -54,7 +54,7 @@ protected:
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) = 0;
     virtual std::vector<VkClearValue> _getClearValuesV() = 0;
 
-    VkCommandBuffer _getCommandBuffer(uint32_t vImageIndex)
+    CCommandBuffer::Ptr _getCommandBuffer(uint32_t vImageIndex)
     {
         return m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     }
@@ -63,7 +63,7 @@ protected:
     {
         _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
 
-        VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+        CCommandBuffer::Ptr CommandBuffer = _getCommandBuffer(vImageIndex);
 
         _ASSERTE(m_FramebufferSet[vImageIndex]->getAttachmentNum() == m_ClearValueSet.size());
         _begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_ClearValueSet);

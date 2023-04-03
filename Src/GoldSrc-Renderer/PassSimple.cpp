@@ -137,7 +137,7 @@ void CSceneSimpleRenderPass::_destroyV()
 
 std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     bool RerecordCommand = false;
     if (m_EnableCulling || m_RerecordCommandTimes > 0)
@@ -161,8 +161,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         VkDeviceSize Offsets[] = { 0 };
         if (isNonEmptyAndValid(m_pVertexBuffer))
         {
-            VkBuffer VertBuffer = *m_pVertexBuffer;
-            vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
+            pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
         }
         else
             Valid = false;
@@ -170,7 +169,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
         if (Valid)
         {
             __calculateVisiableObjects();
-            m_PipelineSet.Main.get().bind(CommandBuffer, vImageIndex);
+            m_PipelineSet.Main.get().bind(pCommandBuffer, vImageIndex);
             for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
                 if (m_AreObjectsVisable[i])
@@ -182,7 +181,7 @@ std::vector<VkCommandBuffer> CSceneSimpleRenderPass::_requestCommandBuffersV(uin
 
         _endWithFramebuffer();
     }
-    return { CommandBuffer };
+    return { pCommandBuffer->get() };
 }
 
 void CSceneSimpleRenderPass::__createSceneResources()
@@ -207,8 +206,8 @@ void CSceneSimpleRenderPass::__destroySceneResources()
 
 void CSceneSimpleRenderPass::__drawActor(uint32_t vImageIndex, CActor::Ptr vActor)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    _drawActor(CommandBuffer, vActor);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    _drawActor(pCommandBuffer, vActor);
 }
 
 void CSceneSimpleRenderPass::__createTextureImages()
@@ -280,6 +279,6 @@ void CSceneSimpleRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
 
 void CSceneSimpleRenderPass::__recordSkyRenderCommand(uint32_t vImageIndex)
 {
-    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-    m_PipelineSet.Sky.get().recordCommand(CommandBuffer, vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    m_PipelineSet.Sky.get().recordCommand(pCommandBuffer, vImageIndex);
 }
