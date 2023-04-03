@@ -18,8 +18,19 @@ layout(push_constant) uniform SPushConstant
     vec3 Scale;
 } uPushConstant;
 
+#define _BLEND_TYPE_NORMAL 0x00
+#define _BLEND_TYPE_INDEXED_TRANSPARENT 0x01
+
 void main()
 {
 	outColor = texture(sampler2D(uTextures[uPushConstant.TexIndex], uTexSampler), inFragTexCoord);
-    // todo: blend type
+    if (uPushConstant.BlendType == _BLEND_TYPE_NORMAL)
+    {
+        outColor.a = 1.0;
+    }
+    else if (uPushConstant.BlendType == _BLEND_TYPE_INDEXED_TRANSPARENT)
+    {
+        if (outColor.a < 0.5)
+            discard;
+    }
 }

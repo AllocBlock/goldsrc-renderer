@@ -11,6 +11,13 @@ enum class EIcon
     MAX_NUM
 };
 
+enum class EIconRenderType
+{
+    OPAQUE = 0,
+    INDEXED_TRANSPARENT,
+    ALPHA,
+};
+
 class CIconManager
 {
 public:
@@ -23,11 +30,18 @@ public:
         return pInstance;
     }
 
-    CIOImage::CPtr getImage(EIcon vIcon) { return m_IconImageMap.at(vIcon); }
+    CIOImage::CPtr getImage(EIcon vIcon) const { return m_IconImageMap.at(vIcon).pImage; }
+    EIconRenderType getRenderType(EIcon vIcon) const { return m_IconImageMap.at(vIcon).RenderType; }
 
 private:
     static ptr<CIconManager> pInstance;
     CIconManager();
 
-    std::map<EIcon, CIOImage::Ptr> m_IconImageMap;
+    struct IconInfo
+    {
+        CIOImage::Ptr pImage;
+        EIconRenderType RenderType;
+    };
+
+    std::map<EIcon, IconInfo> m_IconImageMap;
 };

@@ -67,12 +67,14 @@ void CPipelineIcon::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vIm
     {
         bind(vCommandBuffer, vImageIndex);
         vCommandBuffer->bindVertexBuffer(*m_pVertexDataBuffer);
+        
+        auto pIconManager = CIconManager::getInstance();
 
         SPushConstant Constant;
         Constant.Scale = glm::vec3(1.0f);
-        Constant.BlendType = 0x00;
         for (const auto& IconInfo : m_IconInfoSet)
         {
+            Constant.BlendType = uint32_t(pIconManager->getRenderType(IconInfo.Icon));
             Constant.TexIndex = m_IconIndexMap.at(IconInfo.Icon);
             Constant.Position = IconInfo.Position;
             vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
@@ -106,6 +108,11 @@ CPipelineDescriptor CPipelineIcon::_getPipelineDescriptionV()
 
     Descriptor.setEnableDepthTest(true);
     Descriptor.setEnableDepthWrite(true);
+    // TODO: turn on depth write, opaque and indexed transparent work fine, but alpha blend is strange
+    // turn off, opaque and indexed transparent is bad, but alpha blend works better
+
+    /*Descriptor.setEnableBlend(true);
+    Descriptor.setBlendMethod(EBlendFunction::NORMAL);*/
 
     return Descriptor;
 }
@@ -121,12 +128,12 @@ void CPipelineIcon::_createResourceV(size_t vImageNum)
     // create unit square facing positive x-axis
     const std::vector<SPointData> PointData =
     {
-        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
-        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
-        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
-        {{0.0,  1.0,  1.0 }, {1.0, 1.0}},
-        {{0.0, -1.0, -1.0 }, {0.0, 0.0}},
-        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
+        {{0.0,  1.0,  1.0 }, {1.0, 0.0}},
+        {{0.0,  1.0, -1.0 }, {1.0, 1.0}},
+        {{0.0, -1.0, -1.0 }, {0.0, 1.0}},
+        {{0.0,  1.0,  1.0 }, {1.0, 0.0}},
+        {{0.0, -1.0, -1.0 }, {0.0, 1.0}},
+        {{0.0, -1.0,  1.0 }, {0.0, 0.0}},
     };
 
     VkDeviceSize DataSize = sizeof(SPointData) * PointData.size();

@@ -21,10 +21,6 @@ layout(push_constant) uniform SPushConstant
     vec3 Scale;
 } uPushConstant;
 
-#define _BLEND_TYPE_NORMAL 0x00
-#define _BLEND_TYPE_MASK 0x01
-#define _BLEND_TYPE_ALPHA 0x02
-
 void main()
 {
     vec3 X = normalize(ubo.EyePosition - uPushConstant.Position);
