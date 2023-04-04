@@ -11,12 +11,6 @@
 
 #include <future>
 
-enum class ERenderMethod
-{
-    DEFAULT,
-    BSP
-};
-
 struct SResultReadScene
 {
     bool Succeed = false;
@@ -26,7 +20,6 @@ struct SResultReadScene
 
 // TODO: custom event loop!
 using ReadSceneCallbackFunc_T = std::function<void(ptr<SSceneInfoGoldSrc>)>;
-using ChangeRenderMethodCallbackFunc_T = std::function<void(ERenderMethod)>;
 
 class CGUIMain : public IDrawableUI
 {
@@ -39,11 +32,6 @@ public:
     void setReadSceneCallback(ReadSceneCallbackFunc_T vCallback)
     {
         m_ReadSceneCallback = vCallback;
-    }
-
-    void setChangeRendererCallback(ChangeRenderMethodCallbackFunc_T vCallback)
-    {
-        m_ChangeRenderMethodCallback = vCallback;
     }
 
     void setRenderSettingCallback(std::function<void()> vCallback)
@@ -79,13 +67,11 @@ private:
         bool ShowWidgetFrameRate = false;
         bool ShowWidgetScene = false;
     } m_Control;
-
-    ERenderMethod m_RenderMethod = ERenderMethod::BSP;
+    
     std::filesystem::path m_LoadingFilePath = "";
     std::string m_LoadingProgressReport = "";
     std::future<SResultReadScene> m_FileReadingFuture;
 
     std::function<void()> m_RenderSettingCallback = nullptr;
     ReadSceneCallbackFunc_T m_ReadSceneCallback = nullptr;
-    ChangeRenderMethodCallbackFunc_T m_ChangeRenderMethodCallback = nullptr;
 };

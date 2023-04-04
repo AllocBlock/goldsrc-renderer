@@ -63,9 +63,6 @@
     <ClCompile Include="PipelineSimple.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
-    <ClCompile Include="PassSimple.cpp">
-      <Filter>源文件\RenderPass</Filter>
-    </ClCompile>
     <ClCompile Include="PassGoldSrc.cpp">
       <Filter>源文件\RenderPass</Filter>
     </ClCompile>
@@ -92,9 +89,6 @@
     </ClCompile>
     <ClCompile Include="PipelineIcon.cpp">
       <Filter>源文件\Pipeline</Filter>
-    </ClCompile>
-    <ClCompile Include="PassGoldSrcDeprecated.cpp">
-      <Filter>源文件\RenderPass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -143,9 +137,6 @@
     <ClInclude Include="PassGoldSrc.h">
       <Filter>头文件\RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="PassSimple.h">
-      <Filter>头文件\RenderPass</Filter>
-    </ClInclude>
     <ClInclude Include="SceneProbe.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -169,9 +160,6 @@
     </ClInclude>
     <ClInclude Include="PipelineIcon.h">
       <Filter>头文件\Pipeline</Filter>
-    </ClInclude>
-    <ClInclude Include="PassGoldSrcDeprecated.h">
-      <Filter>头文件\RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="GuiScene.h">
       <Filter>头文件\Gui</Filter>

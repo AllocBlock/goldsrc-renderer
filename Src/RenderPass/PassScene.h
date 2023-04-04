@@ -20,32 +20,7 @@ public:
         m_pSceneInfo = vScene;
         _loadSceneV(vScene);
     }
-    
-protected:
-    virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) = 0;
 
-    CCamera::Ptr m_pCamera = nullptr;
-    ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
-};
-
-template <typename PointData_t>
-class CRenderPassSceneTyped : public CRenderPassScene
-{
-public:
-    _DEFINE_PTR(CRenderPassSceneTyped<PointData_t>);
-
-    CCamera::Ptr getCamera() { return m_pCamera; }
-    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; }
-
-    ptr<SSceneInfoGoldSrc> getScene() const { return m_pSceneInfo; }
-
-    virtual void _destroyV() override
-    {
-        destroyAndClear(m_pVertexBuffer);
-
-        CRenderPassScene::_destroyV();
-    }
-    
     static bool isActorInSight(CActor::Ptr vActor, const SFrustum& vFrustum)
     {
         auto pTransform = vActor->getTransform();
@@ -91,24 +66,10 @@ public:
         return true;
     }
 
-protected:
-    virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override
-    {
-        m_pDevice->waitUntilIdle();
-        destroyAndClear(m_pVertexBuffer);
-        const auto& Pair = m_pSceneInfo->pScene->generateVertexBuffer<PointData_t>(m_pDevice);
-        m_pVertexBuffer = Pair.first;
-        m_ActorSegmentMap = Pair.second;
-    }
-
-    void _drawActor(CCommandBuffer::Ptr vCommandBuffer, CActor::Ptr vActor)
-    {
-        _ASSERTE(m_ActorSegmentMap.find(vActor) != m_ActorSegmentMap.end());
-        size_t SegIndex = m_ActorSegmentMap.at(vActor);
-        const auto& Info = m_pVertexBuffer->getSegmentInfo(SegIndex);
-        vCommandBuffer->draw(Info.First, Info.Num);
-    }
     
-    vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
-    std::map<CActor::Ptr, size_t> m_ActorSegmentMap;
+protected:
+    virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) = 0;
+
+    CCamera::Ptr m_pCamera = nullptr;
+    ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
 };

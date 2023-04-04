@@ -192,41 +192,7 @@ void CGUIMain::_renderUIV()
         }
         UI::endMenuBar();
     }
-
-    // 渲染设置
-    if (UI::collapse(u8"渲染", true))
-    {
-        static const std::vector<ERenderMethod> RenderMethods =
-        {
-            ERenderMethod::DEFAULT,
-            ERenderMethod::BSP
-        };
-
-        static const std::vector<const char*> RenderMethodNames =
-        {
-            u8"简易",
-            u8"金源渲染"
-        };
-
-        static ERenderMethod LastMethod = m_RenderMethod;
-        int RenderMethodIndex = static_cast<int>(std::find(RenderMethods.begin(), RenderMethods.end(), m_RenderMethod) - RenderMethods.begin());
-        UI::combo(u8"渲染器", RenderMethodNames, RenderMethodIndex);
-        m_RenderMethod = RenderMethods[RenderMethodIndex];
-        if (LastMethod != m_RenderMethod)
-        {
-            if (m_ChangeRenderMethodCallback)
-            {
-                m_ChangeRenderMethodCallback(m_RenderMethod);
-                LastMethod = m_RenderMethod;
-            }
-            else
-            {
-                showAlert(u8"无法切换渲染器，未给GUI指定切换回调函数");
-                m_RenderMethod = LastMethod;
-            }
-        }
-    }
-
+    
     if (m_RenderSettingCallback) m_RenderSettingCallback();
 
     if (UI::collapse(u8"其他", true))

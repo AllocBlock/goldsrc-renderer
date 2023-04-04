@@ -21,7 +21,6 @@ protected:
     virtual void _destroyV() override;
 
 private:
-    void __recreateRenderer(ERenderMethod vMethod);
     void __linkPasses();
 
     ptr<CRenderPassScene> m_pPassScene = nullptr;
@@ -34,7 +33,4 @@ private:
     CCamera::Ptr m_pCamera = nullptr;
 
     ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
-
-    bool m_NeedRecreateRenderer = false;
-    ERenderMethod m_CurRenderMethod = ERenderMethod::BSP;
 };

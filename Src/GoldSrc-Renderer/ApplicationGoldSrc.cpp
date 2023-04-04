@@ -1,6 +1,5 @@
 #include "ApplicationGoldSrc.h"
 #include "PassGoldSrc.h"
-#include "PassSimple.h"
 #include "SceneProbe.h"
 #include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
@@ -31,11 +30,6 @@ void CApplicationGoldSrc::_createV()
 
     m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
-    m_pMainUI->setChangeRendererCallback([this](ERenderMethod vMethod)
-        {
-            m_NeedRecreateRenderer = true;
-            m_CurRenderMethod = vMethod;
-        });
 
     m_pMainUI->setReadSceneCallback([this](ptr<SSceneInfoGoldSrc> vScene)
         {
@@ -71,17 +65,17 @@ void CApplicationGoldSrc::_createV()
             }
         });
 
-    __recreateRenderer(m_CurRenderMethod);
+    m_pPassScene = make<CSceneGoldSrcRenderPass>();
+    m_pPassScene->init(m_pDevice, m_pAppInfo);
+    m_pPassScene->setCamera(m_pCamera);
+    if (m_pSceneInfo)
+        m_pPassScene->loadScene(m_pSceneInfo);
+
+    __linkPasses();
 }
 
 void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
 {
-    if (m_NeedRecreateRenderer)
-    {
-        m_NeedRecreateRenderer = false;
-        __recreateRenderer(m_CurRenderMethod);
-    }
-
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
     m_pPassScene->update(vImageIndex);
@@ -106,36 +100,6 @@ void CApplicationGoldSrc::_destroyV()
     destroyAndClear(m_pPassVisualize);
 
     cleanGlobalCommandBuffer();
-}
-
-void CApplicationGoldSrc::__recreateRenderer(ERenderMethod vMethod)
-{
-    m_pDevice->waitUntilIdle();
-    if (m_pPassScene)
-        destroyAndClear(m_pPassScene);
-    
-    switch (vMethod)
-    {
-    case ERenderMethod::DEFAULT:
-    {
-        m_pPassScene = make<CSceneSimpleRenderPass>();
-        break;
-    }
-    case ERenderMethod::BSP:
-    {
-        m_pPassScene = make<CSceneGoldSrcRenderPass>();
-        break;
-    }
-    default:
-        return;
-    }
-
-    m_pPassScene->init(m_pDevice, m_pAppInfo);
-    m_pPassScene->setCamera(m_pCamera);
-    if (m_pSceneInfo)
-        m_pPassScene->loadScene(m_pSceneInfo);
-
-    __linkPasses();
 }
 
 void CApplicationGoldSrc::__linkPasses()

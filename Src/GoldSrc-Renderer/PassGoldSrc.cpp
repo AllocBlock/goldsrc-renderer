@@ -13,10 +13,10 @@
 
 void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
-    CRenderPassSceneTyped::_loadSceneV(vScene);
-    
+    m_pDevice->waitUntilIdle();
     m_CurTextureIndex = 0;
 
+    __createVertexBuffer();
     __destroySceneResources();
     __createSceneResources();
     __updateTextureView();
@@ -29,7 +29,7 @@ void CSceneGoldSrcRenderPass::rerecordCommand()
 
 void CSceneGoldSrcRenderPass::_initV()
 {
-    CRenderPassSceneTyped::_initV();
+    CRenderPassScene::_initV();
     
     VkExtent2D RefExtent = { 0, 0 };
     _dumpReferenceExtentV(RefExtent);
@@ -60,6 +60,16 @@ void CSceneGoldSrcRenderPass::_initV()
     m_PipelineSet.BlendTextureAlpha.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
     m_PipelineSet.BlendAlphaTest.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
     m_PipelineSet.BlendAdditive.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
+
+    m_PipelineSet.Simple.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
+        [this](CPipelineSimple& vPipeline)
+        {
+            if (vPipeline.isValid())
+            {
+                __updatePipelineResourceSimple(vPipeline);
+                rerecordCommand();
+            }
+        });
     m_PipelineSet.Sky.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
         [this](CPipelineSkybox& vPipeline)
         {
@@ -127,8 +137,20 @@ void CSceneGoldSrcRenderPass::_updateV(uint32_t vImageIndex)
 
 void CSceneGoldSrcRenderPass::_renderUIV()
 {
-    if (UI::collapse(u8"∑¬Ω‘¥"))
+    if (UI::collapse(u8"‰÷»æ…Ë÷√"))
     {
+        static const std::vector<const char*> RenderMethodNames =
+        {
+            u8"Ω‘¥‰÷»æ",
+            u8"ºÚ“◊",
+        };
+        
+        int RenderMethodIndex = static_cast<int>(m_RenderMethod);
+        if (UI::combo(u8"‰÷»æ∆˜", RenderMethodNames, RenderMethodIndex))
+        {
+            setRenderMethod(static_cast<ERenderMethod>(RenderMethodIndex));
+        }
+
         bool SkyRendering = getSkyState();
         UI::toggle(u8"ø™∆ÙÃÏø’‰÷»æ", SkyRendering);
         setSkyState(SkyRendering);
@@ -153,10 +175,11 @@ void CSceneGoldSrcRenderPass::_destroyV()
 {
     m_DepthImageManager.destroy();
     m_PipelineSet.destroy();
+    m_pVertexBuffer->destroy();
 
     __destroySceneResources();
 
-    CRenderPassSceneTyped::_destroyV();
+    CRenderPassScene::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -187,19 +210,29 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         }
 
         // 2. scene mesh
-        bool Valid = true;
-        VkDeviceSize Offsets[] = { 0 };
+        bool IsValid = false;
+
         if (isNonEmptyAndValid(m_pVertexBuffer))
         {
             pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+            IsValid = true;
         }
-        else
-            Valid = false;
 
-        if (Valid)
+        if (IsValid)
         {
-            m_PipelineSet.Normal.get().bind(pCommandBuffer, vImageIndex);
-            m_PipelineSet.Normal.get().setOpacity(pCommandBuffer, 1.0f);
+            if (m_RenderMethod == ERenderMethod::GOLDSRC)
+            {
+                m_PipelineSet.Normal.get().bind(pCommandBuffer, vImageIndex);
+                m_PipelineSet.Normal.get().setOpacity(pCommandBuffer, 1.0f);
+            }
+            else if (m_RenderMethod == ERenderMethod::SIMPLE)
+            {
+                m_PipelineSet.Simple.get().bind(pCommandBuffer, vImageIndex);
+            }
+            else
+            {
+                _SHOULD_NOT_GO_HERE;
+            }
 
             for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
@@ -214,9 +247,12 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 auto pMesh = pMeshRenderer->getMesh();
                 if (!pMesh) continue;
 
-                bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
-                m_PipelineSet.Normal.get().setLightmapState(pCommandBuffer, EnableLightmap);
-                __drawActor(vImageIndex, pActor);
+                if (m_RenderMethod == ERenderMethod::GOLDSRC)
+                {
+                    bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
+                    m_PipelineSet.Normal.get().setLightmapState(pCommandBuffer, EnableLightmap);
+                }
+                __drawMeshActor(vImageIndex, pActor);
             }
         }
 
@@ -266,6 +302,8 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
         __updatePipelineResourceGoldSrc(m_PipelineSet.BlendAlphaTest.get());
     if (m_PipelineSet.BlendTextureAlpha.isReady())
         __updatePipelineResourceGoldSrc(m_PipelineSet.BlendTextureAlpha.get());
+    if (m_PipelineSet.Simple.isReady())
+        __updatePipelineResourceSimple(m_PipelineSet.Simple.get());
     if (m_PipelineSet.Sky.isReady())
         __updatePipelineResourceSky(m_PipelineSet.Sky.get());
     if (m_PipelineSet.Sprite.isReady())
@@ -353,10 +391,10 @@ struct SModelSortInfo
 //    }
 //}
 
-void CSceneGoldSrcRenderPass::__drawActor(uint32_t vImageIndex, CActor::Ptr vActor)
+void CSceneGoldSrcRenderPass::__drawMeshActor(uint32_t vImageIndex, CActor::Ptr vActor)
 {
     CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
-    _drawActor(pCommandBuffer, vActor);
+    __drawActor(pCommandBuffer, vActor);
 }
 
 void CSceneGoldSrcRenderPass::__createTextureImages()
@@ -378,6 +416,29 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
     {
         ptr<CIOImage> pCombinedLightmapImage = m_pSceneInfo->pLightmap->getCombinedLightmap();
         Function::createImageFromIOImage(m_LightmapImage, m_pDevice, pCombinedLightmapImage);
+    }
+}
+
+void CSceneGoldSrcRenderPass::__createVertexBuffer()
+{
+    destroyAndClear(m_pVertexBuffer);
+    if (m_RenderMethod == ERenderMethod::GOLDSRC)
+    {
+        const auto& Pair = m_pSceneInfo->pScene->generateVertexBuffer<SGoldSrcPointData>(m_pDevice);
+
+        m_pVertexBuffer = Pair.first;
+        m_ActorSegmentMap = Pair.second;
+    }
+    else if (m_RenderMethod == ERenderMethod::SIMPLE)
+    {
+        const auto& Pair = m_pSceneInfo->pScene->generateVertexBuffer<SSimplePointData>(m_pDevice);
+
+        m_pVertexBuffer = Pair.first;
+        m_ActorSegmentMap = Pair.second;
+    }
+    else
+    {
+        _SHOULD_NOT_GO_HERE;
     }
 }
 
@@ -413,6 +474,11 @@ void CSceneGoldSrcRenderPass::__updatePipelineResourceGoldSrc(CPipelineGoldSrc& 
     vPipeline.setLightmap(m_LightmapImage);
 }
 
+void CSceneGoldSrcRenderPass::__updatePipelineResourceSimple(CPipelineSimple& vPipeline)
+{
+    vPipeline.setTextures(m_TextureImageSet);
+}
+
 void CSceneGoldSrcRenderPass::__updatePipelineResourceSky(CPipelineSkybox& vPipeline)
 {
     if (m_pSceneInfo)
@@ -442,6 +508,7 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
     m_PipelineSet.BlendTextureAlpha.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
     m_PipelineSet.BlendAlphaTest.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
     m_PipelineSet.BlendAdditive.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
+    m_PipelineSet.Simple.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
     m_PipelineSet.Sprite.get().updateUniformBuffer(vImageIndex, m_pCamera);
     if (m_EnableSky)
         m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, m_pCamera);

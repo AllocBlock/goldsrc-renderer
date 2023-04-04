@@ -135,7 +135,6 @@
     <ClCompile Include="GuiTextureViewer.cpp" />
     <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PassGoldSrcDeprecated.cpp" />
     <ClCompile Include="PassOutlineMask.cpp" />
     <ClCompile Include="PassOutlineEdge.cpp" />
     <ClCompile Include="PipelineGoldSrc.cpp" />
@@ -144,7 +143,6 @@
     <ClCompile Include="PipelineOutlineMask.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
     <ClCompile Include="SceneProbe.cpp" />
-    <ClCompile Include="PassSimple.cpp" />
     <ClCompile Include="PassGoldSrc.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -157,7 +155,6 @@
     <ClInclude Include="GuiRenderer.h" />
     <ClInclude Include="GuiTextureViewer.h" />
     <ClInclude Include="GuiRequestPopupModal.h" />
-    <ClInclude Include="PassGoldSrcDeprecated.h" />
     <ClInclude Include="PassOutlineEdge.h" />
     <ClInclude Include="PassOutlineMask.h" />
     <ClInclude Include="PipelineIcon.h" />
@@ -171,7 +168,6 @@
     <ClInclude Include="PipelineSimple.h" />
     <ClInclude Include="PointData.h" />
     <ClInclude Include="SceneProbe.h" />
-    <ClInclude Include="PassSimple.h" />
     <ClInclude Include="PassGoldSrc.h" />
     <ClInclude Include="GuiScene.h" />
   </ItemGroup>
