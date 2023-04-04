@@ -6,7 +6,7 @@ namespace
 {
     struct SPointData
     {
-        glm::vec3 Pos;
+        glm::vec2 Pos;
         glm::vec2 TexCoord;
 
         using PointData_t = SPointData;
@@ -128,12 +128,12 @@ void CPipelineIcon::_createResourceV(size_t vImageNum)
     // create unit square facing positive x-axis
     const std::vector<SPointData> PointData =
     {
-        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
-        {{0.0,  1.0,  1.0 }, {0.0, 0.0}},
-        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
-        {{0.0,  1.0, -1.0 }, {1.0, 0.0}},
-        {{0.0, -1.0,  1.0 }, {0.0, 1.0}},
-        {{0.0, -1.0, -1.0 }, {1.0, 1.0}},
+        {{-1.0,  1.0 }, {0.0, 0.0}},
+        {{-1.0, -1.0 }, {0.0, 1.0}},
+        {{ 1.0, -1.0 }, {1.0, 1.0}},
+        {{-1.0,  1.0 }, {0.0, 0.0}},
+        {{ 1.0, -1.0 }, {1.0, 1.0}},
+        {{ 1.0,  1.0 }, {1.0, 0.0}},
     };
 
     VkDeviceSize DataSize = sizeof(SPointData) * PointData.size();

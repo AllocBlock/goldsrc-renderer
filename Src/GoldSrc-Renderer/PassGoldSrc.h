@@ -9,6 +9,7 @@
 #include "PipelineSkybox.h"
 #include "PipelineSprite.h"
 #include "PipelineIcon.h"
+#include "PipelineText.h"
 #include "Image.h"
 #include "DynamicResourceManager.h"
 
@@ -112,6 +113,7 @@ private:
         CDynamicPipeline<CPipelineSkybox> Sky;
         CDynamicPipeline<CPipelineSprite> Sprite;
         CDynamicPipeline<CPipelineIcon> Icon;
+        CDynamicPipeline<CPipelineText> Text;
 
         void update(const vk::SPassUpdateState& vUpdateState)
         {
@@ -124,6 +126,7 @@ private:
             Sky.updateV(vUpdateState);
             Sprite.updateV(vUpdateState);
             Icon.updateV(vUpdateState);
+            Text.updateV(vUpdateState);
         }
 
         void destroy()
@@ -137,6 +140,7 @@ private:
             Sky.destroy();
             Sprite.destroy();
             Icon.destroy();
+            Text.destroy();
         }
     } m_PipelineSet;
     

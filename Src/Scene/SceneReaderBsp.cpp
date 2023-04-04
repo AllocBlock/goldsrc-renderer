@@ -8,6 +8,7 @@
 #include "Log.h"
 #include "ComponentMeshRenderer.h"
 #include "ComponentIconRenderer.h"
+#include "ComponentTextRenderer.h"
 
 #include <sstream>
 
@@ -711,6 +712,12 @@ void CSceneReaderBsp::__loadPointEntities()
         auto pIconRenderer = make<CComponentIconRenderer>();
         pIconRenderer->setIcon(EIcon::TIP);
         pPointEntityActor->getTransform()->addComponent(pIconRenderer);
+
+        auto pTextRenderer = make<CComponentTextRenderer>();
+        pTextRenderer->setOffset(glm::vec2(0, 1.0f));
+        pTextRenderer->setText(Name);
+        pTextRenderer->setScale(0.5f);
+        pPointEntityActor->getTransform()->addComponent(pTextRenderer);
 
         m_pSceneInfo->pScene->addActor(pPointEntityActor);
     }

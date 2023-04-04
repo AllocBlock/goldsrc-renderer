@@ -90,6 +90,9 @@
     <ClCompile Include="PipelineIcon.cpp">
       <Filter>源文件\Pipeline</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineText.cpp">
+      <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h">
@@ -164,6 +167,9 @@
     <ClInclude Include="GuiScene.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineText.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\goldSrcNormalShader.vert">
@@ -218,6 +224,12 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\iconShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\textShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="shaders\textShader.vert">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

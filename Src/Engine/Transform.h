@@ -64,6 +64,11 @@ public:
 		vTransform->m_pParent = weak_from_this();
 	}
 
+	std::vector<IComponent::Ptr> getComponents()
+	{
+		return m_ComponentSet;
+	}
+
 	void addComponent(IComponent::Ptr vComponent)
 	{
 		m_ComponentSet.emplace_back(vComponent);

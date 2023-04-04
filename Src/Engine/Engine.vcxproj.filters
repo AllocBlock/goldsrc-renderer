@@ -129,6 +129,9 @@
     <ClCompile Include="Scene.cpp">
       <Filter>源文件\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -234,6 +237,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ComponentIconRenderer.h">
+      <Filter>头文件\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentTextRenderer.h">
       <Filter>头文件\Scene\Components</Filter>
     </ClInclude>
   </ItemGroup>

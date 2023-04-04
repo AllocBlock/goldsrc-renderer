@@ -93,6 +93,11 @@ void CSceneGoldSrcRenderPass::_initV()
         {
             rerecordCommand();
         });
+    m_PipelineSet.Text.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
+        [this](IPipeline& vPipeline)
+        {
+            rerecordCommand();
+        });
 
     __createSceneResources();
 
@@ -252,11 +257,11 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                     bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
                     m_PipelineSet.Normal.get().setLightmapState(pCommandBuffer, EnableLightmap);
                 }
-                __drawMeshActor(vImageIndex, pActor);
+                //__drawMeshActor(vImageIndex, pActor);
             }
         }
 
-        // 3. sprite and icon
+        // 3. sprite, icon and text
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
         {
             m_PipelineSet.Sprite.get().recordCommand(pCommandBuffer, vImageIndex);
@@ -280,6 +285,22 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 PipelineIcon.addIcon(Icon, Position, glm::max(Scale.x, glm::max(Scale.y, Scale.z)));
             }
             PipelineIcon.recordCommand(pCommandBuffer, vImageIndex);
+        }
+
+        // todo: remove duplicate loop
+        if (m_pSceneInfo)
+        {
+            auto& PipelineText = m_PipelineSet.Text.get();
+            for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
+            {
+                auto pActor = m_pSceneInfo->pScene->getActor(i);
+                if (!pActor->getVisible()) continue;
+
+                auto pTextRenderer = pActor->getTransform()->findComponent<CComponentTextRenderer>();
+                if (!pTextRenderer) continue;
+                
+                PipelineText.drawTextActor(pCommandBuffer, vImageIndex, pActor);
+            }
         }
 
         _endWithFramebuffer();
@@ -513,4 +534,5 @@ void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
     if (m_EnableSky)
         m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, m_pCamera);
     m_PipelineSet.Icon.get().updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineSet.Text.get().updateUniformBuffer(vImageIndex, m_pCamera);
 }

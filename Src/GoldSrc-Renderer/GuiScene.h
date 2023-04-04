@@ -38,6 +38,16 @@ public:
                     Vec3 = pTransform->getRotate().getEulerDegrees();
                     UI::input(u8"Ğı×ª##" + std::to_string(i), Vec3);
                     pTransform->setRotate(CRotator::createEulerDegrees(Vec3));
+
+                    if (UI::collapse(u8"×é¼ş##" + std::to_string(i)))
+                    {
+                        UI::indent(20.0f);
+                        for (auto pComp : pTransform->getComponents())
+                        {
+                            UI::text(pComp->getName());
+                        }
+                        UI::unindent();
+                    }
                     UI::unindent();
                 }
             }

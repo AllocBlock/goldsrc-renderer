@@ -142,6 +142,7 @@
     <ClCompile Include="PipelineOutlineEdge.cpp" />
     <ClCompile Include="PipelineOutlineMask.cpp" />
     <ClCompile Include="PipelineSimple.cpp" />
+    <ClCompile Include="PipelineText.cpp" />
     <ClCompile Include="SceneProbe.cpp" />
     <ClCompile Include="PassGoldSrc.cpp" />
   </ItemGroup>
@@ -166,6 +167,7 @@
     <ClInclude Include="PipelineNormal.h" />
     <ClInclude Include="PipelineGoldSrc.h" />
     <ClInclude Include="PipelineSimple.h" />
+    <ClInclude Include="PipelineText.h" />
     <ClInclude Include="PointData.h" />
     <ClInclude Include="SceneProbe.h" />
     <ClInclude Include="PassGoldSrc.h" />
@@ -190,6 +192,8 @@
     <None Include="shaders\skyShader.vert" />
     <None Include="shaders\sprShader.frag" />
     <None Include="shaders\sprShader.vert" />
+    <None Include="shaders\textShader.frag" />
+    <None Include="shaders\textShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -124,6 +124,7 @@
     <ClCompile Include="StaticResource.cpp" />
     <ClCompile Include="IconManager.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Font.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
@@ -133,7 +134,9 @@
     <ClInclude Include="Command.h" />
     <ClInclude Include="ComponentIconRenderer.h" />
     <ClInclude Include="ComponentMeshRenderer.h" />
+    <ClInclude Include="ComponentTextRenderer.h" />
     <ClInclude Include="DynamicResourceManager.h" />
+    <ClInclude Include="Font.h" />
     <ClInclude Include="RenderPassSingle.h" />
     <ClInclude Include="ShaderCompileCache.h" />
     <ClInclude Include="ShaderCompiler.h" />

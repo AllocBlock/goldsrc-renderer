@@ -56,7 +56,7 @@ namespace vk
 
         bool create(CDevice::CPtr vDevice, const std::vector<PointData_t>& vData)
         {
-            return create(vDevice, { vData });
+            return create(vDevice, std::vector<std::vector<PointData_t>>{ vData });
         }
 
         bool create(CDevice::CPtr vDevice, const std::vector<std::vector<PointData_t>>& vDataSet)
