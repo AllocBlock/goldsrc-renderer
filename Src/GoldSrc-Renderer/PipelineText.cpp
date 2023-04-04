@@ -74,8 +74,8 @@ CPipelineDescriptor CPipelineText::_getPipelineDescriptionV()
     Descriptor.addPushConstant<SPushConstant>(VK_SHADER_STAGE_VERTEX_BIT);
     Descriptor.addPushConstant<SPushConstant>(VK_SHADER_STAGE_FRAGMENT_BIT);
 
-    Descriptor.setEnableDepthTest(false);
-    Descriptor.setEnableDepthWrite(false);
+    Descriptor.setEnableDepthTest(true);
+    Descriptor.setEnableDepthWrite(true);
 
     return Descriptor;
 }

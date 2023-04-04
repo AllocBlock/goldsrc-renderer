@@ -257,7 +257,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                     bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
                     m_PipelineSet.Normal.get().setLightmapState(pCommandBuffer, EnableLightmap);
                 }
-                //__drawMeshActor(vImageIndex, pActor);
+                __drawMeshActor(vImageIndex, pActor);
             }
         }
 

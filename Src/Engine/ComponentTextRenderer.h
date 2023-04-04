@@ -5,6 +5,13 @@
 #include "VertexAttributeDescriptor.h"
 #include "VertexBuffer.h"
 
+enum class ETextAlign
+{
+    LEFT,
+    CENTER,
+    RIGHT
+};
+
 class CComponentTextRenderer : public IComponent
 {
 public:
@@ -109,16 +116,40 @@ private:
         }
     }
 
+    void __shiftLineByHorizonAlign(size_t vLineStartIndex, size_t vLineEndIndex, float vLineWidth) const
+    {
+        auto pVertexArray = m_MeshData.getVertexArray();
+        _ASSERTE(vLineEndIndex <= pVertexArray->size());
+        // shift by align
+        for (size_t i = vLineStartIndex; i < vLineEndIndex; ++i)
+        {
+            float Shift = 0.0f;
+            if (m_HorizonAlign == ETextAlign::CENTER)
+                Shift = -vLineWidth * 0.5;
+            else if (m_HorizonAlign == ETextAlign::RIGHT)
+                Shift = -vLineWidth;
+
+            glm::vec3 Pos = pVertexArray->get(i);
+            Pos.x += Shift;
+            pVertexArray->set(i, Pos);
+        }
+    }
+
     void __generateTextMesh()
     {
         m_MeshData = CMeshData();
+        auto pVertexArray = m_MeshData.getVertexArray();
+
         glm::vec2 Cursor = m_Offset;
+        size_t LineStartVertIndex = 0;
         for (char Char : m_Text)
         {
             if (Char == '\n')
             {
+                __shiftLineByHorizonAlign(LineStartVertIndex, pVertexArray->size(), Cursor.x);
                 Cursor.x = 0.0f;
                 Cursor.y += m_LineHeight;
+                LineStartVertIndex = pVertexArray->size();
                 continue;
             }
             const CFont::SFontDrawInfo& DrawInfo = m_pFont->getCharDrawInfo(Char);
@@ -127,6 +158,9 @@ private:
 
             Cursor.x += (DrawInfo.Advance + m_Spacing) * m_Scale;
         }
+
+        // shift by align
+        __shiftLineByHorizonAlign(LineStartVertIndex, pVertexArray->size(), Cursor.x);
     }
 
     glm::vec3 m_Anchor = glm::vec3(0.0f);
@@ -137,6 +171,7 @@ private:
     float m_Scale = 1.0f;
     float m_LineHeight = 40.0f;
     float m_Spacing = 0.0f;
+    ETextAlign m_HorizonAlign = ETextAlign::CENTER;
 
     CMeshData m_MeshData;
 };

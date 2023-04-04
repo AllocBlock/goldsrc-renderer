@@ -714,7 +714,7 @@ void CSceneReaderBsp::__loadPointEntities()
         pPointEntityActor->getTransform()->addComponent(pIconRenderer);
 
         auto pTextRenderer = make<CComponentTextRenderer>();
-        pTextRenderer->setOffset(glm::vec2(0, 1.0f));
+        pTextRenderer->setOffset(glm::vec2(0, 1.2f));
         pTextRenderer->setText(Name);
         pTextRenderer->setScale(0.5f);
         pPointEntityActor->getTransform()->addComponent(pTextRenderer);
