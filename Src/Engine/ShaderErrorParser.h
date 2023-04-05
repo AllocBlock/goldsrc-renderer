@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-namespace ShaderErrorParser
+namespace GlslShaderErrorParser
 {
     struct SShaderError
     {

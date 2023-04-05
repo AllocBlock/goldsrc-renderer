@@ -8,7 +8,8 @@
 #include <set>
 
 bool gInited = false;
-std::filesystem::path gCompilePath = "";
+std::filesystem::path gGlslCompilePath = "";
+std::filesystem::path gHlslCompilePath = "";
 CShaderCompileCache gCompileCache = CShaderCompileCache();
 std::filesystem::path gCompileCacheFile = Environment::getTempFilePath("shaderCompileCache.txt");
 std::filesystem::path gTempOutputFile = Environment::getTempFilePath("CompileResult.temp.txt");
@@ -24,16 +25,23 @@ void __init()
         auto Val = Environment::getEnvironmentVariable(Key);
         if (!Val.empty())
         {
-            auto ExePath = std::filesystem::path(Val) / "Bin/glslangValidator.exe";
-            if (std::filesystem::exists(ExePath))
+            auto GlslExePath = std::filesystem::path(Val) / "Bin/glslangValidator.exe";
+            if (std::filesystem::exists(GlslExePath))
             {
-                gCompilePath = std::filesystem::canonical(ExePath);
-                break;
+                gGlslCompilePath = std::filesystem::canonical(GlslExePath);
             }
+            auto HlslExePath = std::filesystem::path(Val) / "Bin/dxc.exe";
+            if (std::filesystem::exists(HlslExePath))
+            {
+                gHlslCompilePath = std::filesystem::canonical(HlslExePath);
+            }
+
+            if (!gGlslCompilePath.empty() && !gHlslCompilePath.empty())
+                break;
         }
     }
 
-    if (gCompilePath.empty())
+    if (gGlslCompilePath.empty() || gHlslCompilePath.empty())
         throw std::runtime_error("Vulkan compiler not found, please check Vulkan SDK environment variable (VK_SDK_PATH, VULKAN_SDK)");
 
     if (std::filesystem::exists(gCompileCacheFile))
@@ -56,7 +64,7 @@ std::filesystem::path __generateCompiledShaderPath(const std::filesystem::path& 
 
 bool __executeCompileWithOutput(const std::string& vCommand, std::string& voOutput)
 {
-    int ExitCode = std::system((vCommand + " > \"" + gTempOutputFile.string() + "\"").c_str());
+    int ExitCode = std::system((vCommand + " > \"" + gTempOutputFile.string() + "\" 2>&1").c_str());
     voOutput = Common::readFileAsString(gTempOutputFile);
     return ExitCode == 0;
 }
@@ -64,6 +72,36 @@ bool __executeCompileWithOutput(const std::string& vCommand, std::string& voOutp
 void ShaderCompiler::addHeaderDir(const std::filesystem::path& vPath)
 {
     gHeaderDirSet.insert(Environment::normalizePath(vPath));
+}
+
+enum class EShaderSourceType
+{
+    HLSL,
+    GLSL
+};
+
+enum class EShaderStageType
+{
+    VERTEX,
+    FRAGMENT,
+    // TODO: add more stage
+};
+
+EShaderSourceType guessShaderSourceType(const std::filesystem::path& vPath)
+{
+    std::string ShaderSource = Common::readFileAsString(vPath);
+    if (ShaderSource.substr(0, 8) == "#version")
+        return EShaderSourceType::GLSL;
+    else
+        return EShaderSourceType::HLSL;
+}
+
+EShaderStageType getShaderStageType(const std::filesystem::path& vPath)
+{
+    std::string Ext = vPath.extension().string();
+    if (Ext == ".vert") return EShaderStageType::VERTEX;
+    if (Ext == ".frag") return EShaderStageType::FRAGMENT;
+    _SHOULD_NOT_GO_HERE;
 }
 
 std::filesystem::path ShaderCompiler::compile(const std::filesystem::path& vPath)
@@ -75,13 +113,50 @@ std::filesystem::path ShaderCompiler::compile(const std::filesystem::path& vPath
         throw std::runtime_error("File not found");
 
     auto OutputPath = __generateCompiledShaderPath(vPath);
-    std::string Cmd = gCompilePath.string() + " "; // exe 
-    
-    for (const auto& Dir : gHeaderDirSet)
-        Cmd += "-I\"" + Dir.string() + "\" "; // additional include directory
 
-    Cmd += "-V \"" + vPath.string() + "\" "; // input
-    Cmd += "-o \"" + OutputPath.string() + "\" "; // output
+    EShaderSourceType shaderType = guessShaderSourceType(ActualPath);
+    EShaderStageType shaderStageType = getShaderStageType(ActualPath);
+
+    std::string Cmd;  
+    switch (shaderType)
+    {
+    case EShaderSourceType::GLSL:
+        {
+        Cmd = gGlslCompilePath.string() + " "; // exe 
+
+        for (const auto& Dir : gHeaderDirSet)
+            Cmd += "-I\"" + Dir.string() + "\" "; // additional include directory
+
+        Cmd += "-V \"" + vPath.string() + "\" "; // input
+        Cmd += "-o \"" + OutputPath.string() + "\" "; // output
+        break;
+        }
+    case EShaderSourceType::HLSL: // TODO: HLSL compile can be integrated into C++ code
+        {
+        Cmd = gHlslCompilePath.string() + " -spirv -T"; // exe
+        if (shaderStageType == EShaderStageType::VERTEX)
+        {
+            Cmd += "vs";
+        }
+        else if (shaderStageType == EShaderStageType::FRAGMENT)
+        {
+            Cmd += "ps";
+        }
+        else _SHOULD_NOT_GO_HERE;
+
+        Cmd += "_6_0 "; // shader model version
+        Cmd += "-E main "; // entry
+
+        for (const auto& Dir : gHeaderDirSet)
+            Cmd += "-I\"" + Dir.string() + "\" "; // additional include directory
+
+        Cmd += "\"" + vPath.string() + "\" "; // input
+        Cmd += "-Fo \"" + OutputPath.string() + "\" "; // output
+        break;
+        }
+    default:
+        _SHOULD_NOT_GO_HERE;
+    }
 
     std::string Output;
     bool Success = __executeCompileWithOutput(Cmd, Output);
@@ -91,7 +166,9 @@ std::filesystem::path ShaderCompiler::compile(const std::filesystem::path& vPath
     {
         Log::log("Compile failed on file " + vPath.string());
 
-        auto ShaderErrorMsg = ShaderErrorParser::parseAndFormat(Output);
+        auto ShaderErrorMsg = Output;
+        if (shaderType == EShaderSourceType::GLSL)
+            ShaderErrorMsg =  GlslShaderErrorParser::parseAndFormat(ShaderErrorMsg);
         Log::log(ShaderErrorMsg);
         throw std::runtime_error("Compile failed");
         return "";

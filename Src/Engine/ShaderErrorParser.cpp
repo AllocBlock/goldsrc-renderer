@@ -3,7 +3,7 @@
 
 #include <regex>
 
-std::vector<ShaderErrorParser::SShaderError> ShaderErrorParser::parse(const std::string& vErrorStr)
+std::vector<GlslShaderErrorParser::SShaderError> GlslShaderErrorParser::parse(const std::string& vErrorStr)
 {
     auto LineSet = Common::split(vErrorStr, "\n");
 
@@ -45,7 +45,7 @@ std::string __toStringWithPadding(size_t vNumber, size_t vTotalLength)
     return Res;
 }
 
-std::string ShaderErrorParser::parseAndFormat(const std::string& vErrorStr)
+std::string GlslShaderErrorParser::parseAndFormat(const std::string& vErrorStr)
 {
     auto ErrorSet = parse(vErrorStr);
     if (ErrorSet.empty())
