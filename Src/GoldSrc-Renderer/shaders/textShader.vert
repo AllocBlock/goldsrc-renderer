@@ -14,13 +14,12 @@ struct UBO
 
 [[vk::binding(0)]] cbuffer ubo { UBO ubo; }
 
-struct SPushConstant
+[[vk::push_constant]]
+struct
 {
     float3 Scale;
     float3 Position;
-};
-
-[[vk::push_constant]] SPushConstant uPushConstant;
+} uPushConstant;
 
 struct VSOutput
 {
@@ -34,7 +33,7 @@ VSOutput main(VSInput input, uint VertexIndex : SV_VertexID)
     float3 Z = normalize(-ubo.EyeDirection);
     float3 X = normalize(cross(float3(0.0, 1.0, 0.0), Z));
     float3 Y = normalize(cross(Z, X));
-    float3x3 Rotate = float3x3(X, Y, Z);
+    float3x3 Rotate = transpose(float3x3(X, Y, Z));
     float3 World = mul(Rotate, float3(input.Position.xy, 0.0) * uPushConstant.Scale) + uPushConstant.Position;
     
 	VSOutput output = (VSOutput)0;

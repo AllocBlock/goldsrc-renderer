@@ -7,13 +7,12 @@ struct FSInput
 [[vk::combinedImageSampler]][[vk::binding(1)]] Texture2D uFontTexture;
 [[vk::combinedImageSampler]][[vk::binding(1)]] SamplerState uSampler;
 
-struct SPushConstant
+[[vk::push_constant]]
+struct
 {
     float3 Scale;
     float3 Position;
-};
-
-[[vk::push_constant]] SPushConstant uPushConstant;
+} uPushConstant;
 
 float4 main(FSInput input) : SV_Target
 {
