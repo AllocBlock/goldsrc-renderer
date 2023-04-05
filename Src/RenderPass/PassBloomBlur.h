@@ -61,7 +61,7 @@ private:
         m_BrightImageSet.init(ImageNum);
         for (uint32_t i = 0; i < ImageNum; ++i)
         {
-            Function::createImage2d(*m_BrightImageSet[i], m_pDevice, vExtent, Format, Usage);
+            ImageUtils::createImage2d(*m_BrightImageSet[i], m_pDevice, vExtent, Format, Usage);
             m_pPortSet->setOutput("Output", *m_BrightImageSet[i]);
         }
     }

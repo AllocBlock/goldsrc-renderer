@@ -1,5 +1,5 @@
 #include "PassShadowMap.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "RenderPassDescriptor.h"
 
 void CRenderPassShadowMap::exportShadowMapToFile(std::string vFileName)
@@ -109,7 +109,7 @@ void CRenderPassShadowMap::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CRenderPassShadowMap::__createDepthResources()
 {
-    Function::createDepthImage(m_DepthImage, m_pDevice, m_ShadowMapExtent);
+    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, m_ShadowMapExtent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 

@@ -1,5 +1,5 @@
 #include "PipelineSimple.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "PointData.h"
 
 size_t CPipelineSimple::MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
@@ -91,7 +91,7 @@ void CPipelineSimple::_createResourceV(size_t vImageNum)
     );
     m_Sampler.create(m_pDevice, SamplerInfo);
 
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 
     __updateDescriptorSet();
 }

@@ -1,6 +1,6 @@
 #include "PassGoldSrc.h"
 #include "Common.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "InterfaceUI.h"
 #include "RenderPassDescriptor.h"
 #include "Log.h"
@@ -39,7 +39,7 @@ void CSceneGoldSrcRenderPass::_initV()
         {
             vImageSet.init(1);
             VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-            Function::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
+            ImageUtils::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
             m_pPortSet->setOutput("Depth", *vImageSet[0]);
         }
     );
@@ -426,7 +426,7 @@ void CSceneGoldSrcRenderPass::__createTextureImages()
         m_TextureImageSet.init(NumTexture);
         for (size_t i = 0; i < NumTexture; ++i)
         {
-            Function::createImageFromIOImage(*m_TextureImageSet[i], m_pDevice, m_pSceneInfo->TexImageSet[i]);
+            ImageUtils::createImageFromIOImage(*m_TextureImageSet[i], m_pDevice, m_pSceneInfo->TexImageSet[i]);
         }
     }
 }
@@ -436,7 +436,7 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
     if (m_pSceneInfo && m_pSceneInfo->UseLightmap)
     {
         ptr<CIOImage> pCombinedLightmapImage = m_pSceneInfo->pLightmap->getCombinedLightmap();
-        Function::createImageFromIOImage(m_LightmapImage, m_pDevice, pCombinedLightmapImage);
+        ImageUtils::createImageFromIOImage(m_LightmapImage, m_pDevice, pCombinedLightmapImage);
     }
 }
 

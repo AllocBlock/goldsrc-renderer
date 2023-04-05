@@ -1,5 +1,5 @@
 #include "PassFullScreen.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "RenderPassDescriptor.h"
 
 void CRenderPassFullScreen::_initV()

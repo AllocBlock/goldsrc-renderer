@@ -1,5 +1,5 @@
 #include "PipelineSprite.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "VertexAttributeDescriptor.h"
 
 const size_t CPipelineSprite::MaxSpriteNum = 16; // if need change, you should change this in shader as well
@@ -40,7 +40,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     m_SpriteSequence.resize(vSpriteImageSet.size());
     for (size_t i = 0; i < vSpriteImageSet.size(); ++i)
     {
-        Function::createImageFromIOImage(*m_SpriteImageSet[i], m_pDevice, vSpriteImageSet[i].pImage);
+        ImageUtils::createImageFromIOImage(*m_SpriteImageSet[i], m_pDevice, vSpriteImageSet[i].pImage);
         m_SpriteSequence[i].SpriteType = static_cast<uint32_t>(vSpriteImageSet[i].Type);
         m_SpriteSequence[i].Origin = vSpriteImageSet[i].Position;
         m_SpriteSequence[i].Angle = vSpriteImageSet[i].Angle;
@@ -150,7 +150,7 @@ void CPipelineSprite::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
 
     // placeholder image
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelineSprite::_destroyV()

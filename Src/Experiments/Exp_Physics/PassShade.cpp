@@ -1,5 +1,5 @@
 #include "PassShade.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "RenderPassDescriptor.h"
 #include "InterfaceUI.h"
 
@@ -87,7 +87,7 @@ void CRenderPassShade::__createDepthResources()
     m_DepthImage.destroy();
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    Function::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent, NULL, DepthFormat);
+    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent, NULL, DepthFormat);
 
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }

@@ -1,6 +1,6 @@
 #include "PassPBR.h"
 #include "InterfaceUI.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "RenderPassDescriptor.h"
 
 void CRenderPassPBR::_initV()
@@ -100,7 +100,7 @@ void CRenderPassPBR::__createGraphicsPipeline()
 
 void CRenderPassPBR::__createDepthResources()
 {
-    Function::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
+    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
@@ -141,18 +141,18 @@ void CRenderPassPBR::__createMaterials()
     m_TextureColorSet.init(1);
     CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
-    Function::createImageFromIOImage(*m_TextureColorSet[0], m_pDevice, pColorImage);
+    ImageUtils::createImageFromIOImage(*m_TextureColorSet[0], m_pDevice, pColorImage);
 
     m_TextureNormalSet.init(1);
     CIOImage::Ptr pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
     pNormalImage->read();
-    Function::createImageFromIOImage(*m_TextureNormalSet[0], m_pDevice, pNormalImage);
+    ImageUtils::createImageFromIOImage(*m_TextureNormalSet[0], m_pDevice, pNormalImage);
 
     m_TextureSpecularSet.init(1);
     CIOImage::Ptr pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
     pSpecularImage->read();
     vk::CImage Specular;
-    Function::createImageFromIOImage(*m_TextureSpecularSet[0], m_pDevice, pSpecularImage);
+    ImageUtils::createImageFromIOImage(*m_TextureSpecularSet[0], m_pDevice, pSpecularImage);
 
     _ASSERTE(m_GridSize > 0);
     size_t Num = m_GridSize * m_GridSize;

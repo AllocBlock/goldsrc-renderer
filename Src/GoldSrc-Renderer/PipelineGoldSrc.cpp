@@ -1,6 +1,6 @@
 #include "PipelineNormal.h"
 #include "Sampler.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "PointData.h"
 
 size_t CPipelineGoldSrc::MaxTextureNum = 2048; // if need change, you should change this in frag shader as well
@@ -168,7 +168,7 @@ void CPipelineGoldSrc::_createResourceV(size_t vImageNum)
     );
     m_Sampler.create(m_pDevice, SamplerInfo);
 
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelineGoldSrc::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)

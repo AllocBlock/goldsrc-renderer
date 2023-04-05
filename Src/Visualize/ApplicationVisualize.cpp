@@ -1,6 +1,6 @@
 #include "ApplicationVisualize.h"
 
-#include "Function.h"
+#include "ImageUtils.h"
 #include "GlobalSingleTimeBuffer.h"
 
 void CApplicationVisualize::addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor)
@@ -42,7 +42,7 @@ void CApplicationVisualize::_createV()
             vImageSet.init(1);
             VkFormat DepthFormat = m_pDepthPort->getFormat().Format;
             EUsage Usage = m_pDepthPort->getFormat().Usage;
-            Function::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
+            ImageUtils::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
 
             /*VkCommandBuffer CommandBuffer = vk::beginSingleTimeBuffer();
             vImageSet[0]->transitionLayout(CommandBuffer, toLayout(Usage, true));

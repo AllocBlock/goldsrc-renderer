@@ -1,5 +1,5 @@
 #include "PipelineIcon.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "VertexAttributeDescriptor.h"
 
 namespace
@@ -159,7 +159,7 @@ void CPipelineIcon::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
 
     // placeholder image
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 
     // load icon images
     __createIconResources();
@@ -186,7 +186,7 @@ void CPipelineIcon::__createIconResources()
     {
         EIcon Icon = EIcon(i);
         auto pImage = pIconManager->getImage(Icon);
-        Function::createImageFromIOImage(*m_IconImageSet[i], m_pDevice, pImage);
+        ImageUtils::createImageFromIOImage(*m_IconImageSet[i], m_pDevice, pImage);
         m_IconIndexMap[Icon] = i;
     }
     __updateDescriptorSet();

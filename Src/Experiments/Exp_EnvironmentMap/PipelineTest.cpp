@@ -1,5 +1,5 @@
 #include "PipelineTest.h"
-#include "Function.h"
+#include "ImageUtils.h"
 
 namespace
 {
@@ -136,7 +136,7 @@ void CPipelineTest::_createResourceV(size_t vImageNum)
     );
     m_Sampler.create(m_pDevice, SamplerInfo);
 
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelineTest::_destroyV()

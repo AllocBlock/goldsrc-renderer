@@ -1,5 +1,5 @@
 #include "PipelineText.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "VertexAttributeDescriptor.h"
 
 namespace
@@ -105,7 +105,7 @@ void CPipelineText::_createResourceV(size_t vImageNum)
     m_Sampler.create(m_pDevice, SamplerInfo);
 
     // default font image
-    Function::createImageFromIOImage(m_FontImage, m_pDevice, CFont::getDefaultFont()->getImage());
+    ImageUtils::createImageFromIOImage(m_FontImage, m_pDevice, CFont::getDefaultFont()->getImage());
 
     __updateDescriptorSet();
 }

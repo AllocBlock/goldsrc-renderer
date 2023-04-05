@@ -1,5 +1,5 @@
 #include "PipelineEnvironment.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "FullScreenPointData.h"
 
 namespace
@@ -13,7 +13,7 @@ namespace
 
 void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
 {
-    Function::createImageFromIOImage(m_EnvironmentImage, m_pDevice, vSkyImage);
+    ImageUtils::createImageFromIOImage(m_EnvironmentImage, m_pDevice, vSkyImage);
     __precalculateIBL(vSkyImage);
     __updateDescriptorSet();
     m_Ready = true;
@@ -84,7 +84,7 @@ void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
 
 void CPipelineEnvironment::__createPlaceholderImage()
 {
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelineEnvironment::__updateDescriptorSet()

@@ -4,7 +4,7 @@
 #include "Sampler.h"
 #include "UniformBuffer.h"
 #include "FullScreenPointData.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "InterfaceUI.h"
 #include "RenderPassPort.h"
 
@@ -67,7 +67,7 @@ protected:
         if (!m_pPlaceholderImage)
         {
             m_pPlaceholderImage = make<vk::CImage>();
-            Function::createPlaceholderImage(*m_pPlaceholderImage, m_pDevice);
+            ImageUtils::createPlaceholderImage(*m_pPlaceholderImage, m_pDevice);
         }
 
         if (!m_Sampler.isValid())

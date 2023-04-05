@@ -132,6 +132,12 @@
     <ClCompile Include="Font.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ImageUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Maths.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -244,6 +250,15 @@
     </ClInclude>
     <ClInclude Include="ComponentTextRenderer.h">
       <Filter>头文件\Scene\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Maths.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TestUtils.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

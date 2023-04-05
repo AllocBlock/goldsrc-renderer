@@ -1,4 +1,4 @@
-#include "Function.h"
+#include "ImageUtils.h"
 #include "Vulkan.h"
 #include "IOImage.h"
 
@@ -17,7 +17,7 @@ VkFormat toVulkanFormat(EPixelFormat vPixelFormat)
     }
 }
 
-void Function::createImageFromIOImage(vk::CImage& voImage, CDevice::CPtr vDevice, CIOImage::CPtr vImage, int vMipLevel)
+void ImageUtils::createImageFromIOImage(vk::CImage& voImage, CDevice::CPtr vDevice, CIOImage::CPtr vImage, int vMipLevel)
 {
     _ASSERTE(vImage->getData());
     VkDeviceSize DataSize = vImage->getDataSize();
@@ -50,17 +50,17 @@ void Function::createImageFromIOImage(vk::CImage& voImage, CDevice::CPtr vDevice
     vk::endSingleTimeBuffer(pCommandBuffer);
 }
 
-void Function::createPlaceholderImage(vk::CImage& voImage, CDevice::CPtr vDevice)
+void ImageUtils::createPlaceholderImage(vk::CImage& voImage, CDevice::CPtr vDevice)
 {
     // placeholder image
     uint8_t Data[4] = { 0, 0, 0, 0 };
     CIOImage::Ptr pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(Data);
-    Function::createImageFromIOImage(voImage, vDevice, pTinyImage);
+    ImageUtils::createImageFromIOImage(voImage, vDevice, pTinyImage);
 }
 
-void Function::createDepthImage(vk::CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
+void ImageUtils::createDepthImage(vk::CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
 {
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -87,7 +87,7 @@ void Function::createDepthImage(vk::CImage& voImage, CDevice::CPtr vDevice, VkEx
     endSingleTimeBuffer(pCommandBuffer);
 }
 
-void Function::createImage2d(CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkFormat vFormat, VkImageUsageFlags vUsage)
+void ImageUtils::createImage2d(CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkFormat vFormat, VkImageUsageFlags vUsage)
 {
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

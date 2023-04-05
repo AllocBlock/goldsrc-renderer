@@ -3,7 +3,7 @@
 
 class CIOImage; // FIXME: manage reference to avoid this kind of pre-declaration
 
-namespace Function
+namespace ImageUtils
 {
     void createImageFromIOImage(vk::CImage& voImage, vk::CDevice::CPtr vDevice, cptr<CIOImage> vImage, int vMipLevel = 1);
     void createPlaceholderImage(vk::CImage& voImage, vk::CDevice::CPtr vDevice);

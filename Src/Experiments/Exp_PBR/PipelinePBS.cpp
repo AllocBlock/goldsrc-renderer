@@ -1,6 +1,6 @@
 #include "PipelinePBS.h"
 #include "MaterialPBR.h"
-#include "Function.h"
+#include "ImageUtils.h"
 
 namespace
 {
@@ -70,8 +70,8 @@ void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::
 {
     m_SkyImage.destroy();
     m_SkyIrrImage.destroy();
-    Function::createImageFromIOImage(m_SkyImage, m_pDevice, vSkyImage, m_MipmapLevelNum);
-    Function::createImageFromIOImage(m_SkyIrrImage, m_pDevice, vSkyIrrImage);
+    ImageUtils::createImageFromIOImage(m_SkyImage, m_pDevice, vSkyImage, m_MipmapLevelNum);
+    ImageUtils::createImageFromIOImage(m_SkyIrrImage, m_pDevice, vSkyIrrImage);
 
     // FIXME: how to update in a better way?
     if (isReady())
@@ -80,7 +80,7 @@ void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::
 
 void CPipelinePBS::__createPlaceholderImage()
 {
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
 void CPipelinePBS::__updateDescriptorSet()
@@ -181,7 +181,7 @@ void CPipelinePBS::_createResourceV(size_t vImageNum)
     __createPlaceholderImage();
     CIOImage::Ptr pBRDFIOImage = make<CIOImage>("./textures/brdf.png");
     pBRDFIOImage->read();
-    Function::createImageFromIOImage(m_BRDFImage, m_pDevice, pBRDFIOImage);
+    ImageUtils::createImageFromIOImage(m_BRDFImage, m_pDevice, pBRDFIOImage);
 }
 
 void CPipelinePBS::_destroyV()

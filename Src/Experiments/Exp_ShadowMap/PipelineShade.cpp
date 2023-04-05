@@ -1,5 +1,5 @@
 #include "PipelineShade.h"
-#include "Function.h"
+#include "ImageUtils.h"
 
 namespace
 {
@@ -81,7 +81,7 @@ void CPipelineShade::_createResourceV(size_t vImageNum)
     );
     m_Sampler.create(m_pDevice, SamplerInfo);
 
-    Function::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
+    ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
     __updateDescriptorSet();
 }
 

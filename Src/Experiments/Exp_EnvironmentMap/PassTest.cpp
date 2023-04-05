@@ -1,6 +1,6 @@
 #include "PassTest.h"
 #include "RenderPassDescriptor.h"
-#include "Function.h"
+#include "ImageUtils.h"
 
 void CRenderPassSprite::_initV()
 {
@@ -119,7 +119,7 @@ void CRenderPassSprite::__createGraphicsPipeline()
 
 void CRenderPassSprite::__createDepthResources()
 {
-    Function::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
+    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 

@@ -344,6 +344,44 @@
   - 方案1：每个物体分配一个Uniform...
   - **方案2：Push constant，很方便**
 
+### 需求和设计思路
+- 需求
+  - 每个pass独立，port之间可以连接
+  - 当链接更新时，相关的pass也会自动更新
+    - 不同资源的更新，并且尽量避免重复更新
+  - 可以掌握每个pass的状态，手动指定任意一个port为屏幕输出
+  - 可以掌握每个pass依赖、生成的资源，判断当前状态是否就绪/可以运行
+- 实现
+  - 每个pass都有portset
+    - portset包含两类port：input和output
+    - 实际port分成三类：relay、source和relayOrSource
+      - *需要的资源可以直接在source/relayOrSource port上创建
+  - pass依赖一些数据，当这些数据变化时可能需要更新，这些数据包括
+    - 屏幕大小
+    - 输入的image
+    - swapchain中图像的数量
+  - 判断pass是否就绪
+    - 就绪不代表所有资源已经创建，但外部条件已满足，内部资源可随时创建，这由pass决定
+    - 只和输入的就绪状态有关
+
+## 问题：如何管理场景
+  - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理
+  - 而渲染时希望保证状态变化少，一劳永逸，需要做一些权衡
+  - 比如目前为了不拆散物体，允许一个物体有多个纹理，这导致一个物体drawcall需要引用多张纹理
+    - 解决方法就是把所有纹理全部传入shader，这个量级其实是比较大的
+    - 可以的做法是分batch，一次引用几张纹理这样，限制传入数量，可以考虑实现
+  - 另外还可以考虑顺便实现static batching，也是现代引擎常用的方法，减少draw call
+  - 还有部分需求是网状结构，很难处理
+    - 比如对于一批物体，一方面希望控制每个物体的可见性，因此不方便拆分物体；另一方面希望实现同一纹理网格的batching，需要拆分物体...
+
+## 问题：GUI事件处理
+  - 部分事件需要全局的信息，需要在主函数处理，否则就需要把全局信息传入，产生耦合
+  - 引入回调函数可以解决这个问题，但是大量的回调函数需要很多接口...
+  - 可以引入事件系统，这需要涉及到
+    - 事件列表的设计，是全局通用，还是GUI自己定义
+    - hook和trigger
+    - **事件参数如何传递？**
+
 ## 问题：物理引擎设计
 ### 问题：要保证物理引擎的稳定，可以使用固定间隔更新
   - 但需要单独的线程来处理，同时要同步渲染和物理之间的状态
@@ -429,7 +467,7 @@
   - 把所有资源都传入数组（空的地方填placeholder，比如提前准备一个1x1的纹理用作placeholder）
   - 每个物体draw前pushconstant传入资源的索引
 - **动态描述符**：需要使用扩展，效率如何？
-  - [Khronos Blog - The Khronos Group Inc](https://www.khronos.org/blog/vk-ext-descriptor-buffer)
+  - [Bindless讨论，以VK_EXT_descriptor_buffer为出发点](https://www.khronos.org/blog/vk-ext-descriptor-buffer)
   - 
 
 ## 问题：隐藏依赖类的header与细节：前向声明和Pointer to implementation

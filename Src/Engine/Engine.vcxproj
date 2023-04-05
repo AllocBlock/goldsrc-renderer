@@ -100,6 +100,8 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="DynamicResourceManager.cpp" />
+    <ClCompile Include="ImageUtils.cpp" />
+    <ClCompile Include="Maths.cpp" />
     <ClCompile Include="RenderPassSingle.cpp" />
     <ClCompile Include="ShaderCompileCache.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
@@ -137,6 +139,8 @@
     <ClInclude Include="ComponentTextRenderer.h" />
     <ClInclude Include="DynamicResourceManager.h" />
     <ClInclude Include="Font.h" />
+    <ClInclude Include="ImageUtils.h" />
+    <ClInclude Include="Maths.h" />
     <ClInclude Include="RenderPassSingle.h" />
     <ClInclude Include="ShaderCompileCache.h" />
     <ClInclude Include="ShaderCompiler.h" />
@@ -157,6 +161,7 @@
     <ClInclude Include="RenderPassPort.h" />
     <ClInclude Include="SetupGLFW.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="TestUtils.h" />
     <ClInclude Include="Ticker.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="VertexAttributeDescriptor.h" />

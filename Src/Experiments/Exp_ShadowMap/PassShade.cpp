@@ -1,5 +1,5 @@
 #include "PassShade.h"
-#include "Function.h"
+#include "ImageUtils.h"
 #include "RenderPassDescriptor.h"
 #include "ShadowMapDefines.h"
 
@@ -86,7 +86,7 @@ void CRenderPassShade::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 
 void CRenderPassShade::__createDepthResources()
 {
-    Function::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
+    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
     m_pPortSet->setOutput("Depth", m_DepthImage);
 }
 
