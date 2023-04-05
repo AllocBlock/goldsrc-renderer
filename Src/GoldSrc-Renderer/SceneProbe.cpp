@@ -1,21 +1,14 @@
 #include "SceneProbe.h"
 #include "Maths.h"
 #include "ComponentMeshRenderer.h"
+#include "ComponentIconRenderer.h"
 
 #include <glm/matrix.hpp>
 #include <optional>
 
-bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vActor, float& voNearT)
+bool __intersectRayMesh(glm::vec3 vOrigin, glm::vec3 vDirection, CMesh::Ptr vMesh, float& voNearT)
 {
-	// check bounding box first
-	auto pTransform = vActor->getTransform();
-	auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
-	if (!pMeshRenderer) return false;
-
-	auto pMesh = pMeshRenderer->getMesh();
-	if (!pMesh) return false;
-
-	auto AABB = pMesh->getAABB();
+	auto AABB = vMesh->getAABB();
 	if (!AABB.IsValid) return false;
 
 	float FarT, NearT;
@@ -24,7 +17,7 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vA
 		return false;
 	}
 
-	auto MeshData = pMesh->getMeshDataV();
+	auto MeshData = vMesh->getMeshDataV();
 	// intersect each triangle
 	_ASSERTE(MeshData.getPrimitiveType() == E3DObjectPrimitiveType::TRIAGNLE_LIST); // FIXME: only support triangle list for now
 	auto PosSet = MeshData.getVertexArray();
@@ -41,10 +34,39 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vA
 		}
 	}
 
-	if(!Hit) return false;
-	
+	if (!Hit) return false;
+
 	voNearT = NearT;
 	return true;
+}
+
+bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vActor, float& voNearT)
+{
+	// check bounding box first
+	auto pTransform = vActor->getTransform();
+
+	// mesh
+	auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
+	if (pMeshRenderer)
+	{
+		auto pMesh = pMeshRenderer->getMesh();
+		if (pMesh)
+		{
+			if (__intersectRayMesh(vOrigin, vDirection, pMesh, voNearT))
+				return true;
+		}
+	}
+
+	// icon
+	auto pIconRenderer = pTransform->findComponent<CComponentIconRenderer>();
+	if (pIconRenderer)
+	{
+		float FarT;
+		if (Math::intersectRayAABB(vOrigin, vDirection, pIconRenderer->getAABBV(), false, voNearT, FarT))
+			return true;
+	}
+
+	return false;
 }
 
 bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene, CActor::Ptr& voActor, glm::vec3& voNearestIntersection)
@@ -84,6 +106,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene
     {
 		voNearestIntersection = EyePos + Direction * NearestDistance;
         voActor = pNearestActor;
+		std::cout << "select actor " << pNearestActor->getName() << "\n";
         return true;
     }
     else

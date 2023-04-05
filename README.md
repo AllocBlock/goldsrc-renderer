@@ -42,8 +42,7 @@
   - 辅助显示
     - 图标渲染 ✅已完成
     - 文本渲染
-      - ASCII
-        - 等宽字体 - Consola
+      - ASCII ✅已完成
       - 中文字体
 ## 其他功能（画🍕）
 - 高级渲染效果 ⏸暂停
@@ -103,3 +102,4 @@
 ## TODO
   - Debug scope功能
   - 碰撞分board和narrow
+  - GLSL → HLSL

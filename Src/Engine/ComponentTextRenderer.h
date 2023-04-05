@@ -85,6 +85,11 @@ public:
         return pVertBuffer;
     }
 
+    virtual SAABB getAABBV() const override
+    {
+        return SAABB::createByCenterExtent(m_pParent.lock()->getAbsoluteTranslate(), m_pParent.lock()->getAbsoluteScale() * 2.0f);
+    }
+
 protected:
     virtual std::string _getNameV() const override { return "Text Renderer"; }
 

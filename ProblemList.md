@@ -400,6 +400,38 @@
   - 问题：include变了如何重新编译
     - 得做一个include分析器....那不如干脆不用GL_GOOGLE_include_directive
 
+## 问题：per Object数据的处理
+### 涉及的资源
+- CommandBuffer：录制命令后提交，可以提交多个CommandBuffer
+- Descriptor：着色器资源（如纹理、采样器、Uniform），一般在开始录制命令前才能更新
+  - 使用扩展```VK_EXT_descriptor_buffer```能提供更新描述符的命令```vkCmdPushDescriptorSetKHR```，但效率如何？
+- UniformBuffer：Buffer数据，一般在开始录制命令前才能更新
+  - dynamicUBO能做到类似pushconstant的功能，但不如pushconstant方便，但它是提前提交数据+实时传输索引，效率应该高些
+- PushConstant：Buffer数据，使用命令更新
+
+### 流程
+1. 更新描述符
+2. 开始录制命令
+3. 绑定描述符
+4. 录制绘制、pushconstant等命令
+5. 停止录制并提交命令buffer
+### 实现资源切换
+- **多描述符**：适合切换纹理
+ - 创建多个描述符集合
+ - 创建Pipeline Layout时，可以同时指定多个描述符集合
+ - 分别更新（写入）描述符集合，比如填入不同的纹理
+ - 绘制时通过vkCmdBindDescriptorSets切换不同的描述符
+- **动态PushConstant**：适合per-object的buffer数据，如模型变换；但不能直接用于纹理
+ - pipeline创建PushConstant
+ - 在每个物体draw前pushconstant传入数据
+- **动态PushConstant+纹理数组**：多纹理，伪bindless
+  - 着色器使用纹理数组（需要固定大小）
+  - 把所有资源都传入数组（空的地方填placeholder，比如提前准备一个1x1的纹理用作placeholder）
+  - 每个物体draw前pushconstant传入资源的索引
+- **动态描述符**：需要使用扩展，效率如何？
+  - [Khronos Blog - The Khronos Group Inc](https://www.khronos.org/blog/vk-ext-descriptor-buffer)
+  - 
+
 ## 问题：隐藏依赖类的header与细节：前向声明和Pointer to implementation
 假如有以下代码
 ```C++

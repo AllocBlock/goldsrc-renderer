@@ -1,5 +1,6 @@
 #pragma once
 #include "Common.h"
+#include "BoundingBox.h"
 
 class CTransform; // avoid mutual include
 class IComponent
@@ -10,6 +11,8 @@ public:
 
     std::string getName() const { return _getNameV(); }
     ptr<CTransform> getTransform() const { return m_pParent.expired() ? nullptr : m_pParent.lock(); }
+    
+    virtual SAABB getAABBV() const = 0;
 
 protected:
     virtual std::string _getNameV() const = 0;
