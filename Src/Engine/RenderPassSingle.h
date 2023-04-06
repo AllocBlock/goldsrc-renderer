@@ -53,25 +53,32 @@ protected:
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) = 0;
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) = 0;
     virtual std::vector<VkClearValue> _getClearValuesV() = 0;
+    virtual std::vector<std::string> _getExtraCommandBufferNamesV() const { return {}; };
 
     CCommandBuffer::Ptr _getCommandBuffer(uint32_t vImageIndex)
     {
         return m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
     }
     
-    void _beginWithFramebuffer(uint32_t vImageIndex)
+    void _beginWithFramebuffer(uint32_t vImageIndex, bool vHasSecondary = false)
     {
         _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
 
         CCommandBuffer::Ptr CommandBuffer = _getCommandBuffer(vImageIndex);
 
         _ASSERTE(m_FramebufferSet[vImageIndex]->getAttachmentNum() == m_ClearValueSet.size());
-        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_ClearValueSet);
+        _begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_ClearValueSet, vHasSecondary);
     }
 
     void _endWithFramebuffer()
     {
         _end();
+    }
+
+    void _beginSecondary(CCommandBuffer::Ptr vCommandBuffer, uint32_t vImageIndex)
+    {
+        _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
+        vCommandBuffer->beginSecondary(get(), 0, *m_FramebufferSet[vImageIndex]);
     }
 
     CCommand m_Command = CCommand();
@@ -86,6 +93,11 @@ private:
         if (vImageNum == 0) return;
         m_Command.createPool(m_pDevice, ECommandType::RESETTABLE);
         m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(vImageNum), ECommandBufferLevel::PRIMARY);
+
+        for (const auto& Name : _getExtraCommandBufferNamesV())
+        {
+            m_Command.createBuffers(Name, static_cast<uint32_t>(vImageNum), ECommandBufferLevel::SECONDARY);
+        }
     }
 
     void __destroyCommandPoolAndBuffers()

@@ -74,6 +74,11 @@ protected:
         return DefaultClearValueColorDepth;
     }
 
+    virtual std::vector<std::string> _getExtraCommandBufferNamesV() const override
+    {
+        return { "Main", "Text" };
+    };
+
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
 
 private:
@@ -85,7 +90,6 @@ private:
     void __destroySceneResources();
     
     void __updateAllUniformBuffer(uint32_t vImageIndex);
-    void __drawMeshActor(uint32_t vImageIndex, CActor::Ptr vActor);
     
     size_t __getActualTextureNum();
     void __updatePipelineResourceGoldSrc(CPipelineGoldSrc& vPipeline);
@@ -94,7 +98,7 @@ private:
     void __updatePipelineResourceSprite(CPipelineSprite& vPipeline);
     void __updateTextureView();
 
-    void __drawActor(CCommandBuffer::Ptr vCommandBuffer, CActor::Ptr vActor)
+    void __drawMeshActor(CCommandBuffer::Ptr vCommandBuffer, CActor::Ptr vActor)
     {
         _ASSERTE(m_ActorSegmentMap.find(vActor) != m_ActorSegmentMap.end());
         size_t SegIndex = m_ActorSegmentMap.at(vActor);

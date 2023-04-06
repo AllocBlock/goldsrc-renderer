@@ -66,3 +66,28 @@ $$
 	      float, float, float,  // 作为矩阵的第二行
 	      float, float, float); // 作为矩阵的第三行
   ``` 
+
+
+### render pass和command buffer
+- [relation between render passes and command buffers](https://stackoverflow.com/questions/48521961/what-is-the-relation-between-render-passes-command-buffers-and-clearing-of-atta)
+- 工作流
+```
+begin commandbuffer 
+    begin renderpass
+        bind stuff (pipeline, buffers, descriptor sets)
+        draw
+    end renderpass
+end commandbuffer
+
+create_submit_info
+submit_to_graphics_queue
+```
+- command buffer之间互相独立，如果要用多个commandbuffer，他们不共享状态，所以一些命令要重新指定
+  - 特别是begin renderpass，开销很大[出处](https://kylemayes.github.io/vulkanalia/dynamic/secondary_command_buffers.html)
+    - 而且如果设置了clear，就没有意义了
+- secondary command buffer
+  - 相比primary，secondary不能单独submit到queue，而是通过primary的vkCmdExecuteCommands来运行
+  - secondary可以继承状态，无需重新设置
+  - 使用方法
+    - begin renderpass的subpass要指定为VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS，inline和secondary不能在一个subpass混用，这样要么用多个subpass，要么全部都用secondary buffer
+    - secondary buffer在begin时要设置inheritance info，usage用VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT

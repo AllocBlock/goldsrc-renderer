@@ -45,7 +45,7 @@
   - Advance 非等宽字符需要的，光标移动距离
 - Font 字体：从Character到Glyph的映射
 
-### 方法
+### 文本表示
 #### Font Atlas
 - 所有文字存储在一张图集上
   - ![](https://pic4.zhimg.com/80/v2-c738674d74ee141e68376d56927dc0fb_720w.webp)
@@ -57,6 +57,11 @@
 - [msdf-atlas-gen 生成Font Atlas的工具](https://github.com/Chlumsky/msdf-atlas-gen)
 - [Font Texture Generator Online](https://evanw.github.io/font-texture-generator/)
 - [SDF渲染](https://www.cnblogs.com/mmc1206x/p/11965064.html)
+
+## 文本渲染
+- 每个字符生成一个矩形Mesh和其对应字体的UV
+- 模拟光标的移动，每个Mesh按顺序排列在2D空间里
+- 模型变换平移到3D空间中
 
 ## 技术：物理模拟
 ### 概念

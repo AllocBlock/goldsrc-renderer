@@ -6,7 +6,7 @@ class CCommandBuffer
 public:
     _DEFINE_PTR(CCommandBuffer);
 
-    CCommandBuffer(VkCommandBuffer vBuffer, bool vIsSingleTimeBuffer);
+    CCommandBuffer(VkCommandBuffer vBuffer, bool vIsSingleTimeBuffer, bool vIsSecondary);
 
     bool isValid();
     bool isBegun() { return m_IsBegun; }
@@ -15,21 +15,24 @@ public:
     void markAsOutdate() { m_Buffer = VK_NULL_HANDLE; }
 
     void begin();
+    void beginSecondary(VkRenderPass vPass, uint32_t vSubPass, VkFramebuffer vFramebuffer);
     void end();
 
-    void beginRenderPass(const VkRenderPassBeginInfo& vBeginInfo, bool vIsSecondary)
+    void beginRenderPass(const VkRenderPassBeginInfo& vBeginInfo, bool vHasSecondary)
     {
+        _ASSERTE(!m_IsSecondary);
         __assertValid();
         __assertBegun();
         if (m_IsPassBegun)
             throw std::runtime_error("Already begun a pass");
         m_IsPassBegun = true;
-        VkSubpassContents Content = vIsSecondary ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE;
+        VkSubpassContents Content = vHasSecondary ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE;
         vkCmdBeginRenderPass(m_Buffer, &vBeginInfo, Content);
     }
 
     void endRenderPass()
     {
+        _ASSERTE(!m_IsSecondary);
         __assertValid();
         __assertBegun();
         if (!m_IsPassBegun)
@@ -138,6 +141,11 @@ public:
         vkCmdPushConstants(m_Buffer, m_BoundPipelineLayout, vState, 0, sizeof(vPushConstant), &vPushConstant);
     }
 
+    void execCommand(VkCommandBuffer vCommandBuffer)
+    {
+        vkCmdExecuteCommands(m_Buffer, 1, &vCommandBuffer);
+    }
+
 private:
     // no copy
     CCommandBuffer(const CCommandBuffer&) = delete;
@@ -169,6 +177,7 @@ private:
     bool m_IsPassBegun = false;
     VkCommandBuffer m_Buffer = VK_NULL_HANDLE;
     bool m_IsSingleTimeBuffer;
+    bool m_IsSecondary;
 
     VkBuffer m_BoundVertBuffer = VK_NULL_HANDLE;
     VkPipeline m_BoundPipeline = VK_NULL_HANDLE;

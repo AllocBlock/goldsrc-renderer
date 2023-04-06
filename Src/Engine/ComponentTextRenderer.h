@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "VertexAttributeDescriptor.h"
 #include "VertexBuffer.h"
+#include "Event.h"
 
 enum class ETextAlign
 {
@@ -14,6 +15,8 @@ enum class ETextAlign
 
 class CComponentTextRenderer : public IComponent
 {
+    _DEFINE_UPDATE_EVENT(TextMesh)
+    _DEFINE_UPDATE_EVENT(ShaderParam)
 public:
     _DEFINE_PTR(CComponentTextRenderer);
 
@@ -63,13 +66,76 @@ public:
         {
             m_Text = vText;
             __generateTextMesh();
+            m_TextMeshUpdateEventHandler.trigger();
         }
     }
 
-    _DEFINE_GETTER_SETTER_POINTER(Font, CFont::Ptr);
-    _DEFINE_GETTER_SETTER(Anchor, glm::vec3);
-    _DEFINE_GETTER_SETTER(Offset, glm::vec2);
-    _DEFINE_GETTER_SETTER(Scale, float);
+    _DEFINE_GETTER_POINTER(Font, CFont::Ptr);
+    _DEFINE_GETTER(Anchor, glm::vec3);
+    _DEFINE_GETTER(Offset, glm::vec2);
+    _DEFINE_GETTER(Scale, float);
+    _DEFINE_GETTER(LineHeight, float);
+    _DEFINE_GETTER(Spacing, float);
+
+    void setFont(CFont::Ptr vFont)
+    {
+        if (vFont != m_pFont)
+        {
+            m_pFont = vFont;
+            m_TextMeshUpdateEventHandler.trigger();
+        }
+    }
+    
+    void setAnchor(glm::vec3 vAnchor)
+    {
+        if (vAnchor != m_Anchor)
+        {
+            m_Anchor = vAnchor;
+            m_TextMeshUpdateEventHandler.trigger();
+        }
+    }
+    void setOffset(glm::vec2 vOffset)
+    {
+        if (vOffset != m_Offset)
+        {
+            m_Offset = vOffset;
+            m_TextMeshUpdateEventHandler.trigger();
+        }
+    }
+    
+    void setScale(float vScale)
+    {
+        if (vScale != m_Scale)
+        {
+            m_Scale = vScale;
+            m_TextMeshUpdateEventHandler.trigger();
+        }
+    }
+    
+    void setLineHeight(float vLineHeight)
+    {
+        if (vLineHeight != m_LineHeight)
+        {
+            m_LineHeight = vLineHeight;
+            m_TextMeshUpdateEventHandler.trigger();
+        }
+    }
+    void setSpacing(float vSpacing)
+    {
+        if (vSpacing != m_Spacing)
+        {
+            m_Spacing = vSpacing;
+            m_TextMeshUpdateEventHandler.trigger();
+        }
+    }
+    void setHorizonAlign(ETextAlign vAlign)
+    {
+        if (vAlign != m_HorizonAlign)
+        {
+            m_HorizonAlign = vAlign;
+            m_TextMeshUpdateEventHandler.trigger();
+        }
+    }
 
     glm::vec3 getWorldPosition() const
     {
@@ -172,7 +238,6 @@ private:
     glm::vec2 m_Offset = glm::vec2(0.0f);
     std::string m_Text = "";
     CFont::Ptr m_pFont = nullptr;
-    float m_FontSize = 32.0f;
     float m_Scale = 1.0f;
     float m_LineHeight = 40.0f;
     float m_Spacing = 0.0f;

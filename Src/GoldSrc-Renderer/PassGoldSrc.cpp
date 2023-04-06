@@ -191,27 +191,42 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 {
     _ASSERTE(isValid());
     
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
-
     bool RerecordCommand = false;
     if (m_RerecordCommandTimes > 0)
     {
         RerecordCommand = true;
         if (m_RerecordCommandTimes > 0) --m_RerecordCommandTimes;
     }
+    
+    // text
+    CCommandBuffer::Ptr pTextCmdBuffer = m_Command.getCommandBuffer("Text", vImageIndex);
+
+    bool IsTextCmdEmpty = false;
+
+    auto& PipelineText = m_PipelineSet.Text.get();
+    if (PipelineText.doesNeedRerecord(vImageIndex))
+    {
+        RerecordCommand = true;
+        _beginSecondary(pTextCmdBuffer, vImageIndex);
+        if (!PipelineText.recordCommand(pTextCmdBuffer, vImageIndex))
+        {
+            IsTextCmdEmpty = true;
+        }
+        pTextCmdBuffer->end();
+    }
+
+    // main
+    // TODO: split to separate buffers, and manage update
+    CCommandBuffer::Ptr pMainCmdBuffer = m_Command.getCommandBuffer("Main", vImageIndex);
+
     if (RerecordCommand)
     {
-        // init
-        std::vector<VkClearValue> ClearValueSet(2);
-        ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-        ClearValueSet[1].depthStencil = { 1.0f, 0 };
-
-        _beginWithFramebuffer(vImageIndex);
+        _beginSecondary(pMainCmdBuffer, vImageIndex);
 
         // 1. sky
         if (m_EnableSky)
         {
-            m_PipelineSet.Sky.get().recordCommand(pCommandBuffer, vImageIndex);
+            m_PipelineSet.Sky.get().recordCommand(pMainCmdBuffer, vImageIndex);
         }
 
         // 2. scene mesh
@@ -219,7 +234,7 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
 
         if (isNonEmptyAndValid(m_pVertexBuffer))
         {
-            pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+            pMainCmdBuffer->bindVertexBuffer(*m_pVertexBuffer);
             IsValid = true;
         }
 
@@ -227,12 +242,12 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         {
             if (m_RenderMethod == ERenderMethod::GOLDSRC)
             {
-                m_PipelineSet.Normal.get().bind(pCommandBuffer, vImageIndex);
-                m_PipelineSet.Normal.get().setOpacity(pCommandBuffer, 1.0f);
+                m_PipelineSet.Normal.get().bind(pMainCmdBuffer, vImageIndex);
+                m_PipelineSet.Normal.get().setOpacity(pMainCmdBuffer, 1.0f);
             }
             else if (m_RenderMethod == ERenderMethod::SIMPLE)
             {
-                m_PipelineSet.Simple.get().bind(pCommandBuffer, vImageIndex);
+                m_PipelineSet.Simple.get().bind(pMainCmdBuffer, vImageIndex);
             }
             else
             {
@@ -255,16 +270,16 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 if (m_RenderMethod == ERenderMethod::GOLDSRC)
                 {
                     bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
-                    m_PipelineSet.Normal.get().setLightmapState(pCommandBuffer, EnableLightmap);
+                    m_PipelineSet.Normal.get().setLightmapState(pMainCmdBuffer, EnableLightmap);
                 }
-                __drawMeshActor(vImageIndex, pActor);
+                __drawMeshActor(pMainCmdBuffer, pActor);
             }
         }
 
         // 3. sprite, icon and text
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
         {
-            m_PipelineSet.Sprite.get().recordCommand(pCommandBuffer, vImageIndex);
+            m_PipelineSet.Sprite.get().recordCommand(pMainCmdBuffer, vImageIndex);
         }
 
         if (m_pSceneInfo)
@@ -284,28 +299,25 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 glm::vec3 Scale = pActor->getTransform()->getAbsoluteScale();
                 PipelineIcon.addIcon(Icon, Position, glm::max(Scale.x, glm::max(Scale.y, Scale.z)));
             }
-            PipelineIcon.recordCommand(pCommandBuffer, vImageIndex);
+            PipelineIcon.recordCommand(pMainCmdBuffer, vImageIndex);
         }
+        pMainCmdBuffer->end();
+    }
 
-        // todo: remove duplicate loop
-        if (m_pSceneInfo)
+    CCommandBuffer::Ptr pPrimaryCmdBuffer = _getCommandBuffer(vImageIndex);
+    if (RerecordCommand)
+    {
+        _beginWithFramebuffer(vImageIndex, true);
+        pPrimaryCmdBuffer->execCommand(pMainCmdBuffer->get());
+        if (!IsTextCmdEmpty)
         {
-            auto& PipelineText = m_PipelineSet.Text.get();
-            for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
-            {
-                auto pActor = m_pSceneInfo->pScene->getActor(i);
-                if (!pActor->getVisible()) continue;
-
-                auto pTextRenderer = pActor->getTransform()->findComponent<CComponentTextRenderer>();
-                if (!pTextRenderer) continue;
-                
-                PipelineText.drawTextActor(pCommandBuffer, vImageIndex, pActor);
-            }
+            pPrimaryCmdBuffer->execCommand(pTextCmdBuffer->get());
         }
 
         _endWithFramebuffer();
     }
-    return { pCommandBuffer->get() };
+
+    return { pPrimaryCmdBuffer->get() };
 }
 
 void CSceneGoldSrcRenderPass::__createSceneResources()
@@ -329,6 +341,23 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
         __updatePipelineResourceSky(m_PipelineSet.Sky.get());
     if (m_PipelineSet.Sprite.isReady())
         __updatePipelineResourceSprite(m_PipelineSet.Sprite.get());
+
+    // search all text renderer
+    if (m_pSceneInfo)
+    {
+        auto& PipelineText = m_PipelineSet.Text.get();
+        PipelineText.clearTextComponent();
+        for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
+        {
+            auto pActor = m_pSceneInfo->pScene->getActor(i);
+            if (!pActor->getVisible()) continue;
+
+            auto pTextRenderer = pActor->getTransform()->findComponent<CComponentTextRenderer>();
+            if (!pTextRenderer) continue;
+
+            PipelineText.addTextComponent(pTextRenderer);
+        }
+    }
 
     rerecordCommand();
 }
@@ -411,12 +440,6 @@ struct SModelSortInfo
 //        __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
 //    }
 //}
-
-void CSceneGoldSrcRenderPass::__drawMeshActor(uint32_t vImageIndex, CActor::Ptr vActor)
-{
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
-    __drawActor(pCommandBuffer, vActor);
-}
 
 void CSceneGoldSrcRenderPass::__createTextureImages()
 {

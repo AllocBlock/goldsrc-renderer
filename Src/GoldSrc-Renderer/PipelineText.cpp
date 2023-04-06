@@ -30,26 +30,66 @@ void CPipelineText::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCam
     m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
 }
 
-void CPipelineText::drawTextActor(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex, CActor::Ptr vActor)
+void CPipelineText::addTextComponent(CComponentTextRenderer::Ptr vTextRenderer)
 {
-    CComponentTextRenderer::CPtr pTextRenderer = vActor->getTransform()->findComponent<CComponentTextRenderer>();
-    if (!pTextRenderer) return;
-    if (m_TextCompVertBufferMap.find(pTextRenderer) == m_TextCompVertBufferMap.end())
+    _ASSERTE(vTextRenderer);
+    _ASSERTE(vTextRenderer->getTransform());
+    _ASSERTE(vTextRenderer->getFont() == CFont::getDefaultFont()); // only static default font is support for now
+
+    m_TextRendererSet.emplace_back(vTextRenderer);
+    m_VertBufferSet.emplace_back(nullptr);
+    m_NeedUpdateVertBufferSet.emplace_back(true);
+
+    size_t Index = m_TextRendererSet.size() - 1;
+    vTextRenderer->hookTextMeshUpdate([this, Index]() { m_NeedUpdateVertBufferSet[Index] = true; __markNeedRerecord(); });
+    vTextRenderer->hookShaderParamUpdate([this, Index]() { __markNeedRerecord(); });
+
+}
+
+void CPipelineText::clearTextComponent()
+{
+    m_TextRendererSet.clear();
+    for (const auto& pBuffer : m_VertBufferSet)
     {
-        m_TextCompVertBufferMap[pTextRenderer] = pTextRenderer->generateVertexBuffer(m_pDevice); // what if text is updated
+        pBuffer->destroy();
     }
+    m_VertBufferSet.clear();
+    m_NeedUpdateVertBufferSet.clear();
+    __markNeedRerecord();
+}
 
-    _ASSERTE(pTextRenderer->getFont() == CFont::getDefaultFont()); // only static default font is support for now
+bool CPipelineText::doesNeedRerecord(size_t vImageIndex)
+{
+    return m_NeedRerecordSet[vImageIndex];
+}
 
-    auto pVertBuffer = m_TextCompVertBufferMap.at(pTextRenderer);
-    bind(vCommandBuffer, vImageIndex);
-    vCommandBuffer->bindVertexBuffer(*pVertBuffer);
+// return false if no command is recorded
+bool CPipelineText::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+{
+    _ASSERTE(doesNeedRerecord(vImageIndex));
 
-    SPushConstant Constant;
-    Constant.Position = pTextRenderer->getWorldPosition();
-    Constant.Scale = vActor->getTransform()->getAbsoluteScale();
-    vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
-    vCommandBuffer->draw(0, pVertBuffer->getVertexNum());
+    for (size_t i = 0; i < m_TextRendererSet.size(); ++i)
+    {
+        if (m_NeedUpdateVertBufferSet[i])
+        {
+            m_VertBufferSet[i] = m_TextRendererSet[i]->generateVertexBuffer(m_pDevice);
+            m_NeedUpdateVertBufferSet[i] = false;
+        }
+
+        auto pVertBuffer = m_VertBufferSet[i];
+        bind(vCommandBuffer, vImageIndex);
+        vCommandBuffer->bindVertexBuffer(*pVertBuffer);
+
+
+        SPushConstant Constant;
+        Constant.Position = m_TextRendererSet[i]->getWorldPosition();
+        Constant.Scale = m_TextRendererSet[i]->getTransform()->getAbsoluteScale();
+        vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
+        vCommandBuffer->draw(0, pVertBuffer->getVertexNum());
+    }
+    m_NeedRerecordSet[vImageIndex] = false;
+
+    return !m_TextRendererSet.empty();
 }
 
 void CPipelineText::_initShaderResourceDescriptorV()
@@ -108,19 +148,19 @@ void CPipelineText::_createResourceV(size_t vImageNum)
     ImageUtils::createImageFromIOImage(m_FontImage, m_pDevice, CFont::getDefaultFont()->getImage());
 
     __updateDescriptorSet();
+
+    m_NeedRerecordSet.clear();
+    m_NeedRerecordSet.resize(vImageNum, true);
 }
 
 void CPipelineText::_destroyV()
 {
+    clearTextComponent();
+    m_NeedRerecordSet.clear();
+
     m_Sampler.destroy();
     m_FontImage.destroy();
     m_VertUniformBufferSet.destroyAndClearAll();
-
-    for (const auto& Pair : m_TextCompVertBufferMap)
-    {
-        Pair.second->destroy();
-    }
-    m_TextCompVertBufferMap.clear();
 }
 
 void CPipelineText::__updateDescriptorSet()

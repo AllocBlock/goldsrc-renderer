@@ -142,7 +142,7 @@ namespace vk
          */
         virtual void _onUpdateV(const SPassUpdateState& vUpdateState) {}
 
-        void _begin(CCommandBuffer::Ptr vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues);
+        void _begin(CCommandBuffer::Ptr vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues, bool vHasSecondary = false);
         void _end();
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 

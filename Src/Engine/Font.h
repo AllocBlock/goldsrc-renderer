@@ -23,6 +23,11 @@ public:
         std::array<glm::vec2, 4> UVs; // start at left top, counter clockwise
     };
 
+    float getFontBaseSize() const
+    {
+        return m_FontSize;
+    }
+
     CIOImage::CPtr getImage()
     {
         return m_pFontImage;

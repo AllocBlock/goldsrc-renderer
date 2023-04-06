@@ -53,10 +53,12 @@ void CCommand::createBuffers(std::string vName, uint32_t vNum, ECommandBufferLev
     std::vector<VkCommandBuffer> RawBufferSet(vNum);
     __allocBuffer(vNum, vLevel, RawBufferSet.data());
 
+    bool IsSecondary = (vLevel == ECommandBufferLevel::SECONDARY);
+
     m_NameToBufferSetMap[vName].resize(vNum, nullptr);
     for (size_t i = 0; i < vNum; ++i)
     {
-        m_NameToBufferSetMap[vName][i] = make<CCommandBuffer>(RawBufferSet[i], false);
+        m_NameToBufferSetMap[vName][i] = make<CCommandBuffer>(RawBufferSet[i], false, IsSecondary);
     }
 }
 
@@ -82,7 +84,7 @@ CCommandBuffer::Ptr CCommand::beginSingleTimeBuffer()
     VkCommandBuffer CommandBuffer;
     __allocBuffer(1, ECommandBufferLevel::PRIMARY, &CommandBuffer);
 
-    CCommandBuffer::Ptr pCommandBuffer = make<CCommandBuffer>(CommandBuffer, true);
+    CCommandBuffer::Ptr pCommandBuffer = make<CCommandBuffer>(CommandBuffer, true, false);
     pCommandBuffer->begin();
 
     m_InUseSingleTimeNum++;

@@ -468,7 +468,12 @@
   - 每个物体draw前pushconstant传入资源的索引
 - **动态描述符**：需要使用扩展，效率如何？
   - [Bindless讨论，以VK_EXT_descriptor_buffer为出发点](https://www.khronos.org/blog/vk-ext-descriptor-buffer)
-  - 
+
+## 问题：CommandBuffer的更新管理
+- 涉及command的信息发生变化时需要重新录制命令到commandbuffer，其他时候command是烘焙好的，可以重复提交
+- 传统OpenGL核心几乎每帧都要更新commandbuffer，而Vulkan可以自己掌控
+- 一个应用程序可以有成百上千的Commandbuffer
+- 如何管理buffer，尽量减少buffer更新，并且准确知道什么时候需要更新？
 
 ## 问题：隐藏依赖类的header与细节：前向声明和Pointer to implementation
 假如有以下代码
