@@ -380,29 +380,29 @@ void CRenderPassGoldSrc::__destroySceneResources()
     m_LightmapImage.destroy();
 }
 
-struct SModelSortInfo
-{
-    size_t Index;
-    EGoldSrcRenderMode RenderMode;
-    float Distance;
-
-    int getRenderModePriority() const
-    {
-        switch (RenderMode)
-        {
-        case EGoldSrcRenderMode::NORMAL:
-        case EGoldSrcRenderMode::SOLID:
-            return 0;
-        case EGoldSrcRenderMode::COLOR:
-        case EGoldSrcRenderMode::TEXTURE:
-            return 1;
-        case EGoldSrcRenderMode::GLOW:
-        case EGoldSrcRenderMode::ADDITIVE:
-            return 2;
-        default: return -1;
-        }
-    }
-};
+//struct SModelSortInfo
+//{
+//    size_t Index;
+//    EGoldSrcRenderMode RenderMode;
+//    float Distance;
+//
+//    int getRenderModePriority() const
+//    {
+//        switch (RenderMode)
+//        {
+//        case EGoldSrcRenderMode::NORMAL:
+//        case EGoldSrcRenderMode::SOLID:
+//            return 0;
+//        case EGoldSrcRenderMode::COLOR:
+//        case EGoldSrcRenderMode::TEXTURE:
+//            return 1;
+//        case EGoldSrcRenderMode::GLOW:
+//        case EGoldSrcRenderMode::ADDITIVE:
+//            return 2;
+//        default: return -1;
+//        }
+//    }
+//};
 
 // FIXME: restore this part later
 //void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelIndex)

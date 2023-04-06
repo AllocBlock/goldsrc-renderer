@@ -1,64 +1,10 @@
 #pragma once
 #include "IOImage.h"
 #include "Scene.h"
-#include "BoundingBox.h"
 
 #include <vector>
 #include <array>
-#include <map>
-#include <optional>
 #include <glm/glm.hpp>
-
-enum class EGoldSrcRenderMode
-{
-    NORMAL = 0x00,
-    COLOR,
-    TEXTURE,
-    GLOW,
-    SOLID,
-    ADDITIVE
-};
-
-struct SModelInfo
-{
-    SAABB BoundingBox;
-    EGoldSrcRenderMode RenderMode = EGoldSrcRenderMode::NORMAL;
-    float Opacity = 1.0f;
-};
-
-struct SBspTreeNode
-{
-    glm::vec3 PlaneNormal;
-    float PlaneDistance = 0.0f;
-    std::optional<uint32_t> PvsOffset = std::nullopt;
-    std::optional<int32_t> Front = std::nullopt;
-    std::optional<int32_t> Back = std::nullopt;
-
-    bool isPointFrontOfPlane(glm::vec3 vPoint) const;
-};
-
-struct SBspTree
-{
-    size_t NodeNum = 0, LeafNum = 0, ModelNum = 0;
-    std::vector<SBspTreeNode> Nodes;
-    std::map<size_t, std::vector<size_t>> LeafIndexToObjectIndices;
-    std::map<size_t, std::vector<size_t>> ModelIndexToObjectIndex;
-    std::vector<SModelInfo> ModelInfos; // TIPS: one model can contain multiple parts(actors)
-
-    uint32_t getPointLeaf(glm::vec3 vPoint);
-};
-
-struct SBspPvs
-{
-    uint32_t LeafNum = 0;
-    std::vector<uint8_t> RawData;
-    std::vector<std::vector<bool>> MapList;
-
-    void decompress(std::vector<uint8_t> vRawData, const SBspTree& vBspTree);
-    bool isLeafVisiable(uint32_t vStartLeafIndex, uint32_t vLeafIndex) const;
-private:
-    std::vector<uint8_t> __decompressFrom(size_t vStartIndex);
-};
 
 class CLightmap
 {
@@ -101,15 +47,10 @@ struct SSceneInfoGoldSrc
     std::vector<ptr<CIOImage>> TexImageSet;
     std::vector<SGoldSrcSprite> SprSet;
 
+    bool UseSkyBox = false;
+    std::array<ptr<CIOImage>, 6> SkyBoxImages;
+
     // for bsp
     bool UseLightmap = false;
     ptr<CLightmap> pLightmap = nullptr;
-
-    // for bsp
-    bool UsePVS = false;
-    SBspTree BspTree;
-    SBspPvs BspPvs;
-
-    bool UseSkyBox = false;
-    std::array<ptr<CIOImage>, 6> SkyBoxImages;
 };

@@ -35,7 +35,6 @@ ptr<SSceneInfoGoldSrc> CSceneReaderBsp::_readV()
 
     __readTextures();
     __loadBspTree();
-    __loadBspPvs();
     if (m_HasLightmapData)
         __correntLightmapCoords();
 
@@ -106,15 +105,12 @@ void CSceneReaderBsp::__readTextures()
     m_pSceneInfo->TexImageSet = std::move(TexImageSet);
 }
 
-std::vector<CActor::Ptr> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
+void CSceneReaderBsp::__loadLeaf(size_t vLeafIndex, CMeshData& vioMeshDataNormal, CMeshData& vioMeshDataSky)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
     _ASSERTE(vLeafIndex < Lumps.m_LumpLeaf.Leaves.size());
     const SBspLeaf& Leaf = Lumps.m_LumpLeaf.Leaves[vLeafIndex];
-
-    auto MeshDataNormalPart = CMeshData();
-    auto MeshDataSkyPart = CMeshData();
 
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -126,32 +122,17 @@ std::vector<CActor::Ptr> CSceneReaderBsp::__loadLeaf(size_t vLeafIndex)
         uint16_t FaceIndex = Lumps.m_LumpMarkSurface.FaceIndices[MarkSurfaceIndex];
         __getBspFaceTextureSizeAndName(FaceIndex, TexWidth, TexHeight, TexName);
         if (TexName == "sky")
-        {
-            __appendBspFaceToObject(MeshDataSkyPart, FaceIndex);
-        }
+            __appendBspFaceToObject(vioMeshDataSky, FaceIndex, true);
         else
-        {
-            __appendBspFaceToObject(MeshDataNormalPart, FaceIndex);
-        }
+            __appendBspFaceToObject(vioMeshDataNormal, FaceIndex, true);
     }
-    
-    auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "brush" });
-    auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
-    pActorSkyPart->setVisible(false);
-    
-    // to y-up counter clock wise
-    GoldSrc::toYupCounterClockwise(MeshDataNormalPart);
-    GoldSrc::toYupCounterClockwise(MeshDataSkyPart);
-
-    return { pActorNormalPart, pActorSkyPart };
 }
 
-std::vector<CActor::Ptr> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+CActor::Ptr CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    auto MeshDataNormalPart = CMeshData();
-    auto MeshDataSkyPart = CMeshData();
+    auto MeshData = CMeshData();
     
     const SBspModel& Model = Lumps.m_LumpModel.Models[vModelIndex];
     size_t TexWidth, TexHeight;
@@ -160,21 +141,15 @@ std::vector<CActor::Ptr> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
     {
         uint16_t FaceIndex = Model.FirstFaceIndex + i;
         __getBspFaceTextureSizeAndName(FaceIndex, TexWidth, TexHeight, TexName);
-        if (TexName == "sky")
-            __appendBspFaceToObject(MeshDataSkyPart, FaceIndex);
-        else
-            __appendBspFaceToObject(MeshDataNormalPart, FaceIndex);
+        _ASSERTE(TexName != "sky"); // model should not contain sky face
+        __appendBspFaceToObject(MeshData, FaceIndex, true);
     }
-    
-    auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "entity" });
-    auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
-    pActorSkyPart->setVisible(false);
 
     // to y-up counter clock wise
-    GoldSrc::toYupCounterClockwise(MeshDataNormalPart);
-    GoldSrc::toYupCounterClockwise(MeshDataSkyPart);
+    GoldSrc::toYupCounterClockwise(MeshData);
 
-    return { pActorNormalPart, pActorSkyPart };
+    auto pActor = GoldSrc::createActorByMeshAndTag(MeshData, { "entity" });
+    return pActor;
 }
 
 void CSceneReaderBsp::__loadBspTree()
@@ -183,132 +158,66 @@ void CSceneReaderBsp::__loadBspTree()
 
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    SBspTree BspTree;
-
     // read node and PVS data
     Scene::reportProgress(u8"载入BSP数据");
     size_t NodeNum = Lumps.m_LumpNode.Nodes.size();
     size_t LeafNum = Lumps.m_LumpLeaf.Leaves.size();
     size_t ModelNum = Lumps.m_LumpModel.Models.size();
 
-    BspTree.NodeNum = NodeNum;
-    BspTree.LeafNum = LeafNum;
-    BspTree.ModelNum = ModelNum;
-    BspTree.Nodes.resize(NodeNum + LeafNum);
-
     // read nodes and leaves
+    auto MeshDataNormalPart = CMeshData();
+    auto MeshDataSkyPart = CMeshData();
     for (size_t i = 0; i < NodeNum; ++i)
     {
         const SBspNode& OriginNode = Lumps.m_LumpNode.Nodes[i];
         _ASSERTE(OriginNode.PlaneIndex < Lumps.m_LumpPlane.Planes.size());
         const SBspPlane& OriginPlane = Lumps.m_LumpPlane.Planes[OriginNode.PlaneIndex];
-        SBspTreeNode& Node = BspTree.Nodes[i];
-
-        Node.PlaneNormal = OriginPlane.Normal.toGlm();
-        Node.PlaneDistance = OriginPlane.DistanceToOrigin * m_SceneScale;
-
-        if (OriginNode.ChildrenIndices[0] > 0)
-            Node.Front = OriginNode.ChildrenIndices[0];
-        else
+        
+        if (OriginNode.ChildrenIndices[0] <= 0)
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[0]);
-            Node.Front = NodeNum + LeafIndex;
-            auto LeafActorSet = __loadLeaf(LeafIndex);
-            std::vector<size_t> ObjectIndices;
-            for (auto pActor : LeafActorSet)
-            {
-                ObjectIndices.emplace_back(pScene->getActorNum());
-                pScene->addActor(pActor);
-            }
-            BspTree.LeafIndexToObjectIndices[LeafIndex] = ObjectIndices;
+            __loadLeaf(LeafIndex, MeshDataNormalPart, MeshDataSkyPart);
         }
-        if (OriginNode.ChildrenIndices[1] > 0)
-            Node.Back = OriginNode.ChildrenIndices[1];
-        else
+        if (OriginNode.ChildrenIndices[1] <= 0)
         {
             size_t LeafIndex = static_cast<size_t>(~OriginNode.ChildrenIndices[1]);
-            Node.Back = NodeNum + LeafIndex;
-            auto LeafActorSet = __loadLeaf(LeafIndex);
-            std::vector<size_t> ObjectIndices;
-            for (auto pActor : LeafActorSet)
-            {
-                ObjectIndices.emplace_back(pScene->getActorNum());
-                pScene->addActor(pActor);
-            }
-            BspTree.LeafIndexToObjectIndices[LeafIndex] = ObjectIndices;
+            __loadLeaf(LeafIndex, MeshDataNormalPart, MeshDataSkyPart);
         }
     }
 
+    _ASSERTE(MeshDataNormalPart.getLightmapIndexArray()->empty() || MeshDataNormalPart.getVertexArray()->size() == MeshDataNormalPart.getLightmapIndexArray()->size()); // all do not has lightmap or all have lightmap
+
+    // to y-up counter clock wise
+    GoldSrc::toYupCounterClockwise(MeshDataNormalPart);
+    auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "brush" });
+    pActorNormalPart->setName("brush");
+    m_pSceneInfo->pScene->addActor(pActorNormalPart);
+
+    // if need sky part, uncomment this
+    //GoldSrc::toYupCounterClockwise(MeshDataSkyPart);
+    //auto pActorSkyPart = GoldSrc::createActorByMeshAndTag(MeshDataSkyPart, { "sky" });
+    //pActorSkyPart->setName("sky");
+    //pActorSkyPart->setVisible(false);
+    //m_pSceneInfo->pScene->addActor(pActorSkyPart);
+    
     // read models
-    BspTree.ModelInfos.resize(ModelNum);
     for (size_t i = 1; i < ModelNum; ++i) // 从1号开始，0号实体似乎就是worldspawn，不含实体属性，包含全部固体
     {
-        // get entity opacity
+        // load entities data and calculate bounding box
+        auto pModelActor = __loadEntity(i);
+        pScene->addActor(pModelActor);
+        pModelActor->setName("model " + std::to_string(i));
+        
+        // get model entity name
         std::optional<SMapEntity> EntityOpt = __findEntity(i);
-        EGoldSrcRenderMode RenderMode = EGoldSrcRenderMode::NORMAL;
-        float Opacity = 1.0f;
         if (EntityOpt.has_value())
         {
             const SMapEntity& Entity = EntityOpt.value();
-            int RenderModeBit = Entity.Properties.find("rendermode") != Entity.Properties.end() ? std::stoi(Entity.Properties.at("rendermode")) : 0;
-            Opacity = Entity.Properties.find("renderamt") != Entity.Properties.end() ? std::stof(Entity.Properties.at("renderamt")) / 255.0f : 1.0f;
-
-            RenderMode = static_cast<EGoldSrcRenderMode>(RenderModeBit);
+            if (Entity.Properties.find("classname") != Entity.Properties.end())
+            {
+                pModelActor->setName(Entity.Properties.at("classname"));
+            }
         }
-
-        // load entities data and calculate bounding box
-        auto ModelActorSet = __loadEntity(i);
-        std::vector<size_t> ObjectIndices;
-        SAABB TotalAABB =
-        {
-            {INFINITY, INFINITY, INFINITY},
-            {-INFINITY, -INFINITY, -INFINITY},
-        };
-        for (auto pModelActor : ModelActorSet)
-        {
-            auto pTransform = pModelActor->getTransform();
-            auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
-            if (!pMeshRenderer) continue;
-
-            auto pMesh = pMeshRenderer->getMesh();
-            if (!pMesh) continue;
-
-            SAABB AABB = pMesh->getAABB();
-            if (!AABB.IsValid) continue;
-            TotalAABB.applyUnion(AABB);
-            ObjectIndices.emplace_back(pScene->getActorNum());
-            pScene->addActor(pModelActor);
-        }
-
-        BspTree.ModelIndexToObjectIndex[i] = ObjectIndices;
-        BspTree.ModelInfos[i].BoundingBox = TotalAABB;
-        BspTree.ModelInfos[i].RenderMode = RenderMode;
-        BspTree.ModelInfos[i].Opacity = Opacity;
-    }
-
-    // load pvs data to leaves
-    for (size_t i = 0; i < LeafNum; ++i)
-    {
-        const SBspLeaf& OriginLeaf = Lumps.m_LumpLeaf.Leaves[i];
-        SBspTreeNode& Node = BspTree.Nodes[NodeNum + i];
-
-        if (OriginLeaf.VisOffset >= 0)
-            Node.PvsOffset = OriginLeaf.VisOffset;
-    }
-
-    m_pSceneInfo->BspTree = BspTree;
-}
-
-void CSceneReaderBsp::__loadBspPvs()
-{
-    Scene::reportProgress(u8"载入VIS数据");
-
-    const SBspLumps& Lumps = m_Bsp.getLumps();
-
-    if (!Lumps.m_LumpVisibility.Vis.empty())
-    {
-        m_pSceneInfo->UsePVS = true;
-        m_pSceneInfo->BspPvs.decompress(Lumps.m_LumpVisibility.Vis, m_pSceneInfo->BspTree);
     }
 }
 
@@ -498,7 +407,7 @@ void CSceneReaderBsp::__getBspFaceTextureSizeAndName(size_t vFaceIndex, size_t& 
     voName = BspTexture.Name;
 }
 
-void CSceneReaderBsp::__appendBspFaceToObject(CMeshData& vioMeshData, uint32_t vFaceIndex)
+void CSceneReaderBsp::__appendBspFaceToObject(CMeshData& vioMeshData, uint32_t vFaceIndex, bool vForceFillLightmapData)
 {
     size_t TexWidth, TexHeight;
     std::string TexName;
@@ -547,6 +456,11 @@ void CSceneReaderBsp::__appendBspFaceToObject(CMeshData& vioMeshData, uint32_t v
             pLightmapCoordArray->append(LightmapCoords[0]);
             pLightmapCoordArray->append(LightmapCoords[k - 1]);
             pLightmapCoordArray->append(LightmapCoords[k]);
+        }
+        else if (vForceFillLightmapData)
+        {
+            pLightmapIndexArray->append(0, 3);
+            pLightmapCoordArray->append(glm::vec2(0.0f), 3);
         }
     }
 }
@@ -720,63 +634,5 @@ void CSceneReaderBsp::__loadPointEntities()
         pPointEntityActor->getTransform()->addComponent(pTextRenderer);
 
         m_pSceneInfo->pScene->addActor(pPointEntityActor);
-    }
-}
-
-void CSceneReaderBsp::__appendCube(glm::vec3 vOrigin, float vSize, CMeshData& vioMeshData)
-{
-    // create plane and vertex buffer
-    std::vector<glm::vec3> VertexSet =
-    {
-        { 1.0,  1.0,  1.0}, // 0
-        {-1.0,  1.0,  1.0}, // 1
-        {-1.0,  1.0, -1.0}, // 2
-        { 1.0,  1.0, -1.0}, // 3
-        { 1.0, -1.0,  1.0}, // 4
-        {-1.0, -1.0,  1.0}, // 5
-        {-1.0, -1.0, -1.0}, // 6
-        { 1.0, -1.0, -1.0}, // 7
-    };
-
-    for (auto& Vertex : VertexSet)
-    {
-        Vertex = vSize * Vertex + vOrigin;
-    }
-
-    const std::vector<size_t> IndexSet =
-    {
-        4, 1, 0, 4, 5, 1, // +z
-        3, 6, 7, 3, 2, 6, // -z
-        0, 2, 3, 0, 1, 2, // +y
-        5, 7, 6, 5, 4, 7, // -y
-        4, 3, 7, 4, 0, 3, // +x
-        1, 6, 2, 1, 5, 6, // -x
-    };
-
-    const std::vector<glm::vec3> NormalSet =
-    {
-        {0.0f, 0.0f, 1.0f},
-        {0.0f, 0.0f, -1.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, -1.0f, 0.0f},
-        {1.0f, 0.0f, 0.0f},
-        {-1.0f, 0.0f, 0.0f},
-    };
-
-    auto pVertexArray = vioMeshData.getVertexArray();
-    auto pColorArray = vioMeshData.getColorArray();
-    auto pNormalArray = vioMeshData.getNormalArray();
-    auto pTexCoordArray = vioMeshData.getTexCoordArray();
-    auto pLightmapCoordArray = vioMeshData.getLightmapTexCoordArray();
-    auto pTexIndexArray = vioMeshData.getTexIndexArray();
-
-    for (size_t i = 0; i < IndexSet.size(); ++i)
-    {
-        pVertexArray->append(VertexSet[IndexSet[i]]);
-        pColorArray->append(glm::vec3(0.0f, 0.0f, 0.0f));
-        pNormalArray->append(NormalSet[i / 6]);
-        pTexCoordArray->append(glm::vec2(0.0f, 0.0f));
-        pLightmapCoordArray->append(glm::vec2(0.0f, 0.0f));
-        pTexIndexArray->append(0);
     }
 }
