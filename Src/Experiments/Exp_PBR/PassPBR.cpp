@@ -40,7 +40,7 @@ void CRenderPassPBR::_renderUIV()
     UI::toggle("Force Use Material", m_PipelineControl.ForceUseMat);
     if (m_PipelineControl.ForceUseMat)
     {
-        UI::indent(20.0f);
+        UI::indent();
         UI::inputColor("Base Color", m_PipelineControl.Material.Albedo);
         UI::drag("Metallic", m_PipelineControl.Material.OMR.g, 0.01f, 0.01f, 0.99f);
         UI::drag("Roughness", m_PipelineControl.Material.OMR.b, 0.01f, 0.01f, 0.99f);

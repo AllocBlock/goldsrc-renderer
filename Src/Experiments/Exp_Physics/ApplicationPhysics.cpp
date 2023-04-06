@@ -155,7 +155,7 @@ void CApplicationPhysics::_renderUIV()
     {
         if (UI::collapse(u8"场景", true))
         {
-            UI::indent(20.0f);
+            UI::indent();
             if (UI::button(u8"重置场景"))
                 __resetActors();
             if (UI::button(u8"随机力"))
@@ -176,7 +176,7 @@ void CApplicationPhysics::_renderUIV()
                 std::string ActorName = pActor->getName();
                 if (UI::collapse(ActorName + "##Scene"))
                 {
-                    UI::indent(20.0f);
+                    UI::indent();
                     auto pTransform = pActor->getTransform();
                     UI::drag(u8"位置##" + ActorName + u8"_Scene", pTransform->Translate);
                     glm::vec3 Euler = pTransform->Rotate.getEulerDegrees();

@@ -62,6 +62,12 @@ void CApplicationGoldSrc::_createV()
             {
                 m_pPassOutlineMask->setHighlightActor(pNearestActor);
                 m_pPassVisualize->addLine(m_pCamera->getPos(), NearestIntersection, glm::vec3(0.0, 1.0, 0.0));
+                m_pMainUI->setSceneFocusedActor(pNearestActor);
+            }
+            else
+            {
+                m_pPassOutlineMask->removeHighlight();
+                m_pMainUI->clearSceneFocusedActor();
             }
         });
 

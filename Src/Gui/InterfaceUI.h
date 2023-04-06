@@ -72,7 +72,7 @@ namespace UI
     void endMenuBar();
 
     void sameLine();
-    void indent(float vWidth);
+    void indent(float vWidth = 20.0f);
     void unindent();
     void spacing();
     void split();

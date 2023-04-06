@@ -44,6 +44,16 @@ public:
         m_pInteractor = vInteractor;
     }
 
+    void setSceneFocusedActor(CActor::Ptr vActor)
+    {
+        m_GUIScene.setFocusedActor(vActor);
+    }
+
+    void clearSceneFocusedActor()
+    {
+        m_GUIScene.clearFocusedActor();
+    }
+
     static SResultReadScene readScene(std::filesystem::path vFilePath);
 protected:
     virtual void _renderUIV() override;
