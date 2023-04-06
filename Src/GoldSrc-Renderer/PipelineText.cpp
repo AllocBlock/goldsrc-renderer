@@ -43,7 +43,6 @@ void CPipelineText::addTextComponent(CComponentTextRenderer::Ptr vTextRenderer)
     size_t Index = m_TextRendererSet.size() - 1;
     vTextRenderer->hookTextMeshUpdate([this, Index]() { m_NeedUpdateVertBufferSet[Index] = true; __markNeedRerecord(); });
     vTextRenderer->hookShaderParamUpdate([this, Index]() { __markNeedRerecord(); });
-
 }
 
 void CPipelineText::clearTextComponent()
@@ -72,15 +71,18 @@ bool CPipelineText::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vIm
     {
         if (m_NeedUpdateVertBufferSet[i])
         {
+            m_pDevice->waitUntilIdle();
+            if (m_VertBufferSet[i]) m_VertBufferSet[i]->destroy();
             m_VertBufferSet[i] = m_TextRendererSet[i]->generateVertexBuffer(m_pDevice);
             m_NeedUpdateVertBufferSet[i] = false;
         }
 
         auto pVertBuffer = m_VertBufferSet[i];
+
+        if (!pVertBuffer) continue;
         bind(vCommandBuffer, vImageIndex);
         vCommandBuffer->bindVertexBuffer(*pVertBuffer);
-
-
+        
         SPushConstant Constant;
         Constant.Position = m_TextRendererSet[i]->getWorldPosition();
         Constant.Scale = m_TextRendererSet[i]->getTransform()->getAbsoluteScale();

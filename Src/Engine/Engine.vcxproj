@@ -99,6 +99,7 @@
     <ClCompile Include="BoundingBox.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Command.cpp" />
+    <ClCompile Include="ComponentTextRenderer.cpp" />
     <ClCompile Include="DynamicResourceManager.cpp" />
     <ClCompile Include="ImageUtils.cpp" />
     <ClCompile Include="Maths.cpp" />
@@ -127,6 +128,7 @@
     <ClCompile Include="IconManager.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Font.cpp" />
+    <ClCompile Include="Component.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />

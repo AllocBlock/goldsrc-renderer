@@ -35,13 +35,14 @@ public:
     
     SFontDrawInfo getCharDrawInfo(char vChar)
     {
+        float NormalizeScale = 2.0f / m_FontSize;
         // TODO: cache draw info
         const auto& Info = m_CharInfoMap.at(vChar);
 
         SFontDrawInfo DrawInfo;
-        DrawInfo.Size = glm::vec2(Info.Size) / m_FontSize;
-        DrawInfo.Offset = Info.Anchor / m_FontSize;
-        DrawInfo.Advance = Info.Advance / m_FontSize;
+        DrawInfo.Size = glm::vec2(Info.Size) * NormalizeScale;
+        DrawInfo.Offset = Info.Anchor * NormalizeScale;
+        DrawInfo.Advance = Info.Advance * NormalizeScale;
 
         glm::vec2 LeftTop = glm::vec2(Info.Offset) / m_FontAtlasSize;
         glm::vec2 RightBottom = glm::vec2(Info.Offset + Info.Size) / m_FontAtlasSize;

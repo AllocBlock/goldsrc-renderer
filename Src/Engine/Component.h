@@ -1,9 +1,11 @@
 #pragma once
+#include "Pointer.h"
 #include "Common.h"
 #include "BoundingBox.h"
+#include "DrawableUI.h"
 
 class CTransform; // avoid mutual include
-class IComponent
+class IComponent : public IDrawableUI
 {
 public:
     _DEFINE_PTR(IComponent);
@@ -11,7 +13,8 @@ public:
 
     std::string getName() const { return _getNameV(); }
     ptr<CTransform> getTransform() const { return m_pParent.expired() ? nullptr : m_pParent.lock(); }
-    
+
+    virtual void _renderUIV() {}
     virtual SAABB getAABBV() const = 0;
 
 protected:

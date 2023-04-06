@@ -1,4 +1,7 @@
 #include "InterfaceUI.h"
+
+#include <array>
+
 #include "Sampler.h"
 
 #include <imgui.h>
@@ -200,6 +203,17 @@ void UI::bulletText(std::string vName)
     return ImGui::BulletText(vName.c_str());
 }
 
+bool UI::textarea(std::string vName, std::string& vioText)
+{
+    const int BufferSize = 1024;
+    std::array<char, BufferSize> Buffer;
+    Buffer.fill('\0');
+    vioText.copy(Buffer.data(), vioText.size(), 0);
+    bool Updated = ImGui::InputTextMultiline(vName.c_str(), Buffer.data(), BufferSize);
+    vioText = Buffer.data();
+    return Updated;
+}
+
 bool UI::input(std::string vName, float& vioValue, float vStep)
 {
     return ImGui::InputFloat(vName.c_str(), &vioValue, vStep);
@@ -213,6 +227,11 @@ bool UI::input(std::string vName, glm::vec3& vioValue)
 bool UI::drag(std::string vName, float& vioValue, float vStep, float vMin, float vMax)
 {
     return ImGui::DragFloat(vName.c_str(), &vioValue, vStep, vMin, vMax);
+}
+
+bool UI::drag(std::string vName, glm::vec2& vioValue, float vStep, float vMin, float vMax)
+{
+    return ImGui::DragFloat2(vName.c_str(), glm::value_ptr(vioValue), vStep, vMin, vMax);
 }
 
 bool UI::drag(std::string vName, glm::vec3& vioValue, float vStep, float vMin, float vMax)

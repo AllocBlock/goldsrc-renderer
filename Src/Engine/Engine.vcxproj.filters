@@ -138,6 +138,12 @@
     <ClCompile Include="Maths.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ComponentTextRenderer.cpp">
+      <Filter>源文件\Scene\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>源文件\Scene\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">

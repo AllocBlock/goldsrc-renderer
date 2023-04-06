@@ -106,7 +106,6 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene
     {
 		voNearestIntersection = EyePos + Direction * NearestDistance;
         voActor = pNearestActor;
-		std::cout << "select actor " << pNearestActor->getName() << "\n";
         return true;
     }
     else

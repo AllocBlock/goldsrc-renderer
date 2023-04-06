@@ -42,9 +42,11 @@ namespace UI
     void endWindow();
     void text(std::string vName, bool vWarp = false);
     void bulletText(std::string vName);
+    bool textarea(std::string vName, std::string& vioText);
     bool input(std::string vName, float& vioValue, float vStep = 0.01f);
     bool input(std::string vName, glm::vec3& vioValue);
     bool drag(std::string vName, float& vioValue, float vStep = 0.01f, float vMin = 0.0f, float vMax = 0.0f);
+    bool drag(std::string vName, glm::vec2& vioValue, float vStep = 0.01f, float vMin = 0.0f, float vMax = 0.0f);
     bool drag(std::string vName, glm::vec3& vioValue, float vStep = 0.01f, float vMin = 0.0f, float vMax = 0.0f);
     bool slider(std::string vName, float& vioValue, float vMin = 0.0f, float vMax = 0.0f, std::string vFormat = "");
     bool inputColor(std::string vName, glm::vec3& vioColor);

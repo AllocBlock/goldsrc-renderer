@@ -122,6 +122,8 @@ void CPipelineMask::__updateVertexBuffer(CActor::Ptr vActor)
 
     m_VertexNum = 0;
 
+    if (!vActor) return;
+
     auto pTransform = vActor->getTransform();
     auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
     if (!pMeshRenderer) return;

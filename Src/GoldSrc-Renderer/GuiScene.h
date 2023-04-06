@@ -65,7 +65,13 @@ private:
             UI::indent();
             for (auto pComp : pTransform->getComponents())
             {
-                UI::text(pComp->getName());
+                std::string Id = std::to_string(reinterpret_cast<int64_t>(pComp.get()));
+                if (UI::collapse(pComp->getName() + "##" + Id))
+                {
+                    UI::indent();
+                    pComp->renderUI();
+                    UI::unindent();
+                }
             }
             UI::unindent();
         }
