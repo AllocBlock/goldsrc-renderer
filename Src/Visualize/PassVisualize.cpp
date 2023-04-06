@@ -82,6 +82,11 @@ CRenderPassDescriptor CRenderPassVisualize::_getRenderPassDescV()
 
 void CRenderPassVisualize::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    if (vUpdateState.ImageNum.IsUpdated || vUpdateState.RenderpassUpdated)
+    {
+        __rerecordCommand();
+    }
+
     m_PipelineSet.Triangle.updateV(vUpdateState);
     m_PipelineSet.Line.updateV(vUpdateState);
     m_PipelineSet.Point.updateV(vUpdateState);
@@ -119,7 +124,7 @@ std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV(uint3
         RerecordCommand = true;
         --m_RerecordCommandTimes;
     }
-    if (RerecordCommand)
+    if (true)
     {
         // init
         _beginWithFramebuffer(vImageIndex);

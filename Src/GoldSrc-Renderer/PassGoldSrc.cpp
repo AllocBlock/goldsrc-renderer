@@ -11,7 +11,7 @@
 #include <set>
 #include <fstream>
 
-void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
+void CRenderPassGoldSrc::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
 {
     m_pDevice->waitUntilIdle();
     m_CurTextureIndex = 0;
@@ -22,12 +22,12 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
     __updateTextureView();
 }
 
-void CSceneGoldSrcRenderPass::rerecordAllCommand()
+void CRenderPassGoldSrc::rerecordAllCommand()
 {
     m_pRerecord->requestRecordForAll();
 }
 
-void CSceneGoldSrcRenderPass::_initV()
+void CRenderPassGoldSrc::_initV()
 {
     CRenderPassScene::_initV();
 
@@ -109,7 +109,7 @@ void CSceneGoldSrcRenderPass::_initV()
     rerecordAllCommand();
 }
 
-void CSceneGoldSrcRenderPass::_initPortDescV(SPortDescriptor& vioDesc)
+void CRenderPassGoldSrc::_initPortDescV(SPortDescriptor& vioDesc)
 {
     vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 
@@ -117,14 +117,19 @@ void CSceneGoldSrcRenderPass::_initPortDescV(SPortDescriptor& vioDesc)
     vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
 }
 
-CRenderPassDescriptor CSceneGoldSrcRenderPass::_getRenderPassDescV()
+CRenderPassDescriptor CRenderPassGoldSrc::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
                                                             m_pPortSet->getOutputPort("Depth"));
 }
 
-void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
+void CRenderPassGoldSrc::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
+    if (vUpdateState.ImageNum.IsUpdated || vUpdateState.RenderpassUpdated)
+    {
+        rerecordAllCommand();
+    }
+
     m_DepthImageManager.updateV(vUpdateState);
     m_PipelineSet.update(vUpdateState);
 
@@ -140,12 +145,12 @@ void CSceneGoldSrcRenderPass::_onUpdateV(const vk::SPassUpdateState& vUpdateStat
     CRenderPassSingle::_onUpdateV(vUpdateState);
 }
 
-void CSceneGoldSrcRenderPass::_updateV(uint32_t vImageIndex)
+void CRenderPassGoldSrc::_updateV(uint32_t vImageIndex)
 {
     __updateAllUniformBuffer(vImageIndex);
 }
 
-void CSceneGoldSrcRenderPass::_renderUIV()
+void CRenderPassGoldSrc::_renderUIV()
 {
     if (UI::collapse(u8"‰÷»æ…Ë÷√"))
     {
@@ -181,7 +186,7 @@ void CSceneGoldSrcRenderPass::_renderUIV()
     
 }
 
-void CSceneGoldSrcRenderPass::_destroyV()
+void CRenderPassGoldSrc::_destroyV()
 {
     m_DepthImageManager.destroy();
     m_PipelineSet.destroy();
@@ -192,7 +197,7 @@ void CSceneGoldSrcRenderPass::_destroyV()
     CRenderPassScene::_destroyV();
 }
 
-std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(isValid());
 
@@ -323,11 +328,11 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
         pPrimaryCmdBuffer->execCommand(pTextCmdBuffer->get());
         _endWithFramebuffer();
     }
-
+    
     return { pPrimaryCmdBuffer->get() };
 }
 
-void CSceneGoldSrcRenderPass::__createSceneResources()
+void CRenderPassGoldSrc::__createSceneResources()
 {
     __createTextureImages();
     __createLightmapImage();
@@ -369,7 +374,7 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
     m_pRerecord->requestRecordForAll();
 }
 
-void CSceneGoldSrcRenderPass::__destroySceneResources()
+void CRenderPassGoldSrc::__destroySceneResources()
 {
     m_TextureImageSet.destroyAndClearAll();
     m_LightmapImage.destroy();
@@ -448,7 +453,7 @@ struct SModelSortInfo
 //    }
 //}
 
-void CSceneGoldSrcRenderPass::__createTextureImages()
+void CRenderPassGoldSrc::__createTextureImages()
 {
     size_t NumTexture = __getActualTextureNum();
     if (NumTexture > 0)
@@ -461,7 +466,7 @@ void CSceneGoldSrcRenderPass::__createTextureImages()
     }
 }
 
-void CSceneGoldSrcRenderPass::__createLightmapImage()
+void CRenderPassGoldSrc::__createLightmapImage()
 {
     if (m_pSceneInfo && m_pSceneInfo->UseLightmap)
     {
@@ -470,7 +475,7 @@ void CSceneGoldSrcRenderPass::__createLightmapImage()
     }
 }
 
-void CSceneGoldSrcRenderPass::__createVertexBuffer()
+void CRenderPassGoldSrc::__createVertexBuffer()
 {
     destroyAndClear(m_pVertexBuffer);
     if (m_RenderMethod == ERenderMethod::GOLDSRC)
@@ -493,7 +498,7 @@ void CSceneGoldSrcRenderPass::__createVertexBuffer()
     }
 }
 
-void CSceneGoldSrcRenderPass::__updateTextureView()
+void CRenderPassGoldSrc::__updateTextureView()
 {
     size_t ImageNum = m_pSceneInfo->TexImageSet.size();
     _ASSERTE(ImageNum == m_TextureImageSet.size());
@@ -507,7 +512,7 @@ void CSceneGoldSrcRenderPass::__updateTextureView()
     }
 }
 
-size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
+size_t CRenderPassGoldSrc::__getActualTextureNum()
 {
     size_t NumTexture = m_pSceneInfo ? m_pSceneInfo->TexImageSet.size() : 0;
     if (NumTexture > CPipelineNormal::MaxTextureNum)
@@ -518,19 +523,19 @@ size_t CSceneGoldSrcRenderPass::__getActualTextureNum()
     return NumTexture;
 }
 
-void CSceneGoldSrcRenderPass::__updatePipelineResourceGoldSrc(CPipelineGoldSrc& vPipeline)
+void CRenderPassGoldSrc::__updatePipelineResourceGoldSrc(CPipelineGoldSrc& vPipeline)
 {
     vPipeline.clearResources();
     vPipeline.setTextures(m_TextureImageSet);
     vPipeline.setLightmap(m_LightmapImage);
 }
 
-void CSceneGoldSrcRenderPass::__updatePipelineResourceSimple(CPipelineSimple& vPipeline)
+void CRenderPassGoldSrc::__updatePipelineResourceSimple(CPipelineSimple& vPipeline)
 {
     vPipeline.setTextures(m_TextureImageSet);
 }
 
-void CSceneGoldSrcRenderPass::__updatePipelineResourceSky(CPipelineSkybox& vPipeline)
+void CRenderPassGoldSrc::__updatePipelineResourceSky(CPipelineSkybox& vPipeline)
 {
     if (m_pSceneInfo)
     {
@@ -541,7 +546,7 @@ void CSceneGoldSrcRenderPass::__updatePipelineResourceSky(CPipelineSkybox& vPipe
     }
 }
 
-void CSceneGoldSrcRenderPass::__updatePipelineResourceSprite(CPipelineSprite& vPipeline)
+void CRenderPassGoldSrc::__updatePipelineResourceSprite(CPipelineSprite& vPipeline)
 {
     if (m_pSceneInfo)
     {
@@ -552,7 +557,7 @@ void CSceneGoldSrcRenderPass::__updatePipelineResourceSprite(CPipelineSprite& vP
     }
 }
 
-void CSceneGoldSrcRenderPass::__updateAllUniformBuffer(uint32_t vImageIndex)
+void CRenderPassGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
     glm::mat4 Model = glm::mat4(1.0f);
     m_PipelineSet.Normal.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);

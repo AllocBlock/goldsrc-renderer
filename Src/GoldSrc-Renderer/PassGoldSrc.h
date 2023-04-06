@@ -14,7 +14,7 @@
 #include "DynamicResourceManager.h"
 #include "RerecordState.h"
 
-class CSceneGoldSrcRenderPass : public CRenderPassScene
+class CRenderPassGoldSrc : public CRenderPassScene
 {
 public:
     enum class ERenderMethod
@@ -23,7 +23,7 @@ public:
         SIMPLE
     };
 
-    CSceneGoldSrcRenderPass() = default;
+    CRenderPassGoldSrc() = default;
     
     void rerecordAllCommand();
 

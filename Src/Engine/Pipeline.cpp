@@ -62,12 +62,7 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     m_pDevice->destroyShaderModule(VertShaderModule);
     m_pDevice->destroyShaderModule(FragShaderModule);
 
-#ifdef _DEBUG
-    static int Count = 0;
-    std::cout << "create pipeline [" << Count << "] = 0x " << std::setbase(16) << (uint64_t)(m_Pipeline)
-    << ", layout = 0x" << (uint64_t)(m_PipelineLayout) << std::setbase(10) << std::endl;
-    Count++;
-#endif
+    Log::logCreation("pipeline", uint64_t(m_Pipeline));
 
     _createV();
 }

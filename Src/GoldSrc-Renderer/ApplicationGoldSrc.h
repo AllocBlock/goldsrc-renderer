@@ -3,7 +3,7 @@
 #include "GuiMain.h"
 #include "Interactor.h"
 #include "SceneInfoGoldSrc.h"
-#include "PassScene.h"
+#include "PassGoldSrc.h"
 #include "PassGUI.h"
 #include "PassOutlineMask.h"
 #include "PassOutlineEdge.h"
@@ -23,7 +23,7 @@ protected:
 private:
     void __linkPasses();
 
-    ptr<CRenderPassScene> m_pPassScene = nullptr;
+    ptr<CRenderPassGoldSrc> m_pPassGoldSrc = nullptr;
     ptr<CRenderPassGUI> m_pPassGUI = nullptr;
     ptr<CRenderPassOutlineMask> m_pPassOutlineMask = nullptr;
     ptr<CRenderPassOutlineEdge> m_pPassOutlineEdge = nullptr;

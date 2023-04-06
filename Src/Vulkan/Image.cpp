@@ -4,6 +4,7 @@
 #include "Buffer.h"
 #include "PhysicalDevice.h"
 #include "Device.h"
+#include "Log.h"
 
 using namespace vk;
 
@@ -40,12 +41,9 @@ void CImage::create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, 
 
     m_IsOuterImage = false;
     __createImageView(vDevice, vViewInfo);
-#ifdef _DEBUG
-    static int Count = 0;
-    std::cout << "create image [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_Image) << " by 0x" << (uint64_t)(this) << std::setbase(10) << std::endl;
-    std::cout << "create memory [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_Memory) << " by 0x" << (uint64_t)(this) << std::setbase(10) << std::endl;
-    Count++;
-#endif
+
+    Log::logCreation("image", uint64_t(m_Image));
+    Log::logCreation("memory", uint64_t(m_Memory));
 }
 
 void CImage::createFromImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
@@ -249,11 +247,7 @@ void CImage::__createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vVie
 
     vk::checkError(vkCreateImageView(*vDevice, &ImageViewInfo, nullptr, _getPtr()));
 
-#ifdef _DEBUG
-    static int Count = 0;
-    std::cout << "create image view[" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(get()) << " by 0x" << (uint64_t)(this) << std::setbase(10) << std::endl;
-    Count++;
-#endif
+    Log::logCreation("image view", uint64_t(get()));
 }
 
 void CImage::generateMipmaps(CCommandBuffer::Ptr vCommandBuffer)

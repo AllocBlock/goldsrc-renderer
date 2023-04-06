@@ -101,11 +101,7 @@ void IRenderPass::__createRenderpass()
         vk::checkError(vkCreateRenderPass(*m_pDevice, &Info, nullptr, _getPtr()));
         m_CurPassDesc.clearStage(); // free stage data to save memory
 
-#ifdef _DEBUG
-        static int Count = 0;
-        std::cout << "create renderpass [" << Count << "] = 0x" << std::setbase(16) << uint64_t(get()) << std::setbase(10) << std::endl;
-        Count++;
-#endif
+        Log::logCreation("renderpass", uint64_t(get()));
     }
 
     __triggerRenderpassUpdate();

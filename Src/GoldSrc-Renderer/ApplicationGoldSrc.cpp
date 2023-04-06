@@ -34,7 +34,7 @@ void CApplicationGoldSrc::_createV()
     m_pMainUI->setReadSceneCallback([this](ptr<SSceneInfoGoldSrc> vScene)
         {
             m_pSceneInfo = vScene;
-            m_pPassScene->loadScene(vScene);
+            m_pPassGoldSrc->loadScene(vScene);
         });
     m_pMainUI->setRenderSettingCallback([this]()
         {
@@ -42,7 +42,7 @@ void CApplicationGoldSrc::_createV()
             if (m_pInteractor) m_pInteractor->renderUI();
             if (m_pPassOutlineMask) m_pPassOutlineMask->renderUI();
             if (m_pPassOutlineEdge) m_pPassOutlineEdge->renderUI();
-            if (m_pPassScene) m_pPassScene->renderUI();
+            if (m_pPassGoldSrc) m_pPassGoldSrc->renderUI();
         });
 
     m_pInteractor->setMouseCallback([this](GLFWwindow* vWindow, int vButton, int vAction)
@@ -71,11 +71,11 @@ void CApplicationGoldSrc::_createV()
             }
         });
 
-    m_pPassScene = make<CSceneGoldSrcRenderPass>();
-    m_pPassScene->init(m_pDevice, m_pAppInfo);
-    m_pPassScene->setCamera(m_pCamera);
+    m_pPassGoldSrc = make<CRenderPassGoldSrc>();
+    m_pPassGoldSrc->init(m_pDevice, m_pAppInfo);
+    m_pPassGoldSrc->setCamera(m_pCamera);
     if (m_pSceneInfo)
-        m_pPassScene->loadScene(m_pSceneInfo);
+        m_pPassGoldSrc->loadScene(m_pSceneInfo);
 
     __linkPasses();
 }
@@ -84,7 +84,7 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
     m_pPassGUI->update(vImageIndex);
-    m_pPassScene->update(vImageIndex);
+    m_pPassGoldSrc->update(vImageIndex);
     m_pPassOutlineMask->update(vImageIndex);
     m_pPassOutlineEdge->update(vImageIndex);
     m_pPassVisualize->update(vImageIndex);
@@ -99,7 +99,7 @@ void CApplicationGoldSrc::_renderUIV()
 
 void CApplicationGoldSrc::_destroyV()
 {
-    destroyAndClear(m_pPassScene);
+    destroyAndClear(m_pPassGoldSrc);
     destroyAndClear(m_pPassOutlineMask);
     destroyAndClear(m_pPassOutlineEdge);
     destroyAndClear(m_pPassGUI);
@@ -110,7 +110,7 @@ void CApplicationGoldSrc::_destroyV()
 
 void CApplicationGoldSrc::__linkPasses()
 {
-    auto pPortScene = m_pPassScene->getPortSet();
+    auto pPortScene = m_pPassGoldSrc->getPortSet();
     auto pPortOutlineMask = m_pPassOutlineMask->getPortSet();
     auto pPortOutlineEdge = m_pPassOutlineEdge->getPortSet();
     auto pPortVisualize = m_pPassVisualize->getPortSet();
@@ -131,7 +131,7 @@ void CApplicationGoldSrc::__linkPasses()
     CPortSet::link(pPortScene, "Depth", pPortVisualize, "Depth");
     m_pSwapchainPort->setForceNotReady(false);
 
-    _ASSERTE(m_pPassScene->isValid());
+    _ASSERTE(m_pPassGoldSrc->isValid());
     _ASSERTE(m_pPassOutlineMask->isValid());
     _ASSERTE(m_pPassOutlineEdge->isValid());
     _ASSERTE(m_pPassVisualize->isValid());

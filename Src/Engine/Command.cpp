@@ -1,5 +1,6 @@
 #include "Command.h"
 #include "Vulkan.h"
+#include "Log.h"
 
 using namespace vk;
 
@@ -28,11 +29,7 @@ void CCommand::createPool(CDevice::CPtr vDevice, ECommandType vType, uint32_t vQ
 
     vk::checkError(vkCreateCommandPool(*m_pDevice, &PoolInfo, nullptr, &m_CommandPool));
 
-//#ifdef _DEBUG
-//    static int Count = 0;
-//    std::cout << "create command pool [" << Count << "] = 0x" << std::setbase(16) << (uint64_t)(m_CommandPool) << std::setbase(10) << std::endl;
-//    Count++;
-//#endif
+    Log::logCreation("command pool", uint64_t(m_CommandPool));
 }
 
 void CCommand::createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel)
@@ -52,6 +49,15 @@ void CCommand::createBuffers(std::string vName, uint32_t vNum, ECommandBufferLev
 
     std::vector<VkCommandBuffer> RawBufferSet(vNum);
     __allocBuffer(vNum, vLevel, RawBufferSet.data());
+
+#ifdef _DEBUG
+    std::vector<uint64_t> HandleSet;
+    for (auto Buffer : RawBufferSet)
+    {
+        HandleSet.emplace_back(uint64_t(Buffer));
+    }
+    Log::logCreation("command buffer", HandleSet);
+#endif
 
     bool IsSecondary = (vLevel == ECommandBufferLevel::SECONDARY);
 
