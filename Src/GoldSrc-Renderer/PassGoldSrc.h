@@ -12,6 +12,7 @@
 #include "PipelineText.h"
 #include "Image.h"
 #include "DynamicResourceManager.h"
+#include "RerecordState.h"
 
 class CSceneGoldSrcRenderPass : public CRenderPassScene
 {
@@ -24,13 +25,13 @@ public:
 
     CSceneGoldSrcRenderPass() = default;
     
-    void rerecordCommand();
+    void rerecordAllCommand();
 
     bool getSkyState() const { return m_EnableSky; }
     void setSkyState(bool vEnableSky)
     { 
         bool EnableSky = vEnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
-        if (m_EnableSky != EnableSky) rerecordCommand();
+        if (m_EnableSky != EnableSky) m_pRerecord->requestRecord("Sky");
         m_EnableSky = EnableSky;
     }
 
@@ -42,7 +43,7 @@ public:
             m_RenderMethod = vMethod;
             m_pDevice->waitUntilIdle();
             __createVertexBuffer();
-            rerecordCommand();
+            m_pRerecord->requestRecord("Mesh");
         }
     }
     
@@ -76,7 +77,7 @@ protected:
 
     virtual std::vector<std::string> _getExtraCommandBufferNamesV() const override
     {
-        return { "Main", "Text" };
+        return { "Mesh", "Sprite", "Icon", "Text", "Sky"};
     };
 
     virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
@@ -154,10 +155,12 @@ private:
     vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
 
     std::map<CActor::Ptr, size_t> m_ActorSegmentMap;
-
-    size_t m_RerecordCommandTimes = 0;
+    
     bool m_EnableSky = true;
     ERenderMethod m_RenderMethod = ERenderMethod::GOLDSRC;
+
+    // rerecord control
+    CRerecordState::Ptr m_pRerecord = nullptr;
 
     // ÎÆÀí²é¿´
     int m_CurTextureIndex = 0;

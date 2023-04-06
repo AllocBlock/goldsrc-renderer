@@ -144,6 +144,7 @@
     <ClInclude Include="ImageUtils.h" />
     <ClInclude Include="Maths.h" />
     <ClInclude Include="RenderPassSingle.h" />
+    <ClInclude Include="RerecordState.h" />
     <ClInclude Include="ShaderCompileCache.h" />
     <ClInclude Include="ShaderCompiler.h" />
     <ClInclude Include="ShaderErrorParser.h" />

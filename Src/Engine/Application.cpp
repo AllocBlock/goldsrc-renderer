@@ -338,7 +338,7 @@ std::vector<VkCommandBuffer> IApplication::__sortCommandBuffers(uint32_t vImageI
     {
         const auto& BufferSet = OrderedPassSet[i]->requestCommandBuffers(vImageIndex);
         CommandBufferSet.insert(CommandBufferSet.begin(), BufferSet.begin(), BufferSet.end());
-    }
+     }
 
     return CommandBufferSet;
 }

@@ -22,14 +22,19 @@ void CSceneGoldSrcRenderPass::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
     __updateTextureView();
 }
 
-void CSceneGoldSrcRenderPass::rerecordCommand()
+void CSceneGoldSrcRenderPass::rerecordAllCommand()
 {
-    m_RerecordCommandTimes = m_pAppInfo->getImageNum();
+    m_pRerecord->requestRecordForAll();
 }
 
 void CSceneGoldSrcRenderPass::_initV()
 {
     CRenderPassScene::_initV();
+
+    m_pRerecord = make<CRerecordState>(m_pAppInfo);
+    m_pRerecord->addField("Primary");
+    for (const auto& Name : _getExtraCommandBufferNamesV())
+        m_pRerecord->addField(Name);
     
     VkExtent2D RefExtent = { 0, 0 };
     _dumpReferenceExtentV(RefExtent);
@@ -52,7 +57,7 @@ void CSceneGoldSrcRenderPass::_initV()
         {
             VkImageView Lightmap = (m_pSceneInfo && m_pSceneInfo->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
             __updatePipelineResourceGoldSrc(vPipeline);
-            rerecordCommand();
+            m_pRerecord->requestRecord("Mesh");
         }
     };
 
@@ -67,7 +72,7 @@ void CSceneGoldSrcRenderPass::_initV()
             if (vPipeline.isValid())
             {
                 __updatePipelineResourceSimple(vPipeline);
-                rerecordCommand();
+                m_pRerecord->requestRecord("Mesh");
             }
         });
     m_PipelineSet.Sky.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
@@ -76,7 +81,7 @@ void CSceneGoldSrcRenderPass::_initV()
             if (vPipeline.isValid())
             {
                 __updatePipelineResourceSky(vPipeline);
-                rerecordCommand();
+                m_pRerecord->requestRecord("Sky");
             }
         });
     m_PipelineSet.Sprite.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
@@ -85,23 +90,23 @@ void CSceneGoldSrcRenderPass::_initV()
             if (vPipeline.isValid())
             {
                 __updatePipelineResourceSprite(vPipeline);
-                rerecordCommand();
+                m_pRerecord->requestRecord("Sprite");
             }
         });
     m_PipelineSet.Icon.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
         [this](IPipeline& vPipeline)
         {
-            rerecordCommand();
+            m_pRerecord->requestRecord("Icon");
         });
     m_PipelineSet.Text.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
         [this](IPipeline& vPipeline)
         {
-            rerecordCommand();
+            m_pRerecord->requestRecord("Text");
         });
 
     __createSceneResources();
 
-    rerecordCommand();
+    rerecordAllCommand();
 }
 
 void CSceneGoldSrcRenderPass::_initPortDescV(SPortDescriptor& vioDesc)
@@ -190,64 +195,39 @@ void CSceneGoldSrcRenderPass::_destroyV()
 std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(uint32_t vImageIndex)
 {
     _ASSERTE(isValid());
+
+    bool NeedRecordPrimary = false;
     
-    bool RerecordCommand = false;
-    if (m_RerecordCommandTimes > 0)
+    // sky
+    CCommandBuffer::Ptr pSkyCmdBuffer = m_Command.getCommandBuffer("Sky", vImageIndex);
+    if (m_pRerecord->consume("Sky"))
     {
-        RerecordCommand = true;
-        if (m_RerecordCommandTimes > 0) --m_RerecordCommandTimes;
-    }
-    
-    // text
-    CCommandBuffer::Ptr pTextCmdBuffer = m_Command.getCommandBuffer("Text", vImageIndex);
-
-    bool IsTextCmdEmpty = false;
-
-    auto& PipelineText = m_PipelineSet.Text.get();
-    if (PipelineText.doesNeedRerecord(vImageIndex))
-    {
-        RerecordCommand = true;
-        _beginSecondary(pTextCmdBuffer, vImageIndex);
-        if (!PipelineText.recordCommand(pTextCmdBuffer, vImageIndex))
-        {
-            IsTextCmdEmpty = true;
-        }
-        pTextCmdBuffer->end();
-    }
-
-    // main
-    // TODO: split to separate buffers, and manage update
-    CCommandBuffer::Ptr pMainCmdBuffer = m_Command.getCommandBuffer("Main", vImageIndex);
-
-    if (RerecordCommand)
-    {
-        _beginSecondary(pMainCmdBuffer, vImageIndex);
-
-        // 1. sky
+        _beginSecondary(pSkyCmdBuffer, vImageIndex);
         if (m_EnableSky)
         {
-            m_PipelineSet.Sky.get().recordCommand(pMainCmdBuffer, vImageIndex);
+            m_PipelineSet.Sky.get().recordCommand(pSkyCmdBuffer, vImageIndex);
         }
+        pSkyCmdBuffer->end();
+        NeedRecordPrimary = true;
+    }
 
-        // 2. scene mesh
-        bool IsValid = false;
-
+    // mesh
+    CCommandBuffer::Ptr pMeshCmdBuffer = m_Command.getCommandBuffer("Mesh", vImageIndex);
+    if (m_pRerecord->consume("Mesh"))
+    {
+        _beginSecondary(pMeshCmdBuffer, vImageIndex);
         if (isNonEmptyAndValid(m_pVertexBuffer))
         {
-            pMainCmdBuffer->bindVertexBuffer(*m_pVertexBuffer);
-            IsValid = true;
-        }
-
-        if (IsValid)
-        {
+            pMeshCmdBuffer->bindVertexBuffer(*m_pVertexBuffer);
+    
             if (m_RenderMethod == ERenderMethod::GOLDSRC)
             {
-                m_PipelineSet.Normal.get().bind(pMainCmdBuffer, vImageIndex);
-                m_PipelineSet.Normal.get().setOpacity(pMainCmdBuffer, 1.0f);
+                m_PipelineSet.Normal.get().bind(pMeshCmdBuffer, vImageIndex);
+                m_PipelineSet.Normal.get().setOpacity(pMeshCmdBuffer, 1.0f);
             }
             else if (m_RenderMethod == ERenderMethod::SIMPLE)
             {
-                m_PipelineSet.Simple.get().bind(pMainCmdBuffer, vImageIndex);
+                m_PipelineSet.Simple.get().bind(pMeshCmdBuffer, vImageIndex);
             }
             else
             {
@@ -270,18 +250,33 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 if (m_RenderMethod == ERenderMethod::GOLDSRC)
                 {
                     bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
-                    m_PipelineSet.Normal.get().setLightmapState(pMainCmdBuffer, EnableLightmap);
+                    m_PipelineSet.Normal.get().setLightmapState(pMeshCmdBuffer, EnableLightmap);
                 }
-                __drawMeshActor(pMainCmdBuffer, pActor);
+                __drawMeshActor(pMeshCmdBuffer, pActor);
             }
         }
+        pMeshCmdBuffer->end();
+        NeedRecordPrimary = true;
+    }
 
-        // 3. sprite, icon and text
+    // sprite
+    CCommandBuffer::Ptr pSpriteCmdBuffer = m_Command.getCommandBuffer("Sprite", vImageIndex);
+    if (m_pRerecord->consume("Sprite"))
+    {
+        _beginSecondary(pSpriteCmdBuffer, vImageIndex);
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
         {
-            m_PipelineSet.Sprite.get().recordCommand(pMainCmdBuffer, vImageIndex);
+            m_PipelineSet.Sprite.get().recordCommand(pSpriteCmdBuffer, vImageIndex);
         }
+        pSpriteCmdBuffer->end();
+        NeedRecordPrimary = true;
+    }
 
+    // icon
+    CCommandBuffer::Ptr pIconCmdBuffer = m_Command.getCommandBuffer("Icon", vImageIndex);
+    if (m_pRerecord->consume("Icon"))
+    {
+        _beginSecondary(pIconCmdBuffer, vImageIndex);
         if (m_pSceneInfo)
         {
             auto& PipelineIcon = m_PipelineSet.Icon.get();
@@ -299,21 +294,33 @@ std::vector<VkCommandBuffer> CSceneGoldSrcRenderPass::_requestCommandBuffersV(ui
                 glm::vec3 Scale = pActor->getTransform()->getAbsoluteScale();
                 PipelineIcon.addIcon(Icon, Position, glm::max(Scale.x, glm::max(Scale.y, Scale.z)));
             }
-            PipelineIcon.recordCommand(pMainCmdBuffer, vImageIndex);
+            PipelineIcon.recordCommand(pIconCmdBuffer, vImageIndex);
         }
-        pMainCmdBuffer->end();
+        pIconCmdBuffer->end();
+        NeedRecordPrimary = true;
     }
 
+    // text
+    CCommandBuffer::Ptr pTextCmdBuffer = m_Command.getCommandBuffer("Text", vImageIndex);
+    auto& PipelineText = m_PipelineSet.Text.get();
+    if (PipelineText.doesNeedRerecord(vImageIndex))
+    {
+        _beginSecondary(pTextCmdBuffer, vImageIndex);
+        PipelineText.recordCommand(pTextCmdBuffer, vImageIndex);
+        pTextCmdBuffer->end();
+        NeedRecordPrimary = true;
+    }
+
+    // primary
     CCommandBuffer::Ptr pPrimaryCmdBuffer = _getCommandBuffer(vImageIndex);
-    if (RerecordCommand)
+    if (m_pRerecord->consume("Primary") || NeedRecordPrimary)
     {
         _beginWithFramebuffer(vImageIndex, true);
-        pPrimaryCmdBuffer->execCommand(pMainCmdBuffer->get());
-        if (!IsTextCmdEmpty)
-        {
-            pPrimaryCmdBuffer->execCommand(pTextCmdBuffer->get());
-        }
-
+        pPrimaryCmdBuffer->execCommand(pSkyCmdBuffer->get());
+        pPrimaryCmdBuffer->execCommand(pMeshCmdBuffer->get());
+        pPrimaryCmdBuffer->execCommand(pSpriteCmdBuffer->get());
+        pPrimaryCmdBuffer->execCommand(pIconCmdBuffer->get());
+        pPrimaryCmdBuffer->execCommand(pTextCmdBuffer->get());
         _endWithFramebuffer();
     }
 
@@ -359,7 +366,7 @@ void CSceneGoldSrcRenderPass::__createSceneResources()
         }
     }
 
-    rerecordCommand();
+    m_pRerecord->requestRecordForAll();
 }
 
 void CSceneGoldSrcRenderPass::__destroySceneResources()

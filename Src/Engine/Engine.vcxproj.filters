@@ -266,5 +266,8 @@
     <ClInclude Include="TestUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="RerecordState.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
