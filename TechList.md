@@ -316,6 +316,6 @@
 ---
 
 ## 色彩空间、PBR
-- ![色彩空间为什么那么空？](https://www.bilibili.com/video/BV19e4y1y7Mo)
+- [色彩空间为什么那么空？](https://www.bilibili.com/video/BV19e4y1y7Mo)
 
 ### Tonemap

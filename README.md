@@ -52,6 +52,25 @@
 - bsp实体触发机制与效果
 - 解析、播放地图音频
 - 读取并渲染dem文件
+
+## 架构图
+- Vulkan构造流程图
+![](./Doc/VulkanConstructSequence.png)
+- 类关系图
+![](./Doc/ClassRelations.png)
+- 渲染流程与生命周期图
+![](./Doc/LiveCycle.png)
+- 交换链渲染循环图
+![](./Doc/RenderLoopWithSwapchain.png)
+
+## 遇到的有价值的问题
+这里记录了很多开发过程中遇到的问题，主要是整个渲染器架构设计上的问题。
+- [问题列表](./ProblemList.md)
+
+## 一些用到的技术、算法
+这里记录了很多使用到的技术和算法，对其基本原理做了简单的介绍。
+- [技术列表](./TechList.md)
+
 ## 依赖
 - 所有C++依赖均通过vkpkg安装，使用64位版本
   - 图形API：vulkan （官网下载安装配置环境变量VULKAN_SDK为Vulkan根目录）
@@ -82,22 +101,6 @@
   vcpkg integrate install
   ```
   > 注意因为Vulkan并非下载源码安装，而是会去寻找本地已安装的SDK，所以才需要自己下载安装，此外安装后需要检查VULKAN_SDK环境变量是否正确
-
-## 架构图
-- Vulkan依赖图
-![](./Doc/VulkanReferenceGraph.png)
-- 数据流程图
-![](./Doc/DataFlowGraph.png)
-- 模块依赖
-![](./Doc/ModuleDependency.png)
-- 渲染流程与生命周期图
-![](./Doc/RenderFlowAndLiveCycle.png)
-
-## 遇到的有价值的问题
-- [问题列表](./ProblemList.md)
-
-## 一些用到的技术、算法
-- [技术列表](./TechList.md)
 
 ## TODO
   - Debug scope功能
