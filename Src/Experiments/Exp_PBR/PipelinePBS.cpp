@@ -145,8 +145,8 @@ CPipelineDescriptor CPipelinePBS::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("shaders/shaderVert.spv");
-    Descriptor.setFragShaderPath("shaders/shaderFrag.spv");
+    Descriptor.setVertShaderPath("pbsShader.vert");
+    Descriptor.setFragShaderPath("pbsShader.frag");
 
     Descriptor.setVertexInputInfo<SPointData>();
     Descriptor.setInputAssembly(VkPrimitiveTopology::VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, false);

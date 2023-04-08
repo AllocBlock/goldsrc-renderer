@@ -15,7 +15,6 @@ protected:
     virtual void _createV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
-    virtual std::vector<VkCommandBuffer> _getCommandBufferSetV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
 private:

@@ -140,6 +140,7 @@ private:
         destroy();
         m_CreateImageFunc(m_Extent, m_ImageSet);
         _ASSERTE(!m_ImageSet.empty() && m_ImageSet.isAllValid());
+        m_IsReady = true;
     }
 
     bool m_IsInitted = false;
@@ -235,10 +236,10 @@ public:
             {
                 m_Pipeline.create(m_pDevice, pPass->get(), m_Extent);
                 m_Pipeline.setImageNum(m_ImageNum);
+                if (m_pCreateCallback)
+                    m_pCreateCallback(m_Pipeline);
             }
         }
-        if (m_pCreateCallback)
-            m_pCreateCallback(m_Pipeline);
         m_IsReady = m_Pipeline.isValid();
     }
 
