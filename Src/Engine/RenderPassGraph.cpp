@@ -26,14 +26,12 @@ void CRenderPassGraph::__drawGrid()
     }
 }
 
-void CRenderPassGraph::__drawLink(const SRenderPassGraphLink& vLink, glm::vec2 vCanvasOffset)
+void CRenderPassGraph::__drawLink(const SRenderPassGraphLink& vLink)
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-
-    const auto& SrcNode = m_NodeMap[vLink.Source.NodeId];
-    const auto& DestNode = m_NodeMap[vLink.Destination.NodeId];
-    glm::vec2 p1 = vCanvasOffset + SrcNode.getOutputSlotPos(vLink.Source.Name);
-    glm::vec2 p2 = vCanvasOffset + DestNode.getInputSlotPos(vLink.Destination.Name);
+    
+    glm::vec2 p1 = m_NodePortPosMap.at(vLink.Source.NodeId).Output.at(vLink.Source.Name);
+    glm::vec2 p2 = m_NodePortPosMap.at(vLink.Destination.NodeId).Input.at(vLink.Destination.Name);
     glm::vec2 p11 = p1 + glm::vec2(50, 0);
     glm::vec2 p22 = p2 + glm::vec2(-50, 0);
 
@@ -42,37 +40,85 @@ void CRenderPassGraph::__drawLink(const SRenderPassGraphLink& vLink, glm::vec2 v
 
 void CRenderPassGraph::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset)
 {
+    const float LineHeight = ImGui::GetTextLineHeight();
     const float NODE_SLOT_RADIUS = 4.0f;
-    const glm::vec2 NODE_WINDOW_PADDING(8.0f, 8.0f);
+    const float NODE_WINDOW_PADDING = 8.0f;
+    const float HeaderHeight = LineHeight + 8.0f;
+    const auto HeaderBackgroundColor = IM_COL32(80, 0, 0, 255);
+    const float Rounding = 4.0f;
+
+    const auto PortTextColor = IM_COL32(255, 255, 255, 255);
+    const float WidgetWidth = 120.0f; // dynamic calculating ti avoid overlap or too empty
 
     ImGuiIO& io = ImGui::GetIO();
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
 
     ImGui::PushID(vId);
-    glm::vec2 node_rect_min = vCanvasOffset + vioNode.Pos;
+    const glm::vec2 NodeCanvasPos = vCanvasOffset + vioNode.Pos;
 
-    // Display node contents first
-    pDrawList->ChannelsSetCurrent(1); // Foreground
+    float ContentPadding = 8.0f;
+    float ContentHeight = LineHeight * glm::max(vioNode.InputSet.size(), vioNode.OutputSet.size()) + ContentPadding * 2;
+
+    // work on background
+    pDrawList->ChannelsSetCurrent(1);
+    
+    // draw whole node background and boarder
+    ImU32 node_bg_color = (m_HoveredNode == vId || (m_HoveredNode == -1 && m_SelectedNodeID == vId)) ? IM_COL32(75, 75, 75, 255) : IM_COL32(60, 60, 60, 255);
+    glm::vec2 NodeCanvasSize = glm::vec2(WidgetWidth, HeaderHeight + ContentHeight);
+    glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
+    pDrawList->AddRectFilled(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), node_bg_color, Rounding);
+    pDrawList->AddRect(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), IM_COL32(100, 100, 100, 255), Rounding);
+
+    // draw header background
+    pDrawList->AddRectFilled(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasPos + glm::vec2(WidgetWidth, HeaderHeight)), HeaderBackgroundColor, Rounding, ImDrawFlags_RoundCornersTop);
+
+    // draw header texts
+    pDrawList->ChannelsSetCurrent(2); // Foreground
+    ImGuiStyle& style = ImGui::GetStyle();
+    float TextHeight = ImGui::CalcTextSize(vioNode.Name.c_str()).y + style.FramePadding.y * 2.0f;
+    ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos + glm::vec2(NODE_WINDOW_PADDING, (HeaderHeight - TextHeight) * 0.5f)));
     bool old_any_active = ImGui::IsAnyItemActive();
-    ImGui::SetCursorScreenPos(__toImgui(node_rect_min + NODE_WINDOW_PADDING));
     ImGui::BeginGroup(); // Lock horizontal position
-    ImGui::Text("%s", vioNode.Name.c_str());
+    ImGui::Text(vioNode.Name.c_str());
     ImGui::EndGroup();
+
+    // draw ports
+    m_NodePortPosMap[vId] = SPortPos();
+    glm::vec2 CurInputPortPos = NodeCanvasPos + glm::vec2(0.0f, HeaderHeight + ContentPadding + LineHeight * 0.5);
+    glm::vec2 CurOutputPortPos = CurInputPortPos + glm::vec2(WidgetWidth, 0.0f);
+
+    for (const auto& InputName : vioNode.InputSet)
+    {
+        m_NodePortPosMap[vId].Input[InputName] = CurInputPortPos;
+        pDrawList->AddCircleFilled(__toImgui(CurInputPortPos), NODE_SLOT_RADIUS, IM_COL32(150, 150, 150, 150));
+
+        ImVec2 TextSize = ImGui::CalcTextSize(InputName.c_str());
+        pDrawList->AddText(__toImgui(CurInputPortPos + glm::vec2(NODE_SLOT_RADIUS + 4.0f, -TextSize.y * 0.5)), PortTextColor, InputName.c_str());
+
+        CurInputPortPos.y += LineHeight;
+    }
+
+    for (const auto& OutputName : vioNode.OutputSet)
+    {
+        m_NodePortPosMap[vId].Output[OutputName] = CurOutputPortPos;
+        pDrawList->AddCircleFilled(__toImgui(CurOutputPortPos), NODE_SLOT_RADIUS, IM_COL32(150, 150, 150, 150));
+
+        ImVec2 TextSize = ImGui::CalcTextSize(OutputName.c_str());
+        pDrawList->AddText(__toImgui(CurOutputPortPos + glm::vec2(-NODE_SLOT_RADIUS - 4.0f - TextSize.x, -TextSize.y * 0.5)), PortTextColor, OutputName.c_str());
+
+        CurOutputPortPos.y += LineHeight;
+    }
 
     // Save the size of what we have emitted and whether any of the widgets are being used
     bool node_widgets_active = (!old_any_active && ImGui::IsAnyItemActive());
     vioNode.Size = __toGlm(ImGui::GetItemRectSize()) + NODE_WINDOW_PADDING + NODE_WINDOW_PADDING;
-    glm::vec2 node_rect_max = node_rect_min + vioNode.Size;
+    glm::vec2 node_rect_max = NodeCanvasPos + vioNode.Size;
 
-    // Display node box
+    // draw invisable button for interaction
     pDrawList->ChannelsSetCurrent(0); // Background
-    ImGui::SetCursorScreenPos(__toImgui(node_rect_min));
-
-    ImVec2 Size = __toImgui(vioNode.Size);
-    if (ImGui::InvisibleButton("node", Size))
-    {
-        vioNode.Size = __toGlm(Size);
-    }
+    ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos));
+    
+    ImGui::InvisibleButton("node", __toImgui(NodeCanvasSize));
     if (ImGui::IsItemHovered())
     {
         m_HoveredNode = vId;
@@ -83,14 +129,6 @@ void CRenderPassGraph::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, glm
         m_SelectedNodeID = vId;
     if (node_moving_active && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta);
-
-    ImU32 node_bg_color = (m_HoveredNode == vId ||  (m_HoveredNode == -1 && m_SelectedNodeID == vId)) ? IM_COL32(75, 75, 75, 255) : IM_COL32(60, 60, 60, 255);
-    pDrawList->AddRectFilled(__toImgui(node_rect_min), __toImgui(node_rect_max), node_bg_color, 4.0f);
-    pDrawList->AddRect(__toImgui(node_rect_min), __toImgui(node_rect_max), IM_COL32(100, 100, 100, 255), 4.0f);
-    for (const auto& InputName : vioNode.InputSet)
-        pDrawList->AddCircleFilled(__toImgui(vCanvasOffset + vioNode.getInputSlotPos(InputName)), NODE_SLOT_RADIUS, IM_COL32(150, 150, 150, 150));
-    for (const auto& OutputName : vioNode.OutputSet)
-        pDrawList->AddCircleFilled(__toImgui(vCanvasOffset + vioNode.getOutputSlotPos(OutputName)), NODE_SLOT_RADIUS, IM_COL32(150, 150, 150, 150));
 
     ImGui::PopID();
 }
@@ -122,21 +160,22 @@ void CRenderPassGraph::_renderUIV()
     // Display grid
     if (m_ShowGrid)
         __drawGrid();
+    
+    pDrawList->ChannelsSplit(3);
 
-    // Display links curve
-    pDrawList->ChannelsSplit(2);
-    pDrawList->ChannelsSetCurrent(0); // Background
-    for (const SRenderPassGraphLink& Link : m_LinkSet)
-    {
-        __drawLink(Link, CanvasOffset);
-    }
-
-    // Display nodes
+    // draw nodes
     for (auto& Pair : m_NodeMap)
     {
         size_t Id = Pair.first;
         SRenderPassGraphNode& Node = Pair.second;
         __drawNode(Id, Node, CanvasOffset);
+    }
+
+    // draw links
+    pDrawList->ChannelsSetCurrent(0); // Background
+    for (const SRenderPassGraphLink& Link : m_LinkSet)
+    {
+        __drawLink(Link); // depend on renderer node, so draw after node
     }
     pDrawList->ChannelsMerge();
 

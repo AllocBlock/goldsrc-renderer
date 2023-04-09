@@ -102,20 +102,6 @@ struct SRenderPassGraphNode
                 return i;
         throw std::runtime_error("Port not found");
     }
-
-    glm::vec2 getInputSlotPos(const std::string& vName) const
-    {
-        size_t Index = getInputIndex(vName);
-        float OffsetY = (Size.y / float(InputSet.size())) * (Index + 0.5f);
-        return Pos + glm::vec2(0, OffsetY);
-    }
-
-    glm::vec2 getOutputSlotPos(const std::string& vName) const
-    {
-        size_t Index = getOutputIndex(vName);
-        float OffsetY = (Size.y / float(OutputSet.size())) * (Index + 0.5f);
-        return Pos + glm::vec2(Size.x, OffsetY);
-    }
 };
 
 struct SRenderPassGraphPortInfo
@@ -183,12 +169,6 @@ public:
     void update()
     {
         if (!m_EnableForce) return;
-
-        if (!m_TimerInited)
-        {
-            m_TimerInited = true;
-            m_Timer.start();
-        }
 
         const float m_WorldScale = 1.0f / 300.0f; // dpi
         
@@ -288,7 +268,7 @@ public:
     virtual void _renderUIV() override;
 private:
     void __drawGrid();
-    void __drawLink(const SRenderPassGraphLink& vLink, glm::vec2 vCanvasOffset);
+    void __drawLink(const SRenderPassGraphLink& vLink);
     void __drawNode(size_t vId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset);
 
     size_t m_CurNodeIndex = 0;
@@ -304,7 +284,13 @@ private:
 
     int m_HoveredNode = -1;
 
+    // temp data
+    struct SPortPos
+    {
+        std::map<std::string, glm::vec2> Input;
+        std::map<std::string, glm::vec2> Output;
+    };
+    std::map<size_t, SPortPos> m_NodePortPosMap;
+    
     bool m_EnableForce = true;
-    bool m_TimerInited = false;
-    CTimer m_Timer;
 };
