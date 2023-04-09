@@ -26,6 +26,11 @@ enum class ERotateState
 	CRAWL = 0x0020,
 };
 
+CInteractor::CInteractor()
+{
+	m_Timer.start();
+}
+
 void CInteractor::bindEvent(GLFWwindow* vWindow, CCamera::Ptr vCamera)
 {
 	m_pWindow = vWindow;
@@ -108,7 +113,7 @@ void CInteractor::onMouseClick(GLFWwindow* vpWindow, int vButton, int vAction, i
 
 void CInteractor::update()
 {
-	float DeltaTime = __getDeltaTime();
+	float DeltaTime = m_Timer.tick();
 	__updateMove(DeltaTime);
 	__updateRotate(DeltaTime);
 }

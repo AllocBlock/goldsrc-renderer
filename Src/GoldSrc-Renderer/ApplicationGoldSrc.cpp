@@ -89,6 +89,7 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
     m_pPassOutlineMask->update(vImageIndex);
     m_pPassOutlineEdge->update(vImageIndex);
     m_pPassVisualize->update(vImageIndex);
+    m_RenderPassGraph.update();
 }
 
 void CApplicationGoldSrc::_renderUIV()

@@ -2,6 +2,7 @@
 #include "Pointer.h"
 #include "Camera.h"
 #include "DrawableUI.h"
+#include "Timer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -26,10 +27,10 @@ using MouseCallback_t = std::function<void(GLFWwindow*, int, int)>;
 class CInteractor : public IDrawableUI
 {
 public:
-	CInteractor() = default;
+	CInteractor();
 
 	void bindEvent(GLFWwindow* vWindow, CCamera::Ptr vCamera);
-	void enable() { m_Enabled = true; }
+	void enable() { m_Enabled = true; m_Timer.start(); }
 	void disable() { m_Enabled = false; }
 	void update();
 	void reset();
@@ -54,6 +55,8 @@ private:
 	void __stopMovingMode();
 	void __updateMove(float vDeltaTime);
 	void __updateRotate(float vDeltaTime);
+
+	CTimer m_Timer;
 
 	GLFWwindow* m_pWindow = nullptr;
 	CCamera::Ptr m_pCamera = nullptr;

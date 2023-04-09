@@ -105,8 +105,10 @@ void CRenderPassGraph::_renderUIV()
     ImGui::BeginGroup();
     // Create our child canvas
     ImGui::Text("Hold middle mouse button to scroll (%.2f,%.2f)", m_Scrolling.x, m_Scrolling.y);
-    ImGui::SameLine(ImGui::GetWindowWidth() - 100);
+    ImGui::SameLine(ImGui::GetWindowWidth() - 200);
     ImGui::Checkbox("Show grid", &m_ShowGrid);
+    ImGui::SameLine(ImGui::GetWindowWidth() - 100);
+    ImGui::Checkbox("Enable Force", &m_EnableForce);
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(60, 60, 70, 200));

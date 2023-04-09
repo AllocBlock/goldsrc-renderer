@@ -1,11 +1,13 @@
 #pragma once
-#include <string>
-#include <vector>
-
 #include "RenderPassGraph.h"
 #include "RenderPass.h"
+#include "Timer.h"
+#include "Random.h"
 
+#include <string>
+#include <vector>
 #include <glm/glm.hpp>
+
 
 struct SAABB2D
 {
@@ -21,6 +23,11 @@ struct SAABB2D
     glm::vec2 Min = glm::vec2(0.0f);
     glm::vec2 Max = glm::vec2(0.0f);
 
+    glm::vec2 getCenter() const
+    {
+        return (Min + Max) * 0.5f;
+    }
+
     void applyUnion(const SAABB2D& vOther)
     {
         Min.x = glm::min<float>(Min.x, vOther.Min.x);
@@ -28,12 +35,39 @@ struct SAABB2D
         Max.x = glm::max<float>(Max.x, vOther.Max.x);
         Max.y = glm::max<float>(Max.y, vOther.Max.y);
     }
+
+    float distanceTo(const SAABB2D& vOther) const
+    {
+        float dx = __calcSegmentDistance(Min.x, Max.x, vOther.Min.x, vOther.Max.x);
+        float dy = __calcSegmentDistance(Min.y, Max.y, vOther.Min.y, vOther.Max.y);
+        return glm::sqrt(dx * dx + dy * dy);
+    }
+
+    static bool intersection(const SAABB2D& v1, const SAABB2D& v2, SAABB2D& voAABB)
+    {
+        float MinX = glm::max<float>(v1.Min.x, v2.Min.x);
+        float MinY = glm::max<float>(v1.Min.y, v2.Min.y);
+        float MaxX = glm::min<float>(v1.Max.x, v2.Max.x);
+        float MaxY = glm::min<float>(v1.Max.y, v2.Max.y);
+        if (MinX >= MaxX) return false;
+        if (MinY >= MaxY) return false;
+        voAABB = SAABB2D(glm::vec2(MinX, MinY), glm::vec2(MaxX, MaxY));
+        return true;
+    }
+private:
+    float __calcSegmentDistance(float a1, float a2, float b1, float b2) const
+    {
+        if (a1 > b2) return a1 - b2;
+        if (b1 > a2) return b1 - a2;
+        return 0.0f;
+    }
 };
 
 struct SRenderPassGraphNode
 {
     std::string Name;
-    glm::vec2 Pos, Size; // Size is auto-updating, so no need to set it
+    glm::vec2 Pos = glm::vec2(0.0f);
+    glm::vec2 Size = glm::vec2(20.0f); // Size is auto-updating, so no need to set it
     std::vector<std::string> InputSet, OutputSet;
 
     SAABB2D getAABB() const
@@ -111,7 +145,7 @@ public:
         glm::vec2 Pos = glm::vec2(0.0f);
         if (m_AABB.has_value())
         {
-            glm::vec2 Pos = glm::vec2(m_AABB.value().Max.x + Margin, 0.0f);
+            Pos = glm::vec2(m_AABB.value().Max.x + Margin, Random::GenerateFloat() * 300.0f);
         }
 
         SRenderPassGraphNode Node;
@@ -123,7 +157,7 @@ public:
         if (!m_AABB.has_value())
             m_AABB = Node.getAABB();
         else
-            m_AABB->applyUnion(Node.getAABB());
+            m_AABB.value().applyUnion(Node.getAABB());
 
         m_NodeMap[m_CurNodeIndex] = std::move(Node);
         return m_CurNodeIndex++;
@@ -144,6 +178,70 @@ public:
         m_LinkSet.clear();
         m_EntryPortOpt = std::nullopt;
         m_Scrolling = glm::vec2(0.0f);
+    }
+
+    void update()
+    {
+        if (!m_EnableForce) return;
+
+        if (!m_TimerInited)
+        {
+            m_TimerInited = true;
+            m_Timer.start();
+        }
+
+        const float m_WorldScale = 1.0f / 300.0f; // dpi
+        
+        // force graph
+        float Step = 0.01f;
+        std::map<size_t, glm::vec2> ForceMap;
+        
+        // 1. node repulsion
+        for (auto pIter1 = m_NodeMap.begin(); pIter1 != m_NodeMap.end(); ++pIter1)
+        {
+            size_t Id1 = pIter1->first;
+            const SRenderPassGraphNode& Node1 = pIter1->second;
+            SAABB2D NodeAABB1 = Node1.getAABB();
+            for (auto pIter2 = std::next(pIter1); pIter2 != m_NodeMap.end(); ++pIter2)
+            {
+                size_t Id2 = pIter2->first;
+                const SRenderPassGraphNode& Node2 = pIter2->second;
+                SAABB2D NodeAABB2 = Node2.getAABB();
+
+                glm::vec2 v = (NodeAABB1.getCenter() - NodeAABB2.getCenter()) * m_WorldScale;
+                float d = glm::length(v);
+                glm::vec2 ForceOn1Direction = d < 1e-3 ? glm::vec2(1, 0) : glm::normalize(v);
+
+                float ForceOn1 = 500.0f / (d * d);
+                ForceMap[Id1] += ForceOn1 * ForceOn1Direction;
+                ForceMap[Id2] -= ForceOn1 * ForceOn1Direction;
+            }
+        }
+
+        // 2. link attraction
+        for (const SRenderPassGraphLink& Link : m_LinkSet)
+        {
+            glm::vec2 v = (m_NodeMap[Link.Destination.NodeId].getAABB().getCenter() - m_NodeMap[Link.Source.NodeId].getAABB().getCenter()) * m_WorldScale;
+            float d = glm::length(v);
+            glm::vec2 ForceOn1Direction = d > 1e-3 ? glm::normalize(v) : glm::vec2(1, 0);
+
+            float ForceOn1 = 10000.0f * d;
+            glm::vec2 F = ForceOn1Direction * ForceOn1;
+            ForceMap[Link.Source.NodeId] += F;
+            ForceMap[Link.Destination.NodeId] -= F;
+        }
+
+
+        for (const auto& Pair : ForceMap)
+        {
+            size_t Id = Pair.first;
+            if (Id == m_SelectedNodeID) continue; // dragging
+            glm::vec2 F = Pair.second;
+            SRenderPassGraphNode& Node = m_NodeMap[Id];
+            
+            glm::vec2 A = F / 1.0f;
+            Node.Pos = Node.Pos + A * Step * Step;
+        }
     }
 
     // FIXME: temp, when link of pass is done in graph, this ugly function can be removed
@@ -205,4 +303,8 @@ private:
     bool m_IsContextMenuOpen = false;
 
     int m_HoveredNode = -1;
+
+    bool m_EnableForce = true;
+    bool m_TimerInited = false;
+    CTimer m_Timer;
 };
