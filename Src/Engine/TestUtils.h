@@ -11,7 +11,10 @@ int runTestApp(std::string vTitle, int vWindowWidth = 1280, int vWindowHeight = 
 
 	GLFW::startLoop(pWindow, [=]()
 		{
-			pApp->render();
+			pApp->tick();
+		}, [=](int vWidth, int vHeight)
+		{
+			pApp->resize(vWidth, vHeight);
 		});
 
 	pApp->waitDevice();

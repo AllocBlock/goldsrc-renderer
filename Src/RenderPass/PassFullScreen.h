@@ -45,6 +45,10 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override;
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override;
+    virtual std::vector<VkClearValue> _getClearValuesV() override;
+
 private:
     void __createPipeline(VkExtent2D vExtent);
     void __createVertexBuffer();

@@ -1,13 +1,14 @@
 #pragma once
-#include "RenderPass.h"
-#include "FrameBuffer.h"
+#include "RenderPassSingle.h"
 #include "Camera.h"
+#include "DynamicResourceManager.h"
 #include "Image.h"
-#include "Buffer.h"
 #include "MaterialPBR.h"
 #include "PipelinePBS.h"
+#include "VertexBuffer.h"
+#include "UniformBuffer.h"
 
-class CRenderPassPBR : public vk::IRenderPass
+class CRenderPassPBR : public CRenderPassSingle
 {
 public:
     CRenderPassPBR() = default;
@@ -17,7 +18,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual void _initPortDescV(SPortDescriptor vDesc) override;
+    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
@@ -26,25 +27,35 @@ protected:
 
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
+    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
+    {
+        return _dumpInputPortExtent("Main", voExtent);
+    }
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    {
+        return
+        {
+            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+            m_DepthImageManager.getImageViewV()
+        };
+    }
+    virtual std::vector<VkClearValue> _getClearValuesV() override
+    {
+        return DefaultClearValueColorDepth;
+    }
+
 private:
-    void __createGraphicsPipeline();
-    void __createDepthResources();
-    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
     void __createMaterials();
-
-    void __createRecreateResources();
-    void __destroyRecreateResources();
 
     void __updateUniformBuffer(uint32_t vImageIndex);
     void __generateScene();
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth);
    
-    CPipelinePBS m_Pipeline;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
-    ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
-    ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
-    vk::CImage m_DepthImage; 
+    CDynamicPipeline<CPipelinePBS> m_PipelineCreator;
+    vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
+    vk::CBuffer::Ptr m_pMaterialBuffer = nullptr;
+    CDynamicTextureCreator m_DepthImageManager;
 
     CCamera::Ptr m_pCamera = nullptr;
     std::vector<CPipelinePBS::SPointData> m_PointDataSet;

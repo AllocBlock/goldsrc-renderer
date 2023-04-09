@@ -49,10 +49,10 @@
     <None Include="shaders\env.vert">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="shaders\shader.frag">
+    <None Include="shaders\pbsShader.frag">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="shaders\shader.vert">
+    <None Include="shaders\pbsShader.vert">
       <Filter>资源文件</Filter>
     </None>
     <None Include="shaders\env.frag">

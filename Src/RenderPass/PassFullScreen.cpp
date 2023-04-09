@@ -4,6 +4,8 @@
 
 void CRenderPassFullScreen::_initV()
 {
+    CRenderPassSingle::_initV();
+
     __createVertexBuffer();
 }
 
@@ -28,6 +30,24 @@ void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     {
         __createPipeline(RefExtent);
     }
+}
+
+bool CRenderPassFullScreen::_dumpReferenceExtentV(VkExtent2D& voExtent)
+{
+    return _dumpInputPortExtent("Main", voExtent);
+}
+
+std::vector<VkImageView> CRenderPassFullScreen::_getAttachmentsV(uint32_t vIndex)
+{
+    return
+    {
+        m_pPortSet->getOutputPort("Main")->getImageV(vIndex)
+    };
+}
+
+std::vector<VkClearValue> CRenderPassFullScreen::_getClearValuesV()
+{
+    return DefaultClearValueColor;
 }
 
 std::vector<VkCommandBuffer> CRenderPassFullScreen::_requestCommandBuffersV(uint32_t vImageIndex)

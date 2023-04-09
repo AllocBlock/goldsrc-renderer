@@ -21,18 +21,21 @@ protected:
      * setup port info for PortSet
      */
     virtual void _initPortDescV(SPortDescriptor& vioDesc) = 0;
-    
+
+    // IMPORTANT: call this original _initV if override
     virtual void _initV() override
     {
         m_ClearValueSet = _getClearValuesV();
     }
 
+    // IMPORTANT: call this original _destroyV if override
     virtual void _destroyV() override
     {
         m_FramebufferSet.destroyAndClearAll();
         __destroyCommandPoolAndBuffers();
     }
 
+    // IMPORTANT: call this original _onUpdateV if override
     virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override
     {
         if (vUpdateState.ImageNum.IsUpdated)

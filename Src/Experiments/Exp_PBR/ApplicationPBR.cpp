@@ -6,14 +6,12 @@ void CApplicationPBR::_createV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
-    vk::SAppInfo AppInfo = getAppInfo();
-
     m_pCamera = make<CCamera>();
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pCamera);
 
     m_pRenderPassFullScreen = make<CRenderPassFullScreen>();
-    m_pRenderPassFullScreen->init(AppInfo);
+    m_pRenderPassFullScreen->init(m_pDevice, m_pAppInfo);
     m_pPipelineEnv = m_pRenderPassFullScreen->initPipeline<CPipelineEnvironment>();
 
     m_pRenderPassFullScreen->hookPipelineCreate([this]
@@ -25,12 +23,12 @@ void CApplicationPBR::_createV()
 
 
     m_pRenderPassPBR = make<CRenderPassPBR>();
-    m_pRenderPassPBR->init(AppInfo);
+    m_pRenderPassPBR->init(m_pDevice, m_pAppInfo);
     m_pRenderPassPBR->setCamera(m_pCamera);
 
     m_pGUI = make<CRenderPassGUI>();
     m_pGUI->setWindow(m_pWindow);
-    m_pGUI->init(AppInfo);
+    m_pGUI->init(m_pDevice, m_pAppInfo);
 
     m_pCamera->setPos(glm::vec3(0.0f, -13.6114998f, 0.0f));
     m_pCamera->setPhi(90);
@@ -56,17 +54,6 @@ void CApplicationPBR::_renderUIV()
     m_pRenderPassPBR->renderUI();
     m_pRenderPassFullScreen->renderUI();
     UI::endFrame();
-}
-
-std::vector<VkCommandBuffer> CApplicationPBR::_getCommandBufferSetV(uint32_t vImageIndex)
-{
-    std::vector<VkCommandBuffer> SkyBuffers = m_pRenderPassFullScreen->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> SceneBuffers = m_pRenderPassPBR->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> GUIBuffers = m_pGUI->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> Result = SkyBuffers;
-    Result.insert(Result.end(), SceneBuffers.begin(), SceneBuffers.end());
-    Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
-    return Result;
 }
 
 void CApplicationPBR::_destroyV()

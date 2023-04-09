@@ -19,8 +19,8 @@ vec2 worldToLatlongMap(vec3 vDirection)
 {
     vec3 p = normalize(vDirection);
     vec2 uv;
-    uv.x = atan(-p.y, p.x) * M_1_2PI + 0.5;
-    uv.y = acos(p.z) * M_1_PI;
+    uv.x = atan(p.z, p.x) * M_1_2PI + 0.5;
+    uv.y = acos(p.y) * M_1_PI;
     return uv;
 }
 

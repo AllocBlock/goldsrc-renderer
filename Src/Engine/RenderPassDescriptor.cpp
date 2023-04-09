@@ -20,7 +20,19 @@ SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bo
     else
         CurUsage = EUsage::UNDEFINED;
 
-    EUsage NextUsage = vIsDepth ? CurUsage : EUsage::PRESENTATION; // for color attachment, used to present; for depth, keep
+    EUsage NextUsage = EUsage::PRESENTATION;
+    if (IsEnd)
+    {
+        // for color attachment, used to present
+        // for depth, keep if valid, else as WRITE
+        if (vIsDepth)
+        {
+            if (CurUsage == EUsage::UNDEFINED)
+                NextUsage = EUsage::WRITE;
+            else
+                NextUsage = CurUsage;
+        }
+    }
     if (!IsEnd)
     {
         _ASSERTE(vPort->getChildNum() > 0);
