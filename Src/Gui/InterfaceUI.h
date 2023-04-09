@@ -38,7 +38,7 @@ namespace UI
 
     bool isInited();
 
-    void beginWindow(std::string vTitle, bool* vIsOpen = nullptr, int vFlags = 0);
+    bool beginWindow(std::string vTitle, bool* vIsOpen = nullptr, int vFlags = 0);
     void endWindow();
     void text(std::string vName, bool vWarp = false);
     void bulletText(std::string vName);
@@ -78,6 +78,7 @@ namespace UI
     void unindent();
     void spacing();
     void split();
+    void setNextWindowSize(const glm::vec2& vSize);
     void setNextWindowPos(const glm::vec2& vCenter, ESetVariableCondition vCond, const glm::vec2& vPivot);
     void setScrollHereX(float vCenterRatio = 0.5f);
     void setScrollHereY(float vCenterRatio = 0.5f);

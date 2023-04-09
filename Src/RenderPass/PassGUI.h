@@ -13,6 +13,8 @@ public:
     GLFWwindow* getWindow() { return m_pWindow; }
     void setWindow(GLFWwindow* vWindow) { m_pWindow = vWindow; }
 
+    virtual std::string getNameV() const override { return "Gui"; }
+
 protected:
     virtual void _initV() override;
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;

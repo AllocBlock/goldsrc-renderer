@@ -78,6 +78,13 @@ namespace vk
         IRenderPass();
         virtual ~IRenderPass() = default;
 
+        /*
+         * _getNameV:
+         * triggers at anytime
+         * get render pass name
+         */
+        virtual std::string getNameV() const = 0;
+
         void init(CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo);
         void update(uint32_t vImageIndex);
         std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
@@ -86,6 +93,7 @@ namespace vk
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
 
     protected:
+
         /*
          * _createPortSetV:
          * triggers only once

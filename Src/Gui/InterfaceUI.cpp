@@ -1,9 +1,7 @@
 #include "InterfaceUI.h"
-
-#include <array>
-
 #include "Sampler.h"
 
+#include <array>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
@@ -180,9 +178,9 @@ void UI::endFrame()
 
 bool UI::isInited() { return isInited; }
 
-void UI::beginWindow(std::string vTitle, bool* vIsOpen, int vWindowFlags)
+bool UI::beginWindow(std::string vTitle, bool* vIsOpen, int vWindowFlags)
 {
-    ImGui::Begin(vTitle.c_str(), vIsOpen, __toImguiWindowFlags(vWindowFlags));
+    return ImGui::Begin(vTitle.c_str(), vIsOpen, __toImguiWindowFlags(vWindowFlags));
 }
 
 void UI::endWindow()
@@ -325,6 +323,11 @@ void UI::split() { ImGui::Separator(); }
 void UI::setNextWindowPos(const glm::vec2& vCenter, ESetVariableCondition vCond, const glm::vec2& vPivot)
 {
     ImGui::SetNextWindowPos(__toImguiVec2(vCenter), __toImguiCondFlag(vCond), __toImguiVec2(vPivot));
+}
+
+void UI::setNextWindowSize(const glm::vec2& vSize)
+{
+    ImGui::SetNextWindowSize(__toImguiVec2(vSize));
 }
 
 void UI::setScrollHereX(float vCenterRatio) { ImGui::SetScrollHereX(vCenterRatio); }

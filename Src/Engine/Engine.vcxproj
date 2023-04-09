@@ -129,6 +129,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Component.cpp" />
+    <ClCompile Include="RenderPassGraph.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
@@ -172,6 +173,7 @@
     <ClInclude Include="Component.h" />
     <ClInclude Include="StaticResource.h" />
     <ClInclude Include="IconManager.h" />
+    <ClInclude Include="RenderPassGraph.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

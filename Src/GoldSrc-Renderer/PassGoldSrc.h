@@ -47,6 +47,8 @@ public:
         }
     }
     
+    virtual std::string getNameV() const override { return "GoldSrc"; }
+    
 protected:
     virtual void _initV() override;
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;

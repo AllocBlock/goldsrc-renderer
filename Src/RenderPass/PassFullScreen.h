@@ -34,6 +34,8 @@ public:
         m_PipelineCreateCallbackSet.emplace_back(vCallback);
     }
 
+    virtual std::string getNameV() const override { return "Fullscreen"; }
+
 protected:
     virtual void _initV() override;
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;

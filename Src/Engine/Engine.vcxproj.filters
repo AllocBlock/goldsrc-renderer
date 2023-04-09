@@ -144,6 +144,9 @@
     <ClCompile Include="Component.cpp">
       <Filter>源文件\Scene\Components</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPassGraph.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -267,6 +270,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RerecordState.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassGraph.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

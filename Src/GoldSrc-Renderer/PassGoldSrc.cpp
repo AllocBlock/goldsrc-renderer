@@ -190,7 +190,7 @@ void CRenderPassGoldSrc::_destroyV()
 {
     m_DepthImageManager.destroy();
     m_PipelineSet.destroy();
-    m_pVertexBuffer->destroy();
+    destroyAndClear(m_pVertexBuffer);
 
     __destroySceneResources();
 

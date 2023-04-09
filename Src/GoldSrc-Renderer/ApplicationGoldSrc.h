@@ -8,6 +8,7 @@
 #include "PassOutlineMask.h"
 #include "PassOutlineEdge.h"
 #include "PassVisualize.h"
+#include "RenderPassGraph.h"
 
 class CApplicationGoldSrc : public IApplication
 {
@@ -33,4 +34,6 @@ private:
     CCamera::Ptr m_pCamera = nullptr;
 
     ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
+
+    CRenderPassGraph m_RenderPassGraph;
 };

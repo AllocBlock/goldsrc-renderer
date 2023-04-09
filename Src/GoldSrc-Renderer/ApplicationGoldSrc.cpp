@@ -3,6 +3,7 @@
 #include "SceneProbe.h"
 #include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
+#include "RenderPassGraph.h"
 
 void CApplicationGoldSrc::_createV()
 {
@@ -94,6 +95,12 @@ void CApplicationGoldSrc::_renderUIV()
 {
     UI::beginFrame();
     m_pMainUI->renderUI();
+    
+    if (UI::beginWindow("Render Pass Graph"))
+    {
+        m_RenderPassGraph.renderUI();
+    }
+    UI::endWindow();
     UI::endFrame();
 }
 
@@ -136,4 +143,23 @@ void CApplicationGoldSrc::__linkPasses()
     _ASSERTE(m_pPassOutlineEdge->isValid());
     _ASSERTE(m_pPassVisualize->isValid());
     _ASSERTE(m_pPassGUI->isValid());
+
+    m_RenderPassGraph.clear();
+    m_RenderPassGraph.createFromRenderPassGraph(
+        {
+            m_pPassGoldSrc,
+            m_pPassOutlineMask,
+            m_pPassOutlineEdge,
+            m_pPassVisualize,
+            m_pPassGUI,
+        },
+        {
+           {1, "Mask", 2, "Mask"},
+           {0, "Main", 2, "Main"},
+           {2, "Main", 3, "Main"},
+           {3, "Main", 4, "Main"},
+           {0, "Depth", 3, "Depth"},
+        },
+        {0, "Main"}
+    );
 }

@@ -17,6 +17,8 @@ public:
     void setHighlightActor(CActor::Ptr vActor);
     void removeHighlight();
 
+    virtual std::string getNameV() const override { return "Outline Mask"; }
+
 protected:
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;

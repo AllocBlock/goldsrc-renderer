@@ -6,6 +6,8 @@
 
 class CRenderPassOutlineEdge : public CRenderPassSingle
 {
+public:
+    virtual std::string getNameV() const override { return "Outline Edge"; }
 protected:
     virtual void _initV() override;
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
