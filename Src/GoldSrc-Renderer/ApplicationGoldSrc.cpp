@@ -7,6 +7,9 @@
 
 void CApplicationGoldSrc::_createV()
 {
+    m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
+    m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
+
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     m_pCamera = make<CCamera>();
@@ -89,7 +92,7 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
     m_pPassOutlineMask->update(vImageIndex);
     m_pPassOutlineEdge->update(vImageIndex);
     m_pPassVisualize->update(vImageIndex);
-    m_RenderPassGraph.update();
+    m_pRenderPassGraphUI->update();
 }
 
 void CApplicationGoldSrc::_renderUIV()
@@ -99,7 +102,7 @@ void CApplicationGoldSrc::_renderUIV()
     
     if (UI::beginWindow("Render Pass Graph"))
     {
-        m_RenderPassGraph.renderUI();
+        m_pRenderPassGraphUI->renderUI();
     }
     UI::endWindow();
     UI::endFrame();
@@ -145,8 +148,8 @@ void CApplicationGoldSrc::__linkPasses()
     _ASSERTE(m_pPassVisualize->isValid());
     _ASSERTE(m_pPassGUI->isValid());
 
-    m_RenderPassGraph.clear();
-    m_RenderPassGraph.createFromRenderPassGraph(
+    m_pRenderPassGraphUI->clear();
+    m_pRenderPassGraphUI->createFromRenderPassGraph(
         {
             m_pPassGoldSrc,
             m_pPassOutlineMask,

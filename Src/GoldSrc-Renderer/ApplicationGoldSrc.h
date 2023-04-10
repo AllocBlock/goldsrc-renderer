@@ -9,6 +9,7 @@
 #include "PassOutlineEdge.h"
 #include "PassVisualize.h"
 #include "RenderPassGraph.h"
+#include "RenderPassGraphUI.h"
 
 class CApplicationGoldSrc : public IApplication
 {
@@ -35,5 +36,6 @@ private:
 
     ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
 
-    CRenderPassGraph m_RenderPassGraph;
+    ptr<SRenderPassGraph> m_pRenderPassGraph = make<SRenderPassGraph>();
+    ptr<CRenderPassGraphUI> m_pRenderPassGraphUI = nullptr;
 };

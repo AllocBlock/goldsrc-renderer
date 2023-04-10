@@ -129,7 +129,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Component.cpp" />
-    <ClCompile Include="RenderPassGraph.cpp" />
+    <ClCompile Include="RenderPassGraphUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
@@ -144,6 +144,8 @@
     <ClInclude Include="Font.h" />
     <ClInclude Include="ImageUtils.h" />
     <ClInclude Include="Maths.h" />
+    <ClInclude Include="RenderPassGraphEditor.h" />
+    <ClInclude Include="RenderPassGraphUI.h" />
     <ClInclude Include="RenderPassSingle.h" />
     <ClInclude Include="RerecordState.h" />
     <ClInclude Include="ShaderCompileCache.h" />
@@ -175,6 +177,7 @@
     <ClInclude Include="IconManager.h" />
     <ClInclude Include="RenderPassGraph.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="RenderPassRegister.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">
