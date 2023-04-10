@@ -5,6 +5,11 @@
 //#define ENABLE_BACK_FACE_CULLING
 #define ENABLE_IN_BOX_INTERSECTION
 
+float Math::smoothstepInversed(float x)
+{
+    // https://www.shadertoy.com/view/MsSBRh
+    return 0.5 - glm::sin(glm::asin(1.0 - 2.0 * x) / 3.0);
+}
 
 bool Math::intersectRayPlane(const glm::vec3& vOrigin, const glm::vec3& vDirection, const Plane& vPlane, float& voT)
 {

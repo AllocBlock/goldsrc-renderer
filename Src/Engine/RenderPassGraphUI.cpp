@@ -1,7 +1,10 @@
 #include "RenderPassGraphUI.h"
+#include "RenderPassGraphUI.h"
 #include "Random.h"
+#include "Maths.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 // based on https://gist.github.com/ocornut/7e9b3ec566a333d725d4
 
@@ -33,7 +36,7 @@ void CRenderPassGraphUI::__drawGrid()
     }
 }
 
-void CRenderPassGraphUI::__drawLink(const SRenderPassGraphLink& vLink)
+void CRenderPassGraphUI::__drawLink(size_t vLinkIndex, const SRenderPassGraphLink& vLink)
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
     
@@ -42,7 +45,56 @@ void CRenderPassGraphUI::__drawLink(const SRenderPassGraphLink& vLink)
     glm::vec2 p11 = p1 + glm::vec2(50, 0);
     glm::vec2 p22 = p2 + glm::vec2(-50, 0);
 
-    pDrawList->AddBezierCurve(__toImgui(p1), __toImgui(p11), __toImgui(p22), __toImgui(p2), IM_COL32(200, 200, 100, 255), 3.0f);
+    Math::SCubicBezier2D Bezier(p1, p11, p22, p2);
+    const float HoverDistance = 6.0f;
+    glm::vec2 MousePos = __toGlm(ImGui::GetMousePos());
+    float d = Bezier.calcDistanceToPoint(MousePos);
+    
+    if (d <= HoverDistance)
+    {
+        __setHoveredLink(vLinkIndex);
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            __setSelectedLink(vLinkIndex);
+        }
+    }
+
+    auto LinkColor = IM_COL32(200, 200, 100, 255);
+    float LinkThickness = 3.0f;
+    bool Hovered = __isLinkHovered(vLinkIndex);
+    if (Hovered)
+    {
+        LinkColor = IM_COL32(255, 255, 150, 255);
+        LinkThickness = 6.0f;
+    }
+    
+    pDrawList->AddBezierCurve(__toImgui(p1), __toImgui(p11), __toImgui(p22), __toImgui(p2), LinkColor, LinkThickness);
+
+    // draw link animation
+    unsigned BaseCircleColor = LinkColor;
+    if (__isLinkSelected(vLinkIndex))
+    {
+        const int CircleNum = 4;
+        float Duration = 0.5f;
+        float Interval = 1.0f / CircleNum;
+        float Shift = glm::mod(m_AnimationTime / Duration, 1.0f) * Interval;
+        for (int i = 0; i < CircleNum; ++i)
+        {
+            float t = i * Interval + Shift;
+            float Alpha = (t < 0.5 ? t : 1.0 - t) * 2; // fade in-out
+            Alpha = Math::smoothstepInversed(Alpha); // smooth
+            unsigned char Alpha8Bit = unsigned char(Alpha * 255);
+            unsigned CircleColor = (BaseCircleColor & ~IM_COL32_A_MASK) | IM_COL32(0, 0, 0, Alpha8Bit);
+            glm::vec2 Pos = Bezier.sample(t);
+            pDrawList->AddCircleFilled(__toImgui(Pos), LinkThickness + 2.0f, CircleColor);
+        }
+    }
+
+    // debug, line segment
+    /*for (const auto& Seg : Bezier.downSample())
+    {
+        pDrawList->AddLine(__toImgui(Seg.Start), __toImgui(Seg.End), LinkColor, LinkThickness);
+    }*/
 }
 
 void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset)
@@ -60,20 +112,42 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     ImGuiIO& io = ImGui::GetIO();
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
 
-    ImGui::PushID(vId);
     const glm::vec2 NodeCanvasPos = vCanvasOffset + vioNode.Pos;
 
     float ContentPadding = 8.0f;
     float ContentHeight = LineHeight * glm::max(vioNode.InputSet.size(), vioNode.OutputSet.size()) + ContentPadding * 2;
+    
+    glm::vec2 NodeCanvasSize = glm::vec2(WidgetWidth, HeaderHeight + ContentHeight);
+    glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
+    
+    ImGui::PushID(vId);
+    // draw invisable button for interaction
+    pDrawList->ChannelsSetCurrent(0);
+    ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos));
+
+    ImGui::InvisibleButton("node", __toImgui(NodeCanvasSize));
+    if (ImGui::IsItemHovered())
+    {
+        __setHoveredNode(vId);
+    }
+
+    // dragging
+    bool IsMoving = ImGui::IsItemActive();
+    if (IsMoving)
+        __setSelectedNode(vId);
+    if (IsMoving && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta);
 
     // work on background
     pDrawList->ChannelsSetCurrent(1);
     
     // draw whole node background and boarder
-    ImU32 node_bg_color = (m_HoveredNode == vId || (m_HoveredNode == -1 && m_SelectedNodeID == vId)) ? IM_COL32(75, 75, 75, 255) : IM_COL32(60, 60, 60, 255);
-    glm::vec2 NodeCanvasSize = glm::vec2(WidgetWidth, HeaderHeight + ContentHeight);
-    glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
-    pDrawList->AddRectFilled(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), node_bg_color, Rounding);
+    ImU32 BackgroundColor = IM_COL32(60, 60, 60, 255);
+    if (__isNodeSelected(vId))
+        BackgroundColor = IM_COL32(100, 100, 100, 255);
+    else if (__isNodeHovered(vId))
+        BackgroundColor = IM_COL32(75, 75, 75, 255);
+    pDrawList->AddRectFilled(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), BackgroundColor, Rounding);
     pDrawList->AddRect(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), IM_COL32(100, 100, 100, 255), Rounding);
 
     // draw header background
@@ -84,7 +158,6 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     ImGuiStyle& style = ImGui::GetStyle();
     float TextHeight = ImGui::CalcTextSize(vioNode.Name.c_str()).y + style.FramePadding.y * 2.0f;
     ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos + glm::vec2(NODE_WINDOW_PADDING, (HeaderHeight - TextHeight) * 0.5f)));
-    bool old_any_active = ImGui::IsAnyItemActive();
     ImGui::BeginGroup(); // Lock horizontal position
     ImGui::Text(vioNode.Name.c_str());
     ImGui::EndGroup();
@@ -115,26 +188,6 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
 
         CurOutputPortPos.y += LineHeight;
     }
-
-    // Save the size of what we have emitted and whether any of the widgets are being used
-    bool node_widgets_active = (!old_any_active && ImGui::IsAnyItemActive());
-    vioNode.Size = __toGlm(ImGui::GetItemRectSize()) + NODE_WINDOW_PADDING + NODE_WINDOW_PADDING;
-    glm::vec2 node_rect_max = NodeCanvasPos + vioNode.Size;
-
-    // draw invisable button for interaction
-    pDrawList->ChannelsSetCurrent(0); // Background
-    ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos));
-    
-    ImGui::InvisibleButton("node", __toImgui(NodeCanvasSize));
-    if (ImGui::IsItemHovered())
-    {
-        m_HoveredNode = vId;
-    }
-    bool node_moving_active = ImGui::IsItemActive();
-    if (node_widgets_active || node_moving_active)
-        m_SelectedNodeID = vId;
-    if (node_moving_active && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta);
 
     ImGui::PopID();
 }
@@ -236,7 +289,7 @@ void CRenderPassGraphUI::update()
     for (const auto& Pair : ForceMap)
     {
         size_t Id = Pair.first;
-        if (Id == m_SelectedNodeID) continue; // dragging
+        if (__isNodeSelected(Id)) continue; // dragging
         glm::vec2 F = Pair.second;
         SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(Id);
             
@@ -291,6 +344,10 @@ void CRenderPassGraphUI::createFromRenderPassGraph(std::vector<vk::IRenderPass::
 
 void CRenderPassGraphUI::_renderUIV()
 {
+    // reset state
+    if (!ImGui::IsAnyItemHovered())
+        m_HoveredItem.reset();
+
     ImGuiIO& io = ImGui::GetIO();
 
     const int SidebarWidth = 200;
@@ -340,43 +397,44 @@ void CRenderPassGraphUI::_renderUIV()
 
     // draw links
     pDrawList->ChannelsSetCurrent(0); // Background
-    for (const SRenderPassGraphLink& Link : m_pGraph->LinkSet)
+    for (size_t i = 0; i < m_pGraph->LinkSet.size(); ++i)
     {
-        __drawLink(Link); // depend on renderer node, so draw after node
+        __drawLink(i, m_pGraph->LinkSet[i]); // depend on renderer node, so draw after node
     }
     pDrawList->ChannelsMerge();
 
     // context menu
-
     if (ImGui::IsAnyMouseDown() && !ImGui::IsAnyItemHovered())
+    {
         m_IsContextMenuOpen = false; // close on click
+    }
     
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsAnyItemHovered())
         m_IsContextMenuOpen = true;
 
-    if (m_IsContextMenuOpen && m_HoveredNode != -1)
+    if (m_IsContextMenuOpen && m_HoveredItem.has_value() && m_HoveredItem->Type == EItemType::NODE)
     {
-        ImGui::OpenPopup("context_menu");
-        m_SelectedNodeID = m_HoveredNode;
+        ImGui::OpenPopup("NodeContentMenu");
+        m_SelectedItem = m_HoveredItem;
     }
 
     // Draw context menu
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
-    if (ImGui::BeginPopup("context_menu"))
+    if (ImGui::BeginPopup("NodeContentMenu"))
     {
-        glm::vec2 scene_pos = __toGlm(ImGui::GetMousePosOnOpeningCurrentPopup()) - CanvasOffset;
-        if (m_SelectedNodeID != -1)
+        //glm::vec2 scene_pos = __toGlm(ImGui::GetMousePosOnOpeningCurrentPopup()) - CanvasOffset;
+        if (m_SelectedItem.has_value())
         {
-            SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(m_SelectedNodeID);
+            SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(m_SelectedItem->Id);
             ImGui::Text("Node '%s'", Node.Name.c_str());
             ImGui::Separator();
             if (ImGui::MenuItem("Rename..", NULL, false, false)) {}
             if (ImGui::MenuItem("Delete", NULL, false, true))
             {
-                m_Editor.deleteNode(m_SelectedNodeID);
+                m_Editor.deleteNode(m_SelectedItem->Id);
                 m_IsContextMenuOpen = false;
-                m_SelectedNodeID = -1;
-                m_HoveredNode = -1;
+                m_SelectedItem.reset();
+                m_HoveredItem.reset();
             }
             if (ImGui::MenuItem("Copy", NULL, false, false)) {}
         }
@@ -410,12 +468,13 @@ void CRenderPassGraphUI::_renderUIV()
                 size_t Id = Pair.first;
                 const SRenderPassGraphNode& Node = Pair.second;
                 ImGui::PushID(Id);
-                if (ImGui::Selectable(Node.Name.c_str(), Id == m_SelectedNodeID))
-                    m_SelectedNodeID = Id;
+                if (ImGui::Selectable(Node.Name.c_str(), __isNodeSelected(Id)))
+                {
+                    __setSelectedNode(Id);
+                }
                 if (ImGui::IsItemHovered())
                 {
-                    m_HoveredNode = Id;
-                    m_IsContextMenuOpen |= ImGui::IsMouseClicked(1);
+                    __setHoveredNode(Id);
                 }
                 ImGui::PopID();
             }
@@ -439,5 +498,49 @@ void CRenderPassGraphUI::_renderUIV()
     }
     ImGui::EndChild();
 
-    // TODO: update aabb
+    // update defer
+    m_DeferHoveredItem = m_HoveredItem;
+    m_DeferSelectedItem = m_SelectedItem;
+
+    m_AnimationTime += m_Timer.tick();
+}
+
+bool CRenderPassGraphUI::__isNodeSelected(size_t vNodeId) const
+{
+    return m_DeferSelectedItem.has_value() && m_DeferSelectedItem->Type == EItemType::NODE && m_DeferSelectedItem->Id == vNodeId;
+}
+
+bool CRenderPassGraphUI::__isLinkSelected(size_t vLinkIndex) const
+{
+    return m_DeferSelectedItem.has_value() && m_DeferSelectedItem->Type == EItemType::LINK && m_DeferSelectedItem->Id == vLinkIndex;
+}
+
+void CRenderPassGraphUI::__setSelectedNode(size_t vNodeId)
+{
+    m_SelectedItem = { vNodeId, EItemType::NODE };
+}
+
+void CRenderPassGraphUI::__setSelectedLink(size_t vLinkIndex)
+{
+    m_SelectedItem = { vLinkIndex, EItemType::LINK };
+}
+
+bool CRenderPassGraphUI::__isNodeHovered(size_t vNodeId) const
+{
+    return m_DeferHoveredItem.has_value() && m_DeferHoveredItem->Type == EItemType::NODE && m_DeferHoveredItem->Id == vNodeId;
+}
+
+bool CRenderPassGraphUI::__isLinkHovered(size_t vLinkIndex) const
+{
+    return m_DeferHoveredItem.has_value() && m_DeferHoveredItem->Type == EItemType::LINK && m_DeferHoveredItem->Id == vLinkIndex;
+}
+
+void CRenderPassGraphUI::__setHoveredNode(size_t vNodeId)
+{
+    m_HoveredItem = { vNodeId, EItemType::NODE };
+}
+
+void CRenderPassGraphUI::__setHoveredLink(size_t vLinkIndex)
+{
+    m_HoveredItem = { vLinkIndex, EItemType::LINK };
 }
