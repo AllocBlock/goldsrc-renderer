@@ -35,7 +35,7 @@ void CRenderPassGraphUI::__drawGrid()
     }
 }
 
-void CRenderPassGraphUI::__drawLink(size_t vLinkIndex, const SRenderPassGraphLink& vLink)
+void CRenderPassGraphUI::__drawLink(size_t vLinkId, const SRenderPassGraphLink& vLink)
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
     
@@ -52,17 +52,17 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkIndex, const SRenderPassGraphLin
         float d = Bezier.calcDistanceToPoint(MousePos);
         if (d <= HoverDistance && !m_HoveredItem.has_value()) // only when no node hovered
         {
-            __setHoveredLink(vLinkIndex);
+            __setHoveredItem(vLinkId, EItemType::LINK);
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                __setSelectedLink(vLinkIndex);
+                __setSelectedItem(vLinkId, EItemType::LINK);
             }
         }
     }
 
     auto LinkColor = IM_COL32(200, 200, 100, 255);
     float LinkThickness = 3.0f;
-    bool Hovered = __isLinkHovered(vLinkIndex);
+    bool Hovered = __isItemHovered(vLinkId, EItemType::LINK);
     if (Hovered)
     {
         LinkColor = IM_COL32(255, 255, 150, 255);
@@ -73,7 +73,7 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkIndex, const SRenderPassGraphLin
 
     // draw link animation
     unsigned BaseCircleColor = LinkColor;
-    if (__isLinkSelected(vLinkIndex))
+    if (__isItemSelected(vLinkId, EItemType::LINK))
     {
         const int CircleNum = 4;
         float Duration = 0.5f;
@@ -98,14 +98,16 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkIndex, const SRenderPassGraphLin
     }*/
 }
 
-void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset)
+void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset)
 {
     const float LineHeight = ImGui::GetTextLineHeight();
-    const float NODE_SLOT_RADIUS = 4.0f;
+    const float NODE_SLOT_RADIUS = 8.0f;
+    const float NODE_SLOT_HOVER_RADIUS = NODE_SLOT_RADIUS + 2.0f;
     const float NODE_WINDOW_PADDING = 8.0f;
     const float HeaderHeight = LineHeight + 8.0f;
     const auto HeaderBackgroundColor = IM_COL32(80, 0, 0, 255);
     const float Rounding = 4.0f;
+    const float PortItemHeight = glm::max(ImGui::GetTextLineHeight(), NODE_SLOT_HOVER_RADIUS) + 8.0f;
 
     const auto PortTextColor = IM_COL32(255, 255, 255, 255);
     const float WidgetWidth = 120.0f; // dynamic calculating ti avoid overlap or too empty
@@ -116,12 +118,12 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     const glm::vec2 NodeCanvasPos = vCanvasOffset + vioNode.Pos;
 
     float ContentPadding = 8.0f;
-    float ContentHeight = LineHeight * glm::max(vioNode.InputSet.size(), vioNode.OutputSet.size()) + ContentPadding * 2;
+    float ContentHeight = PortItemHeight * glm::max(vioNode.InputSet.size(), vioNode.OutputSet.size()) + ContentPadding * 2;
     
     glm::vec2 NodeCanvasSize = glm::vec2(WidgetWidth, HeaderHeight + ContentHeight);
     glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
     
-    ImGui::PushID(vId);
+    ImGui::PushID(vNodeId);
     // draw invisable button for interaction
     pDrawList->ChannelsSetCurrent(0);
     ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos));
@@ -129,13 +131,13 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     ImGui::InvisibleButton("node", __toImgui(NodeCanvasSize));
     if (!m_IsContextMenuOpen && ImGui::IsItemHovered())
     {
-        __setHoveredNode(vId);
+        __setHoveredItem(vNodeId, EItemType::NODE);
     }
 
     // dragging
     bool IsMoving = ImGui::IsItemActive();
     if (IsMoving)
-        __setSelectedNode(vId);
+        __setSelectedItem(vNodeId, EItemType::NODE);
     if (IsMoving && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta);
 
@@ -144,9 +146,9 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     
     // draw whole node background and boarder
     ImU32 BackgroundColor = IM_COL32(60, 60, 60, 255);
-    if (__isNodeSelected(vId))
+    if (__isItemSelected(vNodeId, EItemType::NODE))
         BackgroundColor = IM_COL32(100, 100, 100, 255);
-    else if (__isNodeHovered(vId))
+    else if (__isItemHovered(vNodeId, EItemType::NODE))
         BackgroundColor = IM_COL32(75, 75, 75, 255);
     pDrawList->AddRectFilled(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), BackgroundColor, Rounding);
     pDrawList->AddRect(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), IM_COL32(100, 100, 100, 255), Rounding);
@@ -164,30 +166,60 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     ImGui::EndGroup();
 
     // draw ports
-    m_NodePortPosMap[vId] = SPortPos();
-    glm::vec2 CurInputPortPos = NodeCanvasPos + glm::vec2(0.0f, HeaderHeight + ContentPadding + LineHeight * 0.5);
+    m_NodePortPosMap[vNodeId] = SPortPos();
+    glm::vec2 CurInputPortPos = NodeCanvasPos + glm::vec2(0.0f, HeaderHeight + ContentPadding + PortItemHeight * 0.5);
     glm::vec2 CurOutputPortPos = CurInputPortPos + glm::vec2(WidgetWidth, 0.0f);
 
     for (const auto& InputName : vioNode.InputSet)
     {
-        m_NodePortPosMap[vId].Input[InputName] = CurInputPortPos;
-        pDrawList->AddCircleFilled(__toImgui(CurInputPortPos), NODE_SLOT_RADIUS, IM_COL32(150, 150, 150, 150));
+        float Radius = NODE_SLOT_RADIUS;
+        unsigned Color = IM_COL32(150, 150, 150, 150);
+
+        const float HoverRadius = NODE_SLOT_HOVER_RADIUS + 2.0f;
+        if (glm::length(__toGlm(ImGui::GetMousePos()) - CurInputPortPos) < HoverRadius)
+            __setHoveredItem(vNodeId, EItemType::PORT, InputName, true);
+
+        // if is hovered
+        if (__isItemHovered(vNodeId, EItemType::PORT, InputName, true))
+        {
+            Radius = NODE_SLOT_HOVER_RADIUS;
+            Color = IM_COL32(200, 200, 200, 200);
+        }
+
+
+        m_NodePortPosMap[vNodeId].Input[InputName] = CurInputPortPos;
+        pDrawList->AddCircleFilled(__toImgui(CurInputPortPos), Radius, Color);
 
         ImVec2 TextSize = ImGui::CalcTextSize(InputName.c_str());
-        pDrawList->AddText(__toImgui(CurInputPortPos + glm::vec2(NODE_SLOT_RADIUS + 4.0f, -TextSize.y * 0.5)), PortTextColor, InputName.c_str());
+        pDrawList->AddText(__toImgui(CurInputPortPos + glm::vec2(NODE_SLOT_HOVER_RADIUS + 4.0f, -TextSize.y * 0.5)), PortTextColor, InputName.c_str());
 
-        CurInputPortPos.y += LineHeight;
+        CurInputPortPos.y += PortItemHeight;
     }
 
     for (const auto& OutputName : vioNode.OutputSet)
     {
-        m_NodePortPosMap[vId].Output[OutputName] = CurOutputPortPos;
-        pDrawList->AddCircleFilled(__toImgui(CurOutputPortPos), NODE_SLOT_RADIUS, IM_COL32(150, 150, 150, 150));
+
+        float Radius = NODE_SLOT_RADIUS;
+        unsigned Color = IM_COL32(150, 150, 150, 150);
+
+        const float HoverRadius = NODE_SLOT_HOVER_RADIUS + 2.0f;
+        if (glm::length(__toGlm(ImGui::GetMousePos()) - CurOutputPortPos) < HoverRadius)
+            __setHoveredItem(vNodeId, EItemType::PORT, OutputName, false);
+
+        // if is hovered
+        if (__isItemHovered(vNodeId, EItemType::PORT, OutputName, false))
+        {
+            Radius = NODE_SLOT_HOVER_RADIUS;
+            Color = IM_COL32(200, 200, 200, 200);
+        }
+        
+        m_NodePortPosMap[vNodeId].Output[OutputName] = CurOutputPortPos;
+        pDrawList->AddCircleFilled(__toImgui(CurOutputPortPos), Radius, Color);
 
         ImVec2 TextSize = ImGui::CalcTextSize(OutputName.c_str());
-        pDrawList->AddText(__toImgui(CurOutputPortPos + glm::vec2(-NODE_SLOT_RADIUS - 4.0f - TextSize.x, -TextSize.y * 0.5)), PortTextColor, OutputName.c_str());
+        pDrawList->AddText(__toImgui(CurOutputPortPos + glm::vec2(-NODE_SLOT_HOVER_RADIUS - 4.0f - TextSize.x, -TextSize.y * 0.5)), PortTextColor, OutputName.c_str());
 
-        CurOutputPortPos.y += LineHeight;
+        CurOutputPortPos.y += PortItemHeight;
     }
 
     ImGui::PopID();
@@ -241,10 +273,10 @@ void CRenderPassGraphUI::update()
         
     for (const auto& Pair : ForceMap)
     {
-        size_t Id = Pair.first;
-        if (__isNodeSelected(Id)) continue; // dragging
+        size_t NodeId = Pair.first;
+        if (__isItemSelected(NodeId, EItemType::NODE)) continue; // dragging
         glm::vec2 F = Pair.second;
-        SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(Id);
+        SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(NodeId);
             
         glm::vec2 A = F / 1.0f;
         glm::vec2 dx = A * Step * Step;
@@ -328,7 +360,7 @@ void CRenderPassGraphUI::_renderUIV()
     if ((ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         && !m_HoveredItem.has_value() && !ImGui::IsAnyItemHovered())
     {
-        m_SelectedItem = std::nullopt;
+        m_SelectedItem.reset();
     }
 
     // context menu
@@ -337,7 +369,7 @@ void CRenderPassGraphUI::_renderUIV()
         m_IsContextMenuOpen = false; // close on click
     }
     
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_HoveredItem.has_value())
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_HoveredItem.has_value() && m_HoveredItem->Type != EItemType::PORT)
     {
         m_IsContextMenuOpen = true;
         m_SelectedItem = m_HoveredItem;
@@ -353,7 +385,6 @@ void CRenderPassGraphUI::_renderUIV()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
     if (ImGui::BeginPopup("NodeContentMenu"))
     {
-        //glm::vec2 scene_pos = __toGlm(ImGui::GetMousePosOnOpeningCurrentPopup()) - CanvasOffset;
         if (m_DeferSelectedItem.has_value())
         {
             if (m_DeferSelectedItem->Type == EItemType::NODE)
@@ -396,10 +427,8 @@ void CRenderPassGraphUI::_renderUIV()
     ImGui::PopStyleVar();
     ImGui::EndGroup();
     ImGui::EndChild();
-
-
+    
     ImGui::SameLine();
-
 
     // Draw sidebar
     ImGui::BeginChild("sidebar", ImVec2(SidebarWidth, 0));
@@ -409,16 +438,16 @@ void CRenderPassGraphUI::_renderUIV()
         {
             for (const auto& Pair : m_pGraph->NodeMap)
             {
-                size_t Id = Pair.first;
+                size_t NodeId = Pair.first;
                 const SRenderPassGraphNode& Node = Pair.second;
-                ImGui::PushID(Id);
-                if (ImGui::Selectable(Node.Name.c_str(), __isNodeSelected(Id)))
+                ImGui::PushID(NodeId);
+                if (ImGui::Selectable(Node.Name.c_str(), __isItemSelected(NodeId, EItemType::NODE)))
                 {
-                    __setSelectedNode(Id);
+                    __setSelectedItem(NodeId, EItemType::NODE);
                 }
                 if (ImGui::IsItemHovered())
                 {
-                    __setHoveredNode(Id);
+                    __setHoveredItem(NodeId, EItemType::NODE);
                 }
                 ImGui::PopID();
             }
@@ -449,42 +478,24 @@ void CRenderPassGraphUI::_renderUIV()
     m_AnimationTime += m_Timer.tick();
 }
 
-bool CRenderPassGraphUI::__isNodeSelected(size_t vNodeId) const
+bool CRenderPassGraphUI::__isItemSelected(size_t vId, EItemType vType, const std::string& vName, bool vIsInput) const
 {
-    return m_DeferSelectedItem.has_value() && m_DeferSelectedItem->Type == EItemType::NODE && m_DeferSelectedItem->Id == vNodeId;
+    return m_DeferSelectedItem.has_value() && m_DeferSelectedItem->Type == vType && m_DeferSelectedItem->Id == vId &&
+        (m_DeferSelectedItem->Type != EItemType::PORT || (m_DeferSelectedItem->IsInput == vIsInput && m_DeferSelectedItem->Name == vName));
 }
 
-bool CRenderPassGraphUI::__isLinkSelected(size_t vLinkIndex) const
+void CRenderPassGraphUI::__setSelectedItem(size_t vId, EItemType vType, const std::string& vName, bool vIsInput)
 {
-    return m_DeferSelectedItem.has_value() && m_DeferSelectedItem->Type == EItemType::LINK && m_DeferSelectedItem->Id == vLinkIndex;
+    m_SelectedItem = { vType, vId, vName, vIsInput };
 }
 
-void CRenderPassGraphUI::__setSelectedNode(size_t vNodeId)
+bool CRenderPassGraphUI::__isItemHovered(size_t vId, EItemType vType, const std::string& vName, bool vIsInput) const
 {
-    m_SelectedItem = { vNodeId, EItemType::NODE };
+    return m_DeferHoveredItem.has_value() && m_DeferHoveredItem->Type == vType && m_DeferHoveredItem->Id == vId &&
+        (m_DeferHoveredItem->Type != EItemType::PORT || (m_DeferHoveredItem->IsInput == vIsInput && m_DeferHoveredItem->Name == vName));
 }
 
-void CRenderPassGraphUI::__setSelectedLink(size_t vLinkIndex)
+void CRenderPassGraphUI::__setHoveredItem(size_t vId, EItemType vType, const std::string& vName, bool vIsInput)
 {
-    m_SelectedItem = { vLinkIndex, EItemType::LINK };
-}
-
-bool CRenderPassGraphUI::__isNodeHovered(size_t vNodeId) const
-{
-    return m_DeferHoveredItem.has_value() && m_DeferHoveredItem->Type == EItemType::NODE && m_DeferHoveredItem->Id == vNodeId;
-}
-
-bool CRenderPassGraphUI::__isLinkHovered(size_t vLinkIndex) const
-{
-    return m_DeferHoveredItem.has_value() && m_DeferHoveredItem->Type == EItemType::LINK && m_DeferHoveredItem->Id == vLinkIndex;
-}
-
-void CRenderPassGraphUI::__setHoveredNode(size_t vNodeId)
-{
-    m_HoveredItem = { vNodeId, EItemType::NODE };
-}
-
-void CRenderPassGraphUI::__setHoveredLink(size_t vLinkIndex)
-{
-    m_HoveredItem = { vLinkIndex, EItemType::LINK };
+    m_HoveredItem = { vType, vId, vName, vIsInput };
 }

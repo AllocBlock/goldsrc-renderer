@@ -20,37 +20,36 @@ public:
     void update();
 
 private:
+    enum class EItemType
+    {
+        NODE,
+        LINK,
+        PORT
+    };
+
+    struct SItemRef
+    {
+        EItemType Type;
+        size_t Id;
+        std::string Name; // only for port
+        bool IsInput; // only for port
+    };
+
     void __drawGrid();
-    void __drawLink(size_t vLinkIndex, const SRenderPassGraphLink& vLink);
-    void __drawNode(size_t vId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset);
+    void __drawLink(size_t vLinkId, const SRenderPassGraphLink& vLink);
+    void __drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset);
 
     // TODO: how to manage these copied function?
-    bool __isNodeSelected(size_t vNodeId) const;
-    bool __isLinkSelected(size_t vLinkIndex) const;
-    void __setSelectedNode(size_t vNodeId);
-    void __setSelectedLink(size_t vLinkIndex);
-    bool __isNodeHovered(size_t vNodeId) const;
-    bool __isLinkHovered(size_t vLinkIndex) const;
-    void __setHoveredNode(size_t vNodeId);
-    void __setHoveredLink(size_t vLinkIndex);
+    bool __isItemSelected(size_t vId, EItemType vType, const std::string& vName = "", bool vIsInput = true) const;
+    void __setSelectedItem(size_t vId, EItemType vType, const std::string& vName = "", bool vIsInput = true);
+    bool __isItemHovered(size_t vNodeId, EItemType vType, const std::string& vName = "", bool vIsInput = true) const;
+    void __setHoveredItem(size_t vId, EItemType vType, const std::string& vName = "", bool vIsInput = true);
 
     ptr<SRenderPassGraph> m_pGraph = nullptr;
 
     glm::vec2 m_Scrolling = glm::vec2(0.0f);
     bool m_ShowGrid = true;
     bool m_IsContextMenuOpen = false;
-
-    enum class EItemType
-    {
-        NODE,
-        LINK
-    };
-
-    struct SItemRef
-    {
-        size_t Id;
-        EItemType Type;
-    };
 
     std::optional<SItemRef> m_HoveredItem = std::nullopt; // real-time update, override
     std::optional<SItemRef> m_DeferHoveredItem = std::nullopt; // actual hovered, defered for drawing
@@ -69,5 +68,9 @@ private:
     CTimer m_Timer;
     float m_AnimationTime = 0.0f;
 
+    // edit
+    bool m_IsAddingLink = false;
+    std::optional<SRenderPassGraphLink> m_LinkToBeAdded;
+    bool m_IsFixedSource = true; // true: fixed source, find destination; false: fixed destination, find source 
     CRenderPassGraphEditor m_Editor;
 };
