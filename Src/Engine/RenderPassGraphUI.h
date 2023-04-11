@@ -3,6 +3,7 @@
 #include "RenderPass.h"
 #include "RenderPassGraphEditor.h"
 #include "Timer.h"
+#include "Maths.h"
 
 #include <string>
 #include <vector>
@@ -38,6 +39,7 @@ private:
     void __drawGrid();
     void __drawLink(size_t vLinkId, const SRenderPassGraphLink& vLink);
     void __drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset);
+    void __drawCurveAnimation(const Math::SCubicBezier2D& vCurve, unsigned vColor, float vRadius);
 
     // TODO: how to manage these copied function?
     bool __isItemSelected(size_t vId, EItemType vType, const std::string& vName = "", bool vIsInput = true) const;
@@ -70,7 +72,11 @@ private:
 
     // edit
     bool m_IsAddingLink = false;
-    std::optional<SRenderPassGraphLink> m_LinkToBeAdded;
-    bool m_IsFixedSource = true; // true: fixed source, find destination; false: fixed destination, find source 
+    std::optional<SRenderPassGraphPortInfo> m_FixedPort;
+    bool m_IsFixedPortSource = true; // true: fixed source, find destination; false: fixed destination, find source
+    std::optional<SRenderPassGraphPortInfo> m_AttachedPort;
+    float m_AttachedPortDistance;
+    const float m_AttachMinDistance = 16.0f;
+
     CRenderPassGraphEditor m_Editor;
 };

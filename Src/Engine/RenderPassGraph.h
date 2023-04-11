@@ -105,12 +105,22 @@ struct SRenderPassGraphPortInfo
 {
     size_t NodeId;
     std::string Name;
+
+    bool operator == (const SRenderPassGraphPortInfo& vOther) const
+    {
+        return NodeId == vOther.NodeId && Name == vOther.Name;
+    }
 };
 
 struct SRenderPassGraphLink
 {
     SRenderPassGraphPortInfo Source;
     SRenderPassGraphPortInfo Destination;
+
+    bool operator == (const SRenderPassGraphLink& vOther) const
+    {
+        return Source == vOther.Source && Destination == vOther.Destination;
+    }
 };
 
 struct SRenderPassGraph

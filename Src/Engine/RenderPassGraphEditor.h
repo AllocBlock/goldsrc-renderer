@@ -5,6 +5,7 @@
 #include <list>
 #include <stdexcept>
 
+// TODO: check loop when add link
 class IRenderPassGraphEditCommand
 {
 public:
@@ -34,6 +35,38 @@ protected:
 
 private:
     wptr<SRenderPassGraph> m_pGraph;
+};
+
+
+class CCommandAddLink : public IRenderPassGraphEditCommand
+{
+public:
+    CCommandAddLink(size_t vLinkId, const SRenderPassGraphLink& vLink)
+    {
+        m_LinkId = vLinkId;
+        m_Link = vLink;
+    }
+
+protected:
+    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override
+    {
+        _ASSERTE(vGraph->NodeMap.find(m_Link.Source.NodeId) != vGraph->NodeMap.end());
+        _ASSERTE(vGraph->NodeMap.find(m_Link.Destination.NodeId) != vGraph->NodeMap.end());
+        _ASSERTE(vGraph->NodeMap.at(m_Link.Source.NodeId).hasOutput(m_Link.Source.Name));
+        _ASSERTE(vGraph->NodeMap.at(m_Link.Destination.NodeId).hasInput(m_Link.Destination.Name));
+        _ASSERTE(vGraph->LinkMap.find(m_LinkId) == vGraph->LinkMap.end());
+        vGraph->LinkMap[m_LinkId] = m_Link;
+    }
+
+    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override
+    {
+        _ASSERTE(vGraph->LinkMap.find(m_LinkId) != vGraph->LinkMap.end());
+        vGraph->LinkMap.erase(m_LinkId);
+    }
+
+private:
+    size_t m_LinkId;
+    SRenderPassGraphLink m_Link;
 };
 
 class CCommandRemoveLink : public IRenderPassGraphEditCommand
@@ -183,17 +216,19 @@ public:
 
         m_pGraph->NodeMap[m_CurNodeIndex] = std::move(Node);
         return m_CurNodeIndex++;
+    }*/
+
+    void addLink(const SRenderPassGraphPortInfo& vSourcePort, const SRenderPassGraphPortInfo& vDestPort)
+    {
+        SRenderPassGraphLink Link = { vSourcePort, vDestPort };
+        execCommand(make<CCommandAddLink>(m_CurLinkId++, Link));
     }
 
     void addLink(size_t vStartNodeId, const std::string& vStartPortName, size_t vEndNodeId,
         const std::string& vEndPortName)
     {
-        _ASSERTE(hasPass(vStartNodeId));
-        _ASSERTE(hasPass(vEndNodeId));
-        _ASSERTE(m_pGraph->NodeMap.at(vStartNodeId).hasOutput(vStartPortName));
-        _ASSERTE(m_pGraph->NodeMap.at(vEndNodeId).hasInput(vEndPortName));
-        m_pGraph->LinkSet.push_back({ {vStartNodeId, vStartPortName}, {vEndNodeId, vEndPortName} });
-    }*/
+        addLink({ vStartNodeId, vStartPortName }, { vEndNodeId, vEndPortName });
+    }
 
     void removeNode(size_t vNodeId)
     { execCommand(make<CCommandRemoveNode>(vNodeId)); }

@@ -9,13 +9,26 @@
 
 std::vector<std::pair<std::string, std::function<vk::IRenderPass::Ptr()>>> gRegisteredPassSet = {};
 
+glm::vec2 __toGlm(ImVec2 v) { return glm::vec2(v.x, v.y); }
+ImVec2 __toImgui(glm::vec2 v) { return ImVec2(v.x, v.y); }
+
+Math::SCubicBezier2D __createLinkCurve(const glm::vec2& vStart, const glm::vec2& vEnd)
+{
+    glm::vec2 P2 = vStart + glm::vec2(50, 0);
+    glm::vec2 P3 = vEnd + glm::vec2(-50, 0);
+    return Math::SCubicBezier2D(vStart, P2, P3, vEnd);
+}
+
+void __drawLinkCurve(const Math::SCubicBezier2D& vBezier, unsigned vColor, float vThickness)
+{
+    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+    pDrawList->AddBezierCurve(__toImgui(vBezier.Points[0]), __toImgui(vBezier.Points[1]), __toImgui(vBezier.Points[2]), __toImgui(vBezier.Points[3]), vColor, vThickness);
+}
+
 void CRenderPassGraphUI::registerRenderPass(const std::string& vName, std::function<vk::IRenderPass::Ptr()> vCreateFunction)
 {
     gRegisteredPassSet.push_back({ vName, vCreateFunction });
 }
-
-glm::vec2 __toGlm(ImVec2 v) { return glm::vec2(v.x, v.y); }
-ImVec2 __toImgui(glm::vec2 v) { return ImVec2(v.x, v.y); }
 
 void CRenderPassGraphUI::__drawGrid()
 {
@@ -39,17 +52,15 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkId, const SRenderPassGraphLink& 
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
     
-    glm::vec2 p1 = m_NodePortPosMap.at(vLink.Source.NodeId).Output.at(vLink.Source.Name);
-    glm::vec2 p2 = m_NodePortPosMap.at(vLink.Destination.NodeId).Input.at(vLink.Destination.Name);
-    glm::vec2 p11 = p1 + glm::vec2(50, 0);
-    glm::vec2 p22 = p2 + glm::vec2(-50, 0);
+    glm::vec2 Start = m_NodePortPosMap.at(vLink.Source.NodeId).Output.at(vLink.Source.Name);
+    glm::vec2 End = m_NodePortPosMap.at(vLink.Destination.NodeId).Input.at(vLink.Destination.Name);
+    Math::SCubicBezier2D LinkCurve = __createLinkCurve(Start, End);
 
-    Math::SCubicBezier2D Bezier(p1, p11, p22, p2);
     if (!m_IsContextMenuOpen)
     {
         const float HoverDistance = 6.0f;
         glm::vec2 MousePos = __toGlm(ImGui::GetMousePos());
-        float d = Bezier.calcDistanceToPoint(MousePos);
+        float d = LinkCurve.calcDistanceToPoint(MousePos);
         if (d <= HoverDistance && !m_HoveredItem.has_value()) // only when no node hovered
         {
             __setHoveredItem(vLinkId, EItemType::LINK);
@@ -68,28 +79,13 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkId, const SRenderPassGraphLink& 
         LinkColor = IM_COL32(255, 255, 150, 255);
         LinkThickness = 6.0f;
     }
-    
-    pDrawList->AddBezierCurve(__toImgui(p1), __toImgui(p11), __toImgui(p22), __toImgui(p2), LinkColor, LinkThickness);
+
+    __drawLinkCurve(LinkCurve, LinkColor, LinkThickness);
 
     // draw link animation
     unsigned BaseCircleColor = LinkColor;
     if (__isItemSelected(vLinkId, EItemType::LINK))
-    {
-        const int CircleNum = 4;
-        float Duration = 0.5f;
-        float Interval = 1.0f / CircleNum;
-        float Shift = glm::mod(m_AnimationTime / Duration, 1.0f) * Interval;
-        for (int i = 0; i < CircleNum; ++i)
-        {
-            float t = i * Interval + Shift;
-            float Alpha = (t < 0.5 ? t : 1.0 - t) * 2; // fade in-out
-            Alpha = Math::smoothstepInversed(Alpha); // smooth
-            unsigned char Alpha8Bit = unsigned char(Alpha * 255);
-            unsigned CircleColor = (BaseCircleColor & ~IM_COL32_A_MASK) | IM_COL32(0, 0, 0, Alpha8Bit);
-            glm::vec2 Pos = Bezier.sample(t);
-            pDrawList->AddCircleFilled(__toImgui(Pos), LinkThickness + 2.0f, CircleColor);
-        }
-    }
+        __drawCurveAnimation(LinkCurve, BaseCircleColor, LinkThickness + 2.0f);
 
     // debug, line segment
     /*for (const auto& Seg : Bezier.downSample())
@@ -135,11 +131,14 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     }
 
     // dragging
-    bool IsMoving = ImGui::IsItemActive();
-    if (IsMoving)
-        __setSelectedItem(vNodeId, EItemType::NODE);
-    if (IsMoving && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta);
+    if (!m_IsAddingLink)
+    {
+        bool IsMoving = ImGui::IsItemActive();
+        if (IsMoving)
+            __setSelectedItem(vNodeId, EItemType::NODE);
+        if (IsMoving && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+            vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta);
+    }
 
     // work on background
     pDrawList->ChannelsSetCurrent(1);
@@ -170,14 +169,49 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     glm::vec2 CurInputPortPos = NodeCanvasPos + glm::vec2(0.0f, HeaderHeight + ContentPadding + PortItemHeight * 0.5);
     glm::vec2 CurOutputPortPos = CurInputPortPos + glm::vec2(WidgetWidth, 0.0f);
 
+    // TODO: merge common part of input/output
     for (const auto& InputName : vioNode.InputSet)
     {
         float Radius = NODE_SLOT_RADIUS;
         unsigned Color = IM_COL32(150, 150, 150, 150);
 
         const float HoverRadius = NODE_SLOT_HOVER_RADIUS + 2.0f;
-        if (glm::length(__toGlm(ImGui::GetMousePos()) - CurInputPortPos) < HoverRadius)
+        const float Distance = glm::length(__toGlm(ImGui::GetMousePos()) - CurInputPortPos);
+        if (Distance < HoverRadius)
+        {
             __setHoveredItem(vNodeId, EItemType::PORT, InputName, true);
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) // start adding link
+            {
+                m_IsAddingLink = true;
+                m_FixedPort = { vNodeId , InputName };
+                m_IsFixedPortSource = false;
+            }
+        }
+        
+        if (m_IsAddingLink && m_IsFixedPortSource && m_FixedPort->NodeId != vNodeId) // if attached to the adding link
+        {
+            // FIXME: too messy code!!! fix this!
+            bool HasThisLink = false;
+            SRenderPassGraphLink Link = {m_FixedPort.value(), { vNodeId, InputName } };
+            
+            for (const auto& Pair : m_pGraph->LinkMap)
+            {
+                if (Pair.second == Link)
+                {
+                    HasThisLink = true;
+                    break;
+                }
+            }
+
+            if (!HasThisLink)
+            {
+                if (Distance < m_AttachMinDistance && (!m_AttachedPort.has_value() || Distance < m_AttachedPortDistance))
+                {
+                    m_AttachedPortDistance = Distance;
+                    m_AttachedPort = { vNodeId, InputName };
+                }
+            }
+        }
 
         // if is hovered
         if (__isItemHovered(vNodeId, EItemType::PORT, InputName, true))
@@ -203,8 +237,43 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
         unsigned Color = IM_COL32(150, 150, 150, 150);
 
         const float HoverRadius = NODE_SLOT_HOVER_RADIUS + 2.0f;
-        if (glm::length(__toGlm(ImGui::GetMousePos()) - CurOutputPortPos) < HoverRadius)
+        const float Distance = glm::length(__toGlm(ImGui::GetMousePos()) - CurOutputPortPos);
+        if (Distance < HoverRadius)
+        {
             __setHoveredItem(vNodeId, EItemType::PORT, OutputName, false);
+
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                m_IsAddingLink = true;
+                m_FixedPort = { vNodeId , OutputName };
+                m_IsFixedPortSource = true;
+            }
+        }
+        
+        if (m_IsAddingLink && !m_IsFixedPortSource && m_FixedPort->NodeId != vNodeId) // if attached to the adding link
+        {
+            // FIXME: too messy code!!! fix this!
+            bool HasThisLink = false;
+            SRenderPassGraphLink Link = { { vNodeId, OutputName }, m_FixedPort.value() };
+
+            for (const auto& Pair : m_pGraph->LinkMap)
+            {
+                if (Pair.second == Link)
+                {
+                    HasThisLink = true;
+                    break;
+                }
+            }
+
+            if (!HasThisLink)
+            {
+                if (Distance < m_AttachMinDistance && (!m_AttachedPort.has_value() || Distance < m_AttachedPortDistance))
+                {
+                    m_AttachedPortDistance = Distance;
+                    m_AttachedPort = { vNodeId, OutputName };
+                }
+            }
+        }
 
         // if is hovered
         if (__isItemHovered(vNodeId, EItemType::PORT, OutputName, false))
@@ -223,6 +292,26 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     }
 
     ImGui::PopID();
+}
+
+void CRenderPassGraphUI::__drawCurveAnimation(const Math::SCubicBezier2D& vCurve, unsigned vColor, float vRadius)
+{
+    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+   
+    const int CircleNum = 4;
+    float Duration = 0.5f;
+    float Interval = 1.0f / CircleNum;
+    float Shift = glm::mod(m_AnimationTime / Duration, 1.0f) * Interval;
+    for (int i = 0; i < CircleNum; ++i)
+    {
+        float t = i * Interval + Shift;
+        float Alpha = (t < 0.5 ? t : 1.0 - t) * 2; // fade in-out
+        Alpha = Math::smoothstepInversed(Alpha); // smooth
+        unsigned char Alpha8Bit = unsigned char(Alpha * 255);
+        unsigned CircleColor = (vColor & ~IM_COL32_A_MASK) | IM_COL32(0, 0, 0, Alpha8Bit);
+        glm::vec2 Pos = vCurve.sample(t);
+        pDrawList->AddCircleFilled(__toImgui(Pos), vRadius, CircleColor);
+    }
 }
 
 void CRenderPassGraphUI::update()
@@ -300,6 +389,7 @@ void CRenderPassGraphUI::_renderUIV()
 {
     // reset state
     m_HoveredItem.reset();
+    m_AttachedPort.reset();
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -355,6 +445,57 @@ void CRenderPassGraphUI::_renderUIV()
         __drawLink(Pair.first, Pair.second); // depend on renderer node, so draw after node
     }
     pDrawList->ChannelsMerge();
+
+    // draw to add link
+    if (m_IsAddingLink)
+    {
+        // TODO: complex and diffusing link info parsing...deal with this
+        _ASSERTE(m_FixedPort.has_value());
+        glm::vec2 MousePos = __toGlm(ImGui::GetMousePos());
+        glm::vec2 AttchedPos = MousePos;
+        if (m_AttachedPort.has_value())
+        {
+            if (m_IsFixedPortSource)
+            {
+                AttchedPos = m_NodePortPosMap[m_AttachedPort->NodeId].Input[m_AttachedPort->Name];
+            }
+            else
+            {
+                AttchedPos = m_NodePortPosMap[m_AttachedPort->NodeId].Output[m_AttachedPort->Name];
+            }
+        }
+
+        glm::vec2 Start = m_IsFixedPortSource ? m_NodePortPosMap[m_FixedPort->NodeId].Output[m_FixedPort->Name] : AttchedPos;
+        glm::vec2 End = !m_IsFixedPortSource ? m_NodePortPosMap[m_FixedPort->NodeId].Input[m_FixedPort->Name] : AttchedPos;
+        Math::SCubicBezier2D LinkCurve = __createLinkCurve(Start, End);
+
+        auto LinkColor = IM_COL32(200, 150, 150, 255);
+        float LinkThickness = 6.0f;
+        __drawLinkCurve(LinkCurve, LinkColor, LinkThickness);
+
+        // if matched, draw animation
+        if (m_AttachedPort.has_value())
+            __drawCurveAnimation(LinkCurve, LinkColor, LinkThickness + 2.0f);
+
+        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            if (m_AttachedPort.has_value()) // add a link
+            {
+                if (m_IsFixedPortSource)
+                {
+                    m_Editor.addLink(m_FixedPort.value(), m_AttachedPort.value());
+                }
+                else
+                {
+                    m_Editor.addLink(m_AttachedPort.value(), m_FixedPort.value());
+                }
+            }
+
+            m_FixedPort.reset();
+            m_AttachedPort.reset();
+            m_IsAddingLink = false;
+        }
+    }
 
     // state
     if ((ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right))
