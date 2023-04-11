@@ -148,8 +148,7 @@ void CApplicationGoldSrc::__linkPasses()
     _ASSERTE(m_pPassVisualize->isValid());
     _ASSERTE(m_pPassGUI->isValid());
 
-    m_pRenderPassGraphUI->clear();
-    m_pRenderPassGraphUI->createFromRenderPassGraph(
+    m_pRenderPassGraph = CRenderPassGraphEditor::createFromRenderPassGraph(
         {
             m_pPassGoldSrc,
             m_pPassOutlineMask,
@@ -166,4 +165,6 @@ void CApplicationGoldSrc::__linkPasses()
         },
         {0, "Main"}
     );
+
+    m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
 }

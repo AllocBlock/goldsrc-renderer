@@ -36,7 +36,34 @@ private:
     wptr<SRenderPassGraph> m_pGraph;
 };
 
-// TODO: handle if node has entry port
+class CCommandRemoveLink : public IRenderPassGraphEditCommand
+{
+public:
+    CCommandRemoveLink(size_t vLinkId)
+    {
+        m_LinkId = vLinkId;
+    }
+
+protected:
+    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override
+    {
+        _ASSERTE(vGraph->LinkMap.find(m_LinkId) != vGraph->LinkMap.end());
+
+        m_Link = std::move(vGraph->LinkMap.at(m_LinkId));
+        vGraph->LinkMap.erase(m_LinkId);
+    }
+
+    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override
+    {
+        _ASSERTE(vGraph->LinkMap.find(m_LinkId) == vGraph->LinkMap.end());
+        vGraph->LinkMap[m_LinkId] = m_Link;
+    }
+
+private:
+    size_t m_LinkId;
+    SRenderPassGraphLink m_Link;
+};
+
 class CCommandRemoveNode : public IRenderPassGraphEditCommand
 {
 public:
@@ -48,31 +75,36 @@ public:
 protected:
     virtual void _executeV(ptr<SRenderPassGraph> vGraph) override
     {
+        _ASSERTE(vGraph->NodeMap.find(m_NodeId) != vGraph->NodeMap.end());
         m_Node = std::move(vGraph->NodeMap.at(m_NodeId));
         vGraph->NodeMap.erase(m_NodeId);
-
-        auto& GraphLinkSet = vGraph->LinkSet;
-        for (size_t i = 0; i < GraphLinkSet.size(); ++i)
+        
+        for (auto pIter = vGraph->LinkMap.begin(); pIter != vGraph->LinkMap.end();)
         {
-            if (GraphLinkSet[i].Source.NodeId == m_NodeId || GraphLinkSet[i].Destination.NodeId == m_NodeId)
+            size_t LinkId = pIter->first;
+            const SRenderPassGraphLink& Link = pIter->second;
+
+            if (Link.Source.NodeId == m_NodeId || Link.Destination.NodeId == m_NodeId)
             {
-                m_LinkSet.emplace_back(GraphLinkSet[i]);
-                GraphLinkSet.erase(GraphLinkSet.begin() + i);
-                --i;
+                m_LinkMap[LinkId] = Link;
+                pIter = vGraph->LinkMap.erase(pIter);
             }
+            else
+                ++pIter;
         }
     }
 
     virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override
     {
+        _ASSERTE(vGraph->NodeMap.find(m_NodeId) == vGraph->NodeMap.end());
         vGraph->NodeMap[m_NodeId] = m_Node;
-        vGraph->LinkSet.insert(vGraph->LinkSet.end(), m_LinkSet.begin(), m_LinkSet.end());
+        vGraph->LinkMap.insert(m_LinkMap.begin(), m_LinkMap.end());
     }
 
 private:
     size_t m_NodeId;
     SRenderPassGraphNode m_Node;
-    std::vector<SRenderPassGraphLink> m_LinkSet;
+    std::map<size_t, SRenderPassGraphLink> m_LinkMap;
 };
 
 class CRenderPassGraphEditor
@@ -81,6 +113,11 @@ public:
     void setGraph(ptr<SRenderPassGraph> vGraph)
     {
         m_pGraph = vGraph;
+        m_CurNodeId = m_CurLinkId = 0;
+        for (const auto& Pair : m_pGraph->NodeMap)
+            m_CurNodeId = std::max(m_CurNodeId, Pair.first + 1);
+        for (const auto& Pair : m_pGraph->LinkMap)
+            m_CurLinkId = std::max(m_CurLinkId, Pair.first + 1);
         clearHistory();
     }
 
@@ -124,19 +161,132 @@ public:
         m_pCurCommand = std::next(m_pCurCommand);
     }
 
-    void deleteNode(size_t vNodeId)
+    /*size_t addNode(const std::string& vName, const std::vector<std::string>& vInputSet,
+        const std::vector<std::string>& vOutputSet)
     {
-        execCommand(make<CCommandRemoveNode>(vNodeId));
+        const float Margin = 20.0f;
+
+        SAABB2D AABB = getAABB();
+
+        glm::vec2 Pos = glm::vec2(AABB.Max.x + Margin, (AABB.Min.y + AABB.Max.y) * 0.5f);
+
+        SRenderPassGraphNode Node;
+        Node.Name = vName;
+        Node.Pos = Pos;
+        Node.InputSet = vInputSet;
+        Node.OutputSet = vOutputSet;
+
+        if (!m_AABB.has_value())
+            m_AABB = Node.getAABB();
+        else
+            m_AABB.value().applyUnion(Node.getAABB());
+
+        m_pGraph->NodeMap[m_CurNodeIndex] = std::move(Node);
+        return m_CurNodeIndex++;
     }
+
+    void addLink(size_t vStartNodeId, const std::string& vStartPortName, size_t vEndNodeId,
+        const std::string& vEndPortName)
+    {
+        _ASSERTE(hasPass(vStartNodeId));
+        _ASSERTE(hasPass(vEndNodeId));
+        _ASSERTE(m_pGraph->NodeMap.at(vStartNodeId).hasOutput(vStartPortName));
+        _ASSERTE(m_pGraph->NodeMap.at(vEndNodeId).hasInput(vEndPortName));
+        m_pGraph->LinkSet.push_back({ {vStartNodeId, vStartPortName}, {vEndNodeId, vEndPortName} });
+    }*/
+
+    void removeNode(size_t vNodeId)
+    { execCommand(make<CCommandRemoveNode>(vNodeId)); }
+    void removeLink(size_t vLinkId)
+    { execCommand(make<CCommandRemoveLink>(vLinkId)); }
 
     void clearHistory()
     {
         m_CommandLinkList.clear();
         m_pCurCommand = m_CommandLinkList.end();
     }
+
+    SAABB2D getAABB()const
+    {
+        if (m_pGraph && !m_pGraph->NodeMap.empty())
+        {
+            SAABB2D AABB = m_pGraph->NodeMap.begin()->second.getAABB();
+            for (auto pIter = std::next(m_pGraph->NodeMap.begin()); pIter != m_pGraph->NodeMap.end(); ++pIter)
+            {
+                AABB.applyUnion(pIter->second.getAABB());
+            }
+            return AABB;
+        }
+        else
+            return SAABB2D(glm::vec2(0, 0), glm::vec2(0, 0));
+    }
+
+    // temp, remove this later
+    static ptr<SRenderPassGraph> createFromRenderPassGraph(std::vector<vk::IRenderPass::Ptr> vPassSet,
+        std::vector<std::tuple<int, std::string, int, std::string>> vLinks, std::pair<int, std::string> vEntry)
+    {
+        auto pGraph = make<SRenderPassGraph>();
+        size_t CurNodeId = 0;
+
+        pGraph->NodeMap[CurNodeId++] = SRenderPassGraphNode{ "Swapchain", glm::vec2(0, 0),glm::vec2(20.0f), {}, {"Main"} };
+
+        std::vector<size_t> PassIds(vPassSet.size()); // index to id
+        for (size_t i = 0; i < vPassSet.size(); ++i)
+        {
+            std::string PassName = vPassSet[i]->getNameV();
+
+            auto pPortSet = vPassSet[i]->getPortSet();
+            std::vector<std::string> InputPortSet, OutputPortSet;
+            for (size_t i = 0; i < pPortSet->getInputPortNum(); ++i)
+                InputPortSet.emplace_back(pPortSet->getInputPort(i)->getName());
+            for (size_t i = 0; i < pPortSet->getOutputPortNum(); ++i)
+                OutputPortSet.emplace_back(pPortSet->getOutputPort(i)->getName());
+
+            size_t Id = CurNodeId;
+            PassIds[i] = Id;
+
+            pGraph->NodeMap[Id] = SRenderPassGraphNode{ PassName, glm::vec2(0, 0), glm::vec2(20.0f), InputPortSet, OutputPortSet };
+            CurNodeId++;
+        }
+
+        // links
+        size_t CurLinkId = 0;
+        pGraph->EntryPortOpt = SRenderPassGraphPortInfo{ PassIds[vEntry.first], vEntry.second };
+        pGraph->LinkMap[CurLinkId++] = SRenderPassGraphLink{ {0, "Main"}, {pGraph->EntryPortOpt->NodeId, pGraph->EntryPortOpt->Name} };
+
+        for (const auto& Link : vLinks)
+        {
+            int StartPassIndex = std::get<0>(Link);
+            std::string StartPortName = std::get<1>(Link);
+            int EndPassIndex = std::get<2>(Link);
+            std::string EndPortName = std::get<3>(Link);
+
+            size_t StartNodeId = PassIds[StartPassIndex];
+            size_t EndNodeId = PassIds[EndPassIndex];
+            pGraph->LinkMap[CurLinkId++] = SRenderPassGraphLink{ {StartNodeId, StartPortName}, {EndNodeId, EndPortName} };
+        }
+        return pGraph;
+    }
+
     
 private:
+    bool hasPass(size_t vNodeId)
+    {
+        return m_pGraph->NodeMap.find(vNodeId) != m_pGraph->NodeMap.end();
+    }
+
+    void clear()
+    {
+        m_pGraph->NodeMap.clear();
+        m_pGraph->LinkMap.clear();
+        m_pGraph->EntryPortOpt = std::nullopt;
+    }
+
     ptr<SRenderPassGraph> m_pGraph = nullptr;
+    
+    size_t m_CurNodeId = 0;
+    size_t m_CurLinkId = 0;
+
     size_t m_MaxUndoCount = 50;
     std::list<IRenderPassGraphEditCommand::Ptr> m_CommandLinkList;
     std::list<IRenderPassGraphEditCommand::Ptr>::iterator m_pCurCommand;

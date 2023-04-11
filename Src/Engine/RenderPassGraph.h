@@ -116,6 +116,6 @@ struct SRenderPassGraphLink
 struct SRenderPassGraph
 {
     std::map<size_t, SRenderPassGraphNode> NodeMap;
-    std::vector<SRenderPassGraphLink> LinkSet;
-    std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt;
+    std::map<size_t, SRenderPassGraphLink> LinkMap;
+    std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt; // TODO: how to save entry data?
 };

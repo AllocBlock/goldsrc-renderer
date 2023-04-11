@@ -1,5 +1,4 @@
 #include "RenderPassGraphUI.h"
-#include "RenderPassGraphUI.h"
 #include "Random.h"
 #include "Maths.h"
 
@@ -46,16 +45,18 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkIndex, const SRenderPassGraphLin
     glm::vec2 p22 = p2 + glm::vec2(-50, 0);
 
     Math::SCubicBezier2D Bezier(p1, p11, p22, p2);
-    const float HoverDistance = 6.0f;
-    glm::vec2 MousePos = __toGlm(ImGui::GetMousePos());
-    float d = Bezier.calcDistanceToPoint(MousePos);
-    
-    if (d <= HoverDistance)
+    if (!m_IsContextMenuOpen)
     {
-        __setHoveredLink(vLinkIndex);
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        const float HoverDistance = 6.0f;
+        glm::vec2 MousePos = __toGlm(ImGui::GetMousePos());
+        float d = Bezier.calcDistanceToPoint(MousePos);
+        if (d <= HoverDistance && !m_HoveredItem.has_value()) // only when no node hovered
         {
-            __setSelectedLink(vLinkIndex);
+            __setHoveredLink(vLinkIndex);
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            {
+                __setSelectedLink(vLinkIndex);
+            }
         }
     }
 
@@ -126,7 +127,7 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos));
 
     ImGui::InvisibleButton("node", __toImgui(NodeCanvasSize));
-    if (ImGui::IsItemHovered())
+    if (!m_IsContextMenuOpen && ImGui::IsItemHovered())
     {
         __setHoveredNode(vId);
     }
@@ -192,55 +193,6 @@ void CRenderPassGraphUI::__drawNode(size_t vId, SRenderPassGraphNode& vioNode, g
     ImGui::PopID();
 }
 
-bool CRenderPassGraphUI::hasPass(size_t vNodeId)
-{
-    return m_pGraph->NodeMap.find(vNodeId) != m_pGraph->NodeMap.end();
-}
-
-size_t CRenderPassGraphUI::addNode(const std::string& vName, const std::vector<std::string>& vInputSet,
-    const std::vector<std::string>& vOutputSet)
-{
-    const float Margin = 20.0f;
-
-    glm::vec2 Pos = glm::vec2(0.0f);
-    if (m_AABB.has_value())
-    {
-        Pos = glm::vec2(m_AABB.value().Max.x + Margin, Random::GenerateFloat() * 300.0f);
-    }
-
-    SRenderPassGraphNode Node;
-    Node.Name = vName;
-    Node.Pos = Pos;
-    Node.InputSet = vInputSet;
-    Node.OutputSet = vOutputSet;
-
-    if (!m_AABB.has_value())
-        m_AABB = Node.getAABB();
-    else
-        m_AABB.value().applyUnion(Node.getAABB());
-
-    m_pGraph->NodeMap[m_CurNodeIndex] = std::move(Node);
-    return m_CurNodeIndex++;
-}
-
-void CRenderPassGraphUI::addLink(size_t vStartNodeId, const std::string& vStartPortName, size_t vEndNodeId,
-    const std::string& vEndPortName)
-{
-    _ASSERTE(hasPass(vStartNodeId));
-    _ASSERTE(hasPass(vEndNodeId));
-    _ASSERTE(m_pGraph->NodeMap.at(vStartNodeId).hasOutput(vStartPortName));
-    _ASSERTE(m_pGraph->NodeMap.at(vEndNodeId).hasInput(vEndPortName));
-    m_pGraph->LinkSet.push_back({ {vStartNodeId, vStartPortName}, {vEndNodeId, vEndPortName} });
-}
-
-void CRenderPassGraphUI::clear()
-{
-    m_pGraph->NodeMap.clear();
-    m_pGraph->LinkSet.clear();
-    m_pGraph->EntryPortOpt = std::nullopt;
-    m_Scrolling = glm::vec2(0.0f);
-}
-
 void CRenderPassGraphUI::update()
 {
     if (!m_EnableForce) return;
@@ -267,20 +219,21 @@ void CRenderPassGraphUI::update()
             float d = glm::length(v);
             glm::vec2 ForceOn1Direction = d < 1e-3 ? glm::vec2(1, 0) : glm::normalize(v);
 
-            float ForceOn1 = 500.0f / (d * d);
+            float ForceOn1 = glm::min(300.0f / (d * d), 300.0f / m_WorldScale);
             ForceMap[Id1] += ForceOn1 * ForceOn1Direction;
             ForceMap[Id2] -= ForceOn1 * ForceOn1Direction;
         }
     }
 
     // 2. link attraction
-    for (const SRenderPassGraphLink& Link : m_pGraph->LinkSet)
+    for (const auto& Pair : m_pGraph->LinkMap)
     {
+        const SRenderPassGraphLink& Link = Pair.second;
         glm::vec2 v = (m_pGraph->NodeMap.at(Link.Destination.NodeId).getAABB().getCenter() - m_pGraph->NodeMap.at(Link.Source.NodeId).getAABB().getCenter()) * m_WorldScale;
         float d = glm::length(v);
         glm::vec2 ForceOn1Direction = d > 1e-3 ? glm::normalize(v) : glm::vec2(1, 0);
 
-        float ForceOn1 = 10000.0f * d;
+        float ForceOn1 = 5000.0f * d;
         glm::vec2 F = ForceOn1Direction * ForceOn1;
         ForceMap[Link.Source.NodeId] += F;
         ForceMap[Link.Destination.NodeId] -= F;
@@ -298,55 +251,23 @@ void CRenderPassGraphUI::update()
 
         if (glm::length(dx) < 1e-2f) continue; // remove too small force to avoid flickering
         Node.Pos = Node.Pos + dx;
+        _ASSERTE(Node.Pos.x != NAN && Node.Pos.y != NAN);
+        _ASSERTE(Node.Pos.x != INFINITY && Node.Pos.y != INFINITY);
     }
 }
 
-void CRenderPassGraphUI::createFromRenderPassGraph(std::vector<vk::IRenderPass::Ptr> vPassSet,
-    std::vector<std::tuple<int, std::string, int, std::string>> vLinks, std::pair<int, std::string> vEntry)
+namespace ImGui
 {
-    // nodes
-    size_t SwapchainNodeId = addNode("Swapchain Source", {}, { "Main" }); // swap chain
-        
-    std::vector<size_t> PassIds(vPassSet.size()); // index to id
-    for (size_t i = 0; i < vPassSet.size(); ++i)
+    bool isAnyMouseClicked()
     {
-        std::string PassName = vPassSet[i]->getNameV();
-
-        auto pPortSet = vPassSet[i]->getPortSet();
-        std::vector<std::string> InputPortSet, OutputPortSet;
-        for (size_t i = 0; i < pPortSet->getInputPortNum(); ++i)
-            InputPortSet.emplace_back(pPortSet->getInputPort(i)->getName());
-        for (size_t i = 0; i < pPortSet->getOutputPortNum(); ++i)
-            OutputPortSet.emplace_back(pPortSet->getOutputPort(i)->getName());
-
-        PassIds[i] = addNode(PassName, InputPortSet, OutputPortSet);
-    }
-
-    // links
-
-    const size_t InvalidIndex = std::numeric_limits<size_t>::max();
-
-    m_pGraph->EntryPortOpt = SRenderPassGraphPortInfo{ PassIds[vEntry.first], vEntry.second };
-    addLink(SwapchainNodeId, "Main", m_pGraph->EntryPortOpt.value().NodeId, m_pGraph->EntryPortOpt.value().Name);
-        
-    for (const auto& Link : vLinks)
-    {
-        int StartPassIndex = std::get<0>(Link);
-        std::string StartPortName = std::get<1>(Link);
-        int EndPassIndex = std::get<2>(Link);
-        std::string EndPortName = std::get<3>(Link);
-
-        size_t StartNodeId = PassIds[StartPassIndex];
-        size_t EndNodeId = PassIds[EndPassIndex];
-        addLink(StartNodeId, StartPortName, EndNodeId, EndPortName);
+        return ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle);
     }
 }
 
 void CRenderPassGraphUI::_renderUIV()
 {
     // reset state
-    if (!ImGui::IsAnyItemHovered())
-        m_HoveredItem.reset();
+    m_HoveredItem.reset();
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -397,25 +318,35 @@ void CRenderPassGraphUI::_renderUIV()
 
     // draw links
     pDrawList->ChannelsSetCurrent(0); // Background
-    for (size_t i = 0; i < m_pGraph->LinkSet.size(); ++i)
+    for (const auto& Pair : m_pGraph->LinkMap)
     {
-        __drawLink(i, m_pGraph->LinkSet[i]); // depend on renderer node, so draw after node
+        __drawLink(Pair.first, Pair.second); // depend on renderer node, so draw after node
     }
     pDrawList->ChannelsMerge();
 
+    // state
+    if ((ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        && !m_HoveredItem.has_value() && !ImGui::IsAnyItemHovered())
+    {
+        m_SelectedItem = std::nullopt;
+    }
+
     // context menu
-    if (ImGui::IsAnyMouseDown() && !ImGui::IsAnyItemHovered())
+    if (ImGui::isAnyMouseClicked())
     {
         m_IsContextMenuOpen = false; // close on click
     }
     
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Right) && ImGui::IsAnyItemHovered())
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_HoveredItem.has_value())
+    {
         m_IsContextMenuOpen = true;
+        m_SelectedItem = m_HoveredItem;
+        m_DeferSelectedItem = m_HoveredItem;
+    }
 
-    if (m_IsContextMenuOpen && m_HoveredItem.has_value() && m_HoveredItem->Type == EItemType::NODE)
+    if (m_IsContextMenuOpen)
     {
         ImGui::OpenPopup("NodeContentMenu");
-        m_SelectedItem = m_HoveredItem;
     }
 
     // Draw context menu
@@ -423,20 +354,33 @@ void CRenderPassGraphUI::_renderUIV()
     if (ImGui::BeginPopup("NodeContentMenu"))
     {
         //glm::vec2 scene_pos = __toGlm(ImGui::GetMousePosOnOpeningCurrentPopup()) - CanvasOffset;
-        if (m_SelectedItem.has_value())
+        if (m_DeferSelectedItem.has_value())
         {
-            SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(m_SelectedItem->Id);
-            ImGui::Text("Node '%s'", Node.Name.c_str());
-            ImGui::Separator();
-            if (ImGui::MenuItem("Rename..", NULL, false, false)) {}
-            if (ImGui::MenuItem("Delete", NULL, false, true))
+            if (m_DeferSelectedItem->Type == EItemType::NODE)
             {
-                m_Editor.deleteNode(m_SelectedItem->Id);
-                m_IsContextMenuOpen = false;
-                m_SelectedItem.reset();
-                m_HoveredItem.reset();
+                SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(m_DeferSelectedItem->Id);
+                if (ImGui::MenuItem((u8"É¾³ý½Úµã " + Node.Name).c_str(), nullptr, false, true))
+                {
+                    m_Editor.removeNode(m_DeferSelectedItem->Id);
+                    m_IsContextMenuOpen = false;
+                    m_DeferSelectedItem.reset();
+                    m_HoveredItem.reset();
+                }
             }
-            if (ImGui::MenuItem("Copy", NULL, false, false)) {}
+            else if (m_DeferSelectedItem->Type == EItemType::LINK)
+            {
+                if (ImGui::MenuItem(u8"É¾³ýÁ´½Ó", nullptr, false, true))
+                {
+                    m_Editor.removeLink(m_DeferSelectedItem->Id);
+                    m_IsContextMenuOpen = false;
+                    m_DeferSelectedItem.reset();
+                    m_HoveredItem.reset();
+                }
+            }
+            else
+            {
+                _SHOULD_NOT_GO_HERE;
+            }
         }
         ImGui::EndPopup();
     }

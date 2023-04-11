@@ -17,15 +17,7 @@ public:
     virtual void _renderUIV() override;
 
     void setGraph(ptr<SRenderPassGraph> vGraph) { m_pGraph = vGraph; m_Editor.setGraph(vGraph); }
-    bool hasPass(size_t vNodeId);
-    void clear();
     void update();
-
-    // FIXME: these function should not be here, move to editor
-    size_t addNode(const std::string& vName, const std::vector<std::string>& vInputSet, const std::vector<std::string>& vOutputSet);
-    void addLink(size_t vStartNodeId, const std::string& vStartPortName, size_t vEndNodeId, const std::string& vEndPortName);
-    void createFromRenderPassGraph(std::vector<vk::IRenderPass::Ptr> vPassSet,
-        std::vector<std::tuple<int, std::string, int, std::string>> vLinks, std::pair<int, std::string> vEntry);
 
 private:
     void __drawGrid();
@@ -44,11 +36,9 @@ private:
 
     ptr<SRenderPassGraph> m_pGraph = nullptr;
 
-    std::optional<SAABB2D> m_AABB = std::nullopt;
     glm::vec2 m_Scrolling = glm::vec2(0.0f);
     bool m_ShowGrid = true;
     bool m_IsContextMenuOpen = false;
-    size_t m_CurNodeIndex = 0; // TODO: move to editor
 
     enum class EItemType
     {
