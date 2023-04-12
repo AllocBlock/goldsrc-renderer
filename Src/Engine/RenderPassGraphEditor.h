@@ -218,10 +218,15 @@ public:
         return m_CurNodeIndex++;
     }*/
 
+    void addLink(const SRenderPassGraphLink& vLink)
+    {
+        execCommand(make<CCommandAddLink>(m_CurLinkId++, vLink));
+    }
+
     void addLink(const SRenderPassGraphPortInfo& vSourcePort, const SRenderPassGraphPortInfo& vDestPort)
     {
         SRenderPassGraphLink Link = { vSourcePort, vDestPort };
-        execCommand(make<CCommandAddLink>(m_CurLinkId++, Link));
+        addLink(Link);
     }
 
     void addLink(size_t vStartNodeId, const std::string& vStartPortName, size_t vEndNodeId,

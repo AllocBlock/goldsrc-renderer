@@ -52,8 +52,8 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkId, const SRenderPassGraphLink& 
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
     
-    glm::vec2 Start = m_NodePortPosMap.at(vLink.Source.NodeId).Output.at(vLink.Source.Name);
-    glm::vec2 End = m_NodePortPosMap.at(vLink.Destination.NodeId).Input.at(vLink.Destination.Name);
+    glm::vec2 Start = __getPortPos(vLink.Source, false);
+    glm::vec2 End = __getPortPos(vLink.Destination, true);
     Math::SCubicBezier2D LinkCurve = __createLinkCurve(Start, End);
 
     if (!m_IsContextMenuOpen)
@@ -131,7 +131,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     }
 
     // dragging
-    if (!m_IsAddingLink)
+    if (!m_AddLinkState.isStarted())
     {
         bool IsMoving = ImGui::IsItemActive();
         if (IsMoving)
@@ -182,35 +182,13 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
             __setHoveredItem(vNodeId, EItemType::PORT, InputName, true);
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) // start adding link
             {
-                m_IsAddingLink = true;
-                m_FixedPort = { vNodeId , InputName };
-                m_IsFixedPortSource = false;
+                m_AddLinkState.start({ vNodeId , InputName }, false);
             }
         }
         
-        if (m_IsAddingLink && m_IsFixedPortSource && m_FixedPort->NodeId != vNodeId) // if attached to the adding link
+        if (m_AddLinkState.isStarted() && Distance < m_AttachMinDistance) // if attached to the adding link
         {
-            // FIXME: too messy code!!! fix this!
-            bool HasThisLink = false;
-            SRenderPassGraphLink Link = {m_FixedPort.value(), { vNodeId, InputName } };
-            
-            for (const auto& Pair : m_pGraph->LinkMap)
-            {
-                if (Pair.second == Link)
-                {
-                    HasThisLink = true;
-                    break;
-                }
-            }
-
-            if (!HasThisLink)
-            {
-                if (Distance < m_AttachMinDistance && (!m_AttachedPort.has_value() || Distance < m_AttachedPortDistance))
-                {
-                    m_AttachedPortDistance = Distance;
-                    m_AttachedPort = { vNodeId, InputName };
-                }
-            }
+            m_AddLinkState.addCandidate({ vNodeId, InputName }, false, -Distance);
         }
 
         // if is hovered
@@ -219,8 +197,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
             Radius = NODE_SLOT_HOVER_RADIUS;
             Color = IM_COL32(200, 200, 200, 200);
         }
-
-
+        
         m_NodePortPosMap[vNodeId].Input[InputName] = CurInputPortPos;
         pDrawList->AddCircleFilled(__toImgui(CurInputPortPos), Radius, Color);
 
@@ -244,37 +221,16 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
 
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                m_IsAddingLink = true;
-                m_FixedPort = { vNodeId , OutputName };
-                m_IsFixedPortSource = true;
+                m_AddLinkState.start({ vNodeId , OutputName }, true);
             }
+        }
+
+
+        if (m_AddLinkState.isStarted() && Distance < m_AttachMinDistance) // if attached to the adding link
+        {
+            m_AddLinkState.addCandidate({ vNodeId, OutputName }, true, -Distance);
         }
         
-        if (m_IsAddingLink && !m_IsFixedPortSource && m_FixedPort->NodeId != vNodeId) // if attached to the adding link
-        {
-            // FIXME: too messy code!!! fix this!
-            bool HasThisLink = false;
-            SRenderPassGraphLink Link = { { vNodeId, OutputName }, m_FixedPort.value() };
-
-            for (const auto& Pair : m_pGraph->LinkMap)
-            {
-                if (Pair.second == Link)
-                {
-                    HasThisLink = true;
-                    break;
-                }
-            }
-
-            if (!HasThisLink)
-            {
-                if (Distance < m_AttachMinDistance && (!m_AttachedPort.has_value() || Distance < m_AttachedPortDistance))
-                {
-                    m_AttachedPortDistance = Distance;
-                    m_AttachedPort = { vNodeId, OutputName };
-                }
-            }
-        }
-
         // if is hovered
         if (__isItemHovered(vNodeId, EItemType::PORT, OutputName, false))
         {
@@ -389,7 +345,8 @@ void CRenderPassGraphUI::_renderUIV()
 {
     // reset state
     m_HoveredItem.reset();
-    m_AttachedPort.reset();
+    if (m_AddLinkState.isStarted())
+        m_AddLinkState.tick();
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -447,53 +404,57 @@ void CRenderPassGraphUI::_renderUIV()
     pDrawList->ChannelsMerge();
 
     // draw to add link
-    if (m_IsAddingLink)
+    if (m_AddLinkState.isStarted())
     {
-        // TODO: complex and diffusing link info parsing...deal with this
-        _ASSERTE(m_FixedPort.has_value());
+        std::string Reason = "";
+        EAddLinkAttachState AttachState = m_AddLinkState.getLinkState(Reason);
+
+        const auto& FixedPort = m_AddLinkState.getFixedPort();
+        glm::vec2 Start = __getPortPos(FixedPort, !m_AddLinkState.isFixedPortSource());
+
         glm::vec2 MousePos = __toGlm(ImGui::GetMousePos());
-        glm::vec2 AttchedPos = MousePos;
-        if (m_AttachedPort.has_value())
+        glm::vec2 End = MousePos;
+
+        if (AttachState == EAddLinkAttachState::VALID_ATTACH)
         {
-            if (m_IsFixedPortSource)
-            {
-                AttchedPos = m_NodePortPosMap[m_AttachedPort->NodeId].Input[m_AttachedPort->Name];
-            }
-            else
-            {
-                AttchedPos = m_NodePortPosMap[m_AttachedPort->NodeId].Output[m_AttachedPort->Name];
-            }
+            const auto& AttachedPort = m_AddLinkState.getCurrentAttachedPort();
+            End = __getPortPos(AttachedPort, m_AddLinkState.isFixedPortSource());
         }
 
-        glm::vec2 Start = m_IsFixedPortSource ? m_NodePortPosMap[m_FixedPort->NodeId].Output[m_FixedPort->Name] : AttchedPos;
-        glm::vec2 End = !m_IsFixedPortSource ? m_NodePortPosMap[m_FixedPort->NodeId].Input[m_FixedPort->Name] : AttchedPos;
+        if (!m_AddLinkState.isFixedPortSource()) // swap direction
+        {
+            std::swap(Start, End);
+        }
+
         Math::SCubicBezier2D LinkCurve = __createLinkCurve(Start, End);
 
-        auto LinkColor = IM_COL32(200, 150, 150, 255);
+        auto LinkColor = IM_COL32(150, 150, 200, 255);
+        if (AttachState == EAddLinkAttachState::INVALID_ATTACH)
+            LinkColor = IM_COL32(200, 150, 150, 255);
+
         float LinkThickness = 6.0f;
         __drawLinkCurve(LinkCurve, LinkColor, LinkThickness);
-
-        // if matched, draw animation
-        if (m_AttachedPort.has_value())
+        
+        if (AttachState == EAddLinkAttachState::VALID_ATTACH) // if matched, draw animation
             __drawCurveAnimation(LinkCurve, LinkColor, LinkThickness + 2.0f);
+        else if (AttachState == EAddLinkAttachState::INVALID_ATTACH) // if invalid, show why
+        {
+            glm::vec2 Center = LinkCurve.sample(0.5f);
+            glm::vec2 TextSize = __toGlm(ImGui::CalcTextSize(Reason.c_str()));
+            float BgPadding = 4.0f;
+            unsigned BgColor = IM_COL32(100, 100, 100, 200);
+            pDrawList->AddRectFilled(__toImgui(Center - TextSize * 0.5f - BgPadding), __toImgui(Center + TextSize * 0.5f + BgPadding), BgColor, 4.0f);
+            pDrawList->AddText(__toImgui(Center - TextSize * 0.5f), IM_COL32(255, 150, 150, 255), Reason.c_str());
+        }
 
         if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
         {
-            if (m_AttachedPort.has_value()) // add a link
+            if (AttachState == EAddLinkAttachState::VALID_ATTACH)
             {
-                if (m_IsFixedPortSource)
-                {
-                    m_Editor.addLink(m_FixedPort.value(), m_AttachedPort.value());
-                }
-                else
-                {
-                    m_Editor.addLink(m_AttachedPort.value(), m_FixedPort.value());
-                }
+                const SRenderPassGraphLink& NewLink = m_AddLinkState.getCurrentValidLink();
+                m_Editor.addLink(NewLink);
             }
-
-            m_FixedPort.reset();
-            m_AttachedPort.reset();
-            m_IsAddingLink = false;
+            m_AddLinkState.end();
         }
     }
 

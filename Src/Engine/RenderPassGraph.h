@@ -128,4 +128,22 @@ struct SRenderPassGraph
     std::map<size_t, SRenderPassGraphNode> NodeMap;
     std::map<size_t, SRenderPassGraphLink> LinkMap;
     std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt; // TODO: how to save entry data?
+
+    bool hasNode(size_t vNodeId) const { return NodeMap.find(vNodeId) != NodeMap.end(); }
+    bool hasPort(size_t vNodeId, const std::string& vPortName, bool vIsInput) const
+    {
+        if (!hasNode(vNodeId)) return false;
+        const SRenderPassGraphNode& Node = NodeMap.at(vNodeId);
+        for (const auto& PortName : (vIsInput ? Node.InputSet : Node.OutputSet))
+            if (PortName == vPortName)
+                return true;
+        return false;
+    }
+    bool hasLink(const SRenderPassGraphLink& vLink) const
+    {
+        for (const auto& Pair : LinkMap)
+            if (Pair.second == vLink)
+                return true;
+        return false;
+    }
 };
