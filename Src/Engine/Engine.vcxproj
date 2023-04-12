@@ -103,6 +103,7 @@
     <ClCompile Include="DynamicResourceManager.cpp" />
     <ClCompile Include="ImageUtils.cpp" />
     <ClCompile Include="Maths.cpp" />
+    <ClCompile Include="RenderPassGraphAddLinkState.cpp" />
     <ClCompile Include="RenderPassSingle.cpp" />
     <ClCompile Include="ShaderCompileCache.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
@@ -144,6 +145,7 @@
     <ClInclude Include="Font.h" />
     <ClInclude Include="ImageUtils.h" />
     <ClInclude Include="Maths.h" />
+    <ClInclude Include="RenderPassGraphAddLinkState.h" />
     <ClInclude Include="RenderPassGraphEditor.h" />
     <ClInclude Include="RenderPassGraphUI.h" />
     <ClInclude Include="RenderPassSingle.h" />

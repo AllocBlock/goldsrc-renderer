@@ -56,17 +56,33 @@ protected:
         _ASSERTE(vGraph->NodeMap.at(m_Link.Destination.NodeId).hasInput(m_Link.Destination.Name));
         _ASSERTE(vGraph->LinkMap.find(m_LinkId) == vGraph->LinkMap.end());
         vGraph->LinkMap[m_LinkId] = m_Link;
+        // FIXME: here assume AT MOST ONE LINK is on the source
+        for (const auto& Pair : vGraph->LinkMap)
+        {
+            if (Pair.second.Destination == m_Link.Destination)
+            {
+                m_ReplacedLink = Pair;
+                vGraph->LinkMap.erase(Pair.first);
+                break;
+            }
+        }
     }
 
     virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override
     {
         _ASSERTE(vGraph->LinkMap.find(m_LinkId) != vGraph->LinkMap.end());
         vGraph->LinkMap.erase(m_LinkId);
+        if (m_ReplacedLink.has_value())
+        {
+            vGraph->LinkMap[m_ReplacedLink->first] = m_ReplacedLink->second;
+            m_ReplacedLink.reset();
+        }
     }
 
 private:
     size_t m_LinkId;
     SRenderPassGraphLink m_Link;
+    std::optional<std::pair<size_t, SRenderPassGraphLink>> m_ReplacedLink; // one input allow only one source, old source will be replaced
 };
 
 class CCommandRemoveLink : public IRenderPassGraphEditCommand

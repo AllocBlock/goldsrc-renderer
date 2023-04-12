@@ -98,3 +98,49 @@ TEST(Algorithm, RayCastAABB) {
         EXPECT_EQ(Intersected, ExpectResult);
     }
 }
+
+
+TEST(Algorithm, DirectedGraphLoopTest) {
+    Math::CDirectedGraph Graph1;
+    Graph1.addNode(0);
+    EXPECT_FALSE(Graph1.hasLoop());
+    Graph1.addEdge(0, 0);
+    EXPECT_TRUE(Graph1.hasLoop());
+
+    Math::CDirectedGraph Graph2;
+    Graph2.addNode(0);
+    Graph2.addNode(1);
+    EXPECT_FALSE(Graph2.hasLoop());
+    Graph2.addEdge(0, 1);
+    EXPECT_FALSE(Graph2.hasLoop());
+    Graph2.addEdge(1, 0);
+    EXPECT_TRUE(Graph2.hasLoop());
+
+    Math::CDirectedGraph Graph3;
+    Graph3.addNode(0);
+    Graph3.addNode(1);
+    Graph3.addNode(2);
+    EXPECT_FALSE(Graph3.hasLoop());
+    Graph3.addEdge(0, 1);
+    EXPECT_FALSE(Graph3.hasLoop());
+    Graph3.addEdge(1, 2);
+    EXPECT_FALSE(Graph3.hasLoop());
+    Graph3.addEdge(2, 0);
+    EXPECT_TRUE(Graph3.hasLoop());
+
+
+    Math::CDirectedGraph Graph4;
+    Graph4.addNode(0);
+    Graph4.addNode(1);
+    Graph4.addNode(2);
+    Graph4.addNode(3);
+    EXPECT_FALSE(Graph4.hasLoop());
+    Graph4.addEdge(0, 1);
+    EXPECT_FALSE(Graph4.hasLoop());
+    Graph4.addEdge(1, 2);
+    EXPECT_FALSE(Graph4.hasLoop());
+    Graph4.addEdge(2, 3);
+    EXPECT_FALSE(Graph4.hasLoop());
+    Graph4.addEdge(3, 1);
+    EXPECT_TRUE(Graph4.hasLoop());
+}

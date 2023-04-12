@@ -37,6 +37,12 @@
     <Filter Include="源文件\Scene\Components">
       <UniqueIdentifier>{0c5073ed-c1f4-4c6c-ace9-fa36bcf30036}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\RenderPassGraph">
+      <UniqueIdentifier>{ba6332c5-c839-4109-87d5-05c39cf84d04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RenderPassGraph">
+      <UniqueIdentifier>{8b2a8219-3e1e-4cb7-89e8-6c0910dcf7d8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Pipeline.cpp">
@@ -145,7 +151,10 @@
       <Filter>源文件\Scene\Components</Filter>
     </ClCompile>
     <ClCompile Include="RenderPassGraphUI.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPassGraphAddLinkState.cpp">
+      <Filter>源文件\RenderPassGraph</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -272,20 +281,23 @@
     <ClInclude Include="RerecordState.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPassGraph.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RenderPassRegister.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="RenderPassGraph.h">
+      <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
     <ClInclude Include="RenderPassGraphEditor.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
     <ClInclude Include="RenderPassGraphUI.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassGraphAddLinkState.h">
+      <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

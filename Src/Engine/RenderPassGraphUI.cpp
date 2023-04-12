@@ -50,8 +50,6 @@ void CRenderPassGraphUI::__drawGrid()
 
 void CRenderPassGraphUI::__drawLink(size_t vLinkId, const SRenderPassGraphLink& vLink)
 {
-    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-    
     glm::vec2 Start = __getPortPos(vLink.Source, false);
     glm::vec2 End = __getPortPos(vLink.Destination, true);
     Math::SCubicBezier2D LinkCurve = __createLinkCurve(Start, End);
@@ -346,7 +344,7 @@ void CRenderPassGraphUI::_renderUIV()
     // reset state
     m_HoveredItem.reset();
     if (m_AddLinkState.isStarted())
-        m_AddLinkState.tick();
+        m_AddLinkState.clearCandidates();
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -428,15 +426,19 @@ void CRenderPassGraphUI::_renderUIV()
 
         Math::SCubicBezier2D LinkCurve = __createLinkCurve(Start, End);
 
-        auto LinkColor = IM_COL32(150, 150, 200, 255);
-        if (AttachState == EAddLinkAttachState::INVALID_ATTACH)
-            LinkColor = IM_COL32(200, 150, 150, 255);
+        auto LinkColor = IM_COL32(200, 200, 200, 255);
+        if (AttachState == EAddLinkAttachState::VALID_ATTACH)
+            LinkColor = IM_COL32(255, 255, 150, 255);
+        else if (AttachState == EAddLinkAttachState::INVALID_ATTACH)
+            LinkColor = IM_COL32(200, 50, 50, 255);
 
         float LinkThickness = 6.0f;
         __drawLinkCurve(LinkCurve, LinkColor, LinkThickness);
         
         if (AttachState == EAddLinkAttachState::VALID_ATTACH) // if matched, draw animation
+        {
             __drawCurveAnimation(LinkCurve, LinkColor, LinkThickness + 2.0f);
+        }
         else if (AttachState == EAddLinkAttachState::INVALID_ATTACH) // if invalid, show why
         {
             glm::vec2 Center = LinkCurve.sample(0.5f);
