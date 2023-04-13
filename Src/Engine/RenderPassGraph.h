@@ -76,12 +76,14 @@ struct SRenderPassGraphNode
     {
         for (const std::string& Name : InputSet)
             if (Name == vName) return true;
+        return false;
     }
 
     bool hasOutput(const std::string& vName) const
     {
         for (const std::string& Name : OutputSet)
             if (Name == vName) return true;
+        return false;
     }
 
     size_t getInputIndex(const std::string& vName) const

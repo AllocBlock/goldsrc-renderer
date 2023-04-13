@@ -6,7 +6,7 @@
 float Math::smoothstepInversed(float x)
 {
     // https://www.shadertoy.com/view/MsSBRh
-    return 0.5 - glm::sin(glm::asin(1.0 - 2.0 * x) / 3.0);
+    return 0.5f - glm::sin(glm::asin(1.0f - 2.0f * x) / 3.0f);
 }
 
 bool Math::intersectRayPlane(const glm::vec3& vOrigin, const glm::vec3& vDirection, const Plane& vPlane, float& voT)
@@ -41,7 +41,7 @@ bool Math::intersectRayTriangle(
 #endif
 
     Plane TrianglePlane = Plane::createByNormalPoint(TriangleNormal, vA);
-    float t = 0;
+    float t = 0.0f;
     bool IsIntersected = Math::intersectRayPlane(vOrigin, vDirection, TrianglePlane, t);
 
     if (!IsIntersected) return false;
@@ -49,8 +49,8 @@ bool Math::intersectRayTriangle(
     // is inside triangle
     glm::vec3 Intersection = vOrigin + vDirection * t;
     glm::vec3 V = Intersection - vA;
-    float u = glm::dot(V, E1) / glm::pow(glm::length(E1), 2);
-    float v = glm::dot(V, E2) / glm::pow(glm::length(E2), 2);
+    float u = glm::dot(V, E1) / glm::pow(glm::length(E1), 2.0f);
+    float v = glm::dot(V, E2) / glm::pow(glm::length(E2), 2.0f);
     if (u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0) return false;
 
     voT = t;

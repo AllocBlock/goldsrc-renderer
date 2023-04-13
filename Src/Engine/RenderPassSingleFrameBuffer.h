@@ -116,9 +116,9 @@ private:
 
         m_FramebufferSet.destroyAndClearAll();
 
-        size_t ImageNum = m_pAppInfo->getImageNum();
+        uint32_t ImageNum = m_pAppInfo->getImageNum();
         m_FramebufferSet.init(ImageNum);
-        for (size_t i = 0; i < ImageNum; ++i)
+        for (uint32_t i = 0; i < ImageNum; ++i)
         {
             std::vector<VkImageView> AttachmentSet = _getAttachmentsV(i);
             m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);

@@ -39,7 +39,7 @@ protected:
     virtual void _createResourceV(size_t vImageNum) override;
     virtual void _destroyV() override;
     
-    size_t m_VertexNum = 0;
+    uint32_t m_VertexNum = 0;
     vk::CBuffer m_VertexBuffer;
 
 private:

@@ -139,7 +139,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     glm::vec2 NodeCanvasSize = glm::vec2(gNodeWidth, HeaderHeight + ContentHeight);
     glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
     
-    ImGui::PushID(vNodeId);
+    ImGui::PushID(static_cast<int>(vNodeId));
     // draw invisable button for interaction
     pDrawList->ChannelsSetCurrent(0);
     ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos));
@@ -279,7 +279,7 @@ void CRenderPassGraphUI::__drawCurveAnimation(const Math::SCubicBezier2D& vCurve
     for (int i = 0; i < gLinkAnimeCircleNum; ++i)
     {
         float t = i * Interval + Shift;
-        float Alpha = (t < 0.5 ? t : 1.0 - t) * 2; // fade in-out
+        float Alpha = (t < 0.5f ? t : 1.0f - t) * 2.0f; // fade in-out
         Alpha = Math::smoothstepInversed(Alpha); // smooth
         unsigned char Alpha8Bit = unsigned char(Alpha * 255);
         unsigned CircleColor = (vColor & ~IM_COL32_A_MASK) | IM_COL32(0, 0, 0, Alpha8Bit);
@@ -560,7 +560,7 @@ void CRenderPassGraphUI::_renderUIV()
             {
                 size_t NodeId = Pair.first;
                 const SRenderPassGraphNode& Node = Pair.second;
-                ImGui::PushID(NodeId);
+                ImGui::PushID(static_cast<int>(NodeId));
                 if (ImGui::Selectable(Node.Name.c_str(), __isItemSelected(NodeId, EItemType::NODE)))
                 {
                     __setSelectedItem(NodeId, EItemType::NODE);

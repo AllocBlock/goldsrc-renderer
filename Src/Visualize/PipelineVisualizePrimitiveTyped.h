@@ -51,7 +51,7 @@ private:
                 const auto& PointDatas = _convertPrimitive2PointData(i, m_Primitives[i], m_Colors[i]);
                 Vertices.insert(Vertices.end(), PointDatas.begin(), PointDatas.end());
             }
-            m_VertexNum = Vertices.size();
+            m_VertexNum = static_cast<uint32_t>(Vertices.size());
 
             VkDeviceSize BufferSize = sizeof(CPipelineVisualizePrimitive::SPointData) * m_VertexNum;
             m_VertexBuffer.create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
