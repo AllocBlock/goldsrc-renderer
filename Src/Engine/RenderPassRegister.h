@@ -1,7 +1,5 @@
 #pragma once
 
-#include "RenderPassGraph.h"
-
 template <typename RenderPass_t>
 class CRenderPassRegister
 {

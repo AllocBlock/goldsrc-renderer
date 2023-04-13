@@ -1,6 +1,5 @@
 #pragma once
 #include "AppInfo.h"
-#include "Vulkan.h"
 #include "Instance.h"
 #include "DebugMessenger.h"
 #include "Surface.h"

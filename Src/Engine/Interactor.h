@@ -1,5 +1,4 @@
 #pragma once
-#include "Pointer.h"
 #include "Camera.h"
 #include "DrawableUI.h"
 #include "Timer.h"

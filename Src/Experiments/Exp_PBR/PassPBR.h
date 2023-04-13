@@ -6,7 +6,6 @@
 #include "MaterialPBR.h"
 #include "PipelinePBS.h"
 #include "VertexBuffer.h"
-#include "UniformBuffer.h"
 
 class CRenderPassPBR : public CRenderPassSingleFrameBuffer
 {

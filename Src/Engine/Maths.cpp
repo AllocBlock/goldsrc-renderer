@@ -1,7 +1,5 @@
 #include "Maths.h"
 
-#include <stdexcept>
-
 //#define ENABLE_BACK_FACE_CULLING
 #define ENABLE_IN_BOX_INTERSECTION
 

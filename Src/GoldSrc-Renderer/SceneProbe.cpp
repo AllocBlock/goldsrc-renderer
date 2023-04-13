@@ -4,7 +4,6 @@
 #include "ComponentIconRenderer.h"
 
 #include <glm/matrix.hpp>
-#include <optional>
 
 bool __intersectRayMesh(glm::vec3 vOrigin, glm::vec3 vDirection, CMesh::Ptr vMesh, float& voNearT)
 {

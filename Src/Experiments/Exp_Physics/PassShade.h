@@ -3,7 +3,6 @@
 #include "FrameBuffer.h"
 #include "PipelineShade.h"
 #include "Camera.h"
-#include "Buffer.h"
 #include "Image.h"
 #include "Scene.h"
 

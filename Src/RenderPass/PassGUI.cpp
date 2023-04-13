@@ -1,6 +1,4 @@
 ﻿#include "PassGUI.h"
-#include "Common.h"
-#include "Log.h"
 #include "AppInfo.h"
 #include "RenderPassDescriptor.h"
 #include "InterfaceUI.h"

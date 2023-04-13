@@ -1,4 +1,3 @@
-#include "Pointer.h"
 #include "SetupGLFW.h"
 
 template <typename App_t>

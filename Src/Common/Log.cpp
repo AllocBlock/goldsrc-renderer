@@ -1,6 +1,5 @@
 #include "Log.h"
 
-#include <iomanip>
 #include <iostream>
 #include <string>
 #include <map>

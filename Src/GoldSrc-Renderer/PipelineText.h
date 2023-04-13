@@ -7,8 +7,6 @@
 #include "Camera.h"
 #include "ComponentTextRenderer.h"
 
-#include "Actor.h"
-
 class CPipelineText : public IPipeline
 {
 public:

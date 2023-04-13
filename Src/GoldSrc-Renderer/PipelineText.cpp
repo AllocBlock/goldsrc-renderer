@@ -1,6 +1,5 @@
 #include "PipelineText.h"
 #include "ImageUtils.h"
-#include "VertexAttributeDescriptor.h"
 
 namespace
 {

@@ -2,7 +2,6 @@
 #include "Maths.h"
 #include "Visualizer.h"
 #include <array>
-#include <optional>
 
 //#define _DEBUG_VISUALIZE
 
