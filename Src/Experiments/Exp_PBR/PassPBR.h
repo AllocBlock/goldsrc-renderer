@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderPassSingle.h"
+#include "..\RenderPassSingleFrameBuffer.h"
 #include "Camera.h"
 #include "DynamicResourceManager.h"
 #include "Image.h"
@@ -8,7 +8,7 @@
 #include "VertexBuffer.h"
 #include "UniformBuffer.h"
 
-class CRenderPassPBR : public CRenderPassSingle
+class CRenderPassPBR : public CRenderPassSingleFrameBuffer
 {
 public:
     CRenderPassPBR() = default;

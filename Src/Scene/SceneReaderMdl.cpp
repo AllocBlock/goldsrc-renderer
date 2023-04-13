@@ -2,17 +2,16 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-ptr<SSceneInfoGoldSrc> CSceneReaderMdl::_readV()
+void CSceneReaderMdl::_readV(ptr<SSceneInfo> voSceneInfo)
 {
     m_pIOMdl = make<CIOGoldSrcMdl>();
     m_pIOMdl->read(m_FilePath);
-
-    auto pSceneInfo = make<SSceneInfoGoldSrc>();
+    
     auto BodyPartSet = m_pIOMdl->getBodyParts();
     for (const auto& BodyPart : BodyPartSet)
     {
         auto pObject = __readBodyPart(BodyPart);
-        pSceneInfo->pScene->addActor(pObject);
+        voSceneInfo->pScene->addActor(pObject);
     }
 
     auto TextureSet = m_pIOMdl->getTextures();
@@ -25,10 +24,8 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMdl::_readV()
         pImage->setData(pData);
         delete[] pData;
 
-        pSceneInfo->TexImageSet.emplace_back(pImage);
+        voSceneInfo->TexImageSet.emplace_back(pImage);
     }
-
-    return pSceneInfo;
 }
 
 CActor::Ptr CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)

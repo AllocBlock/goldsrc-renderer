@@ -1,16 +1,13 @@
 #pragma once
 #include "RenderPass.h"
 #include "PipelineSprite.h"
-#include "Camera.h"
-#include "FrameBuffer.h"
-#include "RenderPassSingle.h"
+#include "RenderPassSingleFrameBuffer.h"
 #include "DynamicResourceManager.h"
 
-class CRenderPassSprite : public CRenderPassSingle
+class CRenderPassSprite : public CRenderPassSingleFrameBuffer
 {
 public:
     CRenderPassSprite();
-    void setCamera(CCamera::CPtr vCamera) { m_pCamera = vCamera; }
 
 protected:
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
@@ -28,9 +25,7 @@ protected:
 
 private:
     void __updateUniformBuffer(uint32_t vImageIndex);
-
-    CCamera::CPtr m_pCamera = nullptr;
+    
     CDynamicPipeline<CPipelineSprite> m_PipelineSpriteCreator;
-
     std::vector<SGoldSrcSprite> m_SpriteSet;
 };

@@ -22,16 +22,16 @@ void CApplicationVisualize::_createV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
-    m_pCamera = make<CCamera>();
-    m_pCamera->setPos(glm::vec3(1, 1, 1));
-    m_pCamera->setAt(glm::vec3(0, 0, 0));
+    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    pCamera->setPos(glm::vec3(1, 1, 1));
+    pCamera->setAt(glm::vec3(0, 0, 0));
 
     m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
+    m_pInteractor->bindEvent(m_pWindow, pCamera);
 
     m_pPassVisualize = make<CRenderPassVisualize>();
     m_pPassVisualize->init(m_pDevice, m_pAppInfo);
-    m_pPassVisualize->setCamera(m_pCamera);
+    m_pPassVisualize->setSceneInfo(m_pSceneInfo);
 
     SPortFormat Format = { VK_FORMAT_D32_SFLOAT, SPortFormat::AnyExtent, 1, EUsage::WRITE };
     m_pDepthPort = make<CSourcePort>("Depth", Format, nullptr);
@@ -63,7 +63,8 @@ void CApplicationVisualize::_createV()
 
 void CApplicationVisualize::_updateV(uint32_t vImageIndex)
 {
-    m_pCamera->setAspect(m_pAppInfo->getScreenAspect());
+    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    pCamera->setAspect(m_pAppInfo->getScreenAspect());
     m_pInteractor->update();
     m_pPassVisualize->update(vImageIndex);
 }

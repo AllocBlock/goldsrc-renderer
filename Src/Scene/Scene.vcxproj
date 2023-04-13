@@ -95,7 +95,6 @@
     <ClCompile Include="SceneInterface.cpp" />
     <ClCompile Include="SceneObjWriter.cpp" />
     <ClCompile Include="SceneReaderMap.cpp" />
-    <ClCompile Include="SceneInfoGoldSrc.cpp" />
     <ClCompile Include="SceneCommon.cpp" />
     <ClCompile Include="SceneGoldsrcCommon.cpp" />
     <ClCompile Include="SceneReaderBase.cpp" />
@@ -107,7 +106,6 @@
   <ItemGroup>
     <ClInclude Include="SceneObjWriter.h" />
     <ClInclude Include="SceneReaderMap.h" />
-    <ClInclude Include="SceneInfoGoldSrc.h" />
     <ClInclude Include="SceneCommon.h" />
     <ClInclude Include="SceneGoldsrcCommon.h" />
     <ClInclude Include="SceneInterface.h" />

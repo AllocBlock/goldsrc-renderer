@@ -46,7 +46,6 @@
     <ClInclude Include="PipelineVisCollidePoint.h" />
     <ClInclude Include="PipelineVisCollider.h" />
     <ClInclude Include="PassFullScreen.h" />
-    <ClInclude Include="PassScene.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PassGUI.cpp" />

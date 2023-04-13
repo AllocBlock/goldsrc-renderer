@@ -4,7 +4,7 @@
 
 void CRenderPassFullScreen::_initV()
 {
-    CRenderPassSingle::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
 
     __createVertexBuffer();
 }
@@ -21,7 +21,7 @@ CRenderPassDescriptor CRenderPassFullScreen::_getRenderPassDescV()
 
 void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 
     VkExtent2D RefExtent = { 0, 0 };
     if (!_dumpInputPortExtent("Main", RefExtent)) return;
@@ -73,7 +73,7 @@ void CRenderPassFullScreen::_destroyV()
     destroyAndClear(m_pPipeline);
     destroyAndClear(m_pVertexBuffer);
 
-    CRenderPassSingle::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 void CRenderPassFullScreen::__createPipeline(VkExtent2D vExtent)
@@ -127,7 +127,7 @@ void CRenderPassFullScreenGeneral::_onUpdateV(const vk::SPassUpdateState& vUpdat
         }
     }
 
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 std::vector<VkCommandBuffer> CRenderPassFullScreenGeneral::_requestCommandBuffersV(uint32_t vImageIndex)

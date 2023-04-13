@@ -1,5 +1,5 @@
 #pragma once
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 #include "Camera.h"
 
 namespace SceneProbe

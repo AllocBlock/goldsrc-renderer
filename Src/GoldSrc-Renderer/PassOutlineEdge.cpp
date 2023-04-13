@@ -7,7 +7,7 @@
 
 void CRenderPassOutlineEdge::_initV()
 {
-    CRenderPassSingle::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
 
     VkExtent2D RefExtent = { 0, 0 };
     _dumpReferenceExtentV(RefExtent);
@@ -38,7 +38,7 @@ void CRenderPassOutlineEdge::_onUpdateV(const vk::SPassUpdateState& vUpdateState
         m_PipelineCreator.updateExtent(RefExtent);
     }
 
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 std::vector<VkCommandBuffer> CRenderPassOutlineEdge::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -68,7 +68,7 @@ void CRenderPassOutlineEdge::_destroyV()
     m_PipelineCreator.destroy();
     destroyAndClear(m_pVertexBuffer);
 
-    CRenderPassSingle::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 void CRenderPassOutlineEdge::__createVertexBuffer()

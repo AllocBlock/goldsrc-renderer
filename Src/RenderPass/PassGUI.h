@@ -1,11 +1,11 @@
 #pragma once
 #include "Command.h"
-#include "RenderPassSingle.h"
+#include "RenderPassSingleFrameBuffer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class CRenderPassGUI final : public CRenderPassSingle
+class CRenderPassGUI final : public CRenderPassSingleFrameBuffer
 {
 public:
     CRenderPassGUI() = default;

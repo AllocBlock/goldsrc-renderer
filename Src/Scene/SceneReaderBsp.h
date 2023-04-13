@@ -1,5 +1,5 @@
 #pragma once
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 #include "SceneReaderBase.h"
 #include "IOGoldSrcBsp.h"
 #include "Mesh.h"
@@ -10,7 +10,7 @@
 class CSceneReaderBsp : public CSceneReaderBase
 {
 private:
-    virtual ptr<SSceneInfoGoldSrc> _readV() override;
+    virtual void _readV(ptr<SSceneInfo> voSceneInfo) override;
 
     void __readBsp(std::filesystem::path vFilePath);
     void __readTextures();
@@ -30,7 +30,8 @@ private:
     void __appendBspFaceToObject(CMeshData& vioMeshData, uint32_t vFaceIndex, bool vForceFillLightmapData);
     std::optional<SMapEntity> __findEntity(size_t vModelIndex);
 
-    ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
+    ptr<SSceneInfo> m_pTargetSceneInfo = nullptr;
+
     const float m_SceneScale = 1.0f / 64.0f;
     CIOGoldSrcBsp m_Bsp;
     std::map<std::string, uint32_t> m_TexNameToIndex;

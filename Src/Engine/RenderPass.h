@@ -6,6 +6,7 @@
 #include "RenderPassDescriptor.h"
 #include "AppInfo.h"
 #include "FrameBuffer.h"
+#include "SceneInfo.h"
 
 #include <string>
 #include <vector>
@@ -91,6 +92,14 @@ namespace vk
         void destroy();
         
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
+        
+        ptr<SSceneInfo> getScene() const { return m_pSceneInfo; }
+        void setSceneInfo(ptr<SSceneInfo> vScene)
+        {
+            _ASSERTE(vScene);
+            m_pSceneInfo = vScene;
+            _onSceneInfoSet(vScene);
+        }
 
     protected:
 
@@ -150,6 +159,13 @@ namespace vk
          */
         virtual void _onUpdateV(const SPassUpdateState& vUpdateState) {}
 
+        /*
+         * _onSceneInfoSet:
+         * can trigger multiple times
+         * trigger when scene is set
+         */
+        virtual void _onSceneInfoSet(ptr<SSceneInfo> vSceneInfo) {}
+
         void _begin(CCommandBuffer::Ptr vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues, bool vHasSecondary = false);
         void _end();
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
@@ -157,6 +173,7 @@ namespace vk
         CDevice::CPtr m_pDevice = nullptr;
         CAppInfo::Ptr m_pAppInfo = nullptr;
         CPortSet::Ptr m_pPortSet = nullptr;
+        ptr<SSceneInfo> m_pSceneInfo = nullptr;
 
     private:
         void __createRenderpass();

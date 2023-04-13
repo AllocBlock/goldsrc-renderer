@@ -1,5 +1,5 @@
 #pragma once
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 #include "SceneReaderBase.h"
 #include "IOGoldSrcRmf.h"
 #include "IOGoldSrcWad.h"
@@ -10,7 +10,7 @@
 class CSceneReaderRmf : public CSceneReaderBase
 {
 protected:
-    virtual ptr<SSceneInfoGoldSrc> _readV() override;
+    virtual void _readV(ptr<SSceneInfo> voSceneInfo) override;
 private:
     void __readRmf(std::filesystem::path vFilePath);
     void __readWadsAndInitTextures();
@@ -20,7 +20,7 @@ private:
     uint32_t __requestTextureIndex(std::string vTextureName);
     glm::vec2 __getTexCoord(SRmfFace vFace, glm::vec3 vVertex);
 
-    ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
+    ptr<SSceneInfo> m_pTargetSceneInfo = nullptr;
     const float m_SceneScale = 1.0f / 64.0f;
     CIOGoldSrcRmf m_Rmf;
     std::vector<CIOGoldsrcWad> m_Wads;

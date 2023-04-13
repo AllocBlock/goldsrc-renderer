@@ -3,7 +3,7 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOObj.h"
 
-ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
+void CSceneReaderObj::_readV(ptr<SSceneInfo> voSceneInfo)
 {
     Scene::reportProgress(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();
@@ -58,11 +58,7 @@ ptr<SSceneInfoGoldSrc> CSceneReaderObj::_readV()
     }
 
     auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
-
-    m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene>();
-    m_pSceneInfo->pScene->addActor(pActor);
-    m_pSceneInfo->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
-
-    return m_pSceneInfo;
+    
+    voSceneInfo->pScene->addActor(pActor);
+    voSceneInfo->TexImageSet.emplace_back(Scene::generateBlackPurpleGrid(4, 4, 16));
 }

@@ -2,7 +2,7 @@
 #include "Application.h"
 #include "GuiMain.h"
 #include "Interactor.h"
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 #include "PassGoldSrc.h"
 #include "PassGUI.h"
 #include "PassOutlineMask.h"
@@ -30,11 +30,10 @@ private:
     ptr<CRenderPassOutlineMask> m_pPassOutlineMask = nullptr;
     ptr<CRenderPassOutlineEdge> m_pPassOutlineEdge = nullptr;
     ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
+
     ptr<CGUIMain> m_pMainUI = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
-    CCamera::Ptr m_pCamera = nullptr;
-
-    ptr<SSceneInfoGoldSrc> m_pSceneInfo = nullptr;
+    ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
 
     ptr<SRenderPassGraph> m_pRenderPassGraph = make<SRenderPassGraph>();
     ptr<CRenderPassGraphUI> m_pRenderPassGraphUI = nullptr;

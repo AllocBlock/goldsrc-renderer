@@ -65,7 +65,7 @@ CRenderPassDescriptor CRenderPassSprite::_getRenderPassDescV()
 
 void CRenderPassSprite::_initV()
 {
-    CRenderPassSingle::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
 
     m_PipelineSpriteCreator.init(m_pDevice, weak_from_this(), m_pAppInfo->getScreenExtent(), true, m_pAppInfo->getImageNum(),
         [this](CPipelineSprite& vPipeline) { vPipeline.setSprites(m_SpriteSet); }
@@ -95,14 +95,14 @@ void CRenderPassSprite::_destroyV()
 {
     m_PipelineSpriteCreator.destroy();
 
-    CRenderPassSingle::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 void CRenderPassSprite::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
 {
     m_PipelineSpriteCreator.updateV(vUpdateState);
 
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 bool CRenderPassSprite::_dumpReferenceExtentV(VkExtent2D& voExtent)
@@ -126,5 +126,6 @@ std::vector<VkClearValue> CRenderPassSprite::_getClearValuesV()
 
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
-    m_PipelineSpriteCreator.get().updateUniformBuffer(vImageIndex, m_pCamera);
+    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    m_PipelineSpriteCreator.get().updateUniformBuffer(vImageIndex, pCamera);
 }

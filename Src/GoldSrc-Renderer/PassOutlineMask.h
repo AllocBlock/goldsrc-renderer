@@ -1,18 +1,13 @@
 #pragma once
-#include "RenderPassSingle.h"
-#include "Camera.h"
-#include "Image.h"
-#include "SceneInfoGoldSrc.h"
+#include "RenderPassSingleFrameBuffer.h"
+#include "SceneInfo.h"
 #include "PipelineOutlineMask.h"
 #include "DynamicResourceManager.h"
 
-class CRenderPassOutlineMask : public CRenderPassSingle
+class CRenderPassOutlineMask : public CRenderPassSingleFrameBuffer
 {
 public:
     CRenderPassOutlineMask() = default;
-
-    CCamera::Ptr getCamera() { return m_pCamera; }
-    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; }
 
     void setHighlightActor(CActor::Ptr vActor);
     void removeHighlight();
@@ -49,8 +44,6 @@ protected:
 
 private:
     void __rerecordCommand();
-
-    CCamera::Ptr m_pCamera = nullptr;
 
     CDynamicPipeline<CPipelineMask> m_PipelineCreator;
     CDynamicTextureCreator m_MaskImageCreator;

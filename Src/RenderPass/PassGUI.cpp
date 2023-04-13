@@ -9,7 +9,7 @@ const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 
 void CRenderPassGUI::_initV()
 {
-    CRenderPassSingle::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
 
     _ASSERTE(m_pWindow);
     
@@ -42,7 +42,7 @@ void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
         }
     }
 
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassGUI::_renderUIV()
@@ -56,7 +56,7 @@ void CRenderPassGUI::_destroyV()
     __destroyDescriptorPool();
     m_pWindow = nullptr;
 
-    CRenderPassSingle::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vImageIndex)

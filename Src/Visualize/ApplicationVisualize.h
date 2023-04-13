@@ -29,5 +29,5 @@ private:
     ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
 
     ptr<CInteractor> m_pInteractor = nullptr;
-    CCamera::Ptr m_pCamera = nullptr;
+    ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
 };

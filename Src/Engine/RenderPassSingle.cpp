@@ -1,4 +1,4 @@
-#include "RenderPassSingle.h"
+#include "RenderPassSingleFrameBuffer.h"
 
 std::vector<VkClearValue> __createDefaultClearValueColor()
 {
@@ -17,5 +17,5 @@ std::vector<VkClearValue> __createDefaultClearValueColorDepth()
     return ValueSet;
 }
 
-const std::vector<VkClearValue>& CRenderPassSingle::DefaultClearValueColor = __createDefaultClearValueColor();
-const std::vector<VkClearValue>& CRenderPassSingle::DefaultClearValueColorDepth = __createDefaultClearValueColorDepth();
+const std::vector<VkClearValue>& CRenderPassSingleFrameBuffer::DefaultClearValueColor = __createDefaultClearValueColor();
+const std::vector<VkClearValue>& CRenderPassSingleFrameBuffer::DefaultClearValueColorDepth = __createDefaultClearValueColorDepth();

@@ -84,6 +84,5 @@ private:
 
     // edit
     CRenderGraphAddLinkState m_AddLinkState;
-    const float m_AttachMinDistance = 16.0f;
     CRenderPassGraphEditor m_Editor;
 };

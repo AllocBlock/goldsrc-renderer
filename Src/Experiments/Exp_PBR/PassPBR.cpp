@@ -5,7 +5,7 @@
 
 void CRenderPassPBR::_initV()
 {
-    CRenderPassSingle::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
     
     VkExtent2D RefExtent = { 0, 0 };
     _dumpReferenceExtentV(RefExtent);
@@ -103,7 +103,7 @@ void CRenderPassPBR::_destroyV()
     destroyAndClear(m_pMaterialBuffer);
     destroyAndClear(m_pVertexBuffer);
     
-    CRenderPassSingle::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 void CRenderPassPBR::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
@@ -121,7 +121,7 @@ void CRenderPassPBR::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
         m_PipelineCreator.updateExtent(RefExtent);
     }
     
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassPBR::__createVertexBuffer()

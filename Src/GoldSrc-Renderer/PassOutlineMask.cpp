@@ -1,5 +1,4 @@
 #include "PassOutlineMask.h"
-#include "Common.h"
 #include "InterfaceUI.h"
 
 #include <vector>
@@ -18,7 +17,7 @@ void CRenderPassOutlineMask::removeHighlight()
 
 void CRenderPassOutlineMask::_initV()
 {
-    CRenderPassSingle::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
 
     m_MaskImageCreator.init(m_pAppInfo->getScreenExtent(), true, 
         [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
@@ -75,13 +74,14 @@ void CRenderPassOutlineMask::_onUpdateV(const vk::SPassUpdateState& vUpdateState
     m_MaskImageCreator.updateV(vUpdateState);
     m_PipelineCreator.updateV(vUpdateState);
 
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassOutlineMask::_updateV(uint32_t vImageIndex)
 {
-    _ASSERTE(m_pCamera);
-    m_PipelineCreator.get().updateUniformBuffer(vImageIndex, m_pCamera);
+    _ASSERTE(m_pSceneInfo);
+    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    m_PipelineCreator.get().updateUniformBuffer(vImageIndex, pCamera);
 }
 
 void CRenderPassOutlineMask::_renderUIV()
@@ -93,7 +93,7 @@ void CRenderPassOutlineMask::_destroyV()
     m_MaskImageCreator.destroy();
     m_PipelineCreator.destroy();
 
-    CRenderPassSingle::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassOutlineMask::_requestCommandBuffersV(uint32_t vImageIndex)

@@ -1,6 +1,6 @@
 #pragma once
 #include "Pipeline.h"
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 #include "Camera.h"
 #include "Buffer.h"
 #include "UniformBuffer.h"

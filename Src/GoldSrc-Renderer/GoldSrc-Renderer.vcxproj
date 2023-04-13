@@ -128,7 +128,6 @@
     <ClCompile Include="GuiFrameRate.cpp" />
     <ClCompile Include="GuiLog.cpp" />
     <ClCompile Include="GuiMain.cpp" />
-    <ClCompile Include="GuiRenderer.cpp" />
     <ClCompile Include="GuiTextureViewer.cpp" />
     <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
@@ -150,7 +149,6 @@
     <ClInclude Include="GuiFrameRate.h" />
     <ClInclude Include="GuiLog.h" />
     <ClInclude Include="GuiMain.h" />
-    <ClInclude Include="GuiRenderer.h" />
     <ClInclude Include="GuiTextureViewer.h" />
     <ClInclude Include="GuiRequestPopupModal.h" />
     <ClInclude Include="PassOutlineEdge.h" />

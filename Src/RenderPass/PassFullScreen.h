@@ -1,13 +1,12 @@
 #pragma once
-#include "RenderPassSingle.h"
-#include "FrameBuffer.h"
+#include "RenderPassSingleFrameBuffer.h"
 #include "VertexBuffer.h"
 #include "Pipeline.h"
 #include "FullScreenPointData.h"
 
 #include <functional>
 
-class CRenderPassFullScreen : public CRenderPassSingle
+class CRenderPassFullScreen : public CRenderPassSingleFrameBuffer
 {
 public:
     using PipelineCreateCallback_t = std::function<void()>;
@@ -62,7 +61,7 @@ private:
     std::vector<PipelineCreateCallback_t> m_PipelineCreateCallbackSet;
 };
 
-class CRenderPassFullScreenGeneral : public CRenderPassSingle
+class CRenderPassFullScreenGeneral : public CRenderPassSingleFrameBuffer
 {
 protected:
     virtual ptr<IPipeline> _initPipelineV() = 0;

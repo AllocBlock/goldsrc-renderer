@@ -27,9 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SceneInfoGoldSrc.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="SceneGoldsrcCommon.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -62,9 +59,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SceneInfoGoldSrc.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="SceneInterface.h">
       <Filter>头文件</Filter>
     </ClInclude>

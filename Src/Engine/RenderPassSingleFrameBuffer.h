@@ -2,7 +2,7 @@
 #include "RenderPass.h"
 
 // render pass with single frame buffer
-class CRenderPassSingle : public vk::IRenderPass
+class CRenderPassSingleFrameBuffer : public vk::IRenderPass
 {
 protected:
     static const std::vector<VkClearValue>& DefaultClearValueColor;
@@ -87,6 +87,7 @@ protected:
     CCommand m_Command = CCommand();
 
 private:
+    // hide original begin/end, use _beginWithFramebuffer/_endWithFramebuffer instead
     using vk::IRenderPass::_begin;
     using vk::IRenderPass::_end;
     

@@ -156,6 +156,9 @@
     <ClCompile Include="RenderPassGraphAddLinkState.cpp">
       <Filter>源文件\RenderPassGraph</Filter>
     </ClCompile>
+    <ClCompile Include="SceneInfo.cpp">
+      <Filter>源文件\Scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -236,7 +239,7 @@
     <ClInclude Include="ShaderErrorParser.h">
       <Filter>头文件\Shader</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPassSingle.h">
+    <ClInclude Include="RenderPassSingleFrameBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DynamicResourceManager.h">
@@ -298,6 +301,9 @@
     </ClInclude>
     <ClInclude Include="RenderPassGraphAddLinkState.h">
       <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneInfo.h">
+      <Filter>头文件\Scene</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

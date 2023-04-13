@@ -4,7 +4,7 @@
 #include <set>
 #include <fstream>
 
-void CSceneObjWriter::addSceneInfo(ptr<SSceneInfoGoldSrc> vSceneInfo)
+void CSceneObjWriter::addSceneInfo(ptr<SSceneInfo> vSceneInfo)
 {
     for (size_t i = 0; i < vSceneInfo->pScene->getActorNum(); ++i)
     {

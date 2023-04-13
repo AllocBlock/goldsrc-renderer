@@ -54,9 +54,6 @@
     <ClCompile Include="GuiMain.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="GuiRenderer.cpp">
-      <Filter>源文件\Gui</Filter>
-    </ClCompile>
     <ClCompile Include="GuiTextureViewer.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
@@ -114,9 +111,6 @@
       <Filter>头文件\Gui</Filter>
     </ClInclude>
     <ClInclude Include="GuiMain.h">
-      <Filter>头文件\Gui</Filter>
-    </ClInclude>
-    <ClInclude Include="GuiRenderer.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
     <ClInclude Include="GuiTextureViewer.h">

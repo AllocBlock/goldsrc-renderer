@@ -56,7 +56,7 @@ void CRenderPassVisualize::clearAll()
 
 void CRenderPassVisualize::_initV()
 {
-    CRenderPassSingle::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
 
     VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
     
@@ -92,16 +92,17 @@ void CRenderPassVisualize::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     m_PipelineSet.Point.updateV(vUpdateState);
     m_PipelineSet.Primitive3D.updateV(vUpdateState);
     
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassVisualize::_updateV(uint32_t vImageIndex)
 {
-    _ASSERTE(m_pCamera);
-    m_PipelineSet.Triangle.get().updateUniformBuffer(vImageIndex, m_pCamera);
-    m_PipelineSet.Line.get().updateUniformBuffer(vImageIndex, m_pCamera);
-    m_PipelineSet.Point.get().updateUniformBuffer(vImageIndex, m_pCamera);
-    m_PipelineSet.Primitive3D.get().updateUniformBuffer(vImageIndex, m_pCamera);
+    _ASSERTE(m_pSceneInfo);
+    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    m_PipelineSet.Triangle.get().updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Line.get().updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Point.get().updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Primitive3D.get().updateUniformBuffer(vImageIndex, pCamera);
 }
 
 void CRenderPassVisualize::_destroyV()
@@ -111,7 +112,7 @@ void CRenderPassVisualize::_destroyV()
     m_PipelineSet.Point.destroy();
     m_PipelineSet.Primitive3D.destroy();
 
-    CRenderPassSingle::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV(uint32_t vImageIndex)

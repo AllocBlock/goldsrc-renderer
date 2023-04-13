@@ -1,7 +1,8 @@
 #include "SceneReaderBase.h"
 
-ptr<SSceneInfoGoldSrc> CSceneReaderBase::read(std::filesystem::path vFilePath)
+void CSceneReaderBase::read(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo)
 {
     m_FilePath = vFilePath;
-    return _readV();
+    voSceneInfo->clear();
+    _readV(voSceneInfo);
 }

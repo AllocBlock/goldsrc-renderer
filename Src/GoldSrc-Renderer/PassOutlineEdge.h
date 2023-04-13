@@ -1,10 +1,10 @@
 #pragma once
-#include "RenderPassSingle.h"
+#include "RenderPassSingleFrameBuffer.h"
 #include "Buffer.h"
 #include "PipelineOutlineEdge.h"
 #include "DynamicResourceManager.h"
 
-class CRenderPassOutlineEdge : public CRenderPassSingle
+class CRenderPassOutlineEdge : public CRenderPassSingleFrameBuffer
 {
 public:
     virtual std::string getNameV() const override { return "Outline Edge"; }

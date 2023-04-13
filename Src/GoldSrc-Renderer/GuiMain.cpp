@@ -64,7 +64,7 @@ CGUIMain::CGUIMain()
     Scene::setGlobalRequestFilePathFunc(RequestFilePathFunc);
 }
 
-SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath)
+SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo)
 {
     SResultReadScene Result;
     Result.Succeed = false;
@@ -82,7 +82,7 @@ SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath)
     {
         std::string Extension = vFilePath.extension().string().substr(1);
         Result.Succeed = true;
-        Result.pSceneInfo = SceneInterface::read(Extension, vFilePath);
+        SceneInterface::read(Extension, vFilePath, voSceneInfo);
     }
     else
     {
@@ -127,10 +127,9 @@ void CGUIMain::_renderUIV()
             if (ResultScene.Succeed)
             {
                 _ASSERTE(m_ReadSceneCallback);
-                m_ReadSceneCallback(ResultScene.pSceneInfo);
-                m_pCurSceneInfo = ResultScene.pSceneInfo;
+                m_ReadSceneCallback();
                 
-                m_GUIScene.setScene(ResultScene.pSceneInfo->pScene);
+                m_GUIScene.setScene(m_pSceneInfo->pScene);
             }
             else
                 showAlert(ResultScene.Message);
@@ -165,17 +164,17 @@ void CGUIMain::_renderUIV()
                     else if (!Path.empty())
                     {
                         m_LoadingFilePath = Path;
-                        m_FileReadingFuture = std::async(readScene, m_LoadingFilePath);
+                        m_FileReadingFuture = std::async(readScene, m_LoadingFilePath, m_pSceneInfo);
                     }
                 }
             }
-            if (m_pCurSceneInfo && UI::menuItem(u8"保存"))
+            if (m_pSceneInfo && UI::menuItem(u8"保存"))
             {
                 auto Result = Gui::createSaveFileDialog("obj");
                 if (Result)
                 {
                     CSceneObjWriter Writer;
-                    Writer.addSceneInfo(m_pCurSceneInfo);
+                    Writer.addSceneInfo(m_pSceneInfo);
                     Writer.writeToFile(Result.FilePath);
                 }
             }

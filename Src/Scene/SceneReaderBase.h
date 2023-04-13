@@ -1,12 +1,12 @@
 #pragma once
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 
 class CSceneReaderBase
 {
 public:
-    ptr<SSceneInfoGoldSrc> read(std::filesystem::path vFilePath);
+    void read(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo);
 protected:
-    virtual ptr<SSceneInfoGoldSrc> _readV() = 0;
+    virtual void _readV(ptr<SSceneInfo> voSceneInfo) = 0;
 
     std::filesystem::path m_FilePath;
 };

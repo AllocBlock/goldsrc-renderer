@@ -2,17 +2,14 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-ptr<SSceneInfoGoldSrc> CSceneReaderRmf::_readV()
+void CSceneReaderRmf::_readV(ptr<SSceneInfo> voSceneInfo)
 {
-    m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene>();
-    
+    m_pTargetSceneInfo = voSceneInfo;
+
     __readRmf(m_FilePath);
     __readWadsAndInitTextures();
     Scene::reportProgress(u8"读取场景中");
     __readObject(m_Rmf.getWorld());
-
-    return m_pSceneInfo;
 }
 
 void CSceneReaderRmf::__readRmf(std::filesystem::path vFilePath)
@@ -30,7 +27,7 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
     m_TexNameToIndex.clear();
     
     Scene::reportProgress(u8"整理纹理中");
-    m_pSceneInfo->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    m_pTargetSceneInfo->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     m_TexNameToIndex["TextureNotFound"] = 0;
 
     Scene::SRequestResultFilePath FilePathResult = Scene::requestFilePath("", "", u8"添加纹理", "wad");
@@ -89,7 +86,7 @@ void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
     GoldSrc::toYupCounterClockwise(MeshData);
 
     auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
-    m_pSceneInfo->pScene->addActor(pActor);
+    m_pTargetSceneInfo->pScene->addActor(pActor);
 }
 
 void CSceneReaderRmf::__readSolidFace(const SRmfFace& vFace, CMeshData& vioMeshData)
@@ -138,9 +135,9 @@ uint32_t CSceneReaderRmf::__requestTextureIndex(std::string vTextureName)
             if (Index.has_value())
             {
                 ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
-                uint32_t TexIndex = static_cast<uint32_t>(m_pSceneInfo->TexImageSet.size());
+                uint32_t TexIndex = static_cast<uint32_t>(m_pTargetSceneInfo->TexImageSet.size());
                 m_TexNameToIndex[vTextureName] = TexIndex;
-                m_pSceneInfo->TexImageSet.emplace_back(std::move(pTexImage));
+                m_pTargetSceneInfo->TexImageSet.emplace_back(std::move(pTexImage));
                 return TexIndex;
             }
         }
@@ -153,7 +150,7 @@ glm::vec2 CSceneReaderRmf::__getTexCoord(SRmfFace vFace, glm::vec3 vVertex)
 {
     _ASSERTE(m_TexNameToIndex.find(vFace.TextureName) != m_TexNameToIndex.end());
     uint32_t TexIndex = m_TexNameToIndex.at(vFace.TextureName);
-    const ptr<CIOImage> pImage = m_pSceneInfo->TexImageSet[TexIndex];
+    const ptr<CIOImage> pImage = m_pTargetSceneInfo->TexImageSet[TexIndex];
     size_t TexWidth = pImage->getWidth();
     size_t TexHeight = pImage->getHeight();
 

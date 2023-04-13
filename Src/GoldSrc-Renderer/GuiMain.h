@@ -7,7 +7,7 @@
 #include "GuiFGD.h"
 #include "GuiScene.h"
 #include "GuiRequestPopupModal.h"
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 
 #include <future>
 
@@ -15,11 +15,10 @@ struct SResultReadScene
 {
     bool Succeed = false;
     std::string Message;
-    ptr<SSceneInfoGoldSrc> pSceneInfo;
 };
 
 // TODO: custom event loop!
-using ReadSceneCallbackFunc_T = std::function<void(ptr<SSceneInfoGoldSrc>)>;
+using ReadSceneCallbackFunc_t = std::function<void()>;
 
 class CGUIMain : public IDrawableUI
 {
@@ -29,7 +28,12 @@ public:
     void showAlert(std::string vText);
     void log(std::string vText);
 
-    void setReadSceneCallback(ReadSceneCallbackFunc_T vCallback)
+    void setSceneInfo(ptr<SSceneInfo> vSceneInfo)
+    {
+        m_pSceneInfo = vSceneInfo;
+    }
+
+    void setReadSceneCallback(ReadSceneCallbackFunc_t vCallback)
     {
         m_ReadSceneCallback = vCallback;
     }
@@ -54,7 +58,7 @@ public:
         m_GUIScene.clearFocusedActor();
     }
 
-    static SResultReadScene readScene(std::filesystem::path vFilePath);
+    static SResultReadScene readScene(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo);
 protected:
     virtual void _renderUIV() override;
 
@@ -68,7 +72,7 @@ private:
     CGuiScene m_GUIScene;
     CGuiRequestPopupModal m_RequestPopupModal;
 
-    ptr<SSceneInfoGoldSrc> m_pCurSceneInfo = nullptr;
+    ptr<SSceneInfo> m_pSceneInfo = nullptr;
 
     struct SControl
     {
@@ -83,5 +87,5 @@ private:
     std::future<SResultReadScene> m_FileReadingFuture;
 
     std::function<void()> m_RenderSettingCallback = nullptr;
-    ReadSceneCallbackFunc_T m_ReadSceneCallback = nullptr;
+    ReadSceneCallbackFunc_t m_ReadSceneCallback = nullptr;
 };

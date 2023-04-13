@@ -105,6 +105,7 @@
     <ClCompile Include="Maths.cpp" />
     <ClCompile Include="RenderPassGraphAddLinkState.cpp" />
     <ClCompile Include="RenderPassSingle.cpp" />
+    <ClCompile Include="SceneInfo.cpp" />
     <ClCompile Include="ShaderCompileCache.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
     <ClCompile Include="ShaderErrorParser.cpp" />
@@ -148,8 +149,9 @@
     <ClInclude Include="RenderPassGraphAddLinkState.h" />
     <ClInclude Include="RenderPassGraphEditor.h" />
     <ClInclude Include="RenderPassGraphUI.h" />
-    <ClInclude Include="RenderPassSingle.h" />
+    <ClInclude Include="RenderPassSingleFrameBuffer.h" />
     <ClInclude Include="RerecordState.h" />
+    <ClInclude Include="SceneInfo.h" />
     <ClInclude Include="ShaderCompileCache.h" />
     <ClInclude Include="ShaderCompiler.h" />
     <ClInclude Include="ShaderErrorParser.h" />

@@ -1,6 +1,6 @@
 #pragma once
 #include "PointData.h"
-#include "PassScene.h"
+#include "RenderPassSingleFrameBuffer.h"
 #include "PipelineNormal.h"
 #include "PipelineBlendAlpha.h"
 #include "PipelineBlendAlphaTest.h"
@@ -14,7 +14,7 @@
 #include "DynamicResourceManager.h"
 #include "RerecordState.h"
 
-class CRenderPassGoldSrc : public CRenderPassScene
+class CRenderPassGoldSrc : public CRenderPassSingleFrameBuffer
 {
 public:
     enum class ERenderMethod
@@ -82,7 +82,7 @@ protected:
         return { "Mesh", "Sprite", "Icon", "Text", "Sky"};
     };
 
-    virtual void _loadSceneV(ptr<SSceneInfoGoldSrc> vScene) override;
+    virtual void _onSceneInfoSet(ptr<SSceneInfo> vScene) override;
 
 private:
     void __createTextureImages();

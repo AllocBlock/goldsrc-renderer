@@ -3,11 +3,8 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcMap.h"
 
-ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
+void CSceneReaderMap::_readV(ptr<SSceneInfo> voSceneInfo)
 {
-    m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene>();
-
     Scene::reportProgress(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(m_FilePath);
     if (!Map.read())
@@ -19,7 +16,7 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
     // find used textures, load and index them
     std::map<std::string, uint32_t> TexNameToIndex;
     std::set<std::string> UsedTextureNames = Map.getUsedTextureNames();
-    m_pSceneInfo->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
+    voSceneInfo->TexImageSet.push_back(Scene::generateBlackPurpleGrid(4, 4, 16));
     TexNameToIndex["TextureNotFound"] = 0;
     UsedTextureNames.insert("TextureNotFound");
     for (const std::string& TexName : UsedTextureNames)
@@ -31,10 +28,10 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
             if (Index.has_value())
             {
                 Found = true;
-                TexNameToIndex[TexName] = static_cast<uint32_t>(m_pSceneInfo->TexImageSet.size());
+                TexNameToIndex[TexName] = static_cast<uint32_t>(voSceneInfo->TexImageSet.size());
 
                 ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
-                m_pSceneInfo->TexImageSet.emplace_back(std::move(pTexImage));
+                voSceneInfo->TexImageSet.emplace_back(std::move(pTexImage));
                 break;
             }
         }
@@ -49,8 +46,8 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
     for (SMapPolygon& Polygon : Polygons)
     {
         uint32_t TexIndex = TexNameToIndex[Polygon.pPlane->TextureName];
-        size_t TexWidth = m_pSceneInfo->TexImageSet[TexIndex]->getWidth();
-        size_t TexHeight = m_pSceneInfo->TexImageSet[TexIndex]->getHeight();
+        size_t TexWidth = voSceneInfo->TexImageSet[TexIndex]->getWidth();
+        size_t TexHeight = voSceneInfo->TexImageSet[TexIndex]->getHeight();
 
         std::vector<glm::vec2> TexCoords = Polygon.getTexCoords(TexWidth, TexHeight);
         glm::vec3 Normal = Polygon.getNormal();
@@ -79,8 +76,7 @@ ptr<SSceneInfoGoldSrc> CSceneReaderMap::_readV()
         GoldSrc::toYupCounterClockwise(MeshData);
 
         auto pActor = GoldSrc::createActorByMeshAndTag(MeshData);
-        m_pSceneInfo->pScene->addActor(pActor);
+        voSceneInfo->pScene->addActor(pActor);
     }
     Scene::reportProgress(u8"完成");
-    return m_pSceneInfo;
 }

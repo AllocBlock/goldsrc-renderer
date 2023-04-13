@@ -11,7 +11,7 @@
 #include <set>
 #include <fstream>
 
-void CRenderPassGoldSrc::_loadSceneV(ptr<SSceneInfoGoldSrc> vScene)
+void CRenderPassGoldSrc::_onSceneInfoSet(ptr<SSceneInfo> vScene)
 {
     m_pDevice->waitUntilIdle();
     m_CurTextureIndex = 0;
@@ -29,7 +29,7 @@ void CRenderPassGoldSrc::rerecordAllCommand()
 
 void CRenderPassGoldSrc::_initV()
 {
-    CRenderPassScene::_initV();
+    CRenderPassSingleFrameBuffer::_initV();
 
     m_pRerecord = make<CRerecordState>(m_pAppInfo);
     m_pRerecord->addField("Primary");
@@ -136,13 +136,10 @@ void CRenderPassGoldSrc::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
     VkExtent2D RefExtent = { 0, 0 };
     if (_dumpReferenceExtentV(RefExtent))
     {
-        if (m_pCamera)
-            m_pCamera->setAspect(RefExtent.width, RefExtent.height);
-
         m_DepthImageManager.updateExtent(RefExtent);
     }
 
-    CRenderPassSingle::_onUpdateV(vUpdateState);
+    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassGoldSrc::_updateV(uint32_t vImageIndex)
@@ -194,7 +191,7 @@ void CRenderPassGoldSrc::_destroyV()
 
     __destroySceneResources();
 
-    CRenderPassScene::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_t vImageIndex)
@@ -355,7 +352,7 @@ void CRenderPassGoldSrc::__createSceneResources()
         __updatePipelineResourceSprite(m_PipelineSet.Sprite.get());
 
     // search all text renderer
-    if (m_pSceneInfo)
+    if (m_pSceneInfo && m_PipelineSet.Text.isReady())
     {
         auto& PipelineText = m_PipelineSet.Text.get();
         PipelineText.clearTextComponent();
@@ -559,15 +556,17 @@ void CRenderPassGoldSrc::__updatePipelineResourceSprite(CPipelineSprite& vPipeli
 
 void CRenderPassGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
 {
+    auto pCamera = m_pSceneInfo->pScene->getMainCamera();
+
     glm::mat4 Model = glm::mat4(1.0f);
-    m_PipelineSet.Normal.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.BlendTextureAlpha.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.BlendAlphaTest.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.BlendAdditive.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.Simple.get().updateUniformBuffer(vImageIndex, Model, m_pCamera);
-    m_PipelineSet.Sprite.get().updateUniformBuffer(vImageIndex, m_pCamera);
+    m_PipelineSet.Normal.get().updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.BlendTextureAlpha.get().updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.BlendAlphaTest.get().updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.BlendAdditive.get().updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.Simple.get().updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.Sprite.get().updateUniformBuffer(vImageIndex, pCamera);
     if (m_EnableSky)
-        m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, m_pCamera);
-    m_PipelineSet.Icon.get().updateUniformBuffer(vImageIndex, m_pCamera);
-    m_PipelineSet.Text.get().updateUniformBuffer(vImageIndex, m_pCamera);
+        m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Icon.get().updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Text.get().updateUniformBuffer(vImageIndex, pCamera);
 }

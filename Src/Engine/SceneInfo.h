@@ -41,9 +41,9 @@ struct SGoldSrcSprite
     ptr<CIOImage> pImage;
 };
 
-struct SSceneInfoGoldSrc
+struct SSceneInfo
 {
-    CScene::Ptr pScene = nullptr;
+    const CScene::Ptr pScene = make<CScene>();
     std::vector<ptr<CIOImage>> TexImageSet;
     std::vector<SGoldSrcSprite> SprSet;
 
@@ -53,4 +53,15 @@ struct SSceneInfoGoldSrc
     // for bsp
     bool UseLightmap = false;
     ptr<CLightmap> pLightmap = nullptr;
+
+    void clear()
+    {
+        pScene->clear();
+        TexImageSet.clear();
+        SprSet.clear();
+        UseSkyBox = false;
+        SkyBoxImages.fill(nullptr);
+        UseLightmap = false;
+        pLightmap = nullptr;
+    }
 };

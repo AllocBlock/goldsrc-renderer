@@ -42,9 +42,6 @@
     <ClInclude Include="PassGUI.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PassScene.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PassBloomBrightFilter.h">
       <Filter>头文件\Bloom</Filter>
     </ClInclude>

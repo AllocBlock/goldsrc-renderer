@@ -1,7 +1,7 @@
 #pragma once
 #include "Pointer.h"
 #include "IOImage.h"
-#include "SceneInfoGoldSrc.h"
+#include "SceneInfo.h"
 
 #include <glm/glm.hpp>
 #include <vector>
@@ -70,7 +70,7 @@ map_Kd TEST_2.jpg
 class CSceneObjWriter
 {
 public:
-    void addSceneInfo(ptr<SSceneInfoGoldSrc> vSceneInfo);
+    void addSceneInfo(ptr<SSceneInfo> vSceneInfo);
     void addObject(ptr<SObjObject> vObject);
     void writeToFile(std::filesystem::path vFilePath);
 

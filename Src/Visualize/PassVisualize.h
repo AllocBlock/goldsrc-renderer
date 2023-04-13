@@ -1,8 +1,5 @@
 #pragma once
-#include "RenderPassSingle.h"
-#include "FrameBuffer.h"
-#include "BoundingBox.h"
-#include "Camera.h"
+#include "RenderPassSingleFrameBuffer.h"
 #include "DynamicResourceManager.h"
 #include "VisualizePrimitive.h"
 #include "PipelineTriangle.h"
@@ -13,12 +10,10 @@
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 
-class CRenderPassVisualize : public CRenderPassSingle
+class CRenderPassVisualize : public CRenderPassSingleFrameBuffer
 {
 public:
     CRenderPassVisualize() = default;
-
-    _DEFINE_GETTER_SETTER_POINTER(Camera, CCamera::CPtr);
 
     void addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor);
     void addTriangle(const glm::vec3& vA, const glm::vec3& vB, const glm::vec3& vC, const glm::vec3& vColor);
@@ -70,5 +65,4 @@ private:
     } m_PipelineSet;
 
     size_t m_RerecordCommandTimes = 0;
-    CCamera::CPtr m_pCamera = nullptr;
 };

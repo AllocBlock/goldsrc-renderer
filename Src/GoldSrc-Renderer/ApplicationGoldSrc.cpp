@@ -12,10 +12,8 @@ void CApplicationGoldSrc::_createV()
 
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
-    m_pCamera = make<CCamera>();
-
     m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, m_pCamera);
+    m_pInteractor->bindEvent(m_pWindow, m_pSceneInfo->pScene->getMainCamera());
 
     m_pPassGUI = make<CRenderPassGUI>();
     m_pPassGUI->setWindow(m_pWindow);
@@ -23,26 +21,26 @@ void CApplicationGoldSrc::_createV()
 
     m_pPassOutlineMask = make<CRenderPassOutlineMask>();
     m_pPassOutlineMask->init(m_pDevice, m_pAppInfo);
-    m_pPassOutlineMask->setCamera(m_pCamera);
+    m_pPassOutlineMask->setSceneInfo(m_pSceneInfo);
 
     m_pPassOutlineEdge = make<CRenderPassOutlineEdge>();
     m_pPassOutlineEdge->init(m_pDevice, m_pAppInfo);
+    m_pPassOutlineEdge->setSceneInfo(m_pSceneInfo);
 
     m_pPassVisualize = make<CRenderPassVisualize>();
     m_pPassVisualize->init(m_pDevice, m_pAppInfo);
-    m_pPassVisualize->setCamera(m_pCamera);
+    m_pPassVisualize->setSceneInfo(m_pSceneInfo);
 
     m_pMainUI = make<CGUIMain>();
     m_pMainUI->setInteractor(m_pInteractor);
 
-    m_pMainUI->setReadSceneCallback([this](ptr<SSceneInfoGoldSrc> vScene)
+    m_pMainUI->setReadSceneCallback([this]()
         {
-            m_pSceneInfo = vScene;
-            m_pPassGoldSrc->loadScene(vScene);
+            m_pPassGoldSrc->setSceneInfo(m_pSceneInfo);
         });
     m_pMainUI->setRenderSettingCallback([this]()
         {
-            if (m_pCamera) m_pCamera->renderUI();
+            if (m_pSceneInfo) m_pSceneInfo->pScene->getMainCamera()->renderUI();
             if (m_pInteractor) m_pInteractor->renderUI();
             if (m_pPassOutlineMask) m_pPassOutlineMask->renderUI();
             if (m_pPassOutlineEdge) m_pPassOutlineEdge->renderUI();
@@ -62,10 +60,11 @@ void CApplicationGoldSrc::_createV()
 
             CActor::Ptr pNearestActor = nullptr;
             glm::vec3 NearestIntersection;
-            if (SceneProbe::select(NDC, m_pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
+            CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+            if (SceneProbe::select(NDC, pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {
                 m_pPassOutlineMask->setHighlightActor(pNearestActor);
-                m_pPassVisualize->addLine(m_pCamera->getPos(), NearestIntersection, glm::vec3(0.0, 1.0, 0.0));
+                m_pPassVisualize->addLine(pCamera->getPos(), NearestIntersection, glm::vec3(0.0, 1.0, 0.0));
                 m_pMainUI->setSceneFocusedActor(pNearestActor);
             }
             else
@@ -77,9 +76,7 @@ void CApplicationGoldSrc::_createV()
 
     m_pPassGoldSrc = make<CRenderPassGoldSrc>();
     m_pPassGoldSrc->init(m_pDevice, m_pAppInfo);
-    m_pPassGoldSrc->setCamera(m_pCamera);
-    if (m_pSceneInfo)
-        m_pPassGoldSrc->loadScene(m_pSceneInfo);
+    m_pPassGoldSrc->setSceneInfo(m_pSceneInfo);
 
     __linkPasses();
 }

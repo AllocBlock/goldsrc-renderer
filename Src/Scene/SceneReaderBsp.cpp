@@ -20,16 +20,15 @@ glm::vec3 stringToVec3(std::string vString)
     return glm::vec3(X, Y, Z);
 }
 
-ptr<SSceneInfoGoldSrc> CSceneReaderBsp::_readV()
+void CSceneReaderBsp::_readV(ptr<SSceneInfo> voSceneInfo)
 {
-    m_pSceneInfo = make<SSceneInfoGoldSrc>();
-    m_pSceneInfo->pScene = make<CScene>();
+    m_pTargetSceneInfo = voSceneInfo;
     
     __readBsp(m_FilePath);
     if (!m_Bsp.getLumps().m_LumpLighting.Lightmaps.empty())
     {
-        m_pSceneInfo->UseLightmap = true;
-        m_pSceneInfo->pLightmap = make<CLightmap>();
+        m_pTargetSceneInfo->UseLightmap = true;
+        m_pTargetSceneInfo->pLightmap = make<CLightmap>();
         m_HasLightmapData = true;
     }
 
@@ -40,8 +39,6 @@ ptr<SSceneInfoGoldSrc> CSceneReaderBsp::_readV()
 
     __loadPointEntities();
     __loadSkyBox(m_FilePath.parent_path());
-
-    return m_pSceneInfo;
 }
 
 void CSceneReaderBsp::__readBsp(std::filesystem::path vFilePath)
@@ -102,7 +99,7 @@ void CSceneReaderBsp::__readTextures()
         }
     }
 
-    m_pSceneInfo->TexImageSet = std::move(TexImageSet);
+    m_pTargetSceneInfo->TexImageSet = std::move(TexImageSet);
 }
 
 void CSceneReaderBsp::__loadLeaf(size_t vLeafIndex, CMeshData& vioMeshDataNormal, CMeshData& vioMeshDataSky)
@@ -154,7 +151,7 @@ CActor::Ptr CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 
 void CSceneReaderBsp::__loadBspTree()
 {
-    auto pScene = m_pSceneInfo->pScene;
+    auto pScene = m_pTargetSceneInfo->pScene;
 
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
@@ -191,7 +188,7 @@ void CSceneReaderBsp::__loadBspTree()
     GoldSrc::toYupCounterClockwise(MeshDataNormalPart);
     auto pActorNormalPart = GoldSrc::createActorByMeshAndTag(MeshDataNormalPart, { "brush" });
     pActorNormalPart->setName("brush");
-    m_pSceneInfo->pScene->addActor(pActorNormalPart);
+    m_pTargetSceneInfo->pScene->addActor(pActorNormalPart);
 
     // if need sky part, uncomment this
     //GoldSrc::toYupCounterClockwise(MeshDataSkyPart);
@@ -362,7 +359,7 @@ std::pair<uint32_t, std::vector<glm::vec2>> CSceneReaderBsp::__getAndAppendBspFa
         pLightmapImage->setData(pIndices);
         delete[] pTempData;
         delete[] pIndices;
-        uint32_t LightmapIndex = static_cast<uint32_t>(m_pSceneInfo->pLightmap->appendLightmap(pLightmapImage));
+        uint32_t LightmapIndex = static_cast<uint32_t>(m_pTargetSceneInfo->pLightmap->appendLightmap(pLightmapImage));
 
         std::vector<glm::vec2> LightmapCoords;
         for (const glm::vec2& TexCoord : vTexCoords)
@@ -469,9 +466,9 @@ void CSceneReaderBsp::__correntLightmapCoords()
 {
     Scene::reportProgress(u8"ÐÞÕýLightmapÊý¾Ý");
 
-    for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
+    for (size_t i = 0; i < m_pTargetSceneInfo->pScene->getActorNum(); ++i)
     {
-        auto pActor = m_pSceneInfo->pScene->getActor(i);
+        auto pActor = m_pTargetSceneInfo->pScene->getActor(i);
 
         auto pTransform = pActor->getTransform();
         auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
@@ -492,7 +489,7 @@ void CSceneReaderBsp::__correntLightmapCoords()
             uint32_t LightmapIndex = pLightmapIndexArray->get(i);
             _ASSERTE(LightmapIndex != CMeshData::InvalidLightmapIndex);
 
-            pLightmapTexCoordArray->set(i, m_pSceneInfo->pLightmap->getAcutalLightmapCoord(LightmapIndex, pLightmapTexCoordArray->get(i)));
+            pLightmapTexCoordArray->set(i, m_pTargetSceneInfo->pLightmap->getAcutalLightmapCoord(LightmapIndex, pLightmapTexCoordArray->get(i)));
         }
     }
 }
@@ -535,17 +532,17 @@ bool CSceneReaderBsp::__readSkyboxImages(std::string vSkyFilePrefix, std::string
         std::filesystem::path ImagePath;
         if (Environment::findFile(vSkyFilePrefix + SkyBoxPostfixes[i] + vExtension, vCurrentDir, true, ImagePath))
         {
-            m_pSceneInfo->SkyBoxImages[i] = make<CIOImage>();
-            m_pSceneInfo->SkyBoxImages[i]->read(ImagePath);
+            m_pTargetSceneInfo->SkyBoxImages[i] = make<CIOImage>();
+            m_pTargetSceneInfo->SkyBoxImages[i]->read(ImagePath);
         }
         else
         {
-            m_pSceneInfo->UseSkyBox = false;
-            m_pSceneInfo->SkyBoxImages = {};
+            m_pTargetSceneInfo->UseSkyBox = false;
+            m_pTargetSceneInfo->SkyBoxImages = {};
             return false;
         }
     }
-    m_pSceneInfo->UseSkyBox = true;
+    m_pTargetSceneInfo->UseSkyBox = true;
     return true;
 }
 
@@ -610,7 +607,7 @@ void CSceneReaderBsp::__loadPointEntities()
 
                 Sprite.pImage = pImage;
                 Sprite.Type = static_cast<EGoldSrcSpriteType>(Spr.getType());
-                m_pSceneInfo->SprSet.emplace_back(Sprite);
+                m_pTargetSceneInfo->SprSet.emplace_back(Sprite);
             }
         }
         
@@ -633,6 +630,6 @@ void CSceneReaderBsp::__loadPointEntities()
         pTextRenderer->setScale(0.5f);
         pPointEntityActor->getTransform()->addComponent(pTextRenderer);
 
-        m_pSceneInfo->pScene->addActor(pPointEntityActor);
+        m_pTargetSceneInfo->pScene->addActor(pPointEntityActor);
     }
 }
