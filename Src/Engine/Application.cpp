@@ -27,6 +27,8 @@ void IApplication::create(GLFWwindow* vWindow)
 
     __createSwapchain();
 
+    m_pGraphInstance->init(m_pDevice, m_pAppInfo, m_pSceneInfo);
+
     _createV();
 }
 
@@ -38,6 +40,8 @@ void IApplication::waitDevice()
 void IApplication::destroy()
 {
     if (*m_pInstance == VK_NULL_HANDLE) return;
+
+    m_pGraphInstance->destroy();
     
     _destroyV();
     __destroySwapchain();
@@ -88,6 +92,7 @@ void IApplication::__render()
     uint32_t ImageIndex;
     VkResult Result = vkAcquireNextImageKHR(*m_pDevice, *m_pSwapchain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
+    m_pGraphInstance->update(ImageIndex);
     _updateV(ImageIndex);
     _renderUIV();
 

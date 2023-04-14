@@ -12,8 +12,6 @@
 class CRenderPassGraphUI : public IDrawableUI
 {
 public:
-    static void registerRenderPass(const std::string& vName, std::function<vk::IRenderPass::Ptr()> vCreateFunction);
-
     virtual void _renderUIV() override;
 
     void setGraph(ptr<SRenderPassGraph> vGraph)

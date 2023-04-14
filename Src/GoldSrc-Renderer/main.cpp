@@ -1,7 +1,13 @@
 #include "Interactor.h"
 #include "ApplicationGoldSrc.h"
 #include "SetupGLFW.h"
-#include "RenderPassRegister.h"
+#include "RenderpassLib.h"
+
+#include "PassGoldSrc.h"
+#include "PassGUI.h"
+#include "PassOutlineMask.h"
+#include "PassOutlineEdge.h"
+#include "PassVisualize.h"
 
 #include <GLFW/glfw3.h>
 

@@ -1,5 +1,6 @@
 #include "RenderPassGraphUI.h"
 #include "Maths.h"
+#include "RenderpassLib.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -39,9 +40,6 @@ namespace
     const int gSidebarWidth = 200;
 }
 
-
-std::vector<std::pair<std::string, std::function<vk::IRenderPass::Ptr()>>> gRegisteredPassSet = {};
-
 glm::vec2 __toGlm(ImVec2 v) { return glm::vec2(v.x, v.y); }
 ImVec2 __toImgui(glm::vec2 v) { return ImVec2(v.x, v.y); }
 
@@ -58,15 +56,10 @@ void __drawLinkCurve(const Math::SCubicBezier2D& vBezier, unsigned vColor, float
     pDrawList->AddBezierCurve(__toImgui(vBezier.Points[0]), __toImgui(vBezier.Points[1]), __toImgui(vBezier.Points[2]), __toImgui(vBezier.Points[3]), vColor, vThickness);
 }
 
-void CRenderPassGraphUI::registerRenderPass(const std::string& vName, std::function<vk::IRenderPass::Ptr()> vCreateFunction)
-{
-    gRegisteredPassSet.push_back({ vName, vCreateFunction });
-}
-
 void CRenderPassGraphUI::__drawGrid()
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-    
+
     glm::vec2 CanvasPos = __toGlm(ImGui::GetCursorScreenPos());
     glm::vec2 CanvasSize = __toGlm(ImGui::GetWindowSize());
     for (float x = fmodf(m_Scrolling.x, gGridSize); x < CanvasSize.x; x += gGridSize)
@@ -134,11 +127,11 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     const glm::vec2 NodeCanvasPos = vCanvasOffset + vioNode.Pos;
 
     float ContentPadding = 8.0f;
-    float ContentHeight = PortItemHeight * glm::max(vioNode.InputSet.size(), vioNode.OutputSet.size()) + ContentPadding * 2;
-    
+    float ContentHeight = PortItemHeight * glm::max(vioNode.getInputs().size(), vioNode.getOutputs().size()) + ContentPadding * 2;
+
     glm::vec2 NodeCanvasSize = glm::vec2(gNodeWidth, HeaderHeight + ContentHeight);
     glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
-    
+
     ImGui::PushID(static_cast<int>(vNodeId));
     // draw invisable button for interaction
     pDrawList->ChannelsSetCurrent(0);
@@ -162,7 +155,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
 
     // work on background
     pDrawList->ChannelsSetCurrent(1);
-    
+
     // draw whole node background and boarder
     ImU32 BackgroundColor = IM_COL32(60, 60, 60, 255);
     if (__isItemSelected(vNodeId, EItemType::NODE))
@@ -190,7 +183,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     glm::vec2 CurOutputPortPos = CurInputPortPos + glm::vec2(gNodeWidth, 0.0f);
 
     // TODO: merge common part of input/output
-    for (const auto& InputName : vioNode.InputSet)
+    for (const auto& InputName : vioNode.getInputs())
     {
         float Radius = gPortRadius;
         unsigned Color = gPortColor;
@@ -205,7 +198,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
                 m_AddLinkState.start({ vNodeId , InputName }, false);
             }
         }
-        
+
         if (m_AddLinkState.isStarted() && Distance < gPortAttachMinDistance) // if attached to the adding link
         {
             m_AddLinkState.addCandidate({ vNodeId, InputName }, false, -Distance);
@@ -217,7 +210,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
             Radius = gPortHoverDistance;
             Color = gPortHoveredColor;
         }
-        
+
         m_NodePortPosMap[vNodeId].Input[InputName] = CurInputPortPos;
         pDrawList->AddCircleFilled(__toImgui(CurInputPortPos), Radius, Color);
 
@@ -227,7 +220,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
         CurInputPortPos.y += PortItemHeight;
     }
 
-    for (const auto& OutputName : vioNode.OutputSet)
+    for (const auto& OutputName : vioNode.getOutputs())
     {
 
         float Radius = gPortRadius;
@@ -250,14 +243,14 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
         {
             m_AddLinkState.addCandidate({ vNodeId, OutputName }, true, -Distance);
         }
-        
+
         // if is hovered
         if (__isItemHovered(vNodeId, EItemType::PORT, OutputName, false))
         {
             Radius = gPortHoverDistance;
             Color = gPortHoveredColor;
         }
-        
+
         m_NodePortPosMap[vNodeId].Output[OutputName] = CurOutputPortPos;
         pDrawList->AddCircleFilled(__toImgui(CurOutputPortPos), Radius, Color);
 
@@ -273,7 +266,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
 void CRenderPassGraphUI::__drawCurveAnimation(const Math::SCubicBezier2D& vCurve, unsigned vColor, float vRadius)
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-   
+
     float Interval = 1.0f / gLinkAnimeCircleNum;
     float Shift = glm::mod(m_AnimationTime / gLinkAnimeDuration, 1.0f) * Interval;
     for (int i = 0; i < gLinkAnimeCircleNum; ++i)
@@ -293,11 +286,11 @@ void CRenderPassGraphUI::update()
     if (!m_EnableForce) return;
     const float dpi = 300.0f;
     const float m_WorldScale = 1.0f / dpi; // dpi
-        
+
     // force graph
     float Step = 0.01f;
     std::map<size_t, glm::vec2> ForceMap;
-        
+
     // 1. node repulsion
     for (auto pIter1 = m_pGraph->NodeMap.begin(); pIter1 != m_pGraph->NodeMap.end(); ++pIter1)
     {
@@ -333,14 +326,14 @@ void CRenderPassGraphUI::update()
         ForceMap[Link.Source.NodeId] += F;
         ForceMap[Link.Destination.NodeId] -= F;
     }
-        
+
     for (const auto& Pair : ForceMap)
     {
         size_t NodeId = Pair.first;
         if (__isItemSelected(NodeId, EItemType::NODE)) continue; // dragging
         glm::vec2 F = Pair.second;
         SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(NodeId);
-            
+
         glm::vec2 A = F / 1.0f;
         glm::vec2 dx = A * Step * Step;
 
@@ -399,7 +392,7 @@ void CRenderPassGraphUI::_renderUIV()
     // Display grid
     if (m_ShowGrid)
         __drawGrid();
-    
+
     pDrawList->ChannelsSplit(3);
 
     // draw nodes
@@ -451,7 +444,7 @@ void CRenderPassGraphUI::_renderUIV()
 
         float LinkThickness = 6.0f;
         __drawLinkCurve(LinkCurve, LinkColor, LinkThickness);
-        
+
         if (AttachState == EAddLinkAttachState::VALID_ATTACH) // if matched, draw animation
         {
             __drawCurveAnimation(LinkCurve, LinkColor, LinkThickness + 2.0f);
@@ -489,7 +482,7 @@ void CRenderPassGraphUI::_renderUIV()
     {
         m_IsContextMenuOpen = false; // close on click
     }
-    
+
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_HoveredItem.has_value() && m_HoveredItem->Type != EItemType::PORT)
     {
         m_IsContextMenuOpen = true;
@@ -541,13 +534,13 @@ void CRenderPassGraphUI::_renderUIV()
     // Scrolling
     if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Middle, 0.0f))
         m_Scrolling = m_Scrolling + __toGlm(io.MouseDelta);
-    
+
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::PopStyleVar();
     ImGui::EndGroup();
     ImGui::EndChild();
-    
+
     ImGui::SameLine();
 
     // Draw sidebar
@@ -576,13 +569,14 @@ void CRenderPassGraphUI::_renderUIV()
 
         if (ImGui::BeginTabItem(u8"全部"))
         {
-            if (gRegisteredPassSet.empty())
+            const auto& PassSet = RenderpassLib::getAllPassNames();
+            if (PassSet.empty())
                 ImGui::Text(u8"未注册任何渲染Pass...");
             else
             {
-                for (const auto& Pair : gRegisteredPassSet)
+                for (const auto& Name : PassSet)
                 {
-                    ImGui::Text(Pair.first.c_str());
+                    ImGui::Text(Name.c_str());
                 }
             }
             ImGui::EndTabItem();

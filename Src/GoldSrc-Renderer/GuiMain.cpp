@@ -66,6 +66,7 @@ CGUIMain::CGUIMain()
 
 SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo)
 {
+    _ASSERTE(voSceneInfo);
     SResultReadScene Result;
     Result.Succeed = false;
     if (!std::filesystem::exists(vFilePath))
@@ -163,6 +164,7 @@ void CGUIMain::_renderUIV()
                     }
                     else if (!Path.empty())
                     {
+                        _ASSERTE(m_pSceneInfo);
                         m_LoadingFilePath = Path;
                         m_FileReadingFuture = std::async(readScene, m_LoadingFilePath, m_pSceneInfo);
                     }

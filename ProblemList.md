@@ -141,6 +141,28 @@
     - 首先不能只靠input port拿extent，有些pass没有input port，就需要知道屏幕尺寸
       - 这两种pass的更新策略不同！前者依赖input，后者依赖屏幕尺寸
 
+## 问题：Render pass graph
+- 以一个graph来表示整个渲染流程，自动排序command buffer，graph可以保存和载入，动态修改、生成实际的pass
+### graph需要存储哪些信息？
+- Pass节点 每个节点表示一个pass
+  - 名称 以动态映射到实际的Pass类
+  - 位置 方便编辑
+  - 输入输出？ 似乎不必要，这个信息不应该存在graph里，而是从实际的Pass上动态获取（因为Pass的输入输出有可能改变）
+    - 名称 
+    - 格式 可以用来检查连接格式是否匹配？有没有必要？
+      - 每台电脑使用的格式可能不一样（比如depth的格式，不同平台支持的不同，选择也不同），所以不能写死为static
+      - 结论：没有必要
+- 连接信息
+  - 哪些port是相连的
+- 入口
+  - swapchain连接到哪儿
+
+### 流程
+- RenderPassGraph 只包含静态信息
+- RenderPassGraphInstance 一个Graph的实例化状态，包含已经创建的Pass
+- RenderPassGraphEditor 基于命令模式，对Graph编辑的类
+- RenderPassGraphUI 绘制并编辑Graph，包含以上三个类
+
 ## 问题：如何管理场景
   - 场景包含很多物体，每个物体有很多个面片，每个面片有自己的纹理
   - 而渲染时希望保证状态变化少，一劳永逸，需要做一些权衡

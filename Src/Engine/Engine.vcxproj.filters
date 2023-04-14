@@ -159,6 +159,9 @@
     <ClCompile Include="SceneInfo.cpp">
       <Filter>源文件\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="RenderpassLib.cpp">
+      <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -287,9 +290,6 @@
     <ClInclude Include="Timer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPassRegister.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="RenderPassGraph.h">
       <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
@@ -304,6 +304,12 @@
     </ClInclude>
     <ClInclude Include="SceneInfo.h">
       <Filter>头文件\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassGraphInstance.h">
+      <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderpassLib.h">
+      <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

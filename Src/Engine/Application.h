@@ -8,6 +8,7 @@
 #include "SwapChain.h"
 #include "Fence.h"
 #include "RenderPassPort.h"
+#include "RenderPassGraphInstance.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -58,8 +59,6 @@ protected:
     const int m_MaxFrameInFlight = 2;
     int m_CurrentFrameIndex = 0;
 
-    const CAppInfo::Ptr m_pAppInfo = make<CAppInfo>();
-
     const std::vector<const char*> m_ValidationLayers =
     {
         "VK_LAYER_KHRONOS_validation"
@@ -69,6 +68,10 @@ protected:
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+    
+    const CAppInfo::Ptr m_pAppInfo = make<CAppInfo>();
+    const ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
+    const CRenderPassGraphInstance::Ptr m_pGraphInstance = make<CRenderPassGraphInstance>();
 
 private:
     void __render();

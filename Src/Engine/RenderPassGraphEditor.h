@@ -119,6 +119,7 @@ public:
     CCommandRemoveNode(size_t vNodeId)
     {
         m_NodeId = vNodeId;
+        m_Node = SRenderPassGraphNode();
     }
 
 protected:
@@ -276,55 +277,6 @@ public:
         else
             return SAABB2D(glm::vec2(0, 0), glm::vec2(0, 0));
     }
-
-    // temp, remove this later
-    static ptr<SRenderPassGraph> createFromRenderPassGraph(std::vector<vk::IRenderPass::Ptr> vPassSet,
-        std::vector<std::tuple<int, std::string, int, std::string>> vLinks, std::pair<int, std::string> vEntry)
-    {
-        auto pGraph = make<SRenderPassGraph>();
-        size_t CurNodeId = 0;
-
-        pGraph->NodeMap[CurNodeId++] = SRenderPassGraphNode{ "Swapchain", glm::vec2(0, 0),glm::vec2(20.0f), {}, {"Main"} };
-
-        std::vector<size_t> PassIds(vPassSet.size()); // index to id
-        for (size_t i = 0; i < vPassSet.size(); ++i)
-        {
-            std::string PassName = vPassSet[i]->getNameV();
-
-            auto pPortSet = vPassSet[i]->getPortSet();
-            std::vector<std::string> InputPortSet, OutputPortSet;
-            for (size_t i = 0; i < pPortSet->getInputPortNum(); ++i)
-                InputPortSet.emplace_back(pPortSet->getInputPort(i)->getName());
-            for (size_t i = 0; i < pPortSet->getOutputPortNum(); ++i)
-                OutputPortSet.emplace_back(pPortSet->getOutputPort(i)->getName());
-
-            size_t Id = CurNodeId;
-            PassIds[i] = Id;
-
-            pGraph->NodeMap[Id] = SRenderPassGraphNode{ PassName, glm::vec2(0, 0), glm::vec2(20.0f), InputPortSet, OutputPortSet };
-            CurNodeId++;
-        }
-
-        // links
-        size_t CurLinkId = 0;
-        pGraph->EntryPortOpt = SRenderPassGraphPortInfo{ PassIds[vEntry.first], vEntry.second };
-        pGraph->LinkMap[CurLinkId++] = SRenderPassGraphLink{ {0, "Main"}, {pGraph->EntryPortOpt->NodeId, pGraph->EntryPortOpt->Name} };
-
-        for (const auto& Link : vLinks)
-        {
-            int StartPassIndex = std::get<0>(Link);
-            std::string StartPortName = std::get<1>(Link);
-            int EndPassIndex = std::get<2>(Link);
-            std::string EndPortName = std::get<3>(Link);
-
-            size_t StartNodeId = PassIds[StartPassIndex];
-            size_t EndNodeId = PassIds[EndPassIndex];
-            pGraph->LinkMap[CurLinkId++] = SRenderPassGraphLink{ {StartNodeId, StartPortName}, {EndNodeId, EndPortName} };
-        }
-        return pGraph;
-    }
-
-    
 private:
     bool hasPass(size_t vNodeId)
     {
@@ -340,7 +292,7 @@ private:
 
     ptr<SRenderPassGraph> m_pGraph = nullptr;
     
-    size_t m_CurNodeId = 0;
+    size_t m_CurNodeId = SRenderPassGraph::SwapchainNodeId;
     size_t m_CurLinkId = 0;
 
     size_t m_MaxUndoCount = 50;

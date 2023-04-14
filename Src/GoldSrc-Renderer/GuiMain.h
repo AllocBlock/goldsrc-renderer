@@ -43,11 +43,6 @@ public:
         m_RenderSettingCallback = vCallback;
     }
 
-    void setInteractor(ptr<CInteractor> vInteractor)
-    {
-        m_pInteractor = vInteractor;
-    }
-
     void setSceneFocusedActor(CActor::Ptr vActor)
     {
         m_GUIScene.setFocusedActor(vActor);
@@ -63,8 +58,6 @@ protected:
     virtual void _renderUIV() override;
 
 private:
-    ptr<CInteractor> m_pInteractor = nullptr;
-
     CGuiAlert m_GUIAlert = CGuiAlert();
     CGuiFrameRate m_GUIFrameRate = CGuiFrameRate();
     CGuiLog m_GUILog = CGuiLog();

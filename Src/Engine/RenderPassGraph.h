@@ -1,4 +1,6 @@
 #pragma once
+#include "RenderpassLib.h"
+
 #include <map>
 #include <optional>
 #include <stdexcept>
@@ -65,29 +67,46 @@ struct SRenderPassGraphNode
     std::string Name;
     glm::vec2 Pos = glm::vec2(0.0f);
     glm::vec2 Size = glm::vec2(20.0f); // Size is auto-updating, so no need to set it
-    std::vector<std::string> InputSet, OutputSet;
+
+    SRenderPassGraphNode() = default;
+    SRenderPassGraphNode(const std::string vName)
+    {
+        _ASSERTE(!vName.empty());
+        Name = vName;
+    }
 
     SAABB2D getAABB() const
     {
         return SAABB2D(Pos, Pos + Size);
     }
 
+    // TODO: move all port query to instance
+    std::vector<std::string> getInputs() const
+    {
+        return {};
+    }
+    std::vector<std::string> getOutputs() const
+    {
+        return {};
+    }
+
     bool hasInput(const std::string& vName) const
     {
-        for (const std::string& Name : InputSet)
+        for (const std::string& Name : getInputs())
             if (Name == vName) return true;
         return false;
     }
 
     bool hasOutput(const std::string& vName) const
     {
-        for (const std::string& Name : OutputSet)
+        for (const std::string& Name : getOutputs())
             if (Name == vName) return true;
         return false;
     }
 
     size_t getInputIndex(const std::string& vName) const
     {
+        const auto& InputSet = getInputs();
         for (size_t i = 0; i < InputSet.size(); ++i)
             if (InputSet[i] == vName)
                 return i;
@@ -96,6 +115,7 @@ struct SRenderPassGraphNode
 
     size_t getOutputIndex(const std::string& vName) const
     {
+        const auto& OutputSet = getOutputs();
         for (size_t i = 0; i < OutputSet.size(); ++i)
             if (OutputSet[i] == vName)
                 return i;
@@ -127,6 +147,9 @@ struct SRenderPassGraphLink
 
 struct SRenderPassGraph
 {
+    // TODO: remove swapchain node, and simpify the graph saving, but need special handle at ui editing
+    static const size_t SwapchainNodeId = 0;
+
     std::map<size_t, SRenderPassGraphNode> NodeMap;
     std::map<size_t, SRenderPassGraphLink> LinkMap;
     std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt; // TODO: how to save entry data?
@@ -136,7 +159,7 @@ struct SRenderPassGraph
     {
         if (!hasNode(vNodeId)) return false;
         const SRenderPassGraphNode& Node = NodeMap.at(vNodeId);
-        for (const auto& PortName : (vIsInput ? Node.InputSet : Node.OutputSet))
+        for (const auto& PortName : (vIsInput ? Node.getInputs() : Node.getOutputs()))
             if (PortName == vPortName)
                 return true;
         return false;
@@ -147,5 +170,13 @@ struct SRenderPassGraph
             if (Pair.second == vLink)
                 return true;
         return false;
+    }
+
+    bool isValid() const
+    {
+        if (!EntryPortOpt.has_value())
+            return false;
+        // TODO: more validation
+        return true;
     }
 };

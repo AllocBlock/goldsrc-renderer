@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <sstream>
 
 using EventName_t = std::string;
 using HookId_t = size_t;
@@ -46,7 +47,9 @@ public:
 
     EventId_t generateEventId()
     {
-        return m_EventName + "_" + std::to_string(m_CurEventId++);
+        std::ostringstream Address;
+        Address << (void const*)this;
+        return m_EventName + "_" + Address.str() + "_" + std::to_string(m_CurEventId++);
     }
 
 private:

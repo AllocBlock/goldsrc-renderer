@@ -9,8 +9,6 @@ void CRenderPassGUI::_initV()
 {
     CRenderPassSingleFrameBuffer::_initV();
 
-    _ASSERTE(m_pWindow);
-    
     __createDescriptorPool();
 }
 
