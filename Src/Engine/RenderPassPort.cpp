@@ -180,57 +180,56 @@ bool CRelayPort::isImageReadyV() const
     return CPort::isImageReadyV() && isLinkReadyV() && hasParent() && m_pParent.lock()->isImageReadyV();
 }
 
-void SPortDescriptor::addInput(std::string vName, const SPortFormat& vFormat)
+void SPortDescriptor::addInput(const std::string& vName, const SPortFormat& vFormat)
 {
     _ASSERTE(!hasInput(vName));
     _ASSERTE(!hasInputOutput(vName));
-
-    m_InputPortNameSet.emplace_back(vName);
-    m_InputPortSet.emplace_back(vFormat);
+    PortDescSet.emplace_back(SPortDescription{ EPortType::INPUT, vName, vFormat });
 }
 
-void SPortDescriptor::addOutput(std::string vName, const SPortFormat& vFormat)
+void SPortDescriptor::addOutput(const std::string& vName, const SPortFormat& vFormat)
 {
     _ASSERTE(!hasOutput(vName));
     _ASSERTE(!hasInputOutput(vName));
-
-    m_OutputPortNameSet.emplace_back(vName);
-    m_OutputPortSet.emplace_back(vFormat);
+    PortDescSet.emplace_back(SPortDescription{ EPortType::OUTPUT, vName, vFormat });
 }
 
-void SPortDescriptor::addInputOutput(std::string vName, const SPortFormat& vFormat)
+void SPortDescriptor::addInputOutput(const std::string& vName, const SPortFormat& vFormat)
 {
     _ASSERTE(!hasInput(vName));
     _ASSERTE(!hasOutput(vName));
     _ASSERTE(!hasInputOutput(vName));
-
-    m_InputOutputPortNameSet.emplace_back(vName);
-    m_InputOutputPortSet.emplace_back(vFormat);
+    PortDescSet.emplace_back(SPortDescription{ EPortType::INPUT_OUTPUT, vName, vFormat });
 }
 
 void SPortDescriptor::clear()
 {
-    m_InputPortNameSet.clear();
-    m_InputPortSet.clear();
-    m_OutputPortNameSet.clear();
-    m_OutputPortSet.clear();
-    m_InputOutputPortNameSet.clear();
-    m_InputOutputPortSet.clear();
+    PortDescSet.clear();
 }
 
-bool SPortDescriptor::hasInput(const std::string vName) const
+bool SPortDescriptor::has(EPortType vType, const std::string& vName) const
+{
+    for (const SPortDescription& PortDesc : PortDescSet)
+    {
+        if (vType == PortDesc.Type && vName == PortDesc.Name)
+            return true;
+    }
+    return false;
+}
+
+bool SPortDescriptor::hasInput(const std::string& vName) const
 { 
-    return std::find(m_InputPortNameSet.begin(), m_InputPortNameSet.end(), vName) != m_InputPortNameSet.end();
+    return has(EPortType::INPUT, vName);
 }
 
-bool SPortDescriptor::hasOutput(const std::string vName) const
+bool SPortDescriptor::hasOutput(const std::string& vName) const
 {
-    return std::find(m_OutputPortNameSet.begin(), m_OutputPortNameSet.end(), vName) != m_OutputPortNameSet.end();
+    return has(EPortType::OUTPUT, vName);
 }
 
-bool SPortDescriptor::hasInputOutput(const std::string vName) const
+bool SPortDescriptor::hasInputOutput(const std::string& vName) const
 {
-    return std::find(m_InputOutputPortNameSet.begin(), m_InputOutputPortNameSet.end(), vName) != m_InputOutputPortNameSet.end();
+    return has(EPortType::INPUT_OUTPUT, vName);
 }
 
 CPortSet::CPortSet(const SPortDescriptor& vDesc, vk::IRenderPass* vBelongedRenderPass):
@@ -251,18 +250,31 @@ CPortSet::CPortSet(const SPortDescriptor& vDesc, vk::IRenderPass* vBelongedRende
         }
     };
 
-    for (size_t i = 0; i < vDesc.m_InputPortNameSet.size(); ++i)
-    {
-        __addInput(vDesc.m_InputPortNameSet[i], vDesc.m_InputPortSet[i]);
-    }
-    for (size_t i = 0; i < vDesc.m_OutputPortNameSet.size(); ++i)
-    {
-        __addOutput(vDesc.m_OutputPortNameSet[i], vDesc.m_OutputPortSet[i]);
-    }
 
-    for (size_t i = 0; i < vDesc.m_InputOutputPortNameSet.size(); ++i)
+    for (const SPortDescriptor::SPortDescription& PortDesc : vDesc.PortDescSet)
     {
-        __addInputOutput(vDesc.m_InputOutputPortNameSet[i], vDesc.m_InputOutputPortSet[i]);
+        switch (PortDesc.Type)
+        {
+            case SPortDescriptor::EPortType::INPUT:
+            {
+                __addInput(PortDesc.Name, PortDesc.Format);
+                break;
+            }
+            case SPortDescriptor::EPortType::OUTPUT:
+            {
+                __addOutput(PortDesc.Name, PortDesc.Format);
+                break;
+            }
+            case SPortDescriptor::EPortType::INPUT_OUTPUT:
+            {
+                __addInputOutput(PortDesc.Name, PortDesc.Format);
+                break;
+            }
+            default:
+            {
+                _SHOULD_NOT_GO_HERE;
+            }
+        }
     }
 }
 

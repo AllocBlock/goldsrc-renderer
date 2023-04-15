@@ -45,6 +45,9 @@
     <ClInclude Include="Random.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="VectorMap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp">

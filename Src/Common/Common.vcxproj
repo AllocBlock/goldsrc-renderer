@@ -20,6 +20,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="SingleValueDataArray.h" />
     <ClInclude Include="Random.h" />
+    <ClInclude Include="VectorMap.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />

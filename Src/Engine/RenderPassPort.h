@@ -187,23 +187,32 @@ public:
     virtual bool isStandaloneSourceV() const { return false; }
 };
 
-class SPortDescriptor
+struct SPortDescriptor
 {
-public:
-    void addInput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
-    void addOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
-    void addInputOutput(std::string vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
-    void clear();
-    bool hasInput(const std::string vName) const;
-    bool hasOutput(const std::string vName) const;
-    bool hasInputOutput(const std::string vName) const;
+    enum class EPortType
+    {
+        INPUT,
+        OUTPUT,
+        INPUT_OUTPUT
+    };
 
-    std::vector<std::string> m_InputPortNameSet;
-    std::vector<SPortFormat> m_InputPortSet;
-    std::vector<std::string> m_OutputPortNameSet;
-    std::vector<SPortFormat> m_OutputPortSet;
-    std::vector<std::string> m_InputOutputPortNameSet;
-    std::vector<SPortFormat> m_InputOutputPortSet;
+    struct SPortDescription
+    {
+        EPortType Type;
+        std::string Name;
+        SPortFormat Format;
+    };
+
+    std::vector<SPortDescription> PortDescSet;
+
+    void addInput(const std::string& vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
+    void addOutput(const std::string& vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
+    void addInputOutput(const std::string& vName, const SPortFormat& vFormat = SPortFormat::AnyPortFormat);
+    void clear();
+    bool has(EPortType vType, const std::string& vName) const;
+    bool hasInput(const std::string& vName) const;
+    bool hasOutput(const std::string& vName) const;
+    bool hasInputOutput(const std::string& vName) const;
 };
 
 class CPortSet
