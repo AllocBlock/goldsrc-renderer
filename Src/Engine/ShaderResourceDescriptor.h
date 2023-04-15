@@ -73,5 +73,5 @@ private:
     VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 
     std::vector<bool> m_IsUpdated;
-    bool m_IsReady; // is ready cache
+    bool m_IsReady = false; // is ready cache
 };

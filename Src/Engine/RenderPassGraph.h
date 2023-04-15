@@ -79,53 +79,11 @@ struct SRenderPassGraphNode
     {
         return SAABB2D(Pos, Pos + Size);
     }
-
-    // TODO: move all port query to instance
-    std::vector<std::string> getInputs() const
-    {
-        return {};
-    }
-    std::vector<std::string> getOutputs() const
-    {
-        return {};
-    }
-
-    bool hasInput(const std::string& vName) const
-    {
-        for (const std::string& Name : getInputs())
-            if (Name == vName) return true;
-        return false;
-    }
-
-    bool hasOutput(const std::string& vName) const
-    {
-        for (const std::string& Name : getOutputs())
-            if (Name == vName) return true;
-        return false;
-    }
-
-    size_t getInputIndex(const std::string& vName) const
-    {
-        const auto& InputSet = getInputs();
-        for (size_t i = 0; i < InputSet.size(); ++i)
-            if (InputSet[i] == vName)
-                return i;
-        throw std::runtime_error("Port not found");
-    }
-
-    size_t getOutputIndex(const std::string& vName) const
-    {
-        const auto& OutputSet = getOutputs();
-        for (size_t i = 0; i < OutputSet.size(); ++i)
-            if (OutputSet[i] == vName)
-                return i;
-        throw std::runtime_error("Port not found");
-    }
 };
 
 struct SRenderPassGraphPortInfo
 {
-    size_t NodeId;
+    size_t NodeId = std::numeric_limits<size_t>::max();
     std::string Name;
 
     bool operator == (const SRenderPassGraphPortInfo& vOther) const
@@ -145,25 +103,14 @@ struct SRenderPassGraphLink
     }
 };
 
+// TIPS: Graph does not know if link is valid, as port info is defined at runtime
 struct SRenderPassGraph
 {
-    // TODO: remove swapchain node, and simpify the graph saving, but need special handle at ui editing
-    static const size_t SwapchainNodeId = 0;
-
     std::map<size_t, SRenderPassGraphNode> NodeMap;
     std::map<size_t, SRenderPassGraphLink> LinkMap;
-    std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt; // TODO: how to save entry data?
+    std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt;
 
     bool hasNode(size_t vNodeId) const { return NodeMap.find(vNodeId) != NodeMap.end(); }
-    bool hasPort(size_t vNodeId, const std::string& vPortName, bool vIsInput) const
-    {
-        if (!hasNode(vNodeId)) return false;
-        const SRenderPassGraphNode& Node = NodeMap.at(vNodeId);
-        for (const auto& PortName : (vIsInput ? Node.getInputs() : Node.getOutputs()))
-            if (PortName == vPortName)
-                return true;
-        return false;
-    }
     bool hasLink(const SRenderPassGraphLink& vLink) const
     {
         for (const auto& Pair : LinkMap)

@@ -21,8 +21,8 @@ namespace
     float gPortRadius = 8.0f;
     float gPortMargin = 8.0f;
     ImU32 gPortTextColor = IM_COL32(255, 255, 255, 255);
-    float gPortHoverDistance = gPortRadius + 2.0f;
-    float gPortAttachMinDistance = gPortHoverDistance;
+    float gPortHoveredRadius = gPortRadius + 2.0f;
+    float gPortAttachMinDistance = gPortHoveredRadius;
     ImU32 gPortColor = IM_COL32(150, 150, 150, 150);
     ImU32 gPortHoveredColor = IM_COL32(200, 200, 200, 200);
 
@@ -54,6 +54,12 @@ void __drawLinkCurve(const Math::SCubicBezier2D& vBezier, unsigned vColor, float
 {
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
     pDrawList->AddBezierCurve(__toImgui(vBezier.Points[0]), __toImgui(vBezier.Points[1]), __toImgui(vBezier.Points[2]), __toImgui(vBezier.Points[3]), vColor, vThickness);
+}
+
+glm::vec2 __calcActualTextSize(const std::string& vText)
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+    return __toGlm(ImGui::CalcTextSize(vText.c_str())) + __toGlm(style.FramePadding) * 2.0f;
 }
 
 void CRenderPassGraphUI::__drawGrid()
@@ -119,7 +125,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
 {
     const float LineHeight = ImGui::GetTextLineHeight();
     const float HeaderHeight = LineHeight + gNodeHeaderPadding;
-    const float PortItemHeight = glm::max(ImGui::GetTextLineHeight(), gPortHoverDistance) + gPortMargin;
+    const float PortItemHeight = glm::max(ImGui::GetTextLineHeight(), gPortHoveredRadius) + gPortMargin;
 
     ImGuiIO& io = ImGui::GetIO();
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
@@ -127,7 +133,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     const glm::vec2 NodeCanvasPos = vCanvasOffset + vioNode.Pos;
 
     float ContentPadding = 8.0f;
-    float ContentHeight = PortItemHeight * glm::max(vioNode.getInputs().size(), vioNode.getOutputs().size()) + ContentPadding * 2;
+    float ContentHeight = PortItemHeight * glm::max(__getNodeInputs(vNodeId).size(), __getNodeOutputs(vNodeId).size()) + ContentPadding * 2;
 
     glm::vec2 NodeCanvasSize = glm::vec2(gNodeWidth, HeaderHeight + ContentHeight);
     glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
@@ -170,8 +176,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
 
     // draw header texts
     pDrawList->ChannelsSetCurrent(2); // Foreground
-    ImGuiStyle& style = ImGui::GetStyle();
-    float TextHeight = ImGui::CalcTextSize(vioNode.Name.c_str()).y + style.FramePadding.y * 2.0f;
+    float TextHeight = __calcActualTextSize(vioNode.Name).y;
     ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos + glm::vec2(gNodeHeaderPadding, (HeaderHeight - TextHeight) * 0.5f)));
     ImGui::BeginGroup(); // Lock horizontal position
     ImGui::Text(vioNode.Name.c_str());
@@ -183,14 +188,13 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     glm::vec2 CurOutputPortPos = CurInputPortPos + glm::vec2(gNodeWidth, 0.0f);
 
     // TODO: merge common part of input/output
-    for (const auto& InputName : vioNode.getInputs())
+    for (const auto& InputName : __getNodeInputs(vNodeId))
     {
         float Radius = gPortRadius;
         unsigned Color = gPortColor;
-
-        const float HoverRadius = gPortHoverDistance + 2.0f;
+        
         const float Distance = glm::length(__toGlm(ImGui::GetMousePos()) - CurInputPortPos);
-        if (Distance < HoverRadius)
+        if (Distance < gPortHoveredRadius)
         {
             __setHoveredItem(vNodeId, EItemType::PORT, InputName, true);
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) // start adding link
@@ -207,26 +211,26 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
         // if is hovered
         if (__isItemHovered(vNodeId, EItemType::PORT, InputName, true))
         {
-            Radius = gPortHoverDistance;
+            Radius = gPortHoveredRadius;
             Color = gPortHoveredColor;
         }
 
         m_NodePortPosMap[vNodeId].Input[InputName] = CurInputPortPos;
         pDrawList->AddCircleFilled(__toImgui(CurInputPortPos), Radius, Color);
 
-        ImVec2 TextSize = ImGui::CalcTextSize(InputName.c_str());
-        pDrawList->AddText(__toImgui(CurInputPortPos + glm::vec2(gPortHoverDistance + 4.0f, -TextSize.y * 0.5)), gPortTextColor, InputName.c_str());
+        glm::vec2 TextSize = __calcActualTextSize(InputName);
+        pDrawList->AddText(__toImgui(CurInputPortPos + glm::vec2(gPortHoveredRadius + 4.0f, -TextSize.y * 0.5)), gPortTextColor, InputName.c_str());
 
         CurInputPortPos.y += PortItemHeight;
     }
 
-    for (const auto& OutputName : vioNode.getOutputs())
+    for (const auto& OutputName : __getNodeOutputs(vNodeId))
     {
 
         float Radius = gPortRadius;
         unsigned Color = gPortColor;
 
-        const float HoverRadius = gPortHoverDistance + 2.0f;
+        const float HoverRadius = gPortHoveredRadius + 2.0f;
         const float Distance = glm::length(__toGlm(ImGui::GetMousePos()) - CurOutputPortPos);
         if (Distance < HoverRadius)
         {
@@ -247,15 +251,15 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
         // if is hovered
         if (__isItemHovered(vNodeId, EItemType::PORT, OutputName, false))
         {
-            Radius = gPortHoverDistance;
+            Radius = gPortHoveredRadius;
             Color = gPortHoveredColor;
         }
 
         m_NodePortPosMap[vNodeId].Output[OutputName] = CurOutputPortPos;
         pDrawList->AddCircleFilled(__toImgui(CurOutputPortPos), Radius, Color);
 
-        ImVec2 TextSize = ImGui::CalcTextSize(OutputName.c_str());
-        pDrawList->AddText(__toImgui(CurOutputPortPos + glm::vec2(-gPortHoverDistance - 4.0f - TextSize.x, -TextSize.y * 0.5)), gPortTextColor, OutputName.c_str());
+        glm::vec2 TextSize = __calcActualTextSize(OutputName);
+        pDrawList->AddText(__toImgui(CurOutputPortPos + glm::vec2(-gPortHoveredRadius - 4.0f - TextSize.x, -TextSize.y * 0.5)), gPortTextColor, OutputName.c_str());
 
         CurOutputPortPos.y += PortItemHeight;
     }
@@ -411,6 +415,28 @@ void CRenderPassGraphUI::_renderUIV()
     }
     pDrawList->ChannelsMerge();
 
+    // draw entry
+    if (m_pGraph->EntryPortOpt.has_value())
+    {
+        glm::vec2 PortPos = __getPortPos(m_pGraph->EntryPortOpt.value(), true);
+        float gEntryLineLength = 10.0f;
+        float gEntryLineWidth = 2.0f;
+        float gEntryLineMargin = 4.0f;
+        ImU32 gEntryLineColor = ImColor(255, 200, 200, 255);
+        ImU32 gEntryTextColor = ImColor(255, 200, 200, 255);
+
+        glm::vec2 LineStart = PortPos - glm::vec2(gEntryLineLength + gEntryLineMargin + gPortHoveredRadius, gEntryLineWidth * 0.5);
+        glm::vec2 LineEnd = LineStart + glm::vec2(gEntryLineLength, gEntryLineWidth);
+        pDrawList->AddRectFilled(__toImgui(LineStart), __toImgui(LineEnd), gEntryLineColor, 1.0f);
+
+        std::string EntryText = u8"Èë¿Ú";
+        glm::vec2 TextSize = __calcActualTextSize(EntryText);
+        glm::vec2 TextStart = PortPos;
+        TextStart.x -= gPortHoveredRadius + gEntryLineLength + gEntryLineWidth * 2 + TextSize.x;
+        TextStart.y -= TextSize.y * 0.5f;
+        pDrawList->AddText(__toImgui(TextStart), gEntryTextColor, EntryText.c_str());
+    }
+
     // draw to add link
     if (m_AddLinkState.isStarted())
     {
@@ -452,7 +478,7 @@ void CRenderPassGraphUI::_renderUIV()
         else if (AttachState == EAddLinkAttachState::INVALID_ATTACH) // if invalid, show why
         {
             glm::vec2 Center = LinkCurve.sample(0.5f);
-            glm::vec2 TextSize = __toGlm(ImGui::CalcTextSize(Reason.c_str()));
+            glm::vec2 TextSize = __calcActualTextSize(Reason);
             float BgPadding = 4.0f;
             unsigned BgColor = IM_COL32(100, 100, 100, 200);
             pDrawList->AddRectFilled(__toImgui(Center - TextSize * 0.5f - BgPadding), __toImgui(Center + TextSize * 0.5f + BgPadding), BgColor, 4.0f);

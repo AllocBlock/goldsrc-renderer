@@ -10,9 +10,6 @@ void CApplicationGoldSrc::_createV()
 {
     setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
-    m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
-    m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
-
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pSceneInfo->pScene->getMainCamera());
     m_pInteractor->setMouseCallback([this](GLFWwindow* vWindow, int vButton, int vAction)
@@ -71,7 +68,10 @@ void CApplicationGoldSrc::_createV()
 
     m_pRenderPassGraph->EntryPortOpt = { 0, "Main" };
 
+    m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
+    m_pRenderPassGraphUI->setContext(m_pDevice, m_pAppInfo);
     m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
+
     m_pGraphInstance->createFromGraph(m_pRenderPassGraph, m_pSwapchainPort, 
         [this](const std::string& vName, vk::IRenderPass::Ptr vRenderPass)
         {
@@ -98,15 +98,16 @@ void CApplicationGoldSrc::_renderUIV()
     UI::beginFrame();
     m_pMainUI->renderUI();
     
-    /*if (UI::beginWindow("Render Pass Graph"))
+    if (UI::beginWindow("Render Pass Graph"))
     {
         m_pRenderPassGraphUI->renderUI();
-    }*/
-    //UI::endWindow();
+    }
+    UI::endWindow();
     UI::endFrame();
 }
 
 void CApplicationGoldSrc::_destroyV()
 {
+    m_pRenderPassGraphUI->destroyPasses();
     cleanGlobalCommandBuffer();
 }

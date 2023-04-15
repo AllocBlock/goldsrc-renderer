@@ -12,8 +12,6 @@ void CRenderGraphAddLinkState::start(const SRenderPassGraphPortInfo& vStartPort,
 {
     if (!m_pGraph)
         throw std::runtime_error("Graph is not set");
-    if (!m_pGraph->hasPort(vStartPort.NodeId, vStartPort.Name, !vIsSource))
-        throw std::runtime_error("Port not found in graph");
     m_FixedPort = vStartPort;
     m_IsFixedPortSource = vIsSource;
     m_IsAdding = true;
@@ -31,8 +29,6 @@ bool CRenderGraphAddLinkState::addCandidate(const SRenderPassGraphPortInfo& vTar
     float vPriority)
 {
     __assertStarted();
-    if (!m_pGraph->hasPort(vTargetPort.NodeId, vTargetPort.Name, !vIsSource))
-        throw std::runtime_error("Port not found in graph");
 
     // skip if it's the same node as fixed port
     if (vTargetPort.NodeId == m_FixedPort.NodeId) return false;

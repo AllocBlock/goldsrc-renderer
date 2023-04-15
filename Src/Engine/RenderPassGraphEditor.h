@@ -52,8 +52,6 @@ protected:
     {
         _ASSERTE(vGraph->NodeMap.find(m_Link.Source.NodeId) != vGraph->NodeMap.end());
         _ASSERTE(vGraph->NodeMap.find(m_Link.Destination.NodeId) != vGraph->NodeMap.end());
-        _ASSERTE(vGraph->NodeMap.at(m_Link.Source.NodeId).hasOutput(m_Link.Source.Name));
-        _ASSERTE(vGraph->NodeMap.at(m_Link.Destination.NodeId).hasInput(m_Link.Destination.Name));
         _ASSERTE(vGraph->LinkMap.find(m_LinkId) == vGraph->LinkMap.end());
         vGraph->LinkMap[m_LinkId] = m_Link;
         // FIXME: here assume AT MOST ONE LINK is on the source
@@ -292,7 +290,7 @@ private:
 
     ptr<SRenderPassGraph> m_pGraph = nullptr;
     
-    size_t m_CurNodeId = SRenderPassGraph::SwapchainNodeId;
+    size_t m_CurNodeId = 0;
     size_t m_CurLinkId = 0;
 
     size_t m_MaxUndoCount = 50;

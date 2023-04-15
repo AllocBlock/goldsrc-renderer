@@ -48,7 +48,8 @@ void CRenderPassGUI::_renderUIV()
 
 void CRenderPassGUI::_destroyV()
 {
-    UI::destory();
+    if (UI::isInitted())
+        UI::destory();
     __destroyDescriptorPool();
     m_pWindow = nullptr;
 

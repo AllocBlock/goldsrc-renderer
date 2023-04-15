@@ -124,6 +124,11 @@ void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool v
     gIsInitted = true;
 }
 
+bool UI::isInitted()
+{
+    return gIsInitted;
+}
+
 void UI::setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer)
 {
     // FIXME: is free of resources correct?
