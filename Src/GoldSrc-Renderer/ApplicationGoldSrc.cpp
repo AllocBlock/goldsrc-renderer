@@ -1,10 +1,12 @@
 #include "ApplicationGoldSrc.h"
-#include "PassGoldSrc.h"
 #include "SceneProbe.h"
 #include "GlobalSingleTimeBuffer.h"
 #include "InterfaceUI.h"
 #include "RenderPassGraph.h"
 #include "PassGUI.h"
+#include "PassGoldSrc.h"
+#include "PassOutlineMask.h"
+#include "PassVisualize.h"
 
 void CApplicationGoldSrc::_createV()
 {
@@ -26,16 +28,22 @@ void CApplicationGoldSrc::_createV()
             CActor::Ptr pNearestActor = nullptr;
             glm::vec3 NearestIntersection;
             CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+
+            auto pPassOutlineMask = m_pGraphInstance->findPass<CRenderPassOutlineMask>();
             if (SceneProbe::select(NDC, pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {
-                // TODO: fix this
-                //m_pPassOutlineMask->setHighlightActor(pNearestActor);
-                //m_pPassVisualize->addLine(pCamera->getPos(), NearestIntersection, glm::vec3(0.0, 1.0, 0.0));
+                if (pPassOutlineMask)
+                    pPassOutlineMask->setHighlightActor(pNearestActor);
+
+                auto pPassVisualize = m_pGraphInstance->findPass<CRenderPassVisualize>();
+                if (pPassVisualize)
+                    pPassVisualize->addLine(pCamera->getPos(), NearestIntersection, glm::vec3(0.0, 1.0, 0.0));
                 m_pMainUI->setSceneFocusedActor(pNearestActor);
             }
             else
             {
-                //m_pPassOutlineMask->removeHighlight();
+                if (pPassOutlineMask)
+                    pPassOutlineMask->removeHighlight();
                 m_pMainUI->clearSceneFocusedActor();
             }
         });
@@ -58,7 +66,7 @@ void CApplicationGoldSrc::_createV()
     m_pRenderPassGraph->NodeMap[1] = SRenderPassGraphNode("OutlineMask");
     m_pRenderPassGraph->NodeMap[2] = SRenderPassGraphNode("OutlineEdge");
     m_pRenderPassGraph->NodeMap[3] = SRenderPassGraphNode("Visualize");
-    m_pRenderPassGraph->NodeMap[4] = SRenderPassGraphNode("GUI");
+    m_pRenderPassGraph->NodeMap[4] = SRenderPassGraphNode("Gui");
 
     m_pRenderPassGraph->LinkMap[0] = { {1, "Mask"}, {2, "Mask"} };
     m_pRenderPassGraph->LinkMap[1] = { {0, "Main"}, {2, "Main"} };
@@ -76,7 +84,7 @@ void CApplicationGoldSrc::_createV()
         [this](const std::string& vName, vk::IRenderPass::Ptr vRenderPass)
         {
             // GUI pass need to set window
-            if (vName == "GUI")
+            if (vName == "Gui")
             {
                 ptr<CRenderPassGUI> pPassGUI = std::dynamic_pointer_cast<CRenderPassGUI>(vRenderPass);
                 pPassGUI->setWindow(m_pWindow);

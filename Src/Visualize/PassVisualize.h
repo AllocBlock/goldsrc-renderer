@@ -13,6 +13,8 @@
 class CRenderPassVisualize : public CRenderPassSingleFrameBuffer
 {
 public:
+    inline static const std::string Name = "Visualize";
+
     CRenderPassVisualize() = default;
 
     void addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor);
@@ -23,8 +25,6 @@ public:
     void addSphere(const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor);
     void addCube(const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor);
     void clearAll();
-
-    virtual std::string getNameV() const override { return "Visualize"; }
 
 protected:
     virtual void _initV() override;

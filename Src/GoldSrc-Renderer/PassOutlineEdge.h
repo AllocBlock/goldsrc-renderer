@@ -7,7 +7,8 @@
 class CRenderPassOutlineEdge : public CRenderPassSingleFrameBuffer
 {
 public:
-    virtual std::string getNameV() const override { return "Outline Edge"; }
+    inline static const std::string Name = "OutlineEdge";
+
 protected:
     virtual void _initV() override;
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;

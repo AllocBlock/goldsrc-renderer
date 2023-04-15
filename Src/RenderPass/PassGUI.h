@@ -8,12 +8,12 @@
 class CRenderPassGUI final : public CRenderPassSingleFrameBuffer
 {
 public:
+    inline static const std::string Name = "Gui";
+
     CRenderPassGUI() = default;
 
     GLFWwindow* getWindow() { return m_pWindow; }
     void setWindow(GLFWwindow* vWindow) { m_pWindow = vWindow; }
-
-    virtual std::string getNameV() const override { return "Gui"; }
 
 protected:
     virtual void _initV() override;

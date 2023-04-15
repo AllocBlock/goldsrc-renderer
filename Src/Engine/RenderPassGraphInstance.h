@@ -81,9 +81,20 @@ public:
         m_PassMap.clear();
     }
 
-    vk::IRenderPass::Ptr getPass(size_t vId)
+    // return pass by given id
+    vk::IRenderPass::Ptr getPass(size_t vId) const
     {
         return m_PassMap.at(vId);
+    }
+    
+    // return first found pass of given type (by pass name), return nullptr if not found
+    template <typename RenderPass_t>
+    ptr<RenderPass_t> findPass() const
+    {
+        for (const auto& Pair : m_PassMap)
+            if (RenderpassLib::getPassName(Pair.second) == RenderPass_t::Name)
+                return std::dynamic_pointer_cast<RenderPass_t>(Pair.second);
+        return nullptr;
     }
 
 private:

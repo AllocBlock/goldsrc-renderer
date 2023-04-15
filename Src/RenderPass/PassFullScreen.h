@@ -9,6 +9,8 @@
 class CRenderPassFullScreen : public CRenderPassSingleFrameBuffer
 {
 public:
+    inline static const std::string Name = "FullScreen";
+
     using PipelineCreateCallback_t = std::function<void()>;
 
     // create pipeline instance but maybe not valid as renderpass maynot be valid
@@ -32,8 +34,6 @@ public:
     {
         m_PipelineCreateCallbackSet.emplace_back(vCallback);
     }
-
-    virtual std::string getNameV() const override { return "Fullscreen"; }
 
 protected:
     virtual void _initV() override;

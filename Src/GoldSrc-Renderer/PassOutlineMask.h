@@ -7,12 +7,11 @@
 class CRenderPassOutlineMask : public CRenderPassSingleFrameBuffer
 {
 public:
+    inline static const std::string Name = "OutlineMask";
     CRenderPassOutlineMask() = default;
 
     void setHighlightActor(CActor::Ptr vActor);
     void removeHighlight();
-
-    virtual std::string getNameV() const override { return "Outline Mask"; }
 
 protected:
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;

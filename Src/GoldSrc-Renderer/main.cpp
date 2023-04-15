@@ -11,16 +11,16 @@
 
 #include <GLFW/glfw3.h>
 
-#define _REGISTER_PASS(Name) CRenderPassRegister<CRenderPass##Name> Register##Name(#Name)
+#define _REGISTER_PASS(Type) CRenderPassRegister<Type> Register##Type
 
 // TODO: remove this and use self-register
 void registerAllPasses()
 {
-	_REGISTER_PASS(GoldSrc);
-	_REGISTER_PASS(OutlineEdge);
-	_REGISTER_PASS(OutlineMask);
-	_REGISTER_PASS(Visualize);
-	_REGISTER_PASS(GUI);
+	_REGISTER_PASS(CRenderPassGoldSrc);
+	_REGISTER_PASS(CRenderPassOutlineEdge);
+	_REGISTER_PASS(CRenderPassOutlineMask);
+	_REGISTER_PASS(CRenderPassVisualize);
+	_REGISTER_PASS(CRenderPassGUI);
 }
 
 int main()

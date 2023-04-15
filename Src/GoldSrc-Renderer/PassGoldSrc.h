@@ -17,6 +17,8 @@
 class CRenderPassGoldSrc : public CRenderPassSingleFrameBuffer
 {
 public:
+    inline static const std::string Name = "GoldSrc";
+
     enum class ERenderMethod
     {
         GOLDSRC,
@@ -46,8 +48,6 @@ public:
             m_pRerecord->requestRecord("Mesh");
         }
     }
-    
-    virtual std::string getNameV() const override { return "GoldSrc"; }
     
 protected:
     virtual void _initV() override;
