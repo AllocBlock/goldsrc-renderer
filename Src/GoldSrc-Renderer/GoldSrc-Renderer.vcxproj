@@ -131,8 +131,7 @@
     <ClCompile Include="GuiTextureViewer.cpp" />
     <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="PassOutlineMask.cpp" />
-    <ClCompile Include="PassOutlineEdge.cpp" />
+    <ClCompile Include="PassOutline.cpp" />
     <ClCompile Include="PipelineGoldSrc.cpp" />
     <ClCompile Include="PipelineIcon.cpp" />
     <ClCompile Include="PipelineOutlineEdge.cpp" />
@@ -151,8 +150,7 @@
     <ClInclude Include="GuiMain.h" />
     <ClInclude Include="GuiTextureViewer.h" />
     <ClInclude Include="GuiRequestPopupModal.h" />
-    <ClInclude Include="PassOutlineEdge.h" />
-    <ClInclude Include="PassOutlineMask.h" />
+    <ClInclude Include="PassOutline.h" />
     <ClInclude Include="PipelineIcon.h" />
     <ClInclude Include="PipelineOutlineMask.h" />
     <ClInclude Include="PipelineOutlineEdge.h" />

@@ -66,7 +66,7 @@ template <typename Pipeline_t>
 class CDynamicPipeline : public IDynamicResource
 {
 public:
-    void init(vk::CDevice::CPtr vDevice, std::weak_ptr<const vk::IRenderPass> vPass, VkExtent2D vInitExtent, bool vKeepScreenSize, uint32_t vImageNum, CreatePipelineCallback_t<Pipeline_t> vCreateCallback = nullptr)
+    void init(vk::CDevice::CPtr vDevice, std::weak_ptr<const vk::IRenderPass> vPass, VkExtent2D vInitExtent, bool vKeepScreenSize, uint32_t vImageNum, CreatePipelineCallback_t<Pipeline_t> vCreateCallback = nullptr, uint32_t vSubpass = 0)
     {
         _ASSERTE(!m_IsInitted);
         _ASSERTE(!vPass.expired());
@@ -77,6 +77,7 @@ public:
         m_pPass = vPass;
         m_pDevice = vDevice;
         m_pCreateCallback = vCreateCallback;
+        m_Subpass = vSubpass;
         m_IsInitted = true;
     }
 
@@ -143,7 +144,7 @@ public:
             auto pPass = m_pPass.lock();
             if (pPass->isValid())
             {
-                m_Pipeline.create(m_pDevice, pPass->get(), m_Extent);
+                m_Pipeline.create(m_pDevice, pPass->get(), m_Extent, m_Subpass);
                 m_Pipeline.setImageNum(m_ImageNum);
                 if (m_pCreateCallback)
                     m_pCreateCallback(m_Pipeline);
@@ -164,6 +165,7 @@ protected:
     VkExtent2D m_Extent = VkExtent2D{ 0, 0 };
     bool m_KeepScreenSize = false;
     uint32_t m_ImageNum = 0;
+    uint32_t m_Subpass = 0;
     std::weak_ptr<const vk::IRenderPass> m_pPass;
     vk::CDevice::CPtr m_pDevice = nullptr;
     CreatePipelineCallback_t<Pipeline_t> m_pCreateCallback = nullptr;

@@ -21,9 +21,9 @@ void CRenderPassShadowMap::exportShadowMapToFile(std::string vFileName)
     CopyRegion.imageOffset = VkOffset3D{ 0, 0, 0 };
     CopyRegion.imageExtent = VkExtent3D{ m_ShadowMapExtent.width, m_ShadowMapExtent.height, 1 };
 
-    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::beginSingleTimeBuffer();
+    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::begin();
     pCommandBuffer->copyImageToBuffer(m_ShadowMapImageSet[0]->getImage(), m_ShadowMapImageSet[0]->getLayout(), StageBuffer.get(), CopyRegion);
-    SingleTimeCommandBuffer::endSingleTimeBuffer(pCommandBuffer);
+    SingleTimeCommandBuffer::end(pCommandBuffer);
 
     uint8_t* pData = new uint8_t[Size];
     StageBuffer.copyToHost(Size, pData);
@@ -153,9 +153,9 @@ void CRenderPassShadowMap::__createShadowMapImages()
         ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
         
         m_ShadowMapImageSet[i]->create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-        auto pCommandBuffer = SingleTimeCommandBuffer::beginSingleTimeBuffer();
+        auto pCommandBuffer = SingleTimeCommandBuffer::begin();
         m_ShadowMapImageSet[i]->transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        SingleTimeCommandBuffer::endSingleTimeBuffer(pCommandBuffer);
+        SingleTimeCommandBuffer::end(pCommandBuffer);
 
         m_pPortSet->setOutput("ShadowMap", *m_ShadowMapImageSet[i], i);
     }

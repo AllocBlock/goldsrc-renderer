@@ -146,6 +146,11 @@ public:
         vkCmdExecuteCommands(m_Buffer, 1, &vCommandBuffer);
     }
 
+    void goNextPass(bool vIsContentSecondary = false)
+    {
+        vkCmdNextSubpass(get(), vIsContentSecondary ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE);
+    }
+
 private:
     // no copy
     CCommandBuffer(const CCommandBuffer&) = delete;

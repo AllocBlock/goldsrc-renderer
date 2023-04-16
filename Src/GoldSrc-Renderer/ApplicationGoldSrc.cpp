@@ -5,7 +5,7 @@
 #include "RenderPassGraph.h"
 #include "PassGUI.h"
 #include "PassGoldSrc.h"
-#include "PassOutlineMask.h"
+#include "PassOutline.h"
 #include "PassVisualize.h"
 
 void CApplicationGoldSrc::_createV()
@@ -29,11 +29,11 @@ void CApplicationGoldSrc::_createV()
             glm::vec3 NearestIntersection;
             CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
 
-            auto pPassOutlineMask = m_pGraphInstance->findPass<CRenderPassOutlineMask>();
+            auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
             if (SceneProbe::select(NDC, pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {
-                if (pPassOutlineMask)
-                    pPassOutlineMask->setHighlightActor(pNearestActor);
+                if (pPassOutline)
+                    pPassOutline->setHighlightActor(pNearestActor);
 
                 auto pPassVisualize = m_pGraphInstance->findPass<CRenderPassVisualize>();
                 if (pPassVisualize)
@@ -42,8 +42,8 @@ void CApplicationGoldSrc::_createV()
             }
             else
             {
-                if (pPassOutlineMask)
-                    pPassOutlineMask->removeHighlight();
+                if (pPassOutline)
+                    pPassOutline->removeHighlight();
                 m_pMainUI->clearSceneFocusedActor();
             }
         });
@@ -63,16 +63,14 @@ void CApplicationGoldSrc::_createV()
         });
     
     m_pRenderPassGraph->NodeMap[0] = SRenderPassGraphNode("GoldSrc");
-    m_pRenderPassGraph->NodeMap[1] = SRenderPassGraphNode("OutlineMask");
-    m_pRenderPassGraph->NodeMap[2] = SRenderPassGraphNode("OutlineEdge");
-    m_pRenderPassGraph->NodeMap[3] = SRenderPassGraphNode("Visualize");
-    m_pRenderPassGraph->NodeMap[4] = SRenderPassGraphNode("Gui");
-
-    m_pRenderPassGraph->LinkMap[0] = { {1, "Mask"}, {2, "Mask"} };
-    m_pRenderPassGraph->LinkMap[1] = { {0, "Main"}, {2, "Main"} };
+    m_pRenderPassGraph->NodeMap[1] = SRenderPassGraphNode("Outline");
+    m_pRenderPassGraph->NodeMap[2] = SRenderPassGraphNode("Visualize");
+    m_pRenderPassGraph->NodeMap[3] = SRenderPassGraphNode("Gui");
+    
+    m_pRenderPassGraph->LinkMap[0] = { {0, "Main"}, {1, "Main"} };
+    m_pRenderPassGraph->LinkMap[1] = { {1, "Main"}, {2, "Main"} };
     m_pRenderPassGraph->LinkMap[2] = { {2, "Main"}, {3, "Main"} };
-    m_pRenderPassGraph->LinkMap[3] = { {3, "Main"}, {4, "Main"} };
-    m_pRenderPassGraph->LinkMap[4] = { {0, "Depth"}, {3, "Depth"} };
+    m_pRenderPassGraph->LinkMap[3] = { {0, "Depth"}, {2, "Depth"} };
 
     m_pRenderPassGraph->EntryPortOpt = { 0, "Main" };
 

@@ -114,12 +114,12 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::beginSingleTimeBuffer();
+    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::begin();
     transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyFromBuffer(pCommandBuffer, StageBuffer.get(), m_Width, m_Height);
     if (vToShaderLayout)
         transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    SingleTimeCommandBuffer::endSingleTimeBuffer(pCommandBuffer);
+    SingleTimeCommandBuffer::end(pCommandBuffer);
 
     StageBuffer.destroy();
 }

@@ -5,8 +5,7 @@
 
 #include "PassGoldSrc.h"
 #include "PassGUI.h"
-#include "PassOutlineMask.h"
-#include "PassOutlineEdge.h"
+#include "PassOutline.h"
 #include "PassVisualize.h"
 
 #include <GLFW/glfw3.h>
@@ -17,8 +16,7 @@
 void registerAllPasses()
 {
 	_REGISTER_PASS(CRenderPassGoldSrc);
-	_REGISTER_PASS(CRenderPassOutlineEdge);
-	_REGISTER_PASS(CRenderPassOutlineMask);
+	_REGISTER_PASS(CRenderPassOutline);
 	_REGISTER_PASS(CRenderPassVisualize);
 	_REGISTER_PASS(CRenderPassGUI);
 }

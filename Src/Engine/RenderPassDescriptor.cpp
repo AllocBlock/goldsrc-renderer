@@ -69,15 +69,13 @@ void CRenderPassDescriptor::setDepthAttachment(const SAttachementInfo& vInfo)
     m_DepthAttachmentInfo = vInfo;
 }
 
-void CRenderPassDescriptor::setSubpassNum(uint32_t vNum)
+void CRenderPassDescriptor::addSubpass(const std::vector<uint32_t>& vColorIndices, bool vUseDepth, const std::vector<uint32_t>& vDepPassSet)
 {
-    _ASSERTE(vNum >= 1);
-    m_SubPassNum = vNum;
+    m_SubpassTargetInfoSet.emplace_back(SSubpassTargetInfo{ vColorIndices, vUseDepth, vDepPassSet });
 }
 
 void CRenderPassDescriptor::clear()
 {
-    m_SubPassNum = 1;
     m_ColorAttachmentInfoSet.clear();
     m_DepthAttachmentInfo = std::nullopt;
     clearStage();
@@ -88,8 +86,8 @@ void CRenderPassDescriptor::clearStage()
     m_StageAttachmentDescSet.clear();
     m_StageSubpassDescSet.clear();
     m_StageDepedencySet.clear();
-    m_StageColorRefSet.clear();
-    m_StageDepthRef = VkAttachmentReference();
+    m_StageColorRefSetSet.clear();
+    m_StageDepthRefSet.clear();
 }
 
 VkRenderPassCreateInfo CRenderPassDescriptor::generateInfo()
@@ -145,11 +143,24 @@ VkAttachmentDescription CRenderPassDescriptor::__createAttachmentDescription(con
 
 void CRenderPassDescriptor::__generateDependency()
 {
-    m_StageDepedencySet.resize(m_SubPassNum);
-    for (uint32_t i = 0; i < m_SubPassNum; ++i)
+    std::vector<std::pair<uint32_t, uint32_t>> DepSet;
+    if (m_SubpassTargetInfoSet.empty())
     {
-        m_StageDepedencySet[i].srcSubpass = i == 0 ? VK_SUBPASS_EXTERNAL : i - 1;
-        m_StageDepedencySet[i].dstSubpass = i;
+        DepSet.emplace_back(std::make_pair(VK_SUBPASS_EXTERNAL, 0));
+    }
+    else
+    {
+        for (size_t i = 0; i < m_SubpassTargetInfoSet.size(); ++i)
+        {
+            for (uint32_t vDepPass : m_SubpassTargetInfoSet[i].DependentPassIndices)
+                DepSet.emplace_back(std::make_pair(vDepPass, i));
+        }
+    }
+    m_StageDepedencySet.resize(DepSet.size());
+    for (uint32_t i = 0; i < DepSet.size(); ++i)
+    {
+        m_StageDepedencySet[i].srcSubpass = DepSet[i].first;
+        m_StageDepedencySet[i].dstSubpass = DepSet[i].second;
 
         m_StageDepedencySet[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         m_StageDepedencySet[i].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -169,33 +180,58 @@ void CRenderPassDescriptor::__generateAttachmentDescription()
         m_StageAttachmentDescSet.emplace_back(__createAttachmentDescription(m_DepthAttachmentInfo.value(), true));
 }
 
-void CRenderPassDescriptor::__generateSubpassDescription()
+VkSubpassDescription CRenderPassDescriptor::__generateSubpassDescriptionFromTargetInfo(const SSubpassTargetInfo& vTargetInfo)
 {
     VkSubpassDescription SubpassDesc = {};
-    SubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 
-    uint32_t ColorNum = uint32_t(m_ColorAttachmentInfoSet.size());
-    m_StageColorRefSet.resize(ColorNum);
-    for (uint32_t i = 0; i < ColorNum; ++i)
+    m_StageColorRefSetSet.push_back({});
+    auto& StageColorRefSet = m_StageColorRefSetSet[m_StageColorRefSetSet.size() - 1];
+    uint32_t ColorAttachementNum = static_cast<uint32_t>(vTargetInfo.ColorIndices.size());
+    StageColorRefSet.resize(ColorAttachementNum);
+    for (size_t i = 0; i < vTargetInfo.ColorIndices.size(); ++i)
     {
-        m_StageColorRefSet[i].attachment = i;
-        m_StageColorRefSet[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        uint32_t AttachmentIndex = vTargetInfo.ColorIndices[i];
+        _ASSERTE(AttachmentIndex < m_ColorAttachmentInfoSet.size());
+        StageColorRefSet[i].attachment = AttachmentIndex;
+        StageColorRefSet[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
-    SubpassDesc.colorAttachmentCount = ColorNum;
-    SubpassDesc.pColorAttachments = m_StageColorRefSet.data();
+    SubpassDesc.colorAttachmentCount = ColorAttachementNum;
+    SubpassDesc.pColorAttachments = StageColorRefSet.data();
 
+    _ASSERTE(!vTargetInfo.UseDepth || m_DepthAttachmentInfo.has_value());
+    uint32_t DepthAttachmentIndex = m_ColorAttachmentInfoSet.size();
     if (m_DepthAttachmentInfo.has_value())
     {
-        uint32_t DepthAttachmentIndex = ColorNum;
-        m_StageDepthRef.attachment = DepthAttachmentIndex;
-        m_StageDepthRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        SubpassDesc.pDepthStencilAttachment = &m_StageDepthRef;
+        m_StageDepthRefSet.push_back({ DepthAttachmentIndex , VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
+        auto& StageDepthRef = m_StageDepthRefSet[m_StageDepthRefSet.size() - 1];
+        SubpassDesc.pDepthStencilAttachment = &StageDepthRef;
     }
     else
     {
         SubpassDesc.pDepthStencilAttachment = nullptr;
     }
+    return SubpassDesc;
+}
 
+void CRenderPassDescriptor::__generateSubpassDescription()
+{
     m_StageSubpassDescSet.clear();
-    m_StageSubpassDescSet.resize(m_SubPassNum, SubpassDesc);
+    if (m_SubpassTargetInfoSet.empty()) // did not specify, all attachement are used
+    {
+        SSubpassTargetInfo Info;
+        for (size_t i = 0; i < m_ColorAttachmentInfoSet.size(); ++i)
+            Info.ColorIndices.push_back(i);
+        Info.UseDepth = m_DepthAttachmentInfo.has_value();
+            
+        VkSubpassDescription CommonDesc = __generateSubpassDescriptionFromTargetInfo(Info);
+        m_StageSubpassDescSet.resize(1, CommonDesc);
+    }
+    else
+    {
+        for (const auto& Info : m_SubpassTargetInfoSet)
+        {
+            VkSubpassDescription Desc = __generateSubpassDescriptionFromTargetInfo(Info);
+            m_StageSubpassDescSet.emplace_back(Desc);
+        }
+    }
 }

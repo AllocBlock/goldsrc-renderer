@@ -69,10 +69,7 @@
     <ClCompile Include="GuiRequestPopupModal.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
-    <ClCompile Include="PassOutlineMask.cpp">
-      <Filter>源文件\RenderPass</Filter>
-    </ClCompile>
-    <ClCompile Include="PassOutlineEdge.cpp">
+    <ClCompile Include="PassOutline.cpp">
       <Filter>源文件\RenderPass</Filter>
     </ClCompile>
     <ClCompile Include="PipelineGoldSrc.cpp">
@@ -149,10 +146,7 @@
     <ClInclude Include="PipelineOutlineMask.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
-    <ClInclude Include="PassOutlineEdge.h">
-      <Filter>头文件\RenderPass</Filter>
-    </ClInclude>
-    <ClInclude Include="PassOutlineMask.h">
+    <ClInclude Include="PassOutline.h">
       <Filter>头文件\RenderPass</Filter>
     </ClInclude>
     <ClInclude Include="PipelineIcon.h">

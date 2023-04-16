@@ -21,13 +21,13 @@ void SingleTimeCommandBuffer::clean()
     gIsSetup = false;
 }
 
-CCommandBuffer::Ptr SingleTimeCommandBuffer::beginSingleTimeBuffer()
+CCommandBuffer::Ptr SingleTimeCommandBuffer::begin()
 {
     _ASSERTE(gIsSetup);
     return gCommand.beginSingleTimeBuffer();
 }
 
-void SingleTimeCommandBuffer::endSingleTimeBuffer(CCommandBuffer::Ptr& vioCommandBuffer)
+void SingleTimeCommandBuffer::end(CCommandBuffer::Ptr& vioCommandBuffer)
 {
     _ASSERTE(gIsSetup);
     gCommand.endSingleTimeBuffer(vioCommandBuffer);

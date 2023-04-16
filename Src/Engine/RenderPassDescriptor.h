@@ -32,7 +32,7 @@ public:
     void setDepthAttachment(CPort::Ptr vPort);
     void addColorAttachment(const SAttachementInfo& vInfo);
     void setDepthAttachment(const SAttachementInfo& vInfo);
-    void setSubpassNum(uint32_t vNum);
+    void addSubpass(const std::vector<uint32_t>& vColorIndices, bool vUseDepth, const std::vector<uint32_t>& vDepPassSet);
 
     bool isValid() const { return m_IsValid; }
     void clearStage(); // you can clear stage data after create renderpass to save memory
@@ -62,22 +62,30 @@ public:
 
     static CRenderPassDescriptor generateSingleSubpassDesc(CPort::Ptr vColorPort, CPort::Ptr vDepthPort = nullptr);
 private:
+    struct SSubpassTargetInfo
+    {
+        std::vector<uint32_t> ColorIndices;
+        bool UseDepth;
+        std::vector<uint32_t> DependentPassIndices;
+    };
+
     SAttachementInfo __getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth);
 
     static VkAttachmentDescription __createAttachmentDescription(const SAttachementInfo& vInfo, bool vIsDepth);
+    VkSubpassDescription __generateSubpassDescriptionFromTargetInfo(const SSubpassTargetInfo& vTargetInfo);
     void __generateAttachmentDescription();
     void __generateSubpassDescription(); // TODO: this just generates a full reference dependency
     void __generateDependency(); // TODO: this just generates a sequence dependency
-
+    
     std::vector<SAttachementInfo> m_ColorAttachmentInfoSet;
     std::optional<SAttachementInfo> m_DepthAttachmentInfo = std::nullopt;
-    uint32_t m_SubPassNum = 1u;
+    std::vector<SSubpassTargetInfo> m_SubpassTargetInfoSet;
     bool m_IsValid = false;
 
     // avoid local point problem
     std::vector<VkAttachmentDescription> m_StageAttachmentDescSet;
-    std::vector<VkAttachmentReference> m_StageColorRefSet;
-    VkAttachmentReference m_StageDepthRef = {};
+    std::vector<std::vector<VkAttachmentReference>> m_StageColorRefSetSet;
+    std::vector<VkAttachmentReference> m_StageDepthRefSet;
     std::vector<VkSubpassDescription> m_StageSubpassDescSet;
     std::vector<VkSubpassDependency> m_StageDepedencySet;
 };
