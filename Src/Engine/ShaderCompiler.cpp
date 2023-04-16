@@ -46,9 +46,8 @@ void __init()
 
     if (std::filesystem::exists(gCompileCacheFile))
         gCompileCache.load(gCompileCacheFile);
-
-    ShaderCompiler::addHeaderDir("./shaders");
-    ShaderCompiler::addHeaderDir("../RenderPass/shaders");
+    
+    ShaderCompiler::addHeaderDir(Environment::getShaderDir());
     gInited = true;
 }
 

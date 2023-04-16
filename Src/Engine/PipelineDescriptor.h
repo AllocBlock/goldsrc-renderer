@@ -205,18 +205,18 @@ public:
         return PushConstantInfoSet;
     }
 
-    void setVertShaderPath(const std::filesystem::path& vShaderPath)
+    void setVertShaderPath(const std::filesystem::path& vShaderFileName)
     {
-        _ASSERTE(!vShaderPath.empty());
-        _ASSERTE(vShaderPath.extension() == ".vert");
-        m_VertShaderPath = __findShader(vShaderPath);
+        _ASSERTE(!vShaderFileName.empty());
+        _ASSERTE(vShaderFileName.extension() == ".vert");
+        m_VertShaderPath = Environment::findShader(vShaderFileName);
     }
 
-    void setFragShaderPath(const std::filesystem::path& vShaderPath)
+    void setFragShaderPath(const std::filesystem::path& vShaderFileName)
     {
-        _ASSERTE(!vShaderPath.empty());
-        _ASSERTE(vShaderPath.extension() == ".frag");
-        m_FragShaderPath = __findShader(vShaderPath);
+        _ASSERTE(!vShaderFileName.empty());
+        _ASSERTE(vShaderFileName.extension() == ".frag");
+        m_FragShaderPath = Environment::findShader(vShaderFileName);
     }
 
     void setVertexInputInfo(VkVertexInputBindingDescription vBinding, const std::vector<VkVertexInputAttributeDescription>& vAttributeSet)
@@ -296,26 +296,6 @@ public:
     }
 
 private:
-    std::filesystem::path __findShader(std::filesystem::path vShaderPath)
-    {
-        std::filesystem::path FoundShaderPath;
-        std::vector<std::filesystem::path> ShaderDirSet = 
-            {
-            // TODO: put all shader in one dir
-            "./shaders/",
-            "../RenderPass/shaders/",
-            "../Visualize/shaders/",
-            };
-
-        if (Environment::findFile(vShaderPath, ShaderDirSet, true, FoundShaderPath))
-        {
-            return FoundShaderPath;
-        }
-        else
-            throw std::runtime_error("Error: can not find shader: " + vShaderPath.string());
-    }
-
-
     std::filesystem::path m_VertShaderPath;
     std::filesystem::path m_FragShaderPath;
 

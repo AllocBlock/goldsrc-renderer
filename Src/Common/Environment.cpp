@@ -5,6 +5,7 @@
 
 std::set<std::filesystem::path> gPaths = { std::filesystem::current_path() };
 std::filesystem::path gTempFileDir = "./Temp";
+std::filesystem::path gDefaultShaderDir = std::filesystem::path(__FILE__).parent_path().parent_path() / "Shaders";
 
 std::filesystem::path __cleanAbsolutePrefix(const std::filesystem::path& vPath)
 {
@@ -36,6 +37,19 @@ bool __findFileOnTree(const std::filesystem::path& vFileName, const std::filesys
     }
 
     return false;
+}
+
+void Environment::addPathToEnviroment(std::filesystem::path vPath)
+{
+    if (std::filesystem::exists(vPath))
+    {
+        if (!std::filesystem::is_directory(vPath))
+            vPath = vPath.parent_path();
+        vPath = std::filesystem::absolute(vPath);
+        vPath = std::filesystem::canonical(vPath);
+    } // if not exist, it maybe a virtual path
+
+    gPaths.insert(vPath);
 }
 
 bool Environment::findFile(const std::filesystem::path& vTargetName, bool vSearchInEnvironment, std::filesystem::path& voFilePath)
@@ -81,18 +95,23 @@ bool Environment::findFile(const std::filesystem::path& vTargetName, const std::
     return false;
 }
 
-void Environment::addPathToEnviroment(std::filesystem::path vPath)
+bool Environment::findFileRecursively(const std::filesystem::path& vTargetName, const std::filesystem::path& vSearchDirSet, std::filesystem::path& voFilePath)
 {
-    if (std::filesystem::exists(vPath))
+    for (const auto& Entry : std::filesystem::recursive_directory_iterator(vSearchDirSet))
     {
-        if (!std::filesystem::is_directory(vPath))
-            vPath = vPath.parent_path();
-        vPath = std::filesystem::absolute(vPath);
-        vPath = std::filesystem::canonical(vPath);
-    } // if not exist, it maybe a virtual path
+        if (Entry.is_directory())
+            continue;
 
-	gPaths.insert(vPath);
+        auto BaseName = Entry.path().filename();
+        if (BaseName == vTargetName)
+        {
+            voFilePath = Entry.path();
+            return true;
+        }
+    }
+    return false;
 }
+
 
 std::string Environment::getEnvironmentVariable(std::string vKey)
 {
@@ -138,4 +157,20 @@ std::filesystem::path Environment::getTempFilePath(const std::filesystem::path& 
         std::filesystem::create_directories(ParentDir);
     _ASSERTE(__isBelow(gTempFileDir, TempFilePath));
     return TempFilePath;
+}
+
+std::filesystem::path Environment::getShaderDir()
+{
+    return gDefaultShaderDir;
+}
+
+std::filesystem::path Environment::findShader(std::filesystem::path vShaderFileName)
+{
+    std::filesystem::path FoundShaderPath;
+    if (Environment::findFileRecursively(vShaderFileName, getShaderDir(), FoundShaderPath))
+    {
+        return FoundShaderPath;
+    }
+    else
+        throw std::runtime_error("Error: can not find shader: " + vShaderFileName.string());
 }
