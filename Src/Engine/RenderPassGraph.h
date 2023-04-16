@@ -3,9 +3,7 @@
 
 #include <map>
 #include <optional>
-#include <stdexcept>
 #include <string>
-#include <vector>
 #include <glm/glm.hpp>
 
 struct SAABB2D

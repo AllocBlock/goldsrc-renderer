@@ -51,9 +51,6 @@
     <ClCompile Include="ShaderResourceDescriptor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Command.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="RenderPass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -61,9 +58,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="VertexAttributeDescriptor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="GlobalSingleTimeBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RenderPassPort.cpp">
@@ -162,15 +156,24 @@
     <ClCompile Include="RenderpassLib.cpp">
       <Filter>源文件\RenderPassGraph</Filter>
     </ClCompile>
+    <ClCompile Include="PipelineDescriptor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPassGraphInstance.cpp">
+      <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPassGraphEditor.cpp">
+      <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPassSingleFrameBuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ShaderResourceDescriptor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Command.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RenderPass.h">
@@ -183,9 +186,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="DrawableUI.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GlobalSingleTimeBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RenderPassPort.h">

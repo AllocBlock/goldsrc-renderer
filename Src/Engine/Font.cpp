@@ -50,3 +50,25 @@ CFont::CFont(std::string vFontName, size_t vFontSize, bool vIsSDF)
         m_CharInfoMap[Char] = CharInfo;
     }
 }
+
+CFont::SFontDrawInfo CFont::getCharDrawInfo(char vChar)
+{
+    float NormalizeScale = 2.0f / m_FontSize;
+    // TODO: cache draw info
+    const auto& Info = m_CharInfoMap.at(vChar);
+
+    SFontDrawInfo DrawInfo;
+    DrawInfo.Size = glm::vec2(Info.Size) * NormalizeScale;
+    DrawInfo.Offset = Info.Anchor * NormalizeScale;
+    DrawInfo.Advance = Info.Advance * NormalizeScale;
+
+    glm::vec2 LeftTop = glm::vec2(Info.Offset) / m_FontAtlasSize;
+    glm::vec2 RightBottom = glm::vec2(Info.Offset + Info.Size) / m_FontAtlasSize;
+    DrawInfo.UVs = {
+        LeftTop,
+        glm::vec2(LeftTop.x, RightBottom.y),
+        RightBottom,
+        glm::vec2(RightBottom.x, LeftTop.y),
+    };
+    return DrawInfo;
+}

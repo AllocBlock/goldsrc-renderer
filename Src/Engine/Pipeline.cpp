@@ -1,5 +1,6 @@
 #include "Pipeline.h"
 #include "ShaderCompiler.h"
+#include "Log.h"
 
 void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
 {

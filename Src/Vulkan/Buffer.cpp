@@ -1,6 +1,7 @@
 #include "PchVulkan.h"
 #include "Buffer.h"
 #include "Vulkan.h"
+#include "SingleTimeCommandBuffer.h"
 using namespace vk;
 
 void CBuffer::create(CDevice::CPtr vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties)
@@ -84,10 +85,10 @@ void CBuffer::stageFill(const void* vData, VkDeviceSize vSize)
     StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    CCommandBuffer::Ptr CommandBuffer = vk::beginSingleTimeBuffer();
-    copyFrom(CommandBuffer, StageBuffer.get(), vSize);
-    vk::endSingleTimeBuffer(CommandBuffer);
-    CommandBuffer = nullptr;
+    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::beginSingleTimeBuffer();
+    copyFrom(pCommandBuffer, StageBuffer.get(), vSize);
+    SingleTimeCommandBuffer::endSingleTimeBuffer(pCommandBuffer);
+    pCommandBuffer = nullptr;
 
     StageBuffer.destroy();
 }

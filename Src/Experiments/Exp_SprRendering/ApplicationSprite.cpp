@@ -1,13 +1,13 @@
 #include "ApplicationSprite.h"
 
-#include "GlobalSingleTimeBuffer.h"
+#include "SingleTimeCommandBuffer.h"
 #include "InterfaceUI.h"
 
 using namespace vk;
 
 void CApplicationSprite::_createV()
 {
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
     
     std::filesystem::path ShaderDirPath = std::filesystem::path(__FILE__).parent_path() / "../../RenderPass/shaders/";
     Environment::addPathToEnviroment(ShaderDirPath);
@@ -58,7 +58,7 @@ void CApplicationSprite::_destroyV()
     destroyAndClear(m_pPassGUI);
     m_pInteractor = nullptr;
 
-    cleanGlobalCommandBuffer();
+    GlobalCommandBuffer::clean();
 }
 
 void CApplicationSprite::__linkPasses()

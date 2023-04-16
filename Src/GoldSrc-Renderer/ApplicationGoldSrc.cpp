@@ -1,6 +1,6 @@
 #include "ApplicationGoldSrc.h"
 #include "SceneProbe.h"
-#include "GlobalSingleTimeBuffer.h"
+#include "SingleTimeCommandBuffer.h"
 #include "InterfaceUI.h"
 #include "RenderPassGraph.h"
 #include "PassGUI.h"
@@ -10,7 +10,7 @@
 
 void CApplicationGoldSrc::_createV()
 {
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, m_pSceneInfo->pScene->getMainCamera());
@@ -53,7 +53,7 @@ void CApplicationGoldSrc::_createV()
 
     m_pMainUI->setReadSceneCallback([this]()
         {
-            m_pGraphInstance->setSceneInfo(m_pSceneInfo);
+            m_pGraphInstance->updateSceneInfo(m_pSceneInfo);
         });
     m_pMainUI->setRenderSettingCallback([this]()
         {
@@ -117,5 +117,5 @@ void CApplicationGoldSrc::_renderUIV()
 void CApplicationGoldSrc::_destroyV()
 {
     m_pRenderPassGraphUI->destroyPasses();
-    cleanGlobalCommandBuffer();
+    SingleTimeCommandBuffer::clean();
 }

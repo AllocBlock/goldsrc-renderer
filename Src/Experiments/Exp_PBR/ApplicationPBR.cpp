@@ -1,10 +1,10 @@
 #include "ApplicationPBR.h"
-#include "GlobalSingleTimeBuffer.h"
+#include "SingleTimeCommandBuffer.h"
 #include "InterfaceUI.h"
 
 void CApplicationPBR::_createV()
 {
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     m_pCamera = make<CCamera>();
     m_pInteractor = make<CInteractor>();
@@ -63,7 +63,7 @@ void CApplicationPBR::_destroyV()
     destroyAndClear(m_pRenderPassPBR);
     destroyAndClear(m_pGUI);
 
-    cleanGlobalCommandBuffer();
+    GlobalCommandBuffer::clean();
 }
 
 void CApplicationPBR::__linkPasses()

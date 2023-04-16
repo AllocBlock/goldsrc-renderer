@@ -1,13 +1,13 @@
 #include "ApplicationEnvMap.h"
 
-#include "GlobalSingleTimeBuffer.h"
+#include "SingleTimeCommandBuffer.h"
 #include "InterfaceUI.h"
 
 using namespace vk;
 
 void CApplicationEnvMap::_createV()
 {
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     vk::SAppInfo AppInfo = getAppInfo();
 
@@ -58,7 +58,7 @@ void CApplicationEnvMap::_destroyV()
     destroyAndClear(m_pPassGUI);
     destroyAndClear(m_pPassMain);
 
-    cleanGlobalCommandBuffer();
+    GlobalCommandBuffer::clean();
 }
 
 void CApplicationEnvMap::__linkPasses()

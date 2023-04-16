@@ -1,4 +1,5 @@
 #include "PipelineVisualizePrimitive.h"
+#include "Environment.h"
 
 namespace
 {

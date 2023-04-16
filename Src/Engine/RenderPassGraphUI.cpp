@@ -617,6 +617,76 @@ void CRenderPassGraphUI::_renderUIV()
     m_AnimationTime += m_Timer.tick();
 }
 
+void CRenderPassGraphUI::setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
+{
+    m_pDevice = vDevice;
+    m_pAppInfo = vAppInfo;
+}
+
+void CRenderPassGraphUI::setGraph(ptr<SRenderPassGraph> vGraph)
+{
+    m_pGraph = vGraph;
+    m_Editor.setGraph(vGraph);
+    m_AddLinkState.setGraph(vGraph);
+
+    destroyPasses();
+}
+
+void CRenderPassGraphUI::destroyPasses()
+{
+    for (const auto& Pair : m_PassInstanceMap)
+        Pair.second->destroy();
+    m_PassInstanceMap.clear();
+}
+
+glm::vec2 CRenderPassGraphUI::__getPortPos(const SRenderPassGraphPortInfo& vPort, bool vIsInput) const
+{
+    if (vIsInput)
+        return m_NodePortPosMap.at(vPort.NodeId).Input.at(vPort.Name);
+    else
+        return m_NodePortPosMap.at(vPort.NodeId).Output.at(vPort.Name);
+}
+
+CPortSet::CPtr CRenderPassGraphUI::__getNodePortSet(size_t vNodeId)
+{
+    const SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(vNodeId);
+    if (m_PassInstanceMap.find(vNodeId) == m_PassInstanceMap.end())
+    {
+        _ASSERTE(m_pDevice && m_pAppInfo);
+        auto pPass = RenderpassLib::createPass(Node.Name);
+        pPass->init(m_pDevice, m_pAppInfo);
+        m_PassInstanceMap[vNodeId] = pPass;
+    }
+    auto pPass = m_PassInstanceMap.at(vNodeId);
+    auto pPortSet = pPass->getPortSet();
+    _ASSERTE(pPortSet);
+    return pPortSet;
+}
+
+std::vector<std::string> CRenderPassGraphUI::__getNodeInputs(size_t vNodeId)
+{
+    auto pPortSet = __getNodePortSet(vNodeId);
+
+    std::vector<std::string> InputSet;
+    for (size_t i = 0; i < pPortSet->getInputPortNum(); ++i)
+    {
+        InputSet.push_back(pPortSet->getInputPort(i)->getName());
+    }
+    return InputSet;
+}
+
+std::vector<std::string> CRenderPassGraphUI::__getNodeOutputs(size_t vNodeId)
+{
+    auto pPortSet = __getNodePortSet(vNodeId);
+
+    std::vector<std::string> OutputSet;
+    for (size_t i = 0; i < pPortSet->getOutputPortNum(); ++i)
+    {
+        OutputSet.push_back(pPortSet->getOutputPort(i)->getName());
+    }
+    return OutputSet;
+}
+
 bool CRenderPassGraphUI::__isItemSelected(size_t vId, EItemType vType, const std::string& vName, bool vIsInput) const
 {
     return m_DeferSelectedItem.has_value() && m_DeferSelectedItem->Type == vType && m_DeferSelectedItem->Id == vId &&

@@ -94,11 +94,13 @@
   <ItemGroup>
     <ClInclude Include="AppInfo.h" />
     <ClInclude Include="Buffer.h" />
+    <ClInclude Include="Command.h" />
     <ClInclude Include="CommandBuffer.h" />
     <ClInclude Include="DebugMessenger.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Fence.h" />
     <ClInclude Include="FrameBuffer.h" />
+    <ClInclude Include="SingleTimeCommandBuffer.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="PchVulkan.h" />
@@ -113,7 +115,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="Command.cpp" />
     <ClCompile Include="CommandBuffer.cpp" />
+    <ClCompile Include="SingleTimeCommandBuffer.cpp" />
     <ClCompile Include="PhysicalDevice.cpp" />
     <ClCompile Include="DebugMessenger.cpp" />
     <ClCompile Include="Device.cpp" />

@@ -1,12 +1,12 @@
 #include "ApplicationShadowMap.h"
-#include "GlobalSingleTimeBuffer.h"
+#include "SingleTimeCommandBuffer.h"
 #include "InterfaceUI.h"
 
 using namespace vk;
 
 void CApplicationShadowMap::_createV()
 {
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     vk::SAppInfo AppInfo = getAppInfo();
 
@@ -69,7 +69,7 @@ void CApplicationShadowMap::_destroyV()
     m_pRenderPassShadowMap->destroy();
     m_pPassShade->destroy();
 
-    cleanGlobalCommandBuffer();
+    GlobalCommandBuffer::clean();
 }
 
 void CApplicationShadowMap::__linkPasses()

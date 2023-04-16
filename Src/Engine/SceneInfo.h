@@ -10,7 +10,7 @@ class CLightmap
 {
 public:
     void clear();
-    size_t appendLightmap(ptr<CIOImage> vpImage);
+    size_t appendLightmap(ptr<CIOImage> vImage);
     std::pair<size_t, size_t> getLightmapSize();
     glm::vec2 getAcutalLightmapCoord(size_t vIndex, glm::vec2 vOriginTexCoord);
     ptr<CIOImage> getCombinedLightmap();

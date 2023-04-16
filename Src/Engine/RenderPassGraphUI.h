@@ -15,27 +15,11 @@ class CRenderPassGraphUI : public IDrawableUI
 public:
     virtual void _renderUIV() override;
 
-    void setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
-    {
-        m_pDevice = vDevice;
-        m_pAppInfo = vAppInfo;
-    }
+    void setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo);
 
-    void setGraph(ptr<SRenderPassGraph> vGraph)
-    {
-        m_pGraph = vGraph;
-        m_Editor.setGraph(vGraph);
-        m_AddLinkState.setGraph(vGraph);
-
-        destroyPasses();
-    }
+    void setGraph(ptr<SRenderPassGraph> vGraph);
     void update();
-    void destroyPasses()
-    {
-        for (const auto& Pair : m_PassInstanceMap)
-            Pair.second->destroy();
-        m_PassInstanceMap.clear();
-    }
+    void destroyPasses();
 
 private:
     enum class EItemType
@@ -64,54 +48,12 @@ private:
     bool __isItemHovered(size_t vNodeId, EItemType vType, const std::string& vName = "", bool vIsInput = true) const;
     void __setHoveredItem(size_t vId, EItemType vType, const std::string& vName = "", bool vIsInput = true);
 
-    glm::vec2 __getPortPos(const SRenderPassGraphPortInfo& vPort, bool vIsInput) const
-    {
-        if (vIsInput)
-            return m_NodePortPosMap.at(vPort.NodeId).Input.at(vPort.Name);
-        else
-            return m_NodePortPosMap.at(vPort.NodeId).Output.at(vPort.Name);
-    }
-    
-    CPortSet::CPtr __getNodePortSet(size_t vNodeId)
-    {
-        const SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(vNodeId);
-        if (m_PassInstanceMap.find(vNodeId) == m_PassInstanceMap.end())
-        {
-            _ASSERTE(m_pDevice && m_pAppInfo);
-            auto pPass = RenderpassLib::createPass(Node.Name);
-            pPass->init(m_pDevice, m_pAppInfo);
-            m_PassInstanceMap[vNodeId] = pPass;
-        }
-        auto pPass = m_PassInstanceMap.at(vNodeId);
-        auto pPortSet = pPass->getPortSet();
-        _ASSERTE(pPortSet);
-        return pPortSet;
-    }
+    glm::vec2 __getPortPos(const SRenderPassGraphPortInfo& vPort, bool vIsInput) const;
 
+    CPortSet::CPtr __getNodePortSet(size_t vNodeId);
     // TODO: cache to avoid redundant creation
-    std::vector<std::string> __getNodeInputs(size_t vNodeId)
-    {
-        auto pPortSet = __getNodePortSet(vNodeId);
-
-        std::vector<std::string> InputSet;
-        for (size_t i = 0; i < pPortSet->getInputPortNum(); ++i)
-        {
-            InputSet.push_back(pPortSet->getInputPort(i)->getName());
-        }
-        return InputSet;
-    }
-
-    std::vector<std::string> __getNodeOutputs(size_t vNodeId)
-    {
-        auto pPortSet = __getNodePortSet(vNodeId);
-
-        std::vector<std::string> OutputSet;
-        for (size_t i = 0; i < pPortSet->getOutputPortNum(); ++i)
-        {
-            OutputSet.push_back(pPortSet->getOutputPort(i)->getName());
-        }
-        return OutputSet;
-    }
+    std::vector<std::string> __getNodeInputs(size_t vNodeId);
+    std::vector<std::string> __getNodeOutputs(size_t vNodeId);
 
     vk::CDevice::CPtr m_pDevice = nullptr;
     CAppInfo::Ptr m_pAppInfo = nullptr;
@@ -127,7 +69,7 @@ private:
     std::optional<SItemRef> m_SelectedItem = std::nullopt;
     std::optional<SItemRef> m_DeferSelectedItem = std::nullopt;
 
-    // temp data
+    // temp data for drawing
     struct SPortPos
     {
         std::map<std::string, glm::vec2> Input;

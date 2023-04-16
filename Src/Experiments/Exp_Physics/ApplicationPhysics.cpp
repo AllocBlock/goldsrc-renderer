@@ -1,5 +1,5 @@
 #include "ApplicationPhysics.h"
-#include "GlobalSingleTimeBuffer.h"
+#include "SingleTimeCommandBuffer.h"
 #include "InterfaceUI.h"
 #include "Ticker.h"
 
@@ -72,7 +72,7 @@ glm::vec3 __generateRandomAlpha()
 
 void CApplicationPhysics::_createV()
 {
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     auto AppInfo = getAppInfo();
 
@@ -217,7 +217,7 @@ void CApplicationPhysics::_destroyV()
     destroyAndClear(m_pPassVisPhysics);
     m_pPhysicsEngine = nullptr;
 
-    cleanGlobalCommandBuffer();
+    GlobalCommandBuffer::clean();
 }
 
 void CApplicationPhysics::__initPhysicsEngine()

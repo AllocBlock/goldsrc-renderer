@@ -10,15 +10,15 @@ void CLightmap::clear()
     m_Offsets.clear();
 }
 
-size_t CLightmap::appendLightmap(ptr<CIOImage> vpImage)
+size_t CLightmap::appendLightmap(ptr<CIOImage> vImage)
 {
-    if (m_Channel != vpImage->getChannelNum())
+    if (m_Channel != vImage->getChannelNum())
     {
-        throw std::runtime_error(u8"错误：Lightmap图像的通道数量错误，要求为" + std::to_string(m_Channel) + u8"，实际为" + std::to_string(vpImage->getChannelNum()));
+        throw std::runtime_error(u8"错误：Lightmap图像的通道数量错误，要求为" + std::to_string(m_Channel) + u8"，实际为" + std::to_string(vImage->getChannelNum()));
     }
     size_t LightmapIndex = m_LightmapImages.size();
 
-    if (m_StartWidth + vpImage->getWidth() > m_MaxWidth) // next row
+    if (m_StartWidth + vImage->getWidth() > m_MaxWidth) // next row
     {
         m_StartHeight += m_CurrentRowHeight;
         m_StartWidth = m_CurrentRowHeight = 0;
@@ -26,14 +26,14 @@ size_t CLightmap::appendLightmap(ptr<CIOImage> vpImage)
 
     // simply place texture in a row
     m_Offsets.emplace_back(std::make_pair(m_StartWidth, m_StartHeight));
-    m_StartWidth += vpImage->getWidth();
+    m_StartWidth += vImage->getWidth();
     m_TotalWidth = std::max<size_t>(m_TotalWidth, m_StartWidth);
-    if (vpImage->getHeight() > m_CurrentRowHeight)
+    if (vImage->getHeight() > m_CurrentRowHeight)
     {
-        m_TotalHeight += vpImage->getHeight() - m_CurrentRowHeight;
-        m_CurrentRowHeight = vpImage->getHeight();
+        m_TotalHeight += vImage->getHeight() - m_CurrentRowHeight;
+        m_CurrentRowHeight = vImage->getHeight();
     }
-    m_LightmapImages.emplace_back(std::move(vpImage));
+    m_LightmapImages.emplace_back(std::move(vImage));
 
     return LightmapIndex;
 }

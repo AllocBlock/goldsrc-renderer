@@ -5,6 +5,7 @@
 #include "PhysicalDevice.h"
 #include "Device.h"
 #include "Log.h"
+#include "SingleTimeCommandBuffer.h"
 
 using namespace vk;
 
@@ -113,12 +114,12 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    CCommandBuffer::Ptr CommandBuffer = vk::beginSingleTimeBuffer();
-    transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    copyFromBuffer(CommandBuffer, StageBuffer.get(), m_Width, m_Height);
+    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::beginSingleTimeBuffer();
+    transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    copyFromBuffer(pCommandBuffer, StageBuffer.get(), m_Width, m_Height);
     if (vToShaderLayout)
-        transitionLayout(CommandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    vk::endSingleTimeBuffer(CommandBuffer);
+        transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    SingleTimeCommandBuffer::endSingleTimeBuffer(pCommandBuffer);
 
     StageBuffer.destroy();
 }

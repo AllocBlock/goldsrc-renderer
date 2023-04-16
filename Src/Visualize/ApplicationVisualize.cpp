@@ -1,7 +1,7 @@
 #include "ApplicationVisualize.h"
 
 #include "ImageUtils.h"
-#include "GlobalSingleTimeBuffer.h"
+#include "SingleTimeCommandBuffer.h"
 
 void CApplicationVisualize::addTriangle(const Visualize::Triangle& vTriangle, const glm::vec3& vColor)
 { m_pPassVisualize->addTriangle(vTriangle, vColor); }
@@ -20,7 +20,7 @@ void CApplicationVisualize::addCube(const glm::vec3& vCenter, const glm::vec3& v
 
 void CApplicationVisualize::_createV()
 {
-    setupGlobalCommandBuffer(m_pDevice, m_pDevice->getGraphicsQueueIndex());
+    SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setPos(glm::vec3(1, 1, 1));
@@ -68,7 +68,7 @@ void CApplicationVisualize::_destroyV()
 {
     m_DepthImageManager.destroy();
     destroyAndClear(m_pPassVisualize);
-    cleanGlobalCommandBuffer();
+    SingleTimeCommandBuffer::clean();
 }
 
 void CApplicationVisualize::_onResizeV()

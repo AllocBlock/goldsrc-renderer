@@ -1,4 +1,5 @@
 #include "PipelineVisualize3DPrimitive.h"
+#include "Environment.h"
 #include <glm/ext/matrix_transform.hpp>
 
 namespace
