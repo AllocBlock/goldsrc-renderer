@@ -232,6 +232,7 @@ bool CIOGoldSrcForgeGameData::_readV(std::filesystem::path vFilePath)
         auto Entity = __parseEntityFromString(EntityString);
         m_EntitySet.emplace_back(Entity);
     }
+    return true;
 }
 
 void CIOGoldSrcForgeGameData::__checkResult(bool vResult, int vLine)

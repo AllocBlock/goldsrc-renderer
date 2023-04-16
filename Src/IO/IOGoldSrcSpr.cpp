@@ -54,6 +54,8 @@ bool CIOGoldSrcSpr::_readV(std::filesystem::path vFilePath)
     m_FrameSet.resize(m_Header.FrameNum);
     for (int32_t i = 0; i < m_Header.FrameNum; ++i)
         readPicture(File, m_FrameSet[i]);
+
+    return true;
 }
 
 void CIOGoldSrcSpr::readPicture(std::ifstream& voFile, SSprPicture& voPicture)

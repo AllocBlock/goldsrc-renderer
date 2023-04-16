@@ -113,6 +113,8 @@ bool CIOImage::__readImageTinyexr()
     setData(pData);
     
     free(pData);
+    
+    return true;
 }
 
 void CIOImage::__cleanup()

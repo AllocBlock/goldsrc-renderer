@@ -363,8 +363,6 @@ void CRenderPassGraphUI::_renderUIV()
     if (m_AddLinkState.isStarted())
         m_AddLinkState.clearCandidates();
 
-    ImGuiIO& io = ImGui::GetIO();
-
     ImGui::BeginChild("Visualize", ImVec2(-gSidebarWidth, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
     ImGui::BeginGroup();
     // Create our child canvas
@@ -558,9 +556,10 @@ void CRenderPassGraphUI::_renderUIV()
     ImGui::PopStyleVar();
 
     // Scrolling
+    const ImGuiIO& IO = ImGui::GetIO();
     if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Middle, 0.0f))
-        m_Scrolling = m_Scrolling + __toGlm(io.MouseDelta);
-
+        m_Scrolling = m_Scrolling + __toGlm(IO.MouseDelta);
+    
     ImGui::EndChild();
     ImGui::PopStyleColor();
     ImGui::PopStyleVar();

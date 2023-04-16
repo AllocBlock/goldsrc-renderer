@@ -277,4 +277,11 @@ shaderCompileCache.json
 *.max
 *.ppm
 *.bkp
-*。dtmp
+*.dtmp
+
+# xmake
+.xmake/
+build/
+
+# vscode
+.vscode

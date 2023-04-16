@@ -301,8 +301,10 @@ private:
         std::filesystem::path FoundShaderPath;
         std::vector<std::filesystem::path> ShaderDirSet = 
             {
+            // TODO: put all shader in one dir
             "./shaders/",
-            "../RenderPass/shaders/"
+            "../RenderPass/shaders/",
+            "../Visualize/shaders/",
             };
 
         if (Environment::findFile(vShaderPath, ShaderDirSet, true, FoundShaderPath))
@@ -310,7 +312,7 @@ private:
             return FoundShaderPath;
         }
         else
-            throw std::runtime_error("Error: can not find shader");
+            throw std::runtime_error("Error: can not find shader: " + vShaderPath.string());
     }
 
 

@@ -54,7 +54,6 @@ void CRenderPassGoldSrc::_initV()
     {
         if (vPipeline.isValid())
         {
-            VkImageView Lightmap = (m_pSceneInfo && m_pSceneInfo->UseLightmap) ? m_LightmapImage : VK_NULL_HANDLE;
             __updatePipelineResourceGoldSrc(vPipeline);
             m_pRerecord->requestRecord("Mesh");
         }

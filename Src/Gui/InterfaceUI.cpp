@@ -181,7 +181,7 @@ void UI::endFrame()
     gIsFrameBeginned = false;
 }
 
-bool UI::isInited() { return isInited; }
+bool UI::isInited() { return gIsInitted; }
 
 bool UI::beginWindow(std::string vTitle, bool* vIsOpen, int vWindowFlags)
 {

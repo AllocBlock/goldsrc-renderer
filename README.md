@@ -85,6 +85,8 @@
 - [技术列表](./TechList.md)
 
 ## 依赖
+- 项目主要由Visual Studio开发和管理，但方便跨平台提供了xmake版本
+### VS
 - 所有C++依赖均通过vkpkg安装，使用64位版本
   - 图形API：vulkan （官网下载安装配置环境变量VULKAN_SDK为Vulkan根目录）
   - GUI库：glfw+imgui
@@ -114,6 +116,13 @@
   vcpkg integrate install
   ```
   > 注意因为Vulkan并非下载源码安装，而是会去寻找本地已安装的SDK，所以才需要自己下载安装，此外安装后需要检查VULKAN_SDK环境变量是否正确
+
+### Xmake
+- 详见xmake.lua
+- xmake大部分没有强制指定使用vcpkg的源
+  - 除了imgui，xmake似乎只给了imgui的核心，没有给binding，这在vcpkg里是通过feature功能可选安装实现的
+  - 此外需要注意，xrepo中的包名称和vcpkg中可能不一样
+    - 如vcpkg中叫vulkan，而xrepo里叫vulkansdk
 
 ## TODO
   - Debug scope功能
