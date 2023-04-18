@@ -33,7 +33,7 @@ void CRenderPassOutline::_initV()
                 ImageInfo.format = Format;
                 ImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
                 ImageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                ImageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
                 ImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
                 ImageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -74,8 +74,8 @@ CRenderPassDescriptor CRenderPassOutline::_getRenderPassDescV()
 
     Desc.addColorAttachment(m_pPortSet->getOutputPort("Main"));
 
-    Desc.addSubpass({ 0 }, false, { VK_SUBPASS_EXTERNAL });
-    Desc.addSubpass({ 1 }, false, { 0 });
+    Desc.addSubpass({ 0 }, false, { VK_SUBPASS_EXTERNAL }, {});
+    Desc.addSubpass({ 1 }, false, { 0 }, { 0 });
     return Desc;
 }
 

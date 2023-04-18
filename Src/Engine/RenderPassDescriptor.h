@@ -32,11 +32,12 @@ public:
     void setDepthAttachment(CPort::Ptr vPort);
     void addColorAttachment(const SAttachementInfo& vInfo);
     void setDepthAttachment(const SAttachementInfo& vInfo);
-    void addSubpass(const std::vector<uint32_t>& vColorIndices, bool vUseDepth, const std::vector<uint32_t>& vDepPassSet);
+    void addSubpass(const std::vector<uint32_t>& vColorIndices, bool vUseDepth, const std::vector<uint32_t>& vDepPassSet, const std::vector<uint32_t>& vInputIndices);
 
     bool isValid() const { return m_IsValid; }
     void clearStage(); // you can clear stage data after create renderpass to save memory
     void clear();
+    uint32_t getAttachementNum() const;
     VkRenderPassCreateInfo generateInfo();
 
     bool operator == (const CRenderPassDescriptor& vDesc) const
@@ -64,9 +65,10 @@ public:
 private:
     struct SSubpassTargetInfo
     {
-        std::vector<uint32_t> ColorIndices;
-        bool UseDepth;
+        std::vector<uint32_t> ColorIndices; // color render target indices
+        bool UseDepth = false; // if use depth render target
         std::vector<uint32_t> DependentPassIndices;
+        std::vector<uint32_t> InputIndices; // indices of color/depth attachment as input
     };
 
     SAttachementInfo __getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth);
@@ -84,6 +86,7 @@ private:
 
     // avoid local point problem
     std::vector<VkAttachmentDescription> m_StageAttachmentDescSet;
+    std::vector<std::vector<VkAttachmentReference>> m_StageInputRefSetSet;
     std::vector<std::vector<VkAttachmentReference>> m_StageColorRefSetSet;
     std::vector<VkAttachmentReference> m_StageDepthRefSet;
     std::vector<VkSubpassDescription> m_StageSubpassDescSet;

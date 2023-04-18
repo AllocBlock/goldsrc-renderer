@@ -71,7 +71,7 @@ $$
   ``` 
 
 
-### render pass和command buffer
+## render pass和command buffer
 - [relation between render passes and command buffers](https://stackoverflow.com/questions/48521961/what-is-the-relation-between-render-passes-command-buffers-and-clearing-of-atta)
 - 工作流
 ```
@@ -94,3 +94,58 @@ submit_to_graphics_queue
   - 使用方法
     - begin renderpass的subpass要指定为VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS，inline和secondary不能在一个subpass混用，这样要么用多个subpass，要么全部都用secondary buffer
     - secondary buffer在begin时要设置inheritance info，usage用VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT
+
+
+## Subpass的设计和使用
+### Subpass的设计
+- 在Vulkan中，一个render pass可以有多个subpass，并且设计了很多同步机制来提升运行效率
+- subpass之间是共享同一个framebuffer的，每个subpass里可以做以下操作
+  - 写入一个或多个attachment
+  - 读取一个或多个attachment
+    - 叫做input attachement
+    - 但注意这是有限制的，只能读取同一采样位置的同一个像素
+- ~~由此可以看到，Vulkan的render pass内可以一次完成很复杂的操作，比如可以在一个render pass里完成shadow map，第一个subpass生成shadow map写入attachment，而第二个subpass读取这shadow map来渲染场景阴影~~
+  - input attachment能节省带宽
+  - 如果有只能采样一个像素的限制，那么似乎只在一些后处理以及渲染结果合并上有用？
+    > 但实际测试采样多个像素是不会报错或者触发validation的，也许性能损失比较大？
+
+### Subpass的使用
+- subpass的设计这一块充分体现了Vulkan的“verbose”特点，有相当多且复杂的东西需要配置...
+1. **subpass的配置(VkSubpassDescription)**
+   - 在创建render pass时，就需要给出许多有关subpass的信息了，包括
+     - 有多少个subpass
+     - 每个subpass要写入哪些attachment，要读取哪些attachment
+       - 同时也设置了目标image layout，vulkan似乎会在写入后、读取前帮我们做这些转换？
+2. **dependency的配置(VkSubpassDependency)**
+   - 在Vulkan中，subpass的执行顺序是不固定，并非按照第一个subpass、第二个subpass、...这样的顺序来执行的
+   - vulkan提供了subpass dependency的机制来处理subpass之间的依赖
+     - 而且粒度不是subpass和subpass的先后，而是subpass中各个stage的先后，非常细
+   - 设置好依赖后，vulkan会帮我们调度，最大限度利用硬件
+     - 尽可能并行执行操作
+     - 在出现依赖时进行同步
+   - 每个依赖需要设置以下内容
+     - 哪个pass（dstPass）依赖于哪个pass（srcPass）
+     - srcStageMask: 指定一些stages（就是渲染管线里的那些stage，比如顶点着色、片元着色），在srcPass运行完这些stage前，不能继续
+     - dstAccessMask：指定一些stages，stage之前的stage是没有依赖的，任意运行，但直到遇到这里面的stage，就需要等待srcStage那边满足要求
+     - srcAccessMask：指定一些访问操作，效果和srcStageMask类似
+     - dstAccessMask：指定一些访问操作，和dstStageMask类似
+   - 关于依赖和同步，一些额外的资料
+     - https://www.reddit.com/r/vulkan/comments/s80reu/subpass_dependencies_what_are_those_and_why_do_i/ 
+     - [关于 Vulkan Tutorial 中同步问题的解释](https://zhuanlan.zhihu.com/p/350483554)
+     - [一张图形象理解Vulkan Sub Pass](https://zhuanlan.zhihu.com/p/461097833)
+3. **input attachment**
+   - 作为input attachment的image需要添加用途：VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT)
+4. **descriptor和shader**
+   - descriptor要用VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT
+   - 使用input attachment的shader，不能像普通shader一样引入，有特殊的语法 
+     ```hlsl
+     layout (input_attachment_index = 0, set = 0, binding = 0) uniform subpassInput inputColor;
+     // subpassInput 不需要sampler
+     ...
+     vec3 color = subpassLoad(inputColor).rgb;
+     ``` 
+   > 而实际测试，descriptor就用普通的image，shader也按普通的写法，不会报错或者触发validation，感觉可以绕过inp 
+
+
+- 关于实现subpass的资料
+  - [Vulkan input attachments and sub passes](https://www.saschawillems.de/blog/2018/07/19/vulkan-input-attachments-and-sub-passes/)

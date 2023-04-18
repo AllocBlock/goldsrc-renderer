@@ -69,9 +69,9 @@ void CRenderPassDescriptor::setDepthAttachment(const SAttachementInfo& vInfo)
     m_DepthAttachmentInfo = vInfo;
 }
 
-void CRenderPassDescriptor::addSubpass(const std::vector<uint32_t>& vColorIndices, bool vUseDepth, const std::vector<uint32_t>& vDepPassSet)
+void CRenderPassDescriptor::addSubpass(const std::vector<uint32_t>& vColorIndices, bool vUseDepth, const std::vector<uint32_t>& vDepPassSet, const std::vector<uint32_t>& vInputIndices)
 {
-    m_SubpassTargetInfoSet.emplace_back(SSubpassTargetInfo{ vColorIndices, vUseDepth, vDepPassSet });
+    m_SubpassTargetInfoSet.emplace_back(SSubpassTargetInfo{ vColorIndices, vUseDepth, vDepPassSet, vInputIndices });
 }
 
 void CRenderPassDescriptor::clear()
@@ -79,6 +79,14 @@ void CRenderPassDescriptor::clear()
     m_ColorAttachmentInfoSet.clear();
     m_DepthAttachmentInfo = std::nullopt;
     clearStage();
+}
+
+uint32_t CRenderPassDescriptor::getAttachementNum() const
+{
+    uint32_t Num = static_cast<uint32_t>(m_ColorAttachmentInfoSet.size());
+    if (m_DepthAttachmentInfo.has_value())
+        Num++;
+    return Num;
 }
 
 void CRenderPassDescriptor::clearStage()
@@ -143,6 +151,8 @@ VkAttachmentDescription CRenderPassDescriptor::__createAttachmentDescription(con
 
 void CRenderPassDescriptor::__generateDependency()
 {
+    // about subpass dependency
+    // https://www.reddit.com/r/vulkan/comments/s80reu/subpass_dependencies_what_are_those_and_why_do_i/
     std::vector<std::pair<uint32_t, uint32_t>> DepSet;
     if (m_SubpassTargetInfoSet.empty())
     {
@@ -162,10 +172,19 @@ void CRenderPassDescriptor::__generateDependency()
         m_StageDepedencySet[i].srcSubpass = DepSet[i].first;
         m_StageDepedencySet[i].dstSubpass = DepSet[i].second;
 
-        m_StageDepedencySet[i].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        m_StageDepedencySet[i].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        m_StageDepedencySet[i].srcAccessMask = 0;
-        m_StageDepedencySet[i].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        // TODO: to imporve performance, should not use ALL
+        m_StageDepedencySet[i].srcStageMask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+        m_StageDepedencySet[i].dstStageMask = VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+
+        VkAccessFlags SrcAcccesFlags = 0;
+        VkAccessFlags DestAcccesFlags = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        if (DepSet[i].first != VK_SUBPASS_EXTERNAL)
+        {
+            SrcAcccesFlags |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            DestAcccesFlags |= VK_ACCESS_SHADER_READ_BIT;
+        }
+        m_StageDepedencySet[i].srcAccessMask = SrcAcccesFlags;
+        m_StageDepedencySet[i].dstAccessMask = DestAcccesFlags;
     }
 }
 
@@ -183,6 +202,20 @@ void CRenderPassDescriptor::__generateAttachmentDescription()
 VkSubpassDescription CRenderPassDescriptor::__generateSubpassDescriptionFromTargetInfo(const SSubpassTargetInfo& vTargetInfo)
 {
     VkSubpassDescription SubpassDesc = {};
+
+    m_StageInputRefSetSet.push_back({});
+    auto& StageInputRefSet = m_StageInputRefSetSet[m_StageInputRefSetSet.size() - 1];
+    uint32_t InputNum = static_cast<uint32_t>(vTargetInfo.InputIndices.size());
+    StageInputRefSet.resize(InputNum);
+    for (size_t i = 0; i < vTargetInfo.InputIndices.size(); ++i)
+    {
+        uint32_t AttachmentIndex = vTargetInfo.InputIndices[i];
+        _ASSERTE(AttachmentIndex <= getAttachementNum());
+        StageInputRefSet[i].attachment = AttachmentIndex;
+        StageInputRefSet[i].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
+    SubpassDesc.inputAttachmentCount = InputNum;
+    SubpassDesc.pInputAttachments = StageInputRefSet.data();
 
     m_StageColorRefSetSet.push_back({});
     auto& StageColorRefSet = m_StageColorRefSetSet[m_StageColorRefSetSet.size() - 1];
