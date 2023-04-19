@@ -20,6 +20,6 @@ private:
     ptr<CGUIMain> m_pMainUI = nullptr;
     ptr<CInteractor> m_pInteractor = nullptr;
 
-    ptr<SRenderPassGraph> m_pRenderPassGraph = make<SRenderPassGraph>();
+    ptr<SRenderPassGraph> m_pRenderPassGraph = nullptr;
     ptr<CRenderPassGraphUI> m_pRenderPassGraphUI = nullptr;
 };

@@ -1,6 +1,8 @@
 #include "RenderPassGraphAddLinkState.h"
 #include "Maths.h"
 
+#include <stdexcept>
+
 void CRenderGraphAddLinkState::setGraph(ptr<SRenderPassGraph> vGraph)
 {
     m_pGraph = vGraph;

@@ -48,8 +48,15 @@ std::string Common::readFileAsString(const std::filesystem::path& vFilePath)
         throw std::runtime_error(u8"Î´ÕÒµ½ÎÄ¼þ£º" + FullPath.u8string());
     }
 
-    std::ifstream file(vFilePath);
-    return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+    std::ifstream File(vFilePath);
+    return { std::istreambuf_iterator<char>(File), std::istreambuf_iterator<char>() };
+}
+
+void Common::writeStringToFile(const std::string& Data, const std::filesystem::path& vFilePath)
+{
+    std::ofstream File(vFilePath);
+    File << Data;
+    File.close();
 }
 
 std::vector<std::string> Common::split(const std::string& vStr, const std::string& vSplitter)
@@ -63,4 +70,25 @@ std::vector<std::string> Common::split(const std::string& vStr, const std::strin
         LastPos = CurPos + vSplitter.length();
     }
     return ResultSet;
+}
+
+bool __isWhiteSpace(char vChar)
+{
+    if (vChar == ' ') return true;
+    if (vChar == '\t') return true;
+    if (vChar == '\n') return true;
+    return false;
+}
+
+std::string Common::trim(const std::string& vStr)
+{
+    if (vStr.empty()) return "";
+    size_t Start = 0;
+    size_t End = vStr.size();
+    while (__isWhiteSpace(vStr.at(Start)))
+        Start++;
+    while (End > Start && __isWhiteSpace(vStr.at(End - 1)))
+        End--;
+    if (Start == End) return "";
+    return vStr.substr(Start, End);
 }

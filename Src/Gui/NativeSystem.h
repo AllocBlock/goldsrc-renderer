@@ -20,6 +20,7 @@ struct EFileDialogResult
 
 namespace Gui
 {
+	// Filter format: ";" for a new entry, "," to separate in same entry, e.g. "jpg,png,bmp;psd"
 	EFileDialogResult createOpenFileDialog(std::string vFilter = "");
 	EFileDialogResult createSaveFileDialog(std::string vFilter = "");
 };

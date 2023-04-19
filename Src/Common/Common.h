@@ -17,7 +17,9 @@ namespace Common
     float mod(float vVal, float vMax);
     std::vector<uint8_t> readFileAsByte(const std::filesystem::path& vFilePath);
     std::string readFileAsString(const std::filesystem::path& vFilePath);
+    void writeStringToFile(const std::string& Data, const std::filesystem::path& vFilePath);
     std::vector<std::string> split(const std::string& vStr, const std::string& vSplitter);
+    std::string trim(const std::string& vStr);
 
     template <typename T>
     T lerp(T vA, T vB, float vFactor)

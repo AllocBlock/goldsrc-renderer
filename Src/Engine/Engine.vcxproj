@@ -106,6 +106,7 @@
     <ClCompile Include="RenderPassGraphAddLinkState.cpp" />
     <ClCompile Include="RenderPassGraphEditor.cpp" />
     <ClCompile Include="RenderPassGraphInstance.cpp" />
+    <ClCompile Include="RenderPassGraphIO.cpp" />
     <ClCompile Include="RenderPassSingle.cpp" />
     <ClCompile Include="RenderPassSingleFrameBuffer.cpp" />
     <ClCompile Include="SceneInfo.cpp" />
@@ -151,6 +152,7 @@
     <ClInclude Include="RenderPassGraphAddLinkState.h" />
     <ClInclude Include="RenderPassGraphEditor.h" />
     <ClInclude Include="RenderPassGraphInstance.h" />
+    <ClInclude Include="RenderPassGraphIO.h" />
     <ClInclude Include="RenderPassGraphUI.h" />
     <ClInclude Include="RenderPassSingleFrameBuffer.h" />
     <ClInclude Include="RerecordState.h" />

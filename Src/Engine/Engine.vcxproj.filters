@@ -168,6 +168,9 @@
     <ClCompile Include="RenderPassSingleFrameBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="RenderPassGraphIO.cpp">
+      <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -309,6 +312,9 @@
       <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
     <ClInclude Include="RenderpassLib.h">
+      <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassGraphIO.h">
       <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
   </ItemGroup>

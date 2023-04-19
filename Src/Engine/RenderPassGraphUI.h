@@ -77,7 +77,7 @@ private:
     };
     std::map<size_t, SPortPos> m_NodePortPosMap;
 
-    bool m_EnableForce = true;
+    bool m_EnableForce = false;
     CTimer m_Timer;
     float m_AnimationTime = 0.0f;
 

@@ -187,11 +187,11 @@ void CRenderPassGraphEditor::removeNode(size_t vNodeId)
 void CRenderPassGraphEditor::removeLink(size_t vLinkId)
 { execCommand(make<CCommandRemoveLink>(vLinkId)); }
 
-SAABB2D CRenderPassGraphEditor::getAABB() const
+Math::SAABB2D CRenderPassGraphEditor::getAABB() const
 {
     if (m_pGraph && !m_pGraph->NodeMap.empty())
     {
-        SAABB2D AABB = m_pGraph->NodeMap.begin()->second.getAABB();
+        Math::SAABB2D AABB = m_pGraph->NodeMap.begin()->second.getAABB();
         for (auto pIter = std::next(m_pGraph->NodeMap.begin()); pIter != m_pGraph->NodeMap.end(); ++pIter)
         {
             AABB.applyUnion(pIter->second.getAABB());
@@ -199,7 +199,7 @@ SAABB2D CRenderPassGraphEditor::getAABB() const
         return AABB;
     }
     else
-        return SAABB2D(glm::vec2(0, 0), glm::vec2(0, 0));
+        return Math::SAABB2D(glm::vec2(0, 0), glm::vec2(0, 0));
 }
 
 bool CRenderPassGraphEditor::__hasPass(size_t vNodeId)

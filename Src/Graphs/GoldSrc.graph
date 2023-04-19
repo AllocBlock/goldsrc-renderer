@@ -1,0 +1,12 @@
+[Nodes]
+"GoldSrc" "1_GoldSrc" -216.339 105
+"Outline" "2_Outline" -41.7684 18
+"Visualize" "3_Visualize" 130.272 107
+"Gui" "4_Gui" 361.622 108
+[Links]
+"1_GoldSrc" "Main" "2_Outline" "Main"
+"2_Outline" "Main" "3_Visualize" "Main"
+"3_Visualize" "Main" "4_Gui" "Main"
+"1_GoldSrc" "Depth" "3_Visualize" "Depth"
+[Entry]
+"1_GoldSrc" "Main"

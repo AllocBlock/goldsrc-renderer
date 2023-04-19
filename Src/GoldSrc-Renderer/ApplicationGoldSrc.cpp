@@ -1,8 +1,9 @@
 #include "ApplicationGoldSrc.h"
+#include "Environment.h"
+#include "RenderPassGraphIO.h"
 #include "SceneProbe.h"
 #include "SingleTimeCommandBuffer.h"
 #include "InterfaceUI.h"
-#include "RenderPassGraph.h"
 #include "PassGUI.h"
 #include "PassGoldSrc.h"
 #include "PassOutline.h"
@@ -61,18 +62,9 @@ void CApplicationGoldSrc::_createV()
             if (m_pInteractor) m_pInteractor->renderUI();
             m_pGraphInstance->renderUI();
         });
-    
-    m_pRenderPassGraph->NodeMap[0] = SRenderPassGraphNode("GoldSrc");
-    m_pRenderPassGraph->NodeMap[1] = SRenderPassGraphNode("Outline");
-    m_pRenderPassGraph->NodeMap[2] = SRenderPassGraphNode("Visualize");
-    m_pRenderPassGraph->NodeMap[3] = SRenderPassGraphNode("Gui");
-    
-    m_pRenderPassGraph->LinkMap[0] = { {0, "Main"}, {1, "Main"} };
-    m_pRenderPassGraph->LinkMap[1] = { {1, "Main"}, {2, "Main"} };
-    m_pRenderPassGraph->LinkMap[2] = { {2, "Main"}, {3, "Main"} };
-    m_pRenderPassGraph->LinkMap[3] = { {0, "Depth"}, {2, "Depth"} };
 
-    m_pRenderPassGraph->EntryPortOpt = { 0, "Main" };
+    auto GraphFile = Environment::findGraph("GoldSrc.graph");
+    m_pRenderPassGraph = RenderPassGraphIO::load(GraphFile);
 
     m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
     m_pRenderPassGraphUI->setContext(m_pDevice, m_pAppInfo);

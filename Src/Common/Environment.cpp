@@ -6,6 +6,7 @@
 std::set<std::filesystem::path> gPaths = { std::filesystem::current_path() };
 std::filesystem::path gTempFileDir = "./Temp";
 std::filesystem::path gDefaultShaderDir = std::filesystem::path(__FILE__).parent_path().parent_path() / "Shaders";
+std::filesystem::path gDefaultGraphDir = std::filesystem::path(__FILE__).parent_path().parent_path() / "Graphs";
 
 std::filesystem::path __cleanAbsolutePrefix(const std::filesystem::path& vPath)
 {
@@ -164,7 +165,7 @@ std::filesystem::path Environment::getShaderDir()
     return gDefaultShaderDir;
 }
 
-std::filesystem::path Environment::findShader(std::filesystem::path vShaderFileName)
+std::filesystem::path Environment::findShader(const std::filesystem::path& vShaderFileName)
 {
     std::filesystem::path FoundShaderPath;
     if (Environment::findFileRecursively(vShaderFileName, getShaderDir(), FoundShaderPath))
@@ -173,4 +174,20 @@ std::filesystem::path Environment::findShader(std::filesystem::path vShaderFileN
     }
     else
         throw std::runtime_error("Error: can not find shader: " + vShaderFileName.string());
+}
+
+std::filesystem::path Environment::getGraphDir()
+{
+    return gDefaultGraphDir;
+}
+
+std::filesystem::path Environment::findGraph(const std::filesystem::path& vGraphFileName)
+{
+    std::filesystem::path FoundGraphPath;
+    if (Environment::findFileRecursively(vGraphFileName, getGraphDir(), FoundGraphPath))
+    {
+        return FoundGraphPath;
+    }
+    else
+        throw std::runtime_error("Error: can not find graph: " + vGraphFileName.string());
 }

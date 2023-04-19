@@ -18,6 +18,7 @@ namespace Environment
 
 	std::filesystem::path getTempFilePath(const std::filesystem::path& vFileName);
 	std::filesystem::path getShaderDir();
-
-	std::filesystem::path findShader(std::filesystem::path vShaderFileName);
+	std::filesystem::path findShader(const std::filesystem::path& vShaderFileName);
+	std::filesystem::path getGraphDir();
+	std::filesystem::path findGraph(const std::filesystem::path& vGraphFileName);
 };

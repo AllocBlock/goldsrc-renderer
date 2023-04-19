@@ -18,7 +18,6 @@ EFileDialogResult Gui::createOpenFileDialog(std::string vFilter)
 	return Result;
 }
 
-// Filter format: ";" for a new entry, "," to separate in same entry, e.g. "jpg,png,bmp;psd"
 EFileDialogResult Gui::createSaveFileDialog(std::string vFilter)
 {
 	nfdchar_t* pOutPath = nullptr;

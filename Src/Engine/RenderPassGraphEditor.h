@@ -113,7 +113,7 @@ public:
     void removeNode(size_t vNodeId);
     void removeLink(size_t vLinkId);
 
-    SAABB2D getAABB()const;
+    Math::SAABB2D getAABB() const;
 
 private:
     bool __hasPass(size_t vNodeId);

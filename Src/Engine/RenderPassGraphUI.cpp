@@ -1,6 +1,8 @@
 #include "RenderPassGraphUI.h"
 #include "Maths.h"
 #include "RenderpassLib.h"
+#include "NativeSystem.h"
+#include "RenderPassGraphIO.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -300,12 +302,12 @@ void CRenderPassGraphUI::update()
     {
         size_t Id1 = pIter1->first;
         const SRenderPassGraphNode& Node1 = pIter1->second;
-        SAABB2D NodeAABB1 = Node1.getAABB();
+        Math::SAABB2D NodeAABB1 = Node1.getAABB();
         for (auto pIter2 = std::next(pIter1); pIter2 != m_pGraph->NodeMap.end(); ++pIter2)
         {
             size_t Id2 = pIter2->first;
             const SRenderPassGraphNode& Node2 = pIter2->second;
-            SAABB2D NodeAABB2 = Node2.getAABB();
+            Math::SAABB2D NodeAABB2 = Node2.getAABB();
 
             glm::vec2 v = (NodeAABB1.getCenter() - NodeAABB2.getCenter()) * m_WorldScale;
             float d = glm::length(v);
@@ -381,6 +383,15 @@ void CRenderPassGraphUI::_renderUIV()
     if (ImGui::Button(u8"重做"))
         m_Editor.redo();
     ImGui::EndDisabled();
+
+    if (ImGui::Button(u8"保存到"))
+    {
+        auto SaveDialogResult = Gui::createSaveFileDialog("graph");
+        if (SaveDialogResult.Action)
+        {
+            RenderPassGraphIO::save(m_pGraph, SaveDialogResult.FilePath);
+        }
+    }
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
