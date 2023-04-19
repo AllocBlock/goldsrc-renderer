@@ -6,6 +6,8 @@
 #include "DynamicResourceManager.h"
 #include "RerecordState.h"
 
+// FIXME: should not use subpass like this
+// Quote: Image subresources used as attachments must not be accessed in any other way for the duration of a render pass instance.
 class CRenderPassOutline : public CRenderPassSingleFrameBuffer
 {
 public:

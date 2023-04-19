@@ -104,10 +104,12 @@ submit_to_graphics_queue
   - 读取一个或多个attachment
     - 叫做input attachement
     - 但注意这是有限制的，只能读取同一采样位置的同一个像素
+      - 对Tile-based GPU的提升比较大，因为它是分tile执行renderpass的，每个tile单独执行整个每个subpass，整个framebuffer在执行时不一定有效，所以才有这样的限制
 - ~~由此可以看到，Vulkan的render pass内可以一次完成很复杂的操作，比如可以在一个render pass里完成shadow map，第一个subpass生成shadow map写入attachment，而第二个subpass读取这shadow map来渲染场景阴影~~
-  - input attachment能节省带宽
+  - input attachment能节省带宽（on-chip）
   - 如果有只能采样一个像素的限制，那么似乎只在一些后处理以及渲染结果合并上有用？
-    > 但实际测试采样多个像素是不会报错或者触发validation的，也许性能损失比较大？
+    > 但实际测试采样多个像素是不会报错或者触发validation的，也许性能损失比较大？、
+    > Image subresources used as attachments must not be accessed in any other way for the duration of a render pass instance. 所以这个用法是错误的，需要分多个render pass实现
 
 ### Subpass的使用
 - subpass的设计这一块充分体现了Vulkan的“verbose”特点，有相当多且复杂的东西需要配置...
