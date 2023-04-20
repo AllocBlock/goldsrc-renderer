@@ -72,6 +72,21 @@ private:
     std::optional<SRenderPassGraphPortInfo> m_Entry;
 };
 
+class CCommandSetEntry : public IRenderPassGraphEditCommand
+{
+public:
+    CCommandSetEntry(size_t vNodeId, const std::string& vPortName);
+
+protected:
+    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override;
+    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override;
+
+private:
+    size_t m_NodeId;
+    std::string m_PortName;
+    std::optional<SRenderPassGraphPortInfo> m_OldEntry;
+};
+
 class CRenderPassGraphEditor
 {
 public:
@@ -113,6 +128,7 @@ public:
                  const std::string& vEndPortName);
     void removeNode(size_t vNodeId);
     void removeLink(size_t vLinkId);
+    void setEntry(size_t vNodeId, const std::string& vPortName);
 
     Math::SAABB2D getAABB() const;
 

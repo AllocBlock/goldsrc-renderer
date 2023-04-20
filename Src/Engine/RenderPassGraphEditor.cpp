@@ -24,9 +24,9 @@ CCommandAddLink::CCommandAddLink(size_t vLinkId, const SRenderPassGraphLink& vLi
 
 void CCommandAddLink::_executeV(ptr<SRenderPassGraph> vGraph)
 {
-    _ASSERTE(vGraph->NodeMap.find(m_Link.Source.NodeId) != vGraph->NodeMap.end());
-    _ASSERTE(vGraph->NodeMap.find(m_Link.Destination.NodeId) != vGraph->NodeMap.end());
-    _ASSERTE(vGraph->LinkMap.find(m_LinkId) == vGraph->LinkMap.end());
+    _ASSERTE(vGraph->hasNode(m_Link.Source.NodeId));
+    _ASSERTE(vGraph->hasNode(m_Link.Destination.NodeId));
+    _ASSERTE(!vGraph->hasLink(m_LinkId));
     // Remove conflict link
     // FIXME: here assume AT MOST ONE LINK is on the source
     for (const auto& Pair : vGraph->LinkMap)
@@ -43,7 +43,7 @@ void CCommandAddLink::_executeV(ptr<SRenderPassGraph> vGraph)
 
 void CCommandAddLink::_withdrawV(ptr<SRenderPassGraph> vGraph)
 {
-    _ASSERTE(vGraph->LinkMap.find(m_LinkId) != vGraph->LinkMap.end());
+    _ASSERTE(vGraph->hasLink(m_LinkId));
     vGraph->LinkMap.erase(m_LinkId);
     if (m_ReplacedLink.has_value())
     {
@@ -59,7 +59,7 @@ CCommandRemoveLink::CCommandRemoveLink(size_t vLinkId)
 
 void CCommandRemoveLink::_executeV(ptr<SRenderPassGraph> vGraph)
 {
-    _ASSERTE(vGraph->LinkMap.find(m_LinkId) != vGraph->LinkMap.end());
+    _ASSERTE(vGraph->hasLink(m_LinkId));
 
     m_Link = std::move(vGraph->LinkMap.at(m_LinkId));
     vGraph->LinkMap.erase(m_LinkId);
@@ -67,7 +67,7 @@ void CCommandRemoveLink::_executeV(ptr<SRenderPassGraph> vGraph)
 
 void CCommandRemoveLink::_withdrawV(ptr<SRenderPassGraph> vGraph)
 {
-    _ASSERTE(vGraph->LinkMap.find(m_LinkId) == vGraph->LinkMap.end());
+    _ASSERTE(!vGraph->hasLink(m_LinkId));
     vGraph->LinkMap[m_LinkId] = m_Link;
 }
 
@@ -79,7 +79,7 @@ CCommandRemoveNode::CCommandRemoveNode(size_t vNodeId)
 
 void CCommandRemoveNode::_executeV(ptr<SRenderPassGraph> vGraph)
 {
-    _ASSERTE(vGraph->NodeMap.find(m_NodeId) != vGraph->NodeMap.end());
+    _ASSERTE(vGraph->hasNode(m_NodeId));
     m_Node = std::move(vGraph->NodeMap.at(m_NodeId));
 
     // remove node
@@ -110,11 +110,31 @@ void CCommandRemoveNode::_executeV(ptr<SRenderPassGraph> vGraph)
 
 void CCommandRemoveNode::_withdrawV(ptr<SRenderPassGraph> vGraph)
 {
-    _ASSERTE(vGraph->NodeMap.find(m_NodeId) == vGraph->NodeMap.end());
+    _ASSERTE(!vGraph->hasNode(m_NodeId));
     vGraph->NodeMap[m_NodeId] = m_Node;
     vGraph->LinkMap.insert(m_LinkMap.begin(), m_LinkMap.end());
     if (m_Entry.has_value())
+    {
         vGraph->EntryPortOpt = m_Entry;
+        m_Entry.reset();
+    }
+}
+
+CCommandSetEntry::CCommandSetEntry(size_t vNodeId, const std::string& vPortName)
+{
+    m_NodeId = vNodeId;
+    m_PortName = vPortName;
+}
+
+void CCommandSetEntry::_executeV(ptr<SRenderPassGraph> vGraph)
+{
+    m_OldEntry = vGraph->EntryPortOpt;
+    vGraph->EntryPortOpt = { m_NodeId, m_PortName };
+}
+
+void CCommandSetEntry::_withdrawV(ptr<SRenderPassGraph> vGraph)
+{
+    vGraph->EntryPortOpt = m_OldEntry;
 }
 
 void CRenderPassGraphEditor::setGraph(ptr<SRenderPassGraph> vGraph)
@@ -199,6 +219,10 @@ void CRenderPassGraphEditor::removeNode(size_t vNodeId)
 
 void CRenderPassGraphEditor::removeLink(size_t vLinkId)
 { execCommand(make<CCommandRemoveLink>(vLinkId)); }
+
+void CRenderPassGraphEditor::setEntry(size_t vNodeId, const std::string & vPortName)
+{ execCommand(make<CCommandSetEntry>(vNodeId, vPortName)); }
+
 
 Math::SAABB2D CRenderPassGraphEditor::getAABB() const
 {

@@ -18,6 +18,7 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
 {
     if (!vGraph->isValid())
         throw std::runtime_error("Graph is not valid");
+    // TODO: check others, like are all input ports set
     // TODO: keep old pass
     // TODO: create only used pass
     destroy();

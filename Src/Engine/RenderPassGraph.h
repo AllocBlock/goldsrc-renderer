@@ -56,6 +56,7 @@ struct SRenderPassGraph
     std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt;
 
     bool hasNode(size_t vNodeId) const { return NodeMap.find(vNodeId) != NodeMap.end(); }
+    bool hasLink(size_t vLinkId) const { return LinkMap.find(vLinkId) != LinkMap.end(); }
     bool hasLink(const SRenderPassGraphLink& vLink) const
     {
         for (const auto& Pair : LinkMap)
@@ -64,11 +65,19 @@ struct SRenderPassGraph
         return false;
     }
 
-    bool isValid() const
+    bool isValid(std::string& voReason) const
     {
         if (!EntryPortOpt.has_value())
+        {
+            voReason = u8"未指定入口";
             return false;
+        }
         // TODO: more validation
-        return true;
+    }
+
+    bool isValid() const
+    {
+        std::string Temp;
+        return isValid(Temp);
     }
 };

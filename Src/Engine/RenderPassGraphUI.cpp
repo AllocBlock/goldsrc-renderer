@@ -527,7 +527,8 @@ void CRenderPassGraphUI::_renderUIV()
         m_IsContextMenuOpen = false; // close on click
     }
 
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_HoveredItem.has_value() && m_HoveredItem->Type != EItemType::PORT)
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_HoveredItem.has_value() &&
+        (m_HoveredItem->Type != EItemType::PORT || m_HoveredItem->IsInput))
     {
         m_IsContextMenuOpen = true;
         m_SelectedItem = m_HoveredItem;
@@ -564,6 +565,15 @@ void CRenderPassGraphUI::_renderUIV()
                     m_IsContextMenuOpen = false;
                     m_DeferSelectedItem.reset();
                     m_HoveredItem.reset();
+                }
+            }
+            else if (m_DeferSelectedItem->Type == EItemType::PORT)
+            {
+                
+                _ASSERTE(m_DeferSelectedItem->IsInput);
+                if (ImGui::MenuItem(u8"设为入口", nullptr, false, true))
+                {
+                    m_Editor.setEntry(m_DeferSelectedItem->Id, m_DeferSelectedItem->Name);
                 }
             }
             else
