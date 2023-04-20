@@ -2,7 +2,7 @@
 #include "RenderPassGraph.h"
 #include "RenderPass.h"
 #include "RenderPassGraphEditor.h"
-#include "RenderPassGraphInstance.h"
+#include "Event.h"
 #include "Timer.h"
 #include "Maths.h"
 #include "RenderPassGraphAddLinkState.h"
@@ -12,6 +12,7 @@
 
 class CRenderPassGraphUI : public IDrawableUI
 {
+    _DEFINE_EVENT(GraphApply, ptr<SRenderPassGraph>);
 public:
     virtual void _renderUIV() override;
 

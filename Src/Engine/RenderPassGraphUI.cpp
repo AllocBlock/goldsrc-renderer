@@ -393,6 +393,15 @@ void CRenderPassGraphUI::_renderUIV()
         }
     }
 
+    std::string ApplyButtonText = m_pGraph->isValid() ? u8"应用更改" : u8"无法应用更改：渲染图无效";
+    ImGui::BeginDisabled(!m_pGraph->isValid());
+    if (ImGui::Button(ApplyButtonText.c_str()))
+    {
+        m_pDevice->waitUntilIdle();
+        m_GraphApplyEventHandler.trigger(m_pGraph);
+    }
+    ImGui::EndDisabled();
+
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(60, 60, 70, 200));

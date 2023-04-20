@@ -66,12 +66,25 @@ void CApplicationGoldSrc::_createV()
     auto GraphFile = Environment::findGraph("GoldSrc.graph");
     m_pRenderPassGraph = RenderPassGraphIO::load(GraphFile);
 
+    
+
     m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
     m_pRenderPassGraphUI->setContext(m_pDevice, m_pAppInfo);
     m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
+    m_pRenderPassGraphUI->hookGraphApply([this](ptr<SRenderPassGraph> vGraph)
+        {
+        m_NeedRecreateGraphInstance = true;
+        });
 
-    m_pGraphInstance->createFromGraph(m_pRenderPassGraph, m_pSwapchainPort, 
-        [this](const std::string& vName, vk::IRenderPass::Ptr vRenderPass)
+    m_NeedRecreateGraphInstance = true;
+
+}
+
+void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
+{
+    if (m_NeedRecreateGraphInstance)
+    {
+        auto pCreateGraphInstanceCallback = [this](const std::string& vName, vk::IRenderPass::Ptr vRenderPass)
         {
             // GUI pass need to set window
             if (vName == "Gui")
@@ -79,12 +92,13 @@ void CApplicationGoldSrc::_createV()
                 ptr<CRenderPassGUI> pPassGUI = std::dynamic_pointer_cast<CRenderPassGUI>(vRenderPass);
                 pPassGUI->setWindow(m_pWindow);
             }
-        }
-    );
-}
+        };
 
-void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
-{
+        m_pDevice->waitUntilIdle();
+        m_pGraphInstance->createFromGraph(m_pRenderPassGraph, m_pSwapchainPort, pCreateGraphInstanceCallback);
+        m_NeedRecreateGraphInstance = false;
+    }
+
     auto pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setAspect(m_pAppInfo->getScreenAspect());
     m_pInteractor->update();

@@ -22,4 +22,5 @@ private:
 
     ptr<SRenderPassGraph> m_pRenderPassGraph = nullptr;
     ptr<CRenderPassGraphUI> m_pRenderPassGraphUI = nullptr;
+    bool m_NeedRecreateGraphInstance = true;
 };

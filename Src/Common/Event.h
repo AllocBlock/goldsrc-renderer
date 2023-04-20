@@ -62,19 +62,23 @@ private:
 template <>
 class CEventHandler<void> {};
 
-#define _DEFINE_UPDATE_EVENT_INTERFACE(Name, ...) public: \
-HookId_t hook##Name##Update(CEventHandler<__VA_ARGS__>::Callback_t vCallback) \
+#define _DEFINE_EVENT_INTERFACE(Name, ...) public: \
+HookId_t hook##Name(CEventHandler<__VA_ARGS__>::Callback_t vCallback) \
 {\
-    return m_##Name##UpdateEventHandler.hook(vCallback); \
+    return m_##Name##EventHandler.hook(vCallback); \
 } \
 \
-void unhook##Name##Update(HookId_t vHookId) \
+void unhook##Name(HookId_t vHookId) \
 { \
-    m_##Name##UpdateEventHandler.unhook(vHookId); \
+    m_##Name##EventHandler.unhook(vHookId); \
 }
 
-#define _DEFINE_UPDATE_EVENT_HANDLER(Name, ...) protected: \
-CEventHandler<__VA_ARGS__> m_##Name##UpdateEventHandler = CEventHandler<__VA_ARGS__>("Event_" #Name);
+#define _DEFINE_EVENT_HANDLER(Name, ...) protected: \
+CEventHandler<__VA_ARGS__> m_##Name##EventHandler = CEventHandler<__VA_ARGS__>("Event_" #Name);
 
-#define _DEFINE_UPDATE_EVENT(Name, ...) _DEFINE_UPDATE_EVENT_INTERFACE(Name, __VA_ARGS__) \
-    _DEFINE_UPDATE_EVENT_HANDLER(Name, __VA_ARGS__) 
+
+#define _DEFINE_EVENT(Name, ...) _DEFINE_EVENT_INTERFACE(Name, __VA_ARGS__) \
+    _DEFINE_EVENT_HANDLER(Name, __VA_ARGS__) 
+
+#define _DEFINE_UPDATE_EVENT(Name, ...) _DEFINE_EVENT(Name##Update, __VA_ARGS__)
+

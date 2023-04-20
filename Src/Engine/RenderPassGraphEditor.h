@@ -69,6 +69,7 @@ private:
     size_t m_NodeId;
     SRenderPassGraphNode m_Node;
     std::map<size_t, SRenderPassGraphLink> m_LinkMap;
+    std::optional<SRenderPassGraphPortInfo> m_Entry;
 };
 
 class CRenderPassGraphEditor
