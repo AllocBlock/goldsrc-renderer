@@ -6,6 +6,7 @@
 #include "Timer.h"
 #include "Maths.h"
 #include "RenderPassGraphAddLinkState.h"
+#include "CanvasDrawer.h"
 
 #include <string>
 #include <glm/glm.hpp>
@@ -38,9 +39,8 @@ private:
         bool IsInput; // only for port
     };
 
-    void __drawGrid();
     void __drawLink(size_t vLinkId, const SRenderPassGraphLink& vLink);
-    void __drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset);
+    void __drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode);
     void __drawCurveAnimation(const Math::SCubicBezier2D& vCurve, unsigned vColor, float vRadius);
 
     // TODO: how to manage these copied function?
@@ -61,7 +61,7 @@ private:
     ptr<SRenderPassGraph> m_pGraph = nullptr;
     std::map<size_t, vk::IRenderPass::Ptr> m_PassInstanceMap;
 
-    glm::vec2 m_Scrolling = glm::vec2(0.0f);
+    CCanvasDrawer m_CanvasDrawer;
     bool m_ShowGrid = true;
     bool m_IsContextMenuOpen = false;
 

@@ -14,6 +14,7 @@ namespace
 {
     ImU32 gGridColor = IM_COL32(200, 200, 200, 40);
     float gGridSize = 64.0f;
+    float gGridThickness = 1.0f;
 
     float gNodeWidth = 120.0f; // dynamic calculating ti avoid overlap or too empty
     float gNodeRounding = 4.0f;
@@ -43,7 +44,6 @@ namespace
 }
 
 glm::vec2 __toGlm(ImVec2 v) { return glm::vec2(v.x, v.y); }
-ImVec2 __toImgui(glm::vec2 v) { return ImVec2(v.x, v.y); }
 
 Math::SCubicBezier2D __createLinkCurve(const glm::vec2& vStart, const glm::vec2& vEnd)
 {
@@ -52,32 +52,10 @@ Math::SCubicBezier2D __createLinkCurve(const glm::vec2& vStart, const glm::vec2&
     return Math::SCubicBezier2D(vStart, P2, P3, vEnd);
 }
 
-void __drawLinkCurve(const Math::SCubicBezier2D& vBezier, unsigned vColor, float vThickness)
-{
-    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-    pDrawList->AddBezierCurve(__toImgui(vBezier.Points[0]), __toImgui(vBezier.Points[1]), __toImgui(vBezier.Points[2]), __toImgui(vBezier.Points[3]), vColor, vThickness);
-}
-
 glm::vec2 __calcActualTextSize(const std::string& vText)
 {
     ImGuiStyle& style = ImGui::GetStyle();
     return __toGlm(ImGui::CalcTextSize(vText.c_str())) + __toGlm(style.FramePadding) * 2.0f;
-}
-
-void CRenderPassGraphUI::__drawGrid()
-{
-    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-
-    glm::vec2 CanvasPos = __toGlm(ImGui::GetCursorScreenPos());
-    glm::vec2 CanvasSize = __toGlm(ImGui::GetWindowSize());
-    for (float x = fmodf(m_Scrolling.x, gGridSize); x < CanvasSize.x; x += gGridSize)
-    {
-        pDrawList->AddLine(__toImgui(glm::vec2(x, 0.0f) + CanvasPos), __toImgui(glm::vec2(x, CanvasSize.y) + CanvasPos), gGridColor);
-    }
-    for (float y = fmodf(m_Scrolling.y, gGridSize); y < CanvasSize.y; y += gGridSize)
-    {
-        pDrawList->AddLine(__toImgui(glm::vec2(0.0f, y) + CanvasPos), __toImgui(glm::vec2(CanvasSize.x, y) + CanvasPos), gGridColor);
-    }
 }
 
 void CRenderPassGraphUI::__drawLink(size_t vLinkId, const SRenderPassGraphLink& vLink)
@@ -109,43 +87,34 @@ void CRenderPassGraphUI::__drawLink(size_t vLinkId, const SRenderPassGraphLink& 
         LinkThickness = gLinkHoveredThickness;
     }
 
-    __drawLinkCurve(LinkCurve, LinkColor, LinkThickness);
+    m_CanvasDrawer.drawBezier(LinkCurve, LinkColor, LinkThickness);
 
     // draw link animation
     unsigned BaseCircleColor = LinkColor;
     if (__isItemSelected(vLinkId, EItemType::LINK))
         __drawCurveAnimation(LinkCurve, BaseCircleColor, gLinkAnimeCircleRadius);
-
-    // debug, line segment
-    /*for (const auto& Seg : Bezier.downSample())
-    {
-        pDrawList->AddLine(__toImgui(Seg.Start), __toImgui(Seg.End), LinkColor, LinkThickness);
-    }*/
 }
 
-void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode, glm::vec2 vCanvasOffset)
+void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode)
 {
     const float LineHeight = ImGui::GetTextLineHeight();
     const float HeaderHeight = LineHeight + gNodeHeaderPadding;
     const float PortItemHeight = glm::max(ImGui::GetTextLineHeight(), gPortHoveredRadius) + gPortMargin;
 
     ImGuiIO& io = ImGui::GetIO();
-    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
 
-    const glm::vec2 NodeCanvasPos = vCanvasOffset + vioNode.Pos;
+    const glm::vec2 NodePos = vioNode.Pos;
 
     float ContentPadding = 8.0f;
     float ContentHeight = PortItemHeight * glm::max(__getNodeInputs(vNodeId).size(), __getNodeOutputs(vNodeId).size()) + ContentPadding * 2;
 
-    glm::vec2 NodeCanvasSize = glm::vec2(gNodeWidth, HeaderHeight + ContentHeight);
-    glm::vec2 NodeCanvasEnd = NodeCanvasPos + NodeCanvasSize;
+    glm::vec2 NodeSize = glm::vec2(gNodeWidth, HeaderHeight + ContentHeight);
 
     ImGui::PushID(static_cast<int>(vNodeId));
-    // draw invisable button for interaction
-    pDrawList->ChannelsSetCurrent(0);
-    ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos));
 
-    ImGui::InvisibleButton("node", __toImgui(NodeCanvasSize));
+    // draw invisible button for interaction
+    m_CanvasDrawer.switchLayer(0);
+    m_CanvasDrawer.addInvisibleButton(NodePos, NodeSize);
     if (!m_IsContextMenuOpen && ImGui::IsItemHovered())
     {
         __setHoveredItem(vNodeId, EItemType::NODE);
@@ -158,11 +127,11 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
         if (IsMoving)
             __setSelectedItem(vNodeId, EItemType::NODE);
         if (IsMoving && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-            vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta);
+            vioNode.Pos = vioNode.Pos + __toGlm(io.MouseDelta) / m_CanvasDrawer.getScale();
     }
 
     // work on background
-    pDrawList->ChannelsSetCurrent(1);
+    m_CanvasDrawer.switchLayer(1);
 
     // draw whole node background and boarder
     ImU32 BackgroundColor = IM_COL32(60, 60, 60, 255);
@@ -170,32 +139,37 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
         BackgroundColor = IM_COL32(100, 100, 100, 255);
     else if (__isItemHovered(vNodeId, EItemType::NODE))
         BackgroundColor = IM_COL32(75, 75, 75, 255);
-    pDrawList->AddRectFilled(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), BackgroundColor, gNodeRounding);
-    pDrawList->AddRect(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasEnd), IM_COL32(100, 100, 100, 255), gNodeRounding);
+    m_CanvasDrawer.drawSolidRect(NodePos, NodeSize, BackgroundColor, gNodeRounding);
+    m_CanvasDrawer.drawOutlineRect(NodePos, NodeSize, IM_COL32(100, 100, 100, 255), gNodeRounding);
 
     // draw header background
-    pDrawList->AddRectFilled(__toImgui(NodeCanvasPos), __toImgui(NodeCanvasPos + glm::vec2(gNodeWidth, HeaderHeight)), gNodeHeaderBackgroundColor, gNodeRounding, ImDrawFlags_RoundCornersTop);
+    m_CanvasDrawer.drawSolidRect(NodePos, glm::vec2(gNodeWidth, HeaderHeight), gNodeHeaderBackgroundColor, gNodeRounding, ImDrawFlags_RoundCornersTop);
 
     // draw header texts
-    pDrawList->ChannelsSetCurrent(2); // Foreground
+    m_CanvasDrawer.switchLayer(2); // Foreground
     float TextHeight = __calcActualTextSize(vioNode.Name).y;
-    ImGui::SetCursorScreenPos(__toImgui(NodeCanvasPos + glm::vec2(gNodeHeaderPadding, (HeaderHeight - TextHeight) * 0.5f)));
+    m_CanvasDrawer.setCursor(NodePos + glm::vec2(gNodeHeaderPadding, (HeaderHeight - TextHeight) * 0.5f));
     ImGui::BeginGroup(); // Lock horizontal position
     ImGui::Text(vioNode.Name.c_str());
     ImGui::EndGroup();
 
     // draw ports
     m_NodePortPosMap[vNodeId] = SPortPos();
-    glm::vec2 CurInputPortPos = NodeCanvasPos + glm::vec2(0.0f, HeaderHeight + ContentPadding + PortItemHeight * 0.5);
+    glm::vec2 CurInputPortPos = NodePos + glm::vec2(0.0f, HeaderHeight + ContentPadding + PortItemHeight * 0.5);
     glm::vec2 CurOutputPortPos = CurInputPortPos + glm::vec2(gNodeWidth, 0.0f);
+
+
+    const glm::vec2 MousePos = m_CanvasDrawer.inverseTransform(__toGlm(ImGui::GetMousePos()));
 
     // TODO: merge common part of input/output
     for (const auto& InputName : __getNodeInputs(vNodeId))
     {
+        m_NodePortPosMap[vNodeId].Input[InputName] = CurInputPortPos;
+
         float Radius = gPortRadius;
         unsigned Color = gPortColor;
         
-        const float Distance = glm::length(__toGlm(ImGui::GetMousePos()) - CurInputPortPos);
+        const float Distance = glm::length(MousePos - CurInputPortPos);
         if (Distance < gPortHoveredRadius)
         {
             __setHoveredItem(vNodeId, EItemType::PORT, InputName, true);
@@ -217,24 +191,23 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
             Color = gPortHoveredColor;
         }
 
-        m_NodePortPosMap[vNodeId].Input[InputName] = CurInputPortPos;
-        pDrawList->AddCircleFilled(__toImgui(CurInputPortPos), Radius, Color);
+        m_CanvasDrawer.drawSolidCircle(CurInputPortPos, Radius, Color);
 
         glm::vec2 TextSize = __calcActualTextSize(InputName);
-        pDrawList->AddText(__toImgui(CurInputPortPos + glm::vec2(gPortHoveredRadius + 4.0f, -TextSize.y * 0.5)), gPortTextColor, InputName.c_str());
+        m_CanvasDrawer.drawText(CurInputPortPos + glm::vec2(gPortHoveredRadius + 4.0f, -TextSize.y * 0.5), InputName, gPortTextColor);
 
         CurInputPortPos.y += PortItemHeight;
     }
 
     for (const auto& OutputName : __getNodeOutputs(vNodeId))
     {
+        m_NodePortPosMap[vNodeId].Output[OutputName] = CurOutputPortPos;
 
         float Radius = gPortRadius;
         unsigned Color = gPortColor;
-
-        const float HoverRadius = gPortHoveredRadius + 2.0f;
-        const float Distance = glm::length(__toGlm(ImGui::GetMousePos()) - CurOutputPortPos);
-        if (Distance < HoverRadius)
+        
+        const float Distance = glm::length(MousePos - CurOutputPortPos);
+        if (Distance < gPortHoveredRadius)
         {
             __setHoveredItem(vNodeId, EItemType::PORT, OutputName, false);
 
@@ -257,11 +230,11 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
             Color = gPortHoveredColor;
         }
 
-        m_NodePortPosMap[vNodeId].Output[OutputName] = CurOutputPortPos;
-        pDrawList->AddCircleFilled(__toImgui(CurOutputPortPos), Radius, Color);
+
+        m_CanvasDrawer.drawSolidCircle(CurOutputPortPos, Radius, Color);
 
         glm::vec2 TextSize = __calcActualTextSize(OutputName);
-        pDrawList->AddText(__toImgui(CurOutputPortPos + glm::vec2(-gPortHoveredRadius - 4.0f - TextSize.x, -TextSize.y * 0.5)), gPortTextColor, OutputName.c_str());
+        m_CanvasDrawer.drawText(CurOutputPortPos + glm::vec2(-gPortHoveredRadius - 4.0f - TextSize.x, -TextSize.y * 0.5), OutputName, gPortTextColor);
 
         CurOutputPortPos.y += PortItemHeight;
     }
@@ -271,8 +244,6 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
 
 void CRenderPassGraphUI::__drawCurveAnimation(const Math::SCubicBezier2D& vCurve, unsigned vColor, float vRadius)
 {
-    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
-
     float Interval = 1.0f / gLinkAnimeCircleNum;
     float Shift = glm::mod(m_AnimationTime / gLinkAnimeDuration, 1.0f) * Interval;
     for (int i = 0; i < gLinkAnimeCircleNum; ++i)
@@ -283,7 +254,7 @@ void CRenderPassGraphUI::__drawCurveAnimation(const Math::SCubicBezier2D& vCurve
         unsigned char Alpha8Bit = unsigned char(Alpha * 255);
         unsigned CircleColor = (vColor & ~IM_COL32_A_MASK) | IM_COL32(0, 0, 0, Alpha8Bit);
         glm::vec2 Pos = vCurve.sample(t);
-        pDrawList->AddCircleFilled(__toImgui(Pos), vRadius, CircleColor);
+        m_CanvasDrawer.drawSolidCircle(Pos, vRadius, CircleColor);
     }
 }
 
@@ -368,7 +339,9 @@ void CRenderPassGraphUI::_renderUIV()
     ImGui::BeginChild("Visualize", ImVec2(-gSidebarWidth, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
     ImGui::BeginGroup();
     // Create our child canvas
-    ImGui::Text("Hold middle mouse button to scroll (%.2f,%.2f)", m_Scrolling.x, m_Scrolling.y);
+    glm::vec2 CanvasOffset = m_CanvasDrawer.getOffset();
+    float CanvasScale = m_CanvasDrawer.getScale();
+    ImGui::Text("Hold middle mouse button to panning (%.2f,%.2f), scale = %.2f", CanvasOffset.x, CanvasOffset.y, CanvasScale);
     ImGui::SameLine(ImGui::GetWindowWidth() - 200);
     ImGui::Checkbox("Show grid", &m_ShowGrid);
     ImGui::SameLine(ImGui::GetWindowWidth() - 100);
@@ -408,30 +381,30 @@ void CRenderPassGraphUI::_renderUIV()
     ImGui::BeginChild("Canvas", ImVec2(0, 0), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
     ImGui::PopStyleVar(); // WindowPadding
 
-    const glm::vec2 CanvasOffset = __toGlm(ImGui::GetCursorScreenPos()) + m_Scrolling;
-    ImDrawList* pDrawList = ImGui::GetWindowDrawList();
+    m_CanvasDrawer.begin();
+    m_CanvasDrawer.setCanvasInfo(__toGlm(ImGui::GetCursorScreenPos()), __toGlm(ImGui::GetWindowSize()));
 
     // Display grid
     if (m_ShowGrid)
-        __drawGrid();
-
-    pDrawList->ChannelsSplit(3);
+        m_CanvasDrawer.drawGrid(gGridSize, gGridColor, gGridThickness);
+    
+    m_CanvasDrawer.beginLayerSplitting(3);
 
     // draw nodes
     for (auto& Pair : m_pGraph->NodeMap)
     {
         size_t Id = Pair.first;
         SRenderPassGraphNode& Node = Pair.second;
-        __drawNode(Id, Node, CanvasOffset);
+        __drawNode(Id, Node);
     }
 
     // draw links
-    pDrawList->ChannelsSetCurrent(0); // Background
+    m_CanvasDrawer.switchLayer(0); // Background
     for (const auto& Pair : m_pGraph->LinkMap)
     {
         __drawLink(Pair.first, Pair.second); // depend on renderer node, so draw after node
     }
-    pDrawList->ChannelsMerge();
+    m_CanvasDrawer.endLayerSplitting();
 
     // draw entry
     if (m_pGraph->EntryPortOpt.has_value())
@@ -445,14 +418,14 @@ void CRenderPassGraphUI::_renderUIV()
 
         glm::vec2 LineStart = PortPos - glm::vec2(gEntryLineLength + gEntryLineMargin + gPortHoveredRadius, gEntryLineWidth * 0.5);
         glm::vec2 LineEnd = LineStart + glm::vec2(gEntryLineLength, gEntryLineWidth);
-        pDrawList->AddRectFilled(__toImgui(LineStart), __toImgui(LineEnd), gEntryLineColor, 1.0f);
+        m_CanvasDrawer.drawLine(LineStart, LineEnd, gEntryLineColor, 2.0f);
 
         std::string EntryText = u8"Èë¿Ú";
         glm::vec2 TextSize = __calcActualTextSize(EntryText);
         glm::vec2 TextStart = PortPos;
         TextStart.x -= gPortHoveredRadius + gEntryLineLength + gEntryLineWidth * 2 + TextSize.x;
         TextStart.y -= TextSize.y * 0.5f;
-        pDrawList->AddText(__toImgui(TextStart), gEntryTextColor, EntryText.c_str());
+        m_CanvasDrawer.drawText(TextStart, EntryText, gEntryTextColor);
     }
 
     // draw to add link
@@ -464,7 +437,7 @@ void CRenderPassGraphUI::_renderUIV()
         const auto& FixedPort = m_AddLinkState.getFixedPort();
         glm::vec2 Start = __getPortPos(FixedPort, !m_AddLinkState.isFixedPortSource());
 
-        glm::vec2 MousePos = __toGlm(ImGui::GetMousePos());
+        glm::vec2 MousePos = m_CanvasDrawer.inverseTransform(__toGlm(ImGui::GetMousePos()));
         glm::vec2 End = MousePos;
 
         if (AttachState == EAddLinkAttachState::VALID_ATTACH)
@@ -472,6 +445,7 @@ void CRenderPassGraphUI::_renderUIV()
             const auto& AttachedPort = m_AddLinkState.getCurrentAttachedPort();
             End = __getPortPos(AttachedPort, m_AddLinkState.isFixedPortSource());
         }
+
 
         if (!m_AddLinkState.isFixedPortSource()) // swap direction
         {
@@ -487,7 +461,7 @@ void CRenderPassGraphUI::_renderUIV()
             LinkColor = IM_COL32(200, 50, 50, 255);
 
         float LinkThickness = 6.0f;
-        __drawLinkCurve(LinkCurve, LinkColor, LinkThickness);
+        m_CanvasDrawer.drawBezier(LinkCurve, LinkColor, LinkThickness);
 
         if (AttachState == EAddLinkAttachState::VALID_ATTACH) // if matched, draw animation
         {
@@ -499,8 +473,9 @@ void CRenderPassGraphUI::_renderUIV()
             glm::vec2 TextSize = __calcActualTextSize(Reason);
             float BgPadding = 4.0f;
             unsigned BgColor = IM_COL32(100, 100, 100, 200);
-            pDrawList->AddRectFilled(__toImgui(Center - TextSize * 0.5f - BgPadding), __toImgui(Center + TextSize * 0.5f + BgPadding), BgColor, 4.0f);
-            pDrawList->AddText(__toImgui(Center - TextSize * 0.5f), IM_COL32(255, 150, 150, 255), Reason.c_str());
+            glm::vec2 BgSize = TextSize + 2.0f * BgPadding;
+            m_CanvasDrawer.drawSolidRect(Center - BgSize * 0.5f, BgSize, BgColor, 4.0f);
+            m_CanvasDrawer.drawText(Center - TextSize * 0.5f, Reason, IM_COL32(255, 150, 150, 255));
         }
 
         if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
@@ -585,10 +560,14 @@ void CRenderPassGraphUI::_renderUIV()
     }
     ImGui::PopStyleVar();
 
-    // Scrolling
+    // Panning and scaling
     const ImGuiIO& IO = ImGui::GetIO();
-    if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Middle, 0.0f))
-        m_Scrolling = m_Scrolling + __toGlm(IO.MouseDelta);
+    if (ImGui::IsWindowHovered() && !ImGui::IsAnyItemActive())
+    {
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle, 0.0f))
+            m_CanvasDrawer.setOffset(m_CanvasDrawer.getOffset() + __toGlm(IO.MouseDelta));
+    }
+    m_CanvasDrawer.setScale(glm::max(0.1f, m_CanvasDrawer.getScale() + IO.MouseWheel * 0.1f));
     
     ImGui::EndChild();
     ImGui::PopStyleColor();

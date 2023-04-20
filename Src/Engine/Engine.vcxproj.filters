@@ -171,6 +171,9 @@
     <ClCompile Include="RenderPassGraphIO.cpp">
       <Filter>源文件\RenderPassGraph</Filter>
     </ClCompile>
+    <ClCompile Include="CanvasDrawer.cpp">
+      <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Pipeline.h">
@@ -315,6 +318,9 @@
       <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
     <ClInclude Include="RenderPassGraphIO.h">
+      <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="CanvasDrawer.h">
       <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
   </ItemGroup>

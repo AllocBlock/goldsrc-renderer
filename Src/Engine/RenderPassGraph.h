@@ -73,6 +73,7 @@ struct SRenderPassGraph
             return false;
         }
         // TODO: more validation
+        return true;
     }
 
     bool isValid() const

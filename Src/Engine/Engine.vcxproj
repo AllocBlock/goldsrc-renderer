@@ -98,6 +98,7 @@
     <ClCompile Include="BasicMesh.cpp" />
     <ClCompile Include="BoundingBox.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CanvasDrawer.cpp" />
     <ClCompile Include="ComponentTextRenderer.cpp" />
     <ClCompile Include="DynamicResourceManager.cpp" />
     <ClCompile Include="ImageUtils.cpp" />
@@ -142,6 +143,7 @@
     <ClInclude Include="BasicMesh.h" />
     <ClInclude Include="BoundingBox.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CanvasDrawer.h" />
     <ClInclude Include="ComponentIconRenderer.h" />
     <ClInclude Include="ComponentMeshRenderer.h" />
     <ClInclude Include="ComponentTextRenderer.h" />
