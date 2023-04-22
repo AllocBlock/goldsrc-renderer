@@ -262,9 +262,9 @@ bool UI::toggle(std::string vName, bool& vioValue)
     return ImGui::Checkbox(vName.c_str(), &vioValue);
 }
 
-bool UI::button(std::string vName)
+bool UI::button(std::string vName, glm::vec2 vSize)
 {
-    return ImGui::Button(vName.c_str());
+    return ImGui::Button(vName.c_str(), ImVec2(vSize.x, vSize.y));
 }
 
 void UI::plotLines(std::string vName, const std::vector<float>& vData)

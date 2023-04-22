@@ -16,6 +16,24 @@ void IRenderPassGraphEditCommand::withdraw()
     m_pGraph.reset();
 }
 
+CCommandAddNode::CCommandAddNode(size_t vNodeId, const SRenderPassGraphNode& vNode)
+{
+    m_NodeId = vNodeId;
+    m_Node = vNode;
+}
+
+void CCommandAddNode::_executeV(ptr<SRenderPassGraph> vGraph)
+{
+    _ASSERTE(!vGraph->hasNode(m_NodeId));
+    vGraph->NodeMap[m_NodeId] = m_Node;
+}
+
+void CCommandAddNode::_withdrawV(ptr<SRenderPassGraph> vGraph)
+{
+    _ASSERTE(vGraph->hasNode(m_NodeId));
+    vGraph->NodeMap.erase(m_NodeId);
+}
+
 CCommandAddLink::CCommandAddLink(size_t vLinkId, const SRenderPassGraphLink& vLink)
 {
     m_LinkId = vLinkId;
@@ -194,6 +212,11 @@ void CRenderPassGraphEditor::clearHistory()
 {
     m_CommandLinkList.clear();
     m_pCurCommand = m_CommandLinkList.end();
+}
+
+void CRenderPassGraphEditor::addNode(const std::string& vName, glm::vec2 vPos)
+{
+    execCommand(make<CCommandAddNode>(m_CurNodeId++, SRenderPassGraphNode{ vName, vPos }));
 }
 
 void CRenderPassGraphEditor::addLink(const SRenderPassGraphLink& vLink)

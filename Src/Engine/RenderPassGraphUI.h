@@ -18,10 +18,11 @@ public:
     virtual void _renderUIV() override;
 
     void setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo);
-
     void setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView = true);
     void update();
     void destroyPasses();
+
+    void resetView(float vPadding = 50.0f);
 
 private:
     enum class EItemType
@@ -58,8 +59,9 @@ private:
     std::vector<std::string> __getNodeOutputs(size_t vNodeId);
     Math::SAABB2D __getNodeBound(size_t vNodeId) const;
     Math::SAABB2D __getGraphBound() const;
+    std::string __getNodeName(size_t vNodeId) const;
 
-    void resetView(float vPadding = 50.0f);
+    void __resetViewNextFrame() { m_NeedResetViewTimes = 2; }
 
     vk::CDevice::CPtr m_pDevice = nullptr;
     CAppInfo::Ptr m_pAppInfo = nullptr;
@@ -69,7 +71,7 @@ private:
     CCanvasDrawer m_CanvasDrawer;
     bool m_ShowGrid = true;
     bool m_IsContextMenuOpen = false;
-    bool m_NeedResetView = false;
+    int m_NeedResetViewTimes = 0;
 
     std::optional<SItemRef> m_HoveredItem = std::nullopt; // real-time update, override
     std::optional<SItemRef> m_DeferHoveredItem = std::nullopt; // actual hovered, defered for drawing

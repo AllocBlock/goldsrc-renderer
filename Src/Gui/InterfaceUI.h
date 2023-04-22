@@ -53,7 +53,7 @@ namespace UI
     bool inputColor(std::string vName, glm::vec3& vioColor);
     bool inputColor(std::string vName, glm::vec4& vioColor);
     bool toggle(std::string vName, bool& vioValue);
-    bool button(std::string vName);
+    bool button(std::string vName, glm::vec2 vSize = glm::vec2(0));
     void plotLines(std::string vName, const std::vector<float>& vData);
     bool combo(std::string vName, const std::vector<const char*>& vItemSet, int& vioIndex);
     bool collapse(std::string vName, bool vDefaultOpen = false);

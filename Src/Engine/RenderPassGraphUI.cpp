@@ -159,8 +159,9 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     m_CanvasDrawer.drawSolidRect(NodePos, glm::vec2(gNodeWidth, HeaderHeight), gNodeHeaderBackgroundColor, gNodeRounding, ImDrawFlags_RoundCornersTop);
 
     // draw header texts
+    std::string NodeName = __getNodeName(vNodeId);
     m_CanvasDrawer.switchLayer(2); // Foreground
-    m_CanvasDrawer.drawText(NodePos + glm::vec2(gNodeHeaderPadding, HeaderHeight * 0.5f), vioNode.Name, gNodeHeaderTextColor, CCanvasDrawer::ETextAlign::BEGIN, CCanvasDrawer::ETextAlign::CENTER);
+    m_CanvasDrawer.drawText(NodePos + glm::vec2(gNodeHeaderPadding, HeaderHeight * 0.5f), NodeName, gNodeHeaderTextColor, CCanvasDrawer::ETextAlign::BEGIN, CCanvasDrawer::ETextAlign::CENTER);
 
     // draw ports
     m_NodePortPosMap[vNodeId] = SPortPos();
@@ -330,9 +331,9 @@ void CRenderPassGraphUI::_renderUIV()
         }
         if (UI::beginMenu(u8"编辑"))
         {
-            if (UI::menuItem(u8"撤销"), nullptr, m_Editor.canUndo())
+            if (UI::menuItem(u8"撤销", nullptr, m_Editor.canUndo()))
                 m_Editor.undo();
-            if (UI::menuItem(u8"重做"), nullptr, m_Editor.canUndo())
+            if (UI::menuItem(u8"重做", nullptr, m_Editor.canRedo()))
                 m_Editor.redo();
             UI::endMenu();
         }
@@ -581,9 +582,9 @@ void CRenderPassGraphUI::_renderUIV()
             for (const auto& Pair : m_pGraph->NodeMap)
             {
                 size_t NodeId = Pair.first;
-                const SRenderPassGraphNode& Node = Pair.second;
+                std::string NodeName = __getNodeName(NodeId);
                 ImGui::PushID(static_cast<int>(NodeId));
-                if (ImGui::Selectable(Node.Name.c_str(), __isItemSelected(NodeId, EItemType::NODE)))
+                if (ImGui::Selectable(NodeName.c_str(), __isItemSelected(NodeId, EItemType::NODE)))
                 {
                     __setSelectedItem(NodeId, EItemType::NODE);
                 }
@@ -596,16 +597,27 @@ void CRenderPassGraphUI::_renderUIV()
             ImGui::EndTabItem();
         }
 
-        if (ImGui::BeginTabItem(u8"全部"))
+        if (ImGui::BeginTabItem(u8"库"))
         {
             const auto& PassSet = RenderpassLib::getAllPassNames();
             if (PassSet.empty())
                 ImGui::Text(u8"未注册任何渲染Pass...");
             else
             {
+                float LineHeight = ImGui::GetTextLineHeight() + 4.0f;
+                glm::vec2 AddButtonSize = glm::vec2(LineHeight, LineHeight);
                 for (const auto& Name : PassSet)
                 {
                     ImGui::Text(Name.c_str());
+                    ImGui::SameLine(ImGui::GetWindowWidth() - LineHeight - 4.0f);
+                    if (UI::button(u8"+##" + Name, AddButtonSize))
+                    {
+                        Math::SAABB2D GraphBound = __getGraphBound();
+                        float x = GraphBound.Max.x + 50.0f;
+                        float y = GraphBound.getCenter().y;
+                        m_Editor.addNode(Name, glm::vec2(x, y));
+                        __resetViewNextFrame();
+                    }
                 }
             }
             ImGui::EndTabItem();
@@ -621,10 +633,10 @@ void CRenderPassGraphUI::_renderUIV()
     m_AnimationTime += m_Timer.tick();
 
     // others
-    if (m_NeedResetView)
+    if (m_NeedResetViewTimes > 0)
     {
         resetView();
-        m_NeedResetView = false;
+        --m_NeedResetViewTimes;
     }
 }
 
@@ -643,7 +655,7 @@ void CRenderPassGraphUI::setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView)
     m_NodePortPosMap.clear();
     m_NodeSizeMap.clear();
 
-    m_NeedResetView = vResetView;
+    m_NeedResetViewTimes = 1;
 
     destroyPasses();
 }
@@ -653,6 +665,19 @@ void CRenderPassGraphUI::destroyPasses()
     for (const auto& Pair : m_PassInstanceMap)
         Pair.second->destroy();
     m_PassInstanceMap.clear();
+}
+
+void CRenderPassGraphUI::resetView(float vPadding)
+{
+    Math::SAABB2D AABB = __getGraphBound();
+
+    glm::vec2 Center = AABB.getCenter();
+    glm::vec2 Extent = AABB.getExtent() + vPadding * 2.0f;
+    glm::vec2 CanvasSize = m_CanvasDrawer.getCanvasSize();
+    float Scale = glm::min(CanvasSize.x / Extent.x, CanvasSize.y / Extent.y);
+    m_CanvasDrawer.setScale(Scale);
+    float ActualScale = m_CanvasDrawer.getScale();
+    m_CanvasDrawer.setOffset(-Center * ActualScale);
 }
 
 glm::vec2 CRenderPassGraphUI::__getPortPos(const SRenderPassGraphPortInfo& vPort, bool vIsInput) const
@@ -732,17 +757,10 @@ Math::SAABB2D CRenderPassGraphUI::__getGraphBound() const
     return AABB.value();
 }
 
-void CRenderPassGraphUI::resetView(float vPadding)
+std::string CRenderPassGraphUI::__getNodeName(size_t vNodeId) const
 {
-    Math::SAABB2D AABB = __getGraphBound();
-
-    glm::vec2 Center = AABB.getCenter();
-    glm::vec2 Extent = AABB.getExtent() + vPadding * 2.0f;
-    glm::vec2 CanvasSize = m_CanvasDrawer.getCanvasSize();
-    float Scale = glm::min(CanvasSize.x / Extent.x, CanvasSize.y / Extent.y);
-    m_CanvasDrawer.setScale(Scale);
-    float ActualScale = m_CanvasDrawer.getScale();
-    m_CanvasDrawer.setOffset(-Center * ActualScale);
+    const SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(vNodeId);
+    return std::to_string(vNodeId) + "_" + Node.Name;
 }
 
 bool CRenderPassGraphUI::__isItemSelected(size_t vId, EItemType vType, const std::string& vName, bool vIsInput) const

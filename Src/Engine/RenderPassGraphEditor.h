@@ -26,6 +26,19 @@ private:
     wptr<SRenderPassGraph> m_pGraph;
 };
 
+class CCommandAddNode : public IRenderPassGraphEditCommand
+{
+public:
+    CCommandAddNode(size_t vNodeId, const SRenderPassGraphNode& vNode);
+
+protected:
+    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override;
+    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override;
+
+private:
+    size_t m_NodeId;
+    SRenderPassGraphNode m_Node;
+};
 
 class CCommandAddLink : public IRenderPassGraphEditCommand
 {
@@ -98,30 +111,7 @@ public:
     void redo();
     void clearHistory();
 
-    /*size_t addNode(const std::string& vName, const std::vector<std::string>& vInputSet,
-        const std::vector<std::string>& vOutputSet)
-    {
-        const float Margin = 20.0f;
-
-        SAABB2D AABB = getAABB();
-
-        glm::vec2 Pos = glm::vec2(AABB.Max.x + Margin, (AABB.Min.y + AABB.Max.y) * 0.5f);
-
-        SRenderPassGraphNode Node;
-        Node.Name = vName;
-        Node.Pos = Pos;
-        Node.InputSet = vInputSet;
-        Node.OutputSet = vOutputSet;
-
-        if (!m_AABB.has_value())
-            m_AABB = Node.getAABB();
-        else
-            m_AABB.value().applyUnion(Node.getAABB());
-
-        m_pGraph->NodeMap[m_CurNodeIndex] = std::move(Node);
-        return m_CurNodeIndex++;
-    }*/
-
+    void addNode(const std::string& vName, glm::vec2 vPos);
     void addLink(const SRenderPassGraphLink& vLink);
     void addLink(const SRenderPassGraphPortInfo& vSourcePort, const SRenderPassGraphPortInfo& vDestPort);
     void addLink(size_t vStartNodeId, const std::string& vStartPortName, size_t vEndNodeId,
