@@ -110,10 +110,7 @@ void CApplicationGoldSrc::_renderUIV()
     UI::beginFrame();
     m_pMainUI->renderUI();
     
-    if (UI::beginWindow("Render Pass Graph"))
-    {
-        m_pRenderPassGraphUI->renderUI();
-    }
+    m_pRenderPassGraphUI->renderUI();
     UI::endWindow();
     UI::endFrame();
 }

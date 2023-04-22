@@ -130,8 +130,6 @@ public:
     void removeLink(size_t vLinkId);
     void setEntry(size_t vNodeId, const std::string& vPortName);
 
-    Math::SAABB2D getAABB() const;
-
 private:
     bool __hasPass(size_t vNodeId);
     void __clear();

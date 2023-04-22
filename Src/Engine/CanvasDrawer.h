@@ -7,9 +7,6 @@
 class CCanvasDrawer
 {
 public:
-    _DEFINE_GETTER_SETTER(Offset, glm::vec2);
-    _DEFINE_GETTER_SETTER(Scale, float);
-
     enum class ETextAlign
     {
         BEGIN,
@@ -17,8 +14,17 @@ public:
         END
     };
 
+    _DEFINE_GETTER_SETTER(Offset, glm::vec2);
+    _DEFINE_GETTER(Scale, float);
+
+    void setScale(float vScale)
+    {
+        m_Scale = glm::max(0.1f, glm::min(10.0f, vScale));
+    }
+    
     void setCanvasInfo(const glm::vec2& vPos, const glm::vec2& vSize);
-    void setCanvasInfo(const ImVec2& vPos, const ImVec2& vSize);
+    glm::vec2 getCanvasPos() const;
+    glm::vec2 getCanvasSize() const;
 
     glm::vec2 applyTransform(const glm::vec2& vWorld) const;
     glm::vec2 applyScale(const glm::vec2& vWorld) const;

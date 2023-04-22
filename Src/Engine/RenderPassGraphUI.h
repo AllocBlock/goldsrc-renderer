@@ -19,7 +19,7 @@ public:
 
     void setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo);
 
-    void setGraph(ptr<SRenderPassGraph> vGraph);
+    void setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView = true);
     void update();
     void destroyPasses();
 
@@ -56,6 +56,10 @@ private:
     // TODO: cache to avoid redundant creation
     std::vector<std::string> __getNodeInputs(size_t vNodeId);
     std::vector<std::string> __getNodeOutputs(size_t vNodeId);
+    Math::SAABB2D __getNodeBound(size_t vNodeId) const;
+    Math::SAABB2D __getGraphBound() const;
+
+    void resetView(float vPadding = 50.0f);
 
     vk::CDevice::CPtr m_pDevice = nullptr;
     CAppInfo::Ptr m_pAppInfo = nullptr;
@@ -65,6 +69,7 @@ private:
     CCanvasDrawer m_CanvasDrawer;
     bool m_ShowGrid = true;
     bool m_IsContextMenuOpen = false;
+    bool m_NeedResetView = false;
 
     std::optional<SItemRef> m_HoveredItem = std::nullopt; // real-time update, override
     std::optional<SItemRef> m_DeferHoveredItem = std::nullopt; // actual hovered, defered for drawing
@@ -78,6 +83,7 @@ private:
         std::map<std::string, glm::vec2> Output;
     };
     std::map<size_t, SPortPos> m_NodePortPosMap;
+    std::map<size_t, glm::vec2> m_NodeSizeMap;
 
     bool m_EnableForce = false;
     CTimer m_Timer;

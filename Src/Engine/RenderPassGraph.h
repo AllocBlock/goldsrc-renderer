@@ -10,7 +10,6 @@ struct SRenderPassGraphNode
 {
     std::string Name;
     glm::vec2 Pos = glm::vec2(0.0f);
-    glm::vec2 Size = glm::vec2(20.0f); // Size is auto-updating, so no need to set it
 
     SRenderPassGraphNode() = default;
     SRenderPassGraphNode(const std::string vName, glm::vec2 vPos = glm::vec2(0.0f))
@@ -18,11 +17,6 @@ struct SRenderPassGraphNode
         _ASSERTE(!vName.empty());
         Name = vName;
         Pos = vPos;
-    }
-
-    Math::SAABB2D getAABB() const
-    {
-        return Math::SAABB2D(Pos, Pos + Size);
     }
 };
 

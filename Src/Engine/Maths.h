@@ -29,6 +29,18 @@ namespace Math
             return (Min + Max) * 0.5f;
         }
 
+        glm::vec2 getExtent() const
+        {
+            return Max - Min;
+        }
+
+        void extend(float vSize)
+        {
+            _ASSERTE(vSize >= 0.0f);
+            Min -= vSize;
+            Max += vSize;
+        }
+
         void applyUnion(const SAABB2D& vOther)
         {
             Min.x = glm::min<float>(Min.x, vOther.Min.x);

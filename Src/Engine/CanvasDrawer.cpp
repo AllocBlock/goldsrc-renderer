@@ -12,11 +12,8 @@ void CCanvasDrawer::setCanvasInfo(const glm::vec2& vPos, const glm::vec2& vSize)
     m_CanvasSize = vSize;
 }
 
-void CCanvasDrawer::setCanvasInfo(const ImVec2& vPos, const ImVec2& vSize)
-{
-    m_CanvasPos = __toGlm(vPos);
-    m_CanvasSize = __toGlm(vSize);
-}
+glm::vec2 CCanvasDrawer::getCanvasPos() const { return m_CanvasPos; }
+glm::vec2 CCanvasDrawer::getCanvasSize() const { return m_CanvasSize; }
 
 glm::vec2 CCanvasDrawer::applyTransform(const glm::vec2& vWorld) const
 {
@@ -35,7 +32,7 @@ float CCanvasDrawer::applyScale(float vValue) const
 
 glm::vec2 CCanvasDrawer::inverseTransform(const glm::vec2& vScreen) const
 {
-    return (vScreen - m_Offset - m_CanvasPos) / m_Scale;
+    return (vScreen - m_Offset - m_CanvasPos - m_CanvasSize * 0.5f) / m_Scale;
 }
 
 float CCanvasDrawer::inverseScale(float vValue) const
@@ -93,14 +90,19 @@ void CCanvasDrawer::drawBezier(const Math::SCubicBezier2D& vBezier, ImColor vCol
 
 void CCanvasDrawer::drawGrid(float vGridSize, ImColor vColor, float vThickness)
 {
-    float AcutalGridSize = vGridSize * m_Scale;
-    for (float x = fmodf(m_Offset.x, AcutalGridSize); x < m_CanvasSize.x; x += AcutalGridSize)
+    glm::vec2 WorldLeftTop = inverseTransform(m_CanvasPos);
+    glm::vec2 WorldRightBottom = inverseTransform(m_CanvasPos + m_CanvasSize);
+
+
+    glm::vec2 StartPos = glm::ceil(WorldLeftTop / vGridSize) * vGridSize;
+    
+    for (float x = StartPos.x; x < WorldRightBottom.x; x += vGridSize)
     {
-        m_pDrawList->AddLine(__toImgui(glm::vec2(x, 0.0f) + m_CanvasPos), __toImgui(glm::vec2(x, m_CanvasSize.y) + m_CanvasPos), vColor, vThickness);
+        drawLine(glm::vec2(x, WorldLeftTop.y), glm::vec2(x, WorldRightBottom.y), vColor, vThickness);
     }
-    for (float y = fmodf(m_Offset.y, AcutalGridSize); y < m_CanvasSize.y; y += AcutalGridSize)
+    for (float y = StartPos.y; y < WorldRightBottom.y; y += vGridSize)
     {
-        m_pDrawList->AddLine(__toImgui(glm::vec2(0.0f, y) + m_CanvasPos), __toImgui(glm::vec2(m_CanvasSize.x, y) + m_CanvasPos), vColor, vThickness);
+        drawLine(glm::vec2(WorldLeftTop.x, y), glm::vec2(WorldRightBottom.x, y), vColor, vThickness);
     }}
 
 bool CCanvasDrawer::addInvisibleButton(const glm::vec2& vPos, const glm::vec2& vSize)
@@ -155,7 +157,7 @@ glm::vec2 CCanvasDrawer::calcActualTextSize(const std::string& vText)
 
 glm::vec2 CCanvasDrawer::__toScreen(const glm::vec2& vWorld) const
 {
-    return vWorld * m_Scale + m_Offset + m_CanvasPos;
+    return vWorld * m_Scale + m_Offset + m_CanvasPos + m_CanvasSize * 0.5f;
 }
 
 ImVec2 CCanvasDrawer::__toScreenImgui(const glm::vec2& vWorld) const

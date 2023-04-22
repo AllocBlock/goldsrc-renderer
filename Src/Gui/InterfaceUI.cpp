@@ -315,7 +315,7 @@ void UI::image(const vk::CImage& vImage, const glm::vec2& vSize)
 
 bool UI::beginMenuBar() { return ImGui::BeginMenuBar(); }
 bool UI::beginMenu(std::string vTitle) { return ImGui::BeginMenu(vTitle.c_str()); }
-bool UI::menuItem(std::string vTitle, bool* vSelected) { return ImGui::MenuItem(vTitle.c_str(), nullptr, vSelected); }
+bool UI::menuItem(std::string vTitle, bool* vSelected, bool vEnabled) { return ImGui::MenuItem(vTitle.c_str(), nullptr, vSelected, vEnabled); }
 void UI::endMenu() { ImGui::EndMenu(); }
 void UI::endMenuBar() { ImGui::EndMenuBar(); }
 

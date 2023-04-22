@@ -70,7 +70,7 @@ namespace UI
 
     bool beginMenuBar();
     bool beginMenu(std::string vTitle);
-    bool menuItem(std::string vTitle, bool* vSelected = nullptr);
+    bool menuItem(std::string vTitle, bool* vSelected = nullptr, bool vEnabled = true);
     void endMenu();
     void endMenuBar();
 

@@ -223,22 +223,6 @@ void CRenderPassGraphEditor::removeLink(size_t vLinkId)
 void CRenderPassGraphEditor::setEntry(size_t vNodeId, const std::string & vPortName)
 { execCommand(make<CCommandSetEntry>(vNodeId, vPortName)); }
 
-
-Math::SAABB2D CRenderPassGraphEditor::getAABB() const
-{
-    if (m_pGraph && !m_pGraph->NodeMap.empty())
-    {
-        Math::SAABB2D AABB = m_pGraph->NodeMap.begin()->second.getAABB();
-        for (auto pIter = std::next(m_pGraph->NodeMap.begin()); pIter != m_pGraph->NodeMap.end(); ++pIter)
-        {
-            AABB.applyUnion(pIter->second.getAABB());
-        }
-        return AABB;
-    }
-    else
-        return Math::SAABB2D(glm::vec2(0, 0), glm::vec2(0, 0));
-}
-
 bool CRenderPassGraphEditor::__hasPass(size_t vNodeId)
 {
     return m_pGraph->NodeMap.find(vNodeId) != m_pGraph->NodeMap.end();

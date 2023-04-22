@@ -7,6 +7,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include "InterfaceUI.h"
+
 // reference: https://gist.github.com/ocornut/7e9b3ec566a333d725d4
 
 // parameters
@@ -53,6 +55,13 @@ namespace
     glm::vec2 __toGlm(ImVec2 v) { return glm::vec2(v.x, v.y); }
 }
 
+namespace ImGui
+{
+    bool isAnyMouseClicked()
+    {
+        return ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle);
+    }
+}
 
 Math::SCubicBezier2D __createLinkCurve(const glm::vec2& vStart, const glm::vec2& vEnd)
 {
@@ -112,6 +121,7 @@ void CRenderPassGraphUI::__drawNode(size_t vNodeId, SRenderPassGraphNode& vioNod
     float ContentHeight = PortItemHeight * glm::max(__getNodeInputs(vNodeId).size(), __getNodeOutputs(vNodeId).size()) + ContentPadding * 2;
 
     glm::vec2 NodeSize = glm::vec2(gNodeWidth, HeaderHeight + ContentHeight);
+    m_NodeSizeMap[vNodeId] = NodeSize;
 
     ImGui::PushID(static_cast<int>(vNodeId));
 
@@ -247,13 +257,11 @@ void CRenderPassGraphUI::update()
     for (auto pIter1 = m_pGraph->NodeMap.begin(); pIter1 != m_pGraph->NodeMap.end(); ++pIter1)
     {
         size_t Id1 = pIter1->first;
-        const SRenderPassGraphNode& Node1 = pIter1->second;
-        Math::SAABB2D NodeAABB1 = Node1.getAABB();
+        Math::SAABB2D NodeAABB1 = __getNodeBound(Id1);
         for (auto pIter2 = std::next(pIter1); pIter2 != m_pGraph->NodeMap.end(); ++pIter2)
         {
             size_t Id2 = pIter2->first;
-            const SRenderPassGraphNode& Node2 = pIter2->second;
-            Math::SAABB2D NodeAABB2 = Node2.getAABB();
+            Math::SAABB2D NodeAABB2 = __getNodeBound(Id2);
 
             glm::vec2 v = (NodeAABB1.getCenter() - NodeAABB2.getCenter()) * m_WorldScale;
             float d = glm::length(v);
@@ -269,7 +277,7 @@ void CRenderPassGraphUI::update()
     for (const auto& Pair : m_pGraph->LinkMap)
     {
         const SRenderPassGraphLink& Link = Pair.second;
-        glm::vec2 v = (m_pGraph->NodeMap.at(Link.Destination.NodeId).getAABB().getCenter() - m_pGraph->NodeMap.at(Link.Source.NodeId).getAABB().getCenter()) * m_WorldScale;
+        glm::vec2 v = (__getNodeBound(Link.Destination.NodeId).getCenter() - __getNodeBound(Link.Source.NodeId).getCenter()) * m_WorldScale;
         float d = glm::length(v);
         glm::vec2 ForceOn1Direction = d > 1e-3 ? glm::normalize(v) : glm::vec2(1, 0);
 
@@ -296,54 +304,63 @@ void CRenderPassGraphUI::update()
     }
 }
 
-namespace ImGui
-{
-    bool isAnyMouseClicked()
-    {
-        return ImGui::IsMouseClicked(ImGuiMouseButton_Left) || ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle);
-    }
-}
-
 void CRenderPassGraphUI::_renderUIV()
 {
+    if (!UI::beginWindow("Render Pass Graph", nullptr, UI::EWindowFlag::MENU_BAR)) return;
+
     // reset state
     m_HoveredItem.reset();
     if (m_AddLinkState.isStarted())
         m_AddLinkState.clearCandidates();
 
-    ImGui::BeginChild("Visualize", ImVec2(-gSidebarWidth, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
-    ImGui::BeginGroup();
-    // Create our child canvas
-    glm::vec2 CanvasOffset = m_CanvasDrawer.getOffset();
-    float CanvasScale = m_CanvasDrawer.getScale();
-    ImGui::Text("Hold middle mouse button to panning (%.2f,%.2f), scale = %.2f", CanvasOffset.x, CanvasOffset.y, CanvasScale);
-    ImGui::SameLine(ImGui::GetWindowWidth() - 200);
-    ImGui::Checkbox("Show grid", &m_ShowGrid);
-    ImGui::SameLine(ImGui::GetWindowWidth() - 100);
-    ImGui::Checkbox("Enable Force", &m_EnableForce);
-
-    ImGui::BeginDisabled(!m_Editor.canUndo());
-    if (ImGui::Button(u8"撤销"))
-        m_Editor.undo();
-    ImGui::EndDisabled();
-    ImGui::SameLine();
-    ImGui::BeginDisabled(!m_Editor.canRedo());
-    if (ImGui::Button(u8"重做"))
-        m_Editor.redo();
-    ImGui::EndDisabled();
-
-    if (ImGui::Button(u8"保存到"))
+    // menu
+    if (UI::beginMenuBar())
     {
-        auto SaveDialogResult = Gui::createSaveFileDialog("graph");
-        if (SaveDialogResult.Action)
+        if (UI::beginMenu(u8"文件"))
         {
-            RenderPassGraphIO::save(m_pGraph, SaveDialogResult.FilePath);
+            if (UI::menuItem(u8"保存到"))
+            {
+                auto SaveDialogResult = Gui::createSaveFileDialog("graph");
+                if (SaveDialogResult.Action)
+                {
+                    RenderPassGraphIO::save(m_pGraph, SaveDialogResult.FilePath);
+                }
+            }
+            UI::endMenu();
         }
+        if (UI::beginMenu(u8"编辑"))
+        {
+            if (UI::menuItem(u8"撤销"), nullptr, m_Editor.canUndo())
+                m_Editor.undo();
+            if (UI::menuItem(u8"重做"), nullptr, m_Editor.canUndo())
+                m_Editor.redo();
+            UI::endMenu();
+        }
+        if (UI::beginMenu(u8"设置"))
+        {
+            UI::menuItem(u8"显示网格", &m_ShowGrid);
+            UI::menuItem(u8"开启节点引力", &m_EnableForce);
+            UI::endMenu();
+        }
+        UI::endMenuBar();
     }
 
+    ImGui::BeginChild("Visualize", ImVec2(-gSidebarWidth, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
+    UI::beginGroup();
+    // Create our child canvas
+    float CanvasScale = m_CanvasDrawer.getScale();
+    glm::vec2 CanvasCenter = m_CanvasDrawer.getOffset() / CanvasScale;
+    glm::vec2 MousePos = m_CanvasDrawer.getMousePosInWorld();
+    ImGui::Text(u8"中心 (%7.2f,%7.2f), 缩放 %4.2f, 鼠标位置 (%7.2f,%7.2f)", CanvasCenter.x, CanvasCenter.y, CanvasScale, MousePos.x, MousePos.y);
+
+    if (UI::button(u8"重置视角"))
+        resetView(50.0f);
+
+    UI::sameLine();
+    
     std::string ApplyButtonText = m_pGraph->isValid() ? u8"应用更改" : u8"无法应用更改：渲染图无效";
     ImGui::BeginDisabled(!m_pGraph->isValid());
-    if (ImGui::Button(ApplyButtonText.c_str()))
+    if (UI::button(ApplyButtonText))
     {
         m_pDevice->waitUntilIdle();
         m_GraphApplyEventHandler.trigger(m_pGraph);
@@ -353,13 +370,14 @@ void CRenderPassGraphUI::_renderUIV()
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(60, 60, 70, 200));
-    ImGui::BeginChild("Canvas", ImVec2(0, 0), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
+    ImGui::BeginChild("Canvas", ImVec2(0, 0), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoMove);
     ImGui::PopStyleVar(); // WindowPadding
 
+    // canvas
     m_CanvasDrawer.begin();
     m_CanvasDrawer.setCanvasInfo(__toGlm(ImGui::GetCursorScreenPos()), __toGlm(ImGui::GetWindowSize()));
 
-    // Display grid
+    // draw grid
     if (m_ShowGrid)
         m_CanvasDrawer.drawGrid(gGridSize, gGridColor, gGridThickness);
     
@@ -482,8 +500,7 @@ void CRenderPassGraphUI::_renderUIV()
     {
         ImGui::OpenPopup("NodeContentMenu");
     }
-
-    // Draw context menu
+    
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
     if (ImGui::BeginPopup("NodeContentMenu"))
     {
@@ -544,7 +561,6 @@ void CRenderPassGraphUI::_renderUIV()
 
             m_CanvasDrawer.setScale(NewScale);
             m_CanvasDrawer.setOffset(NewOffset);
-            
         }
     }
     
@@ -556,7 +572,7 @@ void CRenderPassGraphUI::_renderUIV()
 
     ImGui::SameLine();
 
-    // Draw sidebar
+    // draw sidebar
     ImGui::BeginChild("sidebar", ImVec2(gSidebarWidth, 0));
     if (ImGui::BeginTabBar("sidebartab"))
     {
@@ -603,6 +619,13 @@ void CRenderPassGraphUI::_renderUIV()
     m_DeferSelectedItem = m_SelectedItem;
 
     m_AnimationTime += m_Timer.tick();
+
+    // others
+    if (m_NeedResetView)
+    {
+        resetView();
+        m_NeedResetView = false;
+    }
 }
 
 void CRenderPassGraphUI::setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
@@ -611,11 +634,16 @@ void CRenderPassGraphUI::setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAp
     m_pAppInfo = vAppInfo;
 }
 
-void CRenderPassGraphUI::setGraph(ptr<SRenderPassGraph> vGraph)
+void CRenderPassGraphUI::setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView)
 {
     m_pGraph = vGraph;
     m_Editor.setGraph(vGraph);
     m_AddLinkState.setGraph(vGraph);
+
+    m_NodePortPosMap.clear();
+    m_NodeSizeMap.clear();
+
+    m_NeedResetView = vResetView;
 
     destroyPasses();
 }
@@ -673,6 +701,48 @@ std::vector<std::string> CRenderPassGraphUI::__getNodeOutputs(size_t vNodeId)
         OutputSet.push_back(pPortSet->getOutputPort(i)->getName());
     }
     return OutputSet;
+}
+
+Math::SAABB2D CRenderPassGraphUI::__getNodeBound(size_t vNodeId) const
+{
+    const auto& Node = m_pGraph->NodeMap.at(vNodeId);
+    if (m_NodeSizeMap.find(vNodeId) == m_NodeSizeMap.end())
+        return Math::SAABB2D(Node.Pos, Node.Pos);
+    else
+    {
+        glm::vec2 Size = m_NodeSizeMap.at(vNodeId);
+        return Math::SAABB2D(Node.Pos, Node.Pos + Size);
+    }
+}
+
+Math::SAABB2D CRenderPassGraphUI::__getGraphBound() const
+{
+    if (!m_pGraph || m_pGraph->NodeMap.empty())
+        return  Math::SAABB2D(glm::vec2(-200), glm::vec2(200));
+
+    std::optional<Math::SAABB2D> AABB;
+    for (const auto& Pair : m_pGraph->NodeMap)
+    {
+        const auto& Bound = __getNodeBound(Pair.first);
+        if (AABB.has_value())
+            AABB->applyUnion(Bound);
+        else
+            AABB = Bound;
+    }
+    return AABB.value();
+}
+
+void CRenderPassGraphUI::resetView(float vPadding)
+{
+    Math::SAABB2D AABB = __getGraphBound();
+
+    glm::vec2 Center = AABB.getCenter();
+    glm::vec2 Extent = AABB.getExtent() + vPadding * 2.0f;
+    glm::vec2 CanvasSize = m_CanvasDrawer.getCanvasSize();
+    float Scale = glm::min(CanvasSize.x / Extent.x, CanvasSize.y / Extent.y);
+    m_CanvasDrawer.setScale(Scale);
+    float ActualScale = m_CanvasDrawer.getScale();
+    m_CanvasDrawer.setOffset(-Center * ActualScale);
 }
 
 bool CRenderPassGraphUI::__isItemSelected(size_t vId, EItemType vType, const std::string& vName, bool vIsInput) const
