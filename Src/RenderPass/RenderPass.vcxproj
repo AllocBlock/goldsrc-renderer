@@ -57,15 +57,6 @@
     <ClCompile Include="PipelineVisCollider.cpp" />
     <ClCompile Include="PassFullScreen.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\sprShader.frag" />
-    <None Include="shaders\sprShader.vert" />
-    <None Include="shaders\tonemap.glsl" />
-    <None Include="shaders\visCollidePointShader.frag" />
-    <None Include="shaders\visCollidePointShader.vert" />
-    <None Include="shaders\visColliderShader.frag" />
-    <None Include="shaders\visColliderShader.vert" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

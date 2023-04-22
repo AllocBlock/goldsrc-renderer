@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="资源文件">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -44,25 +40,5 @@
     <ClInclude Include="PassVisPhysics.h">
       <Filter>头文件</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\shader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\shader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\visColliderShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\visColliderShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\visCollidePointShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\visCollidePointShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
   </ItemGroup>
 </Project>

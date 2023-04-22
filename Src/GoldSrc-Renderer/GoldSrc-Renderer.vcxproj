@@ -166,28 +166,6 @@
     <ClInclude Include="PassGoldSrc.h" />
     <ClInclude Include="GuiScene.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\alphaTestShader.frag" />
-    <None Include="shaders\alphaTestShader.vert" />
-    <None Include="shaders\bloomBrightFilter.frag" />
-    <None Include="shaders\fullScreen.vert" />
-    <None Include="shaders\iconShader.frag" />
-    <None Include="shaders\iconShader.vert" />
-    <None Include="shaders\outlineEdgeShader.frag" />
-    <None Include="shaders\outlineEdgeShader.vert" />
-    <None Include="shaders\outlineMaskShader.frag" />
-    <None Include="shaders\outlineMaskShader.vert" />
-    <None Include="shaders\goldSrcNormalShader.frag" />
-    <None Include="shaders\goldSrcNormalShader.vert" />
-    <None Include="shaders\simpleShader.frag" />
-    <None Include="shaders\simpleShader.vert" />
-    <None Include="shaders\skyShader.frag" />
-    <None Include="shaders\skyShader.vert" />
-    <None Include="shaders\sprShader.frag" />
-    <None Include="shaders\sprShader.vert" />
-    <None Include="shaders\textShader.frag" />
-    <None Include="shaders\textShader.vert" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="资源文件">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="源文件\Pipeline">
       <UniqueIdentifier>{1f5a51fb-9e66-4c84-96b5-f52fcacfcc53}</UniqueIdentifier>
     </Filter>
@@ -158,67 +154,5 @@
     <ClInclude Include="PipelineText.h">
       <Filter>头文件\Pipeline</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\goldSrcNormalShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\simpleShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\simpleShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\skyShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\skyShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\sprShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\sprShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\alphaTestShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\alphaTestShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\goldSrcNormalShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\outlineEdgeShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\outlineEdgeShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\outlineMaskShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\outlineMaskShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\fullScreen.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\bloomBrightFilter.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\iconShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\iconShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\textShader.frag">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="shaders\textShader.vert">
-      <Filter>资源文件</Filter>
-    </None>
   </ItemGroup>
 </Project>
