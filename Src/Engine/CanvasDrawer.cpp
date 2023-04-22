@@ -1,6 +1,10 @@
 #include "CanvasDrawer.h"
 
-ImVec2 __toImgui(glm::vec2 v) { return ImVec2(v.x, v.y); }
+namespace
+{
+    glm::vec2 __toGlm(ImVec2 v) { return glm::vec2(v.x, v.y); }
+    ImVec2 __toImgui(glm::vec2 v) { return ImVec2(v.x, v.y); }
+}
 
 void CCanvasDrawer::setCanvasInfo(const glm::vec2& vPos, const glm::vec2& vSize)
 {
@@ -8,24 +12,35 @@ void CCanvasDrawer::setCanvasInfo(const glm::vec2& vPos, const glm::vec2& vSize)
     m_CanvasSize = vSize;
 }
 
-glm::vec2 CCanvasDrawer::applyTransform(const glm::vec2& vWorld)
+void CCanvasDrawer::setCanvasInfo(const ImVec2& vPos, const ImVec2& vSize)
+{
+    m_CanvasPos = __toGlm(vPos);
+    m_CanvasSize = __toGlm(vSize);
+}
+
+glm::vec2 CCanvasDrawer::applyTransform(const glm::vec2& vWorld) const
 {
     return __toScreen(vWorld);
 }
 
-glm::vec2 CCanvasDrawer::applyScale(const glm::vec2& vWorld)
+glm::vec2 CCanvasDrawer::applyScale(const glm::vec2& vWorld) const
 {
     return vWorld * m_Scale;
 }
 
-float CCanvasDrawer::applyScale(float vValue)
+float CCanvasDrawer::applyScale(float vValue) const
 {
     return vValue * m_Scale;
 }
 
-glm::vec2 CCanvasDrawer::inverseTransform(const glm::vec2& vScreen)
+glm::vec2 CCanvasDrawer::inverseTransform(const glm::vec2& vScreen) const
 {
     return (vScreen - m_Offset - m_CanvasPos) / m_Scale;
+}
+
+float CCanvasDrawer::inverseScale(float vValue) const
+{
+    return vValue / m_Scale;
 }
 
 void ::CCanvasDrawer::begin()
@@ -53,10 +68,17 @@ void CCanvasDrawer::drawSolidCircle(const glm::vec2& vCenter, float vRadius, ImC
     m_pDrawList->AddCircleFilled(__toScreenImgui(vCenter), vRadius, vColor);
 }
 
-void CCanvasDrawer::drawText(const glm::vec2& vPos, const std::string& vText, ImColor vColor)
+void CCanvasDrawer::drawText(const glm::vec2& vAnchorPos, const std::string& vText, ImColor vColor, ETextAlign vAlignHorizon, ETextAlign vAlignVertical)
 {
+    glm::vec2 TextAnchor = __toScreen(vAnchorPos);
+    glm::vec2 TextSize = calcActualTextSize(vText.c_str());
+    if (vAlignHorizon == ETextAlign::CENTER) TextAnchor.x -= TextSize.x * 0.5;
+    else if (vAlignHorizon == ETextAlign::END) TextAnchor.x -= TextSize.x;
 
-    m_pDrawList->AddText(__toScreenImgui(vPos), vColor, vText.c_str());
+    if (vAlignVertical == ETextAlign::CENTER) TextAnchor.y -= TextSize.y * 0.5;
+    else if (vAlignVertical == ETextAlign::END) TextAnchor.y -= TextSize.y;
+
+    m_pDrawList->AddText(__toImgui(TextAnchor), vColor, vText.c_str());
 }
 
 void CCanvasDrawer::drawBezier(const Math::SCubicBezier2D& vBezier, ImColor vColor, float vThickness)
@@ -113,6 +135,22 @@ void CCanvasDrawer::endLayerSplitting()
 void CCanvasDrawer::setCursor(const glm::vec2& vWorld)
 {
     ImGui::SetCursorScreenPos(__toScreenImgui(vWorld));
+}
+
+glm::vec2 CCanvasDrawer::getMousePosOnScreen() const
+{
+    return __toGlm(ImGui::GetMousePos());
+}
+
+glm::vec2 CCanvasDrawer::getMousePosInWorld() const
+{
+    return inverseTransform(getMousePosOnScreen());
+}
+
+glm::vec2 CCanvasDrawer::calcActualTextSize(const std::string& vText)
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+    return __toGlm(ImGui::CalcTextSize(vText.c_str())) + __toGlm(style.FramePadding) * 2.0f;
 }
 
 glm::vec2 CCanvasDrawer::__toScreen(const glm::vec2& vWorld) const

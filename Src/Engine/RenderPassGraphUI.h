@@ -42,6 +42,7 @@ private:
     void __drawLink(size_t vLinkId, const SRenderPassGraphLink& vLink);
     void __drawNode(size_t vNodeId, SRenderPassGraphNode& vioNode);
     void __drawCurveAnimation(const Math::SCubicBezier2D& vCurve, unsigned vColor, float vRadius);
+    void __drawPorts(size_t vNodeId, glm::vec2 vStartPos, float vPortItemHeight, bool vIsInput);
 
     // TODO: how to manage these copied function?
     bool __isItemSelected(size_t vId, EItemType vType, const std::string& vName = "", bool vIsInput = true) const;

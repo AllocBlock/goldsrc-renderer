@@ -10,19 +10,28 @@ public:
     _DEFINE_GETTER_SETTER(Offset, glm::vec2);
     _DEFINE_GETTER_SETTER(Scale, float);
 
-    void setCanvasInfo(const glm::vec2& vPos, const glm::vec2& vSize);
+    enum class ETextAlign
+    {
+        BEGIN,
+        CENTER,
+        END
+    };
 
-    glm::vec2 applyTransform(const glm::vec2& vWorld);
-    glm::vec2 applyScale(const glm::vec2& vWorld);
-    float applyScale(float vValue);
-    glm::vec2 inverseTransform(const glm::vec2& vScreen);
+    void setCanvasInfo(const glm::vec2& vPos, const glm::vec2& vSize);
+    void setCanvasInfo(const ImVec2& vPos, const ImVec2& vSize);
+
+    glm::vec2 applyTransform(const glm::vec2& vWorld) const;
+    glm::vec2 applyScale(const glm::vec2& vWorld) const;
+    float applyScale(float vValue) const;
+    glm::vec2 inverseTransform(const glm::vec2& vScreen) const;
+    float inverseScale(float vValue) const;
 
     void begin();
     void drawLine(const glm::vec2& vStart, const glm::vec2& vEnd, ImColor vColor, float vThickness);
     void drawOutlineRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding = 0.0f, ImDrawCornerFlags vFlags = 0);
     void drawSolidRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding = 0.0f, ImDrawCornerFlags vFlags = 0);
     void drawSolidCircle(const glm::vec2& vCenter, float vRadius, ImColor vColor);
-    void drawText(const glm::vec2& vPos, const std::string& vText, ImColor vColor);
+    void drawText(const glm::vec2& vAnchorPos, const std::string& vText, ImColor vColor, ETextAlign vAlignHorizon = ETextAlign::BEGIN, ETextAlign vAlignVertical = ETextAlign::BEGIN);
     void drawBezier(const Math::SCubicBezier2D& vBezier, ImColor vColor, float vThickness);
     void drawGrid(float vGridSize, ImColor vColor, float vThickness);
     bool addInvisibleButton(const glm::vec2& vPos, const glm::vec2& vSize);
@@ -32,6 +41,10 @@ public:
     void endLayerSplitting();
 
     void setCursor(const glm::vec2& vWorld);
+    glm::vec2 getMousePosOnScreen() const;
+    glm::vec2 getMousePosInWorld() const;
+
+    glm::vec2 calcActualTextSize(const std::string& vText);
 
 private:
     glm::vec2 __toScreen(const glm::vec2& vWorld) const;
