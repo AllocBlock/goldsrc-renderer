@@ -5,6 +5,10 @@
 - 渲染器截图
 ![](./Doc/Images/assault_this_renderer.png)
 
+## 其他功能
+- Renderpass Graph
+![](./Doc/Images/renderpass_graph_demo.gif)
+
 ## 基础功能
 - 渲染
   - 读取并渲染map文件 ✅已完成
