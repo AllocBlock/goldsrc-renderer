@@ -12,25 +12,12 @@ namespace
 {
     struct SUBOFrag
     {
-        alignas(16) float FilterSize;
+        alignas(16) glm::uvec2 ImageExtent;
     };
 }
 
-class CPipelineBlendBlur : public IPipeline
+class CPipelineBloomBlur : public IPipeline
 {
-public:
-    void setInputPort(CPort::Ptr vPort)
-    {
-        vPort->hookImageUpdate([this, vPort]()
-        {
-            if (!vPort->isImageReadyV()) return;
-            for (size_t i = 0; i < m_ImageNum; ++i)
-            {
-                __updateInputImage(vPort->getImageV(i), i);
-            }
-        });
-    }
-
 protected:
     virtual void _initShaderResourceDescriptorV() override
     {
@@ -106,7 +93,8 @@ private:
     void __updateUniformBuffer(uint32_t vImageIndex)
     {
         SUBOFrag UBOFrag = {};
-        UBOFrag.FilterSize = m_FilterSize;
+        //UBOFrag.FilterSize = m_FilterSize;
+        UBOFrag.ImageExtent = m_Extent;
         m_FragUbufferSet[vImageIndex]->update(&UBOFrag);
     }
 

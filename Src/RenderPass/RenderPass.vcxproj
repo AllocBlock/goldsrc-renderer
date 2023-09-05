@@ -32,15 +32,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FullScreenPointData.h" />
-    <ClInclude Include="PassBloomBlur.h" />
-    <ClInclude Include="PassBloomBrightFilter.h" />
-    <ClInclude Include="PassBloomMerge.h" />
+    <ClInclude Include="PassBloom.h" />
     <ClInclude Include="PassGUI.h" />
     <ClInclude Include="PassSprite.h" />
     <ClInclude Include="PipelineBloomBlur.h" />
     <ClInclude Include="PipelineBloomMerge.h" />
     <ClInclude Include="PipelineEnvironment.h" />
-    <ClInclude Include="PipelineBloomBrightFilter.h" />
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PipelineSprite.h" />
     <ClInclude Include="PipelineVisCollidePoint.h" />

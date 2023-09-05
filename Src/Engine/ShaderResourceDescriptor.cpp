@@ -84,6 +84,17 @@ void CDescriptorWriteInfo::addWriteImagesAndSampler(size_t vTargetIndex, const v
     addWriteImagesAndSampler(vTargetIndex, ImageViewSet, vSampler);
 }
 
+void CDescriptorWriteInfo::addWriteInputAttachment(size_t vTargetIndex, VkImageView vImageView)
+{
+    _ASSERTE(vImageView != VK_NULL_HANDLE);
+
+    VkDescriptorImageInfo Info = {};
+    Info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    Info.imageView = vImageView;
+    Info.sampler = VK_NULL_HANDLE;
+    m_WriteInfoSet.emplace_back(SDescriptorWriteInfoEntry({ vTargetIndex, {}, {Info} }));
+}
+
 CShaderResourceDescriptor::~CShaderResourceDescriptor() { clear(); }
 
 void CShaderResourceDescriptor::add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage)

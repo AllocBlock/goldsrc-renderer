@@ -112,54 +112,24 @@ void CRenderPassFullScreen::__generateScene()
 void CRenderPassFullScreenGeneral::_initV()
 {
     __createVertexBuffer();
-    _initPipelineV();
-}
-
-void CRenderPassFullScreenGeneral::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
-{
-    VkExtent2D Extent;
-    if (_dumpReferenceExtentV(Extent))
-    {
-        if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
-        {
-            __createPipeline(Extent);
-        }
-    }
-
-    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
-}
-
-std::vector<VkCommandBuffer> CRenderPassFullScreenGeneral::_requestCommandBuffersV(uint32_t vImageIndex)
-{
-    _ASSERTE(m_pPipeline->isValid());
-
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
-    _beginWithFramebuffer(vImageIndex);
-
-    if (m_pVertexBuffer->isValid())
-    {
-        pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
-        m_pPipeline->bind(pCommandBuffer, vImageIndex);
-        pCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
-    }
-    
-    _endWithFramebuffer();
-    return { pCommandBuffer->get() };
 }
 
 void CRenderPassFullScreenGeneral::_destroyV()
 {
-    destroyAndClear(m_pPipeline);
     destroyAndClear(m_pVertexBuffer);
-
     IRenderPass::_destroyV();
 }
 
-void CRenderPassFullScreenGeneral::__createPipeline(VkExtent2D vExtent)
+void CRenderPassFullScreenGeneral::_bindVertexBuffer(CCommandBuffer::Ptr vCommandBuffer)
 {
-    _ASSERTE(isValid() && m_pPipeline);
-    m_pPipeline->create(m_pDevice, get(), vExtent);
-    m_pPipeline->setImageNum(m_pAppInfo->getImageNum());
+    _ASSERTE(m_pVertexBuffer->isValid());
+    vCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+}
+
+void CRenderPassFullScreenGeneral::_drawFullScreen(CCommandBuffer::Ptr vCommandBuffer)
+{
+    _bindVertexBuffer(vCommandBuffer);
+    vCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
 }
 
 void CRenderPassFullScreenGeneral::__createVertexBuffer()

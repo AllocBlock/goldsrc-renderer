@@ -38,26 +38,17 @@
     <ClInclude Include="PassGUI.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PassBloomBrightFilter.h">
-      <Filter>头文件\Bloom</Filter>
-    </ClInclude>
-    <ClInclude Include="PipelineBloomBrightFilter.h">
-      <Filter>头文件\Bloom</Filter>
-    </ClInclude>
-    <ClInclude Include="PassBloomBlur.h">
-      <Filter>头文件\Bloom</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineBloomBlur.h">
       <Filter>头文件\Bloom</Filter>
     </ClInclude>
     <ClInclude Include="PipelineBloomMerge.h">
       <Filter>头文件\Bloom</Filter>
     </ClInclude>
-    <ClInclude Include="PassBloomMerge.h">
-      <Filter>头文件\Bloom</Filter>
-    </ClInclude>
     <ClInclude Include="PassSprite.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PassBloom.h">
+      <Filter>头文件\Bloom</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

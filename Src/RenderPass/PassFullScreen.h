@@ -64,42 +64,34 @@ private:
 class CRenderPassFullScreenGeneral : public CRenderPassSingleFrameBuffer
 {
 protected:
-    virtual ptr<IPipeline> _initPipelineV() = 0;
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) = 0;
-    virtual CRenderPassDescriptor _getRenderPassDescV() = 0;
-
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
-    
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override final
     {
         voExtent = m_pAppInfo->getScreenExtent();
         return true;
     }
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override final
+    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
     {
         return
         {
             m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
         };
     }
-    virtual std::vector<VkClearValue> _getClearValuesV() override final
+    virtual std::vector<VkClearValue> _getClearValuesV() override
     {
         return DefaultClearValueColor;
     }
 
-private:
-    virtual void _initV() override final;
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override final;
-    virtual void _destroyV() override final;
+protected:
+    virtual void _initV() override;
+    virtual void _destroyV() override;
+
+    void _bindVertexBuffer(CCommandBuffer::Ptr vCommandBuffer);
+    void _drawFullScreen(CCommandBuffer::Ptr vCommandBuffer);
     
 private:
-    void __createPipeline(VkExtent2D vExtent);
     void __createVertexBuffer();
-
     void __generateScene();
 
-    ptr<IPipeline> m_pPipeline = nullptr;
     ptr<vk::CVertexBufferTyped<SFullScreenPointData>> m_pVertexBuffer = nullptr;
-
     std::vector<SFullScreenPointData> m_PointDataSet;
 };

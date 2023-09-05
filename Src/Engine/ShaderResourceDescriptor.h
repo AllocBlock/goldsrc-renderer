@@ -26,6 +26,7 @@ public:
     void addWriteImagesAndSampler(size_t vTargetIndex, const std::vector<VkImageView>& vImageViewSet, VkSampler vSampler = VK_NULL_HANDLE);
     void addWriteImagesAndSampler(size_t vTargetIndex, const std::vector<vk::CImage>& vImageSet, VkSampler vSampler = VK_NULL_HANDLE);
     void addWriteImagesAndSampler(size_t vTargetIndex, const vk::CPointerSet<vk::CImage>& vImageSet, VkSampler vSampler = VK_NULL_HANDLE);
+    void addWriteInputAttachment(size_t vTargetIndex, VkImageView vImageView);
 
 private:
     std::vector<SDescriptorWriteInfoEntry> m_WriteInfoSet;

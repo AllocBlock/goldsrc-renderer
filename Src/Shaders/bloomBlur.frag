@@ -10,9 +10,16 @@ layout(binding = 1) uniform sampler2D uTexInput;
 
 layout(location = 0) out vec4 outColor;
 
+float threshold = 0.6;
+
 bool isInScreen(vec2 uv)
 {
     return uv.x >= 0.0 && uv.x < 1.0 && uv.y >= 0.0 && uv.y < 1.0;
+}
+
+float luminance(vec3 color)
+{
+    return 0.2125 * color.r + 0.7154 * color.g + 0.0721 * color.b; 
 }
 
 void main()
@@ -20,15 +27,9 @@ void main()
     const int N = 5;
     const int MaxNum = N * N;
     const vec2 PixelSize = vec2(1.0) / vec2(ubo.ImageExtent);
-    int Num = 0;
     
-    // for (int i = 0; i < MaxNum; ++i)
-    // {
-    //     vec2 Shift = (vec2(i % N, i / N) - N/2) * PixelSize;
-    //     bool hasValue = (texture(uTexInput, inFragTexCoord + Shift).x > 0.5);
-    //     if (hasValue) Num++;
-    // }
-
+    int Num = 0;
+    vec3 SumColor = vec3(0.0, 0.0, 0.0);
     const int Half = N / 2;
     for (int i = -Half; i <= Half; ++i)
     {
@@ -36,13 +37,12 @@ void main()
         {
             vec2 uv = inFragTexCoord + vec2(i, k) * PixelSize;
             if (!isInScreen(uv)) continue;
-            bool hasValue = (texture(uTexInput, uv).x > 0.5);
-            if (hasValue) Num++;
+            vec3 color = texture(uTexInput, uv).rgb;
+            float t = clamp(luminance(color) - threshold, 0.0, 1.0);
+            Num++;
+            SumColor += color;
         }
     }
 
-    bool IsEdge = (Num > 0 && Num < MaxNum);
-    if (!IsEdge)
-        discard;
-    outColor = vec4(1.0, 0.2, 0.2, 0.8);
+    outColor = vec4(SumColor, 0.8);
 }

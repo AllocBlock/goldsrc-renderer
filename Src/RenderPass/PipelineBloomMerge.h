@@ -6,7 +6,6 @@
 #include "FullScreenPointData.h"
 #include "ImageUtils.h"
 #include "InterfaceUI.h"
-#include "RenderPassPort.h"
 
 namespace
 {
@@ -16,27 +15,13 @@ namespace
     };
 }
 
-class CPipelineBlendMerge : public IPipeline
+class CPipelineBloomMerge : public IPipeline
 {
+
 public:
-    void setInputPort(CPort::Ptr vInputPort, CPort::Ptr vBlurPort)
+    void setInputImage(VkImageView vImageView, size_t vIndex)
     {
-        vInputPort->hookImageUpdate([this, vInputPort]()
-            {
-                if (!vInputPort->isImageReadyV()) return;
-                for (size_t i = 0; i < m_ImageNum; ++i)
-                {
-                    __updateInputImage(vInputPort->getImageV(i), i);
-                }
-            });
-        
-        vBlurPort->hookImageUpdate([this, vBlurPort]()
-            {
-                if (!vBlurPort->isImageReadyV()) return;                for (size_t i = 0; i < m_ImageNum; ++i)
-                {
-                    __updateInputBlurImage(vBlurPort->getImageV(i), i);
-                }
-            });
+        __updateInputImage(vImageView, vIndex);
     }
 
 protected:
@@ -46,7 +31,6 @@ protected:
         m_ShaderResourceDescriptor.clear();
         m_ShaderResourceDescriptor.add("UBOFrag", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
         m_ShaderResourceDescriptor.add("Input", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-        m_ShaderResourceDescriptor.add("Blur", 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
         m_ShaderResourceDescriptor.createLayout(m_pDevice);
     }
 
@@ -55,7 +39,7 @@ protected:
         CPipelineDescriptor Descriptor;
 
         Descriptor.setVertShaderPath("fullScreen.vert");
-        Descriptor.setFragShaderPath("bloomMerge.frag");
+        Descriptor.setFragShaderPath("bloomBlur.frag");
 
         Descriptor.setVertexInputInfo<SFullScreenPointData>();
 
@@ -98,49 +82,40 @@ protected:
 
     virtual void _renderUIV()
     {
-        if (UI::collapse("Pipeline Bloom Merge"))
+        if (UI::collapse("Pipeline Bloom Blur"))
         {
-            UI::drag(u8"混合系数", m_BloomFactor, 0.01f, 0.0f, 1.0f);
+            UI::drag(u8"模糊范围", m_FilterSize, 0.1f, 1.0f, 15.0f);
         }
     }
 
 private:
-    void __updateInputImage(VkImageView vImageView, size_t vIndex)
+    void __updateInputImages(std::vector<VkImageView> vImageViewSet)
     {
         CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteImageAndSampler(1, vImageView, m_Sampler);
-        m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
-    }
-
-    void __updateInputBlurImage(VkImageView vImageView, size_t vIndex)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteImageAndSampler(2, vImageView, m_Sampler);
+        WriteInfo.addWriteInputAttachment(1, vImageViewSet);
         m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
     }
 
     void __updateUniformBuffer(uint32_t vImageIndex)
     {
         SUBOFrag UBOFrag = {};
-        UBOFrag.BloomFactor = m_BloomFactor;
+        //UBOFrag.FilterSize = m_FilterSize;
+        UBOFrag.ImageExtent = m_Extent;
         m_FragUbufferSet[vImageIndex]->update(&UBOFrag);
     }
 
     void __initAllDescriptorSet()
-    {
+    {ed
         for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
         {
             CDescriptorWriteInfo WriteInfo;
             WriteInfo.addWriteBuffer(0, *m_FragUbufferSet[i]);
-            WriteInfo.addWriteImageAndSampler(1, *m_pPlaceholderImage, m_Sampler);
-            WriteInfo.addWriteImageAndSampler(2, *m_pPlaceholderImage, m_Sampler);
+            WriteInfo.addWriteInputAttachment(1, *m_pPlaceholderImage, m_Sampler);
             m_ShaderResourceDescriptor.update(i, WriteInfo);
         }
     }
 
     vk::CPointerSet<vk::CUniformBuffer> m_FragUbufferSet;
-    vk::CImage::Ptr m_pPlaceholderImage = nullptr;
-    vk::CSampler m_Sampler;
 
-    float m_BloomFactor = 0.3f;
+    float m_FilterSize = 5.0f;
 };
