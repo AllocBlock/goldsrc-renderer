@@ -31,7 +31,18 @@ public:
         return nullptr;
     }
 
+    std::vector<vk::IRenderPass::Ptr> getSortedPasses() const
+    {
+        std::vector<vk::IRenderPass::Ptr> Passes;
+        for (auto PassId : m_SortedOrder)
+        {
+            Passes.push_back(m_PassMap.at(PassId));
+        }
+        return Passes;
+    }
+
 private:
+    std::vector<size_t> m_SortedOrder;
     vk::CDevice::CPtr m_pDevice = nullptr;
     CAppInfo::Ptr m_pAppInfo = nullptr;
     ptr<SSceneInfo> m_pSceneInfo = nullptr;

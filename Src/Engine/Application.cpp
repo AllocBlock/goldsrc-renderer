@@ -79,7 +79,6 @@ void IApplication::resize(uint32_t vWidth, uint32_t vHeight)
     if (vWidth > 0 && vHeight > 0)
     {
         m_Freezed = false;
-        _onResizeV();
     }
     else
         m_Freezed = true;
@@ -106,7 +105,12 @@ void IApplication::__render()
         throw std::runtime_error(u8"ªÒ»°Ωªªª¡¥ÕºœÒ ß∞‹");
     }
 
-    std::vector<VkCommandBuffer> CommandBufferSet = __sortCommandBuffers(ImageIndex);
+    std::vector<VkCommandBuffer> CommandBufferSet;
+    for (auto pPass : m_pGraphInstance->getSortedPasses())
+    {
+        const auto& BufferSet = pPass->requestCommandBuffers(ImageIndex);
+        CommandBufferSet.insert(CommandBufferSet.begin(), BufferSet.begin(), BufferSet.end());
+    }
 
     VkSemaphore WaitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrameIndex] };
     VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -214,138 +218,7 @@ void IApplication::__recreateSwapchain()
     waitDevice();
     __destroySwapchain();
     __createSwapchain();
-}
-
-IRenderPass* getParentPass(CPort::Ptr vInputPort)
-{
-    auto pParent = vInputPort->getParent();
-    if (!pParent) return nullptr;
-    auto pPortSet = pParent->getBelongedPortSet();
-    if (!pPortSet) return nullptr; // separate port like swapchain port
-    auto pPass = pPortSet->getBelongedRenderPass();
-    _ASSERTE(pPass);
-    return pPass;
-}
-
-std::vector<IRenderPass*> getChildPasses(CPort::Ptr vOutputPort)
-{
-    std::vector<IRenderPass*> Result;
-    auto ChildNum = vOutputPort->getChildNum();
-    for (size_t i = 0; i < ChildNum; ++i)
-    {
-        auto pPort = vOutputPort->getChild(i);
-        auto pPortSet = pPort->getBelongedPortSet();
-        _ASSERTE(pPortSet);
-        auto pPass = pPortSet->getBelongedRenderPass();
-        _ASSERTE(pPass);
-
-        Result.emplace_back(pPass);
-    }
-    return Result;
-}
-
-bool __isTail(IRenderPass* vPass, const std::set<IRenderPass*>& vRemovedPasses)
-{
-    auto pPortSet = vPass->getPortSet();
-    auto OutputNum = pPortSet->getOutputPortNum();
-    for (size_t i = 0; i < OutputNum; ++i)
-    {
-        auto pOutput = pPortSet->getOutputPort(i);
-        auto Passes = getChildPasses(pOutput);
-        for (auto pPass : Passes)
-        {
-            if (vRemovedPasses.find(pPass) == vRemovedPasses.end()) // child is not removed
-                return false;
-        }
-    }
-    return true;
-}
-
-std::set<IRenderPass*> __findAllPasses(CPort::Ptr vStartPort)
-{
-    std::set<IRenderPass*> AllPasses;
-    std::queue<IRenderPass*> InqueuePasses;
-
-    auto ChildPasses = getChildPasses(vStartPort);
-    for (auto pPass : ChildPasses)
-    {
-        InqueuePasses.push(pPass);
-        AllPasses.insert(pPass);
-    }
-
-    while(!InqueuePasses.empty())
-    {
-        auto pCurPass = InqueuePasses.front();
-        InqueuePasses.pop();
-
-        auto pPortSet = pCurPass->getPortSet();
-        // process parent
-        auto InputNum = pPortSet->getInputPortNum();
-        for (size_t i = 0; i < InputNum; ++i)
-        {
-            auto pInput = pPortSet->getInputPort(i);
-            auto pPass = getParentPass(pInput);
-            if (pPass && AllPasses.find(pPass) == AllPasses.end())
-            {
-                InqueuePasses.push(pPass);
-                AllPasses.insert(pPass);
-            }
-        }
-
-        // process children
-        auto OutputNum = pPortSet->getOutputPortNum();
-        for (size_t i = 0; i < OutputNum; ++i)
-        {
-            auto pOutput = pPortSet->getOutputPort(i);
-            auto Passes = getChildPasses(pOutput);
-            for (auto pPass : Passes)
-            {
-                if (AllPasses.find(pPass) == AllPasses.end())
-                {
-                    InqueuePasses.push(pPass);
-                    AllPasses.insert(pPass);
-                }
-            }
-        }
-    }
-
-    return AllPasses;
-}
-
-std::vector<VkCommandBuffer> IApplication::__sortCommandBuffers(uint32_t vImageIndex)
-{
-    // 1. find all passes
-    std::set<IRenderPass*> AllPasses = __findAllPasses(m_pSwapchainPort);
-
-    // 2. loop remove tails, and find new tails
-    std::set<IRenderPass*> RemovedPasses;
-    std::vector<IRenderPass*> OrderedPassSet;
-
-    while(RemovedPasses.size() != AllPasses.size())
-    {
-        for (auto pPass : AllPasses)
-        {
-            if (RemovedPasses.find(pPass) != RemovedPasses.end()) continue;
-
-            // is tail?
-            bool IsTail = __isTail(pPass, RemovedPasses);
-
-            if (IsTail)
-            {
-                RemovedPasses.insert(pPass);
-                OrderedPassSet.emplace_back(pPass);
-            }
-        }
-    }
-
-    std::vector<VkCommandBuffer> CommandBufferSet;
-    for (size_t i = 0; i < OrderedPassSet.size(); ++i) // reverse
-    {
-        const auto& BufferSet = OrderedPassSet[i]->requestCommandBuffers(vImageIndex);
-        CommandBufferSet.insert(CommandBufferSet.begin(), BufferSet.begin(), BufferSet.end());
-     }
-
-    return CommandBufferSet;
+    _onSwapchainRecreateV();
 }
 
 std::vector<const char*> IApplication::__getRequiredExtensions()

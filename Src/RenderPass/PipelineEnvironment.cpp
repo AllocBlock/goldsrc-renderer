@@ -51,14 +51,14 @@ void CPipelineEnvironment::_initShaderResourceDescriptorV()
     m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-void CPipelineEnvironment::_createResourceV(size_t vImageNum)
+void CPipelineEnvironment::_createV()
 {
     __destroyResources();
 
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_FragUBSet.init(vImageNum);
+    m_FragUBSet.init(m_ImageNum);
 
-    for (size_t i = 0; i < vImageNum; ++i)
+    for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_FragUBSet[i]->create(m_pDevice, VertBufferSize);
     }

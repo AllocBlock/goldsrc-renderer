@@ -65,10 +65,8 @@ CRenderPassDescriptor CRenderPassSprite::_getRenderPassDescV()
 void CRenderPassSprite::_initV()
 {
     CRenderPassSingleFrameBuffer::_initV();
-
-    m_PipelineSpriteCreator.init(m_pDevice, weak_from_this(), m_pAppInfo->getScreenExtent(), true, m_pAppInfo->getImageNum(),
-        [this](CPipelineSprite& vPipeline) { vPipeline.setSprites(m_SpriteSet); }
-    );
+    
+    m_PipelineSprite.create(m_pDevice, get(), m_pAppInfo->getScreenExtent(), m_pAppInfo->getImageNum());
 }
 
 void CRenderPassSprite::_updateV(uint32_t vImageIndex)
@@ -85,23 +83,16 @@ std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
     _beginWithFramebuffer(vImageIndex);
-    m_PipelineSpriteCreator.get().recordCommand(pCommandBuffer, vImageIndex);
+    m_PipelineSprite.recordCommand(pCommandBuffer, vImageIndex);
     _endWithFramebuffer();
     return { pCommandBuffer->get() };
 }
 
 void CRenderPassSprite::_destroyV()
 {
-    m_PipelineSpriteCreator.destroy();
+    m_PipelineSprite.destroy();
 
     CRenderPassSingleFrameBuffer::_destroyV();
-}
-
-void CRenderPassSprite::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
-{
-    m_PipelineSpriteCreator.updateV(vUpdateState);
-
-    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 bool CRenderPassSprite::_dumpReferenceExtentV(VkExtent2D& voExtent)
@@ -126,5 +117,5 @@ std::vector<VkClearValue> CRenderPassSprite::_getClearValuesV()
 void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
 {
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
-    m_PipelineSpriteCreator.get().updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSprite.updateUniformBuffer(vImageIndex, pCamera);
 }

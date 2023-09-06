@@ -4,35 +4,25 @@ CPortSet::Ptr CRenderPassSingleFrameBuffer::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     _initPortDescV(PortDesc);
-    return make<CPortSet>(PortDesc, this);
+    return make<CPortSet>(PortDesc);
 }
 
 void CRenderPassSingleFrameBuffer::_initV()
 {
+    __createCommandPoolAndBuffers(m_pAppInfo->getImageNum());
+
     m_ClearValueSet = _getClearValuesV();
+
+    VkExtent2D Extent = vk::ZeroExtent;
+    bool Success = _dumpReferenceExtentV(Extent);
+    _ASSERTE(Success);
+    __createFramebuffers(Extent);
 }
 
 void CRenderPassSingleFrameBuffer::_destroyV()
 {
     m_FramebufferSet.destroyAndClearAll();
     __destroyCommandPoolAndBuffers();
-}
-
-void CRenderPassSingleFrameBuffer::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
-{
-    if (vUpdateState.ImageNum.IsUpdated)
-    {
-        __createCommandPoolAndBuffers(vUpdateState.ImageNum.Value);
-    }
-
-    if (isValid() && m_pPortSet->isImageReady() && 
-        (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated || vUpdateState.InputImageUpdated || vUpdateState.ScreenExtent.IsUpdated))
-    {
-        VkExtent2D Extent;
-        if (!_dumpReferenceExtentV(Extent)) return;
-        if (Extent != vk::ZeroExtent)
-            __createFramebuffers(Extent);
-    }
 }
 
 std::vector<std::string> CRenderPassSingleFrameBuffer::_getExtraCommandBufferNamesV() const
@@ -84,8 +74,8 @@ void CRenderPassSingleFrameBuffer::__destroyCommandPoolAndBuffers()
 
 void CRenderPassSingleFrameBuffer::__createFramebuffers(VkExtent2D vExtent)
 {
-    if (!isValid()) return;
-    if (!m_pPortSet->isImageReady()) return;
+    _ASSERTE(isValid());
+    m_pPortSet->assertImageReady();
 
     m_FramebufferSet.destroyAndClearAll();
 

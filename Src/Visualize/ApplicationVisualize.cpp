@@ -36,24 +36,15 @@ void CApplicationVisualize::_createV()
     SPortFormat Format = { VK_FORMAT_D32_SFLOAT, SPortFormat::AnyExtent, 1, EUsage::WRITE };
     m_pDepthPort = make<CSourcePort>("Depth", Format, nullptr);
 
-    m_DepthImageManager.init({0, 0}, true,
-        [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
-        {
-            vImageSet.init(1);
-            VkFormat DepthFormat = m_pDepthPort->getFormat().Format;
-            ImageUtils::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
+    VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
+    VkFormat DepthFormat = m_pDepthPort->getFormat().Format;
+    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, ScreenExtent, NULL, DepthFormat);
 
-            m_pDepthPort->setActualFormat(DepthFormat);
-            m_pDepthPort->setActualExtent(vExtent);
-            m_pDepthPort->setImage(*vImageSet[0], 0);
-        }
-    );
+    m_pDepthPort->setActualFormat(DepthFormat);
+    m_pDepthPort->setActualExtent(ScreenExtent);
+    m_pDepthPort->setImage(m_DepthImage, 0);
 
     __linkPasses();
-
-    // create after link
-    VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
-    m_DepthImageManager.updateExtent(ScreenExtent, true);
 }
 
 void CApplicationVisualize::_updateV(uint32_t vImageIndex)
@@ -66,14 +57,9 @@ void CApplicationVisualize::_updateV(uint32_t vImageIndex)
 
 void CApplicationVisualize::_destroyV()
 {
-    m_DepthImageManager.destroy();
+    m_DepthImage.destroy();
     destroyAndClear(m_pPassVisualize);
     SingleTimeCommandBuffer::clean();
-}
-
-void CApplicationVisualize::_onResizeV()
-{
-    m_DepthImageManager.updateExtent(m_pAppInfo->getScreenExtent());
 }
 
 void CApplicationVisualize::__linkPasses()

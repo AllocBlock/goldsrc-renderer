@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="Common.h" />
     <ClInclude Include="DataArray.h" />
+    <ClInclude Include="Debug.h" />
     <ClInclude Include="DebugScope.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="Event.h" />
@@ -24,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Debug.cpp" />
     <ClCompile Include="DebugScope.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="Event.cpp" />

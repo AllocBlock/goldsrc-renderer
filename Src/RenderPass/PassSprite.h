@@ -2,7 +2,6 @@
 #include "RenderPass.h"
 #include "PipelineSprite.h"
 #include "RenderPassSingleFrameBuffer.h"
-#include "DynamicResourceManager.h"
 
 class CRenderPassSprite : public CRenderPassSingleFrameBuffer
 {
@@ -17,8 +16,6 @@ protected:
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
-
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override;
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override;
     virtual std::vector<VkClearValue> _getClearValuesV() override;
@@ -26,6 +23,6 @@ protected:
 private:
     void __updateUniformBuffer(uint32_t vImageIndex);
     
-    CDynamicPipeline<CPipelineSprite> m_PipelineSpriteCreator;
+    CPipelineSprite m_PipelineSprite;
     std::vector<SGoldSrcSprite> m_SpriteSet;
 };

@@ -100,7 +100,6 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CanvasDrawer.cpp" />
     <ClCompile Include="ComponentTextRenderer.cpp" />
-    <ClCompile Include="DynamicResourceManager.cpp" />
     <ClCompile Include="ImageUtils.cpp" />
     <ClCompile Include="Maths.cpp" />
     <ClCompile Include="PipelineDescriptor.cpp" />
@@ -147,7 +146,6 @@
     <ClInclude Include="ComponentIconRenderer.h" />
     <ClInclude Include="ComponentMeshRenderer.h" />
     <ClInclude Include="ComponentTextRenderer.h" />
-    <ClInclude Include="DynamicResourceManager.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="ImageUtils.h" />
     <ClInclude Include="Maths.h" />

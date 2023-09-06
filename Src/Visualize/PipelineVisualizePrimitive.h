@@ -34,9 +34,9 @@ public:
     virtual void recordCommandV(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
 
 protected:
+    virtual void _createV() override;
     virtual void _initShaderResourceDescriptorV() override;
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;
-    virtual void _createResourceV(size_t vImageNum) override;
     virtual void _destroyV() override;
     
     uint32_t m_VertexNum = 0;

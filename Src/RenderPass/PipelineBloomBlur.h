@@ -40,7 +40,7 @@ protected:
         return Descriptor;
     }
 
-    virtual void _createResourceV(size_t vImageNum) override
+    virtual void _createV() override
     {
         if (!m_pPlaceholderImage)
         {

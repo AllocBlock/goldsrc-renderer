@@ -3,7 +3,6 @@
 #include "Buffer.h"
 #include "PipelineOutlineEdge.h"
 #include "PipelineOutlineMask.h"
-#include "DynamicResourceManager.h"
 #include "RerecordState.h"
 
 // FIXME: should not use subpass like this
@@ -15,13 +14,13 @@ public:
 
     void setHighlightActor(CActor::Ptr vActor)
     {
-        m_MaskPipelineCreator.get().setActor(vActor);
+        m_MaskPipeline.setActor(vActor);
         m_pRerecord->requestRecordForAll();
     }
 
     void removeHighlight()
     {
-        m_MaskPipelineCreator.get().removeObject();
+        m_MaskPipeline.removeObject();
         m_pRerecord->requestRecordForAll();
     }
 
@@ -33,17 +32,16 @@ protected:
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
-
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
     {
         return _dumpInputPortExtent("Main", voExtent);
     }
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
     {
+        _ASSERTE(m_MaskImage.isValid());
         return
         {
-            m_MaskImageCreator.getImageViewV(0),
+            m_MaskImage,
             m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
         };
     }
@@ -58,9 +56,9 @@ protected:
 private:
     void __createVertexBuffer();
 
-    CDynamicTextureCreator m_MaskImageCreator;
-    CDynamicPipeline<CPipelineMask> m_MaskPipelineCreator;
-    CDynamicPipeline<CPipelineEdge> m_EdgePipelineCreator;
+    vk::CImage m_MaskImage;
+    CPipelineMask m_MaskPipeline;
+    CPipelineEdge m_EdgePipeline;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
     std::vector<CPipelineEdge::SPointData> m_PointDataSet;

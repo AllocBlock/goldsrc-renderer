@@ -39,7 +39,7 @@ void CRenderPassPBR::_initV()
 void CRenderPassPBR::_initPortDescV(SPortDescriptor& vioDesc)
 {
     vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
+    VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
     vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
 }
 

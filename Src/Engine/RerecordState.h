@@ -9,25 +9,25 @@ class CRerecordState
 public:
     _DEFINE_PTR(CRerecordState);
 
-    CRerecordState(CAppInfo::Ptr vAppInfo): m_pAppInfo(vAppInfo) {}
+    CRerecordState(size_t vImageNum): m_ImageNum(vImageNum) {}
 
     void addField(const std::string& vName)
     {
         if (m_FieldTimeMap.find(vName) != m_FieldTimeMap.end())
             throw std::runtime_error("Field already exists");
-        m_FieldTimeMap[vName] = m_pAppInfo->getImageNum();
+        m_FieldTimeMap[vName] = m_ImageNum;
     }
 
     void requestRecord(const std::string& vFieldName)
     {
-        m_FieldTimeMap[vFieldName] = m_pAppInfo->getImageNum();
+        m_FieldTimeMap[vFieldName] = m_ImageNum;
     }
     
     void requestRecordForAll()
     {
         for (auto& Pair : m_FieldTimeMap)
         {
-            Pair.second = m_pAppInfo->getImageNum();
+            Pair.second = m_ImageNum;
         }
     }
 
@@ -42,6 +42,6 @@ public:
         return false;
     }
 private:
-    CAppInfo::Ptr m_pAppInfo = nullptr;
+    size_t m_ImageNum = 0;
     std::map<std::string, size_t> m_FieldTimeMap;
 };

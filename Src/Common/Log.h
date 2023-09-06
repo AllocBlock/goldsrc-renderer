@@ -2,7 +2,7 @@
 #include <functional>
 #include <string>
 
-//#define _ENABLE_HANDLE_CREATION_LOG
+#define _ENABLE_HANDLE_CREATION_LOG
 
 namespace Log
 {

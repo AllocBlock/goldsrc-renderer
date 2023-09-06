@@ -134,3 +134,4 @@
   - GLSL → HLSL
     - https://github.com/KhronosGroup/Vulkan-Guide/blob/main/chapters/hlsl.adoc
   - renderpass graph的可视化
+  - _ASSERTE(xx.isValid())改为check，汇报不满足的地方，方便定位

@@ -638,6 +638,7 @@ void CRenderPassGraphUI::_renderUIV()
         resetView();
         --m_NeedResetViewTimes;
     }
+    UI::endWindow();
 }
 
 void CRenderPassGraphUI::setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)

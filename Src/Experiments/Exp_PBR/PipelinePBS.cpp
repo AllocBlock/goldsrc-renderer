@@ -154,7 +154,7 @@ CPipelineDescriptor CPipelinePBS::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelinePBS::_createResourceV(size_t vImageNum)
+void CPipelinePBS::_createV(size_t vImageNum)
 {
     __destroyResources();
 

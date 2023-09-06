@@ -1,6 +1,5 @@
 #pragma once
 #include "RenderPassSingleFrameBuffer.h"
-#include "DynamicResourceManager.h"
 #include "VisualizePrimitive.h"
 #include "PipelineTriangle.h"
 #include "PipelineLine.h"
@@ -34,8 +33,6 @@ protected:
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
-
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
     {
         return _dumpInputPortExtent("Main", voExtent);
@@ -58,10 +55,10 @@ private:
 
     struct
     {
-        CDynamicPipeline<CPipelineTriangle> Triangle;
-        CDynamicPipeline<CPipelineLine> Line;
-        CDynamicPipeline<CPipelinePoint> Point;
-        CDynamicPipeline<CPipelineVisualize3DPrimitive> Primitive3D;
+        CPipelineTriangle Triangle;
+        CPipelineLine Line;
+        CPipelinePoint Point;
+        CPipelineVisualize3DPrimitive Primitive3D;
     } m_PipelineSet;
 
     size_t m_RerecordCommandTimes = 0;

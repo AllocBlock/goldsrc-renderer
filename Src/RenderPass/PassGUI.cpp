@@ -10,6 +10,11 @@ void CRenderPassGUI::_initV()
     CRenderPassSingleFrameBuffer::_initV();
 
     __createDescriptorPool();
+    
+    UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_pAppInfo->getImageNum(), get());
+    CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
+    UI::setFont(gChineseFont, pCommandBuffer);
+    m_Command.endSingleTimeBuffer(pCommandBuffer);
 }
 
 void CRenderPassGUI::_initPortDescV(SPortDescriptor& vioDesc)
@@ -20,25 +25,6 @@ void CRenderPassGUI::_initPortDescV(SPortDescriptor& vioDesc)
 CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
-}
-
-void CRenderPassGUI::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
-{
-    if (vUpdateState.RenderpassUpdated || vUpdateState.InputImageUpdated || vUpdateState.ImageNum.IsUpdated)
-    {
-        if (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated)
-        {
-            if (isValid())
-            {
-                UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_pAppInfo->getImageNum(), get());
-                CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
-                UI::setFont(gChineseFont, pCommandBuffer);
-                m_Command.endSingleTimeBuffer(pCommandBuffer);
-            }
-        }
-    }
-
-    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassGUI::_renderUIV()

@@ -6,19 +6,18 @@ IRenderPass::IRenderPass()
 {
 }
 
+void IRenderPass::createPortSet()
+{
+    m_pPortSet = _createPortSetV();
+}
+
 void IRenderPass::init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
 {
     m_pDevice = vDevice;
     m_pAppInfo = vAppInfo;
-
-    m_pPortSet = _createPortSetV();
-
-    // FIXME: init first or create pass/command first
-    _initV();
-
-    __hookEvents();
-    __triggerImageNumUpdate(m_pAppInfo->getImageNum());
+    
     __createRenderpass();
+    _initV();
 }
 
 void IRenderPass::update(uint32_t vImageIndex)
@@ -37,7 +36,6 @@ void IRenderPass::destroy()
 {
     _destroyV();
     __destroyRenderpass();
-    __unhookEvents();
     m_pPortSet->unlinkAll();
 }
 
@@ -95,16 +93,13 @@ void IRenderPass::__createRenderpass()
     if (!OldDesc.isValid() && !m_CurPassDesc.isValid()) return; // all invalid, no change
 
     __destroyRenderpass();
-    if (m_CurPassDesc.isValid())
-    {
-        auto Info = m_CurPassDesc.generateInfo();
-        vk::checkError(vkCreateRenderPass(*m_pDevice, &Info, nullptr, _getPtr()));
-        m_CurPassDesc.clearStage(); // free stage data to save memory
+    _ASSERTE(m_CurPassDesc.isValid());
 
-        Log::logCreation("renderpass", uint64_t(get()));
-    }
+    auto Info = m_CurPassDesc.generateInfo();
+    vk::checkError(vkCreateRenderPass(*m_pDevice, &Info, nullptr, _getPtr()));
+    m_CurPassDesc.clearStage(); // free stage data to save memory
 
-    __triggerRenderpassUpdate();
+    Log::logCreation(std::string(typeid(*this).name()) + "(renderpass)", uint64_t(get()));
 }
 
 void IRenderPass::__destroyRenderpass()
@@ -114,58 +109,4 @@ void IRenderPass::__destroyRenderpass()
         vkDestroyRenderPass(*m_pDevice, get(), nullptr);
         _setNull();
     }
-}
-
-void IRenderPass::__hookEvents()
-{
-    m_ImageNumUpdateHookId = m_pAppInfo->hookImageNumUpdate([this](uint32_t vImageNum) 
-        { __triggerImageNumUpdate(vImageNum); }
-    );
-    m_ScreenExtentUpdateHookId = m_pAppInfo->hookScreenExtentUpdate([this](VkExtent2D vExtent)      
-        { __triggerScreenExtentUpdate(vExtent); }
-    );
-
-    m_InputImageUpdateHookId = m_pPortSet->hookInputImageUpdate([this]()
-        { __triggerInputImageUpdate(); }
-    );
-
-    m_LinkUpdateHookId = m_pPortSet->hookLinkUpdate([this](EventId_t, ILinkEvent::CPtr)
-        { __createRenderpass(); }
-    );
-}
-
-void IRenderPass::__unhookEvents()
-{
-    if (m_ImageNumUpdateHookId) m_pAppInfo->unhookImageNumUpdate(m_ImageNumUpdateHookId);
-    if (m_ScreenExtentUpdateHookId) m_pAppInfo->unhookScreenExtentUpdate(m_ScreenExtentUpdateHookId);
-    if (m_InputImageUpdateHookId) m_pPortSet->unhookInputImageUpdate(m_InputImageUpdateHookId);
-    if (m_LinkUpdateHookId) m_pPortSet->unhookLinkUpdate(m_LinkUpdateHookId);
-}
-
-void IRenderPass::__triggerImageNumUpdate(uint32_t vImageNum)
-{
-    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
-    State.ImageNum = SPassUpdateAttribute<uint32_t>::create(vImageNum, true);
-    _onUpdateV(State);
-}
-
-void IRenderPass::__triggerScreenExtentUpdate(VkExtent2D vExtent)
-{
-    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
-    State.ScreenExtent = SPassUpdateAttribute<VkExtent2D>::create(vExtent, true);
-    _onUpdateV(State);
-}
-
-void IRenderPass::__triggerInputImageUpdate()
-{
-    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
-    State.InputImageUpdated = true;
-    _onUpdateV(State);
-}
-
-void IRenderPass::__triggerRenderpassUpdate()
-{
-    SPassUpdateState State(m_pAppInfo->getImageNum(), m_pAppInfo->getScreenExtent());
-    State.RenderpassUpdated = true;
-    _onUpdateV(State);
 }

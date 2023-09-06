@@ -1,5 +1,4 @@
 #pragma once
-#include "DynamicResourceManager.h"
 #include "PassFullScreen.h"
 #include "PipelineBloomBlur.h"
 #include "PipelineBloomMerge.h"
@@ -15,7 +14,7 @@ protected:
     {
         CRenderPassFullScreenGeneral::_initV();
 
-        m_pRerecord = make<CRerecordState>(m_pAppInfo);
+        m_pRerecord = make<CRerecordState>(m_pAppInfo->getImageNum());
         m_pRerecord->addField("Primary");
 
         VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();

@@ -28,80 +28,33 @@ void CRenderPassGoldSrc::rerecordAllCommand()
 
 void CRenderPassGoldSrc::_initV()
 {
-    CRenderPassSingleFrameBuffer::_initV();
+    size_t ImageNum = m_pAppInfo->getImageNum();
 
-    m_pRerecord = make<CRerecordState>(m_pAppInfo);
+    m_pRerecord = make<CRerecordState>(ImageNum);
     m_pRerecord->addField("Primary");
     for (const auto& Name : _getExtraCommandBufferNamesV())
         m_pRerecord->addField(Name);
     
     VkExtent2D RefExtent = { 0, 0 };
-    _dumpReferenceExtentV(RefExtent);
+    bool Success = _dumpReferenceExtentV(RefExtent);
+    _ASSERTE(Success);
 
-    m_DepthImageManager.init(RefExtent, false, 
-        [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
-        {
-            vImageSet.init(1);
-            VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-            ImageUtils::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
-            m_pPortSet->setOutput("Depth", *vImageSet[0]);
-        }
-    );
+    VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
+    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, RefExtent, NULL, DepthFormat);
+    m_pPortSet->setOutput("Depth", m_DepthImage);
 
-    VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
+    CRenderPassSingleFrameBuffer::_initV();
 
-    auto CreateGoldSrcPipelineFunc = [this](CPipelineGoldSrc& vPipeline)
-    {
-        if (vPipeline.isValid())
-        {
-            __updatePipelineResourceGoldSrc(vPipeline);
-            m_pRerecord->requestRecord("Mesh");
-        }
-    };
-
-    m_PipelineSet.Normal.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-    m_PipelineSet.BlendTextureAlpha.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-    m_PipelineSet.BlendAlphaTest.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-    m_PipelineSet.BlendAdditive.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(), CreateGoldSrcPipelineFunc);
-
-    m_PipelineSet.Simple.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
-        [this](CPipelineSimple& vPipeline)
-        {
-            if (vPipeline.isValid())
-            {
-                __updatePipelineResourceSimple(vPipeline);
-                m_pRerecord->requestRecord("Mesh");
-            }
-        });
-    m_PipelineSet.Sky.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
-        [this](CPipelineSkybox& vPipeline)
-        {
-            if (vPipeline.isValid())
-            {
-                __updatePipelineResourceSky(vPipeline);
-                m_pRerecord->requestRecord("Sky");
-            }
-        });
-    m_PipelineSet.Sprite.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
-        [this](CPipelineSprite& vPipeline)
-        {
-            if (vPipeline.isValid())
-            {
-                __updatePipelineResourceSprite(vPipeline);
-                m_pRerecord->requestRecord("Sprite");
-            }
-        });
-    m_PipelineSet.Icon.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
-        [this](IPipeline& vPipeline)
-        {
-            m_pRerecord->requestRecord("Icon");
-        });
-    m_PipelineSet.Text.init(m_pDevice, weak_from_this(), ScreenExtent, true, m_pAppInfo->getImageNum(),
-        [this](IPipeline& vPipeline)
-        {
-            m_pRerecord->requestRecord("Text");
-        });
-
+    m_PipelineSet.Normal.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.BlendTextureAlpha.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.BlendAlphaTest.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.BlendAdditive.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.Simple.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.Sky.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.Sprite.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.Icon.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.Text.create(m_pDevice, get(), RefExtent, ImageNum);
+    
     __createSceneResources();
 
     rerecordAllCommand();
@@ -111,7 +64,7 @@ void CRenderPassGoldSrc::_initPortDescV(SPortDescriptor& vioDesc)
 {
     vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
 
-    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
+    VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
     vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
 }
 
@@ -119,25 +72,6 @@ CRenderPassDescriptor CRenderPassGoldSrc::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
                                                             m_pPortSet->getOutputPort("Depth"));
-}
-
-void CRenderPassGoldSrc::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
-{
-    if (vUpdateState.ImageNum.IsUpdated || vUpdateState.RenderpassUpdated)
-    {
-        rerecordAllCommand();
-    }
-
-    m_DepthImageManager.updateV(vUpdateState);
-    m_PipelineSet.update(vUpdateState);
-
-    VkExtent2D RefExtent = { 0, 0 };
-    if (_dumpReferenceExtentV(RefExtent))
-    {
-        m_DepthImageManager.updateExtent(RefExtent);
-    }
-
-    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
 }
 
 void CRenderPassGoldSrc::_updateV(uint32_t vImageIndex)
@@ -183,7 +117,7 @@ void CRenderPassGoldSrc::_renderUIV()
 
 void CRenderPassGoldSrc::_destroyV()
 {
-    m_DepthImageManager.destroy();
+    m_DepthImage.destroy();
     m_PipelineSet.destroy();
     destroyAndClear(m_pVertexBuffer);
 
@@ -205,7 +139,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
         _beginSecondary(pSkyCmdBuffer, vImageIndex);
         if (m_EnableSky)
         {
-            m_PipelineSet.Sky.get().recordCommand(pSkyCmdBuffer, vImageIndex);
+            m_PipelineSet.Sky.recordCommand(pSkyCmdBuffer, vImageIndex);
         }
         pSkyCmdBuffer->end();
         NeedRecordPrimary = true;
@@ -222,12 +156,12 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
     
             if (m_RenderMethod == ERenderMethod::GOLDSRC)
             {
-                m_PipelineSet.Normal.get().bind(pMeshCmdBuffer, vImageIndex);
-                m_PipelineSet.Normal.get().setOpacity(pMeshCmdBuffer, 1.0f);
+                m_PipelineSet.Normal.bind(pMeshCmdBuffer, vImageIndex);
+                m_PipelineSet.Normal.setOpacity(pMeshCmdBuffer, 1.0f);
             }
             else if (m_RenderMethod == ERenderMethod::SIMPLE)
             {
-                m_PipelineSet.Simple.get().bind(pMeshCmdBuffer, vImageIndex);
+                m_PipelineSet.Simple.bind(pMeshCmdBuffer, vImageIndex);
             }
             else
             {
@@ -250,7 +184,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
                 if (m_RenderMethod == ERenderMethod::GOLDSRC)
                 {
                     bool EnableLightmap = pMesh->getMeshDataV().hasLightmap();
-                    m_PipelineSet.Normal.get().setLightmapState(pMeshCmdBuffer, EnableLightmap);
+                    m_PipelineSet.Normal.setLightmapState(pMeshCmdBuffer, EnableLightmap);
                 }
                 __drawMeshActor(pMeshCmdBuffer, pActor);
             }
@@ -266,7 +200,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
         _beginSecondary(pSpriteCmdBuffer, vImageIndex);
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
         {
-            m_PipelineSet.Sprite.get().recordCommand(pSpriteCmdBuffer, vImageIndex);
+            m_PipelineSet.Sprite.recordCommand(pSpriteCmdBuffer, vImageIndex);
         }
         pSpriteCmdBuffer->end();
         NeedRecordPrimary = true;
@@ -279,7 +213,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
         _beginSecondary(pIconCmdBuffer, vImageIndex);
         if (m_pSceneInfo)
         {
-            auto& PipelineIcon = m_PipelineSet.Icon.get();
+            auto& PipelineIcon = m_PipelineSet.Icon;
             PipelineIcon.clear();
             for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
             {
@@ -302,7 +236,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
 
     // text
     CCommandBuffer::Ptr pTextCmdBuffer = m_Command.getCommandBuffer("Text", vImageIndex);
-    auto& PipelineText = m_PipelineSet.Text.get();
+    auto& PipelineText = m_PipelineSet.Text;
     if (PipelineText.doesNeedRerecord(vImageIndex))
     {
         _beginSecondary(pTextCmdBuffer, vImageIndex);
@@ -334,25 +268,18 @@ void CRenderPassGoldSrc::__createSceneResources()
 
     m_EnableSky = m_EnableSky && m_pSceneInfo && m_pSceneInfo->UseSkyBox;
 
-    if (m_PipelineSet.Normal.isReady())
-        __updatePipelineResourceGoldSrc(m_PipelineSet.Normal.get());
-    if (m_PipelineSet.BlendAdditive.isReady())
-        __updatePipelineResourceGoldSrc(m_PipelineSet.BlendAdditive.get());
-    if (m_PipelineSet.BlendAlphaTest.isReady())
-        __updatePipelineResourceGoldSrc(m_PipelineSet.BlendAlphaTest.get());
-    if (m_PipelineSet.BlendTextureAlpha.isReady())
-        __updatePipelineResourceGoldSrc(m_PipelineSet.BlendTextureAlpha.get());
-    if (m_PipelineSet.Simple.isReady())
-        __updatePipelineResourceSimple(m_PipelineSet.Simple.get());
-    if (m_PipelineSet.Sky.isReady())
-        __updatePipelineResourceSky(m_PipelineSet.Sky.get());
-    if (m_PipelineSet.Sprite.isReady())
-        __updatePipelineResourceSprite(m_PipelineSet.Sprite.get());
+    __updatePipelineResourceGoldSrc(m_PipelineSet.Normal);
+    __updatePipelineResourceGoldSrc(m_PipelineSet.BlendAdditive);
+    __updatePipelineResourceGoldSrc(m_PipelineSet.BlendAlphaTest);
+    __updatePipelineResourceGoldSrc(m_PipelineSet.BlendTextureAlpha);
+    __updatePipelineResourceSimple(m_PipelineSet.Simple);
+    __updatePipelineResourceSky(m_PipelineSet.Sky);
+    __updatePipelineResourceSprite(m_PipelineSet.Sprite);
 
     // search all text renderer
-    if (m_pSceneInfo && m_PipelineSet.Text.isReady())
+    if (m_pSceneInfo)
     {
-        auto& PipelineText = m_PipelineSet.Text.get();
+        auto& PipelineText = m_PipelineSet.Text;
         PipelineText.clearTextComponent();
         for (size_t i = 0; i < m_pSceneInfo->pScene->getActorNum(); ++i)
         {
@@ -413,24 +340,24 @@ void CRenderPassGoldSrc::__destroySceneResources()
 //    {
 //    case EGoldSrcRenderMode::NORMAL:
 //    {
-//        pPipeline = &m_PipelineSet.Normal.get();
+//        pPipeline = &m_PipelineSet.Normal;
 //        break;
 //    }
 //    case EGoldSrcRenderMode::COLOR:
 //    case EGoldSrcRenderMode::TEXTURE:
 //    {
-//        pPipeline = &m_PipelineSet.BlendTextureAlpha.get();
+//        pPipeline = &m_PipelineSet.BlendTextureAlpha;
 //        break;
 //    }
 //    case EGoldSrcRenderMode::SOLID:
 //    {
-//        pPipeline = &m_PipelineSet.BlendAlphaTest.get();
+//        pPipeline = &m_PipelineSet.BlendAlphaTest;
 //        break;
 //    }
 //    case EGoldSrcRenderMode::ADDITIVE:
 //    case EGoldSrcRenderMode::GLOW:
 //    {
-//        pPipeline = &m_PipelineSet.BlendAdditive.get();
+//        pPipeline = &m_PipelineSet.BlendAdditive;
 //        break;
 //    }
 //    default:
@@ -557,14 +484,14 @@ void CRenderPassGoldSrc::__updateAllUniformBuffer(uint32_t vImageIndex)
     auto pCamera = m_pSceneInfo->pScene->getMainCamera();
 
     glm::mat4 Model = glm::mat4(1.0f);
-    m_PipelineSet.Normal.get().updateUniformBuffer(vImageIndex, Model, pCamera);
-    m_PipelineSet.BlendTextureAlpha.get().updateUniformBuffer(vImageIndex, Model, pCamera);
-    m_PipelineSet.BlendAlphaTest.get().updateUniformBuffer(vImageIndex, Model, pCamera);
-    m_PipelineSet.BlendAdditive.get().updateUniformBuffer(vImageIndex, Model, pCamera);
-    m_PipelineSet.Simple.get().updateUniformBuffer(vImageIndex, Model, pCamera);
-    m_PipelineSet.Sprite.get().updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Normal.updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.BlendTextureAlpha.updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.BlendAlphaTest.updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.BlendAdditive.updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.Simple.updateUniformBuffer(vImageIndex, Model, pCamera);
+    m_PipelineSet.Sprite.updateUniformBuffer(vImageIndex, pCamera);
     if (m_EnableSky)
-        m_PipelineSet.Sky.get().updateUniformBuffer(vImageIndex, pCamera);
-    m_PipelineSet.Icon.get().updateUniformBuffer(vImageIndex, pCamera);
-    m_PipelineSet.Text.get().updateUniformBuffer(vImageIndex, pCamera);
+        m_PipelineSet.Sky.updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Icon.updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Text.updateUniformBuffer(vImageIndex, pCamera);
 }

@@ -46,7 +46,7 @@ CPipelineDescriptor CPipelineEdge::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineEdge::_createResourceV(size_t vImageNum)
+void CPipelineEdge::_createV()
 {
     if (!m_pPlaceholderImage)
     {
@@ -64,8 +64,8 @@ void CPipelineEdge::_createResourceV(size_t vImageNum)
     }
 
     m_FragUbufferSet.destroyAndClearAll();
-    m_FragUbufferSet.init(vImageNum);
-    for (size_t i = 0; i < vImageNum; ++i)
+    m_FragUbufferSet.init(m_ImageNum);
+    for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_FragUbufferSet[i]->create(m_pDevice, sizeof(SUBOFrag));
         __updateUniformBuffer(i);

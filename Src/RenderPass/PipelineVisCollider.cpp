@@ -103,21 +103,21 @@ CPipelineDescriptor CPipelineVisCollider::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineVisCollider::_createResourceV(size_t vImageNum)
+void CPipelineVisCollider::_createV()
 {
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(vImageNum);
+    m_VertUniformBufferSet.init(m_ImageNum);
 
-    for (size_t i = 0; i < vImageNum; ++i)
+    for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }
 
     VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
-    m_FragUniformBufferSet.init(vImageNum);
+    m_FragUniformBufferSet.init(m_ImageNum);
 
-    for (size_t i = 0; i < vImageNum; ++i)
+    for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
     }

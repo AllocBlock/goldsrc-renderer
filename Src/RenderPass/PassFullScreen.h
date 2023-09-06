@@ -42,8 +42,6 @@ protected:
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override; 
     virtual void _destroyV() override;
 
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
-
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override;
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override;
     virtual std::vector<VkClearValue> _getClearValuesV() override;

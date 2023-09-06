@@ -6,6 +6,10 @@ void CRenderPassFullScreen::_initV()
     CRenderPassSingleFrameBuffer::_initV();
 
     __createVertexBuffer();
+
+    VkExtent2D RefExtent = { 0, 0 };
+    if (!_dumpInputPortExtent("Main", RefExtent)) return;
+    __createPipeline(RefExtent);
 }
 
 void CRenderPassFullScreen::_initPortDescV(SPortDescriptor& vioDesc)
@@ -16,19 +20,6 @@ void CRenderPassFullScreen::_initPortDescV(SPortDescriptor& vioDesc)
 CRenderPassDescriptor CRenderPassFullScreen::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
-}
-
-void CRenderPassFullScreen::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
-{
-    CRenderPassSingleFrameBuffer::_onUpdateV(vUpdateState);
-
-    VkExtent2D RefExtent = { 0, 0 };
-    if (!_dumpInputPortExtent("Main", RefExtent)) return;
-
-    if (isValid() && (vUpdateState.RenderpassUpdated || vUpdateState.ImageNum.IsUpdated))
-    {
-        __createPipeline(RefExtent);
-    }
 }
 
 bool CRenderPassFullScreen::_dumpReferenceExtentV(VkExtent2D& voExtent)
@@ -78,8 +69,8 @@ void CRenderPassFullScreen::_destroyV()
 void CRenderPassFullScreen::__createPipeline(VkExtent2D vExtent)
 {
     _ASSERTE(isValid() && m_pPipeline);
-    m_pPipeline->create(m_pDevice, get(), vExtent);
-    m_pPipeline->setImageNum(m_pAppInfo->getImageNum());
+    size_t ImageNum = m_pAppInfo->getImageNum();
+    m_pPipeline->create(m_pDevice, get(), vExtent, ImageNum);
 
     for (const auto& Callback : m_PipelineCreateCallbackSet)
         Callback();

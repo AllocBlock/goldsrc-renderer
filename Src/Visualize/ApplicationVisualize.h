@@ -19,12 +19,10 @@ protected:
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
 
-    virtual void _onResizeV() override;
-
 private:
     void __linkPasses();
 
-    CDynamicTextureCreator m_DepthImageManager;
+    vk::CImage m_DepthImage;
     CSourcePort::Ptr m_pDepthPort = nullptr;
     ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
 

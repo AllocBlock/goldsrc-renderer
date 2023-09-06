@@ -82,15 +82,15 @@ CPipelineDescriptor CPipelineMask::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineMask::_createResourceV(size_t vImageNum)
+void CPipelineMask::_createV()
 {
     m_VertUniformBufferSet.destroyAndClearAll();
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SUBOProjView);
-    m_VertUniformBufferSet.init(vImageNum);
+    m_VertUniformBufferSet.init(m_ImageNum);
 
-    for (size_t i = 0; i < vImageNum; ++i)
+    for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }

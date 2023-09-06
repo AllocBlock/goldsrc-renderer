@@ -15,8 +15,7 @@ public:
     IPipeline() = default;
     virtual ~IPipeline() = default;
 
-    void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
-    void setImageNum(uint32_t vImageNum);
+    void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vImageNum, uint32_t vSubpass = 0);
     void destroy();
     void bind(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
     bool isValid() const { return m_Pipeline != VK_NULL_HANDLE; }
@@ -51,13 +50,6 @@ protected:
     * for ui drawing
     */
     virtual void _renderUIV() override {};
-
-    /*
-    * _createResourceV:
-    * triggers multiple times
-    * for ui drawing
-    */
-    virtual void _createResourceV(size_t vImageNum) = 0;
 
     /*
     * _initPushConstantV:

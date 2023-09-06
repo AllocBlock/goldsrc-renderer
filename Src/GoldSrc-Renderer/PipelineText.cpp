@@ -127,13 +127,13 @@ void CPipelineText::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
     vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Data);
 }
 
-void CPipelineText::_createResourceV(size_t vImageNum)
+void CPipelineText::_createV()
 {
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(vImageNum);
+    m_VertUniformBufferSet.init(m_ImageNum);
 
-    for (size_t i = 0; i < vImageNum; ++i)
+    for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
     }
@@ -151,7 +151,7 @@ void CPipelineText::_createResourceV(size_t vImageNum)
     __updateDescriptorSet();
 
     m_NeedRerecordSet.clear();
-    m_NeedRerecordSet.resize(vImageNum, true);
+    m_NeedRerecordSet.resize(m_ImageNum, true);
 }
 
 void CPipelineText::_destroyV()

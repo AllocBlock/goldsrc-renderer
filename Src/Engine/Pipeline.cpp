@@ -2,7 +2,7 @@
 #include "ShaderCompiler.h"
 #include "Log.h"
 
-void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
+void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vImageNum, uint32_t vSubpass)
 {
     destroy();
 
@@ -62,17 +62,12 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     m_pDevice->destroyShaderModule(VertShaderModule);
     m_pDevice->destroyShaderModule(FragShaderModule);
 
-    Log::logCreation("pipeline", uint64_t(m_Pipeline));
+    Log::logCreation( std::string(typeid(*this).name()) + "(pipeline)", uint64_t(m_Pipeline));
 
-    _createV();
-}
-
-void IPipeline::setImageNum(uint32_t vImageNum)
-{
-    if (vImageNum == m_ImageNum) return;
     m_ImageNum = vImageNum;
     m_ShaderResourceDescriptor.createDescriptorSetSet(vImageNum);
-    _createResourceV(vImageNum);
+
+    _createV();
 }
 
 void IPipeline::destroy()

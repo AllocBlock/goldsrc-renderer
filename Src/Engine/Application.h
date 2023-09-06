@@ -41,7 +41,7 @@ protected:
     virtual void _renderUIV() {}
     virtual void _destroyV() = 0;
 
-    virtual void _onResizeV() {}
+    virtual void _onSwapchainRecreateV() {}
 
     GLFWwindow* m_pWindow = nullptr;
     vk::CInstance::Ptr m_pInstance = make<vk::CInstance>();

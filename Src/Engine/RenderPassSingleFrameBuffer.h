@@ -21,8 +21,6 @@ protected:
     virtual void _initV() override;
     // IMPORTANT: call this original _destroyV if override
     virtual void _destroyV() override;
-    // IMPORTANT: call this original _onUpdateV if override
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) = 0;
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) = 0;

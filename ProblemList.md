@@ -141,6 +141,21 @@
     - 首先不能只靠input port拿extent，有些pass没有input port，就需要知道屏幕尺寸
       - 这两种pass的更新策略不同！前者依赖input，后者依赖屏幕尺寸
 
+
+### 第四版
+- 管理各种先后优先级、更新事件传播等实在麻烦...还是每次更新完整重建整个rendergraph吧
+- renderpass
+  - 节点允许统配符
+- renderpass graph
+  - 更新
+    - 任意一个节点更新时，直接重建整个render graph
+    - 重建时会确定port的参数并写死、并且资源的参数也会确定，除非重建，否则不可更改
+    - 重建时renderpass、framebuffer、pipeline以及相关的各种资源均会创建，并且下次重建前都不会更改
+    - 会导致renderpass graph重建的情况有
+      - swapchain image num改变
+      - 屏幕尺寸改变
+      - renderpass内部要求重建
+
 ## 问题：Render pass graph
 - 以一个graph来表示整个渲染流程，自动排序command buffer，graph可以保存和载入，动态修改、生成实际的pass
 ### graph需要存储哪些信息？

@@ -11,7 +11,6 @@
 #include "PipelineIcon.h"
 #include "PipelineText.h"
 #include "Image.h"
-#include "DynamicResourceManager.h"
 #include "RerecordState.h"
 
 class CRenderPassGoldSrc : public CRenderPassSingleFrameBuffer
@@ -57,8 +56,6 @@ protected:
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
     virtual void _destroyV() override;
-
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
     
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
     {
@@ -111,31 +108,17 @@ private:
 
     struct
     {
-        CDynamicPipeline<CPipelineNormal> Normal;
-        CDynamicPipeline<CPipelineBlendAlpha> BlendTextureAlpha;
-        CDynamicPipeline<CPipelineBlendAlphaTest> BlendAlphaTest;
-        CDynamicPipeline<CPipelineBlendAdditive> BlendAdditive;
-        CDynamicPipeline<CPipelineSimple> Simple;
+        CPipelineNormal Normal;
+        CPipelineBlendAlpha BlendTextureAlpha;
+        CPipelineBlendAlphaTest BlendAlphaTest;
+        CPipelineBlendAdditive BlendAdditive;
+        CPipelineSimple Simple;
 
-        CDynamicPipeline<CPipelineSkybox> Sky;
-        CDynamicPipeline<CPipelineSprite> Sprite;
-        CDynamicPipeline<CPipelineIcon> Icon;
-        CDynamicPipeline<CPipelineText> Text;
-
-        void update(const vk::SPassUpdateState& vUpdateState)
-        {
-            Normal.updateV(vUpdateState);
-            BlendTextureAlpha.updateV(vUpdateState);
-            BlendAlphaTest.updateV(vUpdateState);
-            BlendAdditive.updateV(vUpdateState);
-            Simple.updateV(vUpdateState);
-
-            Sky.updateV(vUpdateState);
-            Sprite.updateV(vUpdateState);
-            Icon.updateV(vUpdateState);
-            Text.updateV(vUpdateState);
-        }
-
+        CPipelineSkybox Sky;
+        CPipelineSprite Sprite;
+        CPipelineIcon Icon;
+        CPipelineText Text;
+        
         void destroy()
         {
             Normal.destroy();
@@ -152,7 +135,7 @@ private:
     } m_PipelineSet;
     
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
-    CDynamicTextureCreator m_DepthImageManager;
+    vk::CImage m_DepthImage;
     vk::CImage m_LightmapImage;
     vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
 

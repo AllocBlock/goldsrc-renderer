@@ -65,9 +65,7 @@ void CApplicationGoldSrc::_createV()
 
     auto GraphFile = Environment::findGraph("GoldSrc.graph");
     m_pRenderPassGraph = RenderPassGraphIO::load(GraphFile);
-
     
-
     m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
     m_pRenderPassGraphUI->setContext(m_pDevice, m_pAppInfo);
     m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
@@ -110,8 +108,7 @@ void CApplicationGoldSrc::_renderUIV()
     UI::beginFrame();
     m_pMainUI->renderUI();
     
-    m_pRenderPassGraphUI->renderUI();
-    UI::endWindow();
+    //m_pRenderPassGraphUI->renderUI();
     UI::endFrame();
 }
 
@@ -119,4 +116,9 @@ void CApplicationGoldSrc::_destroyV()
 {
     m_pRenderPassGraphUI->destroyPasses();
     SingleTimeCommandBuffer::clean();
+}
+
+void CApplicationGoldSrc::_onSwapchainRecreateV()
+{
+    m_NeedRecreateGraphInstance = true;
 }

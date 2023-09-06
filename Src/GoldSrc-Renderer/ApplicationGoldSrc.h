@@ -15,6 +15,7 @@ protected:
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
     virtual void _destroyV() override;
+    virtual void _onSwapchainRecreateV() override;
 
 private:
     ptr<CGUIMain> m_pMainUI = nullptr;

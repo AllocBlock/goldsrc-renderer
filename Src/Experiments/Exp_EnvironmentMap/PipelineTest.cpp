@@ -115,7 +115,7 @@ CPipelineDescriptor CPipelineTest::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineTest::_createResourceV(size_t vImageNum)
+void CPipelineTest::_createV(size_t vImageNum)
 {
     __destroyResources();
 

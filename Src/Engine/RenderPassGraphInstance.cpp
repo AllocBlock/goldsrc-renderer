@@ -1,5 +1,7 @@
 #include "RenderPassGraphInstance.h"
 
+#include <queue>
+
 void CRenderPassGraphInstance::init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo, ptr<SSceneInfo> vScene)
 {
     m_pDevice = vDevice;
@@ -18,11 +20,10 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
 {
     if (!vGraph->isValid())
         throw std::runtime_error("Graph is not valid");
-    // TODO: check others, like are all input ports set
-    // TODO: keep old pass
-    // TODO: create only used pass
     destroy();
 
+    std::map<size_t, int> RemainDependNumSet;
+    std::map<size_t, std::vector<size_t>> DependPassSet;
     for (const auto& Pair : vGraph->NodeMap)
     {
         size_t NodeId = Pair.first;
@@ -30,9 +31,11 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
         vk::IRenderPass::Ptr pPass = RenderpassLib::createPass(Node.Name);
         if (vBeforeInitCallback)
             vBeforeInitCallback(Node.Name, pPass);
-        pPass->init(m_pDevice, m_pAppInfo);
-        pPass->setSceneInfo(m_pSceneInfo);
+        pPass->createPortSet();
         m_PassMap[NodeId] = pPass;
+
+        RemainDependNumSet[NodeId] = 0;
+        DependPassSet[NodeId] = {};
     }
 
     for (const auto& Pair : vGraph->LinkMap)
@@ -41,11 +44,41 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
         auto pSrcPass = m_PassMap.at(Link.Source.NodeId);
         auto pDestPass = m_PassMap.at(Link.Destination.NodeId);
         CPortSet::link(pSrcPass->getPortSet(), Link.Source.Name, pDestPass->getPortSet(), Link.Destination.Name);
+
+        DependPassSet.at(Link.Destination.NodeId).push_back(Link.Source.NodeId);
     }
+
+    // sort
+    std::queue<size_t> Leaves;
+    for (const auto& Pair : RemainDependNumSet)
+    {
+        if (Pair.second == 0)
+            Leaves.push(Pair.first);
+    }
+
+    while (!Leaves.empty())
+    {
+        size_t NodeId = Leaves.front(); Leaves.pop();
+        m_SortedOrder.push_back(NodeId);
+        for (size_t DependNodeId : DependPassSet.at(NodeId))
+        {
+            if (RemainDependNumSet.at(DependNodeId) == 1)
+                Leaves.push(DependNodeId);
+            RemainDependNumSet[DependNodeId]--;
+        }
+    }
+    std::reverse(m_SortedOrder.begin(), m_SortedOrder.end());
 
     vSwapchainPort->unlinkAll();
     auto pEntryPass = m_PassMap.at(vGraph->EntryPortOpt->NodeId);
     CPortSet::link(vSwapchainPort, pEntryPass->getPortSet(), vGraph->EntryPortOpt->Name);
+
+    for (const auto& Pair : m_PassMap)
+    {
+        vk::IRenderPass::Ptr pPass = Pair.second;
+        pPass->init(m_pDevice, m_pAppInfo);
+        pPass->setSceneInfo(m_pSceneInfo);
+    }
 
     for (const auto& Pair : m_PassMap)
     {
@@ -70,6 +103,7 @@ void CRenderPassGraphInstance::destroy()
     for (const auto& Pair : m_PassMap)
         Pair.second->destroy();
     m_PassMap.clear();
+    m_SortedOrder.clear();
 }
 
 vk::IRenderPass::Ptr CRenderPassGraphInstance::getPass(size_t vId) const

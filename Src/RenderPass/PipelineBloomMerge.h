@@ -46,7 +46,7 @@ protected:
         return Descriptor;
     }
 
-    virtual void _createResourceV(size_t vImageNum) override
+    virtual void _createV() override
     {
         if (!m_pPlaceholderImage)
         {
@@ -105,7 +105,7 @@ private:
     }
 
     void __initAllDescriptorSet()
-    {ed
+    {
         for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
         {
             CDescriptorWriteInfo WriteInfo;

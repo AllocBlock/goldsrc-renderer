@@ -124,18 +124,18 @@ CPipelineDescriptor CPipelineVisualize3DPrimitive::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineVisualize3DPrimitive::_createResourceV(size_t vImageNum)
+void CPipelineVisualize3DPrimitive::_createV()
 {
     m_VertUniformBufferSet.destroyAndClearAll();
     m_FragUniformBufferSet.destroyAndClearAll();
 
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(vImageNum);
+    m_VertUniformBufferSet.init(m_ImageNum);
     VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
-    m_FragUniformBufferSet.init(vImageNum);
+    m_FragUniformBufferSet.init(m_ImageNum);
 
-    for (size_t i = 0; i < vImageNum; ++i)
+    for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
         m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);

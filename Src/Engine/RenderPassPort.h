@@ -6,9 +6,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <functional>
-
-#include "Event.h"
 
 class CPortSet;
 
@@ -45,25 +42,7 @@ struct SPortFormat
     static const size_t AnyNum;
 };
 
-class ILinkEvent
-{
-public:
-    _DEFINE_PTR(ILinkEvent);
-    _DEFINE_UPDATE_EVENT(Image)
-    _DEFINE_UPDATE_EVENT(Link, EventId_t, ILinkEvent::CPtr)
-
-protected:
-    void _onImageUpdate();
-    void _onLinkUpdate(EventId_t vEventId, ILinkEvent::CPtr vFrom);
-
-    virtual void _onImageUpdateExtendV() {}
-    virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) {}
-
-private:
-    static size_t CurEventId;
-};
-
-class CPort : public ILinkEvent, public std::enable_shared_from_this<CPort>
+class CPort : public std::enable_shared_from_this<CPort>
 {
 public:
     _DEFINE_PTR(CPort);
@@ -119,12 +98,6 @@ public:
     CPortSet* getBelongedPortSet() const { return m_pBelongedSet; }
 
 protected:
-    // image update propagates to tail
-    virtual void _onImageUpdateExtendV() override final;
-
-    // link update propagates to whole link
-    virtual void _onLinkUpdateExtendV(EventId_t vEventId, ILinkEvent::CPtr vFrom) override final;
-
     std::string m_Name = "";
     CPortSet* const m_pBelongedSet;
     SPortFormat m_Format;
@@ -217,17 +190,15 @@ struct SPortDescriptor
 
 class CPortSet
 {
-    _DEFINE_UPDATE_EVENT(InputImage)
-    _DEFINE_UPDATE_EVENT(Link, EventId_t, ILinkEvent::CPtr)
-
 public:
     _DEFINE_PTR(CPortSet);
 
     CPortSet() = delete;
-    CPortSet(const SPortDescriptor& vDesc, vk::IRenderPass* vBelongedRenderPass);
+    CPortSet(const SPortDescriptor& vDesc);
 
-    bool isLinkReady();
-    bool isImageReady();
+    bool isLinkReady() const;
+    bool isImageReady() const;
+    void assertImageReady() const;
 
     bool hasInput(const std::string& vName) const;
     bool hasOutput(const std::string& vName) const;
@@ -248,8 +219,6 @@ public:
     
     void unlinkAll(); // remove all parent of input and children of output
 
-    vk::IRenderPass* getBelongedRenderPass() const { return m_pBelongedRenderPass; }
-
     static void link(CPort::Ptr vOutputPort, CPort::Ptr vInputPort);
     static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPort::Ptr vInputPort);
     static void link(CPort::Ptr vOutputPort, CPortSet::Ptr vSet2, const std::string& vInputName);
@@ -261,12 +230,7 @@ private:
     void __addInputOutput(const std::string& vName, const SPortFormat& vFormat);
 
     CPort::Ptr __findPort(const std::string& vName, const std::vector<CPort::Ptr>& vPortSet) const;
-
-    vk::IRenderPass* const m_pBelongedRenderPass;
-    std::function<void()> m_pImageUpdateCallbackFunc = nullptr;
-    std::function<void(EventId_t, ILinkEvent::CPtr)> m_pLinkUpdateCallbackFunc = nullptr;
+    
     std::vector<CPort::Ptr> m_InputPortSet;
     std::vector<CPort::Ptr> m_OutputPortSet;
-
-    std::string m_LastEventId = "";
 };

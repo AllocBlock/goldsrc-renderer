@@ -62,7 +62,7 @@ CPipelineDescriptor CPipelineShadowMap::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineShadowMap::_createResourceV(size_t vImageNum)
+void CPipelineShadowMap::_createV(size_t vImageNum)
 {
     __destroyResources();
 
