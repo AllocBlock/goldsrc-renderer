@@ -11,7 +11,7 @@ class CRenderPassGraphInstance
 public:
     _DEFINE_PTR(CRenderPassGraphInstance);
 
-    void init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo, ptr<SSceneInfo> vScene);
+    void init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene);
     void updateSceneInfo(ptr<SSceneInfo> vSceneInfo);
     void createFromGraph(ptr<SRenderPassGraph> vGraph, CPort::Ptr vSwapchainPort, BeforeInitCallback_t vBeforeInitCallback = nullptr);
     void update(uint32_t vImageIndex) const;
@@ -44,7 +44,8 @@ public:
 private:
     std::vector<size_t> m_SortedOrder;
     vk::CDevice::CPtr m_pDevice = nullptr;
-    CAppInfo::Ptr m_pAppInfo = nullptr;
+    size_t m_ImageNum = 0;
+    VkExtent2D m_ScreenExtent = vk::ZeroExtent;
     ptr<SSceneInfo> m_pSceneInfo = nullptr;
     std::map<size_t, vk::IRenderPass::Ptr> m_PassMap;
 };

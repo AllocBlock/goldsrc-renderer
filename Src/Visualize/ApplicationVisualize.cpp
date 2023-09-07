@@ -29,14 +29,14 @@ void CApplicationVisualize::_createV()
     m_pInteractor = make<CInteractor>();
     m_pInteractor->bindEvent(m_pWindow, pCamera);
 
+    VkExtent2D ScreenExtent = m_pSwapchain->getExtent();
     m_pPassVisualize = make<CRenderPassVisualize>();
-    m_pPassVisualize->init(m_pDevice, m_pAppInfo);
+    m_pPassVisualize->init(m_pDevice, m_pSwapchain->getImageNum(), ScreenExtent);
     m_pPassVisualize->setSceneInfo(m_pSceneInfo);
 
     SPortFormat Format = { VK_FORMAT_D32_SFLOAT, SPortFormat::AnyExtent, 1, EUsage::WRITE };
     m_pDepthPort = make<CSourcePort>("Depth", Format, nullptr);
 
-    VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
     VkFormat DepthFormat = m_pDepthPort->getFormat().Format;
     ImageUtils::createDepthImage(m_DepthImage, m_pDevice, ScreenExtent, NULL, DepthFormat);
 
@@ -50,7 +50,7 @@ void CApplicationVisualize::_createV()
 void CApplicationVisualize::_updateV(uint32_t vImageIndex)
 {
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
-    pCamera->setAspect(m_pAppInfo->getScreenAspect());
+    pCamera->setAspect(vk::calcAspect(m_pSwapchain->getExtent()));
     m_pInteractor->update();
     m_pPassVisualize->update(vImageIndex);
 }

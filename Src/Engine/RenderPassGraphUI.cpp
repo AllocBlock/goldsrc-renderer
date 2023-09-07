@@ -363,7 +363,6 @@ void CRenderPassGraphUI::_renderUIV()
     ImGui::BeginDisabled(!m_pGraph->isValid());
     if (UI::button(ApplyButtonText))
     {
-        m_pDevice->waitUntilIdle();
         m_GraphApplyEventHandler.trigger(m_pGraph);
     }
     ImGui::EndDisabled();
@@ -641,12 +640,6 @@ void CRenderPassGraphUI::_renderUIV()
     UI::endWindow();
 }
 
-void CRenderPassGraphUI::setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
-{
-    m_pDevice = vDevice;
-    m_pAppInfo = vAppInfo;
-}
-
 void CRenderPassGraphUI::setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView)
 {
     m_pGraph = vGraph;
@@ -694,9 +687,8 @@ CPortSet::CPtr CRenderPassGraphUI::__getNodePortSet(size_t vNodeId)
     const SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(vNodeId);
     if (m_PassInstanceMap.find(vNodeId) == m_PassInstanceMap.end())
     {
-        _ASSERTE(m_pDevice && m_pAppInfo);
         auto pPass = RenderpassLib::createPass(Node.Name);
-        pPass->init(m_pDevice, m_pAppInfo);
+        pPass->createPortSet();
         m_PassInstanceMap[vNodeId] = pPass;
     }
     auto pPass = m_PassInstanceMap.at(vNodeId);

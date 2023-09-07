@@ -1,7 +1,6 @@
 #pragma once
 #include "Vulkan.h"
 #include "Image.h"
-#include "AppInfo.h"
 
 #include <string>
 #include <glm/glm.hpp>

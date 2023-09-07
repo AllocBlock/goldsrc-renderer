@@ -63,11 +63,10 @@ void CApplicationGoldSrc::_createV()
             m_pGraphInstance->renderUI();
         });
 
-    auto GraphFile = Environment::findGraph("GoldSrc.graph");
+    const auto& GraphFile = Environment::findGraph("GoldSrc.graph");
     m_pRenderPassGraph = RenderPassGraphIO::load(GraphFile);
     
     m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
-    m_pRenderPassGraphUI->setContext(m_pDevice, m_pAppInfo);
     m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
     m_pRenderPassGraphUI->hookGraphApply([this](ptr<SRenderPassGraph> vGraph)
         {
@@ -98,7 +97,7 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
     }
 
     auto pCamera = m_pSceneInfo->pScene->getMainCamera();
-    pCamera->setAspect(m_pAppInfo->getScreenAspect());
+    pCamera->setAspect(vk::calcAspect(m_pSwapchain->getExtent()));
     m_pInteractor->update();
     m_pRenderPassGraphUI->update();
 }
@@ -108,7 +107,7 @@ void CApplicationGoldSrc::_renderUIV()
     UI::beginFrame();
     m_pMainUI->renderUI();
     
-    //m_pRenderPassGraphUI->renderUI();
+    m_pRenderPassGraphUI->renderUI();
     UI::endFrame();
 }
 

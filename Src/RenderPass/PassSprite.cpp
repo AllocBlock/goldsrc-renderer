@@ -66,7 +66,7 @@ void CRenderPassSprite::_initV()
 {
     CRenderPassSingleFrameBuffer::_initV();
     
-    m_PipelineSprite.create(m_pDevice, get(), m_pAppInfo->getScreenExtent(), m_pAppInfo->getImageNum());
+    m_PipelineSprite.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
 }
 
 void CRenderPassSprite::_updateV(uint32_t vImageIndex)
@@ -97,7 +97,7 @@ void CRenderPassSprite::_destroyV()
 
 bool CRenderPassSprite::_dumpReferenceExtentV(VkExtent2D& voExtent)
 {
-    voExtent = m_pAppInfo->getScreenExtent();
+    voExtent = m_ScreenExtent;
     return true;
 }
 

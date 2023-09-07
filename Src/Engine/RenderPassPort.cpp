@@ -244,6 +244,13 @@ bool CPortSet::isImageReady() const
     return true;
 }
 
+bool CPortSet::isInputLinkReady() const
+{
+    for (const auto& pPort : m_InputPortSet)
+        if (!pPort->isLinkReadyV()) return false;
+    return true;
+}
+
 size_t CPortSet::getInputPortNum() const { return m_InputPortSet.size(); }
 size_t CPortSet::getOutputPortNum() const { return m_OutputPortSet.size(); }
 

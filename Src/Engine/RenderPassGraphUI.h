@@ -16,8 +16,7 @@ class CRenderPassGraphUI : public IDrawableUI
     _DEFINE_EVENT(GraphApply, ptr<SRenderPassGraph>);
 public:
     virtual void _renderUIV() override;
-
-    void setContext(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo);
+    
     void setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView = true);
     void update();
     void destroyPasses();
@@ -64,7 +63,6 @@ private:
     void __resetViewNextFrame() { m_NeedResetViewTimes = 2; }
 
     vk::CDevice::CPtr m_pDevice = nullptr;
-    CAppInfo::Ptr m_pAppInfo = nullptr;
     ptr<SRenderPassGraph> m_pGraph = nullptr;
     std::map<size_t, vk::IRenderPass::Ptr> m_PassInstanceMap;
 

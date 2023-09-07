@@ -11,10 +11,13 @@ void IRenderPass::createPortSet()
     m_pPortSet = _createPortSetV();
 }
 
-void IRenderPass::init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo)
+void IRenderPass::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent)
 {
+    _ASSERTE(vImageNum > 0);
+    _ASSERTE(vScreenExtent.width > 0 && vScreenExtent.height > 0);
     m_pDevice = vDevice;
-    m_pAppInfo = vAppInfo;
+    m_ImageNum = vImageNum;
+    m_ScreenExtent = vScreenExtent;
     
     __createRenderpass();
     _initV();

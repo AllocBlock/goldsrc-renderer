@@ -28,9 +28,7 @@ void CRenderPassGoldSrc::rerecordAllCommand()
 
 void CRenderPassGoldSrc::_initV()
 {
-    size_t ImageNum = m_pAppInfo->getImageNum();
-
-    m_pRerecord = make<CRerecordState>(ImageNum);
+    m_pRerecord = make<CRerecordState>(m_ImageNum);
     m_pRerecord->addField("Primary");
     for (const auto& Name : _getExtraCommandBufferNamesV())
         m_pRerecord->addField(Name);
@@ -45,15 +43,15 @@ void CRenderPassGoldSrc::_initV()
 
     CRenderPassSingleFrameBuffer::_initV();
 
-    m_PipelineSet.Normal.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.BlendTextureAlpha.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.BlendAlphaTest.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.BlendAdditive.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.Simple.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.Sky.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.Sprite.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.Icon.create(m_pDevice, get(), RefExtent, ImageNum);
-    m_PipelineSet.Text.create(m_pDevice, get(), RefExtent, ImageNum);
+    m_PipelineSet.Normal.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.BlendTextureAlpha.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.BlendAlphaTest.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.BlendAdditive.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.Simple.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.Sky.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.Sprite.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.Icon.create(m_pDevice, get(), RefExtent, m_ImageNum);
+    m_PipelineSet.Text.create(m_pDevice, get(), RefExtent, m_ImageNum);
     
     __createSceneResources();
 
@@ -301,79 +299,6 @@ void CRenderPassGoldSrc::__destroySceneResources()
     m_TextureImageSet.destroyAndClearAll();
     m_LightmapImage.destroy();
 }
-
-//struct SModelSortInfo
-//{
-//    size_t Index;
-//    EGoldSrcRenderMode RenderMode;
-//    float Distance;
-//
-//    int getRenderModePriority() const
-//    {
-//        switch (RenderMode)
-//        {
-//        case EGoldSrcRenderMode::NORMAL:
-//        case EGoldSrcRenderMode::SOLID:
-//            return 0;
-//        case EGoldSrcRenderMode::COLOR:
-//        case EGoldSrcRenderMode::TEXTURE:
-//            return 1;
-//        case EGoldSrcRenderMode::GLOW:
-//        case EGoldSrcRenderMode::ADDITIVE:
-//            return 2;
-//        default: return -1;
-//        }
-//    }
-//};
-
-// FIXME: restore this part later
-//void CSceneGoldSrcRenderPass::__renderModel(uint32_t vImageIndex, size_t vModelIndex)
-//{
-//    VkCommandBuffer CommandBuffer = _getCommandBuffer(vImageIndex);
-//
-//    _ASSERTE(vModelIndex < m_pSceneInfo->BspTree.ModelInfos.size());
-//
-//    const SModelInfo& ModelInfo = m_pSceneInfo->BspTree.ModelInfos[vModelIndex];
-//    CPipelineGoldSrc* pPipeline = nullptr;
-//
-//    switch (ModelInfo.RenderMode)
-//    {
-//    case EGoldSrcRenderMode::NORMAL:
-//    {
-//        pPipeline = &m_PipelineSet.Normal;
-//        break;
-//    }
-//    case EGoldSrcRenderMode::COLOR:
-//    case EGoldSrcRenderMode::TEXTURE:
-//    {
-//        pPipeline = &m_PipelineSet.BlendTextureAlpha;
-//        break;
-//    }
-//    case EGoldSrcRenderMode::SOLID:
-//    {
-//        pPipeline = &m_PipelineSet.BlendAlphaTest;
-//        break;
-//    }
-//    case EGoldSrcRenderMode::ADDITIVE:
-//    case EGoldSrcRenderMode::GLOW:
-//    {
-//        pPipeline = &m_PipelineSet.BlendAdditive;
-//        break;
-//    }
-//    default:
-//        break;
-//    }
-//
-//    pPipeline->bind(CommandBuffer, vImageIndex);
-//    pPipeline->setOpacity(CommandBuffer, ModelInfo.Opacity);
-//
-//    std::vector<size_t> ObjectIndices = m_pSceneInfo->BspTree.ModelIndexToObjectIndex[vModelIndex];
-//    for (size_t ObjectIndex : ObjectIndices)
-//    {
-//        if (!m_AreObjectsVisable[ObjectIndex]) continue;
-//        __renderActorByPipeline(vImageIndex, ObjectIndex, CommandBuffer, *pPipeline);
-//    }
-//}
 
 void CRenderPassGoldSrc::__createTextureImages()
 {

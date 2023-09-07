@@ -34,3 +34,9 @@ bool vk::isValidationLayersSupported(const std::vector<const char*>& vValidation
     }
     return true;
 }
+
+float vk::calcAspect(const VkExtent2D& vExtent)
+{
+    _ASSERTE(vExtent.width > 0 && vExtent.height > 0);
+    return float(vExtent.width) / vExtent.height;
+}

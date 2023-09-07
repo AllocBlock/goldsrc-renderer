@@ -2,10 +2,14 @@
 
 #include <queue>
 
-void CRenderPassGraphInstance::init(vk::CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo, ptr<SSceneInfo> vScene)
+void CRenderPassGraphInstance::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene)
 {
+    _ASSERTE(vImageNum > 0);
+    _ASSERTE(vScreenExtent.width > 0 && vScreenExtent.height > 0);
     m_pDevice = vDevice;
-    m_pAppInfo = vAppInfo;
+    m_ImageNum = vImageNum;
+    m_ScreenExtent = vScreenExtent;
+
     m_pSceneInfo = vScene;
 }
 
@@ -48,6 +52,17 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
         DependPassSet.at(Link.Destination.NodeId).push_back(Link.Source.NodeId);
     }
 
+    vSwapchainPort->unlinkAll();
+    auto pEntryPass = m_PassMap.at(vGraph->EntryPortOpt->NodeId);
+    CPortSet::link(vSwapchainPort, pEntryPass->getPortSet(), vGraph->EntryPortOpt->Name);
+
+    for (const auto& Pair : m_PassMap)
+    {
+        vk::IRenderPass::Ptr pPass = Pair.second;
+        pPass->init(m_pDevice, m_ImageNum, m_ScreenExtent);
+        pPass->setSceneInfo(m_pSceneInfo);
+    }
+
     // sort
     std::queue<size_t> Leaves;
     for (const auto& Pair : RemainDependNumSet)
@@ -59,6 +74,8 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
     while (!Leaves.empty())
     {
         size_t NodeId = Leaves.front(); Leaves.pop();
+        if (!m_PassMap.at(NodeId)->getPortSet()->isInputLinkReady())
+            continue;
         m_SortedOrder.push_back(NodeId);
         for (size_t DependNodeId : DependPassSet.at(NodeId))
         {
@@ -68,17 +85,6 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
         }
     }
     std::reverse(m_SortedOrder.begin(), m_SortedOrder.end());
-
-    vSwapchainPort->unlinkAll();
-    auto pEntryPass = m_PassMap.at(vGraph->EntryPortOpt->NodeId);
-    CPortSet::link(vSwapchainPort, pEntryPass->getPortSet(), vGraph->EntryPortOpt->Name);
-
-    for (const auto& Pair : m_PassMap)
-    {
-        vk::IRenderPass::Ptr pPass = Pair.second;
-        pPass->init(m_pDevice, m_pAppInfo);
-        pPass->setSceneInfo(m_pSceneInfo);
-    }
 
     for (const auto& Pair : m_PassMap)
     {

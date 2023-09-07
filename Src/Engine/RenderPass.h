@@ -4,7 +4,6 @@
 #include "DrawableUI.h"
 #include "RenderPassPort.h"
 #include "RenderPassDescriptor.h"
-#include "AppInfo.h"
 #include "FrameBuffer.h"
 #include "SceneInfo.h"
 
@@ -22,7 +21,7 @@ namespace vk
         virtual ~IRenderPass() = default;
 
         void createPortSet();
-        void init(CDevice::CPtr vDevice, CAppInfo::Ptr vAppInfo);
+        void init(CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent);
         void update(uint32_t vImageIndex);
         std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
         void destroy();
@@ -100,7 +99,8 @@ namespace vk
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 
         CDevice::CPtr m_pDevice = nullptr;
-        CAppInfo::Ptr m_pAppInfo = nullptr;
+        size_t m_ImageNum = 0;
+        VkExtent2D m_ScreenExtent = vk::ZeroExtent;
         CPortSet::Ptr m_pPortSet = nullptr;
         ptr<SSceneInfo> m_pSceneInfo = nullptr;
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "AppInfo.h"
 #include "Instance.h"
 #include "DebugMessenger.h"
 #include "Surface.h"
@@ -69,7 +68,6 @@ protected:
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
     
-    const CAppInfo::Ptr m_pAppInfo = make<CAppInfo>();
     const ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
     const CRenderPassGraphInstance::Ptr m_pGraphInstance = make<CRenderPassGraphInstance>();
 

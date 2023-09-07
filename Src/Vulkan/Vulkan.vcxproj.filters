@@ -53,9 +53,6 @@
     <ClInclude Include="PhysicalDevice.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="AppInfo.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PchVulkan.h">
       <Filter>头文件</Filter>
     </ClInclude>

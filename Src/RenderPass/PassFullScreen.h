@@ -64,7 +64,7 @@ class CRenderPassFullScreenGeneral : public CRenderPassSingleFrameBuffer
 protected:
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override final
     {
-        voExtent = m_pAppInfo->getScreenExtent();
+        voExtent = m_ScreenExtent;
         return true;
     }
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override

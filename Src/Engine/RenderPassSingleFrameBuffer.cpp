@@ -9,7 +9,7 @@ CPortSet::Ptr CRenderPassSingleFrameBuffer::_createPortSetV()
 
 void CRenderPassSingleFrameBuffer::_initV()
 {
-    __createCommandPoolAndBuffers(m_pAppInfo->getImageNum());
+    __createCommandPoolAndBuffers(m_ImageNum);
 
     m_ClearValueSet = _getClearValuesV();
 
@@ -78,10 +78,9 @@ void CRenderPassSingleFrameBuffer::__createFramebuffers(VkExtent2D vExtent)
     m_pPortSet->assertImageReady();
 
     m_FramebufferSet.destroyAndClearAll();
-
-    uint32_t ImageNum = m_pAppInfo->getImageNum();
-    m_FramebufferSet.init(ImageNum);
-    for (uint32_t i = 0; i < ImageNum; ++i)
+    
+    m_FramebufferSet.init(m_ImageNum);
+    for (uint32_t i = 0; i < m_ImageNum; ++i)
     {
         std::vector<VkImageView> AttachmentSet = _getAttachmentsV(i);
         m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);

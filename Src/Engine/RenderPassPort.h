@@ -198,6 +198,7 @@ public:
 
     bool isLinkReady() const;
     bool isImageReady() const;
+    bool isInputLinkReady() const;
     void assertImageReady() const;
 
     bool hasInput(const std::string& vName) const;

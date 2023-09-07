@@ -31,4 +31,6 @@ namespace vk
     
     inline void checkError(VkResult vResult) { if (vResult) throw std::runtime_error(u8"vulkan·µ»Ø´íÎó"); }
     bool isValidationLayersSupported(const std::vector<const char*>& vValidationLayers);
+    
+    float calcAspect(const VkExtent2D& vExtent);
 }

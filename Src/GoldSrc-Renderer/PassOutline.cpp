@@ -6,7 +6,7 @@
 
 void CRenderPassOutline::_initV()
 {
-    m_pRerecord = make<CRerecordState>(m_pAppInfo->getImageNum());
+    m_pRerecord = make<CRerecordState>(m_ImageNum);
     m_pRerecord->addField("Primary");
 
     VkExtent2D RefExtent = { 0, 0 };
@@ -33,13 +33,12 @@ void CRenderPassOutline::_initV()
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
     m_MaskImage.create(m_pDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 
-    size_t ImageNum = m_pAppInfo->getImageNum();
-    m_MaskPipeline.create(m_pDevice, get(), RefExtent, ImageNum, 0);
-    m_EdgePipeline.create(m_pDevice, get(), RefExtent, ImageNum, 1);
+    CRenderPassSingleFrameBuffer::_initV();
+
+    m_MaskPipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 0);
+    m_EdgePipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 1);
     
     __createVertexBuffer();
-
-    CRenderPassSingleFrameBuffer::_initV();
 
     m_pRerecord->requestRecordForAll();
 }

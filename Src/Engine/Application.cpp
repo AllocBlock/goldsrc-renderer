@@ -1,12 +1,6 @@
 #include "Application.h"
-
-#include <queue>
-
 #include "Log.h"
-#include "AppInfo.h"
 #include "RenderPass.h"
-
-#include <set>
 
 using namespace vk;
 
@@ -27,7 +21,7 @@ void IApplication::create(GLFWwindow* vWindow)
 
     __createSwapchain();
 
-    m_pGraphInstance->init(m_pDevice, m_pAppInfo, m_pSceneInfo);
+    m_pGraphInstance->init(m_pDevice, m_pSwapchain->getImageNum(), m_pSwapchain->getExtent(), m_pSceneInfo);
 
     _createV();
 }
@@ -187,11 +181,7 @@ void IApplication::__createSwapchain()
     m_pSwapchainPort->setImageNum(ImageNum);
     m_pSwapchainPort->clearImage();
     for (size_t i = 0; i < ImageNum; ++i)
-        m_pSwapchainPort->setImage(Views[i], i);
-
-    m_pAppInfo->setImageNum(ImageNum);
-    m_pAppInfo->setScreenExtent(m_pSwapchain->getExtent()); // for now, swapchain extent == screen extent
-}
+        m_pSwapchainPort->setImage(Views[i], i);}
 
 void IApplication::__destroySwapchain()
 {

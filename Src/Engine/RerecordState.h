@@ -2,7 +2,6 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include "AppInfo.h"
 
 class CRerecordState
 {

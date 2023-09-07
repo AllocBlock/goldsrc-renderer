@@ -58,13 +58,10 @@ void CRenderPassVisualize::_initV()
 {
     CRenderPassSingleFrameBuffer::_initV();
 
-    VkExtent2D ScreenExtent = m_pAppInfo->getScreenExtent();
-    size_t ImageNum = m_pAppInfo->getImageNum();
-    
-    m_PipelineSet.Triangle.create(m_pDevice, get(), ScreenExtent, ImageNum);
-    m_PipelineSet.Line.create(m_pDevice, get(), ScreenExtent, ImageNum);
-    m_PipelineSet.Point.create(m_pDevice, get(), ScreenExtent, ImageNum);
-    m_PipelineSet.Primitive3D.create(m_pDevice, get(), ScreenExtent, ImageNum);
+    m_PipelineSet.Triangle.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
+    m_PipelineSet.Line.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
+    m_PipelineSet.Point.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
+    m_PipelineSet.Primitive3D.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
 
     __rerecordCommand();
 }
@@ -126,5 +123,5 @@ std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV(uint3
 
 void CRenderPassVisualize::__rerecordCommand()
 {
-    m_RerecordCommandTimes = m_pAppInfo->getImageNum();
+    m_RerecordCommandTimes = m_ImageNum;
 }

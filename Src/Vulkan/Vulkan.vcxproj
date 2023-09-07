@@ -92,7 +92,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AppInfo.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Command.h" />
     <ClInclude Include="CommandBuffer.h" />

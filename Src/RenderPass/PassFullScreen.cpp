@@ -69,8 +69,7 @@ void CRenderPassFullScreen::_destroyV()
 void CRenderPassFullScreen::__createPipeline(VkExtent2D vExtent)
 {
     _ASSERTE(isValid() && m_pPipeline);
-    size_t ImageNum = m_pAppInfo->getImageNum();
-    m_pPipeline->create(m_pDevice, get(), vExtent, ImageNum);
+    m_pPipeline->create(m_pDevice, get(), vExtent, m_ImageNum);
 
     for (const auto& Callback : m_PipelineCreateCallbackSet)
         Callback();

@@ -1,5 +1,4 @@
 ﻿#include "PassGUI.h"
-#include "AppInfo.h"
 #include "RenderPassDescriptor.h"
 #include "InterfaceUI.h"
 
@@ -11,7 +10,7 @@ void CRenderPassGUI::_initV()
 
     __createDescriptorPool();
     
-    UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_pAppInfo->getImageNum(), get());
+    UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_ImageNum, get());
     CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
     UI::setFont(gChineseFont, pCommandBuffer);
     m_Command.endSingleTimeBuffer(pCommandBuffer);
