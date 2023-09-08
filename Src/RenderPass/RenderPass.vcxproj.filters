@@ -12,6 +12,9 @@
     <Filter Include="头文件\Bloom">
       <UniqueIdentifier>{d6ee673e-4ada-42f4-9904-c847e2581564}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\Bloom">
+      <UniqueIdentifier>{0f1b54c9-8fca-4a3b-9278-ecce0a556b35}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PipelineSkybox.h">
@@ -75,6 +78,12 @@
     </ClCompile>
     <ClCompile Include="PassSprite.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineBloomBlur.cpp">
+      <Filter>源文件\Bloom</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineBloomMerge.cpp">
+      <Filter>源文件\Bloom</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

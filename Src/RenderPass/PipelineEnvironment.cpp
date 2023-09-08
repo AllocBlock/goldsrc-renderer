@@ -42,7 +42,7 @@ CPipelineDescriptor CPipelineEnvironment::_getPipelineDescriptionV()
 
 void CPipelineEnvironment::_initShaderResourceDescriptorV()
 {
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice);
     m_ShaderResourceDescriptor.clear();
 
     m_ShaderResourceDescriptor.add("UboFrag", 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);

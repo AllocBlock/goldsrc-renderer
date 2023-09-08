@@ -1,25 +1,19 @@
-#include "PipelineOutlineEdge.h"
-#include "ImageUtils.h"
-
-#include <glm/glm.hpp>
+#include "PipelineBloomMerge.h"
 
 namespace
 {
     struct SUBOFrag
     {
-        glm::uvec2 ImageExtent;
+        alignas(16) float BloomFactor;
     };
 }
 
-void CPipelineEdge::setInputImage(VkImageView vImageView, size_t vIndex)
+void CPipelineBloomMerge::setInputImages(const std::vector<VkImageView>& vImageViewSet)
 {
-    CDescriptorWriteInfo WriteInfo;
-    WriteInfo.addWriteBuffer(0, *m_FragUbufferSet[vIndex]);
-    WriteInfo.addWriteImageAndSampler(1, vImageView != VK_NULL_HANDLE ? vImageView : *m_pPlaceholderImage, m_Sampler);
-    m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
+    __updateInputImages(vImageViewSet);
 }
 
-void CPipelineEdge::_initShaderResourceDescriptorV()
+void CPipelineBloomMerge::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice);
     m_ShaderResourceDescriptor.clear();
@@ -28,30 +22,28 @@ void CPipelineEdge::_initShaderResourceDescriptorV()
     m_ShaderResourceDescriptor.createLayout(m_pDevice);
 }
 
-CPipelineDescriptor CPipelineEdge::_getPipelineDescriptionV()
+CPipelineDescriptor CPipelineBloomMerge::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("outlineEdgeShader.vert");
-    Descriptor.setFragShaderPath("outlineEdgeShader.frag");
+    Descriptor.setVertShaderPath("fullScreen.vert");
+    Descriptor.setFragShaderPath("bloomMerge.frag");
 
-    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setVertexInputInfo<SFullScreenPointData>();
 
     Descriptor.setEnableDepthTest(false);
     Descriptor.setEnableDepthWrite(false);
-        
     Descriptor.setEnableBlend(true);
-    Descriptor.setBlendMethod(EBlendFunction::NORMAL);
+    Descriptor.setBlendMethod(EBlendFunction::ADDITIVE);
 
     return Descriptor;
 }
 
-void CPipelineEdge::_createV()
+void CPipelineBloomMerge::_createV()
 {
-    if (!m_pPlaceholderImage)
+    if (!m_PlaceholderImage.isValid())
     {
-        m_pPlaceholderImage = make<vk::CImage>();
-        ImageUtils::createPlaceholderImage(*m_pPlaceholderImage, m_pDevice);
+        ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
     }
 
     if (!m_Sampler.isValid())
@@ -62,8 +54,7 @@ void CPipelineEdge::_createV()
         );
         m_Sampler.create(m_pDevice, SamplerInfo);
     }
-
-    m_FragUbufferSet.destroyAndClearAll();
+        
     m_FragUbufferSet.init(m_ImageNum);
     for (size_t i = 0; i < m_ImageNum; ++i)
     {
@@ -74,27 +65,45 @@ void CPipelineEdge::_createV()
     __initAllDescriptorSet();
 }
 
-void CPipelineEdge::_destroyV()
+void CPipelineBloomMerge::_destroyV()
 {
-    destroyAndClear(m_pPlaceholderImage);
+    m_PlaceholderImage.destroy();
     m_Sampler.destroy();
     m_FragUbufferSet.destroyAndClearAll();
 }
 
-void CPipelineEdge::__updateUniformBuffer(uint32_t vImageIndex)
+void CPipelineBloomMerge::_renderUIV()
+{
+    if (UI::collapse("Pipeline Bloom Merge"))
+    {
+        UI::drag(u8"Ç¿¶È", m_BloomFactor, 0.05f, 1.0f, 1.0f);
+    }
+}
+
+void CPipelineBloomMerge::__updateInputImages(const std::vector<VkImageView>& vImageViewSet)
+{
+    for (size_t i = 0; i < vImageViewSet.size(); ++i)
+    {
+        CDescriptorWriteInfo WriteInfo;
+        WriteInfo.addWriteInputAttachment(1, vImageViewSet[i]);
+        m_ShaderResourceDescriptor.update(i, WriteInfo);
+    }
+}
+
+void CPipelineBloomMerge::__updateUniformBuffer(uint32_t vImageIndex)
 {
     SUBOFrag UBOFrag = {};
-    UBOFrag.ImageExtent = glm::uvec2(m_Extent.width, m_Extent.height);
+    UBOFrag.BloomFactor = 0.5f;
     m_FragUbufferSet[vImageIndex]->update(&UBOFrag);
 }
 
-void CPipelineEdge::__initAllDescriptorSet()
+void CPipelineBloomMerge::__initAllDescriptorSet()
 {
     for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
     {
         CDescriptorWriteInfo WriteInfo;
         WriteInfo.addWriteBuffer(0, *m_FragUbufferSet[i]);
-        WriteInfo.addWriteImageAndSampler(1, *m_pPlaceholderImage, m_Sampler);
+        WriteInfo.addWriteImageAndSampler(1, m_PlaceholderImage, m_Sampler);
         m_ShaderResourceDescriptor.update(i, WriteInfo);
     }
 }

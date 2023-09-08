@@ -227,9 +227,10 @@ void CPipelineDescriptor::setBlendMethod(EBlendFunction vFunction)
     case EBlendFunction::ADDITIVE:
         {
             // additive: 
-            // result color = source color + old color
-            // result alpha = source alpha + dst alpha
-            m_ColorBlendSrcFactor = m_ColorBlendDstFactor = VK_BLEND_FACTOR_ONE;
+            // result color = (source color) * (source alpha) + old color
+            // result alpha = whatever
+            m_ColorBlendSrcFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            m_ColorBlendDstFactor = VK_BLEND_FACTOR_ONE;
             m_AlphaBlendSrcFactor = m_AlphaBlendDstFactor = VK_BLEND_FACTOR_ONE;
             m_ColorBlendOp = m_AlphaBlendOp = VK_BLEND_OP_ADD;
             break;

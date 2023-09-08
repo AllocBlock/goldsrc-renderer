@@ -7,6 +7,7 @@
 #include "PassGUI.h"
 #include "PassOutline.h"
 #include "PassVisualize.h"
+#include "PassBloom.h"
 
 #include <GLFW/glfw3.h>
 
@@ -19,6 +20,7 @@ void registerAllPasses()
 	_REGISTER_PASS(CRenderPassOutline);
 	_REGISTER_PASS(CRenderPassVisualize);
 	_REGISTER_PASS(CRenderPassGUI);
+	_REGISTER_PASS(CRenderPassBloom);
 }
 
 int main()

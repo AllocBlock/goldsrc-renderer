@@ -47,6 +47,8 @@
   <ItemGroup>
     <ClCompile Include="PassGUI.cpp" />
     <ClCompile Include="PassSprite.cpp" />
+    <ClCompile Include="PipelineBloomBlur.cpp" />
+    <ClCompile Include="PipelineBloomMerge.cpp" />
     <ClCompile Include="PipelineEnvironment.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />

@@ -130,7 +130,7 @@ void CShaderResourceDescriptor::createLayout(CDevice::CPtr vDevice)
 const std::vector<VkDescriptorSet>& CShaderResourceDescriptor::createDescriptorSetSet(size_t vImageNum)
 {
     _ASSERTE(vImageNum > 0);
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice);
     _ASSERTE(m_DescriptorLayout != VK_NULL_HANDLE);
 
     if (m_DescriptorPool == VK_NULL_HANDLE || m_DescriptorSetSet.size() > vImageNum)
@@ -231,7 +231,7 @@ bool CShaderResourceDescriptor::isReady()
 
 void CShaderResourceDescriptor::__createPool(size_t vImageNum)
 {
-    _ASSERTE(m_pDevice != VK_NULL_HANDLE);
+    _ASSERTE(m_pDevice);
     __destroyPool();
 
     auto PoolSize = m_PoolSizeSet;

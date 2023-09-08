@@ -91,20 +91,23 @@ void CSwapchain::destroy()
 }
 
 
-VkExtent2D CSwapchain::getExtent()
+VkExtent2D CSwapchain::getExtent() const
 {
     return m_Extent;
 }
 
-VkFormat CSwapchain::getImageFormat()
+VkFormat CSwapchain::getImageFormat() const
 {
     return m_ImageFormat;
 }
 
-const std::vector<VkImageView>& CSwapchain::getImageViews()
+const std::vector<VkImageView>& CSwapchain::getImageViews() const
 {
     return m_ImageViewSet;
 }
+
+uint32_t CSwapchain::getImageNum() const
+{ return static_cast<uint32_t>(m_ImageViewSet.size()); }
 
 VkSurfaceFormatKHR CSwapchain::__chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats)
 {

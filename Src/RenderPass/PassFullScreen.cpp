@@ -101,6 +101,7 @@ void CRenderPassFullScreen::__generateScene()
 
 void CRenderPassFullScreenGeneral::_initV()
 {
+    CRenderPassSingleFrameBuffer::_initV();
     __createVertexBuffer();
 }
 

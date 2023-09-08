@@ -14,10 +14,10 @@ namespace vk
 
         void create(CDevice::Ptr vDevice);
         void destroy();
-        VkExtent2D getExtent();
-        VkFormat getImageFormat();
-        const std::vector<VkImageView>& getImageViews();
-        uint32_t getImageNum() { return static_cast<uint32_t>(m_ImageViewSet.size()); }
+        VkExtent2D getExtent() const;
+        VkFormat getImageFormat() const;
+        const std::vector<VkImageView>& getImageViews() const;
+        uint32_t getImageNum() const;
 
     private:
         VkSurfaceFormatKHR __chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& vAvailableFormats);
