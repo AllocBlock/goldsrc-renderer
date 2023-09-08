@@ -5,7 +5,7 @@
 
 // references:
 // Unity Shader - Bloom(π‚‘Œ°¢∑∫π‚): https://zhuanlan.zhihu.com/p/140724673
-class CRenderPassBloom : public CRenderPassFullScreenGeneral
+class CRenderPassBloom : public CRenderPassFullScreen
 {
 public:
     inline static const std::string Name = "Bloom";
@@ -20,7 +20,7 @@ protected:
         VkFormat Format = VkFormat::VK_FORMAT_B8G8R8A8_UNORM;
         ImageUtils::createImage2d(m_BlurImage, m_pDevice, RefExtent, Format, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
 
-        CRenderPassFullScreenGeneral::_initV();
+        CRenderPassFullScreen::_initV();
         
         m_BlurPipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 0);
         m_MergePipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 1);
@@ -36,7 +36,7 @@ protected:
         m_BlurImage.destroy();
         m_BlurPipeline.destroy();
         m_MergePipeline.destroy();
-        CRenderPassFullScreenGeneral::_destroyV();
+        CRenderPassFullScreen::_destroyV();
     }
     
     virtual CRenderPassDescriptor _getRenderPassDescV() override

@@ -61,7 +61,7 @@ private:
     CPipelineEdge m_EdgePipeline;
     ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
 
-    std::vector<CPipelineEdge::SPointData> m_PointDataSet;
+    std::vector<SFullScreenPointData> m_PointDataSet;
 
     // rerecord control
     CRerecordState::Ptr m_pRerecord = nullptr;

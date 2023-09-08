@@ -32,10 +32,10 @@ CPipelineDescriptor CPipelineEdge::_getPipelineDescriptionV()
 {
     CPipelineDescriptor Descriptor;
 
-    Descriptor.setVertShaderPath("outlineEdgeShader.vert");
+    Descriptor.setVertShaderPath("fullScreen.vert");
     Descriptor.setFragShaderPath("outlineEdgeShader.frag");
 
-    Descriptor.setVertexInputInfo<SPointData>();
+    Descriptor.setVertexInputInfo<SFullScreenPointData>();
 
     Descriptor.setEnableDepthTest(false);
     Descriptor.setEnableDepthWrite(false);

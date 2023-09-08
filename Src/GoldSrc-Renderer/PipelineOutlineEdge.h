@@ -4,27 +4,11 @@
 #include "Sampler.h"
 #include "UniformBuffer.h"
 #include "VertexAttributeDescriptor.h"
+#include "FullScreenPointData.h"
 
 class CPipelineEdge : public IPipeline
 {
 public:
-    struct SPointData
-    {
-        glm::vec2 Pos;
-        glm::vec2 TexCoord;
-
-        using PointData_t = SPointData;
-        _DEFINE_GET_BINDING_DESCRIPTION_FUNC;
-
-        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptionSet()
-        {
-            CVertexAttributeDescriptor Descriptor;
-            Descriptor.add(_GET_ATTRIBUTE_INFO(Pos));
-            Descriptor.add(_GET_ATTRIBUTE_INFO(TexCoord));
-            return Descriptor.generate();
-        }
-    };
-
     void setInputImage(VkImageView vImageView, size_t vIndex);
 
 protected:

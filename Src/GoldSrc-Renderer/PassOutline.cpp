@@ -116,16 +116,16 @@ void CRenderPassOutline::__createVertexBuffer()
 {
     m_PointDataSet =
     {
-        CPipelineEdge::SPointData{glm::vec2(-1.0f, -1.0f), glm::vec2(0.0f, 0.0f)},
-        CPipelineEdge::SPointData{glm::vec2(-1.0f,  3.0f), glm::vec2(0.0f, 2.0f)},
-        CPipelineEdge::SPointData{glm::vec2( 3.0f, -1.0f), glm::vec2(2.0f, 0.0f)},
+        SFullScreenPointData{glm::vec2(-1.0f, -1.0f)},
+        SFullScreenPointData{glm::vec2(-1.0f,  3.0f)},
+        SFullScreenPointData{glm::vec2( 3.0f, -1.0f)},
     };
     
     size_t VertexNum = m_PointDataSet.size();
 
     if (VertexNum > 0)
     {
-        VkDeviceSize BufferSize = sizeof(CPipelineEdge::SPointData) * VertexNum;
+        VkDeviceSize BufferSize = sizeof(SFullScreenPointData) * VertexNum;
         m_pVertexBuffer = make<vk::CBuffer>();
         m_pVertexBuffer->create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);

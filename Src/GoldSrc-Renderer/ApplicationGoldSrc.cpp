@@ -90,41 +90,42 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
                 pPassGUI->setWindow(m_pWindow);
             }
             // GUI pass need to set window
-            if (vName == "Present")
+            else if (vName == "Present")
             {
                 ptr<CRenderPassPresent> pPassPresent = std::dynamic_pointer_cast<CRenderPassPresent>(vRenderPass);
                 pPassPresent->setSwapchainPort(m_pSwapchainPort);
             }
         };
 
+        auto pGraph = make<SRenderPassGraph>(*m_pRenderPassGraph);
         // add gui and present pass
-        _ASSERTE(m_pRenderPassGraph->OutputPort.has_value());
+        _ASSERTE(pGraph->OutputPort.has_value());
         size_t CurNodeId = 0;
-        for (const auto& Pair : m_pRenderPassGraph->NodeMap)
+        for (const auto& Pair : pGraph->NodeMap)
         {
             CurNodeId = std::max(CurNodeId, Pair.first);
         }
         size_t GuiNodeId = CurNodeId + 1;
         size_t PresentNodeId = CurNodeId + 2;
-        m_pRenderPassGraph->NodeMap[GuiNodeId] = SRenderPassGraphNode{"Gui"};
-        m_pRenderPassGraph->NodeMap[PresentNodeId] = SRenderPassGraphNode{"Present"};
+        pGraph->NodeMap[GuiNodeId] = SRenderPassGraphNode{"Gui"};
+        pGraph->NodeMap[PresentNodeId] = SRenderPassGraphNode{"Present"};
 
         size_t CurLinkId = 0;
-        for (const auto& Pair : m_pRenderPassGraph->LinkMap)
+        for (const auto& Pair : pGraph->LinkMap)
         {
             CurLinkId = std::max(CurLinkId, Pair.first);
         }
-        m_pRenderPassGraph->LinkMap[CurLinkId + 1] = SRenderPassGraphLink{
-            m_pRenderPassGraph->OutputPort.value(),
+        pGraph->LinkMap[CurLinkId + 1] = SRenderPassGraphLink{
+            pGraph->OutputPort.value(),
             SRenderPassGraphPortInfo{GuiNodeId, "Main"},
         };
-        m_pRenderPassGraph->LinkMap[CurLinkId + 2] = SRenderPassGraphLink{
+        pGraph->LinkMap[CurLinkId + 2] = SRenderPassGraphLink{
             SRenderPassGraphPortInfo{GuiNodeId, "Main"},
             SRenderPassGraphPortInfo{PresentNodeId, "Main"},
         };
 
         m_pDevice->waitUntilIdle();
-        m_pGraphInstance->createFromGraph(m_pRenderPassGraph, pCreateGraphInstanceCallback);
+        m_pGraphInstance->createFromGraph(pGraph, pCreateGraphInstanceCallback);
         m_NeedRecreateGraphInstance = false;
     }
 

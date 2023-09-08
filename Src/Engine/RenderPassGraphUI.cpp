@@ -399,7 +399,7 @@ void CRenderPassGraphUI::_renderUIV()
     }
     m_CanvasDrawer.endLayerSplitting();
 
-    // draw outpot
+    // draw output
     if (m_pGraph->OutputPort.has_value())
     {
         glm::vec2 PortPos = __getPortPos(m_pGraph->OutputPort.value(), false);
@@ -599,7 +599,7 @@ void CRenderPassGraphUI::_renderUIV()
 
         if (ImGui::BeginTabItem(u8"ø‚"))
         {
-            const auto& PassSet = RenderpassLib::getAllPassNames();
+            const auto& PassSet = RenderpassLib::getAllVisiblePassNames();
             if (PassSet.empty())
                 ImGui::Text(u8"Œ¥◊¢≤·»Œ∫Œ‰÷»æPass...");
             else
