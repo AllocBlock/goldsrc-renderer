@@ -90,7 +90,6 @@ void IPipeline::destroy()
 void IPipeline::bind(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
 {
     _ASSERTE(isValid());
-    _ASSERTE(m_ShaderResourceDescriptor.isReady());
     const auto& DescriptorSet = m_ShaderResourceDescriptor.getDescriptorSet(vImageIndex);
     vCommandBuffer->bindPipeline(m_Pipeline, m_PipelineLayout, DescriptorSet);
     _initPushConstantV(vCommandBuffer);

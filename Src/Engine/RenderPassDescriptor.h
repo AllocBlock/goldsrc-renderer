@@ -21,6 +21,41 @@ struct SAttachementInfo
     }
 };
 
+struct SAttachmentReference
+{
+    uint32_t Index;
+    VkImageLayout Layout;
+};
+
+struct SSubpassReferenceInfo
+{
+    std::vector<SAttachmentReference> ColorIndices; // color render target indices
+    bool UseDepth = false; // if use depth render target
+    std::vector<SAttachmentReference> InputIndices; // indices of color/depth attachment as input
+    std::vector<uint32_t> DependentPassIndices;
+
+    SSubpassReferenceInfo& addColorRef(uint32_t vIndex, VkImageLayout vLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+    {
+        ColorIndices.push_back({ vIndex, vLayout });
+        return *this;
+    };
+    SSubpassReferenceInfo& setUseDepth(bool vUseDepth)
+    {
+        UseDepth = vUseDepth;
+        return *this;
+    };
+    SSubpassReferenceInfo& addInputRef(uint32_t vIndex, VkImageLayout vLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        InputIndices.push_back({ vIndex, vLayout });
+        return *this;
+    };
+    SSubpassReferenceInfo& addDependentPass(uint32_t vIndex)
+    {
+        DependentPassIndices.push_back(vIndex);
+        return *this;
+    };
+};
+
 // TIPS: before create with generated info, you should not release this descriptor as it contains data pointed in renderpass create info
 class CRenderPassDescriptor
 {
@@ -32,7 +67,7 @@ public:
     void setDepthAttachment(CPort::Ptr vPort);
     void addColorAttachment(const SAttachementInfo& vInfo);
     void setDepthAttachment(const SAttachementInfo& vInfo);
-    void addSubpass(const std::vector<uint32_t>& vColorIndices, bool vUseDepth, const std::vector<uint32_t>& vDepPassSet, const std::vector<uint32_t>& vInputIndices);
+    void addSubpass(const SSubpassReferenceInfo& vSubpassInfo);
 
     bool isValid() const { return m_IsValid; }
     void clearStage(); // you can clear stage data after create renderpass to save memory
@@ -63,25 +98,18 @@ public:
 
     static CRenderPassDescriptor generateSingleSubpassDesc(CPort::Ptr vColorPort, CPort::Ptr vDepthPort = nullptr);
 private:
-    struct SSubpassTargetInfo
-    {
-        std::vector<uint32_t> ColorIndices; // color render target indices
-        bool UseDepth = false; // if use depth render target
-        std::vector<uint32_t> DependentPassIndices;
-        std::vector<uint32_t> InputIndices; // indices of color/depth attachment as input
-    };
 
     SAttachementInfo __getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth);
 
     static VkAttachmentDescription __createAttachmentDescription(const SAttachementInfo& vInfo, bool vIsDepth);
-    VkSubpassDescription __generateSubpassDescriptionFromTargetInfo(const SSubpassTargetInfo& vTargetInfo);
+    VkSubpassDescription __generateSubpassDescriptionFromTargetInfo(const SSubpassReferenceInfo& vTargetInfo);
     void __generateAttachmentDescription();
     void __generateSubpassDescription(); // TODO: this just generates a full reference dependency
     void __generateDependency(); // TODO: this just generates a sequence dependency
     
     std::vector<SAttachementInfo> m_ColorAttachmentInfoSet;
     std::optional<SAttachementInfo> m_DepthAttachmentInfo = std::nullopt;
-    std::vector<SSubpassTargetInfo> m_SubpassTargetInfoSet;
+    std::vector<SSubpassReferenceInfo> m_SubpassReferenceInfoSet;
     bool m_IsValid = false;
 
     // avoid local point problem

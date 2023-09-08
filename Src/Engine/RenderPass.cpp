@@ -21,6 +21,7 @@ void IRenderPass::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D v
     m_pPortSet->assertInputLinkReady();
     
     __createRenderpass();
+    _ASSERTE(isValid());
     _initV();
 }
 
@@ -91,12 +92,8 @@ bool IRenderPass::_dumpInputPortExtent(std::string vName, VkExtent2D& voExtent)
 
 void IRenderPass::__createRenderpass()
 {
-    CRenderPassDescriptor OldDesc = m_CurPassDesc;
-    m_CurPassDesc = _getRenderPassDescV();
-    if (OldDesc == m_CurPassDesc) return; // same, no change
-    if (!OldDesc.isValid() && !m_CurPassDesc.isValid()) return; // all invalid, no change
-
     __destroyRenderpass();
+    m_CurPassDesc = _getRenderPassDescV();
     _ASSERTE(m_CurPassDesc.isValid());
 
     auto Info = m_CurPassDesc.generateInfo();

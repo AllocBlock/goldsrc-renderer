@@ -5,7 +5,7 @@
 #include <sstream>
 
 const std::regex gReGraphPart(R"(\[(.*?)\]([^\[]*))");
-const std::regex gReGraphNode(R"X(\s*"([^"]*)"\s*"([^"]*)"\s*(-?\d*.?\d*)\s*(-?\d*.?\d*))X"); // FIXME: rough and brute float matching, fix it later
+const std::regex gReGraphNode(R"X(\s*"([^"]*)"\s*"([^"]*)"\s*(-?\d*\.?\d*)\s*(-?\d*\.?\d*))X"); // FIXME: rough and brute float matching, fix it later
 const std::regex gReGraphLink(R"X(\s*"([^"]*)"\s*\"([^"]*)"\s*"([^"]*)"\s*"([^"]*)"\s*)X");
 const std::regex gReGraphEntry(R"X(\s*"([^"]*)"\s*"([^"]*)"\s*)X");
 

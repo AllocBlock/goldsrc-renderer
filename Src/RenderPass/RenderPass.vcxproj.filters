@@ -59,6 +59,9 @@
     <ClInclude Include="PipelineBlit.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineBloomLuminance.h">
+      <Filter>头文件\Bloom</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PipelineSkybox.cpp">
@@ -96,6 +99,9 @@
     </ClCompile>
     <ClCompile Include="PipelineBlit.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineBloomLuminance.cpp">
+      <Filter>源文件\Bloom</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,11 +1,30 @@
 #include "PipelineBloomBlur.h"
+#include "FullScreenPointData.h"
+#include "ImageUtils.h"
+#include "InterfaceUI.h"
 
 namespace
 {
     struct SUBOFrag
     {
-        alignas(16) glm::uvec2 ImageExtent;
+        alignas(8) glm::uvec2 ImageExtent;
+        alignas(4) uint32_t FilterSize;
     };
+}
+
+void CPipelineBloomBlur::setInputImage(VkImageView vImageView, size_t vIndex)
+{
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteImageAndSampler(1, vImageView != VK_NULL_HANDLE ? vImageView : m_PlaceholderImage, m_Sampler);
+    m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
+}
+
+void CPipelineBloomBlur::updateUniformBuffer(uint32_t vImageIndex, uint32_t vFilterSize)
+{
+    SUBOFrag UBOFrag = {};
+    UBOFrag.ImageExtent = glm::uvec2(m_Extent.width, m_Extent.height);
+    UBOFrag.FilterSize = vFilterSize;
+    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
 void CPipelineBloomBlur::_initShaderResourceDescriptorV()
@@ -25,6 +44,8 @@ CPipelineDescriptor CPipelineBloomBlur::_getPipelineDescriptionV()
     Descriptor.setFragShaderPath("bloomBlur.frag");
 
     Descriptor.setVertexInputInfo<SFullScreenPointData>();
+    Descriptor.setEnableDepthTest(false);
+    Descriptor.setEnableDepthWrite(false);
 
     return Descriptor;
 }
@@ -49,7 +70,7 @@ void CPipelineBloomBlur::_createV()
     for (size_t i = 0; i < m_ImageNum; ++i)
     {
         m_FragUniformBufferSet[i]->create(m_pDevice, sizeof(SUBOFrag));
-        __updateUniformBuffer(i);
+        updateUniformBuffer(i, 5);
     }
 
     __initAllDescriptorSet();
@@ -64,25 +85,6 @@ void CPipelineBloomBlur::_destroyV()
 
 void CPipelineBloomBlur::_renderUIV()
 {
-    if (UI::collapse("Pipeline Bloom Blur"))
-    {
-        UI::drag(u8"Ä£ºý·¶Î§", m_FilterSize, 0.1f, 1.0f, 15.0f);
-    }
-}
-
-void CPipelineBloomBlur::__updateInputImage(VkImageView vImageView, size_t vIndex)
-{
-    CDescriptorWriteInfo WriteInfo;
-    WriteInfo.addWriteImageAndSampler(1, vImageView != VK_NULL_HANDLE ? vImageView : m_PlaceholderImage, m_Sampler);
-    m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
-}
-
-void CPipelineBloomBlur::__updateUniformBuffer(uint32_t vImageIndex)
-{
-    SUBOFrag UBOFrag = {};
-    //UBOFrag.FilterSize = m_FilterSize;
-    UBOFrag.ImageExtent = glm::uvec2(m_Extent.width, m_Extent.height);
-    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
 void CPipelineBloomBlur::__initAllDescriptorSet()

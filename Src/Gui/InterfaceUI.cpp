@@ -232,6 +232,11 @@ bool UI::drag(std::string vName, float& vioValue, float vStep, float vMin, float
     return ImGui::DragFloat(vName.c_str(), &vioValue, vStep, vMin, vMax);
 }
 
+bool UI::drag(std::string vName, int& vioValue, int vStep, int vMin, int vMax)
+{
+    return ImGui::DragInt(vName.c_str(), &vioValue, vStep, vMin, vMax);
+}
+
 bool UI::drag(std::string vName, glm::vec2& vioValue, float vStep, float vMin, float vMax)
 {
     return ImGui::DragFloat2(vName.c_str(), glm::value_ptr(vioValue), vStep, vMin, vMax);

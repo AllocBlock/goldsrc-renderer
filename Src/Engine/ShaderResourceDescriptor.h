@@ -72,7 +72,4 @@ private:
     std::vector<VkDescriptorPoolSize> m_PoolSizeSet;
     std::vector<VkDescriptorSet> m_DescriptorSetSet;
     VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
-
-    std::vector<bool> m_IsUpdated;
-    bool m_IsReady = false; // is ready cache
 };

@@ -160,6 +160,7 @@
       - [Performance of drawing directly to swap chain images](https://www.reddit.com/r/vulkan/comments/4pxsf4/performance_of_drawing_directly_to_swap_chain/)
     - pass维护自己的输入输出，不关心swapchain
     - 最后有一个blitpass写入swapchain
+  - layout和usage管理
 
 ## 问题：Render pass graph
 - 以一个graph来表示整个渲染流程，自动排序command buffer，graph可以保存和载入，动态修改、生成实际的pass

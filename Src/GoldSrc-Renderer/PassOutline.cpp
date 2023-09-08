@@ -62,8 +62,10 @@ CRenderPassDescriptor CRenderPassOutline::_getRenderPassDescV()
 
     Desc.addColorAttachment(m_pPortSet->getOutputPort("Main"));
 
-    Desc.addSubpass({ 0 }, false, { VK_SUBPASS_EXTERNAL }, {});
-    Desc.addSubpass({ 1 }, false, { 0 }, { 0 });
+    SSubpassReferenceInfo SubPassInfo;
+
+    Desc.addSubpass(SSubpassReferenceInfo().addColorRef(0).addDependentPass(VK_SUBPASS_EXTERNAL));
+    Desc.addSubpass(SSubpassReferenceInfo().addColorRef(1).addInputRef(0).addDependentPass(0));
     return Desc;
 }
 

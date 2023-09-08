@@ -148,18 +148,12 @@ const std::vector<VkDescriptorSet>& CShaderResourceDescriptor::createDescriptorS
     m_DescriptorSetSet.resize(vImageNum);
     vk::checkError(vkAllocateDescriptorSets(*m_pDevice, &DescSetAllocInfo, m_DescriptorSetSet.data()));
 
-    m_IsUpdated = std::vector<bool>(vImageNum, false);
-    m_IsReady = false;
     return m_DescriptorSetSet;
 }
 
 void CShaderResourceDescriptor::update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo)
 {
-    m_IsUpdated[vSetIndex] = true;
-
     const std::vector<SDescriptorWriteInfoEntry>& vWriteInfoSet = vWriteInfo.get();
-    if (m_DescriptorInfoSet.size() != vWriteInfoSet.size())
-        throw std::runtime_error(u8"错误，写入描述符的数量和描述符不一致");
 
     std::vector<VkWriteDescriptorSet> DescriptorWrites(vWriteInfoSet.size());
     for (size_t i = 0; i < vWriteInfoSet.size(); ++i)
@@ -211,22 +205,6 @@ VkDescriptorSet CShaderResourceDescriptor::getDescriptorSet(size_t vIndex) const
 size_t CShaderResourceDescriptor::getDescriptorSetNum() const
 {
     return m_DescriptorSetSet.size();
-}
-
-bool CShaderResourceDescriptor::isReady()
-{
-    if (m_IsReady)
-        return m_IsReady;
-
-    if (m_IsUpdated.empty())
-        return false;
-
-    for (bool Updated : m_IsUpdated)
-        if (!Updated)
-            return false;
-
-    m_IsReady = true;
-    return true;
 }
 
 void CShaderResourceDescriptor::__createPool(size_t vImageNum)

@@ -6,11 +6,13 @@ layout(binding = 0) uniform UniformBufferObject
 {
     float BloomFactor;
 } ubo;
-layout(binding = 1) uniform sampler2D uTexInput;
+layout(binding = 1) uniform sampler2D uTexBase;
+layout(binding = 2) uniform sampler2D uTexBlur;
 
 layout(location = 0) out vec4 outColor;
 
 void main()
 {
-    outColor = vec4(texture(uTexInput, inFragTexCoord).rgb, ubo.BloomFactor);
+    vec3 color = texture(uTexBase, inFragTexCoord).rgb + texture(uTexBlur, inFragTexCoord).rgb * ubo.BloomFactor;
+    outColor = vec4(color, 1.0);
 }

@@ -38,6 +38,7 @@
     <ClInclude Include="PassSprite.h" />
     <ClInclude Include="PipelineBlit.h" />
     <ClInclude Include="PipelineBloomBlur.h" />
+    <ClInclude Include="PipelineBloomLuminance.h" />
     <ClInclude Include="PipelineBloomMerge.h" />
     <ClInclude Include="PipelineEnvironment.h" />
     <ClInclude Include="PipelineSkybox.h" />
@@ -52,6 +53,7 @@
     <ClCompile Include="PassSprite.cpp" />
     <ClCompile Include="PipelineBlit.cpp" />
     <ClCompile Include="PipelineBloomBlur.cpp" />
+    <ClCompile Include="PipelineBloomLuminance.cpp" />
     <ClCompile Include="PipelineBloomMerge.cpp" />
     <ClCompile Include="PipelineEnvironment.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />

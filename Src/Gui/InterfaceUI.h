@@ -46,6 +46,7 @@ namespace UI
     bool input(std::string vName, float& vioValue, float vStep = 0.01f);
     bool input(std::string vName, glm::vec3& vioValue);
     bool drag(std::string vName, float& vioValue, float vStep = 0.01f, float vMin = 0.0f, float vMax = 0.0f);
+    bool drag(std::string vName, int& vioValue, int vStep = 1, int vMin = 0, int vMax = 0);
     bool drag(std::string vName, glm::vec2& vioValue, float vStep = 0.01f, float vMin = 0.0f, float vMax = 0.0f);
     bool drag(std::string vName, glm::vec3& vioValue, float vStep = 0.01f, float vMin = 0.0f, float vMax = 0.0f);
     bool slider(std::string vName, float& vioValue, float vMin = 0.0f, float vMax = 0.0f, std::string vFormat = "");
