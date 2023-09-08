@@ -70,14 +70,6 @@ void CPort::unlinkAll()
     clearAllChildren();
 }
 
-void CPort::setForceNotReady(bool vForceNotReady)
-{ 
-    if (m_ForceNotReady != vForceNotReady)
-    {
-        m_ForceNotReady = vForceNotReady;
-    }
-}
-
 CSourcePort::CSourcePort(const std::string& vName, const SPortFormat& vFormat, CPortSet* vBelongedSet) : CPort(vName, vFormat, vBelongedSet)
 {
     if (vFormat.Format != VkFormat::VK_FORMAT_UNDEFINED)
@@ -99,7 +91,6 @@ VkImageView CSourcePort::getImageV(size_t vIndex) const
 
 size_t CSourcePort::getImageNumV() const
 {
-    _ASSERTE(!m_pParent.expired());
     return m_Format.Num;
 }
 
@@ -116,6 +107,7 @@ bool CSourcePort::isImageReadyV() const
 
 void CSourcePort::setImage(VkImageView vImage, size_t vIndex)
 {
+    _ASSERTE(m_Format.Num == 0 || vIndex <= m_Format.Num);
     if (m_ImageMap.find(vIndex) == m_ImageMap.end() || m_ImageMap[vIndex] != vImage)
     {
         m_ImageMap[vIndex] = vImage;
@@ -244,16 +236,6 @@ bool CPortSet::isImageReady() const
     return true;
 }
 
-bool CPortSet::isInputLinkReady() const
-{
-    for (const auto& pPort : m_InputPortSet)
-        if (!pPort->isLinkReadyV()) return false;
-    return true;
-}
-
-size_t CPortSet::getInputPortNum() const { return m_InputPortSet.size(); }
-size_t CPortSet::getOutputPortNum() const { return m_OutputPortSet.size(); }
-
 void CPortSet::assertImageReady() const
 {
     for (const auto& pPort : m_InputPortSet)
@@ -263,6 +245,23 @@ void CPortSet::assertImageReady() const
         if (!pPort->isImageReadyV())
             Common::throwError("output port " + pPort->getName() + " is not ready");
 }
+
+bool CPortSet::isInputLinkReady() const
+{
+    for (const auto& pPort : m_InputPortSet)
+        if (!pPort->isLinkReadyV()) return false;
+    return true;
+}
+
+void CPortSet::assertInputLinkReady() const
+{
+    for (const auto& pPort : m_InputPortSet)
+        if (!pPort->isImageReadyV())
+            Common::throwError("input port " + pPort->getName() + " is not ready");
+}
+
+size_t CPortSet::getInputPortNum() const { return m_InputPortSet.size(); }
+size_t CPortSet::getOutputPortNum() const { return m_OutputPortSet.size(); }
 
 bool CPortSet::hasInput(const std::string& vName) const
 { return __findPort(vName, m_InputPortSet) != nullptr; }

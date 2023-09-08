@@ -19,8 +19,7 @@ void CRenderPassGraphInstance::updateSceneInfo(ptr<SSceneInfo> vSceneInfo)
         Pair.second->setSceneInfo(vSceneInfo);
 }
 
-void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPort::Ptr vSwapchainPort,
-    BeforeInitCallback_t vBeforeInitCallback)
+void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, BeforeInitCallback_t vBeforeInitCallback)
 {
     if (!vGraph->isValid())
         throw std::runtime_error("Graph is not valid");
@@ -51,10 +50,6 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, CPo
 
         DependPassSet.at(Link.Destination.NodeId).push_back(Link.Source.NodeId);
     }
-
-    vSwapchainPort->unlinkAll();
-    auto pEntryPass = m_PassMap.at(vGraph->EntryPortOpt->NodeId);
-    CPortSet::link(vSwapchainPort, pEntryPass->getPortSet(), vGraph->EntryPortOpt->Name);
 
     for (const auto& Pair : m_PassMap)
     {

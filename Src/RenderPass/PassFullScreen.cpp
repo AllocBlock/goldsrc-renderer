@@ -108,7 +108,7 @@ void CRenderPassFullScreenGeneral::_initV()
 void CRenderPassFullScreenGeneral::_destroyV()
 {
     destroyAndClear(m_pVertexBuffer);
-    IRenderPass::_destroyV();
+    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 void CRenderPassFullScreenGeneral::_bindVertexBuffer(CCommandBuffer::Ptr vCommandBuffer)
@@ -139,7 +139,7 @@ void CRenderPassFullScreenGeneral::__generateScene()
     m_PointDataSet =
     {
         SFullScreenPointData{glm::vec2(-1.0f, -1.0f)},
-        SFullScreenPointData{glm::vec2(3.0f, -1.0f)},
         SFullScreenPointData{glm::vec2(-1.0f, 3.0f)},
+        SFullScreenPointData{glm::vec2(3.0f, -1.0f)},
     };
 }

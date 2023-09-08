@@ -18,6 +18,7 @@ namespace vk
             if (get())
             {
                 //throw "Vulkan对象在销毁前被析构";
+                std::string Type = std::string(typeid(*this).name());
                 _ASSERT(false);
             }
 #endif

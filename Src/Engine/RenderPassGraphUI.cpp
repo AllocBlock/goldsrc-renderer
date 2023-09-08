@@ -399,19 +399,20 @@ void CRenderPassGraphUI::_renderUIV()
     }
     m_CanvasDrawer.endLayerSplitting();
 
-    // draw entry
-    if (m_pGraph->EntryPortOpt.has_value())
+    // draw outpot
+    if (m_pGraph->OutputPort.has_value())
     {
-        glm::vec2 PortPos = __getPortPos(m_pGraph->EntryPortOpt.value(), true);
+        glm::vec2 PortPos = __getPortPos(m_pGraph->OutputPort.value(), false);
         
-        glm::vec2 LineStart = PortPos - glm::vec2(gEntryLineLength + gEntryLineMargin + m_CanvasDrawer.inverseScale(gPortHoveredRadius), 0);
-        glm::vec2 LineEnd = LineStart + glm::vec2(gEntryLineLength, 0);
+        glm::vec2 LineStart = PortPos + glm::vec2(gEntryLineLength, 0);
+        glm::vec2 LineEnd = LineStart;
+        LineEnd.x += gEntryLineMargin + m_CanvasDrawer.inverseScale(gPortHoveredRadius);
         m_CanvasDrawer.drawLine(LineStart, LineEnd, gEntryLineColor, gEntryLineWidth);
 
-        std::string EntryText = u8"入口";
-        glm::vec2 TextPos = LineStart;
-        TextPos.x -= 4.0f;
-        m_CanvasDrawer.drawText(TextPos, EntryText, gEntryTextColor, CCanvasDrawer::ETextAlign::END, CCanvasDrawer::ETextAlign::CENTER);
+        std::string OutputText = u8"输出";
+        glm::vec2 TextPos = LineEnd;
+        TextPos.x += 4.0f;
+        m_CanvasDrawer.drawText(TextPos, OutputText, gEntryTextColor, CCanvasDrawer::ETextAlign::BEGIN, CCanvasDrawer::ETextAlign::CENTER);
     }
 
     // draw to add link
@@ -489,7 +490,7 @@ void CRenderPassGraphUI::_renderUIV()
     }
 
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && m_HoveredItem.has_value() &&
-        (m_HoveredItem->Type != EItemType::PORT || m_HoveredItem->IsInput))
+        (m_HoveredItem->Type != EItemType::PORT || !m_HoveredItem->IsInput))
     {
         m_IsContextMenuOpen = true;
         m_SelectedItem = m_HoveredItem;
@@ -530,8 +531,8 @@ void CRenderPassGraphUI::_renderUIV()
             else if (m_DeferSelectedItem->Type == EItemType::PORT)
             {
                 
-                _ASSERTE(m_DeferSelectedItem->IsInput);
-                if (ImGui::MenuItem(u8"设为入口", nullptr, false, true))
+                _ASSERTE(!m_DeferSelectedItem->IsInput);
+                if (ImGui::MenuItem(u8"设为输出", nullptr, false, true))
                 {
                     m_Editor.setEntry(m_DeferSelectedItem->Id, m_DeferSelectedItem->Name);
                 }

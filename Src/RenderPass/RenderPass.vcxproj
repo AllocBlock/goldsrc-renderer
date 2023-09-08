@@ -32,9 +32,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FullScreenPointData.h" />
+    <ClInclude Include="PassPresent.h" />
     <ClInclude Include="PassBloom.h" />
     <ClInclude Include="PassGUI.h" />
     <ClInclude Include="PassSprite.h" />
+    <ClInclude Include="PipelineBlit.h" />
     <ClInclude Include="PipelineBloomBlur.h" />
     <ClInclude Include="PipelineBloomMerge.h" />
     <ClInclude Include="PipelineEnvironment.h" />
@@ -45,8 +47,10 @@
     <ClInclude Include="PassFullScreen.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="PassPresent.cpp" />
     <ClCompile Include="PassGUI.cpp" />
     <ClCompile Include="PassSprite.cpp" />
+    <ClCompile Include="PipelineBlit.cpp" />
     <ClCompile Include="PipelineBloomBlur.cpp" />
     <ClCompile Include="PipelineBloomMerge.cpp" />
     <ClCompile Include="PipelineEnvironment.cpp" />

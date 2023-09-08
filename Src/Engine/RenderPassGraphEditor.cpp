@@ -118,11 +118,11 @@ void CCommandRemoveNode::_executeV(ptr<SRenderPassGraph> vGraph)
             ++pIter;
     }
 
-    // remove entry if needed
-    if (vGraph->EntryPortOpt.has_value() && vGraph->EntryPortOpt->NodeId == m_NodeId)
+    // remove output if needed
+    if (vGraph->OutputPort.has_value() && vGraph->OutputPort->NodeId == m_NodeId)
     {
-        m_Entry = vGraph->EntryPortOpt;
-        vGraph->EntryPortOpt.reset();
+        m_Output = vGraph->OutputPort;
+        vGraph->OutputPort.reset();
     }
 }
 
@@ -131,10 +131,10 @@ void CCommandRemoveNode::_withdrawV(ptr<SRenderPassGraph> vGraph)
     _ASSERTE(!vGraph->hasNode(m_NodeId));
     vGraph->NodeMap[m_NodeId] = m_Node;
     vGraph->LinkMap.insert(m_LinkMap.begin(), m_LinkMap.end());
-    if (m_Entry.has_value())
+    if (m_Output.has_value())
     {
-        vGraph->EntryPortOpt = m_Entry;
-        m_Entry.reset();
+        vGraph->OutputPort = m_Output;
+        m_Output.reset();
     }
 }
 
@@ -146,13 +146,13 @@ CCommandSetEntry::CCommandSetEntry(size_t vNodeId, const std::string& vPortName)
 
 void CCommandSetEntry::_executeV(ptr<SRenderPassGraph> vGraph)
 {
-    m_OldEntry = vGraph->EntryPortOpt;
-    vGraph->EntryPortOpt = { m_NodeId, m_PortName };
+    m_OldOutput = vGraph->OutputPort;
+    vGraph->OutputPort = { m_NodeId, m_PortName };
 }
 
 void CCommandSetEntry::_withdrawV(ptr<SRenderPassGraph> vGraph)
 {
-    vGraph->EntryPortOpt = m_OldEntry;
+    vGraph->OutputPort = m_OldOutput;
 }
 
 void CRenderPassGraphEditor::setGraph(ptr<SRenderPassGraph> vGraph)
@@ -255,5 +255,5 @@ void CRenderPassGraphEditor::__clear()
 {
     m_pGraph->NodeMap.clear();
     m_pGraph->LinkMap.clear();
-    m_pGraph->EntryPortOpt = std::nullopt;
+    m_pGraph->OutputPort = std::nullopt;
 }

@@ -24,8 +24,8 @@
  * "3_Visualize" "Main"  "4_Gui"       "Main" 
  * "1_GoldSrc"   "Depth" "3_Visualize" "Depth"
  *
- * [Entry]
- * "1_GoldSrc"   "Main"
+ * [Output]
+ * "4_Gui"   "Main"
  *
  * each node start with the pass type (identifier) and a unique pass name, then two float indicate the position of node
  * each link contain src pass name, output port name, dest pass name, input port name

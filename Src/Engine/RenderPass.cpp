@@ -18,6 +18,7 @@ void IRenderPass::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D v
     m_pDevice = vDevice;
     m_ImageNum = vImageNum;
     m_ScreenExtent = vScreenExtent;
+    m_pPortSet->assertInputLinkReady();
     
     __createRenderpass();
     _initV();

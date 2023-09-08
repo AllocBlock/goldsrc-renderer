@@ -31,8 +31,7 @@ void CApplicationVisualize::_createV()
 
     VkExtent2D ScreenExtent = m_pSwapchain->getExtent();
     m_pPassVisualize = make<CRenderPassVisualize>();
-    m_pPassVisualize->init(m_pDevice, m_pSwapchain->getImageNum(), ScreenExtent);
-    m_pPassVisualize->setSceneInfo(m_pSceneInfo);
+    m_pPassVisualize->createPortSet();
 
     SPortFormat Format = { VK_FORMAT_D32_SFLOAT, SPortFormat::AnyExtent, 1, EUsage::WRITE };
     m_pDepthPort = make<CSourcePort>("Depth", Format, nullptr);
@@ -45,6 +44,9 @@ void CApplicationVisualize::_createV()
     m_pDepthPort->setImage(m_DepthImage, 0);
 
     __linkPasses();
+
+    m_pPassVisualize->init(m_pDevice, m_pSwapchain->getImageNum(), ScreenExtent);
+    m_pPassVisualize->setSceneInfo(m_pSceneInfo);
 }
 
 void CApplicationVisualize::_updateV(uint32_t vImageIndex)
@@ -66,11 +68,9 @@ void CApplicationVisualize::__linkPasses()
 {
     auto pPortVisualize = m_pPassVisualize->getPortSet();
     m_pSwapchainPort->unlinkAll();
-
-    m_pSwapchainPort->setForceNotReady(true);
+    
     CPortSet::link(m_pSwapchainPort, pPortVisualize, "Main");
     CPortSet::link(m_pDepthPort, pPortVisualize, "Depth");
-    m_pSwapchainPort->setForceNotReady(false);
 
     _ASSERTE(m_pPassVisualize->isValid());
 }

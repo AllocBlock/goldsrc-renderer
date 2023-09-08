@@ -45,7 +45,7 @@ struct SRenderPassGraph
 {
     std::map<size_t, SRenderPassGraphNode> NodeMap;
     std::map<size_t, SRenderPassGraphLink> LinkMap;
-    std::optional<SRenderPassGraphPortInfo> EntryPortOpt = std::nullopt;
+    std::optional<SRenderPassGraphPortInfo> OutputPort = std::nullopt;
 
     bool hasNode(size_t vNodeId) const { return NodeMap.find(vNodeId) != NodeMap.end(); }
     bool hasLink(size_t vLinkId) const { return LinkMap.find(vLinkId) != LinkMap.end(); }
@@ -59,9 +59,9 @@ struct SRenderPassGraph
 
     bool isValid(std::string& voReason) const
     {
-        if (!EntryPortOpt.has_value())
+        if (!OutputPort.has_value())
         {
-            voReason = u8"未指定入口";
+            voReason = u8"未指定输出";
             return false;
         }
         // TODO: more validation

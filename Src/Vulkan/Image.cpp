@@ -287,7 +287,7 @@ void CImage::generateMipmaps(CCommandBuffer::Ptr vCommandBuffer)
 
         vCommandBuffer->addImageMemoryBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, Barrier);
 
-        VkImageBlit Blit{};
+        VkImageBlit Blit = {};
         Blit.srcOffsets[0] = { 0, 0, 0 };
         Blit.srcOffsets[1] = { MipWidth, MipHeight, 1 };
         Blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;

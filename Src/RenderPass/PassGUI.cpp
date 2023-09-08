@@ -28,7 +28,6 @@ CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
 
 void CRenderPassGUI::_renderUIV()
 {
-    UI::text(u8"默认GUI");
 }
 
 void CRenderPassGUI::_destroyV()
@@ -43,9 +42,6 @@ void CRenderPassGUI::_destroyV()
 
 std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vImageIndex)
 {
-    VkClearValue ClearValue = {};
-    ClearValue.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
     CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     _beginWithFramebuffer(vImageIndex);

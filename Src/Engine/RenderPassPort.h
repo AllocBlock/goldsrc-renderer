@@ -77,11 +77,9 @@ public:
     void unlinkAll();
 
     // if the link of this port is ready, means it has a source port as head and no in valid port before it
-    virtual bool isLinkReadyV() const { return !m_ForceNotReady; }
+    virtual bool isLinkReadyV() const { return true; }
     // if the image of this port is ready, means it all pass before this port is runnable
-    virtual bool isImageReadyV() const { return !m_ForceNotReady; };
-    bool isForceNotReady() const { return m_ForceNotReady; }
-    void setForceNotReady(bool vForceNotReady);
+    virtual bool isImageReadyV() const { return true; };
 
     const SPortFormat& getFormat() const { return m_Format; }
     virtual VkImageView getImageV(size_t vIndex = 0) const = 0;
@@ -103,9 +101,6 @@ protected:
     SPortFormat m_Format;
     wptr<CPort> m_pParent;
     std::vector<CPort::Ptr> m_ChildSet;
-
-private:
-    bool m_ForceNotReady = false;
 };
 
 class CSourcePort : public CPort
@@ -198,8 +193,9 @@ public:
 
     bool isLinkReady() const;
     bool isImageReady() const;
-    bool isInputLinkReady() const;
     void assertImageReady() const;
+    bool isInputLinkReady() const;
+    void assertInputLinkReady() const;
 
     bool hasInput(const std::string& vName) const;
     bool hasOutput(const std::string& vName) const;

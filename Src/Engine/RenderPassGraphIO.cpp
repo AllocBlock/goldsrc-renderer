@@ -85,10 +85,10 @@ ptr<SRenderPassGraph> RenderPassGraphIO::load(const std::filesystem::path& vFile
                 }
             }
         }
-        else if (PartName == "Entry")
+        else if (PartName == "Output")
         {
-            if (pGraph->EntryPortOpt.has_value())
-                throw std::runtime_error("Entry already set, only single Entry part is allow in file");
+            if (pGraph->OutputPort.has_value())
+                throw std::runtime_error("Output port already set, only single Output part is allow in file");
             if (std::regex_match(Content, MatchResult, gReGraphEntry))
             {
                 const std::string& PassName = MatchResult[1];
@@ -97,11 +97,11 @@ ptr<SRenderPassGraph> RenderPassGraphIO::load(const std::filesystem::path& vFile
                 if (PassNameIdMap.find(PassName) == PassNameIdMap.end())
                     throw std::runtime_error("Pass in link is not found: " + PassName);
                 size_t PassId = PassNameIdMap.at(PassName);
-                pGraph->EntryPortOpt = { PassId, PortName };
+                pGraph->OutputPort = { PassId, PortName };
             }
             else
             {
-                throw std::runtime_error("Entry part can not be parsed, the file is wrong?" + Content);
+                throw std::runtime_error("Output part can not be parsed, the file is wrong?" + Content);
             }
         }
         else
@@ -150,12 +150,12 @@ void RenderPassGraphIO::save(cptr<SRenderPassGraph> vGraph, const std::filesyste
             Data << "\"" << SrcPassName << "\" \"" << Link.Source.Name << "\" \"" <<  DestPassName << "\" \"" << Link.Destination.Name << "\"\n";
         }
     }
-    // Entry
-    if (vGraph->EntryPortOpt.has_value())
+    // Output
+    if (vGraph->OutputPort.has_value())
     {
-        Data << "[Entry]\n";
-        std::string PassName = PassIdNameMap.at(vGraph->EntryPortOpt->NodeId);
-        Data << "\"" + PassName + "\" \"" + vGraph->EntryPortOpt->Name + "\"\n";
+        Data << "[Output]\n";
+        std::string PassName = PassIdNameMap.at(vGraph->OutputPort->NodeId);
+        Data << "\"" + PassName + "\" \"" + vGraph->OutputPort->Name + "\"\n";
     }
 
     Common::writeStringToFile(Data.str(), vFilePath);

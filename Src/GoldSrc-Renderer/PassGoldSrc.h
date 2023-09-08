@@ -59,7 +59,8 @@ protected:
     
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
     {
-        return _dumpInputPortExtent("Main", voExtent);
+        voExtent = m_ScreenExtent;
+        return voExtent != vk::ZeroExtent;
     }
     virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
     {
@@ -135,6 +136,7 @@ private:
     } m_PipelineSet;
     
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
+    vk::CPointerSet<vk::CImage> m_MainImageSet;
     vk::CImage m_DepthImage;
     vk::CImage m_LightmapImage;
     vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;

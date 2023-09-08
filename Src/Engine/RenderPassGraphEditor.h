@@ -82,7 +82,7 @@ private:
     size_t m_NodeId;
     SRenderPassGraphNode m_Node;
     std::map<size_t, SRenderPassGraphLink> m_LinkMap;
-    std::optional<SRenderPassGraphPortInfo> m_Entry;
+    std::optional<SRenderPassGraphPortInfo> m_Output;
 };
 
 class CCommandSetEntry : public IRenderPassGraphEditCommand
@@ -97,7 +97,7 @@ protected:
 private:
     size_t m_NodeId;
     std::string m_PortName;
-    std::optional<SRenderPassGraphPortInfo> m_OldEntry;
+    std::optional<SRenderPassGraphPortInfo> m_OldOutput;
 };
 
 class CRenderPassGraphEditor

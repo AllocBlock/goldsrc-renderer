@@ -26,6 +26,12 @@ void CRenderPassGoldSrc::rerecordAllCommand()
     m_pRerecord->requestRecordForAll();
 }
 
+void CRenderPassGoldSrc::_initPortDescV(SPortDescriptor& vioDesc)
+{
+    vioDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EUsage::WRITE });
+    vioDesc.addOutput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EUsage::WRITE });
+}
+
 void CRenderPassGoldSrc::_initV()
 {
     m_pRerecord = make<CRerecordState>(m_ImageNum);
@@ -36,6 +42,14 @@ void CRenderPassGoldSrc::_initV()
     VkExtent2D RefExtent = { 0, 0 };
     bool Success = _dumpReferenceExtentV(RefExtent);
     _ASSERTE(Success);
+
+    m_MainImageSet.init(m_ImageNum);
+    VkFormat MainFormat = m_pPortSet->getOutputFormat("Main").Format;
+    for (size_t i = 0; i < m_ImageNum; ++i)
+    {
+        ImageUtils::createImage2d(*m_MainImageSet[i], m_pDevice, m_ScreenExtent, MainFormat, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        m_pPortSet->setOutput("Main", *m_MainImageSet[i], i);
+    }
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
     ImageUtils::createDepthImage(m_DepthImage, m_pDevice, RefExtent, NULL, DepthFormat);
@@ -56,14 +70,6 @@ void CRenderPassGoldSrc::_initV()
     __createSceneResources();
 
     rerecordAllCommand();
-}
-
-void CRenderPassGoldSrc::_initPortDescV(SPortDescriptor& vioDesc)
-{
-    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-
-    VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
-    vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::WRITE });
 }
 
 CRenderPassDescriptor CRenderPassGoldSrc::_getRenderPassDescV()
@@ -115,6 +121,7 @@ void CRenderPassGoldSrc::_renderUIV()
 
 void CRenderPassGoldSrc::_destroyV()
 {
+    m_MainImageSet.destroyAndClearAll();
     m_DepthImage.destroy();
     m_PipelineSet.destroy();
     destroyAndClear(m_pVertexBuffer);

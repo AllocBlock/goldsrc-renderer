@@ -10,8 +10,8 @@ void CRenderPassOutline::_initV()
     m_pRerecord->addField("Primary");
 
     VkExtent2D RefExtent = { 0, 0 };
-    bool success = _dumpReferenceExtentV(RefExtent);
-    _ASSERTE(success);
+    bool Success = _dumpReferenceExtentV(RefExtent);
+    _ASSERTE(Success);
     
     VkFormat Format = VkFormat::VK_FORMAT_R8_UNORM;
     VkImageCreateInfo ImageInfo = {};

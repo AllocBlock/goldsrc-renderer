@@ -53,6 +53,12 @@
     <ClInclude Include="PassBloom.h">
       <Filter>头文件\Bloom</Filter>
     </ClInclude>
+    <ClInclude Include="PassPresent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBlit.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PipelineSkybox.cpp">
@@ -84,6 +90,12 @@
     </ClCompile>
     <ClCompile Include="PipelineBloomMerge.cpp">
       <Filter>源文件\Bloom</Filter>
+    </ClCompile>
+    <ClCompile Include="PassPresent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineBlit.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
