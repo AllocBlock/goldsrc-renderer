@@ -126,6 +126,16 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
 }
 
+void CPipelineSkybox::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+{
+    if (m_VertexBuffer.isValid() && m_SkyBoxImage.isValid())
+    {
+        bind(vCommandBuffer, vImageIndex);
+        vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
+        vCommandBuffer->draw(0, static_cast<uint32_t>(m_VertexNum));
+    }
+}
+
 void CPipelineSkybox::_initShaderResourceDescriptorV()
 {
     _ASSERTE(m_pDevice);

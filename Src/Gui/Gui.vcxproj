@@ -88,7 +88,6 @@
   <ItemGroup>
     <ClCompile Include="GuiAlert.cpp" />
     <ClCompile Include="GuiLog.cpp" />
-    <ClCompile Include="GuiUtil.cpp" />
     <ClCompile Include="GuiLoading.cpp" />
     <ClCompile Include="GuiWindow.cpp" />
     <ClCompile Include="InterfaceGui.cpp" />

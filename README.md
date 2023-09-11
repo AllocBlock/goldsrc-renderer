@@ -63,9 +63,11 @@
     - 级联Shadow Map
   - 光追Pass
   - 后处理Pass及其扩展设计
-    - Bloom
-    - 环境光遮蔽AO
-      - SSAO
+    - Bloom ✅已完成
+    - 环境光遮蔽AO 
+      - SSAO 🚧开发中
+      - HBAO 🚧开发中
+      - SSDO
 - bsp实体触发机制与效果
 - 解析、播放地图音频
 - 读取并渲染dem文件

@@ -14,15 +14,7 @@ class CPipelineSkybox : public IPipeline
 public:
     void setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet);
     void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
-    {
-        if (m_VertexBuffer.isValid() && m_SkyBoxImage.isValid())
-        {
-            bind(vCommandBuffer, vImageIndex);
-            vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
-            vCommandBuffer->draw(0, static_cast<uint32_t>(m_VertexNum));
-        }
-    }
+    void recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;

@@ -17,9 +17,6 @@
     <ClCompile Include="NativeSystem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GuiUtil.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="GuiAlert.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
