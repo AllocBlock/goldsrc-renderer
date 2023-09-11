@@ -1,7 +1,7 @@
 #include "PipelineBloomBlur.h"
 #include "FullScreenPointData.h"
 #include "ImageUtils.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 namespace
 {

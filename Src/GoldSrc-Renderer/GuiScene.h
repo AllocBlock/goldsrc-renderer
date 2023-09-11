@@ -1,6 +1,6 @@
 #pragma once
 #include "Scene.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 class CGuiScene
 {

@@ -1,5 +1,5 @@
 #include "ComponentTextRenderer.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 std::vector<VkVertexInputAttributeDescription> CComponentTextRenderer::SPointData::getAttributeDescriptionSet()
 {

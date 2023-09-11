@@ -35,16 +35,10 @@
     <ClCompile Include="ApplicationGoldSrc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GuiAlert.cpp">
-      <Filter>源文件\Gui</Filter>
-    </ClCompile>
     <ClCompile Include="GuiFGD.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
     <ClCompile Include="GuiFrameRate.cpp">
-      <Filter>源文件\Gui</Filter>
-    </ClCompile>
-    <ClCompile Include="GuiLog.cpp">
       <Filter>源文件\Gui</Filter>
     </ClCompile>
     <ClCompile Include="GuiMain.cpp">
@@ -61,9 +55,6 @@
     </ClCompile>
     <ClCompile Include="SceneProbe.cpp">
       <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="GuiRequestPopupModal.cpp">
-      <Filter>源文件\Gui</Filter>
     </ClCompile>
     <ClCompile Include="PassOutline.cpp">
       <Filter>源文件\RenderPass</Filter>
@@ -91,16 +82,10 @@
     <ClInclude Include="PointData.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GuiAlert.h">
-      <Filter>头文件\Gui</Filter>
-    </ClInclude>
     <ClInclude Include="GuiFGD.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
     <ClInclude Include="GuiFrameRate.h">
-      <Filter>头文件\Gui</Filter>
-    </ClInclude>
-    <ClInclude Include="GuiLog.h">
       <Filter>头文件\Gui</Filter>
     </ClInclude>
     <ClInclude Include="GuiMain.h">
@@ -129,9 +114,6 @@
     </ClInclude>
     <ClInclude Include="SceneProbe.h">
       <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GuiRequestPopupModal.h">
-      <Filter>头文件\Gui</Filter>
     </ClInclude>
     <ClInclude Include="PipelineGoldSrc.h">
       <Filter>头文件\Pipeline</Filter>

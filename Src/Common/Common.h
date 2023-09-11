@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 
 #define _SHOULD_NOT_GO_HERE throw std::runtime_error("Should not go here")
 
@@ -37,6 +38,16 @@ namespace Common
                 return false;
         return true;
     }
+
+    std::string joinString(const std::vector<std::string>& vStrings, const std::string& vSeparator = " ");
+    std::string toString(double vValue, int roundDecimalPlace = 2);
+
+    struct SLoadingInfo
+    {
+        std::filesystem::path FileName;
+        std::string Message;
+        std::optional<float> Progress = std::nullopt;
+    };
 
     constexpr float Acc = 1e-5f;
 }

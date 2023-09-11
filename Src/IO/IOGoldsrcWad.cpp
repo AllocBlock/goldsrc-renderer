@@ -13,7 +13,7 @@ bool CIOGoldsrcWad::_readV(std::filesystem::path vFilePath)
         return false;
     }
 
-    m_Header.read(File);
+    m_Header.read(File); 
 
     File.seekg(m_Header.LumpsListOffset);
     while (true)

@@ -7,7 +7,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 // reference: https://gist.github.com/ocornut/7e9b3ec566a333d725d4
 

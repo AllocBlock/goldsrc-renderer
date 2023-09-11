@@ -1,4 +1,4 @@
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 #include "Sampler.h"
 
 #include <array>
@@ -69,6 +69,15 @@ ImGuiCond __toImguiCondFlag(UI::ESetVariableCondition vFlag)
     }
 }
 
+ImGuiCol_ __toImguiStyleColor(UI::EStyleColorTarget vTarget)
+{
+    switch (vTarget)
+    {
+    case UI::EStyleColorTarget::TEXT: return ImGuiCol_Text;
+    default: throw std::runtime_error("unknown style color target");
+    }
+}
+
 ImVec2 __toImguiVec2(glm::vec2 vVec)
 {
     return ImVec2(vVec.x, vVec.y);
@@ -122,6 +131,12 @@ void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool v
     }
 
     gIsInitted = true;
+}
+
+ImU32 __toImguiColor(const glm::vec4& vColor)
+{
+    glm::ivec4 ColorU8 = vColor * 255.0f;
+    return IM_COL32(ColorU8.r, ColorU8.g, ColorU8.b, ColorU8.a);
 }
 
 bool UI::isInitted()
@@ -342,6 +357,16 @@ void UI::setNextWindowSize(const glm::vec2& vSize)
 
 void UI::setScrollHereX(float vCenterRatio) { ImGui::SetScrollHereX(vCenterRatio); }
 void UI::setScrollHereY(float vCenterRatio) { ImGui::SetScrollHereY(vCenterRatio); }
+
+void UI::pushStyleColor(EStyleColorTarget vTarget, const glm::vec4& vColor)
+{
+    ImGui::PushStyleColor(__toImguiStyleColor(vTarget), __toImguiColor(vColor));
+}
+
+void UI::popStyleColor()
+{
+    ImGui::PopStyleColor();
+}
 
 bool UI::isUsingMouse()
 {

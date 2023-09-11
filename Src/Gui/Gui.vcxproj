@@ -86,12 +86,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="InterfaceUI.cpp" />
+    <ClCompile Include="GuiAlert.cpp" />
+    <ClCompile Include="GuiLog.cpp" />
+    <ClCompile Include="GuiUtil.cpp" />
+    <ClCompile Include="GuiLoading.cpp" />
+    <ClCompile Include="GuiWindow.cpp" />
+    <ClCompile Include="InterfaceGui.cpp" />
     <ClCompile Include="NativeSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="InterfaceUI.h" />
+    <ClInclude Include="GuiLoading.h" />
+    <ClInclude Include="GuiLog.h" />
+    <ClInclude Include="GuiWindow.h" />
+    <ClInclude Include="InterfaceGui.h" />
     <ClInclude Include="NativeSystem.h" />
+    <ClInclude Include="GuiAlert.h" />
+    <ClInclude Include="GuiUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.vcxproj">

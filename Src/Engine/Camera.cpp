@@ -1,5 +1,5 @@
 #include "Camera.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>

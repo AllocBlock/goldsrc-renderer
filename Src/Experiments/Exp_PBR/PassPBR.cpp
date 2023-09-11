@@ -1,5 +1,5 @@
 #include "PassPBR.h"
-#include "InterfaceUI.h"
+#include "..\..\Gui\InterfaceGui.h"
 #include "ImageUtils.h"
 #include "RenderPassDescriptor.h"
 

@@ -1,6 +1,6 @@
 ﻿#include "PassGUI.h"
 #include "RenderPassDescriptor.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 

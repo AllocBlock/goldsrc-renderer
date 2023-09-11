@@ -1,5 +1,5 @@
 #include "GuiFrameRate.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 #include <string>
 
@@ -19,7 +19,7 @@ void CGuiFrameRate::draw()
         double PoppedFrameRate = m_SavedFrameRates.front();
         m_SavedFrameRates.erase(m_SavedFrameRates.begin(), m_SavedFrameRates.begin() + 1);
     }
-    
+
     UI::beginWindow(u8"Ö¡ÂÊ", nullptr, UI::EWindowFlag::ALWAYS_AUTO_RESIZE | UI::EWindowFlag::NO_RESIZE);
     UI::text(u8"ÊµÊ±FPS: " + std::to_string(RealtimeFPS));
     double AverageDeltaTimeSecond = static_cast<float>((CurTimeStamp - m_LastAverageTimeStamp).count()) / 1e6;

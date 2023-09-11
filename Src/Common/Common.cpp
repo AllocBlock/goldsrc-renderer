@@ -1,6 +1,7 @@
 #include "Common.h"
 
 #include <fstream>
+#include <sstream>
 
 const float g_ModOffset = 1e-9f;
 
@@ -91,4 +92,22 @@ std::string Common::trim(const std::string& vStr)
         End--;
     if (Start == End) return "";
     return vStr.substr(Start, End);
+}
+
+std::string Common::joinString(const std::vector<std::string>& vStrings, const std::string& vSeparator)
+{
+    std::string Result;
+    for (size_t i = 0; i < vStrings.size(); ++i)
+    {
+        Result += (i == 0 ? "" : vSeparator) + vStrings[i];
+    }
+    return Result;
+}
+
+std::string Common::toString(double vValue, int roundDecimalPlace)
+{
+    _ASSERTE(roundDecimalPlace >= 1);
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(roundDecimalPlace) << vValue;
+    return stream.str();
 }

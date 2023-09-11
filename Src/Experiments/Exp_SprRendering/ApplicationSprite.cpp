@@ -1,7 +1,7 @@
 #include "ApplicationSprite.h"
 
 #include "SingleTimeCommandBuffer.h"
-#include "InterfaceUI.h"
+#include "..\..\Gui\InterfaceGui.h"
 
 using namespace vk;
 

@@ -1,5 +1,5 @@
 #include "GuiFGD.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 #include "NativeSystem.h"
 
 #include <string>

@@ -123,13 +123,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ApplicationGoldSrc.cpp" />
-    <ClCompile Include="GuiAlert.cpp" />
     <ClCompile Include="GuiFGD.cpp" />
     <ClCompile Include="GuiFrameRate.cpp" />
-    <ClCompile Include="GuiLog.cpp" />
     <ClCompile Include="GuiMain.cpp" />
     <ClCompile Include="GuiTextureViewer.cpp" />
-    <ClCompile Include="GuiRequestPopupModal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PassOutline.cpp" />
     <ClCompile Include="PipelineGoldSrc.cpp" />
@@ -143,13 +140,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationGoldSrc.h" />
-    <ClInclude Include="GuiAlert.h" />
     <ClInclude Include="GuiFGD.h" />
     <ClInclude Include="GuiFrameRate.h" />
-    <ClInclude Include="GuiLog.h" />
     <ClInclude Include="GuiMain.h" />
     <ClInclude Include="GuiTextureViewer.h" />
-    <ClInclude Include="GuiRequestPopupModal.h" />
     <ClInclude Include="PassOutline.h" />
     <ClInclude Include="PipelineIcon.h" />
     <ClInclude Include="PipelineOutlineMask.h" />

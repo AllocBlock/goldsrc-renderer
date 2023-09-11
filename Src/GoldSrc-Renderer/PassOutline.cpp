@@ -1,5 +1,5 @@
 #include "PassOutline.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 #include "RenderPassDescriptor.h"
 
 #include <vector>

@@ -1,6 +1,6 @@
 #include "ApplicationPBR.h"
 #include "SingleTimeCommandBuffer.h"
-#include "InterfaceUI.h"
+#include "..\..\Gui\InterfaceGui.h"
 
 void CApplicationPBR::_createV()
 {

@@ -1,6 +1,6 @@
 #include "PassVisPhysics.h"
 #include "RenderPassDescriptor.h"
-#include "InterfaceUI.h"
+#include "..\..\Gui\InterfaceGui.h"
 
 void CRenderPassVisPhysics::setPhysicsEngine(CPhysicsEngine::Ptr vEngine)
 {

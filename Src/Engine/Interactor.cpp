@@ -1,5 +1,5 @@
 #include "Interactor.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 #include <chrono>
 
 enum class EMoveState

@@ -3,7 +3,7 @@
 #include "RenderPassGraphIO.h"
 #include "SceneProbe.h"
 #include "SingleTimeCommandBuffer.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 #include "PassGUI.h"
 #include "PassOutline.h"
 #include "PassPresent.h"

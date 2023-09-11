@@ -1,12 +1,10 @@
 #pragma once
 #include "DrawableUI.h"
 #include "Interactor.h"
-#include "GuiAlert.h"
 #include "GuiFrameRate.h"
-#include "GuiLog.h"
+#include "GuiUtil.h"
 #include "GuiFGD.h"
 #include "GuiScene.h"
-#include "GuiRequestPopupModal.h"
 #include "SceneInfo.h"
 
 #include <future>
@@ -45,12 +43,12 @@ public:
 
     void setSceneFocusedActor(CActor::Ptr vActor)
     {
-        m_GUIScene.setFocusedActor(vActor);
+        m_GuiScene.setFocusedActor(vActor);
     }
 
     void clearSceneFocusedActor()
     {
-        m_GUIScene.clearFocusedActor();
+        m_GuiScene.clearFocusedActor();
     }
 
     static SResultReadScene readScene(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo);
@@ -58,12 +56,10 @@ protected:
     virtual void _renderUIV() override;
 
 private:
-    CGuiAlert m_GUIAlert = CGuiAlert();
-    CGuiFrameRate m_GUIFrameRate = CGuiFrameRate();
-    CGuiLog m_GUILog = CGuiLog();
-    CGuiFGD m_FGD;
-    CGuiScene m_GUIScene;
-    CGuiRequestPopupModal m_RequestPopupModal;
+    SGuiUtil m_GuiUtil;
+    CGuiFrameRate m_GuiFrameRate = CGuiFrameRate();
+    CGuiFGD m_GuiFGD;
+    CGuiScene m_GuiScene;
 
     ptr<SSceneInfo> m_pSceneInfo = nullptr;
 
@@ -74,10 +70,9 @@ private:
         bool ShowWidgetFrameRate = false;
         bool ShowWidgetScene = false;
     } m_Control;
-    
-    std::filesystem::path m_LoadingFilePath = "";
-    std::string m_LoadingProgressReport = "";
-    std::future<SResultReadScene> m_FileReadingFuture;
+
+    Common::SLoadingInfo m_LoadingInfo;
+    std::future<SResultReadScene> m_LoadingFuture;
 
     std::function<void()> m_RenderSettingCallback = nullptr;
     ReadSceneCallbackFunc_t m_ReadSceneCallback = nullptr;

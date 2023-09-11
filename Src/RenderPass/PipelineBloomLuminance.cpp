@@ -1,7 +1,7 @@
 #include "PipelineBloomLuminance.h"
 #include "FullScreenPointData.h"
 #include "ImageUtils.h"
-#include "InterfaceUI.h"
+#include "InterfaceGui.h"
 
 void CPipelineBloomLuminance::setInputImage(VkImageView vImageView, size_t vIndex)
 {

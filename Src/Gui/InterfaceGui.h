@@ -28,6 +28,12 @@ namespace UI
         APPEARING
     };
 
+
+    enum class EStyleColorTarget
+    {
+        TEXT
+    };
+
     void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass);
     bool isInitted();
     void setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer);
@@ -83,6 +89,9 @@ namespace UI
     void setNextWindowPos(const glm::vec2& vCenter, ESetVariableCondition vCond, const glm::vec2& vPivot);
     void setScrollHereX(float vCenterRatio = 0.5f);
     void setScrollHereY(float vCenterRatio = 0.5f);
+
+    void pushStyleColor(EStyleColorTarget vTarget, const glm::vec4& vColor);
+    void popStyleColor();
 
     bool isUsingMouse();
     bool isUsingKeyboard();

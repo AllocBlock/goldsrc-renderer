@@ -11,18 +11,48 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="InterfaceUI.cpp">
+    <ClCompile Include="InterfaceGui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="NativeSystem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GuiUtil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiAlert.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiLoading.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiLog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="InterfaceUI.h">
+    <ClInclude Include="InterfaceGui.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="NativeSystem.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiAlert.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiLoading.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiWindow.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
