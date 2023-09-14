@@ -148,6 +148,21 @@ submit_to_graphics_queue
      ``` 
    > 而实际测试，descriptor就用普通的image，shader也按普通的写法，不会报错或者触发validation，感觉可以绕过inp 
 
-
 - 关于实现subpass的资料
   - [Vulkan input attachments and sub passes](https://www.saschawillems.de/blog/2018/07/19/vulkan-input-attachments-and-sub-passes/)
+
+## Image Layout的转换阶段
+- pass结束时：VkAttachmentDescription中配置
+- Subpass dependency：VkAttachmentReference中配置
+- 手动转换：vkCmdPipelineBarrier
+
+## Shader和Descriptor Set
+- 一个Shader可以包含多个Descriptor Set
+- 如每张纹理一个descriptor，从而实现复用
+```
+layout (set = 1, binding = 0) uniform sampler2D samplerColorMap;
+layout (set = 2, binding = 0) uniform sampler2D samplerNormalMap;
+layout (set = 3, binding = 0) uniform sampler2D samplerMetallicRoughnessMap;
+layout (set = 4, binding = 0) uniform sampler2D samplerAOMap;
+layout (set = 5, binding = 0) uniform sampler2D samplerEmissionMap;
+```
