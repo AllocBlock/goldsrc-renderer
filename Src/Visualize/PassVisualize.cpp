@@ -68,8 +68,8 @@ void CRenderPassVisualize::_initV()
 
 void CRenderPassVisualize::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
-    vioDesc.addInput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EUsage::WRITE });
+    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    vioDesc.addInput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
 }
 
 CRenderPassDescriptor CRenderPassVisualize::_getRenderPassDescV()

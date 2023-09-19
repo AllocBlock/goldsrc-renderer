@@ -1,10 +1,18 @@
 # 一些对Vulkan的理解
-## Vulkan结构
+- https://developer.nvidia.com/blog/vulkan-dos-donts/
 
+
+## Vulkan结构
+![](./Doc/VulkanConstructSequence.png)
 
 ## Bindless
 - [Bindless讨论，以VK_EXT_descriptor_buffer为出发点](https://www.khronos.org/blog/vk-ext-descriptor-buffer)
 - **目标**：尽量减少描述符的更新，固定数量资源变成动态数量
+- 方案1：动态数组
+  - 传入TEXTURE_ARRAY
+  - pushConstant更新索引
+- 方案2：动态更新descriptor
+  - 使用vkCmdPushDescriptorSetKHR
 
 ## Shader Language: GLSL or HLSL?
 - Vulkan着色器使用SPIR-V中间语言，最初是由类似GLSL语法生成SPIR-V，在Vulkan1.2加入了类似HLSL语法生成SPIR-V
@@ -127,10 +135,10 @@ submit_to_graphics_queue
      - 在出现依赖时进行同步
    - 每个依赖需要设置以下内容
      - 哪个pass（dstPass）依赖于哪个pass（srcPass）
-     - srcStageMask: 指定一些stages（就是渲染管线里的那些stage，比如顶点着色、片元着色），在srcPass运行完这些stage前，不能继续
-     - dstAccessMask：指定一些stages，stage之前的stage是没有依赖的，任意运行，但直到遇到这里面的stage，就需要等待srcStage那边满足要求
-     - srcAccessMask：指定一些访问操作，效果和srcStageMask类似
-     - dstAccessMask：指定一些访问操作，和dstStageMask类似
+     - srcStageMask: 指定一些stages（就是渲染管线里的那些stage，比如顶点着色、片元着色），在上一个pipeline运行完这些stage前，Barrier不能执行。
+     - dstStageMask：指定一些stages，这些stages需要等待srcStageMask内的stages全部执行完毕后，才能执行（此时Barrier也已经结束）
+     - srcAccessMask：访问类型（用作读、渲染目标还是传输等）
+     - dstAccessMask：访问类型（用作读、渲染目标还是传输等）
    - 关于依赖和同步，一些额外的资料
      - https://www.reddit.com/r/vulkan/comments/s80reu/subpass_dependencies_what_are_those_and_why_do_i/ 
      - [关于 Vulkan Tutorial 中同步问题的解释](https://zhuanlan.zhihu.com/p/350483554)
@@ -151,10 +159,15 @@ submit_to_graphics_queue
 - 关于实现subpass的资料
   - [Vulkan input attachments and sub passes](https://www.saschawillems.de/blog/2018/07/19/vulkan-input-attachments-and-sub-passes/)
 
-## Image Layout的转换阶段
-- pass结束时：VkAttachmentDescription中配置
-- Subpass dependency：VkAttachmentReference中配置
-- 手动转换：vkCmdPipelineBarrier
+## Image Layout管理和同步
+- Image Layout转换的情况
+  - pass结束时：VkAttachmentDescription中配置
+  - Subpass dependency：VkAttachmentReference中配置
+  - 手动转换：vkCmdPipelineBarrier
+### Barrier
+- 资料
+  - https://themaister.net/blog/2019/08/14/yet-another-blog-explaining-vulkan-synchronization/
+  - https://stackoverflow.com/questions/46836676/image-layout-transition-inside-render-pass-in-vulkan-api
 
 ## Shader和Descriptor Set
 - 一个Shader可以包含多个Descriptor Set

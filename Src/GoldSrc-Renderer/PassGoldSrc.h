@@ -67,7 +67,7 @@ protected:
         return
         {
             m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
-            m_pPortSet->getOutputPort("Depth")->getImageV(),
+            m_pPortSet->getOutputPort("Depth")->getImageV(vIndex),
         };
     }
     virtual std::vector<VkClearValue> _getClearValuesV() override
@@ -77,7 +77,7 @@ protected:
 
     virtual std::vector<std::string> _getExtraCommandBufferNamesV() const override
     {
-        return { "Mesh", "Sprite", "Icon", "Text", "Sky"};
+        return { "Init", "Mesh", "Sprite", "Icon", "Text", "Sky"};
     };
 
     virtual void _onSceneInfoSet(ptr<SSceneInfo> vScene) override;
@@ -137,7 +137,7 @@ private:
     
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
     vk::CPointerSet<vk::CImage> m_MainImageSet;
-    vk::CImage m_DepthImage;
+    vk::CPointerSet<vk::CImage> m_DepthImageSet;
     vk::CImage m_LightmapImage;
     vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
 

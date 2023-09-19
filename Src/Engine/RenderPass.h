@@ -110,6 +110,5 @@ namespace vk
 
         bool m_Begined = false;
         CCommandBuffer::Ptr m_pCurrentCommandBuffer = nullptr;
-        CRenderPassDescriptor m_CurPassDesc = CRenderPassDescriptor(false);
     };
 }

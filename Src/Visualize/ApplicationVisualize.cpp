@@ -33,10 +33,10 @@ void CApplicationVisualize::_createV()
     m_pPassVisualize = make<CRenderPassVisualize>();
     m_pPassVisualize->createPortSet();
 
-    SPortFormat Format = { VK_FORMAT_D32_SFLOAT, SPortFormat::AnyExtent, 1, EUsage::WRITE };
-    m_pDepthPort = make<CSourcePort>("Depth", Format, nullptr);
+    SPortInfo Info = { VK_FORMAT_D32_SFLOAT, SPortInfo::AnyExtent, 1, EImageUsage::DEPTH_ATTACHMENT };
+    m_pDepthPort = make<CSourcePort>("Depth", Info, nullptr);
 
-    VkFormat DepthFormat = m_pDepthPort->getFormat().Format;
+    VkFormat DepthFormat = m_pDepthPort->getInfo().Format;
     ImageUtils::createDepthImage(m_DepthImage, m_pDevice, ScreenExtent, NULL, DepthFormat);
 
     m_pDepthPort->setActualFormat(DepthFormat);

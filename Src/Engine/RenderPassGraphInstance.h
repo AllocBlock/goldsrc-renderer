@@ -13,7 +13,7 @@ public:
 
     void init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene);
     void updateSceneInfo(ptr<SSceneInfo> vSceneInfo);
-    void createFromGraph(ptr<SRenderPassGraph> vGraph, BeforeInitCallback_t vBeforeInitCallback = nullptr);
+    void createFromGraph(ptr<SRenderPassGraph> vGraph, size_t vPresentNodeId, BeforeInitCallback_t vBeforeInitCallback = nullptr);
     void update(uint32_t vImageIndex) const;
     void renderUI();
     void destroy();

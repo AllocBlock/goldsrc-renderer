@@ -38,9 +38,9 @@ void CRenderPassPBR::_initV()
 
 void CRenderPassPBR::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
     VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
-    vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
+    vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
 }
 
 CRenderPassDescriptor CRenderPassPBR::_getRenderPassDescV()

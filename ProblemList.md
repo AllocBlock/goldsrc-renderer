@@ -160,7 +160,26 @@
       - [Performance of drawing directly to swap chain images](https://www.reddit.com/r/vulkan/comments/4pxsf4/performance_of_drawing_directly_to_swap_chain/)
     - pass维护自己的输入输出，不关心swapchain
     - 最后有一个blitpass写入swapchain
-  - layout和usage管理
+  - layout、usage和format管理
+    - 参考
+      - https://www.reddit.com/r/vulkan/comments/906ofa/whats_the_best_way_to_reset_an_image_layout_for/
+    - 问题
+      - 如果一个output分别用于WRTIE和READ，怎么办？
+      - 自定义的image，中途layout可能被修改，此时CImage内存储的layout怎么更新？如果修改后，每帧开始时的layout怎么重置？
+        - https://www.reddit.com/r/vulkan/comments/el7hlq/how_to_do_image_layout_transitions_without_hating/fdgpzs3/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+      - 不同的format如何兼容
+    - 方案
+      - Port依旧保留“通用”format，extent，并且显式指定USAGE为READ或WRITE
+      - Port增加一项：Input Layout和Output Layout，在link完毕后填入
+      - link完毕后同时更新实际format和extent
+      - Pass使用port的值来确定initLayout和finalLayout
+      - 每条Port的链路上
+        - 除了第一个Port，其他Port有对应Usage，可以确定Input Layout
+        - 由此可以确定除最后一个Port外的所有Output Layout
+        - 最后一个Port无需Output Layout，因为不会作为attachment
+        - 第一个Port无需Input Layout，无论上一帧最后变成的什么布局，都强制当作UNDEFINED
+          - 对应的Attachment的InitLayout也填UNDEFINED，并且LOAD_OP=CLEAR
+            - Swapchain似乎就是这么干的
 
 ## 问题：Render pass graph
 - 以一个graph来表示整个渲染流程，自动排序command buffer，graph可以保存和载入，动态修改、生成实际的pass

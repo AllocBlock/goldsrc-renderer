@@ -6,7 +6,8 @@
 enum class EBlendFunction
 {
     NORMAL,
-    ADDITIVE
+    ADDITIVE,
+    MULTIPLY
 };
 
 class CPipelineDescriptor

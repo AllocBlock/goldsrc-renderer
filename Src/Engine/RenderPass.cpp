@@ -18,7 +18,7 @@ void IRenderPass::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D v
     m_pDevice = vDevice;
     m_ImageNum = vImageNum;
     m_ScreenExtent = vScreenExtent;
-    m_pPortSet->assertInputLinkReady();
+    m_pPortSet->assertInputReady();
     
     __createRenderpass();
     _ASSERTE(isValid());
@@ -90,17 +90,46 @@ bool IRenderPass::_dumpInputPortExtent(std::string vName, VkExtent2D& voExtent)
     return HasExtent;
 }
 
+std::string __toString(VkImageLayout vLayout)
+{
+
+    switch (vLayout)
+    {
+    case VK_IMAGE_LAYOUT_UNDEFINED: return "Undefined";
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: return "Transfer Read";
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: return "Transfer Write";
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: return "Shader Read";
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: return "Color Attachment";
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return "Depth Attachment";
+    default:
+        throw std::runtime_error("Unsupported layout");
+    }
+}
+
 void IRenderPass::__createRenderpass()
 {
     __destroyRenderpass();
-    m_CurPassDesc = _getRenderPassDescV();
-    _ASSERTE(m_CurPassDesc.isValid());
+    CRenderPassDescriptor PassDesc = _getRenderPassDescV();
 
-    auto Info = m_CurPassDesc.generateInfo();
+    auto Info = PassDesc.generateInfo();
     vk::checkError(vkCreateRenderPass(*m_pDevice, &Info, nullptr, _getPtr()));
-    m_CurPassDesc.clearStage(); // free stage data to save memory
+    PassDesc.clearStage(); // free stage data to save memory
 
+#ifdef  _DEBUG
     Log::logCreation(std::string(typeid(*this).name()) + "(renderpass)", uint64_t(get()));
+    Log::log("\tInput port:");
+    for (size_t i = 0; i < m_pPortSet->getInputPortNum(); ++i)
+    {
+        auto pPort = m_pPortSet->getInputPort(i);
+        Log::log("\t\t" + pPort->getName() + ":\t" + __toString(pPort->getInputLayout()) + "\t->\t" + __toString(pPort->getOutputLayout()));
+    }
+    Log::log("\tOutput port:");
+    for (size_t i = 0; i < m_pPortSet->getInputPortNum(); ++i)
+    {
+        auto pPort = m_pPortSet->getInputPort(i);
+        Log::log("\t\t" + pPort->getName() + ":\t" + __toString(pPort->getInputLayout()) + "\t->\t" + __toString(pPort->getOutputLayout()));
+    }
+#endif
 }
 
 void IRenderPass::__destroyRenderpass()

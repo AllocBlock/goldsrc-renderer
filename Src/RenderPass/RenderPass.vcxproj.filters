@@ -15,6 +15,12 @@
     <Filter Include="源文件\Bloom">
       <UniqueIdentifier>{0f1b54c9-8fca-4a3b-9278-ecce0a556b35}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\AO">
+      <UniqueIdentifier>{405e10b8-7b8a-4a9d-aca1-43683bc41e86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\AO">
+      <UniqueIdentifier>{b66ceafd-dde3-466b-8e28-5a3a7c53a468}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PipelineSkybox.h">
@@ -62,6 +68,12 @@
     <ClInclude Include="PipelineBloomLuminance.h">
       <Filter>头文件\Bloom</Filter>
     </ClInclude>
+    <ClInclude Include="PassSSAO.h">
+      <Filter>头文件\AO</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineSSAO.h">
+      <Filter>头文件\AO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PipelineSkybox.cpp">
@@ -102,6 +114,12 @@
     </ClCompile>
     <ClCompile Include="PipelineBloomLuminance.cpp">
       <Filter>源文件\Bloom</Filter>
+    </ClCompile>
+    <ClCompile Include="PassSSAO.cpp">
+      <Filter>源文件\AO</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineSSAO.cpp">
+      <Filter>源文件\AO</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

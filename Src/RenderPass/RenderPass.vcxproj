@@ -36,6 +36,7 @@
     <ClInclude Include="PassBloom.h" />
     <ClInclude Include="PassGUI.h" />
     <ClInclude Include="PassSprite.h" />
+    <ClInclude Include="PassSSAO.h" />
     <ClInclude Include="PipelineBlit.h" />
     <ClInclude Include="PipelineBloomBlur.h" />
     <ClInclude Include="PipelineBloomLuminance.h" />
@@ -43,6 +44,7 @@
     <ClInclude Include="PipelineEnvironment.h" />
     <ClInclude Include="PipelineSkybox.h" />
     <ClInclude Include="PipelineSprite.h" />
+    <ClInclude Include="PipelineSSAO.h" />
     <ClInclude Include="PipelineVisCollidePoint.h" />
     <ClInclude Include="PipelineVisCollider.h" />
     <ClInclude Include="PassFullScreen.h" />
@@ -51,6 +53,7 @@
     <ClCompile Include="PassPresent.cpp" />
     <ClCompile Include="PassGUI.cpp" />
     <ClCompile Include="PassSprite.cpp" />
+    <ClCompile Include="PassSSAO.cpp" />
     <ClCompile Include="PipelineBlit.cpp" />
     <ClCompile Include="PipelineBloomBlur.cpp" />
     <ClCompile Include="PipelineBloomLuminance.cpp" />
@@ -58,6 +61,7 @@
     <ClCompile Include="PipelineEnvironment.cpp" />
     <ClCompile Include="PipelineSkybox.cpp" />
     <ClCompile Include="PipelineSprite.cpp" />
+    <ClCompile Include="PipelineSSAO.cpp" />
     <ClCompile Include="PipelineVisCollidePoint.cpp" />
     <ClCompile Include="PipelineVisCollider.cpp" />
     <ClCompile Include="PassFullScreen.cpp" />

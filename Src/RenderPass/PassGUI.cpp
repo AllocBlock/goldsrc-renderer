@@ -18,7 +18,7 @@ void CRenderPassGUI::_initV()
 
 void CRenderPassGUI::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
 }
 
 CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()

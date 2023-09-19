@@ -98,6 +98,8 @@ namespace vk
             m_Set.clear();
         }
 
+        const std::vector<ptr<T>>& getAll() const { return m_Set; }
+
     private:
         std::vector<ptr<T>> m_Set;
     };

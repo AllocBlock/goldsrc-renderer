@@ -115,6 +115,7 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
         {
             CurLinkId = std::max(CurLinkId, Pair.first);
         }
+
         pGraph->LinkMap[CurLinkId + 1] = SRenderPassGraphLink{
             pGraph->OutputPort.value(),
             SRenderPassGraphPortInfo{GuiNodeId, "Main"},
@@ -125,7 +126,7 @@ void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
         };
 
         m_pDevice->waitUntilIdle();
-        m_pGraphInstance->createFromGraph(pGraph, pCreateGraphInstanceCallback);
+        m_pGraphInstance->createFromGraph(pGraph, PresentNodeId, pCreateGraphInstanceCallback);
         m_NeedRecreateGraphInstance = false;
     }
 

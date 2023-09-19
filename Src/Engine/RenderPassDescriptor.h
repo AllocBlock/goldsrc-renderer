@@ -60,16 +60,12 @@ struct SSubpassReferenceInfo
 class CRenderPassDescriptor
 {
 public:
-    CRenderPassDescriptor() { m_IsValid = true; }
-    CRenderPassDescriptor(bool vIsDefaultValid) { m_IsValid = vIsDefaultValid; }
-
     void addColorAttachment(CPort::Ptr vPort);
     void setDepthAttachment(CPort::Ptr vPort);
     void addColorAttachment(const SAttachementInfo& vInfo);
     void setDepthAttachment(const SAttachementInfo& vInfo);
     void addSubpass(const SSubpassReferenceInfo& vSubpassInfo);
-
-    bool isValid() const { return m_IsValid; }
+    
     void clearStage(); // you can clear stage data after create renderpass to save memory
     void clear();
     uint32_t getAttachementNum() const;
@@ -77,7 +73,6 @@ public:
 
     bool operator == (const CRenderPassDescriptor& vDesc) const
     {
-        if (isValid() != vDesc.isValid()) return false;
         if (m_ColorAttachmentInfoSet.size() != vDesc.m_ColorAttachmentInfoSet.size()) return false;
         if (m_DepthAttachmentInfo.has_value() != vDesc.m_DepthAttachmentInfo.has_value()) return false;
         size_t ColorNum = m_ColorAttachmentInfoSet.size();
@@ -110,7 +105,6 @@ private:
     std::vector<SAttachementInfo> m_ColorAttachmentInfoSet;
     std::optional<SAttachementInfo> m_DepthAttachmentInfo = std::nullopt;
     std::vector<SSubpassReferenceInfo> m_SubpassReferenceInfoSet;
-    bool m_IsValid = false;
 
     // avoid local point problem
     std::vector<VkAttachmentDescription> m_StageAttachmentDescSet;

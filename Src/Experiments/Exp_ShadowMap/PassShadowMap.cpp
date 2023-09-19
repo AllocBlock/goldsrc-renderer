@@ -52,9 +52,9 @@ void CRenderPassShadowMap::_initV()
 void CRenderPassShadowMap::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
-    Ports.addOutput("ShadowMap", { m_ShadowMapFormat, m_ShadowMapExtent, 0, EUsage::READ });
+    Ports.addOutput("ShadowMap", { m_ShadowMapFormat, m_ShadowMapExtent, 0, EImageUsage::READ });
     VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
+    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
     return Ports;
 }
 

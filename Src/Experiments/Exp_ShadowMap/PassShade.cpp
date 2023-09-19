@@ -29,10 +29,10 @@ void CRenderPassShade::_initV()
 void CRenderPassShade::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
-    Ports.addInput("ShadowMap", { gShadowMapImageFormat, {0, 0}, 1, EUsage::READ });
-    Ports.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    Ports.addInput("ShadowMap", { gShadowMapImageFormat, {0, 0}, 1, EImageUsage::READ });
+    Ports.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
     VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EUsage::UNDEFINED });
+    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
     return Ports;
 }
 

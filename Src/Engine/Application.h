@@ -49,7 +49,7 @@ protected:
     vk::CPhysicalDevice::Ptr m_pPhysicalDevice = nullptr;
     vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
     vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
-    const CSourcePort::Ptr m_pSwapchainPort = make<CSourcePort>("SwapChain", SPortFormat::createAnyOfUsage(EUsage::UNDEFINED), nullptr);
+    const CSourcePort::Ptr m_pSwapchainPort = make<CSourcePort>("SwapChain", SPortInfo::createAnyOfUsage(EImageUsage::UNKNOWN), nullptr);
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
@@ -65,7 +65,8 @@ protected:
 
     const std::vector<const char*> m_DeviceExtensions =
     {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME
     };
     
     const ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();

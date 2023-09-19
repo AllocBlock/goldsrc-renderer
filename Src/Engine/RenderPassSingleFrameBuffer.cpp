@@ -75,7 +75,7 @@ void CRenderPassSingleFrameBuffer::__destroyCommandPoolAndBuffers()
 void CRenderPassSingleFrameBuffer::__createFramebuffers(VkExtent2D vExtent)
 {
     _ASSERTE(isValid());
-    m_pPortSet->assertImageReady();
+    m_pPortSet->assertReady();
 
     m_FramebufferSet.destroyAndClearAll();
     

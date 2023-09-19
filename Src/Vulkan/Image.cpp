@@ -115,10 +115,10 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     StageBuffer.fill(vData, vSize);
 
     CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::begin();
-    transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    transitionLayout(pCommandBuffer, m_Layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyFromBuffer(pCommandBuffer, StageBuffer.get(), m_Width, m_Height);
     if (vToShaderLayout)
-        transitionLayout(pCommandBuffer, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        transitionLayout(pCommandBuffer, m_Layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     SingleTimeCommandBuffer::end(pCommandBuffer);
 
     StageBuffer.destroy();
@@ -127,22 +127,53 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
 void CImage::copyToBuffer(CCommandBuffer::Ptr vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer)
 {
     VkImageLayout OriginalLayout = m_Layout;
-    transitionLayout(vCommandBuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    transitionLayout(vCommandBuffer, m_Layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     vCommandBuffer->copyImageToBuffer(m_Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vTargetBuffer, vCopyRegion);
-    transitionLayout(vCommandBuffer, OriginalLayout);
+    transitionLayout(vCommandBuffer, m_Layout, OriginalLayout);
 }
 
-void CImage::transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel, uint32_t vMipLevelCount)
+VkAccessFlags __toAccessFlags(VkImageLayout vLayout)
+{
+    switch (vLayout)
+    {
+    case VK_IMAGE_LAYOUT_UNDEFINED: return 0;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: return VK_ACCESS_TRANSFER_READ_BIT;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: return VK_ACCESS_TRANSFER_WRITE_BIT;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: return VK_ACCESS_SHADER_READ_BIT;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    default:
+        throw std::runtime_error("Unsupported layout");
+    }
+}
+
+// TODO: to limited, especially for shader stage...better design?
+VkPipelineStageFlags __tPipelineStageFlags(VkImageLayout vLayout)
+{
+    switch (vLayout)
+    {
+    case VK_IMAGE_LAYOUT_UNDEFINED: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: return VK_PIPELINE_STAGE_TRANSFER_BIT;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: return VK_PIPELINE_STAGE_TRANSFER_BIT;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    default:
+        throw std::runtime_error("Unsupported layout");
+    }
+}
+
+void CImage::transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vStartMipLevel, uint32_t vMipLevelCount)
 {
     if (!isValid()) throw "NULL image handle";
 
-    _ASSERTE(m_Layout != vNewLayout); // already transited
+    _ASSERTE(vOldLayout != vNewLayout); // should not be the same
 
     vMipLevelCount = std::min<uint32_t>(vMipLevelCount, m_MipmapLevelNum - vStartMipLevel);
 
     VkImageMemoryBarrier Barrier = {};
     Barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    Barrier.oldLayout = m_Layout;
+    Barrier.oldLayout = vOldLayout;
     Barrier.newLayout = vNewLayout;
     Barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     Barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -167,68 +198,11 @@ void CImage::transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout 
     Barrier.subresourceRange.baseArrayLayer = 0;
     Barrier.subresourceRange.layerCount = m_LayerCount;
 
-    VkPipelineStageFlags SrcStage;
-    VkPipelineStageFlags DestStage;
+    Barrier.srcAccessMask = __toAccessFlags(vOldLayout);
+    Barrier.dstAccessMask = __toAccessFlags(vNewLayout);
 
-    if (m_Layout == VK_IMAGE_LAYOUT_UNDEFINED
-        && vNewLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-    {
-        Barrier.srcAccessMask = 0;
-        Barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        DestStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    }
-    else if (m_Layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-        && vNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-    {
-        Barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        DestStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    }
-    else if (m_Layout == VK_IMAGE_LAYOUT_UNDEFINED
-        && vNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-    {
-        Barrier.srcAccessMask = 0;
-        Barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        DestStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    }
-    else if (m_Layout == VK_IMAGE_LAYOUT_UNDEFINED
-        && vNewLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-    {
-        Barrier.srcAccessMask = 0;
-        Barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        DestStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    }
-    else if (m_Layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-        && vNewLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-    {
-        Barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
-        Barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        DestStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    }
-    else if (m_Layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-        && vNewLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
-    {
-        Barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        Barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
-
-        SrcStage = VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        DestStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    }
-    else
-    {
-        throw std::runtime_error(u8"不支持该布局转换");
-    }
-
+    VkPipelineStageFlags SrcStage = __tPipelineStageFlags(vOldLayout);
+    VkPipelineStageFlags DestStage = __tPipelineStageFlags(vNewLayout);
     vCommandBuffer->addImageMemoryBarrier(SrcStage, DestStage, Barrier);
     m_Layout = vNewLayout;
 }

@@ -235,6 +235,20 @@ void CPipelineDescriptor::setBlendMethod(EBlendFunction vFunction)
             m_ColorBlendOp = m_AlphaBlendOp = VK_BLEND_OP_ADD;
             break;
         }
+
+    case EBlendFunction::MULTIPLY:
+    {
+        // multiply: 
+        // result color = (source color) * (old color)
+        // result alpha = whatever
+
+        m_ColorBlendSrcFactor = VK_BLEND_FACTOR_ONE;
+        m_ColorBlendDstFactor = VK_BLEND_FACTOR_ONE;
+        m_AlphaBlendSrcFactor = m_AlphaBlendDstFactor = VK_BLEND_FACTOR_ONE;
+        m_ColorBlendOp = VK_BLEND_OP_MULTIPLY_EXT;
+        m_AlphaBlendOp = VK_BLEND_OP_MULTIPLY_EXT; // TIPS: if use advance op, color and alpha must use same op
+        break;
+    }
     default:
         throw std::runtime_error("Error: unknown blend function");
     }

@@ -19,18 +19,18 @@ protected:
         bool Success = _dumpReferenceExtentV(RefExtent);
         _ASSERTE(Success);
 
-        VkFormat InputFormat = m_pPortSet->getInputPort("Main")->getActualFormatV();
-        VkFormat MergeFormat = m_pPortSet->getOutputPort("Main")->getActualFormatV();
+        auto InputPort = m_pPortSet->getInputPort("Main");
+        auto MergePort = m_pPortSet->getInputPort("Main");
         m_LuminanceImageSet.init(m_ImageNum);
         m_BlurredImageSet.init(m_ImageNum);
         m_OutputImageSet.init(m_ImageNum);
         for (size_t i = 0; i < m_ImageNum; ++i)
         {
-            ImageUtils::createImage2d(*m_LuminanceImageSet[i], m_pDevice, RefExtent, InputFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-            ImageUtils::createImage2d(*m_BlurredImageSet[i], m_pDevice, RefExtent, InputFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-            ImageUtils::createImage2d(*m_OutputImageSet[i], m_pDevice, RefExtent, MergeFormat, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-            m_pPortSet->setOutput("Main", *m_OutputImageSet[i], i);
+            ImageUtils::createImage2d(*m_LuminanceImageSet[i], m_pDevice, RefExtent, InputPort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+            ImageUtils::createImage2d(*m_BlurredImageSet[i], m_pDevice, RefExtent, InputPort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+            ImageUtils::createImage2d(*m_OutputImageSet[i], m_pDevice, RefExtent, MergePort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
         }
+        m_pPortSet->setOutput("Main", m_OutputImageSet.getAll());
 
         CRenderPassFullScreen::_initV();
 
@@ -48,8 +48,8 @@ protected:
 
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override
     {
-        vioDesc.addInput("Main", SPortFormat::createAnyOfUsage(EUsage::READ));
-        vioDesc.addOutput("Main", SPortFormat{ VK_FORMAT_B8G8R8A8_UNORM, SPortFormat::AnyExtent, 0, EUsage::WRITE });
+        vioDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
+        vioDesc.addOutput("Main", SPortInfo{ VK_FORMAT_B8G8R8A8_UNORM, SPortInfo::AnyExtent, 0, EImageUsage::COLOR_ATTACHMENT });
     }
 
     void _destroyV() override
@@ -73,7 +73,7 @@ protected:
 
         SAttachementInfo LuminanceAttachementInfo;
         LuminanceAttachementInfo.Format = InputFormat;
-        LuminanceAttachementInfo.InitLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
+        LuminanceAttachementInfo.InitLayout = VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         LuminanceAttachementInfo.FinalLayout = VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         LuminanceAttachementInfo.IsBegin = true;
         LuminanceAttachementInfo.IsEnd = false;
@@ -81,13 +81,12 @@ protected:
 
         SAttachementInfo BlurredAttachementInfo;
         BlurredAttachementInfo.Format = InputFormat;
-        BlurredAttachementInfo.InitLayout = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
+        BlurredAttachementInfo.InitLayout = VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         BlurredAttachementInfo.FinalLayout = VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         BlurredAttachementInfo.IsBegin = true;
         BlurredAttachementInfo.IsEnd = false;
         Desc.addColorAttachment(BlurredAttachementInfo);
-
-
+        
         Desc.addSubpass(SSubpassReferenceInfo()
             .addColorRef(1)
             .addDependentPass(VK_SUBPASS_EXTERNAL)

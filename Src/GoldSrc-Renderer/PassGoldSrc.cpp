@@ -28,8 +28,8 @@ void CRenderPassGoldSrc::rerecordAllCommand()
 
 void CRenderPassGoldSrc::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    vioDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EUsage::WRITE });
-    vioDesc.addOutput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EUsage::WRITE });
+    vioDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EImageUsage::COLOR_ATTACHMENT });
+    vioDesc.addOutput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 0, EImageUsage::DEPTH_ATTACHMENT });
 }
 
 void CRenderPassGoldSrc::_initV()
@@ -44,16 +44,21 @@ void CRenderPassGoldSrc::_initV()
     _ASSERTE(Success);
 
     m_MainImageSet.init(m_ImageNum);
-    VkFormat MainFormat = m_pPortSet->getOutputFormat("Main").Format;
+    auto pMainPort = m_pPortSet->getOutputPort("Main");
+    VkFormat MainFormat = pMainPort->getActualFormatV();
     for (size_t i = 0; i < m_ImageNum; ++i)
     {
         ImageUtils::createImage2d(*m_MainImageSet[i], m_pDevice, m_ScreenExtent, MainFormat, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-        m_pPortSet->setOutput("Main", *m_MainImageSet[i], i);
     }
+    m_pPortSet->setOutput("Main", m_MainImageSet.getAll());
 
     VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
-    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, RefExtent, NULL, DepthFormat);
-    m_pPortSet->setOutput("Depth", m_DepthImage);
+    m_DepthImageSet.init(m_ImageNum);
+    for (size_t i = 0; i < m_ImageNum; ++i)
+    {
+        ImageUtils::createDepthImage(*m_DepthImageSet[i], m_pDevice, RefExtent, VK_IMAGE_USAGE_SAMPLED_BIT, DepthFormat);
+    }
+    m_pPortSet->setOutput("Depth", m_DepthImageSet.getAll());
 
     CRenderPassSingleFrameBuffer::_initV();
 
@@ -75,7 +80,7 @@ void CRenderPassGoldSrc::_initV()
 CRenderPassDescriptor CRenderPassGoldSrc::_getRenderPassDescV()
 {
     return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
-                                                            m_pPortSet->getOutputPort("Depth"));
+        m_pPortSet->getOutputPort("Depth"));
 }
 
 void CRenderPassGoldSrc::_updateV(uint32_t vImageIndex)
@@ -122,7 +127,7 @@ void CRenderPassGoldSrc::_renderUIV()
 void CRenderPassGoldSrc::_destroyV()
 {
     m_MainImageSet.destroyAndClearAll();
-    m_DepthImage.destroy();
+    m_DepthImageSet.destroyAndClearAll();
     m_PipelineSet.destroy();
     destroyAndClear(m_pVertexBuffer);
 
@@ -136,7 +141,17 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
     _ASSERTE(isValid());
 
     bool NeedRecordPrimary = false;
-    
+
+    // ensure layout
+   /* VkImageLayout LastLayout = m_pPortSet->getOutputPort("Main")->getInputLayout();
+    CCommandBuffer::Ptr pInitCmdBuffer = m_Command.getCommandBuffer("Init", vImageIndex);
+    _beginSecondary(pInitCmdBuffer, vImageIndex);
+    for (auto pImage : m_MainImageSet.getAll())
+    {
+        pImage->transitionLayout(pInitCmdBuffer, LastLayout, VK_IMAGE_LAYOUT_UNDEFINED);
+    }
+    pInitCmdBuffer->end();*/
+
     // sky
     CCommandBuffer::Ptr pSkyCmdBuffer = m_Command.getCommandBuffer("Sky", vImageIndex);
     if (m_pRerecord->consume("Sky"))
@@ -255,6 +270,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV(uint32_
     if (m_pRerecord->consume("Primary") || NeedRecordPrimary)
     {
         _beginWithFramebuffer(vImageIndex, true);
+        //pPrimaryCmdBuffer->execCommand(pInitCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pSkyCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pMeshCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pSpriteCmdBuffer->get());

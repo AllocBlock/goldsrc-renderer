@@ -45,7 +45,7 @@ void CRenderPassOutline::_initV()
 
 void CRenderPassOutline::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    vioDesc.addInputOutput("Main", SPortFormat::createAnyOfUsage(EUsage::WRITE));
+    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
 }
 
 CRenderPassDescriptor CRenderPassOutline::_getRenderPassDescV()

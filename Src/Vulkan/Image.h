@@ -24,7 +24,7 @@ namespace vk
         bool isValid() const override;
         void copyFromBuffer(CCommandBuffer::Ptr vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
         void stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayout = true);
-        void transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
+        void transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
         void copyToBuffer(CCommandBuffer::Ptr vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
         void generateMipmaps(CCommandBuffer::Ptr vCommandBuffer);
         uint32_t getMipmapLevelNum() const { return m_MipmapLevelNum; }

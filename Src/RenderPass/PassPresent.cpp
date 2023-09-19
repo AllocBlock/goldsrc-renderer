@@ -13,7 +13,7 @@ void CRenderPassPresent::_initV()
     m_BlitPipeline.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
 
     auto pInputPort = m_pPortSet->getInputPort("Main");
-    for (size_t i = 0; i < m_pSwapchainPort->getImageNumV(); ++i)
+    for (size_t i = 0; i < m_pSwapchainPort->getActualNumV(); ++i)
     {
         m_BlitPipeline.setInputImage(pInputPort->getImageV(i), i);
     }
@@ -21,7 +21,7 @@ void CRenderPassPresent::_initV()
 
 void CRenderPassPresent::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    vioDesc.addInput("Main", SPortFormat::createAnyOfUsage(EUsage::READ));
+    vioDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
 }
 
 void CRenderPassPresent::_destroyV()

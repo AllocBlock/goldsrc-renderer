@@ -2,52 +2,14 @@
 
 SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth)
 {
-    if (!vPort->isLinkReadyV() || !vPort->hasActualFormatV())
-    {
-        clear();
-        m_IsValid = false;
-        throw std::runtime_error("Port " + vPort->getName() + " is not ready");
-        return SAttachementInfo();
-    }
-
+    VkFormat Format = vPort->getActualFormatV();
+    VkImageLayout InputLayout = vPort->getInputLayout();
+    VkImageLayout OutputLayout = vPort->getOutputLayout();
+    _ASSERTE(OutputLayout != VK_IMAGE_LAYOUT_UNDEFINED);
     bool IsBegin = (vPort->isRoot() || (vPort->hasParent() && vPort->getParent()->isStandaloneSourceV()));
     bool IsEnd = vPort->isTail();
-
-    EUsage CurUsage;
-    if (!IsBegin || vIsDepth) // FIXME: it seems only swapchain image is undefine at start? for now standalone color attachement usage is wrong, how to handle this?
-    {
-        CurUsage = vPort->getFormat().Usage;
-    }
-    else
-        CurUsage = EUsage::UNDEFINED;
-
-    EUsage NextUsage = EUsage::PRESENTATION;
-    if (IsEnd)
-    {
-        // for color attachment, used to present
-        // for depth, keep if valid, else as WRITE
-        if (vIsDepth)
-        {
-            if (CurUsage == EUsage::UNDEFINED)
-                NextUsage = EUsage::WRITE;
-            else
-                NextUsage = CurUsage;
-        }
-    }
-    if (!IsEnd)
-    {
-        _ASSERTE(vPort->getChildNum() > 0);
-        NextUsage = vPort->getChild(0)->getFormat().Usage;
-        for (size_t i = 1; i < vPort->getChildNum(); ++i)
-        {
-            if (NextUsage != vPort->getChild(i)->getFormat().Usage)
-            {
-                throw std::runtime_error("Error: Output port connects to multiple ports with different layout requirements!");
-            }
-        }
-    }
-
-    return { vPort->getActualFormatV(), toLayout(CurUsage, vIsDepth), toLayout(NextUsage, vIsDepth), IsBegin, IsEnd };
+    
+    return { Format, InputLayout, OutputLayout, IsBegin, IsEnd };
 }
 
 void CRenderPassDescriptor::addColorAttachment(CPort::Ptr vPort)

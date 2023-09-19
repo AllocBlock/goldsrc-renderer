@@ -103,7 +103,7 @@ void IApplication::__render()
     for (auto pPass : m_pGraphInstance->getSortedPasses())
     {
         const auto& BufferSet = pPass->requestCommandBuffers(ImageIndex);
-        CommandBufferSet.insert(CommandBufferSet.begin(), BufferSet.begin(), BufferSet.end());
+        CommandBufferSet.insert(CommandBufferSet.end(), BufferSet.begin(), BufferSet.end());
     }
 
     VkSemaphore WaitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrameIndex] };
@@ -178,10 +178,13 @@ void IApplication::__createSwapchain()
 
     m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat());
     m_pSwapchainPort->setActualExtent(m_pSwapchain->getExtent());
-    m_pSwapchainPort->setImageNum(ImageNum);
+    m_pSwapchainPort->setActualNum(ImageNum);
+    m_pSwapchainPort->setInputLayout(VK_IMAGE_LAYOUT_UNDEFINED);
+    m_pSwapchainPort->setOutputLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     m_pSwapchainPort->clearImage();
     for (size_t i = 0; i < ImageNum; ++i)
-        m_pSwapchainPort->setImage(Views[i], i);}
+        m_pSwapchainPort->setImage(Views[i], i);
+}
 
 void IApplication::__destroySwapchain()
 {
@@ -223,6 +226,7 @@ std::vector<const char*> IApplication::__getRequiredExtensions()
     if (ENABLE_VALIDATION_LAYERS) {
         Extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
+    Extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
     return Extensions;
 }

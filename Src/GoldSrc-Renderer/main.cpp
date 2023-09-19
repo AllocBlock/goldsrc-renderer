@@ -8,6 +8,7 @@
 #include "PassOutline.h"
 #include "PassVisualize.h"
 #include "PassBloom.h"
+#include "PassSSAO.h"
 #include "PassPresent.h"
 
 #include <GLFW/glfw3.h>
@@ -23,6 +24,7 @@ void registerAllPasses()
 	_REGISTER_PASS(CRenderPassOutline, true);
 	_REGISTER_PASS(CRenderPassVisualize, true);
 	_REGISTER_PASS(CRenderPassBloom, true);
+	_REGISTER_PASS(CRenderPassSSAO, true);
 }
 
 int main()
