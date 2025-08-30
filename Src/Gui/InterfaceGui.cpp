@@ -45,7 +45,7 @@ ImGuiWindowFlags __toImguiWindowFlags(int vFlag)
     ImGuiWindowFlags Flags = 0;
     int CurFlag = 1;
     int Num = UI::EWindowFlag::ENUM_NUM;
-    while(Num--)
+    while (Num--)
     {
         if (vFlag & CurFlag)
         {
@@ -88,7 +88,7 @@ glm::vec2 __toGlmVec2(ImVec2 vVec)
     return glm::vec2(vVec.x, vVec.y);
 }
 
-void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass)
+void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, VkRenderPass vRenderPass)
 {
     if (!gIsInitted)
     {
@@ -115,8 +115,8 @@ void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool v
     InitInfo.PipelineCache = VK_NULL_HANDLE;
     InitInfo.DescriptorPool = vPool;
     InitInfo.Allocator = nullptr;
-    InitInfo.MinImageCount = vImageNum;
-    InitInfo.ImageCount = vImageNum;
+    InitInfo.MinImageCount = 2;
+    InitInfo.ImageCount = 2;
     InitInfo.CheckVkResultFn = nullptr;
     ImGui_ImplVulkan_Init(&InitInfo, vRenderPass);
 
@@ -314,8 +314,8 @@ void UI::endPopup() { ImGui::EndPopup(); }
 bool UI::isPopupOpen(std::string vTitle) { return ImGui::IsPopupOpen(vTitle.c_str()); }
 bool UI::treeNode(std::string vName) { return ImGui::TreeNode(vName.c_str()); }
 void UI::treePop() { ImGui::TreePop(); }
-void UI::image(const vk::CImage& vImage, const glm::vec2& vSize) 
-{ 
+void UI::image(const vk::CImage& vImage, const glm::vec2& vSize)
+{
     TextureId_t TextureId = 0;
 
     VkImageView ImageView = vImage;

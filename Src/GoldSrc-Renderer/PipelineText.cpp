@@ -18,7 +18,7 @@ namespace
     };
 }
 
-void CPipelineText::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineText::updateUniformBuffer(CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -26,7 +26,7 @@ void CPipelineText::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCam
     UBOVert.EyePosition = vCamera->getPos();
     UBOVert.EyeDirection = vCamera->getFront();
 
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 }
 
 void CPipelineText::addTextComponent(CComponentTextRenderer::Ptr vTextRenderer)
@@ -56,15 +56,15 @@ void CPipelineText::clearTextComponent()
     __markNeedRerecord();
 }
 
-bool CPipelineText::doesNeedRerecord(size_t vImageIndex)
+bool CPipelineText::doesNeedRerecord()
 {
-    return m_NeedRerecordSet[vImageIndex];
+    return m_NeedRerecord;
 }
 
 // return false if no command is recorded
-bool CPipelineText::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+bool CPipelineText::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
 {
-    _ASSERTE(doesNeedRerecord(vImageIndex));
+    _ASSERTE(doesNeedRerecord());
 
     for (size_t i = 0; i < m_TextRendererSet.size(); ++i)
     {
@@ -79,7 +79,7 @@ bool CPipelineText::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vIm
         auto pVertBuffer = m_VertBufferSet[i];
 
         if (!pVertBuffer) continue;
-        bind(vCommandBuffer, vImageIndex);
+        bind(vCommandBuffer);
         vCommandBuffer->bindVertexBuffer(*pVertBuffer);
         
         SPushConstant Constant;
@@ -88,7 +88,7 @@ bool CPipelineText::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vIm
         vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Constant);
         vCommandBuffer->draw(0, pVertBuffer->getVertexNum());
     }
-    m_NeedRerecordSet[vImageIndex] = false;
+    m_NeedRerecord = false;
 
     return !m_TextRendererSet.empty();
 }
@@ -130,13 +130,8 @@ void CPipelineText::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
 void CPipelineText::_createV()
 {
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, sizeof(SUBOVert));
 
     // sampler
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -150,28 +145,27 @@ void CPipelineText::_createV()
 
     __updateDescriptorSet();
 
-    m_NeedRerecordSet.clear();
-    m_NeedRerecordSet.resize(m_ImageNum, true);
+    m_NeedRerecord = true;
 }
 
 void CPipelineText::_destroyV()
 {
     clearTextComponent();
-    m_NeedRerecordSet.clear();
 
     m_Sampler.destroy();
     m_FontImage.destroy();
-    m_VertUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
 }
 
 void CPipelineText::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteImageAndSampler(1, m_FontImage,m_Sampler);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    WriteInfo.addWriteImageAndSampler(1, m_FontImage, m_Sampler);
+    m_ShaderResourceDescriptor.update(WriteInfo);
+}
+
+inline void CPipelineText::__markNeedRerecord()
+{
+    m_NeedRerecord = true;
 }

@@ -4,7 +4,7 @@
 
 namespace
 {
-    struct SUBOVert
+    struct SUBOFrag
     {
         glm::mat4 InverseVP;
         glm::vec4 EyePos;
@@ -21,10 +21,10 @@ void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
 
 void CPipelineEnvironment::updateUniformBuffer(uint32_t vImageIndex, CCamera::Ptr vCamera)
 {
-    SUBOVert UBOVert = {};
+    SUBOFrag UBOVert = {};
     UBOVert.InverseVP = glm::inverse(vCamera->getViewProjMat());
     UBOVert.EyePos = glm::vec4(vCamera->getPos(), 1.0);
-    m_FragUBSet[vImageIndex]->update(&UBOVert);
+    m_pFragUniformBuffer->update(&UBOVert);
 }
 
 CPipelineDescriptor CPipelineEnvironment::_getPipelineDescriptionV()
@@ -54,14 +54,8 @@ void CPipelineEnvironment::_initShaderResourceDescriptorV()
 void CPipelineEnvironment::_createV()
 {
     __destroyResources();
-
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_FragUBSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_FragUBSet[i]->create(m_pDevice, VertBufferSize);
-    }
+    m_pFragUniformBuffer = make<vk::CUniformBuffer>();
+    m_pFragUniformBuffer->create(m_pDevice, sizeof(SUBOFrag));
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
@@ -89,21 +83,17 @@ void CPipelineEnvironment::__createPlaceholderImage()
 
 void CPipelineEnvironment::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_FragUBSet[i]);
-        VkImageView EnvImageView = m_EnvironmentImage.isValid() ? m_EnvironmentImage : m_PlaceholderImage;
-        WriteInfo.addWriteImageAndSampler(1, EnvImageView, m_Sampler.get());
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pFragUniformBuffer);
+    VkImageView EnvImageView = m_EnvironmentImage.isValid() ? m_EnvironmentImage : m_PlaceholderImage;
+    WriteInfo.addWriteImageAndSampler(1, EnvImageView, m_Sampler.get());
 
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
 void CPipelineEnvironment::__destroyResources()
 {
-    m_FragUBSet.destroyAndClearAll();
+    destroyAndClear(m_pFragUniformBuffer);
 
     m_EnvironmentImage.destroy();
     m_PlaceholderImage.destroy();

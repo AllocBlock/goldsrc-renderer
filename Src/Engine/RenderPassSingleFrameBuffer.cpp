@@ -9,7 +9,7 @@ CPortSet::Ptr CRenderPassSingleFrameBuffer::_createPortSetV()
 
 void CRenderPassSingleFrameBuffer::_initV()
 {
-    __createCommandPoolAndBuffers(m_ImageNum);
+    __createCommandPoolAndBuffers();
 
     m_ClearValueSet = _getClearValuesV();
 
@@ -28,19 +28,19 @@ void CRenderPassSingleFrameBuffer::_destroyV()
 std::vector<std::string> CRenderPassSingleFrameBuffer::_getExtraCommandBufferNamesV() const
 { return {}; }
 
-CCommandBuffer::Ptr CRenderPassSingleFrameBuffer::_getCommandBuffer(uint32_t vImageIndex)
+CCommandBuffer::Ptr CRenderPassSingleFrameBuffer::_getCommandBuffer()
 {
-    return m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
+    return m_Command.getCommandBuffer(m_DefaultCommandName);
 }
 
-void CRenderPassSingleFrameBuffer::_beginWithFramebuffer(uint32_t vImageIndex, bool vHasSecondary)
+void CRenderPassSingleFrameBuffer::_beginWithFramebuffer(bool vHasSecondary)
 {
-    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
+    _ASSERTE(m_FramebufferSet.isValid(0));
 
-    CCommandBuffer::Ptr CommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr CommandBuffer = _getCommandBuffer();
 
-    _ASSERTE(m_FramebufferSet[vImageIndex]->getAttachmentNum() == m_ClearValueSet.size());
-    _begin(CommandBuffer, m_FramebufferSet[vImageIndex], m_ClearValueSet, vHasSecondary);
+    _ASSERTE(m_FramebufferSet[0]->getAttachmentNum() == m_ClearValueSet.size());
+    _begin(CommandBuffer, m_FramebufferSet[0], m_ClearValueSet, vHasSecondary);
 }
 
 void CRenderPassSingleFrameBuffer::_endWithFramebuffer()
@@ -48,22 +48,21 @@ void CRenderPassSingleFrameBuffer::_endWithFramebuffer()
     _end();
 }
 
-void CRenderPassSingleFrameBuffer::_beginSecondary(CCommandBuffer::Ptr vCommandBuffer, uint32_t vImageIndex)
+void CRenderPassSingleFrameBuffer::_beginSecondary(CCommandBuffer::Ptr vCommandBuffer)
 {
-    _ASSERTE(m_FramebufferSet.isValid(vImageIndex));
-    vCommandBuffer->beginSecondary(get(), 0, *m_FramebufferSet[vImageIndex]);
+    _ASSERTE(m_FramebufferSet.isValid(0));
+    vCommandBuffer->beginSecondary(get(), 0, *m_FramebufferSet[0]);
 }
 
-void CRenderPassSingleFrameBuffer::__createCommandPoolAndBuffers(uint32_t vImageNum)
+void CRenderPassSingleFrameBuffer::__createCommandPoolAndBuffers()
 {
     __destroyCommandPoolAndBuffers();
-    if (vImageNum == 0) return;
     m_Command.createPool(m_pDevice, ECommandType::RESETTABLE);
-    m_Command.createBuffers(m_DefaultCommandName, static_cast<uint32_t>(vImageNum), ECommandBufferLevel::PRIMARY);
+    m_Command.createBuffers(m_DefaultCommandName, ECommandBufferLevel::PRIMARY);
 
     for (const auto& Name : _getExtraCommandBufferNamesV())
     {
-        m_Command.createBuffers(Name, static_cast<uint32_t>(vImageNum), ECommandBufferLevel::SECONDARY);
+        m_Command.createBuffers(Name, ECommandBufferLevel::SECONDARY);
     }
 }
 
@@ -79,10 +78,10 @@ void CRenderPassSingleFrameBuffer::__createFramebuffers(VkExtent2D vExtent)
 
     m_FramebufferSet.destroyAndClearAll();
     
-    m_FramebufferSet.init(m_ImageNum);
-    for (uint32_t i = 0; i < m_ImageNum; ++i)
+    m_FramebufferSet.init(1);
+    for (uint32_t i = 0; i < 1; ++i)
     {
-        std::vector<VkImageView> AttachmentSet = _getAttachmentsV(i);
+        std::vector<VkImageView> AttachmentSet = _getAttachmentsV();
         m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
     }
 }

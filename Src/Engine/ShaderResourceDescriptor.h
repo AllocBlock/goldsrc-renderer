@@ -41,13 +41,12 @@ public:
     void add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage);
     void createLayout(vk::CDevice::CPtr vDevice);
     
-    const std::vector<VkDescriptorSet>& createDescriptorSetSet(size_t vImageNum);
-    void update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo);
+    const VkDescriptorSet createDescriptorSet();
+    void update(const CDescriptorWriteInfo& vWriteInfo);
     void clear();
     VkDescriptorSetLayout getLayout() const;
     const std::vector<VkDescriptorPoolSize>& getPoolSizeSet() const;
-    VkDescriptorSet getDescriptorSet(size_t vIndex) const;
-    size_t getDescriptorSetNum() const;
+    VkDescriptorSet getDescriptorSet() const;
 
     bool isReady(); // is shader resource ready (num > 0, and all are updated)
 
@@ -61,15 +60,15 @@ private:
         VkShaderStageFlags Stage;
     };
 
-    void __createPool(size_t vImageNum);
+    void __createPool();
     void __destroyPool();
     void __destroyLayout();
-    void __destroySetSet();
+    void __destroyDescriptorSet();
 
     vk::CDevice::CPtr m_pDevice = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<SDescriptorInfo> m_DescriptorInfoSet;
     std::vector<VkDescriptorPoolSize> m_PoolSizeSet;
-    std::vector<VkDescriptorSet> m_DescriptorSetSet;
+    VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
     VkDescriptorSetLayout m_DescriptorLayout = VK_NULL_HANDLE;
 };

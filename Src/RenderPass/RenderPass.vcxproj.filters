@@ -29,22 +29,13 @@
     <ClInclude Include="PipelineSprite.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PassFullScreen.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PipelineEnvironment.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="FullScreenPointData.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineVisCollider.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineVisCollidePoint.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PassGUI.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineBloomBlur.h">
@@ -58,9 +49,6 @@
     </ClInclude>
     <ClInclude Include="PassBloom.h">
       <Filter>头文件\Bloom</Filter>
-    </ClInclude>
-    <ClInclude Include="PassPresent.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="PipelineBlit.h">
       <Filter>头文件</Filter>
@@ -85,16 +73,10 @@
     <ClCompile Include="PipelineEnvironment.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PassFullScreen.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PipelineVisCollider.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PipelineVisCollidePoint.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PassGUI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PassSprite.cpp">
@@ -105,9 +87,6 @@
     </ClCompile>
     <ClCompile Include="PipelineBloomMerge.cpp">
       <Filter>源文件\Bloom</Filter>
-    </ClCompile>
-    <ClCompile Include="PassPresent.cpp">
-      <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PipelineBlit.cpp">
       <Filter>源文件</Filter>

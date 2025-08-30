@@ -66,24 +66,24 @@ void CRenderPassSprite::_initV()
 {
     CRenderPassSingleFrameBuffer::_initV();
     
-    m_PipelineSprite.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
+    m_PipelineSprite.create(m_pDevice, get(), m_ScreenExtent);
 }
 
-void CRenderPassSprite::_updateV(uint32_t vImageIndex)
+void CRenderPassSprite::_updateV()
 {
-    __updateUniformBuffer(vImageIndex);
+    __updateUniformBuffer();
 }
 
-std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
     std::vector<VkClearValue> ClearValueSet(2);
     ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
     ClearValueSet[1].depthStencil = { 1.0f, 0 };
 
-    _beginWithFramebuffer(vImageIndex);
-    m_PipelineSprite.recordCommand(pCommandBuffer, vImageIndex);
+    _beginWithFramebuffer();
+    m_PipelineSprite.recordCommand(pCommandBuffer);
     _endWithFramebuffer();
     return { pCommandBuffer->get() };
 }
@@ -101,11 +101,11 @@ bool CRenderPassSprite::_dumpReferenceExtentV(VkExtent2D& voExtent)
     return true;
 }
 
-std::vector<VkImageView> CRenderPassSprite::_getAttachmentsV(uint32_t vIndex)
+std::vector<VkImageView> CRenderPassSprite::_getAttachmentsV()
 {
     return
     {
-        m_pPortSet->getOutputPort("Main")->getImageV(vIndex)
+        m_pPortSet->getOutputPort("Main")->getImageV()
     };
 }
 
@@ -114,8 +114,8 @@ std::vector<VkClearValue> CRenderPassSprite::_getClearValuesV()
     return DefaultClearValueColor;
 }
 
-void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
+void CRenderPassSprite::__updateUniformBuffer()
 {
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
-    m_PipelineSprite.updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSprite.updateUniformBuffer(pCamera);
 }

@@ -7,8 +7,8 @@
 class CPipelineBloomMerge : public IPipeline
 {
 public:
-    void setInputImage(VkImageView vBase, VkImageView vBlur, size_t vIndex);
-    void updateUniformBuffer(uint32_t vImageIndex, float vBloomFactor);
+    void setInputImage(VkImageView vBase, VkImageView vBlur);
+    void updateUniformBuffer(float vBloomFactor);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
@@ -20,7 +20,7 @@ protected:
 private:
     void __initAllDescriptorSet();
 
-    vk::CPointerSet<vk::CUniformBuffer> m_FragUbufferSet;
+    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
     vk::CImage m_PlaceholderImage;
     vk::CSampler m_Sampler;
 };

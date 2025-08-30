@@ -2,7 +2,7 @@
 #include "ShaderCompiler.h"
 #include "Log.h"
 
-void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vImageNum, uint32_t vSubpass)
+void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
 {
     destroy();
 
@@ -64,8 +64,7 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
 
     Log::logCreation( std::string(typeid(*this).name()) + "(pipeline)", uint64_t(m_Pipeline));
 
-    m_ImageNum = vImageNum;
-    m_ShaderResourceDescriptor.createDescriptorSetSet(vImageNum);
+    m_ShaderResourceDescriptor.createDescriptorSet();
 
     _createV();
 }
@@ -74,7 +73,6 @@ void IPipeline::destroy()
 {
     _destroyV();
 
-    m_ImageNum = 0;
     m_ShaderResourceDescriptor.clear();
 
     if (m_pDevice)
@@ -87,10 +85,10 @@ void IPipeline::destroy()
     m_pDevice = nullptr;
 }
 
-void IPipeline::bind(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+void IPipeline::bind(CCommandBuffer::Ptr vCommandBuffer)
 {
     _ASSERTE(isValid());
-    const auto& DescriptorSet = m_ShaderResourceDescriptor.getDescriptorSet(vImageIndex);
+    const auto& DescriptorSet = m_ShaderResourceDescriptor.getDescriptorSet();
     vCommandBuffer->bindPipeline(m_Pipeline, m_PipelineLayout, DescriptorSet);
     _initPushConstantV(vCommandBuffer);
 }

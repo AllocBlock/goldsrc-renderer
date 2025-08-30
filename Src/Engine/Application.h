@@ -36,7 +36,7 @@ public:
 
 protected:
     virtual void _createV() = 0;
-    virtual void _updateV(uint32_t vImageIndex) = 0;
+    virtual void _updateV() = 0;
     virtual void _renderUIV() {}
     virtual void _destroyV() = 0;
 
@@ -49,13 +49,11 @@ protected:
     vk::CPhysicalDevice::Ptr m_pPhysicalDevice = nullptr;
     vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
     vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
-    const CSourcePort::Ptr m_pSwapchainPort = make<CSourcePort>("SwapChain", SPortInfo::createAnyOfUsage(EImageUsage::UNKNOWN), nullptr);
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-    std::vector<vk::CFence::Ptr> m_InFlightFenceSet;
+    vk::CFence::Ptr m_pInFlightFence;
 
-    const int m_MaxFrameInFlight = 2;
     int m_CurrentFrameIndex = 0;
 
     const std::vector<const char*> m_ValidationLayers =
@@ -77,8 +75,6 @@ private:
     void __createInstance();
     void __setupDebugMessenger();
     void __createSemaphores();
-    void __createSwapchain();
-    void __destroySwapchain();
 
     void __recreateSwapchain();
     std::vector<VkCommandBuffer> __sortCommandBuffers(uint32_t vImageIndex);

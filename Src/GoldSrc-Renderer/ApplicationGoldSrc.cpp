@@ -77,56 +77,12 @@ void CApplicationGoldSrc::_createV()
 
 }
 
-void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
+void CApplicationGoldSrc::_updateV()
 {
     if (m_NeedRecreateGraphInstance)
     {
-        auto pCreateGraphInstanceCallback = [this](const std::string& vName, vk::IRenderPass::Ptr vRenderPass)
-        {
-            // GUI pass need to set window
-            if (vName == "Gui")
-            {
-                ptr<CRenderPassGUI> pPassGUI = std::dynamic_pointer_cast<CRenderPassGUI>(vRenderPass);
-                pPassGUI->setWindow(m_pWindow);
-            }
-            // GUI pass need to set window
-            else if (vName == "Present")
-            {
-                ptr<CRenderPassPresent> pPassPresent = std::dynamic_pointer_cast<CRenderPassPresent>(vRenderPass);
-                pPassPresent->setSwapchainPort(m_pSwapchainPort);
-            }
-        };
-
-        auto pGraph = make<SRenderPassGraph>(*m_pRenderPassGraph);
-        // add gui and present pass
-        _ASSERTE(pGraph->OutputPort.has_value());
-        size_t CurNodeId = 0;
-        for (const auto& Pair : pGraph->NodeMap)
-        {
-            CurNodeId = std::max(CurNodeId, Pair.first);
-        }
-        size_t GuiNodeId = CurNodeId + 1;
-        size_t PresentNodeId = CurNodeId + 2;
-        pGraph->NodeMap[GuiNodeId] = SRenderPassGraphNode{"Gui"};
-        pGraph->NodeMap[PresentNodeId] = SRenderPassGraphNode{"Present"};
-
-        size_t CurLinkId = 0;
-        for (const auto& Pair : pGraph->LinkMap)
-        {
-            CurLinkId = std::max(CurLinkId, Pair.first);
-        }
-
-        pGraph->LinkMap[CurLinkId + 1] = SRenderPassGraphLink{
-            pGraph->OutputPort.value(),
-            SRenderPassGraphPortInfo{GuiNodeId, "Main"},
-        };
-        pGraph->LinkMap[CurLinkId + 2] = SRenderPassGraphLink{
-            SRenderPassGraphPortInfo{GuiNodeId, "Main"},
-            SRenderPassGraphPortInfo{PresentNodeId, "Main"},
-        };
-
         m_pDevice->waitUntilIdle();
-        m_pGraphInstance->createFromGraph(pGraph, PresentNodeId, pCreateGraphInstanceCallback);
+        m_pGraphInstance->createFromGraph(m_pRenderPassGraph, m_pWindow, m_pSwapchain);
         m_NeedRecreateGraphInstance = false;
     }
 

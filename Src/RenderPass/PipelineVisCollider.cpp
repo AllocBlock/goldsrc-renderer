@@ -40,22 +40,22 @@ namespace
     };
 }
 
-void CPipelineVisCollider::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineVisCollider::updateUniformBuffer(CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 
     SUBOFrag UBOFrag = {};
     UBOFrag.EyePos = vCamera->getPos();
-    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
+    m_pFragUniformBuffer->update(&UBOFrag);
 }
 
-void CPipelineVisCollider::startRecord(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+void CPipelineVisCollider::startRecord(CCommandBuffer::Ptr vCommandBuffer)
 {
     m_CurCommandBuffer = vCommandBuffer;
-    bind(vCommandBuffer, vImageIndex);
+    bind(vCommandBuffer);
     vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
 }
 
@@ -106,21 +106,10 @@ CPipelineDescriptor CPipelineVisCollider::_getPipelineDescriptionV()
 void CPipelineVisCollider::_createV()
 {
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-    }
-
-    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
-    m_FragUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, sizeof(SUBOVert));
+    m_pFragUniformBuffer = make<vk::CUniformBuffer>();
+    m_pFragUniformBuffer->create(m_pDevice, sizeof(SUBOFrag));
 
     __updateDescriptorSet();
 
@@ -139,19 +128,16 @@ void CPipelineVisCollider::_initShaderResourceDescriptorV()
 void CPipelineVisCollider::_destroyV()
 {
     m_VertexBuffer.destroy();
-    m_VertUniformBufferSet.destroyAndClearAll();
-    m_FragUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
+    destroyAndClear(m_pFragUniformBuffer);
 }
 
 void CPipelineVisCollider::__updateDescriptorSet()
 {
-    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    WriteInfo.addWriteBuffer(1, *m_pFragUniformBuffer);
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
 void CPipelineVisCollider::__initVertexBuffer()

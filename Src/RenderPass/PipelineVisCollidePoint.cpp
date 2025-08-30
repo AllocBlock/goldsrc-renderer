@@ -36,17 +36,17 @@ void CPipelineVisCollidePoint::addCollidePoint(glm::vec3 vPos, glm::vec3 vNormal
     m_CollidePointInfoSet.push_back({ vPos, vNormal, vShowTime });
 }
 
-void CPipelineVisCollidePoint::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineVisCollidePoint::updateUniformBuffer(CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineVisCollidePoint::record(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex, glm::vec3 vEyePos)
+void CPipelineVisCollidePoint::record(CCommandBuffer::Ptr vCommandBuffer, glm::vec3 vEyePos)
 {
-    bind(vCommandBuffer, vImageIndex);
+    bind(vCommandBuffer);
     vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
 
     SPushConstant Constant;
@@ -92,12 +92,8 @@ void CPipelineVisCollidePoint::_createV()
 {
     // uniform buffer
     VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, VertBufferSize);
 
     __updateDescriptorSet();
 
@@ -115,17 +111,14 @@ void CPipelineVisCollidePoint::_initShaderResourceDescriptorV()
 void CPipelineVisCollidePoint::_destroyV()
 {
     m_VertexBuffer.destroy();
-    m_VertUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
 }
 
 void CPipelineVisCollidePoint::__updateDescriptorSet()
 {
-    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
 void CPipelineVisCollidePoint::__initVertexBuffer()

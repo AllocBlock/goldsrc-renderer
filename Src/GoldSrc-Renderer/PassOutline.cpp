@@ -6,7 +6,7 @@
 
 void CRenderPassOutline::_initV()
 {
-    m_pRerecord = make<CRerecordState>(m_ImageNum);
+    m_pRerecord = make<CRerecordState>();
     m_pRerecord->addField("Primary");
 
     VkExtent2D RefExtent = { 0, 0 };
@@ -35,8 +35,8 @@ void CRenderPassOutline::_initV()
 
     CRenderPassSingleFrameBuffer::_initV();
 
-    m_MaskPipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 0);
-    m_EdgePipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 1);
+    m_MaskPipeline.create(m_pDevice, get(), RefExtent, 0);
+    m_EdgePipeline.create(m_pDevice, get(), RefExtent, 1);
     
     __createVertexBuffer();
 
@@ -69,32 +69,32 @@ CRenderPassDescriptor CRenderPassOutline::_getRenderPassDescV()
     return Desc;
 }
 
-void CRenderPassOutline::_updateV(uint32_t vImageIndex)
+void CRenderPassOutline::_updateV()
 {
     _ASSERTE(m_pSceneInfo);
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
-    m_MaskPipeline.updateUniformBuffer(vImageIndex, pCamera);
+    m_MaskPipeline.updateUniformBuffer(pCamera);
 }
 
-std::vector<VkCommandBuffer> CRenderPassOutline::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassOutline::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
     if (m_pRerecord->consume("Primary"))
     {
-        _beginWithFramebuffer(vImageIndex);
+        _beginWithFramebuffer();
         // 1. draw mask
-        m_MaskPipeline.recordCommand(pCommandBuffer, vImageIndex);
+        m_MaskPipeline.recordCommand(pCommandBuffer);
 
         pCommandBuffer->goNextPass();
 
         // 2. get edge and blend to main
-        m_EdgePipeline.setInputImage(m_MaskImage, vImageIndex);
+        m_EdgePipeline.setInputImage(m_MaskImage);
 
         if (m_pVertexBuffer->isValid())
         {
             pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
-            m_EdgePipeline.bind(pCommandBuffer, vImageIndex);
+            m_EdgePipeline.bind(pCommandBuffer);
             pCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
         }
 

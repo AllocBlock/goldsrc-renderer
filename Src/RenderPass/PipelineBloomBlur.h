@@ -7,8 +7,8 @@
 class CPipelineBloomBlur : public IPipeline
 {
 public:
-    void setInputImage(VkImageView vImageView, size_t vIndex);
-    void updateUniformBuffer(uint32_t vImageIndex, uint32_t vFilterSize);
+    void setInputImage(VkImageView vImageView);
+    void updateUniformBuffer(uint32_t vFilterSize);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
@@ -20,7 +20,7 @@ protected:
 private:
     void __initAllDescriptorSet();
 
-    vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
+    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
     vk::CImage m_PlaceholderImage;
     vk::CSampler m_Sampler;
 };

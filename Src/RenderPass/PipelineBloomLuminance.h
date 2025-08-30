@@ -6,7 +6,7 @@
 class CPipelineBloomLuminance : public IPipeline
 {
 public:
-    void setInputImage(VkImageView vImageView, size_t vIndex);
+    void setInputImage(VkImageView vImageView);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;

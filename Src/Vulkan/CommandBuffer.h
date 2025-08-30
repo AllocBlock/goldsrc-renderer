@@ -1,12 +1,18 @@
 #pragma once
 #include "Vulkan.h"
 
+enum class ECommandBufferLevel
+{
+    PRIMARY = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+    SECONDARY = VkCommandBufferLevel::VK_COMMAND_BUFFER_LEVEL_SECONDARY
+};
+
 class CCommandBuffer
 {
 public:
     _DEFINE_PTR(CCommandBuffer);
 
-    CCommandBuffer(VkCommandBuffer vBuffer, bool vIsSingleTimeBuffer, bool vIsSecondary);
+    CCommandBuffer(VkCommandBuffer vBuffer, bool vIsSingleTimeBuffer, ECommandBufferLevel level);
 
     bool isValid();
     bool isBegun() { return m_IsBegun; }

@@ -21,9 +21,9 @@ namespace vk
         virtual ~IRenderPass() = default;
 
         void createPortSet();
-        void init(CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent);
-        void update(uint32_t vImageIndex);
-        std::vector<VkCommandBuffer> requestCommandBuffers(uint32_t vImageIndex);
+        void init(CDevice::CPtr vDevice, VkExtent2D vScreenExtent);
+        void update();
+        std::vector<VkCommandBuffer> requestCommandBuffers();
         void destroy();
         
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
@@ -64,7 +64,7 @@ namespace vk
          * triggers each frame
          * update function each frame/tick
          */
-        virtual void _updateV(uint32_t vImageIndex) {}
+        virtual void _updateV() {}
         
         /*
          * _renderUIV:
@@ -78,7 +78,7 @@ namespace vk
          * trigger each frame
          * get command buffer each frame
          */
-        virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) = 0;
+        virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() = 0;
 
         /*
          * _destroyV:
@@ -99,7 +99,6 @@ namespace vk
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 
         CDevice::CPtr m_pDevice = nullptr;
-        size_t m_ImageNum = 0;
         VkExtent2D m_ScreenExtent = vk::ZeroExtent;
         CPortSet::Ptr m_pPortSet = nullptr;
         ptr<SSceneInfo> m_pSceneInfo = nullptr;

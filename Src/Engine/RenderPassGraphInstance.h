@@ -3,20 +3,22 @@
 #include "RenderPassLib.h"
 #include "RenderPassGraph.h"
 #include "RenderPass.h"
-
-using BeforeInitCallback_t = std::function<void(const std::string&, vk::IRenderPass::Ptr)>;
+#include "PassGUI.h"
+#include "PassPresent.h"
 
 class CRenderPassGraphInstance
 {
 public:
     _DEFINE_PTR(CRenderPassGraphInstance);
 
-    void init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene);
+    void init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene);
     void updateSceneInfo(ptr<SSceneInfo> vSceneInfo);
-    void createFromGraph(ptr<SRenderPassGraph> vGraph, size_t vPresentNodeId, BeforeInitCallback_t vBeforeInitCallback = nullptr);
-    void update(uint32_t vImageIndex) const;
+    void createFromGraph(ptr<SRenderPassGraph> vGraph, GLFWwindow* vpWindow, wptr<vk::CSwapchain> vpSwapchain);
+    void update() const;
     void renderUI();
     void destroy();
+
+    void updateSwapchainImageIndex(uint32_t vImageIndex);
 
     // return pass by given id
     vk::IRenderPass::Ptr getPass(size_t vId) const;
@@ -44,8 +46,10 @@ public:
 private:
     std::vector<size_t> m_SortedOrder;
     vk::CDevice::CPtr m_pDevice = nullptr;
-    size_t m_ImageNum = 0;
     VkExtent2D m_ScreenExtent = vk::ZeroExtent;
     ptr<SSceneInfo> m_pSceneInfo = nullptr;
     std::map<size_t, vk::IRenderPass::Ptr> m_PassMap;
+
+    ptr<CRenderPassGUI> m_pPassGui;
+    ptr<CRenderPassPresent> m_pPassPresent;
 };

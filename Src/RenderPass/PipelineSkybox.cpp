@@ -94,13 +94,13 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBox
     __updateDescriptorSet();
 }
 
-void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineSkybox::updateUniformBuffer(CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
     UBOVert.EyePosition = vCamera->getPos();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 
     SUBOFrag UBOFrag = {};
     glm::vec3 FixUp = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
@@ -123,14 +123,14 @@ void CPipelineSkybox::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
         float RotationRad = glm::acos(glm::dot(FixUp, Up));
         UBOFrag.UpCorrection = glm::rotate(glm::mat4(1.0), RotationRad, RotationAxe);
     }
-    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
+    m_pFragUniformBuffer->update(&UBOFrag);
 }
 
-void CPipelineSkybox::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+void CPipelineSkybox::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
 {
     if (m_VertexBuffer.isValid() && m_SkyBoxImage.isValid())
     {
-        bind(vCommandBuffer, vImageIndex);
+        bind(vCommandBuffer);
         vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
         vCommandBuffer->draw(0, static_cast<uint32_t>(m_VertexNum));
     }
@@ -195,16 +195,10 @@ void CPipelineSkybox::_createV()
     m_VertexBuffer.stageFill(PointData.data(), DataSize);
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
-    m_VertUniformBufferSet.init(m_ImageNum);
-    m_FragUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, sizeof(SUBOVert));
+    m_pFragUniformBuffer = make<vk::CUniformBuffer>();
+    m_pFragUniformBuffer->create(m_pDevice, sizeof(SUBOFrag));
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
@@ -218,19 +212,15 @@ void CPipelineSkybox::_destroyV()
     m_Sampler.destroy();
     m_SkyBoxImage.destroy();
     m_VertexBuffer.destroy();
-    m_VertUniformBufferSet.destroyAndClearAll();
-    m_FragUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
+    destroyAndClear(m_pFragUniformBuffer);
 }
 
 void CPipelineSkybox::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
-        WriteInfo.addWriteImageAndSampler(2, m_SkyBoxImage, m_Sampler.get());
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    WriteInfo.addWriteBuffer(1, *m_pFragUniformBuffer);
+    WriteInfo.addWriteImageAndSampler(2, m_SkyBoxImage, m_Sampler.get());
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }

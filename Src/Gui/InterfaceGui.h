@@ -34,7 +34,7 @@ namespace UI
         TEXT
     };
 
-    void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, uint32_t vImageNum, VkRenderPass vRenderPass);
+    void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, VkRenderPass vRenderPass);
     bool isInitted();
     void setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer);
     void destory();

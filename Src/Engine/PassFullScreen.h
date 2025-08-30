@@ -13,11 +13,11 @@ protected:
         return true;
     }
 
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    virtual std::vector<VkImageView> _getAttachmentsV() override
     {
         return
         {
-            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+            m_pPortSet->getOutputPort("Main")->getImageV(),
         };
     }
     virtual std::vector<VkClearValue> _getClearValuesV() override

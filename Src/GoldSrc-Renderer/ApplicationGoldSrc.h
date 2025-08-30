@@ -12,7 +12,7 @@ public:
 
 protected:
     virtual void _createV() override;
-    virtual void _updateV(uint32_t vImageIndex) override;
+    virtual void _updateV() override;
     virtual void _renderUIV() override;
     virtual void _destroyV() override;
     virtual void _onSwapchainRecreateV() override;

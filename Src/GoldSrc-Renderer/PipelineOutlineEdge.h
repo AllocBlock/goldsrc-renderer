@@ -9,7 +9,7 @@
 class CPipelineEdge : public IPipeline
 {
 public:
-    void setInputImage(VkImageView vImageView, size_t vIndex);
+    void setInputImage(VkImageView vImageView);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
@@ -18,10 +18,10 @@ protected:
     virtual void _destroyV() override;
 
 private:
-    void __updateUniformBuffer(uint32_t vImageIndex);
+    void __updateUniformBuffer();
     void __initAllDescriptorSet();
 
-    vk::CPointerSet<vk::CUniformBuffer> m_FragUbufferSet;
+    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
     vk::CImage::Ptr m_pPlaceholderImage = nullptr;
     vk::CSampler m_Sampler;
 };

@@ -29,17 +29,17 @@ void CPipelineSimple::setTextures(const vk::CPointerSet<vk::CImage>& vTextureSet
     __updateDescriptorSet();
 }
 
-void CPipelineSimple::updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, CCamera::CPtr vCamera)
+void CPipelineSimple::updateUniformBuffer(glm::mat4 vModel, CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
     UBOVert.View = vCamera->getViewMat();
     UBOVert.Proj = vCamera->getProjMat();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 
     SUBOFrag UBOFrag = {};
     UBOFrag.Eye = vCamera->getPos();
-    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
+    m_pFragUniformBuffer->update(&UBOFrag);
 }
 
 void CPipelineSimple::_initShaderResourceDescriptorV()
@@ -74,16 +74,10 @@ void CPipelineSimple::_createV()
 {
     __destroyResources();
 
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    VkDeviceSize FragBufferSize = sizeof(SUBOFrag);
-    m_VertUniformBufferSet.init(m_ImageNum);
-    m_FragUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-        m_FragUniformBufferSet[i]->create(m_pDevice, FragBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, sizeof(SUBOVert));
+    m_pFragUniformBuffer = make<vk::CUniformBuffer>();
+    m_pFragUniformBuffer->create(m_pDevice, sizeof(SUBOFrag));
 
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
     VkSamplerCreateInfo SamplerInfo = vk::CSamplerInfoGenerator::generateCreateInfo(
@@ -103,41 +97,37 @@ void CPipelineSimple::_destroyV()
 
 void CPipelineSimple::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    WriteInfo.addWriteBuffer(1, *m_pFragUniformBuffer);
+    WriteInfo.addWriteSampler(2, m_Sampler.get());
+
+    //const size_t NumTexture = __getActualTextureNum();
+    const size_t NumTexture = m_TextureSet.size();
+
+    std::vector<VkImageView> TexImageViewSet(CPipelineSimple::MaxTextureNum);
+    for (size_t i = 0; i < CPipelineSimple::MaxTextureNum; ++i)
     {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteBuffer(1, *m_FragUniformBufferSet[i]);
-        WriteInfo.addWriteSampler(2, m_Sampler.get());
-
-        //const size_t NumTexture = __getActualTextureNum();
-        const size_t NumTexture = m_TextureSet.size();
-
-        std::vector<VkImageView> TexImageViewSet(CPipelineSimple::MaxTextureNum);
-        for (size_t i = 0; i < CPipelineSimple::MaxTextureNum; ++i)
+        // for unused element, fill like the first one (weird method but avoid validation warning)
+        if (i >= NumTexture)
         {
-            // for unused element, fill like the first one (weird method but avoid validation warning)
-            if (i >= NumTexture)
-            {
-                if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = m_PlaceholderImage;
-                else
-                    TexImageViewSet[i] = TexImageViewSet[0];
-            }
+            if (i == 0) // no texture, use default placeholder texture
+                TexImageViewSet[i] = m_PlaceholderImage;
             else
-                TexImageViewSet[i] = m_TextureSet[i];
+                TexImageViewSet[i] = TexImageViewSet[0];
         }
-        WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
-
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
+        else
+            TexImageViewSet[i] = m_TextureSet[i];
     }
+    WriteInfo.addWriteImagesAndSampler(3, TexImageViewSet);
+
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
 void CPipelineSimple::__destroyResources()
 {
-    m_VertUniformBufferSet.destroyAndClearAll();
-    m_FragUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
+    destroyAndClear(m_pFragUniformBuffer);
     m_PlaceholderImage.destroy();
     m_Sampler.destroy();
 }

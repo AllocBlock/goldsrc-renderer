@@ -3,11 +3,11 @@
 #include "ImageUtils.h"
 #include "InterfaceGui.h"
 
-void CPipelineBloomLuminance::setInputImage(VkImageView vImageView, size_t vIndex)
+void CPipelineBloomLuminance::setInputImage(VkImageView vImageView)
 {
     CDescriptorWriteInfo WriteInfo;
     WriteInfo.addWriteImageAndSampler(0, vImageView != VK_NULL_HANDLE ? vImageView : m_PlaceholderImage, m_Sampler);
-    m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
 void CPipelineBloomLuminance::_initShaderResourceDescriptorV()
@@ -63,10 +63,7 @@ void CPipelineBloomLuminance::_renderUIV()
 
 void CPipelineBloomLuminance::__initAllDescriptorSet()
 {
-    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteImageAndSampler(0, m_PlaceholderImage, m_Sampler);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteImageAndSampler(0, m_PlaceholderImage, m_Sampler);
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }

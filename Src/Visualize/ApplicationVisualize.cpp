@@ -41,20 +41,20 @@ void CApplicationVisualize::_createV()
 
     m_pDepthPort->setActualFormat(DepthFormat);
     m_pDepthPort->setActualExtent(ScreenExtent);
-    m_pDepthPort->setImage(m_DepthImage, 0);
+    m_pDepthPort->setImage(m_DepthImage);
 
     __linkPasses();
 
-    m_pPassVisualize->init(m_pDevice, m_pSwapchain->getImageNum(), ScreenExtent);
+    m_pPassVisualize->init(m_pDevice, ScreenExtent);
     m_pPassVisualize->setSceneInfo(m_pSceneInfo);
 }
 
-void CApplicationVisualize::_updateV(uint32_t vImageIndex)
+void CApplicationVisualize::_updateV()
 {
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setAspect(vk::calcAspect(m_pSwapchain->getExtent()));
     m_pInteractor->update();
-    m_pPassVisualize->update(vImageIndex);
+    m_pPassVisualize->update();
 }
 
 void CApplicationVisualize::_destroyV()
@@ -67,9 +67,9 @@ void CApplicationVisualize::_destroyV()
 void CApplicationVisualize::__linkPasses()
 {
     auto pPortVisualize = m_pPassVisualize->getPortSet();
-    m_pSwapchainPort->unlinkAll();
+    //m_pSwapchainPort->unlinkAll();
     
-    CPortSet::link(m_pSwapchainPort, pPortVisualize, "Main");
+    //CPortSet::link(m_pSwapchainPort, pPortVisualize, "Main");
     CPortSet::link(m_pDepthPort, pPortVisualize, "Depth");
 
     _ASSERTE(m_pPassVisualize->isValid());

@@ -28,21 +28,21 @@ protected:
     virtual void _initV() override;
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
-    virtual void _updateV(uint32_t vImageIndex) override;
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
+    virtual void _updateV() override;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;
 
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
     {
         return _dumpInputPortExtent("Main", voExtent);
     }
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    virtual std::vector<VkImageView> _getAttachmentsV() override
     {
         _ASSERTE(m_MaskImage.isValid());
         return
         {
             m_MaskImage,
-            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
+            m_pPortSet->getOutputPort("Main")->getImageV(),
         };
     }
     virtual std::vector<VkClearValue> _getClearValuesV() override

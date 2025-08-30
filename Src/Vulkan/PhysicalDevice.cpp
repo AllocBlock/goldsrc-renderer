@@ -38,6 +38,7 @@ CPhysicalDevice::Ptr CPhysicalDevice::chooseBestDevice(CInstance::CPtr vInstance
     CPhysicalDevice::Ptr pDevice = make<CPhysicalDevice>();
     // get property, queue family info and swapchain support info
     vkGetPhysicalDeviceProperties(ChosenDevice, &pDevice->m_DeviceProperty);
+
     pDevice->_set(ChosenDevice);
     pDevice->m_pInstance = vInstance;
     pDevice->m_pSurface = vSurface;
@@ -158,9 +159,17 @@ bool CPhysicalDevice::__isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, CSurf
     SwapChainAdequate = !SwapChainSupport.Formats.empty() && !SwapChainSupport.PresentModes.empty();
     if (!SwapChainAdequate) return false;
 
-    VkPhysicalDeviceFeatures SupportedFeatures;
+    VkPhysicalDeviceFeatures SupportedFeatures = {};
     vkGetPhysicalDeviceFeatures(vPhysicalDevice, &SupportedFeatures);
     if (!SupportedFeatures.samplerAnisotropy) return false;
+
+    VkPhysicalDeviceFeatures2 SupportedFeatures2 = {};
+    SupportedFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    VkPhysicalDeviceVulkan13Features Feature13 = {};
+    Feature13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    SupportedFeatures2.pNext = &Feature13;
+    vkGetPhysicalDeviceFeatures2(vPhysicalDevice, &SupportedFeatures2);
+    if (!Feature13.dynamicRendering) return false;
 
     return true;
 }

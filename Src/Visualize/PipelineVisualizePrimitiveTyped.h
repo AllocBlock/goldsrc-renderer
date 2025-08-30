@@ -21,7 +21,7 @@ public:
         _onClearV();
     }
 
-    virtual void recordCommandV(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex) override
+    virtual void recordCommandV(CCommandBuffer::Ptr vCommandBuffer) override
     {
         if (m_NeedUpdateVertexBuffer)
         {
@@ -29,7 +29,7 @@ public:
             __updateVertexBuffer();
         }
 
-        CPipelineVisualizePrimitive::recordCommandV(vCommandBuffer, vImageIndex);
+        CPipelineVisualizePrimitive::recordCommandV(vCommandBuffer);
     }
 
 protected:

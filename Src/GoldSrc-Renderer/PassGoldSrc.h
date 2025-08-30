@@ -52,9 +52,9 @@ protected:
     virtual void _initV() override;
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
-    virtual void _updateV(uint32_t vImageIndex) override;
+    virtual void _updateV() override;
     virtual void _renderUIV() override;
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;
     
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
@@ -62,12 +62,12 @@ protected:
         voExtent = m_ScreenExtent;
         return voExtent != vk::ZeroExtent;
     }
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    virtual std::vector<VkImageView> _getAttachmentsV() override
     {
         return
         {
-            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
-            m_pPortSet->getOutputPort("Depth")->getImageV(vIndex),
+            m_pPortSet->getOutputPort("Main")->getImageV(),
+            m_pPortSet->getOutputPort("Depth")->getImageV(),
         };
     }
     virtual std::vector<VkClearValue> _getClearValuesV() override
@@ -90,7 +90,7 @@ private:
     void __createSceneResources();
     void __destroySceneResources();
     
-    void __updateAllUniformBuffer(uint32_t vImageIndex);
+    void __updateAllUniformBuffer();
     
     size_t __getActualTextureNum();
     void __updatePipelineResourceGoldSrc(CPipelineGoldSrc& vPipeline);
@@ -136,8 +136,8 @@ private:
     } m_PipelineSet;
     
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
-    vk::CPointerSet<vk::CImage> m_MainImageSet;
-    vk::CPointerSet<vk::CImage> m_DepthImageSet;
+    vk::CImage::Ptr m_pMainImage;
+    vk::CImage::Ptr m_pDepthImage;
     vk::CImage m_LightmapImage;
     vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
 

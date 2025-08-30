@@ -16,8 +16,8 @@ class CPipelineIcon : public IPipeline
 public:
     void addIcon(EIcon vIcon, glm::vec3 vPosition, float vScale = 32.0f);
     void clear();
-    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
+    void updateUniformBuffer(CCamera::CPtr vCamera);
+    void recordCommand(CCommandBuffer::Ptr vCommandBuffer);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
@@ -43,7 +43,7 @@ private:
     vk::CImage m_PlaceholderImage;
     ptr<vk::CBuffer> m_pVertexDataBuffer;
     size_t m_VertexNum = 0;
-    vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
+    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
 
     uint32_t m_IconNum = 0;
     vk::CPointerSet<vk::CImage> m_IconImageSet;

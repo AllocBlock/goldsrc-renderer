@@ -107,8 +107,7 @@ bool CPort::isReady() const
     return m_InputLayout != VK_IMAGE_LAYOUT_UNDEFINED &&
         m_OutputLayout != VK_IMAGE_LAYOUT_UNDEFINED &&
         hasActualFormatV() &&
-        hasActualExtentV() &&
-        hasActualNumV();
+        hasActualExtentV();
 }
 
 void CPort::assertReady() const
@@ -121,8 +120,6 @@ void CPort::assertReady() const
         throw std::runtime_error("Port has no actual format");
     if (!hasActualExtentV())
         throw std::runtime_error("Port has no actual extent");
-    if (!hasActualNumV())
-        throw std::runtime_error("Port has no actual image num");
 }
 
 CSourcePort::CSourcePort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet) : CPort(vName, vInfo, vBelongedSet)
@@ -140,10 +137,9 @@ CSourcePort::CSourcePort(const std::string& vName, const SPortInfo& vInfo, CPort
     m_InputLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
-VkImageView CSourcePort::getImageV(size_t vIndex) const
+VkImageView CSourcePort::getImageV() const
 {
-    _ASSERTE(m_ImageMap.find(vIndex) != m_ImageMap.end());
-    return m_ImageMap.at(vIndex);
+    return m_ImageView;
 }
 
 size_t CSourcePort::getImageNumV() const
@@ -151,13 +147,9 @@ size_t CSourcePort::getImageNumV() const
     return m_Info.Num;
 }
 
-void CSourcePort::setImage(VkImageView vImage, size_t vIndex)
+void CSourcePort::setImage(VkImageView vImageView)
 {
-    _ASSERTE(m_ActualNum == 0 || vIndex < m_ActualNum);
-    if (m_ImageMap.find(vIndex) == m_ImageMap.end() || m_ImageMap[vIndex] != vImage)
-    {
-        m_ImageMap[vIndex] = vImage;
-    }
+    m_ImageView = vImageView;
 }
 
 size_t CRelayPort::getImageNumV() const
@@ -172,10 +164,10 @@ CRelayPort::CRelayPort(const std::string& vName, const SPortInfo& vInfo, CPortSe
         setInputLayout(__toLayout(vInfo.Usage));
 }
 
-VkImageView CRelayPort::getImageV(size_t vIndex) const
+VkImageView CRelayPort::getImageV() const
 {
     _ASSERTE(!m_pParent.expired());
-    return m_pParent.lock()->getImageV(vIndex);
+    return m_pParent.lock()->getImageV();
 }
 
 void SPortDescriptor::addInput(const std::string& vName, const SPortInfo& vInfo)
@@ -335,7 +327,7 @@ const SPortInfo& CPortSet::getOutputFormat(const std::string& vName) const
     return getOutputPort(vName)->getInfo();
 }
 
-void CPortSet::setOutput(const std::string& vOutputName, const std::vector<VkImageView> vImageSet, VkFormat vFormat, VkExtent2D vExtent, VkImageLayout vLayout)
+void CPortSet::setOutput(const std::string& vOutputName, VkImageView vImageView, VkFormat vFormat, VkExtent2D vExtent, VkImageLayout vLayout)
 {
     SPortInfo InputInfo;
     InputInfo.Format = vFormat;
@@ -351,31 +343,16 @@ void CPortSet::setOutput(const std::string& vOutputName, const std::vector<VkIma
     // FIXME: what if different formats/extents are set? how to deal this?
     pSourcePort->setActualFormat(vFormat);
     pSourcePort->setActualExtent(vExtent);
-    pSourcePort->setActualNum(vImageSet.size());
-    for (size_t i = 0; i < vImageSet.size(); ++i)
-        pSourcePort->setImage(vImageSet[i], i);
+    pSourcePort->setImage(vImageView);
 }
 
-void CPortSet::setOutput(const std::string& vOutputName, const std::vector<vk::CImage::Ptr>& vImageSet)
+void CPortSet::setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage)
 {
-    _ASSERTE(vImageSet.size() > 0);
-    VkFormat Format = vImageSet[0]->getFormat();
-    VkExtent2D Extent = vImageSet[0]->getExtent();
-    VkImageLayout Layout = vImageSet[0]->getLayout();
+    VkFormat Format = vImage->getFormat();
+    VkExtent2D Extent = vImage->getExtent();
+    VkImageLayout Layout = vImage->getLayout();
 
-    std::vector<VkImageView> ViewSet;
-    for (size_t i = 0; i < vImageSet.size(); ++i)
-    {
-        ViewSet.push_back(*vImageSet[i]);
-        if (i > 0)
-        {
-            // image in vector must have same format and extent
-            _ASSERTE(Format == vImageSet[i]->getFormat());
-            _ASSERTE(Extent == vImageSet[i]->getExtent());
-            _ASSERTE(Layout == vImageSet[i]->getLayout());
-        }
-    }
-    setOutput(vOutputName, ViewSet, Format, Extent, Layout);
+    setOutput(vOutputName, *vImage, Format, Extent, Layout);
 }
 
 void CPortSet::append(const std::string& vInputName, CPort::Ptr vPort)

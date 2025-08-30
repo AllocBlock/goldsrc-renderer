@@ -18,8 +18,6 @@
 // TODO: remove this and use self-register
 void registerAllPasses()
 {
-	_REGISTER_PASS(CRenderPassGUI, false);
-	_REGISTER_PASS(CRenderPassPresent, false);
 	_REGISTER_PASS(CRenderPassGoldSrc, true);
 	_REGISTER_PASS(CRenderPassOutline, true);
 	_REGISTER_PASS(CRenderPassVisualize, true);

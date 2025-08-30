@@ -4,6 +4,7 @@
 #include "PipelineBloomLuminance.h"
 #include "PipelineBloomBlur.h"
 #include "PipelineBloomMerge.h"
+#include <InterfaceGui.h>
 
 // references:
 // Unity Shader - Bloom(¹âÔÎ¡¢·º¹â): https://zhuanlan.zhihu.com/p/140724673
@@ -21,29 +22,23 @@ protected:
 
         auto InputPort = m_pPortSet->getInputPort("Main");
         auto MergePort = m_pPortSet->getInputPort("Main");
-        m_LuminanceImageSet.init(m_ImageNum);
-        m_BlurredImageSet.init(m_ImageNum);
-        m_OutputImageSet.init(m_ImageNum);
-        for (size_t i = 0; i < m_ImageNum; ++i)
-        {
-            ImageUtils::createImage2d(*m_LuminanceImageSet[i], m_pDevice, RefExtent, InputPort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-            ImageUtils::createImage2d(*m_BlurredImageSet[i], m_pDevice, RefExtent, InputPort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
-            ImageUtils::createImage2d(*m_OutputImageSet[i], m_pDevice, RefExtent, MergePort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-        }
-        m_pPortSet->setOutput("Main", m_OutputImageSet.getAll());
+        m_pLuminanceImage = make<vk::CImage>();
+        m_pBlurredImage = make<vk::CImage>();
+        m_pOutputImage = make<vk::CImage>();
+        ImageUtils::createImage2d(*m_pLuminanceImage, m_pDevice, RefExtent, InputPort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+        ImageUtils::createImage2d(*m_pBlurredImage, m_pDevice, RefExtent, InputPort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+        ImageUtils::createImage2d(*m_pOutputImage, m_pDevice, RefExtent, MergePort->getActualFormatV(), VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+        m_pPortSet->setOutput("Main", m_pOutputImage);
 
         CRenderPassFullScreen::_initV();
 
-        m_LuminiancePipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 0);
-        m_BlurPipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 1);
-        m_MergePipeline.create(m_pDevice, get(), RefExtent, m_ImageNum, 2);
-        for (size_t i = 0; i < m_ImageNum; ++i)
-        {
-            VkImageView InputImage = m_pPortSet->getInputPort("Main")->getImageV(i);
-            m_LuminiancePipeline.setInputImage(InputImage, i);
-            m_BlurPipeline.setInputImage(*m_LuminanceImageSet[i], i);
-            m_MergePipeline.setInputImage(InputImage, *m_BlurredImageSet[i], i);
-        }
+        m_LuminiancePipeline.create(m_pDevice, get(), RefExtent, 0);
+        m_BlurPipeline.create(m_pDevice, get(), RefExtent, 1);
+        m_MergePipeline.create(m_pDevice, get(), RefExtent, 2);
+        VkImageView InputImage = m_pPortSet->getInputPort("Main")->getImageV();
+        m_LuminiancePipeline.setInputImage(InputImage);
+        m_BlurPipeline.setInputImage(*m_pLuminanceImage);
+        m_MergePipeline.setInputImage(InputImage, *m_pBlurredImage);
     }
 
     virtual void _initPortDescV(SPortDescriptor& vioDesc) override
@@ -54,9 +49,9 @@ protected:
 
     void _destroyV() override
     {
-        m_LuminanceImageSet.destroyAndClearAll();
-        m_BlurredImageSet.destroyAndClearAll();
-        m_OutputImageSet.destroyAndClearAll();
+        destroyAndClear(m_pLuminanceImage);
+        destroyAndClear(m_pBlurredImage);
+        destroyAndClear(m_pOutputImage);
         m_LuminiancePipeline.destroy();
         m_BlurPipeline.destroy();
         m_MergePipeline.destroy();
@@ -104,32 +99,32 @@ protected:
         return Desc;
     }
 
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override
     {
-        CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+        CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-        _beginWithFramebuffer(vImageIndex);
+        _beginWithFramebuffer();
 
-        m_LuminiancePipeline.bind(pCommandBuffer, vImageIndex);
+        m_LuminiancePipeline.bind(pCommandBuffer);
         _drawFullScreen(pCommandBuffer);
         pCommandBuffer->goNextPass();
-        m_BlurPipeline.bind(pCommandBuffer, vImageIndex);
+        m_BlurPipeline.bind(pCommandBuffer);
         _drawFullScreen(pCommandBuffer);
         pCommandBuffer->goNextPass();
-        m_MergePipeline.bind(pCommandBuffer, vImageIndex);
+        m_MergePipeline.bind(pCommandBuffer);
         _drawFullScreen(pCommandBuffer);
 
         _endWithFramebuffer();
         return { pCommandBuffer->get() };
     }
 
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    virtual std::vector<VkImageView> _getAttachmentsV() override
     {
         return
         {
-            m_pPortSet->getOutputPort("Main")->getImageV(vIndex),
-            *m_LuminanceImageSet[vIndex],
-            *m_BlurredImageSet[vIndex]
+            m_pPortSet->getOutputPort("Main")->getImageV(),
+            *m_pLuminanceImage,
+            *m_pBlurredImage
         };
     }
 
@@ -152,17 +147,17 @@ protected:
         }
     }
 
-    virtual void _updateV(uint32_t vImageIndex) override
+    virtual void _updateV() override
     {
-        m_BlurPipeline.updateUniformBuffer(vImageIndex, uint32_t(m_FilterSize));
-        m_MergePipeline.updateUniformBuffer(vImageIndex, m_BloomFactor);
+        m_BlurPipeline.updateUniformBuffer(uint32_t(m_FilterSize));
+        m_MergePipeline.updateUniformBuffer(m_BloomFactor);
     }
 
 private:
 
-    vk::CPointerSet<vk::CImage> m_LuminanceImageSet;
-    vk::CPointerSet<vk::CImage> m_BlurredImageSet;
-    vk::CPointerSet<vk::CImage> m_OutputImageSet;
+    vk::CImage::Ptr m_pLuminanceImage;
+    vk::CImage::Ptr m_pBlurredImage;
+    vk::CImage::Ptr m_pOutputImage;
 
     CPipelineBloomLuminance m_LuminiancePipeline;
     CPipelineBloomBlur m_BlurPipeline;

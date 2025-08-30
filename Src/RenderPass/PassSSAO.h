@@ -18,13 +18,10 @@ protected:
     {
         CRenderPassFullScreen::_initV();
         
-        m_Pipeline.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
+        m_Pipeline.create(m_pDevice, get(), m_ScreenExtent);
 
         auto pDepthPort = m_pPortSet->getInputPort("Depth");
-        for (size_t i = 0; i < m_ImageNum; ++i)
-        {
-            m_Pipeline.setDepthImage(pDepthPort->getImageV(i), i);
-        }
+        m_Pipeline.setDepthImage(pDepthPort->getImageV());
     }
 
     void _destroyV() override
@@ -38,9 +35,9 @@ protected:
         return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
     }
 
-    virtual void _updateV(uint32_t vImageIndex) override
+    virtual void _updateV() override
     {
-        m_Pipeline.updateUniformBuffer(vImageIndex, m_pSceneInfo->pScene->getMainCamera());
+        m_Pipeline.updateUniformBuffer(m_pSceneInfo->pScene->getMainCamera());
     }
 
     virtual void _renderUIV() override
@@ -48,22 +45,22 @@ protected:
         m_Pipeline.renderUI();
     }
 
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override
     {
-        CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+        CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-        _beginWithFramebuffer(vImageIndex);
-        m_Pipeline.bind(pCommandBuffer, vImageIndex);
+        _beginWithFramebuffer();
+        m_Pipeline.bind(pCommandBuffer);
         _drawFullScreen(pCommandBuffer);
         _endWithFramebuffer();
         return { pCommandBuffer->get() };
     }
 
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) override
+    virtual std::vector<VkImageView> _getAttachmentsV() override
     {
         return
         {
-            m_pPortSet->getOutputPort("Main")->getImageV(vIndex)
+            m_pPortSet->getOutputPort("Main")->getImageV()
         };
     }
 

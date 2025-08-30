@@ -58,10 +58,10 @@ void CRenderPassVisualize::_initV()
 {
     CRenderPassSingleFrameBuffer::_initV();
 
-    m_PipelineSet.Triangle.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
-    m_PipelineSet.Line.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
-    m_PipelineSet.Point.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
-    m_PipelineSet.Primitive3D.create(m_pDevice, get(), m_ScreenExtent, m_ImageNum);
+    m_PipelineSet.Triangle.create(m_pDevice, get(), m_ScreenExtent);
+    m_PipelineSet.Line.create(m_pDevice, get(), m_ScreenExtent);
+    m_PipelineSet.Point.create(m_pDevice, get(), m_ScreenExtent);
+    m_PipelineSet.Primitive3D.create(m_pDevice, get(), m_ScreenExtent);
 
     __rerecordCommand();
 }
@@ -78,14 +78,14 @@ CRenderPassDescriptor CRenderPassVisualize::_getRenderPassDescV()
                                                             m_pPortSet->getInputPort("Depth"));
 }
 
-void CRenderPassVisualize::_updateV(uint32_t vImageIndex)
+void CRenderPassVisualize::_updateV()
 {
     _ASSERTE(m_pSceneInfo);
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
-    m_PipelineSet.Triangle.updateUniformBuffer(vImageIndex, pCamera);
-    m_PipelineSet.Line.updateUniformBuffer(vImageIndex, pCamera);
-    m_PipelineSet.Point.updateUniformBuffer(vImageIndex, pCamera);
-    m_PipelineSet.Primitive3D.updateUniformBuffer(vImageIndex, pCamera);
+    m_PipelineSet.Triangle.updateUniformBuffer(pCamera);
+    m_PipelineSet.Line.updateUniformBuffer(pCamera);
+    m_PipelineSet.Point.updateUniformBuffer(pCamera);
+    m_PipelineSet.Primitive3D.updateUniformBuffer(pCamera);
 }
 
 void CRenderPassVisualize::_destroyV()
@@ -98,30 +98,25 @@ void CRenderPassVisualize::_destroyV()
     CRenderPassSingleFrameBuffer::_destroyV();
 }
 
-std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-    bool RerecordCommand = false;
-    if (m_RerecordCommandTimes > 0)
-    {
-        RerecordCommand = true;
-        --m_RerecordCommandTimes;
-    }
-    if (true)
+    if (m_RerecordCommand)
     {
         // init
-        _beginWithFramebuffer(vImageIndex);
-        m_PipelineSet.Triangle.recordCommandV(pCommandBuffer, vImageIndex);
-        m_PipelineSet.Line.recordCommandV(pCommandBuffer, vImageIndex);
-        m_PipelineSet.Point.recordCommandV(pCommandBuffer, vImageIndex);
-        m_PipelineSet.Primitive3D.recordCommand(pCommandBuffer, vImageIndex);
+        _beginWithFramebuffer();
+        m_PipelineSet.Triangle.recordCommandV(pCommandBuffer);
+        m_PipelineSet.Line.recordCommandV(pCommandBuffer);
+        m_PipelineSet.Point.recordCommandV(pCommandBuffer);
+        m_PipelineSet.Primitive3D.recordCommand(pCommandBuffer);
         _endWithFramebuffer();
+        m_RerecordCommand = false;
     }
     return { pCommandBuffer->get() };
 }
 
 void CRenderPassVisualize::__rerecordCommand()
 {
-    m_RerecordCommandTimes = m_ImageNum;
+    m_RerecordCommand = true;
 }

@@ -8,39 +8,37 @@ class CRerecordState
 public:
     _DEFINE_PTR(CRerecordState);
 
-    CRerecordState(size_t vImageNum): m_ImageNum(vImageNum) {}
-
     void addField(const std::string& vName)
     {
-        if (m_FieldTimeMap.find(vName) != m_FieldTimeMap.end())
+        if (m_Fields.find(vName) != m_Fields.end())
             throw std::runtime_error("Field already exists");
-        m_FieldTimeMap[vName] = m_ImageNum;
+        m_Fields.insert(vName);
     }
 
     void requestRecord(const std::string& vFieldName)
     {
-        m_FieldTimeMap[vFieldName] = m_ImageNum;
+        m_DirtyFields.insert(vFieldName);
     }
     
     void requestRecordForAll()
     {
-        for (auto& Pair : m_FieldTimeMap)
+        for (const auto& field : m_Fields)
         {
-            Pair.second = m_ImageNum;
+            m_DirtyFields.insert(field);
         }
     }
 
     // return if need record and minus time by 1
     bool consume(const std::string& vFieldName)
     {
-        if (m_FieldTimeMap.at(vFieldName) > 0)
+        if (m_DirtyFields.find(vFieldName) != m_DirtyFields.end())
         {
-            m_FieldTimeMap[vFieldName]--;
+            m_DirtyFields.erase(vFieldName);
             return true;
         }
         return false;
     }
 private:
-    size_t m_ImageNum = 0;
-    std::map<std::string, size_t> m_FieldTimeMap;
+    std::set<std::string> m_Fields;
+    std::set<std::string> m_DirtyFields;
 };

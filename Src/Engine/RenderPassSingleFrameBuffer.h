@@ -23,14 +23,14 @@ protected:
     virtual void _destroyV() override;
 
     virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) = 0;
-    virtual std::vector<VkImageView> _getAttachmentsV(uint32_t vIndex) = 0;
+    virtual std::vector<VkImageView> _getAttachmentsV() = 0;
     virtual std::vector<VkClearValue> _getClearValuesV() = 0;
     virtual std::vector<std::string> _getExtraCommandBufferNamesV() const;;
 
-    CCommandBuffer::Ptr _getCommandBuffer(uint32_t vImageIndex);
-    void _beginWithFramebuffer(uint32_t vImageIndex, bool vHasSecondary = false);
+    CCommandBuffer::Ptr _getCommandBuffer();
+    void _beginWithFramebuffer(bool vHasSecondary = false);
     void _endWithFramebuffer();
-    void _beginSecondary(CCommandBuffer::Ptr vCommandBuffer, uint32_t vImageIndex);
+    void _beginSecondary(CCommandBuffer::Ptr vCommandBuffer);
 
     CCommand m_Command = CCommand();
 
@@ -39,7 +39,7 @@ private:
     using vk::IRenderPass::_begin;
     using vk::IRenderPass::_end;
     
-    void __createCommandPoolAndBuffers(uint32_t vImageNum);
+    void __createCommandPoolAndBuffers();
     void __destroyCommandPoolAndBuffers();
     void __createFramebuffers(VkExtent2D vExtent);
 

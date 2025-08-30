@@ -10,8 +10,8 @@
 class CPipelineVisCollider : public IPipeline
 {
 public:
-    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
-    void startRecord(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
+    void updateUniformBuffer(CCamera::CPtr vCamera);
+    void startRecord(CCommandBuffer::Ptr vCommandBuffer);
     void drawCollider(CComponentCollider::CPtr vCollider);
     void endRecord();
 
@@ -33,8 +33,8 @@ private:
 
     std::map<EBasicColliderType, SVertexDataPos> m_TypeVertexDataPosMap;
     vk::CBuffer m_VertexBuffer;
-    vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
-    vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
+    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
+    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
 
     CCommandBuffer::Ptr m_CurCommandBuffer = nullptr;
 };

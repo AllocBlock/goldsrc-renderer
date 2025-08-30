@@ -11,12 +11,10 @@ void IRenderPass::createPortSet()
     m_pPortSet = _createPortSetV();
 }
 
-void IRenderPass::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent)
+void IRenderPass::init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent)
 {
-    _ASSERTE(vImageNum > 0);
     _ASSERTE(vScreenExtent.width > 0 && vScreenExtent.height > 0);
     m_pDevice = vDevice;
-    m_ImageNum = vImageNum;
     m_ScreenExtent = vScreenExtent;
     m_pPortSet->assertInputReady();
     
@@ -25,16 +23,16 @@ void IRenderPass::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D v
     _initV();
 }
 
-void IRenderPass::update(uint32_t vImageIndex)
+void IRenderPass::update()
 {
     _ASSERTE(isValid());
-    _updateV(vImageIndex);
+    _updateV();
 }
 
-std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers()
 {
     _ASSERTE(isValid());
-    return _requestCommandBuffersV(vImageIndex);
+    return _requestCommandBuffersV();
 }
 
 void IRenderPass::destroy()

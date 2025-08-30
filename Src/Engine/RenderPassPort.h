@@ -72,14 +72,12 @@ public:
 
     const SPortInfo& getInfo() const { return m_Info; }
 
-    virtual VkImageView getImageV(size_t vIndex = 0) const = 0;
+    virtual VkImageView getImageV() const = 0;
     virtual size_t getImageNumV() const = 0;
     virtual bool hasActualFormatV() const = 0;
     virtual VkFormat getActualFormatV() const = 0;
     virtual bool hasActualExtentV() const = 0;
     virtual VkExtent2D getActualExtentV() const = 0;
-    virtual bool hasActualNumV() const = 0;
-    virtual size_t getActualNumV() const = 0;
 
     virtual bool isStandaloneSourceV() const = 0;
 
@@ -105,29 +103,25 @@ public:
 
     CSourcePort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet);
 
-    virtual VkImageView getImageV(size_t vIndex = 0) const override final;
+    virtual VkImageView getImageV() const override final;
     virtual size_t getImageNumV() const override final;
-    void setImage(VkImageView vImage, size_t vIndex = 0);
-    void clearImage() { m_ImageMap.clear(); }
+    void setImage(VkImageView vImageView);
+    void clearImage() { m_ImageView = VK_NULL_HANDLE; }
     
     virtual bool hasActualFormatV() const override final { return m_ActualFormat != VK_FORMAT_UNDEFINED; }
     virtual VkFormat getActualFormatV() const override final { _ASSERTE(hasActualFormatV()); return m_ActualFormat; }
     virtual bool hasActualExtentV() const override final { return m_ActualExtent.width != 0 && m_ActualExtent.height != 0; }
     virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_ActualExtent; }
-    virtual bool hasActualNumV() const override final { return m_ActualNum != SPortInfo::AnyNum; }
-    virtual size_t getActualNumV() const override final { return m_ActualNum; }
     void setActualFormat(VkFormat vFormat) { m_ActualFormat = vFormat; }
     void setActualExtent(VkExtent2D vExtent) { m_ActualExtent = vExtent; }
-    void setActualNum(size_t vImageNum) { m_ActualNum = vImageNum; }
     
     virtual bool isStandaloneSourceV() const override { return m_pBelongedSet == nullptr; }
 
 private:
-    std::map<size_t, VkImageView> m_ImageMap;
+    VkImageView m_ImageView = VK_NULL_HANDLE;
     
     VkFormat m_ActualFormat = SPortInfo::AnyFormat;
     VkExtent2D m_ActualExtent = SPortInfo::AnyExtent;
-    size_t m_ActualNum = SPortInfo::AnyNum;
 };
 
 class CRelayPort : public CPort
@@ -137,7 +131,7 @@ public:
 
     CRelayPort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet);
 
-    virtual VkImageView getImageV(size_t vIndex = 0) const override final;
+    virtual VkImageView getImageV() const override final;
     virtual size_t getImageNumV() const override final;
 
     virtual bool hasActualFormatV() const override final { return !m_pParent.expired() && m_pParent.lock()->hasActualFormatV(); }
@@ -145,8 +139,6 @@ public:
     virtual VkFormat getActualFormatV() const override final { _ASSERTE(hasActualFormatV()); return m_pParent.lock()->getActualFormatV(); }
     virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_pParent.lock()->getActualExtentV();
     }
-    virtual bool hasActualNumV() const override final { return !m_pParent.expired() && m_pParent.lock()->hasActualNumV(); }
-    virtual size_t getActualNumV() const override final { return m_pParent.lock()->getActualNumV(); }
 
     virtual bool isStandaloneSourceV() const override { return false; }
 };
@@ -204,8 +196,8 @@ public:
     const SPortInfo& getInputFormat(const std::string& vName) const; // if not found, throw exception
     const SPortInfo& getOutputFormat(const std::string& vName) const; // if not found, throw exception
 
-    void setOutput(const std::string& vOutputName, const std::vector<VkImageView> vImageSet, VkFormat vFormat, VkExtent2D vExtent, VkImageLayout vLayout);
-    void setOutput(const std::string& vOutputName, const std::vector<vk::CImage::Ptr>& vImageSet);
+    void setOutput(const std::string& vOutputName, VkImageView vImageView, VkFormat vFormat, VkExtent2D vExtent, VkImageLayout vLayout);
+    void setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage);
     void append(const std::string& vInputName, CPort::Ptr vPort);
     void attachTo(const std::string& vInputName, CPort::Ptr vPort);
     

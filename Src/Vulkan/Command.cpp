@@ -32,65 +32,32 @@ void CCommand::createPool(CDevice::CPtr vDevice, ECommandType vType, uint32_t vQ
     Log::logCreation("command pool", uint64_t(m_CommandPool));
 }
 
-void CCommand::createBuffers(std::string vName, uint32_t vNum, ECommandBufferLevel vLevel)
+void CCommand::createBuffers(std::string vName, ECommandBufferLevel vLevel)
 {
-    _ASSERTE(vNum > 0);
-    if (m_NameToBufferSetMap.find(vName) != m_NameToBufferSetMap.end())
+    if (m_NameToBufferMap.find(vName) != m_NameToBufferMap.end())
     {
-        std::vector<VkCommandBuffer> RawBufferSet;
-        for (const auto& pBuffer : m_NameToBufferSetMap.at(vName))
-            RawBufferSet.emplace_back(pBuffer->get());
-        __freeBufferSet(RawBufferSet);
-    }
-    else
-    {
-        m_NameToBufferSetMap[vName] = {};
+        __freeBuffer(m_NameToBufferMap.at(vName));
+        m_NameToBufferMap.erase(vName);
     }
 
-    std::vector<VkCommandBuffer> RawBufferSet(vNum);
-    __allocBuffer(vNum, vLevel, RawBufferSet.data());
+    m_NameToBufferMap[vName] = __allocBuffer(vLevel, false);
 
 #ifdef _DEBUG
-    std::vector<uint64_t> HandleSet;
-    for (auto Buffer : RawBufferSet)
-    {
-        HandleSet.emplace_back(uint64_t(Buffer));
-    }
-    Log::logCreation("command buffer", HandleSet);
+    Log::logCreation("command buffer", uint64_t(m_NameToBufferMap[vName]->get()));
 #endif
-
-    bool IsSecondary = (vLevel == ECommandBufferLevel::SECONDARY);
-
-    m_NameToBufferSetMap[vName].resize(vNum, nullptr);
-    for (size_t i = 0; i < vNum; ++i)
-    {
-        m_NameToBufferSetMap[vName][i] = make<CCommandBuffer>(RawBufferSet[i], false, IsSecondary);
-    }
 }
 
-CCommandBuffer::Ptr CCommand::getCommandBuffer(std::string vName, uint32_t vIndex) const
+CCommandBuffer::Ptr CCommand::getCommandBuffer(std::string vName) const
 {
-    _ASSERTE(m_NameToBufferSetMap.find(vName) != m_NameToBufferSetMap.end());
-    const auto& BufferSet = m_NameToBufferSetMap.at(vName);
-    _ASSERTE(vIndex < BufferSet.size());
-    return BufferSet[vIndex];
-}
-
-size_t CCommand::getCommandBufferSize(std::string vName) const
-{
-    _ASSERTE(m_NameToBufferSetMap.find(vName) != m_NameToBufferSetMap.end());
-    const auto& BufferSet = m_NameToBufferSetMap.at(vName);
-    return BufferSet.size();
+    _ASSERTE(m_NameToBufferMap.find(vName) != m_NameToBufferMap.end());
+    return m_NameToBufferMap.at(vName);
 }
 
 CCommandBuffer::Ptr CCommand::beginSingleTimeBuffer()
 {
     if (m_CommandPool == VK_NULL_HANDLE) throw "create command pool first";
 
-    VkCommandBuffer CommandBuffer;
-    __allocBuffer(1, ECommandBufferLevel::PRIMARY, &CommandBuffer);
-
-    CCommandBuffer::Ptr pCommandBuffer = make<CCommandBuffer>(CommandBuffer, true, false);
+    auto pCommandBuffer = __allocBuffer(ECommandBufferLevel::PRIMARY, true);
     pCommandBuffer->begin();
 
     m_InUseSingleTimeNum++;
@@ -100,6 +67,7 @@ CCommandBuffer::Ptr CCommand::beginSingleTimeBuffer()
 void CCommand::endSingleTimeBuffer(CCommandBuffer::Ptr& vioCommandBuffer)
 {
     if (m_CommandPool == VK_NULL_HANDLE) throw "create command pool first";
+
     VkCommandBuffer Buffer = vioCommandBuffer->get();
 
     vk::checkError(vkEndCommandBuffer(Buffer));
@@ -128,20 +96,22 @@ void CCommand::clear()
     m_pDevice = nullptr;
 }
 
-void CCommand::__allocBuffer(uint32_t vNum, ECommandBufferLevel vLevel, VkCommandBuffer* voData)
+CCommandBuffer::Ptr CCommand::__allocBuffer(ECommandBufferLevel vLevel, bool vIsSingleTime)
 {
     VkCommandBufferAllocateInfo BufferAllocInfo = {};
     BufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     BufferAllocInfo.commandPool = m_CommandPool;
     BufferAllocInfo.level = static_cast<VkCommandBufferLevel>(vLevel);
-    BufferAllocInfo.commandBufferCount = vNum;
+    BufferAllocInfo.commandBufferCount = 1;
 
-    vk::checkError(vkAllocateCommandBuffers(*m_pDevice, &BufferAllocInfo, voData));
+    VkCommandBuffer buffer;
+    vk::checkError(vkAllocateCommandBuffers(*m_pDevice, &BufferAllocInfo, &buffer));
+    return make<CCommandBuffer>(buffer, vIsSingleTime, vLevel);
 }
 
 void CCommand::__destoryPool()
 {
-    __freeAllBufferSet();
+    __freeAllBuffer();
     if (m_CommandPool != VK_NULL_HANDLE)
     {
         vkDestroyCommandPool(*m_pDevice, m_CommandPool, nullptr);
@@ -149,20 +119,17 @@ void CCommand::__destoryPool()
     }
 }
 
-void CCommand::__freeAllBufferSet()
+void CCommand::__freeAllBuffer()
 {
-    for (auto& Pair : m_NameToBufferSetMap)
+    for (auto& Pair : m_NameToBufferMap)
     {
-        std::vector<VkCommandBuffer> RawBufferSet;
-        for (const auto& pBuffer : Pair.second)
-            RawBufferSet.emplace_back(pBuffer->get());
-        __freeBufferSet(RawBufferSet);
+        __freeBuffer(Pair.second);
     }
-    m_NameToBufferSetMap.clear();
+    m_NameToBufferMap.clear();
 }
 
-void CCommand::__freeBufferSet(std::vector<VkCommandBuffer>& voBufferSet)
+void CCommand::__freeBuffer(CCommandBuffer::Ptr vpBufferSet)
 {
-    vkFreeCommandBuffers(*m_pDevice, m_CommandPool, static_cast<uint32_t>(voBufferSet.size()), voBufferSet.data());
-    voBufferSet.clear();
+    auto buffer = vpBufferSet->get();
+    vkFreeCommandBuffers(*m_pDevice, m_CommandPool, 1, &buffer);
 }

@@ -15,9 +15,9 @@ public:
     IPipeline() = default;
     virtual ~IPipeline() = default;
 
-    void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vImageNum, uint32_t vSubpass = 0);
+    void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
     void destroy();
-    void bind(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex);
+    void bind(CCommandBuffer::Ptr vCommandBuffer);
     bool isValid() const { return m_Pipeline != VK_NULL_HANDLE; }
 
     const CShaderResourceDescriptor& getDescriptor() const { return m_ShaderResourceDescriptor; }
@@ -65,7 +65,6 @@ protected:
     */
     virtual void _destroyV() {};
 
-    size_t m_ImageNum = 0;
     VkExtent2D m_Extent = VkExtent2D{ 0, 0 };
 
     CShaderResourceDescriptor m_ShaderResourceDescriptor;

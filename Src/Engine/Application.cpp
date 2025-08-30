@@ -17,11 +17,11 @@ void IApplication::create(GLFWwindow* vWindow)
     m_pSurface->create(m_pInstance, m_pWindow);
     m_pPhysicalDevice = CPhysicalDevice::chooseBestDevice(m_pInstance, m_pSurface, m_DeviceExtensions);
     m_pDevice->create(m_pPhysicalDevice, m_DeviceExtensions, m_ValidationLayers);
+
+    m_pSwapchain->create(m_pDevice);
     __createSemaphores();
 
-    __createSwapchain();
-
-    m_pGraphInstance->init(m_pDevice, m_pSwapchain->getImageNum(), m_pSwapchain->getExtent(), m_pSceneInfo);
+    m_pGraphInstance->init(m_pDevice, m_pSwapchain->getExtent(), m_pSceneInfo);
 
     _createV();
 }
@@ -34,17 +34,16 @@ void IApplication::waitDevice()
 void IApplication::destroy()
 {
     if (*m_pInstance == VK_NULL_HANDLE) return;
+    _destroyV();
 
     m_pGraphInstance->destroy();
-    
-    _destroyV();
-    __destroySwapchain();
+    m_pSwapchain->destroy();
 
-    for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
+    destroyAndClear(m_pInFlightFence);
+    for (size_t i = 0; i < m_RenderFinishedSemaphores.size(); ++i)
     {
         m_pDevice->destroySemaphore(m_RenderFinishedSemaphores[i]);
         m_pDevice->destroySemaphore(m_ImageAvailableSemaphores[i]);
-        m_InFlightFenceSet[i]->destroy();
     }
 
     m_pDevice->destroy();
@@ -80,13 +79,13 @@ void IApplication::resize(uint32_t vWidth, uint32_t vHeight)
 
 void IApplication::__render()
 {
-    m_InFlightFenceSet[m_CurrentFrameIndex]->wait();
+    m_pInFlightFence->wait();
 
     uint32_t ImageIndex;
     VkResult Result = vkAcquireNextImageKHR(*m_pDevice, *m_pSwapchain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
-    m_pGraphInstance->update(ImageIndex);
-    _updateV(ImageIndex);
+    m_pGraphInstance->update();
+    _updateV();
     _renderUIV();
 
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -99,10 +98,11 @@ void IApplication::__render()
         throw std::runtime_error(u8"»ñÈ¡½»»»Á´Í¼ÏñÊ§°Ü");
     }
 
+    m_pGraphInstance->updateSwapchainImageIndex(ImageIndex);
     std::vector<VkCommandBuffer> CommandBufferSet;
     for (auto pPass : m_pGraphInstance->getSortedPasses())
     {
-        const auto& BufferSet = pPass->requestCommandBuffers(ImageIndex);
+        const auto& BufferSet = pPass->requestCommandBuffers();
         CommandBufferSet.insert(CommandBufferSet.end(), BufferSet.begin(), BufferSet.end());
     }
 
@@ -121,8 +121,8 @@ void IApplication::__render()
     SubmitInfo.signalSemaphoreCount = 1;
     SubmitInfo.pSignalSemaphores = SignalSemaphores;
 
-    m_InFlightFenceSet[m_CurrentFrameIndex]->reset();
-    vk::checkError(vkQueueSubmit(m_pDevice->getGraphicsQueue(), 1, &SubmitInfo, *m_InFlightFenceSet[m_CurrentFrameIndex]));
+    m_pInFlightFence->reset();
+    vk::checkError(vkQueueSubmit(m_pDevice->getGraphicsQueue(), 1, &SubmitInfo, *m_pInFlightFence));
 
     VkSwapchainKHR SwapChains[] = { *m_pSwapchain };
     VkPresentInfoKHR PresentInfo = {};
@@ -143,7 +143,7 @@ void IApplication::__render()
         throw std::runtime_error(u8"»ñÈ¡½»»»Á´Í¼ÏñÊ§°Ü");
     }
 
-    m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_MaxFrameInFlight;
+    m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_pSwapchain->getImageNum();
 }
 
 void IApplication::__createInstance()
@@ -169,48 +169,28 @@ void IApplication::__setupDebugMessenger()
     m_pDebugMessenger->setCustomCallback(pCallback);
 } 
 
-void IApplication::__createSwapchain()
-{
-    m_pSwapchain->create(m_pDevice);
-    const auto& Views = m_pSwapchain->getImageViews();
-
-    auto ImageNum = m_pSwapchain->getImageNum();
-
-    m_pSwapchainPort->setActualFormat(m_pSwapchain->getImageFormat());
-    m_pSwapchainPort->setActualExtent(m_pSwapchain->getExtent());
-    m_pSwapchainPort->setActualNum(ImageNum);
-    m_pSwapchainPort->setInputLayout(VK_IMAGE_LAYOUT_UNDEFINED);
-    m_pSwapchainPort->setOutputLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-    m_pSwapchainPort->clearImage();
-    for (size_t i = 0; i < ImageNum; ++i)
-        m_pSwapchainPort->setImage(Views[i], i);
-}
-
-void IApplication::__destroySwapchain()
-{
-    m_pSwapchain->destroy();
-}
-
 void IApplication::__createSemaphores()
 {
-    m_ImageAvailableSemaphores.resize(m_MaxFrameInFlight);
-    m_RenderFinishedSemaphores.resize(m_MaxFrameInFlight);
-    m_InFlightFenceSet.resize(m_MaxFrameInFlight);
+    _ASSERT(m_pSwapchain);
+    m_pInFlightFence = make<vk::CFence>();
+    m_pInFlightFence->create(m_pDevice, true);
 
-    for (size_t i = 0; i < m_MaxFrameInFlight; ++i)
+    int ImageNum = m_pSwapchain->getImageNum();
+    m_ImageAvailableSemaphores.resize(ImageNum);
+    m_RenderFinishedSemaphores.resize(ImageNum);
+
+    for (size_t i = 0; i < ImageNum; ++i)
     {
         m_ImageAvailableSemaphores[i] = m_pDevice->createSemaphore();
         m_RenderFinishedSemaphores[i] = m_pDevice->createSemaphore();
-        m_InFlightFenceSet[i] = make<vk::CFence>();
-        m_InFlightFenceSet[i]->create(m_pDevice, true);
     }
 }
 
 void IApplication::__recreateSwapchain()
 {
     waitDevice();
-    __destroySwapchain();
-    __createSwapchain();
+    m_pSwapchain->destroy();
+    m_pSwapchain->create(m_pDevice);
     _onSwapchainRecreateV();
 }
 

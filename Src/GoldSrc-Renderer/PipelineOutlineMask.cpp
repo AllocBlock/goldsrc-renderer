@@ -27,19 +27,19 @@ namespace
     };
 }
 
-void CPipelineMask::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineMask::updateUniformBuffer(CCamera::CPtr vCamera)
 {
     SUBOProjView UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
     UBOVert.View = vCamera->getViewMat();
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineMask::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+void CPipelineMask::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
 {
     if (m_VertexNum > 0)
     {
-        bind(vCommandBuffer, vImageIndex);
+        bind(vCommandBuffer);
         vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
         vCommandBuffer->draw(0, m_VertexNum);
     }
@@ -84,16 +84,11 @@ CPipelineDescriptor CPipelineMask::_getPipelineDescriptionV()
 
 void CPipelineMask::_createV()
 {
-    m_VertUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUBOProjView);
-    m_VertUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, sizeof(SUBOProjView));
 
     __updateDescriptorSet();
 }
@@ -102,17 +97,14 @@ void CPipelineMask::_destroyV()
 {
     m_VertexNum = 0;
     m_VertexBuffer.destroy();
-    m_VertUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
 }
 
 void CPipelineMask::__updateDescriptorSet()
 {
-    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
 void CPipelineMask::__updateVertexBuffer(CActor::Ptr vActor)

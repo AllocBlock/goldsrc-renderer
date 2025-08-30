@@ -1,13 +1,13 @@
 #include "PchVulkan.h"
 #include "CommandBuffer.h"
 
-CCommandBuffer::CCommandBuffer(VkCommandBuffer vBuffer, bool vIsSingleTimeBuffer, bool vIsSecondary)
+CCommandBuffer::CCommandBuffer(VkCommandBuffer vBuffer, bool vIsSingleTimeBuffer, ECommandBufferLevel level)
 {
     if (vBuffer == VK_NULL_HANDLE)
         throw std::runtime_error("Command buffer is invalid.");
     m_Buffer = vBuffer;
     m_IsSingleTimeBuffer = vIsSingleTimeBuffer;
-    m_IsSecondary = vIsSecondary;
+    m_IsSecondary = level == ECommandBufferLevel::SECONDARY;
 }
 
 bool CCommandBuffer::isValid()

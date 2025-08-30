@@ -127,31 +127,27 @@ void CShaderResourceDescriptor::createLayout(CDevice::CPtr vDevice)
     vk::checkError(vkCreateDescriptorSetLayout(*m_pDevice, &LayoutInfo, nullptr, &m_DescriptorLayout));
 }
 
-const std::vector<VkDescriptorSet>& CShaderResourceDescriptor::createDescriptorSetSet(size_t vImageNum)
+const VkDescriptorSet CShaderResourceDescriptor::createDescriptorSet()
 {
-    _ASSERTE(vImageNum > 0);
     _ASSERTE(m_pDevice);
     _ASSERTE(m_DescriptorLayout != VK_NULL_HANDLE);
 
-    if (m_DescriptorPool == VK_NULL_HANDLE || m_DescriptorSetSet.size() > vImageNum)
-        __createPool(vImageNum);
-
-    std::vector<VkDescriptorSetLayout> Layouts(vImageNum, m_DescriptorLayout);
+    if (m_DescriptorPool == VK_NULL_HANDLE || m_DescriptorSet == VK_NULL_HANDLE)
+        __createPool();
 
     VkDescriptorSetAllocateInfo DescSetAllocInfo = {};
     DescSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     DescSetAllocInfo.descriptorPool = m_DescriptorPool;
-    DescSetAllocInfo.descriptorSetCount = static_cast<uint32_t>(vImageNum);
-    DescSetAllocInfo.pSetLayouts = Layouts.data();
+    DescSetAllocInfo.descriptorSetCount = 1;
+    DescSetAllocInfo.pSetLayouts = &m_DescriptorLayout;
 
-    __destroySetSet();
-    m_DescriptorSetSet.resize(vImageNum);
-    vk::checkError(vkAllocateDescriptorSets(*m_pDevice, &DescSetAllocInfo, m_DescriptorSetSet.data()));
+    __destroyDescriptorSet();
+    vk::checkError(vkAllocateDescriptorSets(*m_pDevice, &DescSetAllocInfo, &m_DescriptorSet));
 
-    return m_DescriptorSetSet;
+    return m_DescriptorSet;
 }
 
-void CShaderResourceDescriptor::update(size_t vSetIndex, const CDescriptorWriteInfo& vWriteInfo)
+void CShaderResourceDescriptor::update(const CDescriptorWriteInfo& vWriteInfo)
 {
     const std::vector<SDescriptorWriteInfoEntry>& vWriteInfoSet = vWriteInfo.get();
 
@@ -162,7 +158,7 @@ void CShaderResourceDescriptor::update(size_t vSetIndex, const CDescriptorWriteI
         const SDescriptorInfo& TargetInfo = m_DescriptorInfoSet[TargetIndex];
 
         DescriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        DescriptorWrites[i].dstSet = m_DescriptorSetSet[vSetIndex];
+        DescriptorWrites[i].dstSet = m_DescriptorSet;
         DescriptorWrites[i].dstBinding = TargetInfo.Index;
         DescriptorWrites[i].dstArrayElement = 0;
         DescriptorWrites[i].descriptorType = TargetInfo.Type;
@@ -180,7 +176,7 @@ void CShaderResourceDescriptor::clear()
     m_DescriptorInfoSet.clear();
     m_PoolSizeSet.clear();
 
-    __destroySetSet();
+    __destroyDescriptorSet();
     __destroyLayout();
     __destroyPool();
     m_pDevice = nullptr;
@@ -196,31 +192,21 @@ const std::vector<VkDescriptorPoolSize>& CShaderResourceDescriptor::getPoolSizeS
     return m_PoolSizeSet;
 }
 
-VkDescriptorSet CShaderResourceDescriptor::getDescriptorSet(size_t vIndex) const
+VkDescriptorSet CShaderResourceDescriptor::getDescriptorSet() const
 {
-    _ASSERTE(vIndex < m_DescriptorSetSet.size());
-    return m_DescriptorSetSet[vIndex];
+    return m_DescriptorSet;
 }
 
-size_t CShaderResourceDescriptor::getDescriptorSetNum() const
-{
-    return m_DescriptorSetSet.size();
-}
-
-void CShaderResourceDescriptor::__createPool(size_t vImageNum)
+void CShaderResourceDescriptor::__createPool()
 {
     _ASSERTE(m_pDevice);
     __destroyPool();
 
-    auto PoolSize = m_PoolSizeSet;
-    for (auto& Size : PoolSize)
-        Size.descriptorCount *= static_cast<uint32_t>(vImageNum);
-
     VkDescriptorPoolCreateInfo PoolInfo = {};
     PoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    PoolInfo.poolSizeCount = static_cast<uint32_t>(PoolSize.size());
-    PoolInfo.pPoolSizes = PoolSize.data();
-    PoolInfo.maxSets = static_cast<uint32_t>(vImageNum);
+    PoolInfo.poolSizeCount = static_cast<uint32_t>(m_PoolSizeSet.size());
+    PoolInfo.pPoolSizes = m_PoolSizeSet.data();
+    PoolInfo.maxSets = 1;
 
     vk::checkError(vkCreateDescriptorPool(*m_pDevice, &PoolInfo, nullptr, &m_DescriptorPool));
 }
@@ -243,10 +229,11 @@ void CShaderResourceDescriptor::__destroyLayout()
     }
 }
 
-void CShaderResourceDescriptor::__destroySetSet()
+void CShaderResourceDescriptor::__destroyDescriptorSet()
 {
-    if (!m_DescriptorSetSet.empty())
+    if (m_DescriptorSet != VK_NULL_HANDLE)
     {
-        m_DescriptorSetSet.clear();
+        vkFreeDescriptorSets(*m_pDevice, m_DescriptorPool, 1, &m_DescriptorSet);
+        m_DescriptorSet = VK_NULL_HANDLE;
     }
 }

@@ -12,19 +12,19 @@ namespace
     };
 }
 
-void CPipelineBloomBlur::setInputImage(VkImageView vImageView, size_t vIndex)
+void CPipelineBloomBlur::setInputImage(VkImageView vImageView)
 {
     CDescriptorWriteInfo WriteInfo;
     WriteInfo.addWriteImageAndSampler(1, vImageView != VK_NULL_HANDLE ? vImageView : m_PlaceholderImage, m_Sampler);
-    m_ShaderResourceDescriptor.update(vIndex, WriteInfo);
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
-void CPipelineBloomBlur::updateUniformBuffer(uint32_t vImageIndex, uint32_t vFilterSize)
+void CPipelineBloomBlur::updateUniformBuffer(uint32_t vFilterSize)
 {
     SUBOFrag UBOFrag = {};
     UBOFrag.ImageExtent = glm::uvec2(m_Extent.width, m_Extent.height);
     UBOFrag.FilterSize = vFilterSize;
-    m_FragUniformBufferSet[vImageIndex]->update(&UBOFrag);
+    m_pFragUniformBuffer->update(&UBOFrag);
 }
 
 void CPipelineBloomBlur::_initShaderResourceDescriptorV()
@@ -65,13 +65,10 @@ void CPipelineBloomBlur::_createV()
         );
         m_Sampler.create(m_pDevice, SamplerInfo);
     }
-        
-    m_FragUniformBufferSet.init(m_ImageNum);
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_FragUniformBufferSet[i]->create(m_pDevice, sizeof(SUBOFrag));
-        updateUniformBuffer(i, 5);
-    }
+    
+    m_pFragUniformBuffer = make<vk::CUniformBuffer>();
+    m_pFragUniformBuffer->create(m_pDevice, sizeof(SUBOFrag));
+    updateUniformBuffer(5);
 
     __initAllDescriptorSet();
 }
@@ -80,7 +77,7 @@ void CPipelineBloomBlur::_destroyV()
 {
     m_PlaceholderImage.destroy();
     m_Sampler.destroy();
-    m_FragUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pFragUniformBuffer);
 }
 
 void CPipelineBloomBlur::_renderUIV()
@@ -89,11 +86,8 @@ void CPipelineBloomBlur::_renderUIV()
 
 void CPipelineBloomBlur::__initAllDescriptorSet()
 {
-    for (size_t i = 0; i < m_ShaderResourceDescriptor.getDescriptorSetNum(); ++i)
-    {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_FragUniformBufferSet[i]);
-        WriteInfo.addWriteImageAndSampler(1, m_PlaceholderImage, m_Sampler);
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
-    }
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pFragUniformBuffer);
+    WriteInfo.addWriteImageAndSampler(1, m_PlaceholderImage, m_Sampler);
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }

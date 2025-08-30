@@ -86,12 +86,10 @@ std::vector<SPortGroup> __getSortedPortGroups(const std::vector<CPortSet::Ptr>& 
     return PortGroups;
 }
 
-void CRenderPassGraphInstance::init(vk::CDevice::CPtr vDevice, size_t vImageNum, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene)
+void CRenderPassGraphInstance::init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene)
 {
-    _ASSERTE(vImageNum > 0);
     _ASSERTE(vScreenExtent.width > 0 && vScreenExtent.height > 0);
     m_pDevice = vDevice;
-    m_ImageNum = vImageNum;
     m_ScreenExtent = vScreenExtent;
 
     m_pSceneInfo = vScene;
@@ -103,7 +101,7 @@ void CRenderPassGraphInstance::updateSceneInfo(ptr<SSceneInfo> vSceneInfo)
         Pair.second->setSceneInfo(vSceneInfo);
 }
 
-void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, size_t vPresentNodeId, BeforeInitCallback_t vBeforeInitCallback)
+void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLFWwindow* vpWindow, wptr<vk::CSwapchain> vpSwapchain)
 {
     if (!vGraph->isValid())
         throw std::runtime_error("Graph is not valid");
@@ -122,7 +120,9 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, siz
 
     std::set<size_t> UsedRenderpass;
     std::queue<size_t> Queue;
-    Queue.push(vPresentNodeId);
+    auto outputPortInfo = vGraph->OutputPort;
+    auto outputNodeId = outputPortInfo->NodeId;
+    Queue.push(outputNodeId);
     while(!Queue.empty())
     {
         size_t NodeId = Queue.front(); Queue.pop();
@@ -144,8 +144,6 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, siz
 
         const SRenderPassGraphNode& Node = Pair.second;
         vk::IRenderPass::Ptr pPass = RenderpassLib::createPass(Node.Name);
-        if (vBeforeInitCallback)
-            vBeforeInitCallback(Node.Name, pPass);
         pPass->createPortSet();
         m_PassMap[NodeId] = pPass;
         
@@ -173,7 +171,7 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, siz
 
     // sort
     std::queue<size_t> Leaves;
-    Leaves.push(vPresentNodeId);
+    Leaves.push(outputNodeId);
 
     while (!Leaves.empty())
     {
@@ -187,6 +185,30 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, siz
         }
     }
     std::reverse(m_SortedOrder.begin(), m_SortedOrder.end());
+
+    // add gui and present pass
+    size_t CurNodeId = 0;
+    for (const auto& Pair : vGraph->NodeMap)
+    {
+        CurNodeId = std::max(CurNodeId, Pair.first);
+    }
+    size_t GuiNodeId = CurNodeId + 1;
+    size_t PresentNodeId = CurNodeId + 2;
+    m_pPassGui = make<CRenderPassGUI>();
+    m_pPassGui->setWindow(vpWindow);
+    m_pPassGui->createPortSet();
+
+    m_pPassPresent = make<CRenderPassPresent>(vpSwapchain);
+    m_pPassPresent->createPortSet();
+
+    m_SortedOrder.push_back(GuiNodeId);
+    m_SortedOrder.push_back(PresentNodeId);
+    m_PassMap[GuiNodeId] = m_pPassGui;
+    m_PassMap[PresentNodeId] = m_pPassPresent;
+
+    auto outputNode = m_PassMap.at(outputPortInfo->NodeId);
+    CPortSet::link(outputNode->getPortSet(), outputPortInfo->Name, m_pPassGui->getPortSet(), "Main");
+    CPortSet::link(m_pPassGui->getPortSet(), "Main", m_pPassPresent->getPortSet(), "Main");
 
     // set port layout
     std::vector<CPortSet::Ptr> SortedPortSets;
@@ -232,10 +254,10 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, siz
     }
     
     // init
-     for (const auto& Pair : m_PassMap)
+    for (const auto& Pair : m_PassMap)
     {
         vk::IRenderPass::Ptr pPass = Pair.second;
-        pPass->init(m_pDevice, m_ImageNum, m_ScreenExtent);
+        pPass->init(m_pDevice, m_ScreenExtent);
         pPass->setSceneInfo(m_pSceneInfo);
     }
 
@@ -245,10 +267,10 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, siz
     }
 }
 
-void CRenderPassGraphInstance::update(uint32_t vImageIndex) const
+void CRenderPassGraphInstance::update() const
 {
     for (const auto& Pair : m_PassMap)
-        Pair.second->update(vImageIndex);
+        Pair.second->update();
 }
 
 void CRenderPassGraphInstance::renderUI()
@@ -263,6 +285,14 @@ void CRenderPassGraphInstance::destroy()
         Pair.second->destroy();
     m_PassMap.clear();
     m_SortedOrder.clear();
+
+    destroyAndClear(m_pPassGui);
+    destroyAndClear(m_pPassPresent);
+}
+
+void CRenderPassGraphInstance::updateSwapchainImageIndex(uint32_t vImageIndex)
+{
+    m_pPassPresent->updateSwapchainImageIndex(vImageIndex);
 }
 
 vk::IRenderPass::Ptr CRenderPassGraphInstance::getPass(size_t vId) const

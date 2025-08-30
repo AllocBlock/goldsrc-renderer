@@ -39,6 +39,18 @@
     <Filter Include="源文件\RenderPassGraph">
       <UniqueIdentifier>{8b2a8219-3e1e-4cb7-89e8-6c0910dcf7d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\RenderPass">
+      <UniqueIdentifier>{1ee2328f-427b-4718-8ec7-b739e7330586}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RenderPass">
+      <UniqueIdentifier>{eca989b4-ae9b-4d82-9036-f3748aa0141f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Pipeline">
+      <UniqueIdentifier>{184c81fb-e27e-4a7a-b45a-55ed73996a01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Pipeline">
+      <UniqueIdentifier>{586681ca-c765-4c95-8305-19392aad41c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Pipeline.cpp">
@@ -152,9 +164,6 @@
     <ClCompile Include="PipelineDescriptor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPassGraphInstance.cpp">
-      <Filter>源文件\RenderPassGraph</Filter>
-    </ClCompile>
     <ClCompile Include="RenderPassGraphEditor.cpp">
       <Filter>源文件\RenderPassGraph</Filter>
     </ClCompile>
@@ -166,6 +175,21 @@
     </ClCompile>
     <ClCompile Include="CanvasDrawer.cpp">
       <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="PassPresent.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="PassGUI.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPassGraphInstance.cpp">
+      <Filter>源文件\RenderPassGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="PassFullScreen.cpp">
+      <Filter>源文件\RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="PipelineBlit.cpp">
+      <Filter>源文件\Pipeline</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -301,9 +325,6 @@
     <ClInclude Include="SceneInfo.h">
       <Filter>头文件\Scene</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPassGraphInstance.h">
-      <Filter>头文件\RenderPassGraph</Filter>
-    </ClInclude>
     <ClInclude Include="RenderpassLib.h">
       <Filter>头文件\RenderPassGraph</Filter>
     </ClInclude>
@@ -312,6 +333,24 @@
     </ClInclude>
     <ClInclude Include="CanvasDrawer.h">
       <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPassGraphInstance.h">
+      <Filter>头文件\RenderPassGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="PassGUI.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="PassPresent.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="PassFullScreen.h">
+      <Filter>头文件\RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="FullScreenPointData.h">
+      <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="PipelineBlit.h">
+      <Filter>头文件\Pipeline</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

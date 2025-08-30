@@ -31,10 +31,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FullScreenPointData.h" />
-    <ClInclude Include="PassPresent.h" />
     <ClInclude Include="PassBloom.h" />
-    <ClInclude Include="PassGUI.h" />
     <ClInclude Include="PassSprite.h" />
     <ClInclude Include="PassSSAO.h" />
     <ClInclude Include="PipelineBlit.h" />
@@ -47,11 +44,8 @@
     <ClInclude Include="PipelineSSAO.h" />
     <ClInclude Include="PipelineVisCollidePoint.h" />
     <ClInclude Include="PipelineVisCollider.h" />
-    <ClInclude Include="PassFullScreen.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PassPresent.cpp" />
-    <ClCompile Include="PassGUI.cpp" />
     <ClCompile Include="PassSprite.cpp" />
     <ClCompile Include="PassSSAO.cpp" />
     <ClCompile Include="PipelineBlit.cpp" />
@@ -64,7 +58,6 @@
     <ClCompile Include="PipelineSSAO.cpp" />
     <ClCompile Include="PipelineVisCollidePoint.cpp" />
     <ClCompile Include="PipelineVisCollider.cpp" />
-    <ClCompile Include="PassFullScreen.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

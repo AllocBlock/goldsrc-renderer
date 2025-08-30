@@ -51,7 +51,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     __updateDescriptorSet();
 }
 
-void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineSprite::updateUniformBuffer(CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -59,14 +59,14 @@ void CPipelineSprite::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vC
     UBOVert.EyePosition = vCamera->getPos();
     UBOVert.EyeDirection = vCamera->getFront();
 
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineSprite::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+void CPipelineSprite::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
 {
     if (m_pVertexDataBuffer->isValid())
     {
-        bind(vCommandBuffer, vImageIndex);
+        bind(vCommandBuffer);
         vCommandBuffer->bindVertexBuffer(*m_pVertexDataBuffer);
         for (auto& PushConstant : m_SpriteSequence)
         {
@@ -134,13 +134,8 @@ void CPipelineSprite::_createV()
     m_pVertexDataBuffer->stageFill(PointData.data(), DataSize);
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, sizeof(SUBOVert));
 
     // sampler
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -160,36 +155,32 @@ void CPipelineSprite::_destroyV()
     m_PlaceholderImage.destroy();
 
     destroyAndClear(m_pVertexDataBuffer);
-    m_VertUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
 }
 
 void CPipelineSprite::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    WriteInfo.addWriteSampler(1, m_Sampler);
+
+    const size_t NumTexture = m_SpriteImageSet.size();
+    std::vector<VkImageView> TexImageViewSet(CPipelineSprite::MaxSpriteNum);
+    for (size_t i = 0; i < CPipelineSprite::MaxSpriteNum; ++i)
     {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteSampler(1, m_Sampler);
-
-        const size_t NumTexture = m_SpriteImageSet.size();
-        std::vector<VkImageView> TexImageViewSet(CPipelineSprite::MaxSpriteNum);
-        for (size_t i = 0; i < CPipelineSprite::MaxSpriteNum; ++i)
+        // for unused element, fill like the first one (weird method but avoid validation warning)
+        if (i >= NumTexture)
         {
-            // for unused element, fill like the first one (weird method but avoid validation warning)
-            if (i >= NumTexture)
-            {
-                if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = m_PlaceholderImage;
-                else
-                    TexImageViewSet[i] = TexImageViewSet[0];
-            }
+            if (i == 0) // no texture, use default placeholder texture
+                TexImageViewSet[i] = m_PlaceholderImage;
             else
-                TexImageViewSet[i] = *m_SpriteImageSet[i];
+                TexImageViewSet[i] = TexImageViewSet[0];
         }
-
-        WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
-
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
+        else
+            TexImageViewSet[i] = *m_SpriteImageSet[i];
     }
+
+    WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
+
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }

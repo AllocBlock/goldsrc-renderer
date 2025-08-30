@@ -50,7 +50,7 @@ void CPipelineIcon::clear()
     m_IconInfoSet.clear();
 }
 
-void CPipelineIcon::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineIcon::updateUniformBuffer(CCamera::CPtr vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -58,14 +58,14 @@ void CPipelineIcon::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCam
     UBOVert.EyePosition = vCamera->getPos();
     UBOVert.EyeDirection = vCamera->getFront();
 
-    m_VertUniformBufferSet[vImageIndex]->update(&UBOVert);
+    m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineIcon::recordCommand(CCommandBuffer::Ptr vCommandBuffer, size_t vImageIndex)
+void CPipelineIcon::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
 {
     if (m_pVertexDataBuffer->isValid())
     {
-        bind(vCommandBuffer, vImageIndex);
+        bind(vCommandBuffer);
         vCommandBuffer->bindVertexBuffer(*m_pVertexDataBuffer);
         
         auto pIconManager = CIconManager::getInstance();
@@ -143,13 +143,8 @@ void CPipelineIcon::_createV()
     m_pVertexDataBuffer->stageFill(PointData.data(), DataSize);
 
     // uniform buffer
-    VkDeviceSize VertBufferSize = sizeof(SUBOVert);
-    m_VertUniformBufferSet.init(m_ImageNum);
-
-    for (size_t i = 0; i < m_ImageNum; ++i)
-    {
-        m_VertUniformBufferSet[i]->create(m_pDevice, VertBufferSize);
-    }
+    m_pVertUniformBuffer = make<vk::CUniformBuffer>();
+    m_pVertUniformBuffer->create(m_pDevice, sizeof(SUBOVert));
 
     // sampler
     const auto& Properties = m_pDevice->getPhysicalDevice()->getProperty();
@@ -172,7 +167,7 @@ void CPipelineIcon::_destroyV()
     m_PlaceholderImage.destroy();
 
     destroyAndClear(m_pVertexDataBuffer);
-    m_VertUniformBufferSet.destroyAndClearAll();
+    destroyAndClear(m_pVertUniformBuffer);
 }
 
 void CPipelineIcon::__createIconResources()
@@ -194,31 +189,27 @@ void CPipelineIcon::__createIconResources()
 
 void CPipelineIcon::__updateDescriptorSet()
 {
-    size_t DescriptorNum = m_ShaderResourceDescriptor.getDescriptorSetNum();
-    for (size_t i = 0; i < DescriptorNum; ++i)
+    CDescriptorWriteInfo WriteInfo;
+    WriteInfo.addWriteBuffer(0, *m_pVertUniformBuffer);
+    WriteInfo.addWriteSampler(1, m_Sampler);
+
+    const size_t NumTexture = m_IconImageSet.size();
+    std::vector<VkImageView> TexImageViewSet(CPipelineIcon::MaxIconNum);
+    for (size_t i = 0; i < CPipelineIcon::MaxIconNum; ++i)
     {
-        CDescriptorWriteInfo WriteInfo;
-        WriteInfo.addWriteBuffer(0, *m_VertUniformBufferSet[i]);
-        WriteInfo.addWriteSampler(1, m_Sampler);
-
-        const size_t NumTexture = m_IconImageSet.size();
-        std::vector<VkImageView> TexImageViewSet(CPipelineIcon::MaxIconNum);
-        for (size_t i = 0; i < CPipelineIcon::MaxIconNum; ++i)
+        // for unused element, fill like the first one (weird method but avoid validation warning)
+        if (i >= NumTexture)
         {
-            // for unused element, fill like the first one (weird method but avoid validation warning)
-            if (i >= NumTexture)
-            {
-                if (i == 0) // no texture, use default placeholder texture
-                    TexImageViewSet[i] = m_PlaceholderImage;
-                else
-                    TexImageViewSet[i] = TexImageViewSet[0];
-            }
+            if (i == 0) // no texture, use default placeholder texture
+                TexImageViewSet[i] = m_PlaceholderImage;
             else
-                TexImageViewSet[i] = *m_IconImageSet[i];
+                TexImageViewSet[i] = TexImageViewSet[0];
         }
-
-        WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
-
-        m_ShaderResourceDescriptor.update(i, WriteInfo);
+        else
+            TexImageViewSet[i] = *m_IconImageSet[i];
     }
+
+    WriteInfo.addWriteImagesAndSampler(2, TexImageViewSet);
+
+    m_ShaderResourceDescriptor.update(WriteInfo);
 }

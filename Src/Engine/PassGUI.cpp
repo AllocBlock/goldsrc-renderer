@@ -10,7 +10,7 @@ void CRenderPassGUI::_initV()
 
     __createDescriptorPool();
     
-    UI::init(m_pDevice, m_pWindow, m_DescriptorPool, m_ImageNum, get());
+    UI::init(m_pDevice, m_pWindow, m_DescriptorPool, get());
     CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
     UI::setFont(gChineseFont, pCommandBuffer);
     m_Command.endSingleTimeBuffer(pCommandBuffer);
@@ -40,11 +40,11 @@ void CRenderPassGUI::_destroyV()
     CRenderPassSingleFrameBuffer::_destroyV();
 }
 
-std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-    _beginWithFramebuffer(vImageIndex);
+    _beginWithFramebuffer();
     UI::draw(pCommandBuffer);
     _endWithFramebuffer();
 
