@@ -41,10 +41,12 @@ protected:
         m_MergePipeline.setInputImage(InputImage, *m_pBlurredImage);
     }
 
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) override
+    virtual CPortSet::Ptr _createPortSetV() override
     {
-        vioDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
-        vioDesc.addOutput("Main", SPortInfo{ VK_FORMAT_B8G8R8A8_UNORM, SPortInfo::AnyExtent, 0, EImageUsage::COLOR_ATTACHMENT });
+        SPortDescriptor PortDesc;
+        PortDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
+        PortDesc.addOutput("Main", SPortInfo{ VK_FORMAT_B8G8R8A8_UNORM, SPortInfo::AnyExtent, 0, EImageUsage::COLOR_ATTACHMENT });
+        return make<CPortSet>(PortDesc);
     }
 
     void _destroyV() override

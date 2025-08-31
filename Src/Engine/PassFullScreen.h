@@ -1,33 +1,16 @@
 #pragma once
-#include "RenderPassSingleFrameBuffer.h"
+#include "RenderPass.h"
 #include "VertexBuffer.h"
 #include "Pipeline.h"
 #include "FullScreenPointData.h"
 
-class CRenderPassFullScreen : public CRenderPassSingleFrameBuffer
+class CRenderPassFullScreen : public engine::IRenderPass
 {
 protected:
-    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override final
-    {
-        voExtent = m_ScreenExtent;
-        return true;
-    }
-
-    virtual std::vector<VkImageView> _getAttachmentsV() override
-    {
-        return
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(),
-        };
-    }
-    virtual std::vector<VkClearValue> _getClearValuesV() override
-    {
-        return DefaultClearValueColor;
-    }
-
-protected:
+    virtual CPortSet::Ptr _createPortSetV() final;
     virtual void _initV() override;
     virtual void _destroyV() override;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() = 0;
 
     void _bindVertexBuffer(CCommandBuffer::Ptr vCommandBuffer);
     void _drawFullScreen(CCommandBuffer::Ptr vCommandBuffer);

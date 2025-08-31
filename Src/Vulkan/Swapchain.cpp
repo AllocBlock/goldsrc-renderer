@@ -106,6 +106,11 @@ const std::vector<VkImageView>& CSwapchain::getImageViews() const
     return m_ImageViewSet;
 }
 
+const vk::CPointerSet<vk::CImage>& CSwapchain::getImages() const
+{
+    return m_ImageSet;
+}
+
 uint32_t CSwapchain::getImageNum() const
 { return static_cast<uint32_t>(m_ImageViewSet.size()); }
 

@@ -16,6 +16,7 @@ namespace vk
         void destroy();
         VkExtent2D getExtent() const;
         VkFormat getImageFormat() const;
+        const vk::CPointerSet<vk::CImage>& getImages() const;
         const std::vector<VkImageView>& getImageViews() const;
         uint32_t getImageNum() const;
 

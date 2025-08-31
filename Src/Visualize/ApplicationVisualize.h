@@ -17,14 +17,13 @@ public:
 
 protected:
     virtual void _createV() override;
-    virtual void _updateV() override;
+    virtual void _updateV(uint32_t ImageIndex) override;
+    virtual std::vector<VkCommandBuffer> _getCommandBuffers() override;
     virtual void _destroyV() override;
 
 private:
     void __linkPasses();
 
-    vk::CImage m_DepthImage;
-    CSourcePort::Ptr m_pDepthPort = nullptr;
     ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
     ptr<CRenderPassPresent> m_pPassPresent = nullptr;
 

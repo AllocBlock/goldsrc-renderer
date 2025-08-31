@@ -4,7 +4,7 @@
 #include "Scene.h"
 
 template <typename SPointData_t>
-class CRenderPassTempSceneBase : public vk::IRenderPass
+class CRenderPassTempSceneBase : public engine::IRenderPass
 {
 public:
     void setScene(CScene::Ptr vScene)
@@ -17,7 +17,7 @@ protected:
     {
         destroyAndClear(m_pVertBuffer);
 
-        vk::IRenderPass::_destroyV();
+        engine::IRenderPass::_destroyV();
     }
     
     ptr<vk::CBuffer> m_pVertBuffer;

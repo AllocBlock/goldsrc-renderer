@@ -26,10 +26,12 @@ void CRenderPassGoldSrc::rerecordAllCommand()
     m_pRerecord->requestRecordForAll();
 }
 
-void CRenderPassGoldSrc::_initPortDescV(SPortDescriptor& vioDesc)
+CPortSet::Ptr CRenderPassGoldSrc::_createPortSetV()
 {
-    vioDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EImageUsage::COLOR_ATTACHMENT });
-    vioDesc.addOutput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 0, EImageUsage::DEPTH_ATTACHMENT });
+    SPortDescriptor PortDesc;
+    PortDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EImageUsage::COLOR_ATTACHMENT });
+    PortDesc.addOutput("Depth", { VK_FORMAT_D24_UNORM_S8_UINT, {0, 0}, 0, EImageUsage::DEPTH_ATTACHMENT });
+    return make<CPortSet>(PortDesc);
 }
 
 void CRenderPassGoldSrc::_initV()
@@ -50,7 +52,7 @@ void CRenderPassGoldSrc::_initV()
     m_pPortSet->setOutput("Main", m_pMainImage);
 
     m_pDepthImage = make<vk::CImage>();
-    VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
+    VkFormat DepthFormat = m_pPortSet->getOutputPortInfo("Depth").Format;
     ImageUtils::createDepthImage(*m_pDepthImage, m_pDevice, RefExtent, VK_IMAGE_USAGE_SAMPLED_BIT, DepthFormat);
     m_pPortSet->setOutput("Depth", m_pDepthImage);
 

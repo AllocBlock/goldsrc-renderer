@@ -5,7 +5,7 @@
 #include "Device.h"
 #include "PipelineDescriptor.h"
 #include "CommandBuffer.h"
-
+#include "RenderInfoDescriptor.h"
 #include <filesystem>
 #include <vulkan/vulkan.h> 
 
@@ -15,7 +15,7 @@ public:
     IPipeline() = default;
     virtual ~IPipeline() = default;
 
-    void create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass = 0);
+    void create(vk::CDevice::CPtr vDevice, const CRenderInfoDescriptor& vRenderInfoDescriptor, VkExtent2D vExtent);
     void destroy();
     void bind(CCommandBuffer::Ptr vCommandBuffer);
     bool isValid() const { return m_Pipeline != VK_NULL_HANDLE; }

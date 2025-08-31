@@ -116,9 +116,6 @@
     <ClCompile Include="ShaderErrorParser.cpp">
       <Filter>源文件\Shader</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPassSingle.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Transform.cpp">
       <Filter>源文件\Scene\Components</Filter>
     </ClCompile>
@@ -167,9 +164,6 @@
     <ClCompile Include="RenderPassGraphEditor.cpp">
       <Filter>源文件\RenderPassGraph</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPassSingleFrameBuffer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="RenderPassGraphIO.cpp">
       <Filter>源文件\RenderPassGraph</Filter>
     </ClCompile>
@@ -190,6 +184,9 @@
     </ClCompile>
     <ClCompile Include="PipelineBlit.cpp">
       <Filter>源文件\Pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderInfoDescriptor.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -264,9 +261,6 @@
     </ClInclude>
     <ClInclude Include="ShaderErrorParser.h">
       <Filter>头文件\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPassSingleFrameBuffer.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Component.h">
       <Filter>头文件\Scene\Components</Filter>
@@ -351,6 +345,9 @@
     </ClInclude>
     <ClInclude Include="PipelineBlit.h">
       <Filter>头文件\Pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderInfoDescriptor.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

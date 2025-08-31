@@ -21,7 +21,7 @@ void IApplication::create(GLFWwindow* vWindow)
     m_pSwapchain->create(m_pDevice);
     __createSemaphores();
 
-    m_pGraphInstance->init(m_pDevice, m_pSwapchain->getExtent(), m_pSceneInfo);
+    //m_pGraphInstance->init(m_pDevice, m_pSwapchain->getExtent(), m_pSceneInfo);
 
     _createV();
 }
@@ -36,7 +36,7 @@ void IApplication::destroy()
     if (*m_pInstance == VK_NULL_HANDLE) return;
     _destroyV();
 
-    m_pGraphInstance->destroy();
+    //m_pGraphInstance->destroy();
     m_pSwapchain->destroy();
 
     destroyAndClear(m_pInFlightFence);
@@ -84,8 +84,12 @@ void IApplication::__render()
     uint32_t ImageIndex;
     VkResult Result = vkAcquireNextImageKHR(*m_pDevice, *m_pSwapchain, std::numeric_limits<uint64_t>::max(), m_ImageAvailableSemaphores[m_CurrentFrameIndex], VK_NULL_HANDLE, &ImageIndex);
 
-    m_pGraphInstance->update();
-    _updateV();
+    //if (m_pGraphInstance)
+    //{
+    //    m_pGraphInstance->updateSwapchainImageIndex(ImageIndex);
+    //    m_pGraphInstance->update();
+    //}
+    _updateV(ImageIndex);
     _renderUIV();
 
     if (Result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -98,13 +102,15 @@ void IApplication::__render()
         throw std::runtime_error(u8"»ñÈ¡½»»»Á´Í¼ÏñÊ§°Ü");
     }
 
-    m_pGraphInstance->updateSwapchainImageIndex(ImageIndex);
-    std::vector<VkCommandBuffer> CommandBufferSet;
-    for (auto pPass : m_pGraphInstance->getSortedPasses())
+    std::vector<VkCommandBuffer> CommandBufferSet = _getCommandBuffers();
+  /*  if (m_pGraphInstance)
     {
-        const auto& BufferSet = pPass->requestCommandBuffers();
-        CommandBufferSet.insert(CommandBufferSet.end(), BufferSet.begin(), BufferSet.end());
-    }
+        for (auto pPass : m_pGraphInstance->getSortedPasses())
+        {
+            const auto& BufferSet = pPass->requestCommandBuffers();
+            CommandBufferSet.insert(CommandBufferSet.end(), BufferSet.begin(), BufferSet.end());
+        }
+    }*/
 
     VkSemaphore WaitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrameIndex] };
     VkPipelineStageFlags WaitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };

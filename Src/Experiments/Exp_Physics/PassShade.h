@@ -6,7 +6,7 @@
 #include "Image.h"
 #include "Scene.h"
 
-class CRenderPassShade : public vk::IRenderPass
+class CRenderPassShade : public engine::IRenderPass
 {
 public:
     CRenderPassShade() = default;

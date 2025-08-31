@@ -1,16 +1,21 @@
 #include "PassFullScreen.h"
 #include "RenderPassDescriptor.h"
 
+CPortSet::Ptr CRenderPassFullScreen::_createPortSetV()
+{
+    SPortDescriptor PortDesc;
+    PortDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
+    return make<CPortSet>(PortDesc);
+}
+
 void CRenderPassFullScreen::_initV()
 {
-    CRenderPassSingleFrameBuffer::_initV();
     __createVertexBuffer();
 }
 
 void CRenderPassFullScreen::_destroyV()
 {
     destroyAndClear(m_pVertexBuffer);
-    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 void CRenderPassFullScreen::_bindVertexBuffer(CCommandBuffer::Ptr vCommandBuffer)

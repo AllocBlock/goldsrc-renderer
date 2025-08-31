@@ -48,6 +48,29 @@ public:
         vkCmdEndRenderPass(m_Buffer);
     }
 
+    void beginRendering(const VkRenderingInfo& vBeginInfo)
+    {
+        _ASSERTE(!m_IsSecondary);
+        __assertValid();
+        __assertBegun();
+        if (m_IsPassBegun)
+            throw std::runtime_error("Already begun a pass");
+        m_IsPassBegun = true;
+        vkCmdBeginRendering(m_Buffer, &vBeginInfo);
+    }
+
+    void endRendering()
+    {
+        _ASSERTE(!m_IsSecondary);
+        __assertValid();
+        __assertBegun();
+        if (!m_IsPassBegun)
+            throw std::runtime_error("Should call beginRenderPass before endRenderPass");
+
+        m_IsPassBegun = false;
+        vkCmdEndRendering(m_Buffer);
+    }
+
     // only single region for now
     void copyBuffer(VkBuffer vSrc, VkBuffer vDest, const VkBufferCopy& vCopyRegion)
     {

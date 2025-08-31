@@ -1,6 +1,6 @@
 #pragma once
 #include "PointData.h"
-#include "RenderPassSingleFrameBuffer.h"
+#include "RenderPass.h"
 #include "PipelineNormal.h"
 #include "PipelineBlendAlpha.h"
 #include "PipelineBlendAlphaTest.h"
@@ -13,7 +13,7 @@
 #include "Image.h"
 #include "RerecordState.h"
 
-class CRenderPassGoldSrc : public CRenderPassSingleFrameBuffer
+class CRenderPassGoldSrc : public engine::IRenderPass
 {
 public:
     inline static const std::string Name = "GoldSrc";
@@ -50,7 +50,7 @@ public:
     
 protected:
     virtual void _initV() override;
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
+    virtual CPortSet::Ptr _createPortSetV() override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV() override;
     virtual void _renderUIV() override;

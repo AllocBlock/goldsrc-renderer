@@ -14,7 +14,7 @@ void CRenderPassPBR::_initV()
         [this](VkExtent2D vExtent, vk::CPointerSet<vk::CImage>& vImageSet)
         {
             vImageSet.init(1);
-            VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
+            VkFormat DepthFormat = m_pPortSet->getOutputPortInfo("Depth").Format;
             ImageUtils::createDepthImage(*vImageSet[0], m_pDevice, vExtent, NULL, DepthFormat);
             m_pPortSet->setOutput("Depth", *vImageSet[0]);
         }
@@ -36,11 +36,13 @@ void CRenderPassPBR::_initV()
     __createMaterials();
 }
 
-void CRenderPassPBR::_initPortDescV(SPortDescriptor& vioDesc)
+CPortSet::Ptr CRenderPassPBR::_createPortSetV()
 {
-    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
-    VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
-    vioDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
+    SPortDescriptor PortDesc;
+    PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    VkFormat DepthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+    PortDesc.addOutput("Depth", { DepthFormat, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
+    return make<CPortSet>(PortDesc);
 }
 
 CRenderPassDescriptor CRenderPassPBR::_getRenderPassDescV()

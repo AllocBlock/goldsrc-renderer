@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderPassSingleFrameBuffer.h"
+#include "RenderPass.h"
 #include "VisualizePrimitive.h"
 #include "PipelineTriangle.h"
 #include "PipelineLine.h"
@@ -8,8 +8,9 @@
 
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
+#include <RenderInfoDescriptor.h>
 
-class CRenderPassVisualize : public CRenderPassSingleFrameBuffer
+class CRenderPassVisualize : public engine::IRenderPass
 {
 public:
     inline static const std::string Name = "Visualize";
@@ -27,31 +28,16 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
-    virtual CRenderPassDescriptor _getRenderPassDescV() override;
+    virtual CPortSet::Ptr _createPortSetV() override;
     virtual void _updateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;
 
-    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
-    {
-        return _dumpInputPortExtent("Main", voExtent);
-    }
-    virtual std::vector<VkImageView> _getAttachmentsV() override
-    {
-        return
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(),
-            m_pPortSet->getInputPort("Depth")->getImageV(),
-        };
-    }
-    virtual std::vector<VkClearValue> _getClearValuesV() override
-    {
-        return DefaultClearValueColorDepth;
-    }
-
 private:
     void __rerecordCommand();
+
+    vk::CImage::Ptr m_pMainImage;
+    vk::CImage::Ptr m_pDepthImage;
 
     struct
     {
@@ -62,4 +48,5 @@ private:
     } m_PipelineSet;
 
     bool m_RerecordCommand = true;
+    CRenderInfoDescriptor m_RenderInfoDescriptor;
 };

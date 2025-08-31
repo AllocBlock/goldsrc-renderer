@@ -31,6 +31,10 @@ void CDevice::create(CPhysicalDevice::CPtr vPhysicalDevice, const std::vector<co
     RequiredFeatures.geometryShader = VK_TRUE;
     RequiredFeatures.samplerAnisotropy = VK_TRUE;
 
+    VkPhysicalDeviceDynamicRenderingFeatures DynamicRenderingFeature = {};
+    DynamicRenderingFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+    DynamicRenderingFeature.dynamicRendering = VK_TRUE;
+
     VkDeviceCreateInfo DeviceInfo = {};
     DeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     DeviceInfo.queueCreateInfoCount = static_cast<uint32_t>(QueueInfos.size());
@@ -38,6 +42,7 @@ void CDevice::create(CPhysicalDevice::CPtr vPhysicalDevice, const std::vector<co
     DeviceInfo.pEnabledFeatures = &RequiredFeatures;
     DeviceInfo.enabledExtensionCount = static_cast<uint32_t>(vExtensionSet.size());
     DeviceInfo.ppEnabledExtensionNames = vExtensionSet.data();
+    DeviceInfo.pNext = &DynamicRenderingFeature;
 
     DeviceInfo.enabledLayerCount = static_cast<uint32_t>(vValidationLayerSet.size());
     if (!vValidationLayerSet.empty()) DeviceInfo.ppEnabledLayerNames = vValidationLayerSet.data();

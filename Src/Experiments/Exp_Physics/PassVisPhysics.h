@@ -6,7 +6,7 @@
 #include "PipelineVisCollider.h"
 #include "PipelineVisCollidePoint.h"
 
-class CRenderPassVisPhysics : public vk::IRenderPass
+class CRenderPassVisPhysics : public engine::IRenderPass
 {
 public:
     CRenderPassVisPhysics() = default;

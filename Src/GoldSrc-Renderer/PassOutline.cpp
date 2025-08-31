@@ -43,9 +43,11 @@ void CRenderPassOutline::_initV()
     m_pRerecord->requestRecordForAll();
 }
 
-void CRenderPassOutline::_initPortDescV(SPortDescriptor& vioDesc)
+CPortSet::Ptr CRenderPassOutline::_createPortSetV()
 {
-    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    SPortDescriptor PortDesc;
+    PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    return make<CPortSet>(PortDesc);
 }
 
 CRenderPassDescriptor CRenderPassOutline::_getRenderPassDescV()

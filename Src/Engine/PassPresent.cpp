@@ -1,10 +1,15 @@
 #include "PassPresent.h"
 
-#include "RenderPassSingleFrameBuffer.h"
+#include "RenderPass.h"
 
 CRenderPassPresent::CRenderPassPresent(wptr<vk::CSwapchain> vpSwapchain)
 {
     m_pSwapchain = vpSwapchain;
+}
+
+void CRenderPassPresent::updateSwapchainImageIndex(uint32_t vImageIndex)
+{
+    m_CurrentSwapchainImageIndex = vImageIndex;
 }
 
 CPortSet::Ptr CRenderPassPresent::_createPortSetV()
@@ -12,6 +17,59 @@ CPortSet::Ptr CRenderPassPresent::_createPortSetV()
     SPortDescriptor PortDesc;
     PortDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
     return make<CPortSet>(PortDesc);
+}
+
+void CRenderPassPresent::_initV()
+{
+    if (m_pSwapchain.expired()) throw "Swapchain is destroyed";
+    auto pSwapchain = m_pSwapchain.lock();
+
+    m_pPortSet->assertReady();
+    const auto& Images = pSwapchain->getImageViews();
+    m_RenderInfoDescriptors.resize(Images.size());
+    for (uint32_t i = 0; i < Images.size(); ++i)
+    {
+        auto& builder = m_RenderInfoDescriptors[i];
+        builder.clear();
+        builder.addColorAttachment(Images[i], pSwapchain->getImageFormat(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true, true);
+    }
+
+    __createCommandPoolAndBuffers();
+    __createVertexBuffer();
+
+    m_BlitPipeline.create(m_pDevice, m_RenderInfoDescriptors[0], m_ScreenExtent); // no renderpass
+
+    auto pInputPort = m_pPortSet->getInputPort("Main");
+    m_BlitPipeline.setInputImage(*pInputPort->getImageV());
+}
+
+void CRenderPassPresent::_destroyV()
+{
+    m_BlitPipeline.destroy();
+    destroyAndClear(m_pVertexBuffer);
+    __destroyCommandPoolAndBuffers();
+}
+
+std::vector<VkCommandBuffer> CRenderPassPresent::_requestCommandBuffersV()
+{
+    if (m_pSwapchain.expired()) throw "Swapchain is destroyed";
+    auto pSwapchain = m_pSwapchain.lock();
+    auto pImage = pSwapchain->getImages()[m_CurrentSwapchainImageIndex];
+
+    CCommandBuffer::Ptr pCommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName);
+
+    _beginCommand(pCommandBuffer);
+    pImage->transitionLayout(pCommandBuffer, pImage->getLayout(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    _beginRendering(pCommandBuffer, m_RenderInfoDescriptors[m_CurrentSwapchainImageIndex].generateRendererInfo(m_ScreenExtent, false));
+
+    m_BlitPipeline.bind(pCommandBuffer);
+    _ASSERTE(m_pVertexBuffer->isValid());
+    pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+    pCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
+    _endRendering();
+    pImage->transitionLayout(pCommandBuffer, pImage->getLayout(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    _endCommand();
+    return { pCommandBuffer->get() };
 }
 
 void CRenderPassPresent::__createCommandPoolAndBuffers()
@@ -24,34 +82,6 @@ void CRenderPassPresent::__createCommandPoolAndBuffers()
 void CRenderPassPresent::__destroyCommandPoolAndBuffers()
 {
     m_Command.clear();
-}
-
-void CRenderPassPresent::__createFramebuffers(VkExtent2D vExtent)
-{
-    _ASSERTE(isValid());
-    if (m_pSwapchain.expired()) throw "Swapchain is destroied";
-    auto pSwapchain = m_pSwapchain.lock();
-
-    m_pPortSet->assertReady();
-
-    m_FramebufferSet.destroyAndClearAll();
-
-    const auto& Images = pSwapchain->getImageViews();
-    m_FramebufferSet.init(Images.size());
-    for (uint32_t i = 0; i < Images.size(); ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            Images[i]
-        };
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, vExtent);
-    }
-}
-
-void CRenderPassPresent::_bindVertexBuffer(CCommandBuffer::Ptr vCommandBuffer)
-{
-    _ASSERTE(m_pVertexBuffer->isValid());
-    vCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
 }
 
 void CRenderPassPresent::__createVertexBuffer()
@@ -73,62 +103,4 @@ void CRenderPassPresent::__generateScene()
         SFullScreenPointData{glm::vec2(-1.0f, 3.0f)},
         SFullScreenPointData{glm::vec2(3.0f, -1.0f)},
     };
-}
-
-void CRenderPassPresent::updateSwapchainImageIndex(uint32_t vImageIndex)
-{
-    m_CurrentSwapchainImageIndex = vImageIndex;
-}
-
-void CRenderPassPresent::_initV()
-{
-    __createCommandPoolAndBuffers();
-
-    VkClearValue Value;
-    Value.color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    m_ClearValueSet = { Value };
-    __createFramebuffers(m_ScreenExtent);
-    __createVertexBuffer();
-        
-    m_BlitPipeline.create(m_pDevice, get(), m_ScreenExtent);
-
-    auto pInputPort = m_pPortSet->getInputPort("Main");
-    m_BlitPipeline.setInputImage(pInputPort->getImageV());
-}
-
-void CRenderPassPresent::_destroyV()
-{
-    m_BlitPipeline.destroy();
-    destroyAndClear(m_pVertexBuffer);
-    m_FramebufferSet.destroyAndClearAll();
-    __destroyCommandPoolAndBuffers();
-}
-
-CRenderPassDescriptor CRenderPassPresent::_getRenderPassDescV()
-{
-    if (m_pSwapchain.expired()) throw "Swapchain is destroied";
-    auto pSwapchain = m_pSwapchain.lock();
-    VkFormat Format = pSwapchain->getImageFormat();
-    VkImageLayout InputLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    VkImageLayout OutputLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    CRenderPassDescriptor Desc;
-    Desc.addColorAttachment({ Format, InputLayout, OutputLayout, true, true });
-    return Desc;
-}
-
-std::vector<VkCommandBuffer> CRenderPassPresent::_requestCommandBuffersV()
-{
-    _ASSERTE(m_FramebufferSet.isValid(m_CurrentSwapchainImageIndex));
-
-    CCommandBuffer::Ptr pCommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName);
-
-    _ASSERTE(m_FramebufferSet[m_CurrentSwapchainImageIndex]->getAttachmentNum() == m_ClearValueSet.size());
-    _begin(pCommandBuffer, m_FramebufferSet[m_CurrentSwapchainImageIndex], m_ClearValueSet, false);
-
-    m_BlitPipeline.bind(pCommandBuffer);
-    _bindVertexBuffer(pCommandBuffer);
-    pCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));
-    _end();
-    return { pCommandBuffer->get() };
 }

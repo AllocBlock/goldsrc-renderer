@@ -60,27 +60,15 @@ public:
     void attachTo(CPort::Ptr vPort);
     void unlinkAll();
     
-    bool hasInputLayout() const;
-    VkImageLayout getInputLayout() const;
-    void setInputLayout(VkImageLayout vLayout);
-    bool hasOutputLayout() const;
-    VkImageLayout getOutputLayout() const;
-    void setOutputLayout(VkImageLayout vLayout);
+    bool hasLayout() const;
+    VkImageLayout getLayout() const;
+    void setLayout(VkImageLayout vLayout);
 
     bool isReady() const;
     void assertReady() const;
 
     const SPortInfo& getInfo() const { return m_Info; }
-
-    virtual VkImageView getImageV() const = 0;
-    virtual size_t getImageNumV() const = 0;
-    virtual bool hasActualFormatV() const = 0;
-    virtual VkFormat getActualFormatV() const = 0;
-    virtual bool hasActualExtentV() const = 0;
-    virtual VkExtent2D getActualExtentV() const = 0;
-
-    virtual bool isStandaloneSourceV() const = 0;
-
+    virtual vk::CImage::Ptr getImageV() const = 0;
     bool isMatch(CPort::CPtr vPort) const { return m_Info.isMatch(vPort->getInfo()); }
     
     CPortSet* getBelongedPortSet() const { return m_pBelongedSet; }
@@ -92,8 +80,7 @@ protected:
     std::vector<CPort::Ptr> m_ChildSet;
     
     SPortInfo m_Info;
-    std::optional<VkImageLayout> m_InputLayout = std::nullopt;
-    std::optional<VkImageLayout> m_OutputLayout = std::nullopt;
+    std::optional<VkImageLayout> m_Layout = std::nullopt;
 };
 
 class CSourcePort : public CPort
@@ -103,22 +90,12 @@ public:
 
     CSourcePort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet);
 
-    virtual VkImageView getImageV() const override final;
-    virtual size_t getImageNumV() const override final;
-    void setImage(VkImageView vImageView);
-    void clearImage() { m_ImageView = VK_NULL_HANDLE; }
-    
-    virtual bool hasActualFormatV() const override final { return m_ActualFormat != VK_FORMAT_UNDEFINED; }
-    virtual VkFormat getActualFormatV() const override final { _ASSERTE(hasActualFormatV()); return m_ActualFormat; }
-    virtual bool hasActualExtentV() const override final { return m_ActualExtent.width != 0 && m_ActualExtent.height != 0; }
-    virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_ActualExtent; }
-    void setActualFormat(VkFormat vFormat) { m_ActualFormat = vFormat; }
-    void setActualExtent(VkExtent2D vExtent) { m_ActualExtent = vExtent; }
-    
-    virtual bool isStandaloneSourceV() const override { return m_pBelongedSet == nullptr; }
+    virtual vk::CImage::Ptr getImageV() const override final;
+    void setImage(vk::CImage::Ptr vImage);
+    void clearImage() { m_pImage = nullptr; }
 
 private:
-    VkImageView m_ImageView = VK_NULL_HANDLE;
+    vk::CImage::Ptr m_pImage;
     
     VkFormat m_ActualFormat = SPortInfo::AnyFormat;
     VkExtent2D m_ActualExtent = SPortInfo::AnyExtent;
@@ -131,16 +108,7 @@ public:
 
     CRelayPort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet);
 
-    virtual VkImageView getImageV() const override final;
-    virtual size_t getImageNumV() const override final;
-
-    virtual bool hasActualFormatV() const override final { return !m_pParent.expired() && m_pParent.lock()->hasActualFormatV(); }
-    virtual bool hasActualExtentV() const override final { return !m_pParent.expired() && m_pParent.lock()->hasActualExtentV(); }
-    virtual VkFormat getActualFormatV() const override final { _ASSERTE(hasActualFormatV()); return m_pParent.lock()->getActualFormatV(); }
-    virtual VkExtent2D getActualExtentV() const override final { _ASSERTE(hasActualExtentV()); return m_pParent.lock()->getActualExtentV();
-    }
-
-    virtual bool isStandaloneSourceV() const override { return false; }
+    virtual vk::CImage::Ptr getImageV() const override final;
 };
 
 struct SPortDescriptor
@@ -193,10 +161,9 @@ public:
     CPort::Ptr getOutputPort(size_t vIndex) const;
     CPort::Ptr getInputPort(const std::string& vName) const; // if not found, throw exception
     CPort::Ptr getOutputPort(const std::string& vName) const; // if not found, throw exception
-    const SPortInfo& getInputFormat(const std::string& vName) const; // if not found, throw exception
-    const SPortInfo& getOutputFormat(const std::string& vName) const; // if not found, throw exception
+    const SPortInfo& getInputPortInfo(const std::string& vName) const; // if not found, throw exception
+    const SPortInfo& getOutputPortInfo(const std::string& vName) const; // if not found, throw exception
 
-    void setOutput(const std::string& vOutputName, VkImageView vImageView, VkFormat vFormat, VkExtent2D vExtent, VkImageLayout vLayout);
     void setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage);
     void append(const std::string& vInputName, CPort::Ptr vPort);
     void attachTo(const std::string& vInputName, CPort::Ptr vPort);

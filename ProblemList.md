@@ -181,6 +181,12 @@
           - 对应的Attachment的InitLayout也填UNDEFINED，并且LOAD_OP=CLEAR
             - Swapchain似乎就是这么干的
 
+
+### 第五版
+- 管线改成串行了，不同帧之间不再有资源竞争
+- renderpass改为dynamic rendering，手动做layout转换
+- Port只关注所需的layout，layout转换自动完成
+
 ## 问题：Render pass graph
 - 以一个graph来表示整个渲染流程，自动排序command buffer，graph可以保存和载入，动态修改、生成实际的pass
 ### graph需要存储哪些信息？

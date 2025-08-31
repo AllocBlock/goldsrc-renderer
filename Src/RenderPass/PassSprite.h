@@ -1,15 +1,15 @@
 #pragma once
 #include "RenderPass.h"
 #include "PipelineSprite.h"
-#include "RenderPassSingleFrameBuffer.h"
+#include "RenderPass.h"
 
-class CRenderPassSprite : public CRenderPassSingleFrameBuffer
+class CRenderPassSprite : public engine::IRenderPass
 {
 public:
     CRenderPassSprite();
 
 protected:
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
+    virtual CPortSet::Ptr _createPortSetV() override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _initV() override;
     virtual void _updateV() override;

@@ -8,10 +8,12 @@ public:
     inline static const std::string Name = "SSAO";
 
 protected:
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) override
+    virtual CPortSet::Ptr _createPortSetV() override
     {
-        vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
-        vioDesc.addInput("Depth", SPortInfo::createAnyOfUsage(EImageUsage::READ));
+        SPortDescriptor PortDesc;
+        PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+        PortDesc.addInput("Depth", SPortInfo::createAnyOfUsage(EImageUsage::READ));
+        return make<CPortSet>(PortDesc);
     }
 
     virtual void _initV() override

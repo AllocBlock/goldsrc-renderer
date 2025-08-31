@@ -2,11 +2,12 @@
 
 SAttachementInfo CRenderPassDescriptor::__getAttachmentInfo(CPort::Ptr vPort, bool vIsDepth)
 {
-    VkFormat Format = vPort->getActualFormatV();
-    VkImageLayout InputLayout = vPort->getInputLayout();
-    VkImageLayout OutputLayout = vPort->getOutputLayout();
+    auto pImage = vPort->getImageV();
+    VkFormat Format = pImage->getFormat();
+    VkImageLayout InputLayout = vPort->getLayout();
+    VkImageLayout OutputLayout = vPort->getLayout();
     _ASSERTE(OutputLayout != VK_IMAGE_LAYOUT_UNDEFINED);
-    bool IsBegin = (vPort->isRoot() || (vPort->hasParent() && vPort->getParent()->isStandaloneSourceV()));
+    bool IsBegin = vPort->isRoot() || vPort->hasParent();
     bool IsEnd = vPort->isTail();
     
     return { Format, InputLayout, OutputLayout, IsBegin, IsEnd };

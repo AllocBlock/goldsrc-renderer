@@ -10,9 +10,9 @@
 #include <string>
 #include <vector>
 
-namespace vk
+namespace engine
 {
-    class IRenderPass : public IVulkanHandle<VkRenderPass>, public IDrawableUI, public std::enable_shared_from_this<IRenderPass>
+    class IRenderPass : public IDrawableUI, public std::enable_shared_from_this<IRenderPass>
     {
     public:
         _DEFINE_PTR(IRenderPass);
@@ -21,13 +21,13 @@ namespace vk
         virtual ~IRenderPass() = default;
 
         void createPortSet();
-        void init(CDevice::CPtr vDevice, VkExtent2D vScreenExtent);
+        void init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent);
         void update();
         std::vector<VkCommandBuffer> requestCommandBuffers();
         void destroy();
-        
+
         CPortSet::Ptr getPortSet() const { return m_pPortSet; }
-        
+
         ptr<SSceneInfo> getScene() const { return m_pSceneInfo; }
         void setSceneInfo(ptr<SSceneInfo> vScene)
         {
@@ -39,75 +39,77 @@ namespace vk
     protected:
 
         /*
-         * _createPortSetV:
-         * triggers only once
-         * setup PortSet
-         */
+            * _createPortSetV:
+            * triggers only once
+            * setup PortSet
+            */
         virtual CPortSet::Ptr _createPortSetV() = 0;
 
         /*
-         * _createV: 
-         * triggers only once
-         * AppInfo and PortSet is ready before trigger
-         */
+            * _createV:
+            * triggers only once
+            * AppInfo and PortSet is ready before trigger
+            */
         virtual void _initV() {}
-        
-        /*
-         * _getRenderPassDescV:
-         * can trigger multiple times
-         * return renderpass attachment info, require every time then renderpass need recreate
-         */
-        virtual CRenderPassDescriptor _getRenderPassDescV() = 0;
 
         /*
-         * _updateV:
-         * triggers each frame
-         * update function each frame/tick
-         */
+            * _updateV:
+            * triggers each frame
+            * update function each frame/tick
+            */
         virtual void _updateV() {}
-        
+
         /*
-         * _renderUIV:
-         * triggers each frame
-         * drawCollider ui
-         */
+            * _renderUIV:
+            * triggers each frame
+            * drawCollider ui
+            */
         virtual void _renderUIV() override {}
-        
+
         /*
-         * _requestCommandBuffersV:
-         * trigger each frame
-         * get command buffer each frame
-         */
+            * _requestCommandBuffersV:
+            * trigger each frame
+            * get command buffer each frame
+            */
         virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() = 0;
 
         /*
-         * _destroyV:
-         * trigger only once
-         * destory everything
-         */
+            * _destroyV:
+            * trigger only once
+            * destory everything
+            */
         virtual void _destroyV() {}
-
+        
         /*
-         * _onSceneInfoSet:
-         * can trigger multiple times
-         * trigger when scene is set
-         */
+            * _onSceneInfoSet:
+            * can trigger multiple times
+            * trigger when scene is set
+            */
         virtual void _onSceneInfoSet(ptr<SSceneInfo> vSceneInfo) {}
 
-        void _begin(CCommandBuffer::Ptr vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues, bool vHasSecondary = false);
-        void _end();
+        void _beginCommand(CCommandBuffer::Ptr vCommandBuffer);
+        void _beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRenderingInfo& vBeginInfo);
+        void _endRendering();
+        void _endCommand();
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 
-        CDevice::CPtr m_pDevice = nullptr;
+        CCommandBuffer::Ptr _getCommandBuffer();
+        void _initImageLayouts(CCommandBuffer::Ptr vCommandBuffer);
+        //void _beginSecondary(CCommandBuffer::Ptr vCommandBuffer);
+
+        vk::CDevice::CPtr m_pDevice = nullptr;
         VkExtent2D m_ScreenExtent = vk::ZeroExtent;
         CPortSet::Ptr m_pPortSet = nullptr;
         ptr<SSceneInfo> m_pSceneInfo = nullptr;
 
-    private:
-        void __createRenderpass();
-        void __destroyRenderpass();
+        CCommand m_Command = CCommand();
+        std::string m_DefaultCommandName = "Default";
 
-        bool m_Begined = false;
+    private:
+        void __createCommandPoolAndBuffers();
+        void __destroyCommandPoolAndBuffers();
+
+        bool m_CommandBegun = false;
         CCommandBuffer::Ptr m_pCurrentCommandBuffer = nullptr;
     };
 }

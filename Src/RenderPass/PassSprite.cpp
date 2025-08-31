@@ -51,10 +51,11 @@ CRenderPassSprite::CRenderPassSprite()
     };
 }
 
-
-void CRenderPassSprite::_initPortDescV(SPortDescriptor& vioDesc)
+CPortSet::Ptr CRenderPassPBR::_initPortDescV(SPortDescriptor& vioDesc)
 {
-    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    SPortDescriptor PortDesc;
+    PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    return make<CPortSet>(PortDesc);
 }
 
 CRenderPassDescriptor CRenderPassSprite::_getRenderPassDescV()

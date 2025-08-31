@@ -12,7 +12,7 @@ void CInstance::create(std::string vName, const std::vector<const char*>& vValid
     AppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     AppInfo.pApplicationName = vName.c_str();
     AppInfo.applicationVersion = 1;
-    AppInfo.apiVersion = VK_MAKE_VERSION(1, 0, 0);
+    AppInfo.apiVersion = VK_API_VERSION_1_4;
 
     VkInstanceCreateInfo InstanceInfo = {};
     InstanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;

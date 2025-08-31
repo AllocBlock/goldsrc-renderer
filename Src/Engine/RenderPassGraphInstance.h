@@ -21,7 +21,7 @@ public:
     void updateSwapchainImageIndex(uint32_t vImageIndex);
 
     // return pass by given id
-    vk::IRenderPass::Ptr getPass(size_t vId) const;
+    engine::IRenderPass::Ptr getPass(size_t vId) const;
 
     // return first found pass of given type (by pass name), return nullptr if not found
     template <typename RenderPass_t>
@@ -33,9 +33,9 @@ public:
         return nullptr;
     }
 
-    std::vector<vk::IRenderPass::Ptr> getSortedPasses() const
+    std::vector<engine::IRenderPass::Ptr> getSortedPasses() const
     {
-        std::vector<vk::IRenderPass::Ptr> Passes;
+        std::vector<engine::IRenderPass::Ptr> Passes;
         for (auto PassId : m_SortedOrder)
         {
             Passes.push_back(m_PassMap.at(PassId));
@@ -48,7 +48,7 @@ private:
     vk::CDevice::CPtr m_pDevice = nullptr;
     VkExtent2D m_ScreenExtent = vk::ZeroExtent;
     ptr<SSceneInfo> m_pSceneInfo = nullptr;
-    std::map<size_t, vk::IRenderPass::Ptr> m_PassMap;
+    std::map<size_t, engine::IRenderPass::Ptr> m_PassMap;
 
     ptr<CRenderPassGUI> m_pPassGui;
     ptr<CRenderPassPresent> m_pPassPresent;

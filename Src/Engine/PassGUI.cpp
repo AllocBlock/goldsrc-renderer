@@ -6,25 +6,25 @@ const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 
 void CRenderPassGUI::_initV()
 {
-    CRenderPassSingleFrameBuffer::_initV();
-
     __createDescriptorPool();
     
-    UI::init(m_pDevice, m_pWindow, m_DescriptorPool, get());
+    //UI::init(m_pDevice, m_pWindow, m_DescriptorPool, get());
     CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
     UI::setFont(gChineseFont, pCommandBuffer);
     m_Command.endSingleTimeBuffer(pCommandBuffer);
 }
 
-void CRenderPassGUI::_initPortDescV(SPortDescriptor& vioDesc)
+CPortSet::Ptr CRenderPassGUI::_createPortSetV()
 {
-    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    SPortDescriptor PortDesc;
+    PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
+    return make<CPortSet>(PortDesc);
 }
 
-CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
-{
-    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
-}
+//CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
+//{
+//    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
+//}
 
 void CRenderPassGUI::_renderUIV()
 {
@@ -36,17 +36,15 @@ void CRenderPassGUI::_destroyV()
         UI::destory();
     __destroyDescriptorPool();
     m_pWindow = nullptr;
-
-    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV()
 {
     CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-    _beginWithFramebuffer();
+    //_beginWithFramebuffer();
     UI::draw(pCommandBuffer);
-    _endWithFramebuffer();
+    //_endWithFramebuffer();
 
     return { pCommandBuffer->get() };
 }

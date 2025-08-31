@@ -107,12 +107,11 @@
     <ClCompile Include="PassPresent.cpp" />
     <ClCompile Include="PipelineBlit.cpp" />
     <ClCompile Include="PipelineDescriptor.cpp" />
+    <ClCompile Include="RenderInfoDescriptor.cpp" />
     <ClCompile Include="RenderPassGraphAddLinkState.cpp" />
     <ClCompile Include="RenderPassGraphEditor.cpp" />
     <ClCompile Include="RenderPassGraphInstance.cpp" />
     <ClCompile Include="RenderPassGraphIO.cpp" />
-    <ClCompile Include="RenderPassSingle.cpp" />
-    <ClCompile Include="RenderPassSingleFrameBuffer.cpp" />
     <ClCompile Include="SceneInfo.cpp" />
     <ClCompile Include="ShaderCompileCache.cpp" />
     <ClCompile Include="ShaderCompiler.cpp" />
@@ -158,12 +157,12 @@
     <ClInclude Include="PassGUI.h" />
     <ClInclude Include="PassPresent.h" />
     <ClInclude Include="PipelineBlit.h" />
+    <ClInclude Include="RenderInfoDescriptor.h" />
     <ClInclude Include="RenderPassGraphAddLinkState.h" />
     <ClInclude Include="RenderPassGraphEditor.h" />
     <ClInclude Include="RenderPassGraphInstance.h" />
     <ClInclude Include="RenderPassGraphIO.h" />
     <ClInclude Include="RenderPassGraphUI.h" />
-    <ClInclude Include="RenderPassSingleFrameBuffer.h" />
     <ClInclude Include="RerecordState.h" />
     <ClInclude Include="SceneInfo.h" />
     <ClInclude Include="ShaderCompileCache.h" />

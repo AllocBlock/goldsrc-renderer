@@ -75,96 +75,58 @@ void CPort::unlinkAll()
     clearAllChildren();
 }
 
-bool CPort::hasInputLayout() const
-{ return m_InputLayout.has_value(); }
-
-VkImageLayout CPort::getInputLayout() const
-{
-    return m_InputLayout.value();
+bool CPort::hasLayout() const
+{ 
+    return m_Layout.has_value();
 }
 
-void CPort::setInputLayout(VkImageLayout vLayout)
+VkImageLayout CPort::getLayout() const
 {
-    m_InputLayout = vLayout;
+    return m_Layout.value();
 }
 
-bool CPort::hasOutputLayout() const
-{ return m_OutputLayout.has_value(); }
-
-VkImageLayout CPort::getOutputLayout() const
+void CPort::setLayout(VkImageLayout vLayout)
 {
-    return m_OutputLayout.value();
-}
-
-void CPort::setOutputLayout(VkImageLayout vLayout)
-{
-    _ASSERTE(vLayout != VK_IMAGE_LAYOUT_UNDEFINED);
-    m_OutputLayout = vLayout;
+    m_Layout = vLayout;
 }
 
 bool CPort::isReady() const
 {
-    return m_InputLayout != VK_IMAGE_LAYOUT_UNDEFINED &&
-        m_OutputLayout != VK_IMAGE_LAYOUT_UNDEFINED &&
-        hasActualFormatV() &&
-        hasActualExtentV();
+    return m_Layout.has_value() &&
+        m_Layout != VK_IMAGE_LAYOUT_UNDEFINED &&
+        getImageV() != nullptr;
 }
 
 void CPort::assertReady() const
 {
-    if (!m_InputLayout.has_value())
+    if (!m_Layout.has_value())
         throw std::runtime_error("Input layout is not set");
-    if (!m_OutputLayout.has_value() || m_OutputLayout.value() == VK_IMAGE_LAYOUT_UNDEFINED)
-        throw std::runtime_error("Output layout is not set or is not valid");
-    if (!hasActualFormatV())
-        throw std::runtime_error("Port has no actual format");
-    if (!hasActualExtentV())
-        throw std::runtime_error("Port has no actual extent");
+    if (!getImageV())
+        throw std::runtime_error("Can not found source texture for the port");
 }
 
 CSourcePort::CSourcePort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet) : CPort(vName, vInfo, vBelongedSet)
 {
-    if (vInfo.Format != VkFormat::VK_FORMAT_UNDEFINED)
-    {
-        setActualFormat(vInfo.Format);
-    }
-
-    if (vInfo.Extent.width != 0 && vInfo.Extent.height != 0)
-    {
-        setActualExtent(vInfo.Extent);
-    }
-
-    m_InputLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
-VkImageView CSourcePort::getImageV() const
+vk::CImage::Ptr CSourcePort::getImageV() const
 {
-    return m_ImageView;
+    return m_pImage;
 }
 
-size_t CSourcePort::getImageNumV() const
+void CSourcePort::setImage(vk::CImage::Ptr vImage)
 {
-    return m_Info.Num;
-}
-
-void CSourcePort::setImage(VkImageView vImageView)
-{
-    m_ImageView = vImageView;
-}
-
-size_t CRelayPort::getImageNumV() const
-{
-    _ASSERTE(!m_pParent.expired());
-    return m_pParent.lock()->getImageNumV();
+    m_pImage = vImage;
 }
 
 CRelayPort::CRelayPort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet): CPort(vName, vInfo, vBelongedSet)
 {
     if (vInfo.Usage != EImageUsage::UNKNOWN)
-        setInputLayout(__toLayout(vInfo.Usage));
+        setLayout(__toLayout(vInfo.Usage));
 }
 
-VkImageView CRelayPort::getImageV() const
+vk::CImage::Ptr CRelayPort::getImageV() const
 {
     _ASSERTE(!m_pParent.expired());
     return m_pParent.lock()->getImageV();
@@ -317,21 +279,21 @@ CPort::Ptr CPortSet::getOutputPort(const std::string& vName) const
     return pPort;
 }
 
-const SPortInfo& CPortSet::getInputFormat(const std::string& vName) const
+const SPortInfo& CPortSet::getInputPortInfo(const std::string& vName) const
 {
     return getInputPort(vName)->getInfo();
 }
 
-const SPortInfo& CPortSet::getOutputFormat(const std::string& vName) const
+const SPortInfo& CPortSet::getOutputPortInfo(const std::string& vName) const
 {
     return getOutputPort(vName)->getInfo();
 }
 
-void CPortSet::setOutput(const std::string& vOutputName, VkImageView vImageView, VkFormat vFormat, VkExtent2D vExtent, VkImageLayout vLayout)
+void CPortSet::setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage)
 {
     SPortInfo InputInfo;
-    InputInfo.Format = vFormat;
-    InputInfo.Extent = vExtent;
+    InputInfo.Format = vImage->getFormat();
+    InputInfo.Extent = vImage->getExtent();
     InputInfo.Num = 0; // dont care
 
     auto pPort = getOutputPort(vOutputName);
@@ -339,20 +301,7 @@ void CPortSet::setOutput(const std::string& vOutputName, VkImageView vImageView,
     _ASSERTE(InputInfo.isMatch(TargetInfo));
 
     CSourcePort::Ptr pSourcePort = std::dynamic_pointer_cast<CSourcePort>(pPort);
-
-    // FIXME: what if different formats/extents are set? how to deal this?
-    pSourcePort->setActualFormat(vFormat);
-    pSourcePort->setActualExtent(vExtent);
-    pSourcePort->setImage(vImageView);
-}
-
-void CPortSet::setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage)
-{
-    VkFormat Format = vImage->getFormat();
-    VkExtent2D Extent = vImage->getExtent();
-    VkImageLayout Layout = vImage->getLayout();
-
-    setOutput(vOutputName, *vImage, Format, Extent, Layout);
+    pSourcePort->setImage(vImage);
 }
 
 void CPortSet::append(const std::string& vInputName, CPort::Ptr vPort)
@@ -402,7 +351,7 @@ void CPortSet::__addInput(const std::string& vName, const SPortInfo& vInfo)
 {
     _ASSERTE(!hasInput(vName));
     auto pPort = make<CRelayPort>(vName, vInfo, this);
-    pPort->setInputLayout(__toLayout(vInfo.Usage));
+    pPort->setLayout(__toLayout(vInfo.Usage));
     m_InputPortSet.emplace_back(pPort);
 }
 
@@ -410,6 +359,7 @@ void CPortSet::__addOutput(const std::string& vName, const SPortInfo& vInfo)
 {
     _ASSERTE(!hasOutput(vName));
     auto pPort = make<CSourcePort>(vName, vInfo, this);
+    pPort->setLayout(__toLayout(vInfo.Usage));
     m_OutputPortSet.emplace_back(pPort);
 }
 

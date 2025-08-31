@@ -1,11 +1,11 @@
 #pragma once
 #include "Command.h"
-#include "RenderPassSingleFrameBuffer.h"
+#include "RenderPass.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-class CRenderPassGUI final : public CRenderPassSingleFrameBuffer
+class CRenderPassGUI final : public engine::IRenderPass
 {
 public:
     inline static const std::string Name = "Gui";
@@ -17,27 +17,10 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
-    virtual CRenderPassDescriptor _getRenderPassDescV() override;
+    virtual CPortSet::Ptr _createPortSetV() override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;
-    
-    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
-    {
-        return _dumpInputPortExtent("Main", voExtent);
-    }
-    virtual std::vector<VkImageView> _getAttachmentsV() override
-    {
-        return
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(),
-        };
-    }
-    virtual std::vector<VkClearValue> _getClearValuesV() override
-    {
-        return DefaultClearValueColor;
-    }
 
 private:
     void __createDescriptorPool();

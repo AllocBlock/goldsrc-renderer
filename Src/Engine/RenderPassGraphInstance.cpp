@@ -143,7 +143,7 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
         if (!UsedRenderpass.count(NodeId)) continue;
 
         const SRenderPassGraphNode& Node = Pair.second;
-        vk::IRenderPass::Ptr pPass = RenderpassLib::createPass(Node.Name);
+        engine::IRenderPass::Ptr pPass = RenderpassLib::createPass(Node.Name);
         pPass->createPortSet();
         m_PassMap[NodeId] = pPass;
         
@@ -215,12 +215,12 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
     for (size_t NodeId : m_SortedOrder)
         SortedPortSets.push_back(m_PassMap.at(NodeId)->getPortSet());
 
-    std::vector<SPortGroup> PortGroups = __getSortedPortGroups(SortedPortSets);
+    /*std::vector<SPortGroup> PortGroups = __getSortedPortGroups(SortedPortSets);
     for (const auto& Group : PortGroups)
     {
         for (size_t i = 0; i < Group.Ports.size() - 1; ++i)
         {
-            VkImageLayout Layout = Group.Ports[i + 1]->getInputLayout();
+            VkImageLayout Layout = Group.Ports[i + 1]->getLayout();
             _ASSERTE(Layout != VK_IMAGE_LAYOUT_UNDEFINED);
             Group.Ports[i]->setOutputLayout(Layout);
         }
@@ -233,7 +233,7 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
         if (Group.Ports.size() >= 2)
             FinalLayout = Group.Ports.back()->getInputLayout();
         Group.Ports.back()->setOutputLayout(FinalLayout);
-    }
+    }*/
     
     for (const auto& Pair : m_PassMap)
     {
@@ -242,29 +242,27 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
         for (size_t i = 0; i < pPortSet->getInputPortNum(); ++i)
         {
             const auto& pPort = pPortSet->getInputPort(i);
-            _ASSERTE(pPort->hasInputLayout());
-            _ASSERTE(pPort->hasOutputLayout());
+            _ASSERTE(pPort->hasLayout());
         }
         for (size_t i = 0; i < pPortSet->getOutputPortNum(); ++i)
         {
             const auto& pPort = pPortSet->getOutputPort(i);
-            _ASSERTE(pPort->hasInputLayout());
-            _ASSERTE(pPort->hasOutputLayout());
+            _ASSERTE(pPort->hasLayout());
         }
     }
     
     // init
     for (const auto& Pair : m_PassMap)
     {
-        vk::IRenderPass::Ptr pPass = Pair.second;
+        engine::IRenderPass::Ptr pPass = Pair.second;
         pPass->init(m_pDevice, m_ScreenExtent);
         pPass->setSceneInfo(m_pSceneInfo);
     }
 
-    for (const auto& Pair : m_PassMap)
+ /*   for (const auto& Pair : m_PassMap)
     {
         _ASSERTE(Pair.second->isValid());
-    }
+    }*/
 }
 
 void CRenderPassGraphInstance::update() const
@@ -295,7 +293,7 @@ void CRenderPassGraphInstance::updateSwapchainImageIndex(uint32_t vImageIndex)
     m_pPassPresent->updateSwapchainImageIndex(vImageIndex);
 }
 
-vk::IRenderPass::Ptr CRenderPassGraphInstance::getPass(size_t vId) const
+engine::IRenderPass::Ptr CRenderPassGraphInstance::getPass(size_t vId) const
 {
     return m_PassMap.at(vId);
 }

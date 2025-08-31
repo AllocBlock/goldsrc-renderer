@@ -64,7 +64,7 @@ private:
 
     vk::CDevice::CPtr m_pDevice = nullptr;
     ptr<SRenderPassGraph> m_pGraph = nullptr;
-    std::map<size_t, vk::IRenderPass::Ptr> m_PassInstanceMap;
+    std::map<size_t, engine::IRenderPass::Ptr> m_PassInstanceMap;
 
     CCanvasDrawer m_CanvasDrawer;
     bool m_ShowGrid = true;

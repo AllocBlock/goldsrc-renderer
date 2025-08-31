@@ -54,28 +54,35 @@ void CRenderPassVisualize::clearAll()
     __rerecordCommand();
 }
 
+CPortSet::Ptr CRenderPassVisualize::_createPortSetV()
+{
+    SPortDescriptor PortDesc;
+    PortDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EImageUsage::COLOR_ATTACHMENT });
+    PortDesc.addOutput("Depth", { VK_FORMAT_D24_UNORM_S8_UINT, {0, 0}, 0, EImageUsage::DEPTH_ATTACHMENT });
+    return make<CPortSet>(PortDesc);
+}
+
 void CRenderPassVisualize::_initV()
 {
-    CRenderPassSingleFrameBuffer::_initV();
+    m_pMainImage = make<vk::CImage>();
+    VkFormat MainFormat = m_pPortSet->getOutputPortInfo("Main").Format;
+    ImageUtils::createImage2d(*m_pMainImage, m_pDevice, m_ScreenExtent, MainFormat, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    m_pPortSet->setOutput("Main", m_pMainImage);
 
-    m_PipelineSet.Triangle.create(m_pDevice, get(), m_ScreenExtent);
-    m_PipelineSet.Line.create(m_pDevice, get(), m_ScreenExtent);
-    m_PipelineSet.Point.create(m_pDevice, get(), m_ScreenExtent);
-    m_PipelineSet.Primitive3D.create(m_pDevice, get(), m_ScreenExtent);
+    m_pDepthImage = make<vk::CImage>();
+    VkFormat DepthFormat = m_pPortSet->getOutputPortInfo("Depth").Format;
+    ImageUtils::createDepthImage(*m_pDepthImage, m_pDevice, m_ScreenExtent, VK_IMAGE_USAGE_SAMPLED_BIT, DepthFormat);
+    m_pPortSet->setOutput("Depth", m_pDepthImage);
+
+    m_RenderInfoDescriptor.addColorAttachment(m_pPortSet->getOutputPort("Main"));
+    m_RenderInfoDescriptor.setDepthAttachment(m_pPortSet->getOutputPort("Depth"));
+
+    m_PipelineSet.Triangle.create(m_pDevice, m_RenderInfoDescriptor, m_ScreenExtent);
+    m_PipelineSet.Line.create(m_pDevice, m_RenderInfoDescriptor, m_ScreenExtent);
+    m_PipelineSet.Point.create(m_pDevice, m_RenderInfoDescriptor, m_ScreenExtent);
+    m_PipelineSet.Primitive3D.create(m_pDevice, m_RenderInfoDescriptor, m_ScreenExtent);
 
     __rerecordCommand();
-}
-
-void CRenderPassVisualize::_initPortDescV(SPortDescriptor& vioDesc)
-{
-    vioDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
-    vioDesc.addInput("Depth", { VK_FORMAT_D32_SFLOAT, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
-}
-
-CRenderPassDescriptor CRenderPassVisualize::_getRenderPassDescV()
-{
-    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
-                                                            m_pPortSet->getInputPort("Depth"));
 }
 
 void CRenderPassVisualize::_updateV()
@@ -90,27 +97,31 @@ void CRenderPassVisualize::_updateV()
 
 void CRenderPassVisualize::_destroyV()
 {
+    destroyAndClear(m_pMainImage);
+    destroyAndClear(m_pDepthImage);
+
     m_PipelineSet.Triangle.destroy();
     m_PipelineSet.Line.destroy();
     m_PipelineSet.Point.destroy();
     m_PipelineSet.Primitive3D.destroy();
-
-    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV()
 {
     CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-    if (m_RerecordCommand)
+    //if (m_RerecordCommand)
+    if (true)
     {
         // init
-        _beginWithFramebuffer();
+        _beginCommand(pCommandBuffer);
+        _beginRendering(pCommandBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent));
         m_PipelineSet.Triangle.recordCommandV(pCommandBuffer);
         m_PipelineSet.Line.recordCommandV(pCommandBuffer);
         m_PipelineSet.Point.recordCommandV(pCommandBuffer);
         m_PipelineSet.Primitive3D.recordCommand(pCommandBuffer);
-        _endWithFramebuffer();
+        _endRendering();
+        _endCommand();
         m_RerecordCommand = false;
     }
     return { pCommandBuffer->get() };

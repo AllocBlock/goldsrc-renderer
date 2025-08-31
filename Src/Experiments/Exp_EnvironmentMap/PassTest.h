@@ -6,7 +6,7 @@
 #include "Buffer.h"
 #include "PipelineTest.h"
 
-class CRenderPassSprite : public vk::IRenderPass
+class CRenderPassSprite : public engine::IRenderPass
 {
 public:
     CRenderPassSprite() : m_pCamera(make<CCamera>()) {}

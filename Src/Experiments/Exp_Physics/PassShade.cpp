@@ -17,7 +17,7 @@ void CRenderPassShade::_initPortDescV(SPortDescriptor vDesc)
 {
     SPortDescriptor Ports;
     Ports.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
-    VkFormat DepthFormat = VK_FORMAT_D32_SFLOAT;
+    VkFormat DepthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
     Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
     return Ports;
 }
@@ -86,7 +86,7 @@ void CRenderPassShade::__createDepthResources()
 {
     m_DepthImage.destroy();
 
-    VkFormat DepthFormat = m_pPortSet->getOutputFormat("Depth").Format;
+    VkFormat DepthFormat = m_pPortSet->getOutputPortInfo("Depth").Format;
     ImageUtils::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent, NULL, DepthFormat);
 
     m_pPortSet->setOutput("Depth", m_DepthImage);

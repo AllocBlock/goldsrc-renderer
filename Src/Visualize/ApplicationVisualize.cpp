@@ -32,45 +32,47 @@ void CApplicationVisualize::_createV()
     VkExtent2D ScreenExtent = m_pSwapchain->getExtent();
     m_pPassVisualize = make<CRenderPassVisualize>();
     m_pPassVisualize->createPortSet();
-
-    SPortInfo Info = { VK_FORMAT_D32_SFLOAT, SPortInfo::AnyExtent, 1, EImageUsage::DEPTH_ATTACHMENT };
-    m_pDepthPort = make<CSourcePort>("Depth", Info, nullptr);
-
-    VkFormat DepthFormat = m_pDepthPort->getInfo().Format;
-    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, ScreenExtent, NULL, DepthFormat);
-
-    m_pDepthPort->setActualFormat(DepthFormat);
-    m_pDepthPort->setActualExtent(ScreenExtent);
-    m_pDepthPort->setImage(m_DepthImage);
+    m_pPassPresent = make<CRenderPassPresent>(m_pSwapchain);
+    m_pPassPresent->createPortSet();
 
     __linkPasses();
 
     m_pPassVisualize->init(m_pDevice, ScreenExtent);
     m_pPassVisualize->setSceneInfo(m_pSceneInfo);
+    m_pPassPresent->init(m_pDevice, ScreenExtent);
 }
 
-void CApplicationVisualize::_updateV()
+void CApplicationVisualize::_updateV(uint32_t ImageIndex)
 {
     CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setAspect(vk::calcAspect(m_pSwapchain->getExtent()));
     m_pInteractor->update();
     m_pPassVisualize->update();
+    m_pPassPresent->updateSwapchainImageIndex(ImageIndex);
+    m_pPassPresent->update();
+}
+
+std::vector<VkCommandBuffer> CApplicationVisualize::_getCommandBuffers()
+{
+    auto buffers = std::vector<VkCommandBuffer>();
+    const auto& subBuffers1 = m_pPassVisualize->requestCommandBuffers();
+    buffers.insert(buffers.end(), subBuffers1.begin(), subBuffers1.end());
+    const auto& subBuffers2 = m_pPassPresent->requestCommandBuffers();
+    buffers.insert(buffers.end(), subBuffers2.begin(), subBuffers2.end());
+    return buffers;
 }
 
 void CApplicationVisualize::_destroyV()
 {
-    m_DepthImage.destroy();
     destroyAndClear(m_pPassVisualize);
+    destroyAndClear(m_pPassPresent);
     SingleTimeCommandBuffer::clean();
 }
 
 void CApplicationVisualize::__linkPasses()
 {
     auto pPortVisualize = m_pPassVisualize->getPortSet();
-    //m_pSwapchainPort->unlinkAll();
-    
-    //CPortSet::link(m_pSwapchainPort, pPortVisualize, "Main");
-    CPortSet::link(m_pDepthPort, pPortVisualize, "Depth");
+    auto pPortPresent = m_pPassPresent->getPortSet();
 
-    _ASSERTE(m_pPassVisualize->isValid());
+    CPortSet::link(pPortVisualize, "Main", pPortPresent, "Main");
 }

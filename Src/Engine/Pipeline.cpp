@@ -2,7 +2,7 @@
 #include "ShaderCompiler.h"
 #include "Log.h"
 
-void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkExtent2D vExtent, uint32_t vSubpass)
+void IPipeline::create(vk::CDevice::CPtr vDevice, const CRenderInfoDescriptor& vRenderInfoDescriptor, VkExtent2D vExtent)
 {
     destroy();
 
@@ -10,6 +10,18 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     m_Extent = vExtent;
 
     _initShaderResourceDescriptorV();
+
+    std::vector<VkFormat> ColorAttachmentFormats = vRenderInfoDescriptor.getColorAttachmentFormats();
+    VkFormat DepthStencilAttachmentFormat = VkFormat::VK_FORMAT_UNDEFINED;
+    if (vRenderInfoDescriptor.hasDepthAttachment())
+        DepthStencilAttachmentFormat = vRenderInfoDescriptor.getDepthAttachmentFormat();
+
+    VkPipelineRenderingCreateInfoKHR DynamicRenderingInfo = {};
+    DynamicRenderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+    DynamicRenderingInfo.colorAttachmentCount = static_cast<uint32_t>(ColorAttachmentFormats.size());
+    DynamicRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats.data();
+    DynamicRenderingInfo.depthAttachmentFormat = DepthStencilAttachmentFormat;
+    DynamicRenderingInfo.stencilAttachmentFormat = DepthStencilAttachmentFormat;
 
     CPipelineDescriptor PipelineDescriptor = _getPipelineDescriptionV();
 
@@ -55,8 +67,9 @@ void IPipeline::create(vk::CDevice::CPtr vDevice, VkRenderPass vRenderPass, VkEx
     PipelineInfo.pColorBlendState = &ColorBlendInfo;
     PipelineInfo.pDynamicState = &DynamicInfo;
     PipelineInfo.layout = m_PipelineLayout;
-    PipelineInfo.renderPass = vRenderPass;
-    PipelineInfo.subpass = vSubpass;
+    PipelineInfo.renderPass = VK_NULL_HANDLE; // dynmaic rendering
+    PipelineInfo.subpass = 0;
+    PipelineInfo.pNext = &DynamicRenderingInfo;
 
     vk::checkError(vkCreateGraphicsPipelines(*m_pDevice, VK_NULL_HANDLE, 1, &PipelineInfo, nullptr, &m_Pipeline));
     m_pDevice->destroyShaderModule(VertShaderModule);

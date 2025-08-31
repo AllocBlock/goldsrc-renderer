@@ -1,6 +1,6 @@
 #include "RenderPass.h"
 
-using namespace vk;
+using namespace engine;
 
 IRenderPass::IRenderPass()
 {
@@ -17,75 +17,121 @@ void IRenderPass::init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent)
     m_pDevice = vDevice;
     m_ScreenExtent = vScreenExtent;
     m_pPortSet->assertInputReady();
-    
-    __createRenderpass();
-    _ASSERTE(isValid());
+
+    __createCommandPoolAndBuffers();
+
     _initV();
 }
 
 void IRenderPass::update()
 {
-    _ASSERTE(isValid());
     _updateV();
 }
 
 std::vector<VkCommandBuffer> IRenderPass::requestCommandBuffers()
 {
-    _ASSERTE(isValid());
     return _requestCommandBuffersV();
 }
 
 void IRenderPass::destroy()
 {
     _destroyV();
-    __destroyRenderpass();
+    __destroyCommandPoolAndBuffers();
     m_pPortSet->unlinkAll();
 }
 
-void IRenderPass::_begin(CCommandBuffer::Ptr vCommandBuffer, CFrameBuffer::CPtr vFrameBuffer, const std::vector<VkClearValue>& vClearValues, bool vHasSecondary)
+void IRenderPass::_beginCommand(CCommandBuffer::Ptr vCommandBuffer)
 {
-    _ASSERTE(!m_Begined);
-    _ASSERTE(isValid());
+    _ASSERTE(!m_CommandBegun);
     if (m_pCurrentCommandBuffer != nullptr)
         throw std::runtime_error("Already begun with another command buffer");
-
-    // only need one command one pass, so begin/end command buffer at same time with renderpass
-    vCommandBuffer->begin();
-
-    VkRenderPassBeginInfo RenderPassBeginInfo = {};
-    RenderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass = get();
-    RenderPassBeginInfo.framebuffer = *vFrameBuffer;
-    RenderPassBeginInfo.renderArea.offset = { 0, 0 };
-    RenderPassBeginInfo.renderArea.extent = vFrameBuffer->getExtent();
-    RenderPassBeginInfo.clearValueCount = static_cast<uint32_t>(vClearValues.size());
-    RenderPassBeginInfo.pClearValues = vClearValues.data();
-
-    vCommandBuffer->beginRenderPass(RenderPassBeginInfo, vHasSecondary);
-
     m_pCurrentCommandBuffer = vCommandBuffer;
-    m_Begined = true;
+
+    m_pCurrentCommandBuffer->begin();
+    _initImageLayouts(vCommandBuffer);
+
+    m_CommandBegun = true;
 }
 
-void IRenderPass::_end()
+void IRenderPass::_beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRenderingInfo& vBeginInfo)
 {
-    _ASSERTE(m_Begined);
-    m_pCurrentCommandBuffer->endRenderPass();
+    _ASSERTE(m_CommandBegun);
+    _initImageLayouts(vCommandBuffer);
+    m_pCurrentCommandBuffer->beginRendering(vBeginInfo);
+}
+
+void IRenderPass::_endRendering()
+{
+    _ASSERTE(m_CommandBegun);
+    m_pCurrentCommandBuffer->endRendering();
+}
+
+void IRenderPass::_endCommand()
+{
+    _ASSERTE(m_CommandBegun);
     m_pCurrentCommandBuffer->end();
     m_pCurrentCommandBuffer = nullptr;
-    m_Begined = false;
+    m_CommandBegun = false;
 }
 
 bool IRenderPass::_dumpInputPortExtent(std::string vName, VkExtent2D& voExtent)
 {
     bool HasExtent = false;
     auto pRefPort = m_pPortSet->getInputPort(vName);
-    if (pRefPort->hasActualExtentV())
+    auto pImage = pRefPort->getImageV();
+    if (pImage)
     {
         HasExtent = true;
-        voExtent = pRefPort->getActualExtentV();
+        voExtent = pImage->getExtent();
     }
     return HasExtent;
+}
+
+
+CCommandBuffer::Ptr IRenderPass::_getCommandBuffer()
+{
+    return m_Command.getCommandBuffer(m_DefaultCommandName);
+}
+
+void IRenderPass::_initImageLayouts(CCommandBuffer::Ptr vCommandBuffer)
+{
+    for (int i = 0; i < m_pPortSet->getInputPortNum(); ++i)
+    {
+        const auto& pPort = m_pPortSet->getInputPort(i);
+        auto pImage = pPort->getImageV();
+        if (pPort->getLayout() != pImage->getLayout())
+        {
+            pImage->transitionLayout(vCommandBuffer, pImage->getLayout(), pPort->getLayout());
+        }
+    }
+
+    for (int i = 0; i < m_pPortSet->getOutputPortNum(); ++i)
+    {
+        const auto& pPort = m_pPortSet->getOutputPort(i);
+        auto pImage = pPort->getImageV();
+        if (pPort->getLayout() != pImage->getLayout())
+        {
+            pImage->transitionLayout(vCommandBuffer, pImage->getLayout(), pPort->getLayout());
+        }
+    }
+}
+
+void IRenderPass::__createCommandPoolAndBuffers()
+{
+    __destroyCommandPoolAndBuffers();
+    m_Command.createPool(m_pDevice, ECommandType::RESETTABLE);
+    m_Command.createBuffers(m_DefaultCommandName, ECommandBufferLevel::PRIMARY);
+
+    // secondary
+ /*   for (const auto& Name : _getExtraCommandBufferNamesV())
+    {
+        m_Command.createBuffers(Name, ECommandBufferLevel::SECONDARY);
+    }*/
+}
+
+void IRenderPass::__destroyCommandPoolAndBuffers()
+{
+    m_Command.clear();
 }
 
 std::string __toString(VkImageLayout vLayout)
@@ -101,40 +147,5 @@ std::string __toString(VkImageLayout vLayout)
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL: return "Depth Attachment";
     default:
         throw std::runtime_error("Unsupported layout");
-    }
-}
-
-void IRenderPass::__createRenderpass()
-{
-    __destroyRenderpass();
-    CRenderPassDescriptor PassDesc = _getRenderPassDescV();
-
-    auto Info = PassDesc.generateInfo();
-    vk::checkError(vkCreateRenderPass(*m_pDevice, &Info, nullptr, _getPtr()));
-    PassDesc.clearStage(); // free stage data to save memory
-
-#ifdef  _DEBUG
-    Log::logCreation(std::string(typeid(*this).name()) + "(renderpass)", uint64_t(get()));
-    Log::log("\tInput port:");
-    for (size_t i = 0; i < m_pPortSet->getInputPortNum(); ++i)
-    {
-        auto pPort = m_pPortSet->getInputPort(i);
-        Log::log("\t\t" + pPort->getName() + ":\t" + __toString(pPort->getInputLayout()) + "\t->\t" + __toString(pPort->getOutputLayout()));
-    }
-    Log::log("\tOutput port:");
-    for (size_t i = 0; i < m_pPortSet->getInputPortNum(); ++i)
-    {
-        auto pPort = m_pPortSet->getInputPort(i);
-        Log::log("\t\t" + pPort->getName() + ":\t" + __toString(pPort->getInputLayout()) + "\t->\t" + __toString(pPort->getOutputLayout()));
-    }
-#endif
-}
-
-void IRenderPass::__destroyRenderpass()
-{
-    if (isValid())
-    {
-        vkDestroyRenderPass(*m_pDevice, get(), nullptr);
-        _setNull();
     }
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderPassSingleFrameBuffer.h"
+#include "RenderPass.h"
 #include "Buffer.h"
 #include "PipelineOutlineEdge.h"
 #include "PipelineOutlineMask.h"
@@ -7,7 +7,7 @@
 
 // FIXME: should not use subpass like this
 // Quote: Image subresources used as attachments must not be accessed in any other way for the duration of a render pass instance.
-class CRenderPassOutline : public CRenderPassSingleFrameBuffer
+class CRenderPassOutline : public engine::IRenderPass
 {
 public:
     inline static const std::string Name = "Outline";
@@ -26,7 +26,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual void _initPortDescV(SPortDescriptor& vioDesc) override;
+    virtual CPortSet::Ptr _createPortSetV() override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;

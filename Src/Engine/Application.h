@@ -36,8 +36,9 @@ public:
 
 protected:
     virtual void _createV() = 0;
-    virtual void _updateV() = 0;
+    virtual void _updateV(uint32_t ImageIndex) = 0;
     virtual void _renderUIV() {}
+    virtual std::vector<VkCommandBuffer> _getCommandBuffers() = 0;
     virtual void _destroyV() = 0;
 
     virtual void _onSwapchainRecreateV() {}
@@ -68,7 +69,7 @@ protected:
     };
     
     const ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
-    const CRenderPassGraphInstance::Ptr m_pGraphInstance = make<CRenderPassGraphInstance>();
+    //const CRenderPassGraphInstance::Ptr m_pGraphInstance = make<CRenderPassGraphInstance>();
 
 private:
     void __render();
