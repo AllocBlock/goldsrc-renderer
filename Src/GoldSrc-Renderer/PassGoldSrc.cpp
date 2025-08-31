@@ -38,16 +38,13 @@ void CRenderPassGoldSrc::_initV()
 {
     m_pRerecord = make<CRerecordState>();
     m_pRerecord->addField("Primary");
-    for (const auto& Name : _getExtraCommandBufferNamesV())
+    for (const auto& Name : _getSecondaryCommandBufferNamesV())
         m_pRerecord->addField(Name);
     
-    VkExtent2D RefExtent = { 0, 0 };
-    bool Success = _dumpReferenceExtentV(RefExtent);
-    _ASSERTE(Success);
+    VkExtent2D RefExtent = m_ScreenExtent;
 
     m_pMainImage = make<vk::CImage>();
-    auto pMainPort = m_pPortSet->getOutputPort("Main");
-    VkFormat MainFormat = pMainPort->getActualFormatV();
+    VkFormat MainFormat = m_pPortSet->getOutputPortInfo("Main").Format;
     ImageUtils::createImage2d(*m_pMainImage, m_pDevice, m_ScreenExtent, MainFormat, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     m_pPortSet->setOutput("Main", m_pMainImage);
 
@@ -56,27 +53,22 @@ void CRenderPassGoldSrc::_initV()
     ImageUtils::createDepthImage(*m_pDepthImage, m_pDevice, RefExtent, VK_IMAGE_USAGE_SAMPLED_BIT, DepthFormat);
     m_pPortSet->setOutput("Depth", m_pDepthImage);
 
-    CRenderPassSingleFrameBuffer::_initV();
+    m_RenderInfoDescriptor.addColorAttachment(m_pPortSet->getOutputPort("Main"));
+    m_RenderInfoDescriptor.setDepthAttachment(m_pPortSet->getOutputPort("Depth"));
 
-    m_PipelineSet.Normal.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.BlendTextureAlpha.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.BlendAlphaTest.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.BlendAdditive.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.Simple.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.Sky.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.Sprite.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.Icon.create(m_pDevice, get(), RefExtent);
-    m_PipelineSet.Text.create(m_pDevice, get(), RefExtent);
+    m_PipelineSet.Normal.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.BlendTextureAlpha.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.BlendAlphaTest.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.BlendAdditive.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.Simple.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.Sky.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.Sprite.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.Icon.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
+    m_PipelineSet.Text.create(m_pDevice, m_RenderInfoDescriptor, RefExtent);
     
     __createSceneResources();
 
     rerecordAllCommand();
-}
-
-CRenderPassDescriptor CRenderPassGoldSrc::_getRenderPassDescV()
-{
-    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
-        m_pPortSet->getOutputPort("Depth"));
 }
 
 void CRenderPassGoldSrc::_updateV()
@@ -128,14 +120,10 @@ void CRenderPassGoldSrc::_destroyV()
     destroyAndClear(m_pVertexBuffer);
 
     __destroySceneResources();
-
-    CRenderPassSingleFrameBuffer::_destroyV();
 }
 
 std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
 {
-    _ASSERTE(isValid());
-
     bool NeedRecordPrimary = false;
 
     // ensure layout
@@ -152,7 +140,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     CCommandBuffer::Ptr pSkyCmdBuffer = m_Command.getCommandBuffer("Sky");
     if (m_pRerecord->consume("Sky"))
     {
-        _beginSecondary(pSkyCmdBuffer);
+        _beginSecondaryCommand(pSkyCmdBuffer, m_RenderInfoDescriptor);
         if (m_EnableSky)
         {
             m_PipelineSet.Sky.recordCommand(pSkyCmdBuffer);
@@ -165,7 +153,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     CCommandBuffer::Ptr pMeshCmdBuffer = m_Command.getCommandBuffer("Mesh");
     if (m_pRerecord->consume("Mesh"))
     {
-        _beginSecondary(pMeshCmdBuffer);
+        _beginSecondaryCommand(pMeshCmdBuffer, m_RenderInfoDescriptor);
         if (isNonEmptyAndValid(m_pVertexBuffer))
         {
             pMeshCmdBuffer->bindVertexBuffer(*m_pVertexBuffer);
@@ -213,7 +201,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     CCommandBuffer::Ptr pSpriteCmdBuffer = m_Command.getCommandBuffer("Sprite");
     if (m_pRerecord->consume("Sprite"))
     {
-        _beginSecondary(pSpriteCmdBuffer);
+        _beginSecondaryCommand(pSpriteCmdBuffer, m_RenderInfoDescriptor);
         if (m_pSceneInfo && !m_pSceneInfo->SprSet.empty())
         {
             m_PipelineSet.Sprite.recordCommand(pSpriteCmdBuffer);
@@ -226,7 +214,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     CCommandBuffer::Ptr pIconCmdBuffer = m_Command.getCommandBuffer("Icon");
     if (m_pRerecord->consume("Icon"))
     {
-        _beginSecondary(pIconCmdBuffer);
+        _beginSecondaryCommand(pIconCmdBuffer, m_RenderInfoDescriptor);
         if (m_pSceneInfo)
         {
             auto& PipelineIcon = m_PipelineSet.Icon;
@@ -255,7 +243,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     auto& PipelineText = m_PipelineSet.Text;
     if (PipelineText.doesNeedRerecord())
     {
-        _beginSecondary(pTextCmdBuffer);
+        _beginSecondaryCommand(pTextCmdBuffer, m_RenderInfoDescriptor);
         PipelineText.recordCommand(pTextCmdBuffer);
         pTextCmdBuffer->end();
         NeedRecordPrimary = true;
@@ -265,14 +253,16 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     CCommandBuffer::Ptr pPrimaryCmdBuffer = _getCommandBuffer();
     if (m_pRerecord->consume("Primary") || NeedRecordPrimary)
     {
-        _beginWithFramebuffer(true);
+        _beginCommand(pPrimaryCmdBuffer);
+        _beginRendering(pPrimaryCmdBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent, true));
         //pPrimaryCmdBuffer->execCommand(pInitCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pSkyCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pMeshCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pSpriteCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pIconCmdBuffer->get());
         pPrimaryCmdBuffer->execCommand(pTextCmdBuffer->get());
-        _endWithFramebuffer();
+        _endRendering();
+        _endCommand();
     }
     
     return { pPrimaryCmdBuffer->get() };

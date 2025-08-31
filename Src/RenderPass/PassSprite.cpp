@@ -51,23 +51,18 @@ CRenderPassSprite::CRenderPassSprite()
     };
 }
 
-CPortSet::Ptr CRenderPassPBR::_initPortDescV(SPortDescriptor& vioDesc)
+CPortSet::Ptr CRenderPassSprite::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
     return make<CPortSet>(PortDesc);
 }
 
-CRenderPassDescriptor CRenderPassSprite::_getRenderPassDescV()
-{
-    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
-}
-
 void CRenderPassSprite::_initV()
 {
-    CRenderPassSingleFrameBuffer::_initV();
+    m_RenderInfoDescriptor.addColorAttachment(m_pPortSet->getOutputPort("Main"));
     
-    m_PipelineSprite.create(m_pDevice, get(), m_ScreenExtent);
+    m_PipelineSprite.create(m_pDevice, m_RenderInfoDescriptor, m_ScreenExtent);
 }
 
 void CRenderPassSprite::_updateV()
@@ -79,40 +74,17 @@ std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV()
 {
     CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-    std::vector<VkClearValue> ClearValueSet(2);
-    ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    ClearValueSet[1].depthStencil = { 1.0f, 0 };
-
-    _beginWithFramebuffer();
+    _beginCommand(pCommandBuffer);
+    _beginRendering(pCommandBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent));
     m_PipelineSprite.recordCommand(pCommandBuffer);
-    _endWithFramebuffer();
+    _endCommand();
+    _endRendering();
     return { pCommandBuffer->get() };
 }
 
 void CRenderPassSprite::_destroyV()
 {
     m_PipelineSprite.destroy();
-
-    CRenderPassSingleFrameBuffer::_destroyV();
-}
-
-bool CRenderPassSprite::_dumpReferenceExtentV(VkExtent2D& voExtent)
-{
-    voExtent = m_ScreenExtent;
-    return true;
-}
-
-std::vector<VkImageView> CRenderPassSprite::_getAttachmentsV()
-{
-    return
-    {
-        m_pPortSet->getOutputPort("Main")->getImageV()
-    };
-}
-
-std::vector<VkClearValue> CRenderPassSprite::_getClearValuesV()
-{
-    return DefaultClearValueColor;
 }
 
 void CRenderPassSprite::__updateUniformBuffer()

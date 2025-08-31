@@ -3,7 +3,7 @@
 #include "Command.h"
 #include "DrawableUI.h"
 #include "RenderPassPort.h"
-#include "RenderPassDescriptor.h"
+#include "RenderInfoDescriptor.h"
 #include "FrameBuffer.h"
 #include "SceneInfo.h"
 
@@ -87,10 +87,14 @@ namespace engine
             */
         virtual void _onSceneInfoSet(ptr<SSceneInfo> vSceneInfo) {}
 
+        virtual std::vector<std::string> _getSecondaryCommandBufferNamesV() const { return {}; }
+
         void _beginCommand(CCommandBuffer::Ptr vCommandBuffer);
         void _beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRenderingInfo& vBeginInfo);
         void _endRendering();
         void _endCommand();
+        void _beginSecondaryCommand(CCommandBuffer::Ptr vCommandBuffer, const CRenderInfoDescriptor& vRenderInfoDescriptor);
+
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 
         CCommandBuffer::Ptr _getCommandBuffer();

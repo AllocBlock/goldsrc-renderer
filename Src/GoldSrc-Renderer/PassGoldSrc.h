@@ -51,31 +51,12 @@ public:
 protected:
     virtual void _initV() override;
     virtual CPortSet::Ptr _createPortSetV() override;
-    virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV() override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;
     
-    virtual bool _dumpReferenceExtentV(VkExtent2D& voExtent) override
-    {
-        voExtent = m_ScreenExtent;
-        return voExtent != vk::ZeroExtent;
-    }
-    virtual std::vector<VkImageView> _getAttachmentsV() override
-    {
-        return
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(),
-            m_pPortSet->getOutputPort("Depth")->getImageV(),
-        };
-    }
-    virtual std::vector<VkClearValue> _getClearValuesV() override
-    {
-        return DefaultClearValueColorDepth;
-    }
-
-    virtual std::vector<std::string> _getExtraCommandBufferNamesV() const override
+    virtual std::vector<std::string> _getSecondaryCommandBufferNamesV() const override
     {
         return { "Init", "Mesh", "Sprite", "Icon", "Text", "Sky"};
     };
@@ -107,6 +88,7 @@ private:
         vCommandBuffer->draw(Info.First, Info.Num);
     }
 
+    CRenderInfoDescriptor m_RenderInfoDescriptor;
     struct
     {
         CPipelineNormal Normal;

@@ -37,7 +37,7 @@ void CCommandBuffer::begin()
     vk::checkError(vkBeginCommandBuffer(m_Buffer, &CommandBufferBeginInfo));
 }
 
-void CCommandBuffer::beginSecondary(VkRenderPass vPass, uint32_t vSubPass, VkFramebuffer vFramebuffer)
+void CCommandBuffer::beginSecondary(const VkCommandBufferInheritanceRenderingInfo& vInheritRenderingInfo)
 {
     _ASSERTE(m_IsSecondary);
     __assertValid();
@@ -52,9 +52,10 @@ void CCommandBuffer::beginSecondary(VkRenderPass vPass, uint32_t vSubPass, VkFra
 
     VkCommandBufferInheritanceInfo InheritInfo = {};
     InheritInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-    InheritInfo.renderPass = vPass;
-    InheritInfo.subpass = vSubPass;
-    InheritInfo.framebuffer = vFramebuffer;
+    InheritInfo.renderPass = VK_NULL_HANDLE;
+    InheritInfo.subpass = 0;
+    InheritInfo.framebuffer = VK_NULL_HANDLE;
+    InheritInfo.pNext = &vInheritRenderingInfo;
     
     CommandBufferBeginInfo.pInheritanceInfo = &InheritInfo;
 

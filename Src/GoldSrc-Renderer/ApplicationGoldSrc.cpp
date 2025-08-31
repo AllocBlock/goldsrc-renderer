@@ -11,6 +11,8 @@
 
 void CApplicationGoldSrc::_createV()
 {
+    m_pGraphInstance->init(m_pDevice, m_pSwapchain->getExtent(), m_pSceneInfo);
+
     SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
     m_pInteractor = make<CInteractor>();
@@ -30,7 +32,7 @@ void CApplicationGoldSrc::_createV()
             glm::vec3 NearestIntersection;
             CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
 
-            auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
+            /*auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
             if (SceneProbe::select(NDC, pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {
                 if (pPassOutline)
@@ -46,7 +48,7 @@ void CApplicationGoldSrc::_createV()
                 if (pPassOutline)
                     pPassOutline->removeHighlight();
                 m_pMainUI->clearSceneFocusedActor();
-            }
+            }*/
         });
 
     m_pMainUI = make<CGUIMain>();
@@ -63,7 +65,7 @@ void CApplicationGoldSrc::_createV()
             m_pGraphInstance->renderUI();
         });
 
-    const auto& GraphFile = Environment::findGraph("GoldSrc.graph");
+    const auto& GraphFile = Environment::findGraph("SimpleGoldSrc.graph");
     m_pRenderPassGraph = RenderPassGraphIO::load(GraphFile);
     
     m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
@@ -77,7 +79,7 @@ void CApplicationGoldSrc::_createV()
 
 }
 
-void CApplicationGoldSrc::_updateV()
+void CApplicationGoldSrc::_updateV(uint32_t vImageIndex)
 {
     if (m_NeedRecreateGraphInstance)
     {
@@ -85,6 +87,9 @@ void CApplicationGoldSrc::_updateV()
         m_pGraphInstance->createFromGraph(m_pRenderPassGraph, m_pWindow, m_pSwapchain);
         m_NeedRecreateGraphInstance = false;
     }
+
+    m_pGraphInstance->updateSwapchainImageIndex(vImageIndex);
+    m_pGraphInstance->update();
 
     auto pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setAspect(vk::calcAspect(m_pSwapchain->getExtent()));
@@ -101,8 +106,20 @@ void CApplicationGoldSrc::_renderUIV()
     UI::endFrame();
 }
 
+std::vector<VkCommandBuffer> CApplicationGoldSrc::_getCommandBuffers()
+{
+    std::vector<VkCommandBuffer> CommandBuffers;
+    for (auto pPass : m_pGraphInstance->getSortedPasses())
+    {
+        const auto& BufferSet = pPass->requestCommandBuffers();
+        CommandBuffers.insert(CommandBuffers.end(), BufferSet.begin(), BufferSet.end());
+    }
+    return CommandBuffers;
+}
+
 void CApplicationGoldSrc::_destroyV()
 {
+    m_pGraphInstance->destroy();
     m_pRenderPassGraphUI->destroyPasses();
     SingleTimeCommandBuffer::clean();
 }

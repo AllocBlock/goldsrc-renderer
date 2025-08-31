@@ -19,9 +19,9 @@
 void registerAllPasses()
 {
 	_REGISTER_PASS(CRenderPassGoldSrc, true);
-	_REGISTER_PASS(CRenderPassOutline, true);
-	_REGISTER_PASS(CRenderPassVisualize, true);
-	_REGISTER_PASS(CRenderPassBloom, true);
+	//_REGISTER_PASS(CRenderPassOutline, true);
+	//_REGISTER_PASS(CRenderPassVisualize, true);
+	//_REGISTER_PASS(CRenderPassBloom, true);
 	_REGISTER_PASS(CRenderPassSSAO, true);
 }
 

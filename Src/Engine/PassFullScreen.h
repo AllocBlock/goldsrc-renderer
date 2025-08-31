@@ -7,7 +7,7 @@
 class CRenderPassFullScreen : public engine::IRenderPass
 {
 protected:
-    virtual CPortSet::Ptr _createPortSetV() final;
+    virtual CPortSet::Ptr _createPortSetV() = 0;
     virtual void _initV() override;
     virtual void _destroyV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() = 0;

@@ -1,0 +1,8 @@
+[Nodes]
+"GoldSrc" "1_GoldSrc" -216.339 105
+"SSAO" "2_SSAO" 330 107
+[Links]
+"1_GoldSrc" "Main" "2_SSAO" "Main"
+"1_GoldSrc" "Depth" "2_SSAO" "Depth"
+[Output]
+"2_SSAO" "Main"

@@ -21,7 +21,7 @@ public:
     void markAsOutdate() { m_Buffer = VK_NULL_HANDLE; }
 
     void begin();
-    void beginSecondary(VkRenderPass vPass, uint32_t vSubPass, VkFramebuffer vFramebuffer);
+    void beginSecondary(const VkCommandBufferInheritanceRenderingInfo& vInheritRenderingInfo);
     void end();
 
     void beginRenderPass(const VkRenderPassBeginInfo& vBeginInfo, bool vHasSecondary)

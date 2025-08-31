@@ -128,7 +128,7 @@ CRelayPort::CRelayPort(const std::string& vName, const SPortInfo& vInfo, CPortSe
 
 vk::CImage::Ptr CRelayPort::getImageV() const
 {
-    _ASSERTE(!m_pParent.expired());
+    if (m_pParent.expired()) return nullptr;
     return m_pParent.lock()->getImageV();
 }
 

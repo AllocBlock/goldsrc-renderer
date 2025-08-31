@@ -74,6 +74,24 @@ void IRenderPass::_endCommand()
     m_CommandBegun = false;
 }
 
+void IRenderPass::_beginSecondaryCommand(CCommandBuffer::Ptr vCommandBuffer, const CRenderInfoDescriptor& vRenderInfoDescriptor)
+{
+    std::vector<VkFormat> ColorAttachmentFormats = vRenderInfoDescriptor.getColorAttachmentFormats();
+
+    VkCommandBufferInheritanceRenderingInfo InheritRenderingInfo = {};
+    InheritRenderingInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO;
+    InheritRenderingInfo.colorAttachmentCount = static_cast<uint32_t>(ColorAttachmentFormats.size());
+    InheritRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats.data();
+    if (vRenderInfoDescriptor.hasDepthAttachment())
+    {
+        InheritRenderingInfo.depthAttachmentFormat = vRenderInfoDescriptor.getDepthAttachmentFormat();
+        InheritRenderingInfo.stencilAttachmentFormat = vRenderInfoDescriptor.getDepthAttachmentFormat();
+    }
+    InheritRenderingInfo.rasterizationSamples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
+
+    vCommandBuffer->beginSecondary(InheritRenderingInfo);
+}
+
 bool IRenderPass::_dumpInputPortExtent(std::string vName, VkExtent2D& voExtent)
 {
     bool HasExtent = false;
@@ -123,10 +141,10 @@ void IRenderPass::__createCommandPoolAndBuffers()
     m_Command.createBuffers(m_DefaultCommandName, ECommandBufferLevel::PRIMARY);
 
     // secondary
- /*   for (const auto& Name : _getExtraCommandBufferNamesV())
+    for (const auto& Name : _getSecondaryCommandBufferNamesV())
     {
         m_Command.createBuffers(Name, ECommandBufferLevel::SECONDARY);
-    }*/
+    }
 }
 
 void IRenderPass::__destroyCommandPoolAndBuffers()

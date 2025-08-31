@@ -181,7 +181,7 @@ void CImage::transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout 
     Barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     Barrier.image = m_Image;
 
-    if (vNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+    if (vNewLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL || vOldLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
     {
         Barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
         bool hasStencilComponent = (m_Format == VK_FORMAT_D32_SFLOAT_S8_UINT || m_Format == VK_FORMAT_D24_UNORM_S8_UINT);
