@@ -34,8 +34,8 @@ public:
 
     void begin();
     void drawLine(const glm::vec2& vStart, const glm::vec2& vEnd, ImColor vColor, float vThickness);
-    void drawOutlineRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding = 0.0f, ImDrawCornerFlags vFlags = 0);
-    void drawSolidRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding = 0.0f, ImDrawCornerFlags vFlags = 0);
+    void drawOutlineRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding = 0.0f, ImDrawFlags vFlags = 0);
+    void drawSolidRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding = 0.0f, ImDrawFlags vFlags = 0);
     void drawSolidCircle(const glm::vec2& vCenter, float vRadius, ImColor vColor);
     void drawText(const glm::vec2& vAnchorPos, const std::string& vText, ImColor vColor, ETextAlign vAlignHorizon = ETextAlign::BEGIN, ETextAlign vAlignVertical = ETextAlign::BEGIN);
     void drawBezier(const Math::SCubicBezier2D& vBezier, ImColor vColor, float vThickness);

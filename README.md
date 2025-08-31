@@ -97,6 +97,7 @@
   - 图形API：vulkan （官网下载安装配置环境变量VULKAN_SDK为Vulkan根目录）
   - GUI库：glfw+imgui
     - file dialog文件选择框基于nativefiledialog
+	- imgui >= 1.90.3 （动态渲染相关有breaking change）
   - 数学库：glm
   - 图片IO：stb_image (.jpg, .bmp, .png, .tga...), tinyexr (.exr)
 

@@ -34,7 +34,7 @@ namespace UI
         TEXT
     };
 
-    void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, VkRenderPass vRenderPass);
+    void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, const VkPipelineRenderingCreateInfo& vPipelineInfo);
     bool isInitted();
     void setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer);
     void destory();
@@ -43,6 +43,8 @@ namespace UI
     void endFrame();
 
     bool isInited();
+
+    void showDebugLogWindow();
 
     bool beginWindow(std::string vTitle, bool* vIsOpen = nullptr, int vFlags = 0);
     void endWindow();

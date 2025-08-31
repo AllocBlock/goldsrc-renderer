@@ -4,11 +4,26 @@
 
 const std::string gChineseFont = "C:/windows/fonts/simhei.ttf";
 
+CRenderPassGUI::CRenderPassGUI(GLFWwindow* vWindow)
+{
+    m_pWindow = vWindow;
+}
+
 void CRenderPassGUI::_initV()
 {
     __createDescriptorPool();
+
+    m_RenderInfoDescriptor.addColorAttachment(m_pPortSet->getOutputPort("Main"));
+    std::vector<VkFormat> ColorAttachmentFormats = m_RenderInfoDescriptor.getColorAttachmentFormats();
+
+    VkPipelineRenderingCreateInfoKHR DynamicRenderingInfo = {};
+    DynamicRenderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;
+    DynamicRenderingInfo.colorAttachmentCount = static_cast<uint32_t>(ColorAttachmentFormats.size());
+    DynamicRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats.data();
+    DynamicRenderingInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+    DynamicRenderingInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
     
-    //UI::init(m_pDevice, m_pWindow, m_DescriptorPool, get());
+    UI::init(m_pDevice, m_pWindow, m_DescriptorPool, DynamicRenderingInfo);
     CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
     UI::setFont(gChineseFont, pCommandBuffer);
     m_Command.endSingleTimeBuffer(pCommandBuffer);
@@ -21,13 +36,9 @@ CPortSet::Ptr CRenderPassGUI::_createPortSetV()
     return make<CPortSet>(PortDesc);
 }
 
-//CRenderPassDescriptor CRenderPassGUI::_getRenderPassDescV()
-//{
-//    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"));
-//}
-
 void CRenderPassGUI::_renderUIV()
 {
+    UI::showDebugLogWindow();
 }
 
 void CRenderPassGUI::_destroyV()
@@ -42,9 +53,11 @@ std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV()
 {
     CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
 
-    //_beginWithFramebuffer();
+    _beginCommand(pCommandBuffer);
+    _beginRendering(pCommandBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent));
     UI::draw(pCommandBuffer);
-    //_endWithFramebuffer();
+    _endRendering();
+    _endCommand();
 
     return { pCommandBuffer->get() };
 }

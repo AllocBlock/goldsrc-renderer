@@ -50,12 +50,12 @@ void CCanvasDrawer::drawLine(const glm::vec2& vStart, const glm::vec2& vEnd, ImC
     m_pDrawList->AddLine(__toScreenImgui(vStart), __toScreenImgui(vEnd), vColor, vThickness);
 }
 
-void CCanvasDrawer::drawOutlineRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding, ImDrawCornerFlags vFlags)
+void CCanvasDrawer::drawOutlineRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding, ImDrawFlags vFlags)
 {
     m_pDrawList->AddRect(__toScreenImgui(vStart), __toScreenImgui(vStart + vSize), vColor, vRounding, vFlags);
 }
 
-void CCanvasDrawer::drawSolidRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding, ImDrawCornerFlags vFlags)
+void CCanvasDrawer::drawSolidRect(const glm::vec2& vStart, const glm::vec2& vSize, ImColor vColor, float vRounding, ImDrawFlags vFlags)
 {
     m_pDrawList->AddRectFilled(__toScreenImgui(vStart), __toScreenImgui(vStart + vSize), vColor, vRounding, vFlags);
 }
@@ -80,7 +80,7 @@ void CCanvasDrawer::drawText(const glm::vec2& vAnchorPos, const std::string& vTe
 
 void CCanvasDrawer::drawBezier(const Math::SCubicBezier2D& vBezier, ImColor vColor, float vThickness)
 {
-    m_pDrawList->AddBezierCurve(
+    m_pDrawList->AddBezierCubic(
         __toScreenImgui(vBezier.Points[0]),
         __toScreenImgui(vBezier.Points[1]),
         __toScreenImgui(vBezier.Points[2]),

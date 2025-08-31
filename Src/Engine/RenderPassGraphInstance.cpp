@@ -194,8 +194,7 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
     }
     size_t GuiNodeId = CurNodeId + 1;
     size_t PresentNodeId = CurNodeId + 2;
-    m_pPassGui = make<CRenderPassGUI>();
-    m_pPassGui->setWindow(vpWindow);
+    m_pPassGui = make<CRenderPassGUI>(vpWindow);
     m_pPassGui->createPortSet();
 
     m_pPassPresent = make<CRenderPassPresent>(vpSwapchain);

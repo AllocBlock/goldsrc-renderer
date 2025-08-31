@@ -12,8 +12,7 @@ bool gIsFrameBeginned = false;
 bool gIsInitted = false;
 vk::CSampler gDefaultSampler;
 
-using TextureId_t = VkDescriptorSet;
-std::map<VkImageView, TextureId_t> gTextureIdMap;
+std::map<VkImageView, ImTextureID> gTextureIdMap;
 
 void __checkIsInitted()
 {
@@ -88,7 +87,7 @@ glm::vec2 __toGlmVec2(ImVec2 vVec)
     return glm::vec2(vVec.x, vVec.y);
 }
 
-void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, VkRenderPass vRenderPass)
+void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, const VkPipelineRenderingCreateInfo& vPipelineInfo)
 {
     if (!gIsInitted)
     {
@@ -118,7 +117,9 @@ void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool v
     InitInfo.MinImageCount = 2;
     InitInfo.ImageCount = 2;
     InitInfo.CheckVkResultFn = nullptr;
-    ImGui_ImplVulkan_Init(&InitInfo, vRenderPass);
+    InitInfo.UseDynamicRendering = true;
+    InitInfo.PipelineRenderingCreateInfo = vPipelineInfo;
+    ImGui_ImplVulkan_Init(&InitInfo);
 
     if (!gIsInitted && !gDefaultSampler.isValid())
     {
@@ -146,13 +147,12 @@ bool UI::isInitted()
 
 void UI::setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer)
 {
-    // FIXME: is free of resources correct?
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
+    // https://github.com/ocornut/imgui/releases/tag/v1.90
     ImGuiIO& IO = ImGui::GetIO();
     IO.Fonts->Clear();
 
     IO.Fonts->AddFontFromFileTTF(vFontFile.c_str(), 13.0f, NULL, IO.Fonts->GetGlyphRangesChineseFull());
-    bool Success = ImGui_ImplVulkan_CreateFontsTexture(vSingleTimeCommandBuffer->get());
+    bool Success = ImGui_ImplVulkan_CreateFontsTexture();
     _ASSERTE(Success);
 }
 
@@ -197,6 +197,11 @@ void UI::endFrame()
 }
 
 bool UI::isInited() { return gIsInitted; }
+
+void UI::showDebugLogWindow()
+{
+    ImGui::ShowDebugLogWindow();
+}
 
 bool UI::beginWindow(std::string vTitle, bool* vIsOpen, int vWindowFlags)
 {
@@ -316,7 +321,7 @@ bool UI::treeNode(std::string vName) { return ImGui::TreeNode(vName.c_str()); }
 void UI::treePop() { ImGui::TreePop(); }
 void UI::image(const vk::CImage& vImage, const glm::vec2& vSize)
 {
-    TextureId_t TextureId = 0;
+    ImTextureID TextureId = 0;
 
     VkImageView ImageView = vImage;
     auto pItem = gTextureIdMap.find(ImageView);
@@ -326,7 +331,7 @@ void UI::image(const vk::CImage& vImage, const glm::vec2& vSize)
     }
     else
     {
-        TextureId = ImGui_ImplVulkan_AddTexture(gDefaultSampler, vImage, vImage.getLayout());
+        TextureId = (ImTextureID)ImGui_ImplVulkan_AddTexture(gDefaultSampler, vImage, vImage.getLayout());
         gTextureIdMap[ImageView] = TextureId;
     }
 

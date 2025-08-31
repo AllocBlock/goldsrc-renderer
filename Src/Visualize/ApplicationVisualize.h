@@ -4,7 +4,6 @@
 #include "Interactor.h"
 #include "PassVisualize.h"
 
-// TODO broken, fix later
 class CApplicationVisualize : public IApplication
 {
 public:
@@ -18,6 +17,7 @@ public:
 protected:
     virtual void _createV() override;
     virtual void _updateV(uint32_t ImageIndex) override;
+    virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _getCommandBuffers() override;
     virtual void _destroyV() override;
 
@@ -26,6 +26,7 @@ private:
 
     ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
     ptr<CRenderPassPresent> m_pPassPresent = nullptr;
+    ptr<CRenderPassGUI> m_pPassGui = nullptr;
 
     ptr<CInteractor> m_pInteractor = nullptr;
     ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
