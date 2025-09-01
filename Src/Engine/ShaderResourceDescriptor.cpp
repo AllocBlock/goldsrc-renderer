@@ -231,9 +231,5 @@ void CShaderResourceDescriptor::__destroyLayout()
 
 void CShaderResourceDescriptor::__destroyDescriptorSet()
 {
-    if (m_DescriptorSet != VK_NULL_HANDLE)
-    {
-        vkFreeDescriptorSets(*m_pDevice, m_DescriptorPool, 1, &m_DescriptorSet);
-        m_DescriptorSet = VK_NULL_HANDLE;
-    }
+    m_DescriptorSet = VK_NULL_HANDLE; // no need to destroy unless FREE_DESCRIPTOR_SET_BIT is set
 }

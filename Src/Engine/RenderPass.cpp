@@ -56,7 +56,6 @@ void IRenderPass::_beginCommand(CCommandBuffer::Ptr vCommandBuffer)
 void IRenderPass::_beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRenderingInfo& vBeginInfo)
 {
     _ASSERTE(m_CommandBegun);
-    _initImageLayouts(vCommandBuffer);
     m_pCurrentCommandBuffer->beginRendering(vBeginInfo);
 }
 

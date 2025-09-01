@@ -208,31 +208,6 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
     auto outputNode = m_PassMap.at(outputPortInfo->NodeId);
     CPortSet::link(outputNode->getPortSet(), outputPortInfo->Name, m_pPassGui->getPortSet(), "Main");
     CPortSet::link(m_pPassGui->getPortSet(), "Main", m_pPassPresent->getPortSet(), "Main");
-
-    // set port layout
-    std::vector<CPortSet::Ptr> SortedPortSets;
-    for (size_t NodeId : m_SortedOrder)
-        SortedPortSets.push_back(m_PassMap.at(NodeId)->getPortSet());
-
-    /*std::vector<SPortGroup> PortGroups = __getSortedPortGroups(SortedPortSets);
-    for (const auto& Group : PortGroups)
-    {
-        for (size_t i = 0; i < Group.Ports.size() - 1; ++i)
-        {
-            VkImageLayout Layout = Group.Ports[i + 1]->getLayout();
-            _ASSERTE(Layout != VK_IMAGE_LAYOUT_UNDEFINED);
-            Group.Ports[i]->setOutputLayout(Layout);
-        }
-    }
-
-    for (const auto& Group : PortGroups)
-    {
-        VkImageLayout FinalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-        if (Group.Ports.size() >= 2)
-            FinalLayout = Group.Ports.back()->getInputLayout();
-        Group.Ports.back()->setOutputLayout(FinalLayout);
-    }*/
     
     for (const auto& Pair : m_PassMap)
     {
