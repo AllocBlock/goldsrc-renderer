@@ -47,11 +47,13 @@ void CRenderPassGoldSrc::_initV()
     VkFormat MainFormat = m_pPortSet->getOutputPortInfo("Main").Format;
     ImageUtils::createImage2d(*m_pMainImage, m_pDevice, m_ScreenExtent, MainFormat, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     m_pPortSet->setOutput("Main", m_pMainImage);
+    m_pMainImage->setDebugName("PassGoldSrc-Main");
 
     m_pDepthImage = make<vk::CImage>();
     VkFormat DepthFormat = m_pPortSet->getOutputPortInfo("Depth").Format;
     ImageUtils::createDepthImage(*m_pDepthImage, m_pDevice, RefExtent, VK_IMAGE_USAGE_SAMPLED_BIT, DepthFormat);
     m_pPortSet->setOutput("Depth", m_pDepthImage);
+    m_pMainImage->setDebugName("PassGoldSrc-Depth");
 
     m_RenderInfoDescriptor.addColorAttachment(m_pPortSet->getOutputPort("Main"));
     m_RenderInfoDescriptor.setDepthAttachment(m_pPortSet->getOutputPort("Depth"));

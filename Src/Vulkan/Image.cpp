@@ -132,6 +132,12 @@ void CImage::copyToBuffer(CCommandBuffer::Ptr vCommandBuffer, const VkBufferImag
     transitionLayout(vCommandBuffer, m_Layout, OriginalLayout);
 }
 
+void vk::CImage::setDebugName(const std::string& vName) const
+{
+    m_pDevice->setObjectDebugName(VkObjectType::VK_OBJECT_TYPE_IMAGE, (uint64_t)(getImage()), vName);
+    m_pDevice->setObjectDebugName(VkObjectType::VK_OBJECT_TYPE_IMAGE_VIEW, (uint64_t)(get()), vName);
+}
+
 VkAccessFlags __toAccessFlags(VkImageLayout vLayout)
 {
     switch (vLayout)

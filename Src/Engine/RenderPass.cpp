@@ -145,6 +145,9 @@ void IRenderPass::__createCommandPoolAndBuffers()
     {
         m_Command.createBuffers(Name, ECommandBufferLevel::SECONDARY);
     }
+
+    const std::type_info& TypeInfo = typeid(*this);
+    m_Command.setDebugName(TypeInfo.name());
 }
 
 void IRenderPass::__destroyCommandPoolAndBuffers()

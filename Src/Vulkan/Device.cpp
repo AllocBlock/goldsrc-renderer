@@ -53,6 +53,10 @@ void CDevice::create(CPhysicalDevice::CPtr vPhysicalDevice, const std::vector<co
     m_PresentQueueIndex = QueueIndices.PresentFamilyIndex.value();
     m_GraphicsQueue = getQueue(m_GraphicsQueueIndex);
     m_PresentQueue = getQueue(m_PresentQueueIndex);
+
+    m_vkSetDebugUtilsObjectNameEXTFunc = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(vkGetInstanceProcAddr(*m_pPhysicalDevice->getInstance(), "vkSetDebugUtilsObjectNameEXT"));
+    if (m_vkSetDebugUtilsObjectNameEXTFunc == nullptr)
+        throw std::runtime_error(u8"不支持调试函数");
 }
 
 void CDevice::destroy()
@@ -136,4 +140,17 @@ VkSemaphore CDevice::createSemaphore() const
 void CDevice::destroySemaphore(VkSemaphore vSemaphore) const
 {
     vkDestroySemaphore(get(), vSemaphore, nullptr);
+}
+
+void CDevice::setObjectDebugName(VkObjectType type, uint64_t handle, const std::string& vName) const
+{
+#ifdef _DEBUG
+    VkDebugUtilsObjectNameInfoEXT NameInfo = {};
+    NameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    NameInfo.objectType = type;
+    NameInfo.objectHandle = handle;
+    NameInfo.pObjectName = vName.c_str();
+
+    vk::checkError(m_vkSetDebugUtilsObjectNameEXTFunc(get(), &NameInfo));
+#endif
 }

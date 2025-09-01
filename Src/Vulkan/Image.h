@@ -37,6 +37,8 @@ namespace vk
         uint32_t getLayerCount() const { return m_LayerCount; }
         VkFormat getFormat() const { return m_Format; }
 
+        void setDebugName(const std::string& vName) const;
+
     private:
         void __createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo);
 

@@ -96,6 +96,14 @@ void CCommand::clear()
     m_pDevice = nullptr;
 }
 
+void CCommand::setDebugName(const std::string& vName) const
+{
+    for (const auto& pair : m_NameToBufferMap)
+    {
+        m_pDevice->setObjectDebugName(VkObjectType::VK_OBJECT_TYPE_COMMAND_BUFFER, (uint64_t)(pair.second->get()), vName + "-" + pair.first);
+    }
+}
+
 CCommandBuffer::Ptr CCommand::__allocBuffer(ECommandBufferLevel vLevel, bool vIsSingleTime)
 {
     VkCommandBufferAllocateInfo BufferAllocInfo = {};

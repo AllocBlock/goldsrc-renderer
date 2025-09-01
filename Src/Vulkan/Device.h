@@ -26,9 +26,12 @@ namespace vk
         VkSemaphore createSemaphore() const;
         void destroySemaphore(VkSemaphore vSemaphore) const;
 
+        void setObjectDebugName(VkObjectType type, uint64_t handle, const std::string& vName) const;
+
     private:
         CPhysicalDevice::CPtr m_pPhysicalDevice = nullptr;
         uint32_t m_GraphicsQueueIndex = 0, m_PresentQueueIndex = 0;
         VkQueue m_GraphicsQueue = VK_NULL_HANDLE, m_PresentQueue = VK_NULL_HANDLE;
+        PFN_vkSetDebugUtilsObjectNameEXT m_vkSetDebugUtilsObjectNameEXTFunc = nullptr;
     };
 }

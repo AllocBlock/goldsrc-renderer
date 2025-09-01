@@ -25,6 +25,8 @@ public:
     void endSingleTimeBuffer(CCommandBuffer::Ptr& vioCommandBuffer);
     void clear();
 
+    void setDebugName(const std::string& vName) const;
+
 private:
     CCommandBuffer::Ptr __allocBuffer(ECommandBufferLevel vLevel, bool vIsSingleTime);
     void __destoryPool();
