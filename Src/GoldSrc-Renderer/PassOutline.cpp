@@ -8,7 +8,7 @@
 void CRenderPassOutline::_initV()
 {
     m_pMaskImage = make<vk::CImage>();
-    ImageUtils::createImage2d(*m_pMaskImage, m_pDevice, m_ScreenExtent, VkFormat::VK_FORMAT_R8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+    ImageUtils::createImage2d(*m_pMaskImage, m_pDevice, m_ScreenExtent, VkFormat::VK_FORMAT_R8_UNORM, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     
     m_PassMaskDescriptor.addColorAttachment(m_pMaskImage, true);
     m_MaskPipeline.create(m_pDevice, m_PassMaskDescriptor, m_ScreenExtent);
