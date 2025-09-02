@@ -91,6 +91,7 @@ namespace engine
 
         void _beginCommand(CCommandBuffer::Ptr vCommandBuffer);
         void _beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRenderingInfo& vBeginInfo);
+        void _addPassBarrier(CCommandBuffer::Ptr vCommandBuffer);
         void _endRendering();
         void _endCommand();
         void _beginSecondaryCommand(CCommandBuffer::Ptr vCommandBuffer, const CRenderInfoDescriptor& vRenderInfoDescriptor);

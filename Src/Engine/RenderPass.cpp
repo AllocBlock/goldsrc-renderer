@@ -59,6 +59,18 @@ void IRenderPass::_beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRe
     m_pCurrentCommandBuffer->beginRendering(vBeginInfo);
 }
 
+void IRenderPass::_addPassBarrier(CCommandBuffer::Ptr vCommandBuffer)
+{
+    // 比较暴力的Pass级别的同步，应该用不到，用在做Image Layout转换时顺便做Image级别的同步就ok了
+    _ASSERTE(m_CommandBegun);
+    vCommandBuffer->addMemoryBarrier(
+        VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+        VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+        VK_ACCESS_2_INPUT_ATTACHMENT_READ_BIT
+    );
+}
+
 void IRenderPass::_endRendering()
 {
     _ASSERTE(m_CommandBegun);

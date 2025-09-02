@@ -1,8 +1,10 @@
 [Nodes]
 "GoldSrc" "1_GoldSrc" -216.339 105
 "SSAO" "2_SSAO" 330 107
+"Outline" "3_Outline" -41.7684 18
 [Links]
 "1_GoldSrc" "Main" "2_SSAO" "Main"
 "1_GoldSrc" "Depth" "2_SSAO" "Depth"
+"2_SSAO" "Main" "3_Outline" "Main"
 [Output]
-"2_SSAO" "Main"
+"3_Outline" "Main"

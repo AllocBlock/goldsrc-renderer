@@ -1,5 +1,7 @@
 #include "RenderpassLib.h"
 #include "VectorMap.h"
+#include "PassGui.h"
+#include "PassPresent.h"
 
 #include <functional>
 #include <string>
@@ -50,6 +52,14 @@ engine::IRenderPass::Ptr RenderpassLib::createPass(const std::string& vName)
 const std::string& RenderpassLib::getPassName(const engine::IRenderPass::Ptr& vPass)
 {
     _ASSERTE(vPass);
+    if (dynamic_cast<CRenderPassGUI*>(vPass.get()))
+    {
+        return "Gui";
+    }
+    else if (dynamic_cast<CRenderPassPresent*>(vPass.get()))
+    {
+        return "Present";
+    }
     const auto& TypeIndex = std::type_index(typeid(*vPass));
     if (gTypePassNameMap.find(TypeIndex) == gTypePassNameMap.end())
         throw std::runtime_error("Pass not found, register it before create it by sign");

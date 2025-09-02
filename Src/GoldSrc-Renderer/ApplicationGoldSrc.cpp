@@ -32,23 +32,23 @@ void CApplicationGoldSrc::_createV()
             glm::vec3 NearestIntersection;
             CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
 
-         /*   auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
+            auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
             if (SceneProbe::select(NDC, pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {
                 if (pPassOutline)
                     pPassOutline->setHighlightActor(pNearestActor);
 
-                auto pPassVisualize = m_pGraphInstance->findPass<CRenderPassVisualize>();
+               /* auto pPassVisualize = m_pGraphInstance->findPass<CRenderPassVisualize>();
                 if (pPassVisualize)
                     pPassVisualize->addLine(pCamera->getPos(), NearestIntersection, glm::vec3(0.0, 1.0, 0.0));
-                m_pMainUI->setSceneFocusedActor(pNearestActor);
+                m_pMainUI->setSceneFocusedActor(pNearestActor);*/
             }
             else
             {
                 if (pPassOutline)
                     pPassOutline->removeHighlight();
                 m_pMainUI->clearSceneFocusedActor();
-            }*/
+            }
         });
 
     m_pMainUI = make<CGUIMain>();

@@ -107,6 +107,31 @@ public:
         );
     }
 
+    void addMemoryBarrier(
+        VkPipelineStageFlags2    srcStageMask,
+        VkAccessFlags2           srcAccessMask,
+        VkPipelineStageFlags2    dstStageMask,
+        VkAccessFlags2           dstAccessMask
+    )
+    {
+        __assertValid();
+        __assertBegun();
+
+        VkMemoryBarrier2 MemBarrier = {};
+        MemBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+        MemBarrier.srcStageMask = srcStageMask;
+        MemBarrier.srcAccessMask = srcAccessMask;
+        MemBarrier.dstStageMask = dstStageMask;
+        MemBarrier.dstAccessMask = dstAccessMask;
+
+        VkDependencyInfo DepInfo = {};
+        DepInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+        DepInfo.memoryBarrierCount = 1;
+        DepInfo.pMemoryBarriers = &MemBarrier;
+
+        vkCmdPipelineBarrier2(m_Buffer, &DepInfo);
+    }
+
     void blitImage(VkImage vSrcImage, VkImageLayout vSrcLayout, VkImage vDestImage, VkImageLayout vDestLayout,
         const VkImageBlit& vBlitInfo, VkFilter vImageFilter)
     {
@@ -173,11 +198,6 @@ public:
     void execCommand(VkCommandBuffer vCommandBuffer)
     {
         vkCmdExecuteCommands(m_Buffer, 1, &vCommandBuffer);
-    }
-
-    void goNextPass(bool vIsContentSecondary = false)
-    {
-        vkCmdNextSubpass(get(), vIsContentSecondary ? VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS : VK_SUBPASS_CONTENTS_INLINE);
     }
 
 private:
