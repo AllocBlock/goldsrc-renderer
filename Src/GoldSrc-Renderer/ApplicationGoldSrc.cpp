@@ -32,7 +32,7 @@ void CApplicationGoldSrc::_createV()
             glm::vec3 NearestIntersection;
             CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
 
-            /*auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
+         /*   auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
             if (SceneProbe::select(NDC, pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
             {
                 if (pPassOutline)

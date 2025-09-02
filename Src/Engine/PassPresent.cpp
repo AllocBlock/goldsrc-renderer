@@ -31,7 +31,7 @@ void CRenderPassPresent::_initV()
     {
         auto& builder = m_RenderInfoDescriptors[i];
         builder.clear();
-        builder.addColorAttachment(Images[i], pSwapchain->getImageFormat(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true, true);
+        builder.addColorAttachment(Images[i], pSwapchain->getImageFormat(), false);
     }
 
     __createCommandPoolAndBuffers();
