@@ -41,7 +41,7 @@ protected:
         m_MergePipeline.setInputImage(*pInputPort->getImageV(), *m_pBlurredImage);
     }
 
-    virtual CPortSet::Ptr _createPortSetV() override
+    virtual sptr<CPortSet> _createPortSetV() override
     {
         SPortDescriptor PortDesc;
         PortDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
@@ -62,7 +62,7 @@ protected:
 
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override
     {
-        CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
+        sptr<CCommandBuffer> pCommandBuffer = _getCommandBuffer();
 
         _beginCommand(pCommandBuffer);
 
@@ -117,9 +117,9 @@ protected:
 
 private:
 
-    vk::CImage::Ptr m_pLuminanceImage;
-    vk::CImage::Ptr m_pBlurredImage;
-    vk::CImage::Ptr m_pOutputImage;
+    sptr<vk::CImage> m_pLuminanceImage;
+    sptr<vk::CImage> m_pBlurredImage;
+    sptr<vk::CImage> m_pOutputImage;
 
     CRenderInfoDescriptor m_PassLuminianceDescriptor;
     CRenderInfoDescriptor m_PassBlurDescriptor;

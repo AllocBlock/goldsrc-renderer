@@ -28,7 +28,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual CPortSet::Ptr _createPortSetV() override;
+    virtual sptr<CPortSet> _createPortSetV() override;
     virtual void _updateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;
@@ -36,8 +36,8 @@ protected:
 private:
     void __rerecordCommand();
 
-    vk::CImage::Ptr m_pMainImage;
-    vk::CImage::Ptr m_pDepthImage;
+    sptr<vk::CImage> m_pMainImage;
+    sptr<vk::CImage> m_pDepthImage;
 
     struct
     {

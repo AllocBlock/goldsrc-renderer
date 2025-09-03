@@ -26,7 +26,7 @@ public:
     void showAlert(std::string vText);
     void log(std::string vText);
 
-    void setSceneInfo(ptr<SSceneInfo> vSceneInfo)
+    void setSceneInfo(sptr<SSceneInfo> vSceneInfo)
     {
         m_pSceneInfo = vSceneInfo;
     }
@@ -41,7 +41,7 @@ public:
         m_RenderSettingCallback = vCallback;
     }
 
-    void setSceneFocusedActor(CActor::Ptr vActor)
+    void setSceneFocusedActor(sptr<CActor> vActor)
     {
         m_GuiScene.setFocusedActor(vActor);
     }
@@ -51,7 +51,7 @@ public:
         m_GuiScene.clearFocusedActor();
     }
 
-    static SResultReadScene readScene(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo);
+    static SResultReadScene readScene(std::filesystem::path vFilePath, sptr<SSceneInfo> voSceneInfo);
 protected:
     virtual void _renderUIV() override;
 
@@ -61,7 +61,7 @@ private:
     CGuiFGD m_GuiFGD;
     CGuiScene m_GuiScene;
 
-    ptr<SSceneInfo> m_pSceneInfo = nullptr;
+    sptr<SSceneInfo> m_pSceneInfo = nullptr;
 
     struct SControl
     {

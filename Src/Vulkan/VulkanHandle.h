@@ -50,7 +50,7 @@ namespace vk
     struct CPointerSet
     {
     public:
-        const ptr<T>& operator [](size_t vIndex) const
+        const sptr<T>& operator [](size_t vIndex) const
         {
             return m_Set[vIndex];
         }
@@ -98,10 +98,10 @@ namespace vk
             m_Set.clear();
         }
 
-        const std::vector<ptr<T>>& getAll() const { return m_Set; }
+        const std::vector<wptr<T>>& getAll() const { return m_Set; }
 
     private:
-        std::vector<ptr<T>> m_Set;
+        std::vector<sptr<T>> m_Set;
     };
 }
 

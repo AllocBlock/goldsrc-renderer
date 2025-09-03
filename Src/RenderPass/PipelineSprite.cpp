@@ -51,7 +51,7 @@ void CPipelineSprite::setSprites(const std::vector<SGoldSrcSprite>& vSpriteImage
     __updateDescriptorSet();
 }
 
-void CPipelineSprite::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineSprite::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -62,7 +62,7 @@ void CPipelineSprite::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineSprite::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineSprite::recordCommand(sptr<CCommandBuffer> vCommandBuffer)
 {
     if (m_pVertexDataBuffer->isValid())
     {
@@ -108,7 +108,7 @@ CPipelineDescriptor CPipelineSprite::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineSprite::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineSprite::_initPushConstantV(sptr<CCommandBuffer> vCommandBuffer)
 {
     SSpritePushConstant Data;
     vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Data);

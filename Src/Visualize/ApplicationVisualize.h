@@ -24,10 +24,10 @@ protected:
 private:
     void __linkPasses();
 
-    ptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
-    ptr<CRenderPassPresent> m_pPassPresent = nullptr;
-    ptr<CRenderPassGUI> m_pPassGui = nullptr;
+    sptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
+    sptr<CRenderPassPresent> m_pPassPresent = nullptr;
+    sptr<CRenderPassGUI> m_pPassGui = nullptr;
 
-    ptr<CInteractor> m_pInteractor = nullptr;
-    ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
+    sptr<CInteractor> m_pInteractor = nullptr;
+    sptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
 };

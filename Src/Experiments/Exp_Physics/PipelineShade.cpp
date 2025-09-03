@@ -20,7 +20,7 @@ void CPipelineShade::__updateDescriptorSet()
     }
 }
 
-void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera)
+void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.View = vCamera->getViewMat();

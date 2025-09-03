@@ -7,7 +7,7 @@ template <typename SPointData_t>
 class CRenderPassTempSceneBase : public engine::IRenderPass
 {
 public:
-    void setScene(CScene::Ptr vScene)
+    void setScene(sptr<CScene> vScene)
     {
         m_pVertBuffer = vScene->generateVertexBuffer<SPointData_t>(m_pDevice, m_ActorDataPositionSet, m_VertexNum);
     }
@@ -20,7 +20,7 @@ protected:
         engine::IRenderPass::_destroyV();
     }
     
-    ptr<vk::CBuffer> m_pVertBuffer;
+    sptr<vk::CBuffer> m_pVertBuffer;
     std::vector<SActorDataInfo> m_ActorDataPositionSet;
     size_t m_VertexNum = 0;
 };

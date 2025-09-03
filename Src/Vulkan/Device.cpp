@@ -5,7 +5,7 @@
 
 using namespace vk;
 
-void CDevice::create(CPhysicalDevice::CPtr vPhysicalDevice, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet)
+void CDevice::create(cptr<CPhysicalDevice> vPhysicalDevice, const std::vector<const char*>& vExtensionSet, const std::vector<const char*>& vValidationLayerSet)
 {
     destroy();
 
@@ -75,7 +75,7 @@ void CDevice::waitUntilIdle() const
     vk::checkError(vkDeviceWaitIdle(get()));
 }
 
-CPhysicalDevice::CPtr CDevice::getPhysicalDevice() const
+cptr<CPhysicalDevice> CDevice::getPhysicalDevice() const
 {
     return m_pPhysicalDevice;
 }

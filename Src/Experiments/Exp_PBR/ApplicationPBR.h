@@ -20,11 +20,11 @@ protected:
 private:
     void __linkPasses();
 
-    CCamera::Ptr m_pCamera = nullptr;
-    ptr<CRenderPassGUI> m_pGUI = nullptr;
-    ptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
-    ptr<CRenderPassFullScreen> m_pRenderPassFullScreen = nullptr;
-    ptr<CPipelineEnvironment> m_pPipelineEnv = nullptr;
-    ptr<CInteractor> m_pInteractor = nullptr;
+    sptr<CCamera> m_pCamera = nullptr;
+    sptr<CRenderPassGUI> m_pGUI = nullptr;
+    sptr<CRenderPassPBR> m_pRenderPassPBR = nullptr;
+    sptr<CRenderPassFullScreen> m_pRenderPassFullScreen = nullptr;
+    sptr<CPipelineEnvironment> m_pPipelineEnv = nullptr;
+    sptr<CInteractor> m_pInteractor = nullptr;
 };
 

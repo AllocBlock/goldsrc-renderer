@@ -2,7 +2,7 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-void CSceneReaderMdl::_readV(ptr<SSceneInfo> voSceneInfo)
+void CSceneReaderMdl::_readV(sptr<SSceneInfo> voSceneInfo)
 {
     m_pIOMdl = make<CIOGoldSrcMdl>();
     m_pIOMdl->read(m_FilePath);
@@ -28,7 +28,7 @@ void CSceneReaderMdl::_readV(ptr<SSceneInfo> voSceneInfo)
     }
 }
 
-CActor::Ptr CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
+sptr<CActor> CSceneReaderMdl::__readBodyPart(const SMdlBodyPart& vBodyPart)
 {
     CMeshData MeshData;
 

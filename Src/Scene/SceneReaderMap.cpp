@@ -3,7 +3,7 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOGoldSrcMap.h"
 
-void CSceneReaderMap::_readV(ptr<SSceneInfo> voSceneInfo)
+void CSceneReaderMap::_readV(sptr<SSceneInfo> voSceneInfo)
 {
     Scene::reportProgress(u8"[map]读取文件中");
     CIOGoldSrcMap Map = CIOGoldSrcMap(m_FilePath);
@@ -30,7 +30,7 @@ void CSceneReaderMap::_readV(ptr<SSceneInfo> voSceneInfo)
                 Found = true;
                 TexNameToIndex[TexName] = static_cast<uint32_t>(voSceneInfo->TexImageSet.size());
 
-                ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
+                sptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
                 voSceneInfo->TexImageSet.emplace_back(std::move(pTexImage));
                 break;
             }

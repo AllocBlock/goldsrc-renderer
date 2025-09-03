@@ -15,9 +15,9 @@ struct SPhysicsMaterial
 struct IPhysicsState
 {
     bool IsStatic = false;
-    ptr<CTransform> pTargetTransform = nullptr;
+    sptr<CTransform> pTargetTransform = nullptr;
     SPhysicsMaterial Material;
-    CComponentCollider::Ptr pCollider = nullptr;
+    sptr<CComponentCollider> pCollider = nullptr;
 
     glm::vec3 FrameForce = glm::vec3(0.0f);
     

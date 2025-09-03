@@ -9,8 +9,7 @@
 class CComponentCollider : public IComponent
 {
 public:
-	_DEFINE_PTR(CComponentCollider);
-
+	
 	virtual ~CComponentCollider() = default;
 	_DEFINE_GETTER_SETTER(Name, std::string)
 
@@ -29,8 +28,7 @@ enum class EBasicColliderType
 class CColliderBasic : public CComponentCollider
 {
 public:
-	_DEFINE_PTR(CColliderBasic);
-
+	
 	CColliderBasic(EBasicColliderType vType = EBasicColliderType::SPHERE): m_Type(vType)
 	{}
 
@@ -40,4 +38,4 @@ private:
 	EBasicColliderType m_Type = EBasicColliderType::SPHERE;
 };
 
-bool collide(CComponentCollider::CPtr vA, CComponentCollider::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth);
+bool collide(cptr<CComponentCollider> vA, cptr<CComponentCollider> vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth);

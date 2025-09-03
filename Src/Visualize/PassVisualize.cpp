@@ -54,7 +54,7 @@ void CRenderPassVisualize::clearAll()
     __rerecordCommand();
 }
 
-CPortSet::Ptr CRenderPassVisualize::_createPortSetV()
+sptr<CPortSet> CRenderPassVisualize::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EImageUsage::COLOR_ATTACHMENT });
@@ -90,7 +90,7 @@ void CRenderPassVisualize::_initV()
 void CRenderPassVisualize::_updateV()
 {
     _ASSERTE(m_pSceneInfo);
-    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    sptr<CCamera> pCamera = m_pSceneInfo->pScene->getMainCamera();
     m_PipelineSet.Triangle.updateUniformBuffer(pCamera);
     m_PipelineSet.Line.updateUniformBuffer(pCamera);
     m_PipelineSet.Point.updateUniformBuffer(pCamera);
@@ -110,7 +110,7 @@ void CRenderPassVisualize::_destroyV()
 
 std::vector<VkCommandBuffer> CRenderPassVisualize::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
+    sptr<CCommandBuffer> pCommandBuffer = _getCommandBuffer();
 
     //if (m_RerecordCommand)
     if (true)

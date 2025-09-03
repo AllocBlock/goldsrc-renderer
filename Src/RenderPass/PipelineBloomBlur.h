@@ -20,7 +20,7 @@ protected:
 private:
     void __initAllDescriptorSet();
 
-    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
     vk::CImage m_PlaceholderImage;
     vk::CSampler m_Sampler;
 };

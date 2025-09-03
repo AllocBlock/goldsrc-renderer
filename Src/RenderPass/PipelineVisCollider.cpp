@@ -40,7 +40,7 @@ namespace
     };
 }
 
-void CPipelineVisCollider::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineVisCollider::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -52,14 +52,14 @@ void CPipelineVisCollider::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pFragUniformBuffer->update(&UBOFrag);
 }
 
-void CPipelineVisCollider::startRecord(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineVisCollider::startRecord(sptr<CCommandBuffer> vCommandBuffer)
 {
     m_CurCommandBuffer = vCommandBuffer;
     bind(vCommandBuffer);
     vCommandBuffer->bindVertexBuffer(m_VertexBuffer);
 }
 
-void CPipelineVisCollider::drawCollider(CComponentCollider::CPtr vCollider)
+void CPipelineVisCollider::drawCollider(cptr<CComponentCollider> vCollider)
 {
     _ASSERTE(m_CurCommandBuffer);
 

@@ -4,7 +4,7 @@
 #include "SingleTimeCommandBuffer.h"
 using namespace vk;
 
-void CBuffer::create(CDevice::CPtr vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties)
+void CBuffer::create(cptr<CDevice> vDevice, VkDeviceSize vSize, VkBufferUsageFlags vUsage, VkMemoryPropertyFlags vProperties)
 {
     destroy();
 
@@ -49,7 +49,7 @@ bool CBuffer::isValid() const
     return IVulkanHandle::isValid() && m_Memory != VK_NULL_HANDLE;
 }
 
-void CBuffer::copyFrom(CCommandBuffer::Ptr vCommandBuffer, VkBuffer vSrcBuffer, VkDeviceSize vSize)
+void CBuffer::copyFrom(sptr<CCommandBuffer> vCommandBuffer, VkBuffer vSrcBuffer, VkDeviceSize vSize)
 {
     _ASSERTE(isValid());
     if (vSize > m_Size) throw "Size overflowed";
@@ -85,7 +85,7 @@ void CBuffer::stageFill(const void* vData, VkDeviceSize vSize)
     StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::begin();
+    sptr<CCommandBuffer> pCommandBuffer = SingleTimeCommandBuffer::begin();
     copyFrom(pCommandBuffer, StageBuffer.get(), vSize);
     SingleTimeCommandBuffer::end(pCommandBuffer);
     pCommandBuffer = nullptr;

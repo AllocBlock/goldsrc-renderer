@@ -8,7 +8,7 @@ class CPipelineSSAO : public IPipeline
 {
 public:
     void setDepthImage(VkImageView vImageView);
-    void updateUniformBuffer(CCamera::Ptr vCamera);
+    void updateUniformBuffer(sptr<CCamera> vCamera);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
@@ -23,7 +23,7 @@ private:
     vk::CImage m_PlaceholderImage;
     vk::CSampler m_Sampler;
 
-    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
     float m_Strength = 1.0f;
     int m_SampleNum = 32;
     float m_SampleRadius = 0.1f;

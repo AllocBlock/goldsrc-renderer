@@ -33,6 +33,6 @@
  */
 namespace RenderPassGraphIO
 {
-    ptr<SRenderPassGraph> load(const std::filesystem::path& vFilePath);
+    sptr<SRenderPassGraph> load(const std::filesystem::path& vFilePath);
     void save(cptr<SRenderPassGraph> vGraph, const std::filesystem::path& vFilePath);
 };

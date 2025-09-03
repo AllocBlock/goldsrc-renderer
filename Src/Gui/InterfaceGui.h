@@ -34,11 +34,11 @@ namespace UI
         TEXT
     };
 
-    void init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, const VkPipelineRenderingCreateInfo& vPipelineInfo);
+    void init(cptr<vk::CDevice> vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, const VkPipelineRenderingCreateInfo& vPipelineInfo);
     bool isInitted();
-    void setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer);
+    void setFont(std::string vFontFile, sptr<CCommandBuffer> vSingleTimeCommandBuffer);
     void destory();
-    void draw(CCommandBuffer::Ptr vCommandBuffer);
+    void draw(sptr<CCommandBuffer> vCommandBuffer);
     void beginFrame(std::string vTitle = u8"Ä¬ÈÏ´°¿Ú");
     void endFrame();
 

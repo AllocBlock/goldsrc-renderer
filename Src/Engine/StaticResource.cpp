@@ -5,10 +5,10 @@ std::filesystem::path StaticResource::getAbsPath(std::filesystem::path vRelative
     return std::filesystem::absolute(StaticResource::ResourceDir / vRelativePath);
 }
 
-CIOImage::Ptr StaticResource::loadImage(std::filesystem::path vRelativePath)
+sptr<CIOImage> StaticResource::loadImage(std::filesystem::path vRelativePath)
 {
     std::filesystem::path FilePath = getAbsPath(vRelativePath);
-    CIOImage::Ptr pImage = make<CIOImage>();
+    sptr<CIOImage> pImage = make<CIOImage>();
     pImage->read(FilePath);
     return pImage;
 }

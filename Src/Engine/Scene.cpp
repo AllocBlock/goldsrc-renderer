@@ -1,6 +1,6 @@
 #include "Scene.h"
 
-void CScene::addActor(CActor::Ptr vActor)
+void CScene::addActor(sptr<CActor> vActor)
 {
     m_ActorSet.emplace_back(vActor);
 }
@@ -8,13 +8,13 @@ void CScene::addActor(CActor::Ptr vActor)
 size_t CScene::getActorNum() const
 { return m_ActorSet.size(); }
 
-CActor::Ptr CScene::getActor(size_t vIndex) const
+sptr<CActor> CScene::getActor(size_t vIndex) const
 {
     _ASSERTE(vIndex < m_ActorSet.size());
     return m_ActorSet[vIndex];
 }
 
-CActor::Ptr CScene::findActor(std::string vName) const
+sptr<CActor> CScene::findActor(std::string vName) const
 {
     for (auto pActor : m_ActorSet)
         if (pActor->getName() == vName)

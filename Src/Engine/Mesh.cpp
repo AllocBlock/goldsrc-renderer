@@ -108,7 +108,7 @@ CMeshData CMeshBasicSphere::getMeshDataV() const
     return CMeshBasicSphere::MeshData;
 }
 
-CMeshTriangleList::Ptr Mesh::bakeTransform(CMesh::CPtr vMesh, cptr<CTransform> vTransform)
+sptr<CMeshTriangleList> Mesh::bakeTransform(cptr<CMesh> vMesh, cptr<CTransform> vTransform)
 {
     auto pMesh = make<CMeshTriangleList>();
     CMeshData Data = vMesh->getMeshDataV().copyDeeply();

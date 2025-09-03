@@ -5,7 +5,7 @@
 class CComponentMeshRenderer : public IComponent
 {
 public:
-    _DEFINE_GETTER_SETTER_POINTER(Mesh, ptr<CMesh>);
+    _DEFINE_GETTER_SETTER_POINTER(Mesh, sptr<CMesh>);
     bool hasMesh() const { return m_pMesh != nullptr; }
 
     virtual SAABB getAABBV() const override
@@ -17,5 +17,5 @@ protected:
     virtual std::string _getNameV() const override { return "Mesh Renderer"; }
 
 private:
-    ptr<CMesh> m_pMesh = nullptr;
+    sptr<CMesh> m_pMesh = nullptr;
 };

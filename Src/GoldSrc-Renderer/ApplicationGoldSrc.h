@@ -19,11 +19,11 @@ protected:
     virtual void _onSwapchainRecreateV() override;
 
 private:
-    ptr<CGUIMain> m_pMainUI = nullptr;
-    ptr<CInteractor> m_pInteractor = nullptr;
+    sptr<CGUIMain> m_pMainUI = nullptr;
+    sptr<CInteractor> m_pInteractor = nullptr;
 
-    const CRenderPassGraphInstance::Ptr m_pGraphInstance = make<CRenderPassGraphInstance>();
-    ptr<SRenderPassGraph> m_pRenderPassGraph = nullptr;
-    ptr<CRenderPassGraphUI> m_pRenderPassGraphUI = nullptr;
+    const sptr<CRenderPassGraphInstance> m_pGraphInstance = make<CRenderPassGraphInstance>();
+    sptr<SRenderPassGraph> m_pRenderPassGraph = nullptr;
+    sptr<CRenderPassGraphUI> m_pRenderPassGraphUI = nullptr;
     bool m_NeedRecreateGraphInstance = true;
 };

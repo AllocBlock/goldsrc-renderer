@@ -9,15 +9,14 @@ namespace vk
     class CSurface : public IVulkanHandle<VkSurfaceKHR>
     {
     public:
-        _DEFINE_PTR(CSurface);
-
-        void create(CInstance::CPtr vInstance, GLFWwindow* vWindow);
+        
+        void create(cptr<CInstance> vInstance, GLFWwindow* vWindow);
         void destroy();
 
         GLFWwindow* getWindow() const { return m_pWindow; }
 
     private:
-        CInstance::CPtr m_pInstance = nullptr;
+        cptr<CInstance> m_pInstance = nullptr;
         GLFWwindow* m_pWindow = nullptr;
     };
 }

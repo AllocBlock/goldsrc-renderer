@@ -42,14 +42,14 @@ const std::vector<std::string>& RenderpassLib::getAllVisiblePassNames()
     return gVisiblePassNameSet;
 }
 
-engine::IRenderPass::Ptr RenderpassLib::createPass(const std::string& vName)
+sptr<engine::IRenderPass> RenderpassLib::createPass(const std::string& vName)
 {
     if (!gNamePassCreatorVecMap.has(vName))
         throw std::runtime_error("Pass not found, register it before create it by sign");
     return gNamePassCreatorVecMap.get(vName)();
 }
 
-const std::string& RenderpassLib::getPassName(const engine::IRenderPass::Ptr& vPass)
+const std::string& RenderpassLib::getPassName(const sptr<engine::IRenderPass>& vPass)
 {
     _ASSERTE(vPass);
     if (dynamic_cast<CRenderPassGUI*>(vPass.get()))

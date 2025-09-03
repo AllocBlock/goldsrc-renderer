@@ -14,21 +14,20 @@ namespace engine
     class IRenderPass : public IDrawableUI, public std::enable_shared_from_this<IRenderPass>
     {
     public:
-        _DEFINE_PTR(IRenderPass);
-
+        
         IRenderPass();
         virtual ~IRenderPass() = default;
 
         void createPortSet();
-        void init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent);
+        void init(cptr<vk::CDevice> vDevice, VkExtent2D vScreenExtent);
         void update();
         std::vector<VkCommandBuffer> requestCommandBuffers();
         void destroy();
 
-        CPortSet::Ptr getPortSet() const { return m_pPortSet; }
+        sptr<CPortSet> getPortSet() const { return m_pPortSet; }
 
-        ptr<SSceneInfo> getScene() const { return m_pSceneInfo; }
-        void setSceneInfo(ptr<SSceneInfo> vScene)
+        sptr<SSceneInfo> getScene() const { return m_pSceneInfo; }
+        void setSceneInfo(sptr<SSceneInfo> vScene)
         {
             _ASSERTE(vScene);
             m_pSceneInfo = vScene;
@@ -42,7 +41,7 @@ namespace engine
             * triggers only once
             * setup PortSet
             */
-        virtual CPortSet::Ptr _createPortSetV() = 0;
+        virtual sptr<CPortSet> _createPortSetV() = 0;
 
         /*
             * _createV:
@@ -84,27 +83,27 @@ namespace engine
             * can trigger multiple times
             * trigger when scene is set
             */
-        virtual void _onSceneInfoSet(ptr<SSceneInfo> vSceneInfo) {}
+        virtual void _onSceneInfoSet(sptr<SSceneInfo> vSceneInfo) {}
 
         virtual std::vector<std::string> _getSecondaryCommandBufferNamesV() const { return {}; }
 
-        void _beginCommand(CCommandBuffer::Ptr vCommandBuffer);
-        void _beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRenderingInfo& vBeginInfo);
-        void _addPassBarrier(CCommandBuffer::Ptr vCommandBuffer);
+        void _beginCommand(sptr<CCommandBuffer> vCommandBuffer);
+        void _beginRendering(sptr<CCommandBuffer> vCommandBuffer, const VkRenderingInfo& vBeginInfo);
+        void _addPassBarrier(sptr<CCommandBuffer> vCommandBuffer);
         void _endRendering();
         void _endCommand();
-        void _beginSecondaryCommand(CCommandBuffer::Ptr vCommandBuffer, const CRenderInfoDescriptor& vRenderInfoDescriptor);
+        void _beginSecondaryCommand(sptr<CCommandBuffer> vCommandBuffer, const CRenderInfoDescriptor& vRenderInfoDescriptor);
 
         bool _dumpInputPortExtent(std::string vName, VkExtent2D& voExtent);
 
-        CCommandBuffer::Ptr _getCommandBuffer();
-        void _initImageLayouts(CCommandBuffer::Ptr vCommandBuffer);
-        //void _beginSecondary(CCommandBuffer::Ptr vCommandBuffer);
+        sptr<CCommandBuffer> _getCommandBuffer();
+        void _initImageLayouts(sptr<CCommandBuffer> vCommandBuffer);
+        //void _beginSecondary(sptr<CCommandBuffer> vCommandBuffer);
 
-        vk::CDevice::CPtr m_pDevice = nullptr;
+        cptr<vk::CDevice> m_pDevice = nullptr;
         VkExtent2D m_ScreenExtent = vk::ZeroExtent;
-        CPortSet::Ptr m_pPortSet = nullptr;
-        ptr<SSceneInfo> m_pSceneInfo = nullptr;
+        sptr<CPortSet> m_pPortSet = nullptr;
+        sptr<SSceneInfo> m_pSceneInfo = nullptr;
 
         CCommand m_Command = CCommand();
         std::string m_DefaultCommandName = "Default";
@@ -114,6 +113,6 @@ namespace engine
         void __destroyCommandPoolAndBuffers();
 
         bool m_CommandBegun = false;
-        CCommandBuffer::Ptr m_pCurrentCommandBuffer = nullptr;
+        sptr<CCommandBuffer> m_pCurrentCommandBuffer = nullptr;
     };
 }

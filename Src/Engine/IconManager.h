@@ -21,7 +21,7 @@ enum class EIconRenderType
 class CIconManager
 {
 public:
-    static ptr<CIconManager> getInstance()
+    static sptr<CIconManager> getInstance()
     {
         if (!pInstance)
         {
@@ -30,16 +30,16 @@ public:
         return pInstance;
     }
 
-    CIOImage::CPtr getImage(EIcon vIcon) const { return m_IconImageMap.at(vIcon).pImage; }
+    cptr<CIOImage> getImage(EIcon vIcon) const { return m_IconImageMap.at(vIcon).pImage; }
     EIconRenderType getRenderType(EIcon vIcon) const { return m_IconImageMap.at(vIcon).RenderType; }
 
 private:
-    static ptr<CIconManager> pInstance;
+    static sptr<CIconManager> pInstance;
     CIconManager();
 
     struct IconInfo
     {
-        CIOImage::Ptr pImage;
+        sptr<CIOImage> pImage;
         EIconRenderType RenderType;
     };
 

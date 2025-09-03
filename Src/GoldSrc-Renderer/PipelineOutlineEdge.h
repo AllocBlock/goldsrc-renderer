@@ -21,7 +21,7 @@ private:
     void __updateUniformBuffer();
     void __initAllDescriptorSet();
 
-    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
-    vk::CImage::Ptr m_pPlaceholderImage = nullptr;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
+    sptr<vk::CImage> m_pPlaceholderImage = nullptr;
     vk::CSampler m_Sampler;
 };

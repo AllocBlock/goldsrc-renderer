@@ -14,13 +14,13 @@ class CPipelineSprite : public IPipeline
 {
 public:
     void setSprites(const std::vector<SGoldSrcSprite>& vSpriteSet);
-    void updateUniformBuffer(CCamera::CPtr vCamera);
-    void recordCommand(CCommandBuffer::Ptr vCommandBuffer);
+    void updateUniformBuffer(cptr<CCamera> vCamera);
+    void recordCommand(sptr<CCommandBuffer> vCommandBuffer);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;
-    virtual void _initPushConstantV(CCommandBuffer::Ptr vCommandBuffer) override;
+    virtual void _initPushConstantV(sptr<CCommandBuffer> vCommandBuffer) override;
     virtual void _createV() override;
     virtual void _destroyV() override;
 
@@ -40,9 +40,9 @@ private:
 
     vk::CSampler m_Sampler;
     vk::CImage m_PlaceholderImage;
-    ptr<vk::CBuffer> m_pVertexDataBuffer;
+    sptr<vk::CBuffer> m_pVertexDataBuffer;
     size_t m_VertexNum = 0;
-    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pVertUniformBuffer;
 
     vk::CPointerSet<vk::CImage> m_SpriteImageSet;
     std::vector<SSpritePushConstant> m_SpriteSequence;

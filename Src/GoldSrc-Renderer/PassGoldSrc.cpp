@@ -9,7 +9,7 @@
 #include <set>
 #include <fstream>
 
-void CRenderPassGoldSrc::_onSceneInfoSet(ptr<SSceneInfo> vScene)
+void CRenderPassGoldSrc::_onSceneInfoSet(sptr<SSceneInfo> vScene)
 {
     m_pDevice->waitUntilIdle();
     m_CurTextureIndex = 0;
@@ -25,7 +25,7 @@ void CRenderPassGoldSrc::rerecordAllCommand()
     m_pRerecord->requestRecordForAll();
 }
 
-CPortSet::Ptr CRenderPassGoldSrc::_createPortSetV()
+sptr<CPortSet> CRenderPassGoldSrc::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 0, EImageUsage::COLOR_ATTACHMENT });
@@ -125,7 +125,7 @@ void CRenderPassGoldSrc::_destroyV()
 std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
 {
     // sky
-    CCommandBuffer::Ptr pSkyCmdBuffer = m_Command.getCommandBuffer("Sky");
+    sptr<CCommandBuffer> pSkyCmdBuffer = m_Command.getCommandBuffer("Sky");
     if (m_pRerecord->consume("Sky"))
     {
         _beginSecondaryCommand(pSkyCmdBuffer, m_RenderInfoDescriptor);
@@ -137,7 +137,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     }
 
     // mesh
-    CCommandBuffer::Ptr pMeshCmdBuffer = m_Command.getCommandBuffer("Mesh");
+    sptr<CCommandBuffer> pMeshCmdBuffer = m_Command.getCommandBuffer("Mesh");
     if (m_pRerecord->consume("Mesh"))
     {
         _beginSecondaryCommand(pMeshCmdBuffer, m_RenderInfoDescriptor);
@@ -184,7 +184,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     }
 
     // sprite
-    CCommandBuffer::Ptr pSpriteCmdBuffer = m_Command.getCommandBuffer("Sprite");
+    sptr<CCommandBuffer> pSpriteCmdBuffer = m_Command.getCommandBuffer("Sprite");
     if (m_pRerecord->consume("Sprite"))
     {
         _beginSecondaryCommand(pSpriteCmdBuffer, m_RenderInfoDescriptor);
@@ -196,7 +196,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     }
 
     // icon
-    CCommandBuffer::Ptr pIconCmdBuffer = m_Command.getCommandBuffer("Icon");
+    sptr<CCommandBuffer> pIconCmdBuffer = m_Command.getCommandBuffer("Icon");
     if (m_pRerecord->consume("Icon"))
     {
         _beginSecondaryCommand(pIconCmdBuffer, m_RenderInfoDescriptor);
@@ -223,7 +223,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     }
 
     // text
-    CCommandBuffer::Ptr pTextCmdBuffer = m_Command.getCommandBuffer("Text");
+    sptr<CCommandBuffer> pTextCmdBuffer = m_Command.getCommandBuffer("Text");
     auto& PipelineText = m_PipelineSet.Text;
     if (PipelineText.doesNeedRerecord())
     {
@@ -233,7 +233,7 @@ std::vector<VkCommandBuffer> CRenderPassGoldSrc::_requestCommandBuffersV()
     }
 
     // primary
-    CCommandBuffer::Ptr pPrimaryCmdBuffer = _getCommandBuffer();
+    sptr<CCommandBuffer> pPrimaryCmdBuffer = _getCommandBuffer();
     _beginCommand(pPrimaryCmdBuffer);
     _beginRendering(pPrimaryCmdBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent, true));
     //pPrimaryCmdBuffer->execCommand(pInitCmdBuffer->get());
@@ -306,7 +306,7 @@ void CRenderPassGoldSrc::__createLightmapImage()
 {
     if (m_pSceneInfo && m_pSceneInfo->UseLightmap)
     {
-        ptr<CIOImage> pCombinedLightmapImage = m_pSceneInfo->pLightmap->getCombinedLightmap();
+        sptr<CIOImage> pCombinedLightmapImage = m_pSceneInfo->pLightmap->getCombinedLightmap();
         ImageUtils::createImageFromIOImage(m_LightmapImage, m_pDevice, pCombinedLightmapImage);
     }
 }

@@ -87,7 +87,7 @@ glm::vec2 __toGlmVec2(ImVec2 vVec)
     return glm::vec2(vVec.x, vVec.y);
 }
 
-void UI::init(vk::CDevice::CPtr vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, const VkPipelineRenderingCreateInfo& vPipelineInfo)
+void UI::init(cptr<vk::CDevice> vDevice, GLFWwindow* vWindow, VkDescriptorPool vPool, const VkPipelineRenderingCreateInfo& vPipelineInfo)
 {
     if (!gIsInitted)
     {
@@ -145,7 +145,7 @@ bool UI::isInitted()
     return gIsInitted;
 }
 
-void UI::setFont(std::string vFontFile, CCommandBuffer::Ptr vSingleTimeCommandBuffer)
+void UI::setFont(std::string vFontFile, sptr<CCommandBuffer> vSingleTimeCommandBuffer)
 {
     // https://github.com/ocornut/imgui/releases/tag/v1.90
     ImGuiIO& IO = ImGui::GetIO();
@@ -170,7 +170,7 @@ void UI::destory()
     gIsInitted = false;
 }
 
-void UI::draw(CCommandBuffer::Ptr vCommandBuffer)
+void UI::draw(sptr<CCommandBuffer> vCommandBuffer)
 {
     auto pDrawData = ImGui::GetDrawData();
     if (pDrawData)

@@ -15,13 +15,12 @@ enum class E3DObjectPrimitiveType
     INDEXED_TRIAGNLE_LIST,
 };
 
-#define _DEFINE_MESH_DATA_ARRAY_PROPERTY(Name, Type) public: _DEFINE_GETTER_SETTER_POINTER(Name, IDataArray<##Type##>::Ptr) private: IDataArray<##Type##>::Ptr m_p##Name = make<CGeneralDataArray<Type>>();
+#define _DEFINE_MESH_DATA_ARRAY_PROPERTY(Name, Type) public: _DEFINE_GETTER_SETTER_POINTER(Name, sptr<IDataArray<##Type##>>) private: sptr<IDataArray<##Type##>> m_p##Name = make<CGeneralDataArray<Type>>();
 
 class CMeshData
 {
 public:
-    _DEFINE_PTR(CMeshData);
-
+    
     CMeshData copyDeeply();
     
     _DEFINE_GETTER_SETTER(PrimitiveType, E3DObjectPrimitiveType)
@@ -45,8 +44,7 @@ private:
 class CMesh
 {
 public:
-	_DEFINE_PTR(CMesh);
-    virtual ~CMesh() = default;
+	    virtual ~CMesh() = default;
 
     _DEFINE_GETTER_SETTER(Name, std::string)
 
@@ -60,8 +58,7 @@ private:
 class CMeshTriangleList : public CMesh
 {
 public:
-    _DEFINE_PTR(CMeshTriangleList);
-
+    
     virtual CMeshData getMeshDataV() const override;
 
     void addTriangles(std::vector<glm::vec3> vPosSet, std::vector<glm::vec3> vNormalSet);
@@ -76,8 +73,7 @@ private:
 class CMeshBasicQuad : public CMesh
 {
 public:
-    _DEFINE_PTR(CMeshBasicQuad);
-
+    
     static CMeshData MeshData;
 
     virtual CMeshData getMeshDataV() const override;
@@ -87,8 +83,7 @@ public:
 class CMeshBasicCube : public CMesh
 {
 public:
-    _DEFINE_PTR(CMeshBasicCube);
-
+    
     static CMeshData MeshData;
 
     virtual CMeshData getMeshDataV() const override;
@@ -98,8 +93,7 @@ public:
 class CMeshBasicSphere : public CMesh
 {
 public:
-    _DEFINE_PTR(CMeshBasicCube);
-
+    
     static CMeshData MeshData;
 
     virtual CMeshData getMeshDataV() const override;
@@ -107,5 +101,5 @@ public:
 
 namespace Mesh
 {
-    CMeshTriangleList::Ptr bakeTransform(CMesh::CPtr vMesh, cptr<CTransform> vTransform);
+    sptr<CMeshTriangleList> bakeTransform(cptr<CMesh> vMesh, cptr<CTransform> vTransform);
 }

@@ -11,7 +11,7 @@ namespace
     };
 }
 
-void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
+void CPipelineEnvironment::setEnvironmentMap(sptr<CIOImage> vSkyImage)
 {
     ImageUtils::createImageFromIOImage(m_EnvironmentImage, m_pDevice, vSkyImage);
     __precalculateIBL(vSkyImage);
@@ -19,7 +19,7 @@ void CPipelineEnvironment::setEnvironmentMap(CIOImage::Ptr vSkyImage)
     m_Ready = true;
 }
 
-void CPipelineEnvironment::updateUniformBuffer(uint32_t vImageIndex, CCamera::Ptr vCamera)
+void CPipelineEnvironment::updateUniformBuffer(uint32_t vImageIndex, sptr<CCamera> vCamera)
 {
     SUBOFrag UBOVert = {};
     UBOVert.InverseVP = glm::inverse(vCamera->getViewProjMat());
@@ -71,7 +71,7 @@ void CPipelineEnvironment::_destroyV()
     __destroyResources();
 }
 
-void CPipelineEnvironment::__precalculateIBL(CIOImage::Ptr vSkyImage)
+void CPipelineEnvironment::__precalculateIBL(sptr<CIOImage> vSkyImage)
 {
     // TODO: implement IBL 
 }

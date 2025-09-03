@@ -24,7 +24,7 @@ namespace
 
 size_t CPipelinePBS::MaxTextureNum = 16;
 
-void CPipelinePBS::setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer)
+void CPipelinePBS::setMaterialBuffer(sptr<vk::CBuffer> vMaterialBuffer)
 {
     _ASSERTE(vMaterialBuffer);
     m_pMaterialBuffer = vMaterialBuffer;
@@ -66,7 +66,7 @@ void CPipelinePBS::setTextures(const vk::CPointerSet<vk::CImage>& vColorSet, con
         __updateDescriptorSet();
 }
 
-void CPipelinePBS::setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::Ptr vSkyIrrImage)
+void CPipelinePBS::setSkyTexture(const sptr<CIOImage> vSkyImage, const sptr<CIOImage> vSkyIrrImage)
 {
     m_SkyImage.destroy();
     m_SkyIrrImage.destroy();
@@ -179,7 +179,7 @@ void CPipelinePBS::_createV(size_t vImageNum)
     m_MipmapSampler.create(m_pDevice, SamplerInfo);
 
     __createPlaceholderImage();
-    CIOImage::Ptr pBRDFIOImage = make<CIOImage>("./textures/brdf.png");
+    sptr<CIOImage> pBRDFIOImage = make<CIOImage>("./textures/brdf.png");
     pBRDFIOImage->read();
     ImageUtils::createImageFromIOImage(m_BRDFImage, m_pDevice, pBRDFIOImage);
 }

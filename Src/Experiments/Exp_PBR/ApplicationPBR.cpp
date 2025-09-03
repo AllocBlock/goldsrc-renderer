@@ -16,7 +16,7 @@ void CApplicationPBR::_createV()
 
     m_pRenderPassFullScreen->hookPipelineCreate([this]
         {
-            CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
+            sptr<CIOImage> pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
             pSkyIOImage->read();
             m_pPipelineEnv->setEnvironmentMap(pSkyIOImage);
         });

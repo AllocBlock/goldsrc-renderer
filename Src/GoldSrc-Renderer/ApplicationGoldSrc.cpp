@@ -28,9 +28,9 @@ void CApplicationGoldSrc::_createV()
             glfwGetFramebufferSize(vWindow, &WindowWidth, &WindowHeight);
             glm::vec2 NDC = glm::vec2(XPos / WindowWidth * 2 - 1.0, YPos / WindowHeight * 2 - 1.0);
 
-            CActor::Ptr pNearestActor = nullptr;
+            sptr<CActor> pNearestActor = nullptr;
             glm::vec3 NearestIntersection;
-            CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+            sptr<CCamera> pCamera = m_pSceneInfo->pScene->getMainCamera();
 
             auto pPassOutline = m_pGraphInstance->findPass<CRenderPassOutline>();
             if (SceneProbe::select(NDC, pCamera, m_pSceneInfo->pScene, pNearestActor, NearestIntersection))
@@ -70,7 +70,7 @@ void CApplicationGoldSrc::_createV()
     
     m_pRenderPassGraphUI = make<CRenderPassGraphUI>();
     m_pRenderPassGraphUI->setGraph(m_pRenderPassGraph);
-    m_pRenderPassGraphUI->hookGraphApply([this](ptr<SRenderPassGraph> vGraph)
+    m_pRenderPassGraphUI->hookGraphApply([this](sptr<SRenderPassGraph> vGraph)
         {
         m_NeedRecreateGraphInstance = true;
         });

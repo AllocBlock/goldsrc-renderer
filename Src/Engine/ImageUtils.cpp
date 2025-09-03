@@ -18,7 +18,7 @@ VkFormat toVulkanFormat(EPixelFormat vPixelFormat)
     }
 }
 
-void ImageUtils::createImageFromIOImage(vk::CImage& voImage, CDevice::CPtr vDevice, CIOImage::CPtr vImage, int vMipLevel)
+void ImageUtils::createImageFromIOImage(vk::CImage& voImage, cptr<CDevice> vDevice, cptr<CIOImage> vImage, int vMipLevel)
 {
     _ASSERTE(vImage->getData());
     VkDeviceSize DataSize = vImage->getDataSize();
@@ -44,24 +44,24 @@ void ImageUtils::createImageFromIOImage(vk::CImage& voImage, CDevice::CPtr vDevi
     ViewInfo.AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 
     voImage.create(vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
-    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::begin();
+    sptr<CCommandBuffer> pCommandBuffer = SingleTimeCommandBuffer::begin();
     voImage.stageFill(vImage->getData(), DataSize, vMipLevel > 1 ? false : true);
     if (vMipLevel > 1)
         voImage.generateMipmaps(pCommandBuffer);
     SingleTimeCommandBuffer::end(pCommandBuffer);
 }
 
-void ImageUtils::createPlaceholderImage(vk::CImage& voImage, CDevice::CPtr vDevice)
+void ImageUtils::createPlaceholderImage(vk::CImage& voImage, cptr<CDevice> vDevice)
 {
     // placeholder image
     uint8_t Data[4] = { 0, 0, 0, 0 };
-    CIOImage::Ptr pTinyImage = make<CIOImage>();
+    sptr<CIOImage> pTinyImage = make<CIOImage>();
     pTinyImage->setSize(1, 1);
     pTinyImage->setData(Data);
     ImageUtils::createImageFromIOImage(voImage, vDevice, pTinyImage);
 }
 
-void ImageUtils::createImage2d(CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkFormat vFormat, VkImageUsageFlags vUsage)
+void ImageUtils::createImage2d(CImage& voImage, cptr<CDevice> vDevice, VkExtent2D vExtent, VkFormat vFormat, VkImageUsageFlags vUsage)
 {
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -84,7 +84,7 @@ void ImageUtils::createImage2d(CImage& voImage, CDevice::CPtr vDevice, VkExtent2
     voImage.create(vDevice, ImageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ViewInfo);
 }
 
-void ImageUtils::createDepthImage(vk::CImage& voImage, CDevice::CPtr vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
+void ImageUtils::createDepthImage(vk::CImage& voImage, cptr<CDevice> vDevice, VkExtent2D vExtent, VkImageUsageFlags vUsage, VkFormat vFormat)
 {
     VkImageCreateInfo ImageInfo = {};
     ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

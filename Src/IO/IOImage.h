@@ -13,8 +13,7 @@ enum class EPixelFormat
 class CIOImage : public CIOBase
 {
 public:
-    _DEFINE_PTR(CIOImage);
-
+    
     CIOImage() : CIOBase() {}
     CIOImage(std::filesystem::path vFilePath) : CIOBase(vFilePath) {}
     CIOImage(const CIOImage& vObj)

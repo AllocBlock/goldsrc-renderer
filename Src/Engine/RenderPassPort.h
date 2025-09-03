@@ -38,8 +38,7 @@ struct SPortInfo
 class CPort : public std::enable_shared_from_this<CPort>
 {
 public:
-    _DEFINE_PTR(CPort);
-
+    
     CPort() = delete;
     CPort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet);
     virtual ~CPort() = default;
@@ -50,14 +49,14 @@ public:
     bool isRoot() const { return !hasParent(); }
     bool isTail() const { return !hasChildren(); }
     bool hasParent() const { return !m_pParent.expired(); }
-    CPort::Ptr getParent() const { return m_pParent.expired() ? nullptr : m_pParent.lock(); }
+    sptr<CPort> getParent() const { return m_pParent.expired() ? nullptr : m_pParent.lock(); }
     void removeParent();
     bool hasChildren() const { return !m_ChildSet.empty(); }
     size_t getChildNum() const { return m_ChildSet.size(); }
-    CPort::Ptr getChild(size_t vIndex) const { return m_ChildSet[vIndex]; }
-    void append(CPort::Ptr vPort) { vPort->attachTo(shared_from_this()); }
+    sptr<CPort> getChild(size_t vIndex) const { return m_ChildSet[vIndex]; }
+    void append(sptr<CPort> vPort) { vPort->attachTo(shared_from_this()); }
     void clearAllChildren();
-    void attachTo(CPort::Ptr vPort);
+    void attachTo(sptr<CPort> vPort);
     void unlinkAll();
     
     bool hasLayout() const;
@@ -68,8 +67,8 @@ public:
     void assertReady() const;
 
     const SPortInfo& getInfo() const { return m_Info; }
-    virtual vk::CImage::Ptr getImageV() const = 0;
-    bool isMatch(CPort::CPtr vPort) const { return m_Info.isMatch(vPort->getInfo()); }
+    virtual sptr<vk::CImage> getImageV() const = 0;
+    bool isMatch(cptr<CPort> vPort) const { return m_Info.isMatch(vPort->getInfo()); }
     
     CPortSet* getBelongedPortSet() const { return m_pBelongedSet; }
 
@@ -77,7 +76,7 @@ protected:
     std::string m_Name = "";
     CPortSet* const m_pBelongedSet;
     wptr<CPort> m_pParent;
-    std::vector<CPort::Ptr> m_ChildSet;
+    std::vector<sptr<CPort>> m_ChildSet;
     
     SPortInfo m_Info;
     std::optional<VkImageLayout> m_Layout = std::nullopt;
@@ -86,16 +85,15 @@ protected:
 class CSourcePort : public CPort
 {
 public:
-    _DEFINE_PTR(CSourcePort);
-
+    
     CSourcePort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet);
 
-    virtual vk::CImage::Ptr getImageV() const override final;
-    void setImage(vk::CImage::Ptr vImage);
+    virtual sptr<vk::CImage> getImageV() const override final;
+    void setImage(sptr<vk::CImage> vImage);
     void clearImage() { m_pImage = nullptr; }
 
 private:
-    vk::CImage::Ptr m_pImage;
+    sptr<vk::CImage> m_pImage;
     
     VkFormat m_ActualFormat = SPortInfo::AnyFormat;
     VkExtent2D m_ActualExtent = SPortInfo::AnyExtent;
@@ -104,11 +102,10 @@ private:
 class CRelayPort : public CPort
 {
 public:
-    _DEFINE_PTR(CRelayPort);
-
+    
     CRelayPort(const std::string& vName, const SPortInfo& vInfo, CPortSet* vBelongedSet);
 
-    virtual vk::CImage::Ptr getImageV() const override final;
+    virtual sptr<vk::CImage> getImageV() const override final;
 };
 
 struct SPortDescriptor
@@ -142,8 +139,7 @@ struct SPortDescriptor
 class CPortSet
 {
 public:
-    _DEFINE_PTR(CPortSet);
-
+    
     CPortSet() = delete;
     CPortSet(const SPortDescriptor& vDesc);
 
@@ -157,31 +153,31 @@ public:
 
     size_t getInputPortNum() const;
     size_t getOutputPortNum() const;
-    CPort::Ptr getInputPort(size_t vIndex) const;
-    CPort::Ptr getOutputPort(size_t vIndex) const;
-    CPort::Ptr getInputPort(const std::string& vName) const; // if not found, throw exception
-    CPort::Ptr getOutputPort(const std::string& vName) const; // if not found, throw exception
+    sptr<CPort> getInputPort(size_t vIndex) const;
+    sptr<CPort> getOutputPort(size_t vIndex) const;
+    sptr<CPort> getInputPort(const std::string& vName) const; // if not found, throw exception
+    sptr<CPort> getOutputPort(const std::string& vName) const; // if not found, throw exception
     const SPortInfo& getInputPortInfo(const std::string& vName) const; // if not found, throw exception
     const SPortInfo& getOutputPortInfo(const std::string& vName) const; // if not found, throw exception
 
-    void setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage);
-    void append(const std::string& vInputName, CPort::Ptr vPort);
-    void attachTo(const std::string& vInputName, CPort::Ptr vPort);
+    void setOutput(const std::string& vOutputName, sptr<vk::CImage> vImage);
+    void append(const std::string& vInputName, sptr<CPort> vPort);
+    void attachTo(const std::string& vInputName, sptr<CPort> vPort);
     
     void unlinkAll(); // remove all parent of input and children of output
 
-    static void link(CPort::Ptr vOutputPort, CPort::Ptr vInputPort);
-    static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPort::Ptr vInputPort);
-    static void link(CPort::Ptr vOutputPort, CPortSet::Ptr vSet2, const std::string& vInputName);
-    static void link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPortSet::Ptr vSet2, const std::string& vInputName);
+    static void link(sptr<CPort> vOutputPort, sptr<CPort> vInputPort);
+    static void link(sptr<CPortSet> vSet1, const std::string& vOutputName, sptr<CPort> vInputPort);
+    static void link(sptr<CPort> vOutputPort, sptr<CPortSet> vSet2, const std::string& vInputName);
+    static void link(sptr<CPortSet> vSet1, const std::string& vOutputName, sptr<CPortSet> vSet2, const std::string& vInputName);
     
 private:
     void __addInput(const std::string& vName, const SPortInfo& vInfo);
     void __addOutput(const std::string& vName, const SPortInfo& vInfo);
     void __addInputOutput(const std::string& vName, const SPortInfo& vInfo);
 
-    CPort::Ptr __findPort(const std::string& vName, const std::vector<CPort::Ptr>& vPortSet) const;
+    sptr<CPort> __findPort(const std::string& vName, const std::vector<sptr<CPort>>& vPortSet) const;
     
-    std::vector<CPort::Ptr> m_InputPortSet;
-    std::vector<CPort::Ptr> m_OutputPortSet;
+    std::vector<sptr<CPort>> m_InputPortSet;
+    std::vector<sptr<CPort>> m_OutputPortSet;
 };

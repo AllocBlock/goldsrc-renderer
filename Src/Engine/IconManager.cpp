@@ -15,7 +15,7 @@ const std::vector<SIconSource> gIconImageFileMap =
     {EIcon::ALERT, "Icons/Alert.png", EIconRenderType::INDEXED_TRANSPARENT},
 }; 
 
-ptr<CIconManager> CIconManager::pInstance = nullptr;
+sptr<CIconManager> CIconManager::pInstance = nullptr;
 
 CIconManager::CIconManager()
 {

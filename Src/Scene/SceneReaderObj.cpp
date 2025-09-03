@@ -3,7 +3,7 @@
 #include "SceneGoldsrcCommon.h"
 #include "IOObj.h"
 
-void CSceneReaderObj::_readV(ptr<SSceneInfo> voSceneInfo)
+void CSceneReaderObj::_readV(sptr<SSceneInfo> voSceneInfo)
 {
     Scene::reportProgress(u8"[obj]读取文件中");
     CIOObj Obj = CIOObj();

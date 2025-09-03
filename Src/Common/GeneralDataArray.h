@@ -43,7 +43,7 @@ protected:
         m_Array.clear();
     }
     
-    virtual IDataArray<T>::Ptr _copyV() override
+    virtual sptr<IDataArray<T>> _copyV() override
     {
         auto pNewArray = make<CGeneralDataArray<T>>();
         pNewArray->m_Array = m_Array;

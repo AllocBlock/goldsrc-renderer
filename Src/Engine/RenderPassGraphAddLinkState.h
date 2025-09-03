@@ -14,7 +14,7 @@ enum class EAddLinkAttachState
 class CRenderGraphAddLinkState
 {
 public:
-    void setGraph(ptr<SRenderPassGraph> vGraph);
+    void setGraph(sptr<SRenderPassGraph> vGraph);
     void start(const SRenderPassGraphPortInfo& vStartPort, bool vIsSource);
     void clearCandidates();
     // TIPS: add any near port, this class will check if it's valid and give a result by getLinkState
@@ -35,7 +35,7 @@ private:
     SRenderPassGraphLink __generateLink(const SRenderPassGraphPortInfo& vAttachedPort);
 
 
-    ptr<SRenderPassGraph> m_pGraph = nullptr;
+    sptr<SRenderPassGraph> m_pGraph = nullptr;
     bool m_IsAdding = false;
     SRenderPassGraphPortInfo m_FixedPort = SRenderPassGraphPortInfo();
     bool m_IsFixedPortSource = true; // true: fixed source, find destination; false: fixed destination, find source

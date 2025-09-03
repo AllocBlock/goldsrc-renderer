@@ -12,9 +12,9 @@ public:
     {
     }
 
-    CCamera::Ptr getCamera() { return m_pCamera; }
+    sptr<CCamera> getCamera() { return m_pCamera; }
 
-    void setShadowMapInfo(CCamera::CPtr vLightCamera);
+    void setShadowMapInfo(cptr<CCamera> vLightCamera);
 
 protected:
     virtual void _initV() override;
@@ -41,6 +41,6 @@ private:
 
     vk::CImage m_DepthImage;
 
-    CCamera::Ptr m_pCamera = nullptr;
-    CCamera::CPtr m_pLightCamera = nullptr;
+    sptr<CCamera> m_pCamera = nullptr;
+    cptr<CCamera> m_pLightCamera = nullptr;
 };

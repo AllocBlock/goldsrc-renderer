@@ -8,8 +8,7 @@
 class CPhysicsEngine
 {
 public:
-    _DEFINE_PTR(CPhysicsEngine);
-
+    
     _DEFINE_GETTER_SETTER(GravityAcceleration, float)
     _DEFINE_GETTER_SETTER(SimulateSpeed, float)
 
@@ -19,13 +18,13 @@ public:
     void pause() { m_Paused = true; }
     bool isPaused() const { return m_Paused; }
 
-    void addRigidBody(ptr<SPhysicsStateRigidBody> vRigid)
+    void addRigidBody(sptr<SPhysicsStateRigidBody> vRigid)
     {
         _ASSERTE(vRigid);
         m_RigidBodySet.emplace_back(vRigid);
     }
     size_t getRigidBodyNum() const { return m_RigidBodySet.size(); }
-    ptr<SPhysicsStateRigidBody> getRigidBody(size_t vIndex) const
+    sptr<SPhysicsStateRigidBody> getRigidBody(size_t vIndex) const
     {
         _ASSERTE(vIndex < m_RigidBodySet.size());
         return m_RigidBodySet[vIndex];
@@ -39,7 +38,7 @@ public:
     void addCollisionHook(CollideCallback_t vCallback) { m_CollisionCallbackSet.emplace_back(vCallback); }
 
 private:
-    std::vector<ptr<SPhysicsStateRigidBody>> m_RigidBodySet;
+    std::vector<sptr<SPhysicsStateRigidBody>> m_RigidBodySet;
 
     bool m_Paused = false;
     float m_SimulateSpeed = 1.0f; // time speed

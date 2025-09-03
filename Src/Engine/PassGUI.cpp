@@ -23,12 +23,12 @@ void CRenderPassGUI::_initV()
     DynamicRenderingInfo.stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
     
     UI::init(m_pDevice, m_pWindow, m_DescriptorPool, DynamicRenderingInfo);
-    CCommandBuffer::Ptr pCommandBuffer = m_Command.beginSingleTimeBuffer();
+    sptr<CCommandBuffer> pCommandBuffer = m_Command.beginSingleTimeBuffer();
     UI::setFont(gChineseFont, pCommandBuffer);
     m_Command.endSingleTimeBuffer(pCommandBuffer);
 }
 
-CPortSet::Ptr CRenderPassGUI::_createPortSetV()
+sptr<CPortSet> CRenderPassGUI::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
@@ -50,7 +50,7 @@ void CRenderPassGUI::_destroyV()
 
 std::vector<VkCommandBuffer> CRenderPassGUI::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
+    sptr<CCommandBuffer> pCommandBuffer = _getCommandBuffer();
 
     _beginCommand(pCommandBuffer);
     _beginRendering(pCommandBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent));

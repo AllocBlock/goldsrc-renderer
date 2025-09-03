@@ -9,16 +9,15 @@
 class IRenderPassGraphEditCommand
 {
 public:
-    _DEFINE_PTR(IRenderPassGraphEditCommand);
-
+    
     virtual ~IRenderPassGraphEditCommand() = default;
 
-    void execute(ptr<SRenderPassGraph> vGraph);
+    void execute(sptr<SRenderPassGraph> vGraph);
     void withdraw();
 
 protected:
-    virtual void _executeV(ptr<SRenderPassGraph> vGraph) = 0;
-    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) = 0;
+    virtual void _executeV(sptr<SRenderPassGraph> vGraph) = 0;
+    virtual void _withdrawV(sptr<SRenderPassGraph> vGraph) = 0;
 
     bool m_Executed = false;
 
@@ -32,8 +31,8 @@ public:
     CCommandAddNode(size_t vNodeId, const SRenderPassGraphNode& vNode);
 
 protected:
-    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override;
-    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override;
+    virtual void _executeV(sptr<SRenderPassGraph> vGraph) override;
+    virtual void _withdrawV(sptr<SRenderPassGraph> vGraph) override;
 
 private:
     size_t m_NodeId;
@@ -46,8 +45,8 @@ public:
     CCommandAddLink(size_t vLinkId, const SRenderPassGraphLink& vLink);
 
 protected:
-    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override;
-    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override;
+    virtual void _executeV(sptr<SRenderPassGraph> vGraph) override;
+    virtual void _withdrawV(sptr<SRenderPassGraph> vGraph) override;
 
 private:
     size_t m_LinkId;
@@ -61,8 +60,8 @@ public:
     CCommandRemoveLink(size_t vLinkId);
 
 protected:
-    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override;
-    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override;
+    virtual void _executeV(sptr<SRenderPassGraph> vGraph) override;
+    virtual void _withdrawV(sptr<SRenderPassGraph> vGraph) override;
 
 private:
     size_t m_LinkId;
@@ -75,8 +74,8 @@ public:
     CCommandRemoveNode(size_t vNodeId);
 
 protected:
-    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override;
-    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override;
+    virtual void _executeV(sptr<SRenderPassGraph> vGraph) override;
+    virtual void _withdrawV(sptr<SRenderPassGraph> vGraph) override;
 
 private:
     size_t m_NodeId;
@@ -91,8 +90,8 @@ public:
     CCommandSetEntry(size_t vNodeId, const std::string& vPortName);
 
 protected:
-    virtual void _executeV(ptr<SRenderPassGraph> vGraph) override;
-    virtual void _withdrawV(ptr<SRenderPassGraph> vGraph) override;
+    virtual void _executeV(sptr<SRenderPassGraph> vGraph) override;
+    virtual void _withdrawV(sptr<SRenderPassGraph> vGraph) override;
 
 private:
     size_t m_NodeId;
@@ -103,8 +102,8 @@ private:
 class CRenderPassGraphEditor
 {
 public:
-    void setGraph(ptr<SRenderPassGraph> vGraph);
-    void execCommand(IRenderPassGraphEditCommand::Ptr vCommand, bool vEnableUndo = true);
+    void setGraph(sptr<SRenderPassGraph> vGraph);
+    void execCommand(sptr<IRenderPassGraphEditCommand> vCommand, bool vEnableUndo = true);
     bool canUndo();
     void undo();
     bool canRedo();
@@ -124,12 +123,12 @@ private:
     bool __hasPass(size_t vNodeId);
     void __clear();
 
-    ptr<SRenderPassGraph> m_pGraph = nullptr;
+    sptr<SRenderPassGraph> m_pGraph = nullptr;
     
     size_t m_CurNodeId = 0;
     size_t m_CurLinkId = 0;
 
     size_t m_MaxUndoCount = 50;
-    std::list<IRenderPassGraphEditCommand::Ptr> m_CommandLinkList;
-    std::list<IRenderPassGraphEditCommand::Ptr>::iterator m_pCurCommand;
+    std::list<sptr<IRenderPassGraphEditCommand>> m_CommandLinkList;
+    std::list<sptr<IRenderPassGraphEditCommand>>::iterator m_pCurCommand;
 };

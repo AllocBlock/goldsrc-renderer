@@ -30,7 +30,7 @@ void CPipelineShade::__updateDescriptorSet()
     }
 }
 
-void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera, CCamera::CPtr vLightCamera, uint32_t vShadowMapSize)
+void CPipelineShade::updateUniformBuffer(uint32_t vImageIndex, cptr<CCamera> vCamera, cptr<CCamera> vLightCamera, uint32_t vShadowMapSize)
 {
     SUBOVert UBOVert = {};
     UBOVert.Model = glm::mat4(1.0f);

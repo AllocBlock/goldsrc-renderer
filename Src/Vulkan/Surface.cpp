@@ -4,7 +4,7 @@
 
 using namespace vk;
 
-void CSurface::create(CInstance::CPtr vInstance, GLFWwindow* vWindow)
+void CSurface::create(cptr<CInstance> vInstance, GLFWwindow* vWindow)
 {
     destroy();
 

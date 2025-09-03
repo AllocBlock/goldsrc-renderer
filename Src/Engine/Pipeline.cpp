@@ -2,7 +2,7 @@
 #include "ShaderCompiler.h"
 #include "Log.h"
 
-void IPipeline::create(vk::CDevice::CPtr vDevice, const CRenderInfoDescriptor& vRenderInfoDescriptor, VkExtent2D vExtent)
+void IPipeline::create(cptr<vk::CDevice> vDevice, const CRenderInfoDescriptor& vRenderInfoDescriptor, VkExtent2D vExtent)
 {
     destroy();
 
@@ -98,7 +98,7 @@ void IPipeline::destroy()
     m_pDevice = nullptr;
 }
 
-void IPipeline::bind(CCommandBuffer::Ptr vCommandBuffer)
+void IPipeline::bind(sptr<CCommandBuffer> vCommandBuffer)
 {
     _ASSERTE(isValid());
     const auto& DescriptorSet = m_ShaderResourceDescriptor.getDescriptorSet();

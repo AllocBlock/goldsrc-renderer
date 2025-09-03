@@ -13,11 +13,11 @@
 
 class CRenderPassGraphUI : public IDrawableUI
 {
-    _DEFINE_EVENT(GraphApply, ptr<SRenderPassGraph>);
+    _DEFINE_EVENT(GraphApply, sptr<SRenderPassGraph>);
 public:
     virtual void _renderUIV() override;
     
-    void setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView = true);
+    void setGraph(sptr<SRenderPassGraph> vGraph, bool vResetView = true);
     void update();
     void destroyPasses();
 
@@ -52,7 +52,7 @@ private:
 
     glm::vec2 __getPortPos(const SRenderPassGraphPortInfo& vPort, bool vIsInput) const;
 
-    CPortSet::CPtr __getNodePortSet(size_t vNodeId);
+    cptr<CPortSet> __getNodePortSet(size_t vNodeId);
     // TODO: cache to avoid redundant creation
     std::vector<std::string> __getNodeInputs(size_t vNodeId);
     std::vector<std::string> __getNodeOutputs(size_t vNodeId);
@@ -62,9 +62,9 @@ private:
 
     void __resetViewNextFrame() { m_NeedResetViewTimes = 2; }
 
-    vk::CDevice::CPtr m_pDevice = nullptr;
-    ptr<SRenderPassGraph> m_pGraph = nullptr;
-    std::map<size_t, engine::IRenderPass::Ptr> m_PassInstanceMap;
+    cptr<vk::CDevice> m_pDevice = nullptr;
+    sptr<SRenderPassGraph> m_pGraph = nullptr;
+    std::map<size_t, sptr<engine::IRenderPass>> m_PassInstanceMap;
 
     CCanvasDrawer m_CanvasDrawer;
     bool m_ShowGrid = true;

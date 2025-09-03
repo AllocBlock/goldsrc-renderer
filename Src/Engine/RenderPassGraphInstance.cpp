@@ -13,25 +13,25 @@ size_t getIndex(const std::vector<T>& vSet, const T& vTarget)
 
 struct SPortGroup
 {
-    std::vector<CPort::Ptr> Ports;
+    std::vector<sptr<CPort>> Ports;
 
-    bool hasPort(CPort::Ptr vPort)
+    bool hasPort(sptr<CPort> vPort)
     {
         return std::find(Ports.begin(), Ports.end(), vPort) != Ports.end();
     }
 
-    void add(CPort::Ptr vPort)
+    void add(sptr<CPort> vPort)
     {
         if (!hasPort(vPort))
             Ports.push_back(vPort);
     }
 
-    void sort(const std::vector<CPortSet::Ptr>& vSortedPortSets)
+    void sort(const std::vector<sptr<CPortSet>>& vSortedPortSets)
     {
         std::vector<CPortSet*> SortedPortSets(vSortedPortSets.size());
         for (size_t i = 0; i < SortedPortSets.size(); ++i)
             SortedPortSets[i] = vSortedPortSets[i].get();
-        auto Comparer = [&SortedPortSets](const CPort::Ptr& vPort1, const CPort::Ptr& vPort2) -> bool
+        auto Comparer = [&SortedPortSets](const sptr<CPort>& vPort1, const sptr<CPort>& vPort2) -> bool
         {
             size_t i1 = std::find(SortedPortSets.begin(), SortedPortSets.end(), vPort1->getBelongedPortSet()) - SortedPortSets.begin();
             size_t i2 = std::find(SortedPortSets.begin(), SortedPortSets.end(), vPort2->getBelongedPortSet()) - SortedPortSets.begin();
@@ -41,13 +41,13 @@ struct SPortGroup
     }
 };
 
-std::vector<SPortGroup> __getSortedPortGroups(const std::vector<CPortSet::Ptr>& vSortedPortSets)
+std::vector<SPortGroup> __getSortedPortGroups(const std::vector<sptr<CPortSet>>& vSortedPortSets)
 {
     std::vector<SPortGroup> PortGroups;
 
     for (const auto& pPortSet : vSortedPortSets)
     {
-        std::vector<CPort::Ptr> Ports;
+        std::vector<sptr<CPort>> Ports;
         for (size_t i = 0; i < pPortSet->getInputPortNum(); ++i)
             Ports.push_back(pPortSet->getInputPort(i));
         for (size_t i = 0; i < pPortSet->getOutputPortNum(); ++i)
@@ -58,7 +58,7 @@ std::vector<SPortGroup> __getSortedPortGroups(const std::vector<CPortSet::Ptr>& 
             bool FoundExistGroup = false;
             if (pPort->hasParent())
             {
-                CPort::Ptr pParent = pPort->getParent();
+                sptr<CPort> pParent = pPort->getParent();
                 for (auto& Group : PortGroups)
                 {
                     if (Group.hasPort(pParent))
@@ -86,7 +86,7 @@ std::vector<SPortGroup> __getSortedPortGroups(const std::vector<CPortSet::Ptr>& 
     return PortGroups;
 }
 
-void CRenderPassGraphInstance::init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent, ptr<SSceneInfo> vScene)
+void CRenderPassGraphInstance::init(cptr<vk::CDevice> vDevice, VkExtent2D vScreenExtent, sptr<SSceneInfo> vScene)
 {
     _ASSERTE(vScreenExtent.width > 0 && vScreenExtent.height > 0);
     m_pDevice = vDevice;
@@ -95,13 +95,13 @@ void CRenderPassGraphInstance::init(vk::CDevice::CPtr vDevice, VkExtent2D vScree
     m_pSceneInfo = vScene;
 }
 
-void CRenderPassGraphInstance::updateSceneInfo(ptr<SSceneInfo> vSceneInfo)
+void CRenderPassGraphInstance::updateSceneInfo(sptr<SSceneInfo> vSceneInfo)
 {
     for (const auto& Pair : m_PassMap)
         Pair.second->setSceneInfo(vSceneInfo);
 }
 
-void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLFWwindow* vpWindow, wptr<vk::CSwapchain> vpSwapchain)
+void CRenderPassGraphInstance::createFromGraph(sptr<SRenderPassGraph> vGraph, GLFWwindow* vpWindow, wptr<vk::CSwapchain> vpSwapchain)
 {
     if (!vGraph->isValid())
         throw std::runtime_error("Graph is not valid");
@@ -143,7 +143,7 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
         if (!UsedRenderpass.count(NodeId)) continue;
 
         const SRenderPassGraphNode& Node = Pair.second;
-        engine::IRenderPass::Ptr pPass = RenderpassLib::createPass(Node.Name);
+        sptr<engine::IRenderPass> pPass = RenderpassLib::createPass(Node.Name);
         pPass->createPortSet();
         m_PassMap[NodeId] = pPass;
         
@@ -228,7 +228,7 @@ void CRenderPassGraphInstance::createFromGraph(ptr<SRenderPassGraph> vGraph, GLF
     // init
     for (const auto& Pair : m_PassMap)
     {
-        engine::IRenderPass::Ptr pPass = Pair.second;
+        sptr<engine::IRenderPass> pPass = Pair.second;
         pPass->init(m_pDevice, m_ScreenExtent);
         pPass->setSceneInfo(m_pSceneInfo);
     }
@@ -267,7 +267,7 @@ void CRenderPassGraphInstance::updateSwapchainImageIndex(uint32_t vImageIndex)
     m_pPassPresent->updateSwapchainImageIndex(vImageIndex);
 }
 
-engine::IRenderPass::Ptr CRenderPassGraphInstance::getPass(size_t vId) const
+sptr<engine::IRenderPass> CRenderPassGraphInstance::getPass(size_t vId) const
 {
     return m_PassMap.at(vId);
 }

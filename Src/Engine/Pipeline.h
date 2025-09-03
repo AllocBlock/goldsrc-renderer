@@ -15,9 +15,9 @@ public:
     IPipeline() = default;
     virtual ~IPipeline() = default;
 
-    void create(vk::CDevice::CPtr vDevice, const CRenderInfoDescriptor& vRenderInfoDescriptor, VkExtent2D vExtent);
+    void create(cptr<vk::CDevice> vDevice, const CRenderInfoDescriptor& vRenderInfoDescriptor, VkExtent2D vExtent);
     void destroy();
-    void bind(CCommandBuffer::Ptr vCommandBuffer);
+    void bind(sptr<CCommandBuffer> vCommandBuffer);
     bool isValid() const { return m_Pipeline != VK_NULL_HANDLE; }
 
     const CShaderResourceDescriptor& getDescriptor() const { return m_ShaderResourceDescriptor; }
@@ -56,7 +56,7 @@ protected:
     * triggers multiple times
     * trigger after each bind action to give the push constant initial data
     */
-    virtual void _initPushConstantV(CCommandBuffer::Ptr vCommandBuffer) {}
+    virtual void _initPushConstantV(sptr<CCommandBuffer> vCommandBuffer) {}
 
     /*
     * _destroyV:
@@ -69,7 +69,7 @@ protected:
 
     CShaderResourceDescriptor m_ShaderResourceDescriptor;
 
-    vk::CDevice::CPtr m_pDevice = nullptr;
+    cptr<vk::CDevice> m_pDevice = nullptr;
     VkPipeline m_Pipeline = VK_NULL_HANDLE;
     VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 

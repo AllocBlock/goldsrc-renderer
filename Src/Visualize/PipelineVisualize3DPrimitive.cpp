@@ -56,7 +56,7 @@ void CPipelineVisualize3DPrimitive::clear()
     m_Primitives.clear();
 }
 
-void CPipelineVisualize3DPrimitive::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineVisualize3DPrimitive::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -68,7 +68,7 @@ void CPipelineVisualize3DPrimitive::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pFragUniformBuffer->update(&UBOFrag);
 }
 
-void CPipelineVisualize3DPrimitive::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineVisualize3DPrimitive::recordCommand(sptr<CCommandBuffer> vCommandBuffer)
 {
     bind(vCommandBuffer);
     
@@ -155,7 +155,7 @@ void CPipelineVisualize3DPrimitive::__updateDescriptorSet()
     m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
-void CPipelineVisualize3DPrimitive::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineVisualize3DPrimitive::_initPushConstantV(sptr<CCommandBuffer> vCommandBuffer)
 {
     SPushConstant Data;
     Data.Model = glm::mat4(1.0f);

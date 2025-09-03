@@ -5,5 +5,5 @@
 class CSceneReaderMap : public CSceneReaderBase
 {
 protected:
-    virtual void _readV(ptr<SSceneInfo> voSceneInfo) override;
+    virtual void _readV(sptr<SSceneInfo> voSceneInfo) override;
 };

@@ -1,3 +1,4 @@
+#pragma once
 #include <memory>
 #ifndef _POINTER_H
 #define _POINTER_H
@@ -5,7 +6,7 @@
 namespace Pointer
 {
     template <class T>
-    using ptr = std::shared_ptr<T>;
+    using sptr = std::shared_ptr<T>;
 
     template <class T>
     using cptr = std::shared_ptr<const T>;
@@ -16,30 +17,23 @@ namespace Pointer
     template <class T>
     using uptr = std::unique_ptr<T>;
 
-#ifndef _MAKE_PTR
-#define _MAKE_PTR
     template <class T, class... _Types>
-    ptr<T> make(_Types&&... _Args) { return std::make_shared<T>(_Args...); }
-#endif
-
-#ifndef _DEFINE_PTR
-#define _DEFINE_PTR(Class) using Ptr = ptr<Class>; using CPtr = ptr<const Class>
-#endif
+    sptr<T> make(_Types&&... _Args) { return std::make_shared<T>(_Args...); }
 
     template <typename T>
-    bool isNonEmptyAndValid(const ptr<const T>& vPointer)
+    bool isNonEmptyAndValid(const sptr<const T>& vPointer)
     {
         return vPointer && vPointer->isValid();
     }
 
     template <typename T>
-    bool isNonEmptyAndValid(const ptr<T>& vPointer)
+    bool isNonEmptyAndValid(const sptr<T>& vPointer)
     {
         return vPointer && vPointer->isValid();
     }
 
     template <typename T>
-    void destroyAndClear(ptr<T>& vPointer) 
+    void destroyAndClear(sptr<T>& vPointer) 
     { 
         if (vPointer)
         {

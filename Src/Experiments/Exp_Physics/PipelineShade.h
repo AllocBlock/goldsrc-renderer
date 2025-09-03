@@ -55,7 +55,7 @@ public:
         glm::mat4 NormalModel;
     };
 
-    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera);
+    void updateUniformBuffer(uint32_t vImageIndex, cptr<CCamera> vCamera);
     void updatePushConstant(VkCommandBuffer vCommandBuffer, const glm::mat4& vModelMatrix);
 
 protected:

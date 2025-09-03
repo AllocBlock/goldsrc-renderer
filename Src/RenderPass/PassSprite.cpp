@@ -50,7 +50,7 @@ CRenderPassSprite::CRenderPassSprite()
     };
 }
 
-CPortSet::Ptr CRenderPassSprite::_createPortSetV()
+sptr<CPortSet> CRenderPassSprite::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
@@ -71,7 +71,7 @@ void CRenderPassSprite::_updateV()
 
 std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
+    sptr<CCommandBuffer> pCommandBuffer = _getCommandBuffer();
 
     _beginCommand(pCommandBuffer);
     _beginRendering(pCommandBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent));
@@ -88,6 +88,6 @@ void CRenderPassSprite::_destroyV()
 
 void CRenderPassSprite::__updateUniformBuffer()
 {
-    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    sptr<CCamera> pCamera = m_pSceneInfo->pScene->getMainCamera();
     m_PipelineSprite.updateUniformBuffer(pCamera);
 }

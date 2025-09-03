@@ -5,12 +5,12 @@
 class CSceneReaderMdl : public CSceneReaderBase
 {
 protected:
-    virtual void _readV(ptr<SSceneInfo> voSceneInfo) override;
+    virtual void _readV(sptr<SSceneInfo> voSceneInfo) override;
 private:
-    CActor::Ptr __readBodyPart(const SMdlBodyPart& vBodyPart);
+    sptr<CActor> __readBodyPart(const SMdlBodyPart& vBodyPart);
     void __appendModelData(const SMdlModel& vModel, CMeshData& vioMeshData);
 
-    ptr<CIOGoldSrcMdl> m_pIOMdl = nullptr;
+    sptr<CIOGoldSrcMdl> m_pIOMdl = nullptr;
 };
 
 

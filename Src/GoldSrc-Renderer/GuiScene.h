@@ -5,7 +5,7 @@
 class CGuiScene
 {
 public:
-    void setScene(CScene::CPtr vScene) { m_pScene = vScene; }
+    void setScene(cptr<CScene> vScene) { m_pScene = vScene; }
     void setFocusedActor(wptr<CActor> vActor) { m_pFocusedActor = vActor; }
     void clearFocusedActor() { m_pFocusedActor.reset(); }
     void draw()
@@ -39,7 +39,7 @@ public:
         UI::endWindow();
     }
 private:
-    void __drawActor(CActor::Ptr vActor,const std::string& vUniqueId)
+    void __drawActor(sptr<CActor> vActor,const std::string& vUniqueId)
     {
         UI::indent();
         bool Visiable = vActor->getVisible();
@@ -78,6 +78,6 @@ private:
         UI::unindent();
     }
 
-    CScene::CPtr m_pScene = nullptr;
+    cptr<CScene> m_pScene = nullptr;
     wptr<CActor> m_pFocusedActor;
 };

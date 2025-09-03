@@ -15,7 +15,7 @@ public:
     void updateSwapchainImageIndex(uint32_t vImageIndex);
 
 protected:
-    virtual CPortSet::Ptr _createPortSetV() final;
+    virtual sptr<CPortSet> _createPortSetV() final;
     virtual void _initV() override;
     virtual void _destroyV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
@@ -25,7 +25,7 @@ private:
     void __destroyCommandPoolAndBuffers();
     void __createVertexBuffer();
     void __generateScene();
-    void __transitLayoutToPresent(CCommandBuffer::Ptr vCommandBuffer);
+    void __transitLayoutToPresent(sptr<CCommandBuffer> vCommandBuffer);
 
     const std::string m_DefaultCommandName = "Default";
 
@@ -33,7 +33,7 @@ private:
     uint32_t m_CurrentSwapchainImageIndex = 0;
 
     CCommand m_Command = CCommand();
-    ptr<vk::CVertexBufferTyped<SFullScreenPointData>> m_pVertexBuffer = nullptr;
+    sptr<vk::CVertexBufferTyped<SFullScreenPointData>> m_pVertexBuffer = nullptr;
     std::vector<SFullScreenPointData> m_PointDataSet;
     std::vector<CRenderInfoDescriptor> m_RenderInfoDescriptors;
     CPipelineBlit m_BlitPipeline;

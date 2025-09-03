@@ -50,7 +50,7 @@ void CPipelineIcon::clear()
     m_IconInfoSet.clear();
 }
 
-void CPipelineIcon::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineIcon::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -61,7 +61,7 @@ void CPipelineIcon::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineIcon::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineIcon::recordCommand(sptr<CCommandBuffer> vCommandBuffer)
 {
     if (m_pVertexDataBuffer->isValid())
     {
@@ -117,7 +117,7 @@ CPipelineDescriptor CPipelineIcon::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineIcon::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineIcon::_initPushConstantV(sptr<CCommandBuffer> vCommandBuffer)
 {
     SPushConstant Data;
     vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Data);

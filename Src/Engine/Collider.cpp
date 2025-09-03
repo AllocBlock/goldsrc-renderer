@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "Transform.h"
 
-bool __collideSphereToSphere(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
+bool __collideSphereToSphere(cptr<CColliderBasic> vA, cptr<CColliderBasic> vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
 	if (vA->getType() != EBasicColliderType::SPHERE || vB->getType() != EBasicColliderType::SPHERE)
 		throw std::runtime_error("Unsupported collider type");
@@ -21,7 +21,7 @@ bool __collideSphereToSphere(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, g
 	return true;
 }
 
-bool __collideSphereToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
+bool __collideSphereToPlane(cptr<CColliderBasic> vA, cptr<CColliderBasic> vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
 	if (vA->getType() == EBasicColliderType::SPHERE && vB->getType() == EBasicColliderType::PLANE)
 	{
@@ -77,7 +77,7 @@ bool __collideEdgeToPlane(const glm::vec3& vPlaneCenter, const glm::vec3& vPlane
 	return true;
 }
 
-bool __collideQuadToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
+bool __collideQuadToPlane(cptr<CColliderBasic> vA, cptr<CColliderBasic> vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
 	if (vA->getType() == EBasicColliderType::QUAD && vB->getType() == EBasicColliderType::PLANE)
 	{
@@ -125,7 +125,7 @@ bool __collideQuadToPlane(CColliderBasic::CPtr vA, CColliderBasic::CPtr vB, glm:
 		throw std::runtime_error("Unsupported collider type");
 }
 
-bool collide(CComponentCollider::CPtr vA, CComponentCollider::CPtr vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
+bool collide(cptr<CComponentCollider> vA, cptr<CComponentCollider> vB, glm::vec3& voPosition, glm::vec3& voNormal, float& voDepth)
 {
 	if (!vA || !vB) return false;
 

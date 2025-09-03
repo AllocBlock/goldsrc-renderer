@@ -8,9 +8,9 @@
 class CPipelineMask : public IPipeline
 {
 public:
-    void updateUniformBuffer(CCamera::CPtr vCamera);
-    void recordCommand(CCommandBuffer::Ptr vCommandBuffer);
-    void setActor(CActor::Ptr vActor);
+    void updateUniformBuffer(cptr<CCamera> vCamera);
+    void recordCommand(sptr<CCommandBuffer> vCommandBuffer);
+    void setActor(sptr<CActor> vActor);
     void removeObject();
 
 protected:
@@ -21,9 +21,9 @@ protected:
 
 private:
     void __updateDescriptorSet();
-    void __updateVertexBuffer(CActor::Ptr vActor);
+    void __updateVertexBuffer(sptr<CActor> vActor);
 
     uint32_t m_VertexNum = 0;
     vk::CBuffer m_VertexBuffer;
-    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pVertUniformBuffer;
 };

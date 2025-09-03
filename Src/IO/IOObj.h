@@ -52,6 +52,6 @@ protected:
     virtual bool _readV(std::filesystem::path vFilePath) override;
 
 private:
-    ptr<SObj> m_pObj = nullptr;
-    ptr<CIOMtl> m_pMtl = nullptr;
+    sptr<SObj> m_pObj = nullptr;
+    sptr<CIOMtl> m_pMtl = nullptr;
 };

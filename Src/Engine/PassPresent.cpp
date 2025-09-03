@@ -12,7 +12,7 @@ void CRenderPassPresent::updateSwapchainImageIndex(uint32_t vImageIndex)
     m_CurrentSwapchainImageIndex = vImageIndex;
 }
 
-CPortSet::Ptr CRenderPassPresent::_createPortSetV()
+sptr<CPortSet> CRenderPassPresent::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addInput("Main", SPortInfo::createAnyOfUsage(EImageUsage::READ));
@@ -56,7 +56,7 @@ std::vector<VkCommandBuffer> CRenderPassPresent::_requestCommandBuffersV()
     auto pSwapchain = m_pSwapchain.lock();
     auto pImage = pSwapchain->getImages()[m_CurrentSwapchainImageIndex];
 
-    CCommandBuffer::Ptr pCommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName);
+    sptr<CCommandBuffer> pCommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName);
 
     _beginCommand(pCommandBuffer);
     pImage->transitionLayout(pCommandBuffer, pImage->getLayout(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

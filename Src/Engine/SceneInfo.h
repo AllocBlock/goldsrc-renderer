@@ -10,13 +10,13 @@ class CLightmap
 {
 public:
     void clear();
-    size_t appendLightmap(ptr<CIOImage> vImage);
+    size_t appendLightmap(sptr<CIOImage> vImage);
     std::pair<size_t, size_t> getLightmapSize();
     glm::vec2 getAcutalLightmapCoord(size_t vIndex, glm::vec2 vOriginTexCoord);
-    ptr<CIOImage> getCombinedLightmap();
+    sptr<CIOImage> getCombinedLightmap();
 private:
     const size_t m_MaxWidth = 0x4000;
-    std::vector<ptr<CIOImage>> m_LightmapImages;
+    std::vector<sptr<CIOImage>> m_LightmapImages;
     size_t m_TotalWidth = 0, m_TotalHeight = 0;
     size_t m_StartHeight = 0, m_StartWidth = 0, m_CurrentRowHeight = 0;
     std::vector<std::pair<size_t, size_t>> m_Offsets;
@@ -38,21 +38,21 @@ struct SGoldSrcSprite
     glm::vec3 Angle;
     float Scale;
     EGoldSrcSpriteType Type;
-    ptr<CIOImage> pImage;
+    sptr<CIOImage> pImage;
 };
 
 struct SSceneInfo
 {
-    const CScene::Ptr pScene = make<CScene>();
-    std::vector<ptr<CIOImage>> TexImageSet;
+    const sptr<CScene> pScene = make<CScene>();
+    std::vector<sptr<CIOImage>> TexImageSet;
     std::vector<SGoldSrcSprite> SprSet;
 
     bool UseSkyBox = false;
-    std::array<ptr<CIOImage>, 6> SkyBoxImages;
+    std::array<sptr<CIOImage>, 6> SkyBoxImages;
 
     // for bsp
     bool UseLightmap = false;
-    ptr<CLightmap> pLightmap = nullptr;
+    sptr<CLightmap> pLightmap = nullptr;
 
     void clear()
     {

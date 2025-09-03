@@ -10,12 +10,12 @@
 class CSceneReaderBsp : public CSceneReaderBase
 {
 private:
-    virtual void _readV(ptr<SSceneInfo> voSceneInfo) override;
+    virtual void _readV(sptr<SSceneInfo> voSceneInfo) override;
 
     void __readBsp(std::filesystem::path vFilePath);
     void __readTextures();
     void __loadLeaf(size_t vLeafIndex, CMeshData& vioMeshDataNormal, CMeshData& vioMeshDataSky);
-    CActor::Ptr __loadEntity(size_t vModelIndex);
+    sptr<CActor> __loadEntity(size_t vModelIndex);
     void __loadBspTree();
     void __correntLightmapCoords();
     void __loadSkyBox(std::filesystem::path vCurrentDir);
@@ -30,7 +30,7 @@ private:
     void __appendBspFaceToObject(CMeshData& vioMeshData, uint32_t vFaceIndex, bool vForceFillLightmapData);
     std::optional<SMapEntity> __findEntity(size_t vModelIndex);
 
-    ptr<SSceneInfo> m_pTargetSceneInfo = nullptr;
+    sptr<SSceneInfo> m_pTargetSceneInfo = nullptr;
 
     const float m_SceneScale = 1.0f / 64.0f;
     CIOGoldSrcBsp m_Bsp;

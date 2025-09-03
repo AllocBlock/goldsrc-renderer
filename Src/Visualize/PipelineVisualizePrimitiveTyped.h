@@ -21,7 +21,7 @@ public:
         _onClearV();
     }
 
-    virtual void recordCommandV(CCommandBuffer::Ptr vCommandBuffer) override
+    virtual void recordCommandV(sptr<CCommandBuffer> vCommandBuffer) override
     {
         if (m_NeedUpdateVertexBuffer)
         {

@@ -2,7 +2,7 @@
 #include "RenderPassDescriptor.h"
 #include "..\..\Gui\InterfaceGui.h"
 
-void CRenderPassVisPhysics::setPhysicsEngine(CPhysicsEngine::Ptr vEngine)
+void CRenderPassVisPhysics::setPhysicsEngine(sptr<CPhysicsEngine> vEngine)
 {
     m_pEngine = vEngine;
     m_pEngine->addCollisionHook([this](glm::vec3 vPos, glm::vec3 vNormal)

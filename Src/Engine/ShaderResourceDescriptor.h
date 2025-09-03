@@ -39,7 +39,7 @@ public:
     ~CShaderResourceDescriptor();
 
     void add(std::string vName, uint32_t vIndex, VkDescriptorType vType, uint32_t vSize, VkShaderStageFlags vStage);
-    void createLayout(vk::CDevice::CPtr vDevice);
+    void createLayout(cptr<vk::CDevice> vDevice);
     
     const VkDescriptorSet createDescriptorSet();
     void update(const CDescriptorWriteInfo& vWriteInfo);
@@ -65,7 +65,7 @@ private:
     void __destroyLayout();
     void __destroyDescriptorSet();
 
-    vk::CDevice::CPtr m_pDevice = nullptr;
+    cptr<vk::CDevice> m_pDevice = nullptr;
     VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
     std::vector<SDescriptorInfo> m_DescriptorInfoSet;
     std::vector<VkDescriptorPoolSize> m_PoolSizeSet;

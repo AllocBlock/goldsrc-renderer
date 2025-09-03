@@ -8,7 +8,7 @@ public:
     inline static const std::string Name = "SSAO";
 
 protected:
-    virtual CPortSet::Ptr _createPortSetV() override
+    virtual sptr<CPortSet> _createPortSetV() override
     {
         SPortDescriptor PortDesc;
         PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
@@ -46,7 +46,7 @@ protected:
 
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override
     {
-        CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
+        sptr<CCommandBuffer> pCommandBuffer = _getCommandBuffer();
 
         _beginCommand(pCommandBuffer);
         _beginRendering(pCommandBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent));

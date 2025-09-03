@@ -47,9 +47,9 @@ public:
         bool UseSpecularTexture = true;
     };
 
-    void setMaterialBuffer(ptr<vk::CBuffer> vMaterialBuffer);
+    void setMaterialBuffer(sptr<vk::CBuffer> vMaterialBuffer);
     void setTextures(const vk::CPointerSet<vk::CImage>& vColorSet, const vk::CPointerSet<vk::CImage>& vNormalSet, const vk::CPointerSet<vk::CImage>& vSpecularSet);
-    void setSkyTexture(const CIOImage::Ptr vSkyImage, const CIOImage::Ptr vSkyIrrImage);
+    void setSkyTexture(const sptr<CIOImage> vSkyImage, const sptr<CIOImage> vSkyIrrImage);
     void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos, const SControl& vControl);
 
     bool isReady() {
@@ -74,7 +74,7 @@ private:
     vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
     vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
     vk::CImage m_PlaceholderImage;
-    ptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
+    sptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
     std::vector<VkImageView> m_TextureColorSet;
     std::vector<VkImageView> m_TextureNormalSet;
     std::vector<VkImageView> m_TextureSpecularSet;

@@ -10,7 +10,7 @@ void CLightmap::clear()
     m_Offsets.clear();
 }
 
-size_t CLightmap::appendLightmap(ptr<CIOImage> vImage)
+size_t CLightmap::appendLightmap(sptr<CIOImage> vImage)
 {
     if (m_Channel != vImage->getChannelNum())
     {
@@ -38,7 +38,7 @@ size_t CLightmap::appendLightmap(ptr<CIOImage> vImage)
     return LightmapIndex;
 }
 
-ptr<CIOImage> CLightmap::getCombinedLightmap()
+sptr<CIOImage> CLightmap::getCombinedLightmap()
 {
     //return generateDiagonalGradientGrid(5290, 15, 255, 0, 0, 0, 255, 0);
     //return m_LightmapImages[0];
@@ -47,7 +47,7 @@ ptr<CIOImage> CLightmap::getCombinedLightmap()
     memset(pCombinedData, 0, Resolution * m_Channel);
     for (size_t i = 0; i < m_LightmapImages.size(); ++i)
     {
-        ptr<CIOImage> pLightmap = m_LightmapImages[i];
+        sptr<CIOImage> pLightmap = m_LightmapImages[i];
         const uint8_t* pImageData = reinterpret_cast<const uint8_t*>(pLightmap->getData());
 
         auto [OffsetWidth, OffsetHeight] = m_Offsets[i];

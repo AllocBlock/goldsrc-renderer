@@ -16,7 +16,7 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual CPortSet::Ptr _createPortSetV() override;
+    virtual sptr<CPortSet> _createPortSetV() override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;

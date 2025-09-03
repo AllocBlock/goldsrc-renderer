@@ -17,14 +17,14 @@ class CPipelineVisualize3DPrimitive : public IPipeline
 public:
     void add(E3DPrimitiveType vPrimitiveType, const glm::vec3& vCenter, const glm::vec3& vScale, const glm::vec3& vColor = glm::vec3(1.0, 1.0, 1.0));
     void clear();
-    void updateUniformBuffer(CCamera::CPtr vCamera);
-    void recordCommand(CCommandBuffer::Ptr vCommandBuffer);
+    void updateUniformBuffer(cptr<CCamera> vCamera);
+    void recordCommand(sptr<CCommandBuffer> vCommandBuffer);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;
     virtual void _createV() override;
-    virtual void _initPushConstantV(CCommandBuffer::Ptr vCommandBuffer) override;
+    virtual void _initPushConstantV(sptr<CCommandBuffer> vCommandBuffer) override;
     virtual void _destroyV() override;
 
 
@@ -50,6 +50,6 @@ private:
 
     size_t m_VertexNum = 0;
     vk::CBuffer m_VertexBuffer;
-    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
-    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pVertUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
 };

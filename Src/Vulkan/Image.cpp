@@ -9,7 +9,7 @@
 
 using namespace vk;
 
-void CImage::create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo)
+void CImage::create(cptr<CDevice> vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo)
 {
     destroy();
 
@@ -47,7 +47,7 @@ void CImage::create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, 
     Log::logCreation("memory", uint64_t(m_Memory));
 }
 
-void CImage::createFromImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
+void CImage::createFromImage(cptr<CDevice> vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo)
 {
     destroy();
 
@@ -87,7 +87,7 @@ bool CImage::isValid() const
     else return m_Image != VK_NULL_HANDLE && m_Memory != VK_NULL_HANDLE && get() != VK_NULL_HANDLE;
 }
 
-void CImage::copyFromBuffer(CCommandBuffer::Ptr vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight)
+void CImage::copyFromBuffer(sptr<CCommandBuffer> vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight)
 {
     VkBufferImageCopy Region = {};
     Region.bufferOffset = 0;
@@ -114,7 +114,7 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     StageBuffer.create(m_pDevice, vSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     StageBuffer.fill(vData, vSize);
 
-    CCommandBuffer::Ptr pCommandBuffer = SingleTimeCommandBuffer::begin();
+    sptr<CCommandBuffer> pCommandBuffer = SingleTimeCommandBuffer::begin();
     transitionLayout(pCommandBuffer, m_Layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     copyFromBuffer(pCommandBuffer, StageBuffer.get(), m_Width, m_Height);
     if (vToShaderLayout)
@@ -124,7 +124,7 @@ void CImage::stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayo
     StageBuffer.destroy();
 }
 
-void CImage::copyToBuffer(CCommandBuffer::Ptr vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer)
+void CImage::copyToBuffer(sptr<CCommandBuffer> vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer)
 {
     VkImageLayout OriginalLayout = m_Layout;
     transitionLayout(vCommandBuffer, m_Layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
@@ -171,7 +171,7 @@ VkPipelineStageFlags __tPipelineStageFlags(VkImageLayout vLayout)
     }
 }
 
-void CImage::transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vStartMipLevel, uint32_t vMipLevelCount)
+void CImage::transitionLayout(sptr<CCommandBuffer> vCommandBuffer, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vStartMipLevel, uint32_t vMipLevelCount)
 {
     if (!isValid()) throw "NULL image handle";
 
@@ -215,7 +215,7 @@ void CImage::transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout 
     m_Layout = vNewLayout;
 }
 
-void CImage::__createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo)
+void CImage::__createImageView(cptr<CDevice> vDevice, const SImageViewInfo& vViewInfo)
 {
     VkImageViewCreateInfo ImageViewInfo = {};
     ImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -233,7 +233,7 @@ void CImage::__createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vVie
     Log::logCreation("image view", uint64_t(get()));
 }
 
-void CImage::generateMipmaps(CCommandBuffer::Ptr vCommandBuffer)
+void CImage::generateMipmaps(sptr<CCommandBuffer> vCommandBuffer)
 {
     _ASSERTE(m_MipmapLevelNum > 1);
     _ASSERTE(m_Layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);

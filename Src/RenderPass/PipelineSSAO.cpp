@@ -23,7 +23,7 @@ void CPipelineSSAO::setDepthImage(VkImageView vImageView)
     m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
-void CPipelineSSAO::updateUniformBuffer(CCamera::Ptr vCamera)
+void CPipelineSSAO::updateUniformBuffer(sptr<CCamera> vCamera)
 {
     SUBOFrag UBOFrag = SUBOFrag();
     UBOFrag.VP = vCamera->getViewProjMat();

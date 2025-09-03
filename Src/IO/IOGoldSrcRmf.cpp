@@ -14,7 +14,7 @@ const std::vector<SRmfVisGroup>& CIOGoldSrcRmf::getVisGroups() const
     return VisGroups;
 }
 
-const ptr<SRmfWorld>& CIOGoldSrcRmf::getWorld() const
+const sptr<SRmfWorld>& CIOGoldSrcRmf::getWorld() const
 {
     return pWorld;
 }
@@ -122,7 +122,7 @@ void SRmfWorld::_readV(std::ifstream& vFile)
 {
     vFile.read(reinterpret_cast<char*>(&ObjectNum), sizeof(int));
     Objects.resize(ObjectNum);
-    for(ptr<SRmfObject>& pObject : Objects)
+    for(sptr<SRmfObject>& pObject : Objects)
         pObject = SRmfObject::create(vFile);
     ClassName.read(vFile);
     if (ClassName.String != "worldspawn")
@@ -149,7 +149,7 @@ void SRmfEntity::_readV(std::ifstream& vFile)
 {
     vFile.read(reinterpret_cast<char*>(&SolidNum), sizeof(int));
     Solids.resize(SolidNum);
-    for (ptr<SRmfSolid>& pSolid : Solids)
+    for (sptr<SRmfSolid>& pSolid : Solids)
         pSolid = std::reinterpret_pointer_cast<SRmfSolid>(SRmfObject::create(vFile));
     ClassName.read(vFile);
     vFile.read(Unknown, sizeof(Unknown));
@@ -167,11 +167,11 @@ void SRmfGroup::_readV(std::ifstream& vFile)
 {
     vFile.read(reinterpret_cast<char*>(&ObjectNum), sizeof(int));
     Objects.resize(ObjectNum);
-    for (ptr<SRmfObject>& pObject : Objects)
+    for (sptr<SRmfObject>& pObject : Objects)
         pObject = SRmfObject::create(vFile);
 }
 
-ptr<SRmfObject> SRmfObject::create(std::ifstream& vFile)
+sptr<SRmfObject> SRmfObject::create(std::ifstream& vFile)
 {
     std::streampos OriginPosition = vFile.tellg();
     SRmfVariableString ObjectHeader;

@@ -5,7 +5,7 @@
 
 using namespace vk;
 
-void CFence::create(CDevice::CPtr vDevice, bool vSigned)
+void CFence::create(cptr<CDevice> vDevice, bool vSigned)
 {
     destroy();
     m_pDevice = vDevice;

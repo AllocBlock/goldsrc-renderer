@@ -3,7 +3,7 @@
 #include "RenderPassDescriptor.h"
 #include "ShadowMapDefines.h"
 
-void CRenderPassShade::setShadowMapInfo(CCamera::CPtr vLightCamera)
+void CRenderPassShade::setShadowMapInfo(cptr<CCamera> vLightCamera)
 {
     _ASSERTE(vLightCamera);
     m_pLightCamera = vLightCamera;

@@ -50,7 +50,7 @@ public:
     
 protected:
     virtual void _initV() override;
-    virtual CPortSet::Ptr _createPortSetV() override;
+    virtual sptr<CPortSet> _createPortSetV() override;
     virtual void _updateV() override;
     virtual void _renderUIV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
@@ -61,7 +61,7 @@ protected:
         return { "Init", "Mesh", "Sprite", "Icon", "Text", "Sky"};
     };
 
-    virtual void _onSceneInfoSet(ptr<SSceneInfo> vScene) override;
+    virtual void _onSceneInfoSet(sptr<SSceneInfo> vScene) override;
 
 private:
     void __createTextureImages();
@@ -80,7 +80,7 @@ private:
     void __updatePipelineResourceSprite(CPipelineSprite& vPipeline);
     void __updateTextureView();
 
-    void __drawMeshActor(CCommandBuffer::Ptr vCommandBuffer, CActor::Ptr vActor)
+    void __drawMeshActor(sptr<CCommandBuffer> vCommandBuffer, sptr<CActor> vActor)
     {
         _ASSERTE(m_ActorSegmentMap.find(vActor) != m_ActorSegmentMap.end());
         size_t SegIndex = m_ActorSegmentMap.at(vActor);
@@ -118,18 +118,18 @@ private:
     } m_PipelineSet;
     
     vk::CPointerSet<vk::CImage> m_TextureImageSet;
-    vk::CImage::Ptr m_pMainImage;
-    vk::CImage::Ptr m_pDepthImage;
+    sptr<vk::CImage> m_pMainImage;
+    sptr<vk::CImage> m_pDepthImage;
     vk::CImage m_LightmapImage;
-    vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
+    sptr<vk::CVertexBuffer> m_pVertexBuffer = nullptr;
 
-    std::map<CActor::Ptr, size_t> m_ActorSegmentMap;
+    std::map<sptr<CActor>, size_t> m_ActorSegmentMap;
     
     bool m_EnableSky = true;
     ERenderMethod m_RenderMethod = ERenderMethod::GOLDSRC;
 
     // rerecord control
-    CRerecordState::Ptr m_pRerecord = nullptr;
+    sptr<CRerecordState> m_pRerecord = nullptr;
 
     // ÎÆÀí²é¿´
     int m_CurTextureIndex = 0;

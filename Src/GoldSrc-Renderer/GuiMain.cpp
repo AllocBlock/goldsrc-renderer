@@ -45,7 +45,7 @@ CGUIMain::CGUIMain()
     Scene::setGlobalRequestFilePathFunc(RequestFilePathFunc);
 }
 
-SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo)
+SResultReadScene CGUIMain::readScene(std::filesystem::path vFilePath, sptr<SSceneInfo> voSceneInfo)
 {
     _ASSERTE(voSceneInfo);
     SResultReadScene Result;

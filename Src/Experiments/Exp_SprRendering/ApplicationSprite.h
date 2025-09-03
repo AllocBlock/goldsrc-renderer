@@ -18,9 +18,9 @@ protected:
 private:
     void __linkPasses();
 
-    CCamera::Ptr m_pCamera = nullptr;
+    sptr<CCamera> m_pCamera = nullptr;
 
-    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
-    ptr<CRenderPassSprite> m_pPassSprite = nullptr;
-    ptr<CInteractor> m_pInteractor = nullptr;
+    sptr<CRenderPassGUI> m_pPassGUI = nullptr;
+    sptr<CRenderPassSprite> m_pPassSprite = nullptr;
+    sptr<CInteractor> m_pInteractor = nullptr;
 };

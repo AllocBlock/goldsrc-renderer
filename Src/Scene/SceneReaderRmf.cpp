@@ -2,7 +2,7 @@
 #include "SceneCommon.h"
 #include "SceneGoldsrcCommon.h"
 
-void CSceneReaderRmf::_readV(ptr<SSceneInfo> voSceneInfo)
+void CSceneReaderRmf::_readV(sptr<SSceneInfo> voSceneInfo)
 {
     m_pTargetSceneInfo = voSceneInfo;
 
@@ -39,35 +39,35 @@ void CSceneReaderRmf::__readWadsAndInitTextures()
     }
 }
 
-void CSceneReaderRmf::__readObject(ptr<SRmfObject> vpObject)
+void CSceneReaderRmf::__readObject(sptr<SRmfObject> vpObject)
 {
     if (vpObject->Type.String == "CMapWorld")
     {
-        ptr<SRmfWorld> pWorld = std::reinterpret_pointer_cast<SRmfWorld>(vpObject);
-        for (ptr<SRmfObject> pObject : pWorld->Objects)
+        sptr<SRmfWorld> pWorld = std::reinterpret_pointer_cast<SRmfWorld>(vpObject);
+        for (sptr<SRmfObject> pObject : pWorld->Objects)
         {
             __readObject(pObject);
         }
     }
     else if (vpObject->Type.String == "CMapGroup")
     {
-        ptr<SRmfGroup> pGroup = std::reinterpret_pointer_cast<SRmfGroup>(vpObject);
-        for (ptr<SRmfObject> pObject : pGroup->Objects)
+        sptr<SRmfGroup> pGroup = std::reinterpret_pointer_cast<SRmfGroup>(vpObject);
+        for (sptr<SRmfObject> pObject : pGroup->Objects)
         {
             __readObject(pObject);
         }
     }
     else if (vpObject->Type.String == "CMapEntity")
     {
-        ptr<SRmfEntity> pEntity = std::reinterpret_pointer_cast<SRmfEntity>(vpObject);
-        for (ptr<SRmfObject> pObject : pEntity->Solids)
+        sptr<SRmfEntity> pEntity = std::reinterpret_pointer_cast<SRmfEntity>(vpObject);
+        for (sptr<SRmfObject> pObject : pEntity->Solids)
         {
             __readObject(pObject);
         }
     }
     else if (vpObject->Type.String == "CMapSolid")
     {
-        ptr<SRmfSolid> pSolid = std::reinterpret_pointer_cast<SRmfSolid>(vpObject);
+        sptr<SRmfSolid> pSolid = std::reinterpret_pointer_cast<SRmfSolid>(vpObject);
         __readSolid(pSolid);
     }
     else
@@ -76,7 +76,7 @@ void CSceneReaderRmf::__readObject(ptr<SRmfObject> vpObject)
     }
 }
 
-void CSceneReaderRmf::__readSolid(ptr<SRmfSolid> vpSolid)
+void CSceneReaderRmf::__readSolid(sptr<SRmfSolid> vpSolid)
 {
     CMeshData MeshData = CMeshData();
     for (const SRmfFace& Face : vpSolid->Faces)
@@ -134,7 +134,7 @@ uint32_t CSceneReaderRmf::__requestTextureIndex(std::string vTextureName)
             std::optional<size_t> Index = Wad.findTexture(vTextureName);
             if (Index.has_value())
             {
-                ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
+                sptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
                 uint32_t TexIndex = static_cast<uint32_t>(m_pTargetSceneInfo->TexImageSet.size());
                 m_TexNameToIndex[vTextureName] = TexIndex;
                 m_pTargetSceneInfo->TexImageSet.emplace_back(std::move(pTexImage));
@@ -150,7 +150,7 @@ glm::vec2 CSceneReaderRmf::__getTexCoord(SRmfFace vFace, glm::vec3 vVertex)
 {
     _ASSERTE(m_TexNameToIndex.find(vFace.TextureName) != m_TexNameToIndex.end());
     uint32_t TexIndex = m_TexNameToIndex.at(vFace.TextureName);
-    const ptr<CIOImage> pImage = m_pTargetSceneInfo->TexImageSet[TexIndex];
+    const sptr<CIOImage> pImage = m_pTargetSceneInfo->TexImageSet[TexIndex];
     size_t TexWidth = pImage->getWidth();
     size_t TexHeight = pImage->getHeight();
 

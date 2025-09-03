@@ -13,7 +13,7 @@ public:
     {  
     }
     
-    CCamera::Ptr getLightCamera() { return m_pLightCamera; }
+    sptr<CCamera> getLightCamera() { return m_pLightCamera; }
     void exportShadowMapToFile(std::string vFileName);
 
 protected:
@@ -41,7 +41,7 @@ private:
     vk::CPointerSet<vk::CImage> m_ShadowMapImageSet;
     vk::CImage m_DepthImage;
 
-    CCamera::Ptr m_pLightCamera = nullptr;
+    sptr<CCamera> m_pLightCamera = nullptr;
 
     const VkFormat m_ShadowMapFormat = gShadowMapImageFormat;
     const VkExtent2D m_ShadowMapExtent = { gShadowMapSize, gShadowMapSize };

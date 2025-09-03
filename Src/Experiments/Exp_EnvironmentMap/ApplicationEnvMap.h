@@ -19,7 +19,7 @@ protected:
 private:
     void __linkPasses();
 
-    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
-    ptr<CRenderPassSprite> m_pPassMain = nullptr;
-    ptr<CInteractor> m_pInteractor = nullptr;
+    sptr<CRenderPassGUI> m_pPassGUI = nullptr;
+    sptr<CRenderPassSprite> m_pPassMain = nullptr;
+    sptr<CInteractor> m_pInteractor = nullptr;
 };

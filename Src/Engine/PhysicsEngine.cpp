@@ -55,7 +55,7 @@ void CPhysicsEngine::update(float vDeltaTime) const
     
     for (size_t i = 0; i < RigidNum; ++i)
     {
-        ptr<SPhysicsStateRigidBody> pRigid = m_RigidBodySet[i];
+        sptr<SPhysicsStateRigidBody> pRigid = m_RigidBodySet[i];
         if (pRigid->IsStatic) continue;
 
         // 3. calculate force and alpha

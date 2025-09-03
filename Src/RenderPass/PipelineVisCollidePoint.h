@@ -12,8 +12,8 @@ public:
     CPipelineVisCollidePoint() { m_Ticker.start(); }
 
     void addCollidePoint(glm::vec3 vPos, glm::vec3 vNormal, float vShowTime = 5.0f);
-    void updateUniformBuffer(CCamera::CPtr vCamera);
-    void record(CCommandBuffer::Ptr vCommandBuffer, glm::vec3 vEyePos);
+    void updateUniformBuffer(cptr<CCamera> vCamera);
+    void record(sptr<CCommandBuffer> vCommandBuffer, glm::vec3 vEyePos);
 
 protected:
     virtual CPipelineDescriptor _getPipelineDescriptionV() override;
@@ -34,7 +34,7 @@ private:
 
     uint32_t m_VertexNum = 0;
     vk::CBuffer m_VertexBuffer;
-    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pVertUniformBuffer;
 
     CTicker<float> m_Ticker;
     std::vector<SCollidePointInfo> m_CollidePointInfoSet;

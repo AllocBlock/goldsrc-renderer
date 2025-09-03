@@ -21,11 +21,11 @@ private:
     void __linkPasses();
     void __generateScene();
 
-    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
-    ptr<CRenderPassShade> m_pPassShade = nullptr;
-    ptr<CRenderPassShadowMap> m_pRenderPassShadowMap = nullptr;
-    ptr<CInteractor> m_pInteractor = nullptr;
+    sptr<CRenderPassGUI> m_pPassGUI = nullptr;
+    sptr<CRenderPassShade> m_pPassShade = nullptr;
+    sptr<CRenderPassShadowMap> m_pRenderPassShadowMap = nullptr;
+    sptr<CInteractor> m_pInteractor = nullptr;
 
-    CScene::Ptr m_pScene = nullptr;
+    sptr<CScene> m_pScene = nullptr;
 };
 

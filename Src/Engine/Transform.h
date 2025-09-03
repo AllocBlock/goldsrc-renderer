@@ -11,8 +11,7 @@ class CTransform : public std::enable_shared_from_this<CTransform>
 {
 	_DEFINE_UPDATE_EVENT(Transform)
 public:
-	_DEFINE_PTR(CTransform);
-	CTransform() = default;
+		CTransform() = default;
 
 	CTransform(glm::vec3 vTranslate, glm::vec3 vRotate, glm::vec3 vScale) :
 		m_Translate(vTranslate), m_Rotate(vRotate), m_Scale(vScale)
@@ -60,23 +59,23 @@ public:
 	glm::vec3 applyAbsoluteOnPoint(glm::vec3 vPoint) const;
 	glm::vec3 applyAbsoluteOnVector(glm::vec3 vVector) const;
 
-	CTransform::Ptr getParent() const
+	sptr<CTransform> getParent() const
 	{
 		return m_pParent.expired() ? nullptr : m_pParent.lock();
 	}
 
-	void addChild(CTransform::Ptr vTransform)
+	void addChild(sptr<CTransform> vTransform)
 	{
 		m_ChildSet.emplace_back(vTransform);
 		vTransform->m_pParent = weak_from_this();
 	}
 
-	std::vector<IComponent::Ptr> getComponents()
+	std::vector<sptr<IComponent>> getComponents()
 	{
 		return m_ComponentSet;
 	}
 
-	void addComponent(IComponent::Ptr vComponent)
+	void addComponent(sptr<IComponent> vComponent)
 	{
 		m_ComponentSet.emplace_back(vComponent);
 		vComponent->__setParent(weak_from_this());
@@ -84,7 +83,7 @@ public:
 
 	// return first matched type of component
 	template <typename Component_t>
-	ptr<Component_t> findComponent() const
+	sptr<Component_t> findComponent() const
 	{
 		const auto& RxpectTypeId = typeid(Component_t);
 	    for (const auto& pComp : m_ComponentSet)
@@ -100,8 +99,8 @@ private:
 	glm::vec4 __applyAbsolute(glm::vec4 vValue) const;
 
 	wptr<CTransform> m_pParent;
-	std::vector<ptr<CTransform>> m_ChildSet;
-	std::vector<ptr<IComponent>> m_ComponentSet;
+	std::vector<sptr<CTransform>> m_ChildSet;
+	std::vector<sptr<IComponent>> m_ComponentSet;
 	glm::vec3 m_Translate = glm::vec3(0.0f);
 	CRotator m_Rotate = CRotator();
 	glm::vec3 m_Scale = glm::vec3(1.0f);

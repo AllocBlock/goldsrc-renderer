@@ -5,7 +5,7 @@ int runTestApp(std::string vTitle, int vWindowWidth = 1280, int vWindowHeight = 
 {
 	GLFW::init();
 	GLFWwindow* pWindow = GLFW::createWindow(1280, 800, "Spr Rendering Test");
-	ptr<App_t> pApp = make<App_t>();
+	sptr<App_t> pApp = make<App_t>();
 	pApp->create(pWindow);
 
 	GLFW::startLoop(pWindow, [=]()

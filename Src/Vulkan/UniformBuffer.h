@@ -7,9 +7,8 @@ namespace vk
     class CUniformBuffer : public vk::CBuffer
     {
     public:
-        _DEFINE_PTR(CUniformBuffer);
-
-        void create(CDevice::CPtr vDevice, VkDeviceSize vSize);
+        
+        void create(cptr<CDevice> vDevice, VkDeviceSize vSize);
         void update(const void* vData);
     };
 
@@ -17,9 +16,8 @@ namespace vk
     class CUniformBufferTyped : public vk::CBuffer
     {
     public:
-        _DEFINE_PTR(CUniformBuffer);
-        
-        void create(CDevice::CPtr vDevice)
+                
+        void create(cptr<CDevice> vDevice)
         {
             destroy();
             CBuffer::create(vDevice, sizeof(SUBO_t), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

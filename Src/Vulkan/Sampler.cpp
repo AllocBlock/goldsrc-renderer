@@ -4,7 +4,7 @@
 
 using namespace vk;
 
-void CSampler::create(CDevice::CPtr vDevice, const VkSamplerCreateInfo& vInfo)
+void CSampler::create(cptr<CDevice> vDevice, const VkSamplerCreateInfo& vInfo)
 {
     destroy();
 

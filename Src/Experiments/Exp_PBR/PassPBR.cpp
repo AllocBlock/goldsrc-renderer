@@ -25,9 +25,9 @@ void CRenderPassPBR::_initV()
         vPipeline.setMaterialBuffer(m_pMaterialBuffer);
         vPipeline.setTextures(m_TextureColorSet, m_TextureNormalSet, m_TextureSpecularSet);
 
-        CIOImage::Ptr pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
+        sptr<CIOImage> pSkyIOImage = make<CIOImage>("./textures/old_hall_4k.exr");
         pSkyIOImage->read();
-        CIOImage::Ptr pSkyIrrIOImage = make<CIOImage>("./textures/old_hall_4k_irr.exr");
+        sptr<CIOImage> pSkyIrrIOImage = make<CIOImage>("./textures/old_hall_4k_irr.exr");
         pSkyIrrIOImage->read();
         vPipeline.setSkyTexture(pSkyIOImage, pSkyIrrIOImage);
     });
@@ -36,7 +36,7 @@ void CRenderPassPBR::_initV()
     __createMaterials();
 }
 
-CPortSet::Ptr CRenderPassPBR::_createPortSetV()
+sptr<CPortSet> CRenderPassPBR::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
@@ -80,7 +80,7 @@ std::vector<VkCommandBuffer> CRenderPassPBR::_requestCommandBuffersV(uint32_t vI
     if (!m_PipelineCreator.isReady())
         throw "Not Ready";
 
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer(vImageIndex);
+    sptr<CCommandBuffer> pCommandBuffer = _getCommandBuffer(vImageIndex);
 
     _beginWithFramebuffer(vImageIndex);
 
@@ -142,17 +142,17 @@ void CRenderPassPBR::__createVertexBuffer()
 void CRenderPassPBR::__createMaterials()
 {
     m_TextureColorSet.init(1);
-    CIOImage::Ptr pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
+    sptr<CIOImage> pColorImage = make<CIOImage>("./textures/Stone_albedo.jpg");
     pColorImage->read();
     ImageUtils::createImageFromIOImage(*m_TextureColorSet[0], m_pDevice, pColorImage);
 
     m_TextureNormalSet.init(1);
-    CIOImage::Ptr pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
+    sptr<CIOImage> pNormalImage = make<CIOImage>("./textures/Stone_normal.jpg");
     pNormalImage->read();
     ImageUtils::createImageFromIOImage(*m_TextureNormalSet[0], m_pDevice, pNormalImage);
 
     m_TextureSpecularSet.init(1);
-    CIOImage::Ptr pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
+    sptr<CIOImage> pSpecularImage = make<CIOImage>("./textures/Stone_omr.jpg");
     pSpecularImage->read();
     vk::CImage Specular;
     ImageUtils::createImageFromIOImage(*m_TextureSpecularSet[0], m_pDevice, pSpecularImage);

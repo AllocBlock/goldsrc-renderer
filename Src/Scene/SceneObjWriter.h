@@ -10,9 +10,9 @@
 struct SObjObject
 {
     std::string Name;
-    ptr<IDataArray<glm::vec3>> pVertexArray;
-    ptr<IDataArray<glm::vec2>> pTexCoordArray;
-    ptr<CIOImage> pImage;
+    sptr<IDataArray<glm::vec3>> pVertexArray;
+    sptr<IDataArray<glm::vec2>> pTexCoordArray;
+    sptr<CIOImage> pImage;
 };
 
 /* e.g.
@@ -70,10 +70,10 @@ map_Kd TEST_2.jpg
 class CSceneObjWriter
 {
 public:
-    void addSceneInfo(ptr<SSceneInfo> vSceneInfo);
-    void addObject(ptr<SObjObject> vObject);
+    void addSceneInfo(sptr<SSceneInfo> vSceneInfo);
+    void addObject(sptr<SObjObject> vObject);
     void writeToFile(std::filesystem::path vFilePath);
 
 private:
-    std::vector<ptr<SObjObject>> m_ObjectSet;
+    std::vector<sptr<SObjObject>> m_ObjectSet;
 };

@@ -6,8 +6,7 @@
 class CRerecordState
 {
 public:
-    _DEFINE_PTR(CRerecordState);
-
+    
     void addField(const std::string& vName)
     {
         if (m_Fields.find(vName) != m_Fields.end())

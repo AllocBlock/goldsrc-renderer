@@ -41,7 +41,7 @@ protected:
         m_Value = T();
     }
 
-    virtual IDataArray<T>::Ptr _copyV() override
+    virtual sptr<IDataArray<T>> _copyV() override
     {
         auto pNewArray = make<CSingleValueDataArray<T>>();
         pNewArray->m_Size = m_Size;

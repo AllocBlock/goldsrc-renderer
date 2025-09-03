@@ -7,7 +7,7 @@ using namespace vk;
 bool gIsSetup = false;
 CCommand gCommand;
 
-void SingleTimeCommandBuffer::setup(CDevice::CPtr vDevice, uint32_t vQueueIndex)
+void SingleTimeCommandBuffer::setup(cptr<CDevice> vDevice, uint32_t vQueueIndex)
 {
     _ASSERTE(!gIsSetup);
     gCommand.createPool(vDevice, ECommandType::RESETTABLE, vQueueIndex);
@@ -21,13 +21,13 @@ void SingleTimeCommandBuffer::clean()
     gIsSetup = false;
 }
 
-CCommandBuffer::Ptr SingleTimeCommandBuffer::begin()
+sptr<CCommandBuffer> SingleTimeCommandBuffer::begin()
 {
     _ASSERTE(gIsSetup);
     return gCommand.beginSingleTimeBuffer();
 }
 
-void SingleTimeCommandBuffer::end(CCommandBuffer::Ptr& vioCommandBuffer)
+void SingleTimeCommandBuffer::end(sptr<CCommandBuffer>& vioCommandBuffer)
 {
     _ASSERTE(gIsSetup);
     gCommand.endSingleTimeBuffer(vioCommandBuffer);

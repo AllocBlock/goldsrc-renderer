@@ -27,7 +27,7 @@ namespace
     };
 }
 
-void CPipelineMask::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineMask::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOProjView UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -35,7 +35,7 @@ void CPipelineMask::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineMask::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineMask::recordCommand(sptr<CCommandBuffer> vCommandBuffer)
 {
     if (m_VertexNum > 0)
     {
@@ -45,7 +45,7 @@ void CPipelineMask::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
     }
 }
 
-void CPipelineMask::setActor(CActor::Ptr vActor)
+void CPipelineMask::setActor(sptr<CActor> vActor)
 {
     __updateVertexBuffer(vActor);
 }
@@ -107,7 +107,7 @@ void CPipelineMask::__updateDescriptorSet()
     m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
-void CPipelineMask::__updateVertexBuffer(CActor::Ptr vActor)
+void CPipelineMask::__updateVertexBuffer(sptr<CActor> vActor)
 {
     m_pDevice->waitUntilIdle();
     m_VertexBuffer.destroy();

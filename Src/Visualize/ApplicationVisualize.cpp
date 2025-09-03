@@ -33,7 +33,7 @@ void CApplicationVisualize::_createV()
 {
     SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
-    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    sptr<CCamera> pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setPos(glm::vec3(1, 1, 1));
     pCamera->setAt(glm::vec3(0, 0, 0));
 
@@ -58,7 +58,7 @@ void CApplicationVisualize::_createV()
 
 void CApplicationVisualize::_updateV(uint32_t ImageIndex)
 {
-    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    sptr<CCamera> pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setAspect(vk::calcAspect(m_pSwapchain->getExtent()));
     m_pInteractor->update();
     m_pPassVisualize->update();
@@ -70,7 +70,7 @@ void CApplicationVisualize::_updateV(uint32_t ImageIndex)
 void CApplicationVisualize::_renderUIV()
 {
     UI::beginFrame();
-    std::vector<engine::IRenderPass::Ptr> Passes = { m_pPassVisualize, m_pPassGui, m_pPassPresent };
+    std::vector<sptr<engine::IRenderPass>> Passes = { m_pPassVisualize, m_pPassGui, m_pPassPresent };
     for (const auto& pPass : Passes)
     {
         pPass->renderUI();
@@ -80,7 +80,7 @@ void CApplicationVisualize::_renderUIV()
 
 std::vector<VkCommandBuffer> CApplicationVisualize::_getCommandBuffers()
 {
-    std::vector<engine::IRenderPass::Ptr> Passes = { m_pPassVisualize, m_pPassGui, m_pPassPresent };
+    std::vector<sptr<engine::IRenderPass>> Passes = { m_pPassVisualize, m_pPassGui, m_pPassPresent };
     auto buffers = std::vector<VkCommandBuffer>();
     for (const auto& pPass : Passes)
     {

@@ -12,7 +12,7 @@ CPhysicalDevice::~CPhysicalDevice()
     release(); // this can auto release as no actual handle is created
 }
 
-CPhysicalDevice::Ptr CPhysicalDevice::chooseBestDevice(CInstance::CPtr vInstance, CSurface::CPtr vSurface, const std::vector<const char*>& vExtensions)
+sptr<CPhysicalDevice> CPhysicalDevice::chooseBestDevice(cptr<CInstance> vInstance, cptr<CSurface> vSurface, const std::vector<const char*>& vExtensions)
 {
     uint32_t NumPhysicalDevice = 0;
     std::vector<VkPhysicalDevice> PhysicalDevices;
@@ -35,7 +35,7 @@ CPhysicalDevice::Ptr CPhysicalDevice::chooseBestDevice(CInstance::CPtr vInstance
         throw std::runtime_error(u8"未找到可用的GPU设备");
     }
 
-    CPhysicalDevice::Ptr pDevice = make<CPhysicalDevice>();
+    sptr<CPhysicalDevice> pDevice = make<CPhysicalDevice>();
     // get property, queue family info and swapchain support info
     vkGetPhysicalDeviceProperties(ChosenDevice, &pDevice->m_DeviceProperty);
 
@@ -60,12 +60,12 @@ void CPhysicalDevice::printSupportedExtension() const
     }
 }
 
-CInstance::CPtr CPhysicalDevice::getInstance() const
+cptr<CInstance> CPhysicalDevice::getInstance() const
 {
     return m_pInstance;
 }
 
-CSurface::CPtr CPhysicalDevice::getSurface() const
+cptr<CSurface> CPhysicalDevice::getSurface() const
 {
     return m_pSurface;
 }
@@ -146,7 +146,7 @@ VkFormat vk::CPhysicalDevice::getBestDepthFormat() const
     return m_BestDepthFormat;
 }
 
-bool CPhysicalDevice::__isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface, const std::vector<const char*>& vDeviceExtensions)
+bool CPhysicalDevice::__isDeviceSuitable(VkPhysicalDevice vPhysicalDevice, cptr<CSurface> vSurface, const std::vector<const char*>& vDeviceExtensions)
 {
     SQueueFamilyIndices QueueIndices = CPhysicalDevice::__findQueueFamilies(vPhysicalDevice, vSurface);
     if (!QueueIndices.isComplete()) return false;
@@ -190,7 +190,7 @@ bool CPhysicalDevice::__isDeviceExtensionsSupported(VkPhysicalDevice vPhysicalDe
     return RequiredExtensions.empty();
 }
 
-SQueueFamilyIndices CPhysicalDevice::__findQueueFamilies(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface)
+SQueueFamilyIndices CPhysicalDevice::__findQueueFamilies(VkPhysicalDevice vPhysicalDevice, cptr<CSurface> vSurface)
 {
     _ASSERTE(vSurface && vSurface->isValid());
 
@@ -224,7 +224,7 @@ SQueueFamilyIndices CPhysicalDevice::__findQueueFamilies(VkPhysicalDevice vPhysi
     return Indices;
 }
 
-SSwapChainSupportDetails CPhysicalDevice::__getSwapChainSupport(VkPhysicalDevice vPhysicalDevice, CSurface::CPtr vSurface)
+SSwapChainSupportDetails CPhysicalDevice::__getSwapChainSupport(VkPhysicalDevice vPhysicalDevice, cptr<CSurface> vSurface)
 {
     _ASSERTE(vSurface && vSurface->isValid());
 

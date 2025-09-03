@@ -10,8 +10,7 @@
 class CFont
 {
 public:
-    _DEFINE_PTR(CFont);
-    static CFont::Ptr getDefaultFont();
+        static sptr<CFont> getDefaultFont();
 
     struct SFontDrawInfo
     {
@@ -24,7 +23,7 @@ public:
     CFont(std::string vFontName, size_t vFontSize, bool vIsSDF);
 
     float getFontBaseSize() const { return m_FontSize; }
-    CIOImage::CPtr getImage() const { return m_pFontImage; }
+    cptr<CIOImage> getImage() const { return m_pFontImage; }
     SFontDrawInfo getCharDrawInfo(char vChar);
 
 private:
@@ -36,7 +35,7 @@ private:
         uint32_t Advance; // next char cursor offset
     };
 
-    CIOImage::Ptr m_pFontImage;
+    sptr<CIOImage> m_pFontImage;
     float m_FontSize;
     glm::vec2 m_FontAtlasSize;
     std::map<char, SCharacterInfo> m_CharInfoMap;

@@ -10,13 +10,13 @@ void CRenderPassFullScreen::_destroyV()
     destroyAndClear(m_pVertexBuffer);
 }
 
-void CRenderPassFullScreen::_bindVertexBuffer(CCommandBuffer::Ptr vCommandBuffer)
+void CRenderPassFullScreen::_bindVertexBuffer(sptr<CCommandBuffer> vCommandBuffer)
 {
     _ASSERTE(m_pVertexBuffer->isValid());
     vCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
 }
 
-void CRenderPassFullScreen::_drawFullScreen(CCommandBuffer::Ptr vCommandBuffer)
+void CRenderPassFullScreen::_drawFullScreen(sptr<CCommandBuffer> vCommandBuffer)
 {
     _bindVertexBuffer(vCommandBuffer);
     vCommandBuffer->draw(0, uint32_t(m_PointDataSet.size()));

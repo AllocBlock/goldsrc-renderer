@@ -18,8 +18,7 @@ class CComponentTextRenderer : public IComponent
     _DEFINE_UPDATE_EVENT(TextMesh)
     _DEFINE_UPDATE_EVENT(ShaderParam)
 public:
-    _DEFINE_PTR(CComponentTextRenderer);
-
+    
     struct SPointData
     {
         glm::vec2 Pos;
@@ -37,14 +36,14 @@ public:
 
     void setText(std::string vText);
 
-    _DEFINE_GETTER_POINTER(Font, CFont::Ptr);
+    _DEFINE_GETTER_POINTER(Font, sptr<CFont>);
     _DEFINE_GETTER(Anchor, glm::vec3);
     _DEFINE_GETTER(Offset, glm::vec2);
     _DEFINE_GETTER(Scale, float);
     _DEFINE_GETTER(LineHeight, float);
     _DEFINE_GETTER(Spacing, float);
 
-    void setFont(CFont::Ptr vFont);
+    void setFont(sptr<CFont> vFont);
     void setAnchor(glm::vec3 vAnchor);
     void setOffset(glm::vec2 vOffset);
     void setScale(float vScale);
@@ -55,7 +54,7 @@ public:
     glm::vec3 getWorldPosition() const;
 
     // TODO: instancing may be better
-    vk::CVertexBuffer::Ptr generateVertexBuffer(vk::CDevice::CPtr vDevice) const;
+    sptr<vk::CVertexBuffer> generateVertexBuffer(cptr<vk::CDevice> vDevice) const;
 
     virtual void _renderUIV() override;
     virtual SAABB getAABBV() const override;
@@ -71,7 +70,7 @@ private:
     glm::vec3 m_Anchor = glm::vec3(0.0f);
     glm::vec2 m_Offset = glm::vec2(0.0f);
     std::string m_Text = "";
-    CFont::Ptr m_pFont = nullptr;
+    sptr<CFont> m_pFont = nullptr;
     float m_Scale = 1.0f;
     float m_LineHeight = 1.0f;
     float m_Spacing = 0.0f;

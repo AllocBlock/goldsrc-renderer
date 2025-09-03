@@ -21,5 +21,5 @@ private:
     
     bool m_IsInitted = false;
 	GLFWwindow* m_pWindow = nullptr;
-	ptr<CApplicationVisualize> m_pApp = nullptr;
+	sptr<CApplicationVisualize> m_pApp = nullptr;
 };

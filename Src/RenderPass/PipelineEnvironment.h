@@ -10,8 +10,8 @@ class CPipelineEnvironment : public IPipeline
 {
 public:
     bool isReady() { return m_Ready; }
-    void setEnvironmentMap(CIOImage::Ptr vSkyImage);
-    void updateUniformBuffer(uint32_t vImageIndex, CCamera::Ptr vCamera);
+    void setEnvironmentMap(sptr<CIOImage> vSkyImage);
+    void updateUniformBuffer(uint32_t vImageIndex, sptr<CCamera> vCamera);
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
 
@@ -22,7 +22,7 @@ protected:
     virtual void _destroyV() override;
 
 private:
-    void __precalculateIBL(CIOImage::Ptr vSkyImage);
+    void __precalculateIBL(sptr<CIOImage> vSkyImage);
     void __createPlaceholderImage();
     void __updateDescriptorSet();
     void __destroyResources();
@@ -35,7 +35,7 @@ private:
     } m_Control;
 
     vk::CSampler m_Sampler;
-    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
     vk::CImage m_EnvironmentImage;
     vk::CImage m_PlaceholderImage;
 };

@@ -4,8 +4,7 @@ template <typename T>
 class IDataArray
 {
 public:
-    _DEFINE_PTR(IDataArray<T>);
-
+    
     virtual ~IDataArray() = default;
 
     bool empty() { return size() == 0; }
@@ -15,7 +14,7 @@ public:
     void set(size_t vIndex, T vData) { _setV(vIndex, vData); }
     void append(T vData, size_t vNum = 1) { _appendV(vData, vNum); }
     void clear() { _clearV(); }
-    IDataArray<T>::Ptr copy() { return _copyV(); }
+    sptr<IDataArray<T>> copy() { return _copyV(); }
 
 protected:
     virtual size_t _sizeV() = 0;
@@ -24,5 +23,5 @@ protected:
     virtual void _setV(size_t vIndex, T vData) = 0;
     virtual void _appendV(T vData, size_t vNum) = 0;
     virtual void _clearV() = 0;
-    virtual IDataArray<T>::Ptr _copyV() = 0;
+    virtual sptr<IDataArray<T>> _copyV() = 0;
 };

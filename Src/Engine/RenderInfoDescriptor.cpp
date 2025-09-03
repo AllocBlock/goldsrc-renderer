@@ -38,23 +38,23 @@ void CRenderInfoDescriptor::setDepthAttachment(VkImageView vImage, VkFormat vFor
     m_AttachmentFormatDepthStencil = vFormat;
 }
 
-void CRenderInfoDescriptor::addColorAttachment(vk::CImage::Ptr vImage, bool clear)
+void CRenderInfoDescriptor::addColorAttachment(sptr<vk::CImage> vImage, bool clear)
 {
     addColorAttachment(*vImage, vImage->getFormat(), clear);
 }
 
-void CRenderInfoDescriptor::setDepthAttachment(vk::CImage::Ptr vImage, bool clear)
+void CRenderInfoDescriptor::setDepthAttachment(sptr<vk::CImage> vImage, bool clear)
 {
     setDepthAttachment(*vImage, vImage->getFormat(), clear);
 }
 
-void CRenderInfoDescriptor::addColorAttachment(CPort::Ptr vPort)
+void CRenderInfoDescriptor::addColorAttachment(sptr<CPort> vPort)
 {
     _ASSERT(vPort->getLayout() == VkImageLayout::VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     addColorAttachment(vPort->getImageV(), vPort->isRoot());
 }
 
-void CRenderInfoDescriptor::setDepthAttachment(CPort::Ptr vPort)
+void CRenderInfoDescriptor::setDepthAttachment(sptr<CPort> vPort)
 {
     _ASSERT(vPort->getLayout() == VkImageLayout::VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     setDepthAttachment(vPort->getImageV(), vPort->isRoot());
@@ -100,7 +100,7 @@ VkRenderingInfo CRenderInfoDescriptor::generateRendererInfo(VkExtent2D renderSiz
     return std::move(RenderingInfo);
 }
 
-CRenderInfoDescriptor CRenderInfoDescriptor::generateSingleSubpassDesc(CPort::Ptr vColorPort, CPort::Ptr vDepthPort)
+CRenderInfoDescriptor CRenderInfoDescriptor::generateSingleSubpassDesc(sptr<CPort> vColorPort, sptr<CPort> vDepthPort)
 {
     CRenderInfoDescriptor Desc;
     Desc.addColorAttachment(vColorPort);

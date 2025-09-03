@@ -9,7 +9,7 @@ CCommand::~CCommand()
     clear();
 }
 
-void CCommand::createPool(CDevice::CPtr vDevice, ECommandType vType, uint32_t vQueueIndex)
+void CCommand::createPool(cptr<CDevice> vDevice, ECommandType vType, uint32_t vQueueIndex)
 {
     _ASSERTE(vDevice != VK_NULL_HANDLE);
     if (vQueueIndex == std::numeric_limits<uint32_t>::max()) // use graphics queue index in device
@@ -47,13 +47,13 @@ void CCommand::createBuffers(std::string vName, ECommandBufferLevel vLevel)
 #endif
 }
 
-CCommandBuffer::Ptr CCommand::getCommandBuffer(std::string vName) const
+sptr<CCommandBuffer> CCommand::getCommandBuffer(std::string vName) const
 {
     _ASSERTE(m_NameToBufferMap.find(vName) != m_NameToBufferMap.end());
     return m_NameToBufferMap.at(vName);
 }
 
-CCommandBuffer::Ptr CCommand::beginSingleTimeBuffer()
+sptr<CCommandBuffer> CCommand::beginSingleTimeBuffer()
 {
     if (m_CommandPool == VK_NULL_HANDLE) throw "create command pool first";
 
@@ -64,7 +64,7 @@ CCommandBuffer::Ptr CCommand::beginSingleTimeBuffer()
     return pCommandBuffer;
 }
 
-void CCommand::endSingleTimeBuffer(CCommandBuffer::Ptr& vioCommandBuffer)
+void CCommand::endSingleTimeBuffer(sptr<CCommandBuffer>& vioCommandBuffer)
 {
     if (m_CommandPool == VK_NULL_HANDLE) throw "create command pool first";
 
@@ -104,7 +104,7 @@ void CCommand::setDebugName(const std::string& vName) const
     }
 }
 
-CCommandBuffer::Ptr CCommand::__allocBuffer(ECommandBufferLevel vLevel, bool vIsSingleTime)
+sptr<CCommandBuffer> CCommand::__allocBuffer(ECommandBufferLevel vLevel, bool vIsSingleTime)
 {
     VkCommandBufferAllocateInfo BufferAllocInfo = {};
     BufferAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -136,7 +136,7 @@ void CCommand::__freeAllBuffer()
     m_NameToBufferMap.clear();
 }
 
-void CCommand::__freeBuffer(CCommandBuffer::Ptr vpBufferSet)
+void CCommand::__freeBuffer(sptr<CCommandBuffer> vpBufferSet)
 {
     auto buffer = vpBufferSet->get();
     vkFreeCommandBuffers(*m_pDevice, m_CommandPool, 1, &buffer);

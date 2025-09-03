@@ -4,8 +4,8 @@
 
 namespace SingleTimeCommandBuffer
 {
-    void setup(vk::CDevice::CPtr vDevice, uint32_t vQueueIndex);
+    void setup(cptr<vk::CDevice> vDevice, uint32_t vQueueIndex);
     void clean();
-    CCommandBuffer::Ptr begin();
-    void end(CCommandBuffer::Ptr& vioCommandBuffer);
+    sptr<CCommandBuffer> begin();
+    void end(sptr<CCommandBuffer>& vioCommandBuffer);
 }

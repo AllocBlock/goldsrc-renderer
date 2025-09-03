@@ -88,12 +88,11 @@ namespace vk
     class CSampler : public IVulkanHandle<VkSampler>
     {
     public:
-        _DEFINE_PTR(CSampler);
-
-        void create(CDevice::CPtr vDevice, const VkSamplerCreateInfo& vInfo);
+        
+        void create(cptr<CDevice> vDevice, const VkSamplerCreateInfo& vInfo);
         void destroy();
 
     private:
-        CDevice::CPtr m_pDevice = nullptr;
+        cptr<CDevice> m_pDevice = nullptr;
     };
 }

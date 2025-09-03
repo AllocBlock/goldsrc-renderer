@@ -9,7 +9,7 @@ public:
     CRenderPassSprite();
 
 protected:
-    virtual CPortSet::Ptr _createPortSetV() override;
+    virtual sptr<CPortSet> _createPortSetV() override;
     virtual void _initV() override;
     virtual void _updateV() override;
     virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;

@@ -59,7 +59,7 @@ void CPort::clearAllChildren()
     m_ChildSet.clear();
 }
 
-void CPort::attachTo(CPort::Ptr vPort)
+void CPort::attachTo(sptr<CPort> vPort)
 {
     _ASSERTE(isMatch(vPort));
 
@@ -110,12 +110,12 @@ CSourcePort::CSourcePort(const std::string& vName, const SPortInfo& vInfo, CPort
     m_Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
-vk::CImage::Ptr CSourcePort::getImageV() const
+sptr<vk::CImage> CSourcePort::getImageV() const
 {
     return m_pImage;
 }
 
-void CSourcePort::setImage(vk::CImage::Ptr vImage)
+void CSourcePort::setImage(sptr<vk::CImage> vImage)
 {
     m_pImage = vImage;
 }
@@ -126,7 +126,7 @@ CRelayPort::CRelayPort(const std::string& vName, const SPortInfo& vInfo, CPortSe
         setLayout(__toLayout(vInfo.Usage));
 }
 
-vk::CImage::Ptr CRelayPort::getImageV() const
+sptr<vk::CImage> CRelayPort::getImageV() const
 {
     if (m_pParent.expired()) return nullptr;
     return m_pParent.lock()->getImageV();
@@ -253,26 +253,26 @@ bool CPortSet::hasInput(const std::string& vName) const
 bool CPortSet::hasOutput(const std::string& vName) const
 { return __findPort(vName, m_OutputPortSet) != nullptr; }
 
-CPort::Ptr CPortSet::getInputPort(size_t vIndex) const
+sptr<CPort> CPortSet::getInputPort(size_t vIndex) const
 {
     _ASSERTE(vIndex < m_InputPortSet.size());
     return m_InputPortSet[vIndex];
 }
 
-CPort::Ptr CPortSet::getOutputPort(size_t vIndex) const
+sptr<CPort> CPortSet::getOutputPort(size_t vIndex) const
 {
     _ASSERTE(vIndex < m_OutputPortSet.size());
     return m_OutputPortSet[vIndex];
 }
 
-CPort::Ptr CPortSet::getInputPort(const std::string& vName) const
+sptr<CPort> CPortSet::getInputPort(const std::string& vName) const
 {
     auto pPort = __findPort(vName, m_InputPortSet);
     _ASSERTE(pPort);
     return pPort;
 }
 
-CPort::Ptr CPortSet::getOutputPort(const std::string& vName) const
+sptr<CPort> CPortSet::getOutputPort(const std::string& vName) const
 {
     auto pPort = __findPort(vName, m_OutputPortSet);
     _ASSERTE(pPort);
@@ -289,7 +289,7 @@ const SPortInfo& CPortSet::getOutputPortInfo(const std::string& vName) const
     return getOutputPort(vName)->getInfo();
 }
 
-void CPortSet::setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage)
+void CPortSet::setOutput(const std::string& vOutputName, sptr<vk::CImage> vImage)
 {
     SPortInfo InputInfo;
     InputInfo.Format = vImage->getFormat();
@@ -300,17 +300,17 @@ void CPortSet::setOutput(const std::string& vOutputName, vk::CImage::Ptr vImage)
     const auto& TargetInfo = pPort->getInfo();
     _ASSERTE(InputInfo.isMatch(TargetInfo));
 
-    CSourcePort::Ptr pSourcePort = std::dynamic_pointer_cast<CSourcePort>(pPort);
+    sptr<CSourcePort> pSourcePort = std::dynamic_pointer_cast<CSourcePort>(pPort);
     pSourcePort->setImage(vImage);
 }
 
-void CPortSet::append(const std::string& vInputName, CPort::Ptr vPort)
+void CPortSet::append(const std::string& vInputName, sptr<CPort> vPort)
 {
     auto pPort = getInputPort(vInputName);
     pPort->append(vPort);
 }
 
-void CPortSet::attachTo(const std::string& vInputName, CPort::Ptr vPort)
+void CPortSet::attachTo(const std::string& vInputName, sptr<CPort> vPort)
 {
     auto pPort = getInputPort(vInputName);
     pPort->attachTo(vPort);
@@ -324,24 +324,24 @@ void CPortSet::unlinkAll()
         pPort->unlinkAll();
 }
 
-void CPortSet::link(CPort::Ptr vOutputPort, CPort::Ptr vInputPort)
+void CPortSet::link(sptr<CPort> vOutputPort, sptr<CPort> vInputPort)
 {
     _ASSERTE(vOutputPort);
     _ASSERTE(vInputPort);
     vOutputPort->append(vInputPort);
 }
 
-void CPortSet::link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPort::Ptr vInputPort)
+void CPortSet::link(sptr<CPortSet> vSet1, const std::string& vOutputName, sptr<CPort> vInputPort)
 {
     link(vSet1->getOutputPort(vOutputName), vInputPort);
 }
 
-void CPortSet::link(CPort::Ptr vOutputPort, CPortSet::Ptr vSet2, const std::string& vInputName)
+void CPortSet::link(sptr<CPort> vOutputPort, sptr<CPortSet> vSet2, const std::string& vInputName)
 {
     link(vOutputPort, vSet2->getInputPort(vInputName));
 }
 
-void CPortSet::link(CPortSet::Ptr vSet1, const std::string& vOutputName, CPortSet::Ptr vSet2,
+void CPortSet::link(sptr<CPortSet> vSet1, const std::string& vOutputName, sptr<CPortSet> vSet2,
     const std::string& vInputName)
 {
     link(vSet1->getOutputPort(vOutputName), vSet2->getInputPort(vInputName));
@@ -372,7 +372,7 @@ void CPortSet::__addInputOutput(const std::string& vName, const SPortInfo& vInfo
     m_OutputPortSet.emplace_back(pPort);
 }
 
-CPort::Ptr CPortSet::__findPort(const std::string& vName, const std::vector<CPort::Ptr>& vPortSet) const
+sptr<CPort> CPortSet::__findPort(const std::string& vName, const std::vector<sptr<CPort>>& vPortSet) const
 {
     for (const auto& pPort : vPortSet)
         if (pPort->getName() == vName)

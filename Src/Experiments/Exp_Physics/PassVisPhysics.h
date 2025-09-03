@@ -11,8 +11,8 @@ class CRenderPassVisPhysics : public engine::IRenderPass
 public:
     CRenderPassVisPhysics() = default;
 
-    void setPhysicsEngine(CPhysicsEngine::Ptr vEngine);
-    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; } 
+    void setPhysicsEngine(sptr<CPhysicsEngine> vEngine);
+    void setCamera(sptr<CCamera> vCamera) { m_pCamera = vCamera; } 
 
 protected:
     virtual void _initV() override;
@@ -39,8 +39,8 @@ private:
     CPipelineVisCollidePoint m_PipelineVisCollidePoint;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
 
-    CPhysicsEngine::Ptr m_pEngine = nullptr;
-    CCamera::Ptr m_pCamera = nullptr;
+    sptr<CPhysicsEngine> m_pEngine = nullptr;
+    sptr<CCamera> m_pCamera = nullptr;
 
     bool m_ShowCollider = true;
 };

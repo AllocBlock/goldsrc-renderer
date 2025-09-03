@@ -6,8 +6,7 @@ namespace vk
     class CVertexBuffer : public CBuffer
     {
     public:
-        _DEFINE_PTR(CVertexBuffer);
-
+        
         struct SSegmentInfo
         {
             uint32_t First;
@@ -52,14 +51,13 @@ namespace vk
     class CVertexBufferTyped : public CVertexBuffer
     {
     public:
-        _DEFINE_PTR(CVertexBufferTyped<PointData_t>);
-
-        bool create(CDevice::CPtr vDevice, const std::vector<PointData_t>& vData)
+        
+        bool create(cptr<CDevice> vDevice, const std::vector<PointData_t>& vData)
         {
             return create(vDevice, std::vector<std::vector<PointData_t>>{ vData });
         }
 
-        bool create(CDevice::CPtr vDevice, const std::vector<std::vector<PointData_t>>& vDataSet)
+        bool create(cptr<CDevice> vDevice, const std::vector<std::vector<PointData_t>>& vDataSet)
         {
             destroy();
 

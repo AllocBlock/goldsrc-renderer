@@ -24,14 +24,14 @@ private:
     void __resetActors();
     void __linkPasses();
 
-    CCamera::Ptr m_pCamera = nullptr;
+    sptr<CCamera> m_pCamera = nullptr;
 
-    ptr<CRenderPassGUI> m_pPassGUI = nullptr;
-    ptr<CRenderPassShade> m_pPassShade = nullptr;
-    ptr<CRenderPassVisPhysics> m_pPassVisPhysics = nullptr;
+    sptr<CRenderPassGUI> m_pPassGUI = nullptr;
+    sptr<CRenderPassShade> m_pPassShade = nullptr;
+    sptr<CRenderPassVisPhysics> m_pPassVisPhysics = nullptr;
 
-    ptr<CInteractor> m_pInteractor = nullptr;
+    sptr<CInteractor> m_pInteractor = nullptr;
 
     CScene<CMeshData>::Ptr m_pScene = nullptr;
-    CPhysicsEngine::Ptr m_pPhysicsEngine = nullptr;
+    sptr<CPhysicsEngine> m_pPhysicsEngine = nullptr;
 };

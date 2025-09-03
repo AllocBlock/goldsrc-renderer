@@ -56,7 +56,7 @@ void CPipelineGoldSrc::__updateDescriptorSet()
     m_ShaderResourceDescriptor.update(WriteInfo);
 }
 
-void CPipelineGoldSrc::updateUniformBuffer(glm::mat4 vModel, CCamera::CPtr vCamera)
+void CPipelineGoldSrc::updateUniformBuffer(glm::mat4 vModel, cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
@@ -69,7 +69,7 @@ void CPipelineGoldSrc::updateUniformBuffer(glm::mat4 vModel, CCamera::CPtr vCame
     m_pFragUniformBuffer->update(&UBOFrag);
 }
 
-void CPipelineGoldSrc::setLightmapState(CCommandBuffer::Ptr vCommandBuffer, bool vEnable)
+void CPipelineGoldSrc::setLightmapState(sptr<CCommandBuffer> vCommandBuffer, bool vEnable)
 {
     if (m_EnableLightmap == vEnable) return;
     else
@@ -79,7 +79,7 @@ void CPipelineGoldSrc::setLightmapState(CCommandBuffer::Ptr vCommandBuffer, bool
     }
 }
 
-void CPipelineGoldSrc::setOpacity(CCommandBuffer::Ptr vCommandBuffer, float vOpacity)
+void CPipelineGoldSrc::setOpacity(sptr<CCommandBuffer> vCommandBuffer, float vOpacity)
 {
     if (m_Opacity == vOpacity) return;
     else
@@ -160,7 +160,7 @@ void CPipelineGoldSrc::_createV()
     ImageUtils::createPlaceholderImage(m_PlaceholderImage, m_pDevice);
 }
 
-void CPipelineGoldSrc::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineGoldSrc::_initPushConstantV(sptr<CCommandBuffer> vCommandBuffer)
 {
     m_EnableLightmap = false;
     m_Opacity = 1.0;
@@ -181,7 +181,7 @@ void CPipelineGoldSrc::__destroyResources()
     m_Sampler.destroy();
 }
 
-void CPipelineGoldSrc::__updatePushConstant(CCommandBuffer::Ptr vCommandBuffer, bool vEnableLightmap, float vOpacity)
+void CPipelineGoldSrc::__updatePushConstant(sptr<CCommandBuffer> vCommandBuffer, bool vEnableLightmap, float vOpacity)
 {
     SPushConstant PushConstant;
     PushConstant.UseLightmap = vEnableLightmap;

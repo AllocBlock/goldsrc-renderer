@@ -11,7 +11,7 @@ void IRenderPass::createPortSet()
     m_pPortSet = _createPortSetV();
 }
 
-void IRenderPass::init(vk::CDevice::CPtr vDevice, VkExtent2D vScreenExtent)
+void IRenderPass::init(cptr<vk::CDevice> vDevice, VkExtent2D vScreenExtent)
 {
     _ASSERTE(vScreenExtent.width > 0 && vScreenExtent.height > 0);
     m_pDevice = vDevice;
@@ -40,7 +40,7 @@ void IRenderPass::destroy()
     m_pPortSet->unlinkAll();
 }
 
-void IRenderPass::_beginCommand(CCommandBuffer::Ptr vCommandBuffer)
+void IRenderPass::_beginCommand(sptr<CCommandBuffer> vCommandBuffer)
 {
     _ASSERTE(!m_CommandBegun);
     if (m_pCurrentCommandBuffer != nullptr)
@@ -53,13 +53,13 @@ void IRenderPass::_beginCommand(CCommandBuffer::Ptr vCommandBuffer)
     m_CommandBegun = true;
 }
 
-void IRenderPass::_beginRendering(CCommandBuffer::Ptr vCommandBuffer, const VkRenderingInfo& vBeginInfo)
+void IRenderPass::_beginRendering(sptr<CCommandBuffer> vCommandBuffer, const VkRenderingInfo& vBeginInfo)
 {
     _ASSERTE(m_CommandBegun);
     m_pCurrentCommandBuffer->beginRendering(vBeginInfo);
 }
 
-void IRenderPass::_addPassBarrier(CCommandBuffer::Ptr vCommandBuffer)
+void IRenderPass::_addPassBarrier(sptr<CCommandBuffer> vCommandBuffer)
 {
     // 比较暴力的Pass级别的同步，应该用不到，用在做Image Layout转换时顺便做Image级别的同步就ok了
     _ASSERTE(m_CommandBegun);
@@ -85,7 +85,7 @@ void IRenderPass::_endCommand()
     m_CommandBegun = false;
 }
 
-void IRenderPass::_beginSecondaryCommand(CCommandBuffer::Ptr vCommandBuffer, const CRenderInfoDescriptor& vRenderInfoDescriptor)
+void IRenderPass::_beginSecondaryCommand(sptr<CCommandBuffer> vCommandBuffer, const CRenderInfoDescriptor& vRenderInfoDescriptor)
 {
     std::vector<VkFormat> ColorAttachmentFormats = vRenderInfoDescriptor.getColorAttachmentFormats();
 
@@ -117,12 +117,12 @@ bool IRenderPass::_dumpInputPortExtent(std::string vName, VkExtent2D& voExtent)
 }
 
 
-CCommandBuffer::Ptr IRenderPass::_getCommandBuffer()
+sptr<CCommandBuffer> IRenderPass::_getCommandBuffer()
 {
     return m_Command.getCommandBuffer(m_DefaultCommandName);
 }
 
-void IRenderPass::_initImageLayouts(CCommandBuffer::Ptr vCommandBuffer)
+void IRenderPass::_initImageLayouts(sptr<CCommandBuffer> vCommandBuffer)
 {
     for (int i = 0; i < m_pPortSet->getInputPortNum(); ++i)
     {

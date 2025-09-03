@@ -11,7 +11,7 @@ class CRenderPassSprite : public engine::IRenderPass
 public:
     CRenderPassSprite() : m_pCamera(make<CCamera>()) {}
 
-    CCamera::Ptr getCamera() { return m_pCamera; }
+    sptr<CCamera> getCamera() { return m_pCamera; }
 
 protected:
     virtual void _initV() override;
@@ -40,12 +40,12 @@ private:
    
     CPipelineTest m_Pipeline;
     vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
-    ptr<vk::CBuffer> m_pVertexBuffer = nullptr;
+    sptr<vk::CBuffer> m_pVertexBuffer = nullptr;
     vk::CImage m_DepthImage;
 
     const std::string m_SkyFilePrefix = "../../../ExampleData/sky-test/neb6";
-    CCamera::Ptr m_pCamera = nullptr;
+    sptr<CCamera> m_pCamera = nullptr;
     std::vector<CPipelineTest::SPointData> m_PointDataSet;
-    std::array<ptr<CIOImage>, 6> m_SkyBoxImageSet;
+    std::array<sptr<CIOImage>, 6> m_SkyBoxImageSet;
 };
 

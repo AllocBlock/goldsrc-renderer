@@ -32,7 +32,7 @@ int main()
 
 	GLFW::init();
 	GLFWwindow* pWindow = GLFW::createWindow(1280, 800, "Vulkan Render");
-	ptr<CApplicationGoldSrc> pApp = make<CApplicationGoldSrc>();
+	sptr<CApplicationGoldSrc> pApp = make<CApplicationGoldSrc>();
 	pApp->create(pWindow);
 	 
 	GLFW::startLoop(pWindow, [=]() 

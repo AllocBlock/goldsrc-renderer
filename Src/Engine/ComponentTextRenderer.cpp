@@ -41,7 +41,7 @@ void CComponentTextRenderer::setText(std::string vText)
     }
 }
 
-void CComponentTextRenderer::setFont(CFont::Ptr vFont)
+void CComponentTextRenderer::setFont(sptr<CFont> vFont)
 {
     if (vFont != m_pFont)
     {
@@ -109,7 +109,7 @@ glm::vec3 CComponentTextRenderer::getWorldPosition() const
     return m_pParent.lock()->getAbsoluteTranslate() + m_Anchor;
 }
 
-vk::CVertexBuffer::Ptr CComponentTextRenderer::generateVertexBuffer(vk::CDevice::CPtr vDevice) const
+sptr<vk::CVertexBuffer> CComponentTextRenderer::generateVertexBuffer(cptr<vk::CDevice> vDevice) const
 {
     if (m_Text.empty()) return nullptr;
     CMeshData MeshData = __generateTextMesh();

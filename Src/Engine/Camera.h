@@ -15,8 +15,7 @@ struct SFrustum
 class CCamera : public IDrawableUI
 {
 public:
-	_DEFINE_PTR(CCamera);
-
+	
 	CCamera() { reset(); }
 
 	void reset();

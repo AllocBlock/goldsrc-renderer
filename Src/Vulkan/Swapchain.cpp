@@ -4,7 +4,7 @@
 
 using namespace vk;
 
-void CSwapchain::create(CDevice::Ptr vDevice)
+void CSwapchain::create(sptr<CDevice> vDevice)
 {
     destroy();
 

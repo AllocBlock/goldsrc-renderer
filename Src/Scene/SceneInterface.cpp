@@ -9,7 +9,7 @@
 #include <functional>
 #include <algorithm>
 
-using ReadFunc_t = std::function<void(std::filesystem::path, ptr<SSceneInfo>)>;
+using ReadFunc_t = std::function<void(std::filesystem::path, sptr<SSceneInfo>)>;
 std::map<std::string, ReadFunc_t> g_RegistedList;
 
 template <typename T>
@@ -19,7 +19,7 @@ struct SRegister
     SRegister(std::string vType)
     {
         std::transform(vType.begin(), vType.end(), vType.begin(), ::tolower);
-        g_RegistedList[vType] = [](std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo)
+        g_RegistedList[vType] = [](std::filesystem::path vFilePath, sptr<SSceneInfo> voSceneInfo)
         {
             T Reader;
             Reader.read(vFilePath, voSceneInfo);
@@ -35,7 +35,7 @@ REGISTER_FILE(CSceneReaderMap, "map");
 REGISTER_FILE(CSceneReaderBsp, "bsp");
 REGISTER_FILE(CSceneReaderMdl, "mdl");
 
-void SceneInterface::read(std::string vType, std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo)
+void SceneInterface::read(std::string vType, std::filesystem::path vFilePath, sptr<SSceneInfo> voSceneInfo)
 {
     _ASSERTE(voSceneInfo);
     std::transform(vType.begin(), vType.end(), vType.begin(), ::tolower);

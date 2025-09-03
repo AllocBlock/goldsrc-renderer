@@ -12,12 +12,12 @@ class CRenderPassPBR : public engine::IRenderPass
 public:
     CRenderPassPBR() = default;
 
-    void setCamera(CCamera::Ptr vCamera) { m_pCamera = vCamera; }
-    CCamera::Ptr getCamera() { return m_pCamera; }
+    void setCamera(sptr<CCamera> vCamera) { m_pCamera = vCamera; }
+    sptr<CCamera> getCamera() { return m_pCamera; }
 
 protected:
     virtual void _initV() override;
-    virtual CPortSet::Ptr _createPortSetV() override;
+    virtual sptr<CPortSet> _createPortSetV() override;
     virtual CRenderPassDescriptor _getRenderPassDescV() override;
     virtual void _updateV(uint32_t vImageIndex) override;
     virtual void _renderUIV() override;
@@ -52,11 +52,11 @@ private:
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, glm::vec3 vCenter, uint32_t vMaterialIndex, int vDepth);
    
     CDynamicPipeline<CPipelinePBS> m_PipelineCreator;
-    vk::CVertexBuffer::Ptr m_pVertexBuffer = nullptr;
-    vk::CBuffer::Ptr m_pMaterialBuffer = nullptr;
+    sptr<vk::CVertexBuffer> m_pVertexBuffer = nullptr;
+    sptr<vk::CBuffer> m_pMaterialBuffer = nullptr;
     CDynamicTextureCreator m_DepthImageManager;
 
-    CCamera::Ptr m_pCamera = nullptr;
+    sptr<CCamera> m_pCamera = nullptr;
     std::vector<CPipelinePBS::SPointData> m_PointDataSet;
 
     uint32_t m_GridSize = 8;

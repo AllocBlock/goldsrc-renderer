@@ -34,7 +34,7 @@ namespace
     };
 }
 
-void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
+void CPipelineSkybox::setSkyBoxImage(const std::array<sptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
     size_t TexWidth = vSkyBoxImageSet[0]->getWidth();
@@ -94,7 +94,7 @@ void CPipelineSkybox::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBox
     __updateDescriptorSet();
 }
 
-void CPipelineSkybox::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineSkybox::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -126,7 +126,7 @@ void CPipelineSkybox::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pFragUniformBuffer->update(&UBOFrag);
 }
 
-void CPipelineSkybox::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineSkybox::recordCommand(sptr<CCommandBuffer> vCommandBuffer)
 {
     if (m_VertexBuffer.isValid() && m_SkyBoxImage.isValid())
     {

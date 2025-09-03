@@ -48,7 +48,7 @@ public:
 
     void setShadowMapImageViews(std::vector<VkImageView> vShadowMapImageViews);
     bool isShadowMapReady() { return !m_ShadowMapImageViewSet.empty(); }
-    void updateUniformBuffer(uint32_t vImageIndex, CCamera::CPtr vCamera, CCamera::CPtr vLightCamera, uint32_t vShadowMapSize);
+    void updateUniformBuffer(uint32_t vImageIndex, cptr<CCamera> vCamera, cptr<CCamera> vLightCamera, uint32_t vShadowMapSize);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;

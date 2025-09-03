@@ -10,8 +10,7 @@ enum class ECommandBufferLevel
 class CCommandBuffer
 {
 public:
-    _DEFINE_PTR(CCommandBuffer);
-
+    
     CCommandBuffer(VkCommandBuffer vBuffer, bool vIsSingleTimeBuffer, ECommandBufferLevel level);
 
     bool isValid();

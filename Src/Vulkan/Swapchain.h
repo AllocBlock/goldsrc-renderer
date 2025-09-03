@@ -10,9 +10,8 @@ namespace vk
     class CSwapchain : public IVulkanHandle<VkSwapchainKHR>
     {
     public:
-        _DEFINE_PTR(CSwapchain);
-
-        void create(CDevice::Ptr vDevice);
+        
+        void create(sptr<CDevice> vDevice);
         void destroy();
         VkExtent2D getExtent() const;
         VkFormat getImageFormat() const;
@@ -25,7 +24,7 @@ namespace vk
         VkPresentModeKHR __chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& vAvailablePresentModes);
         VkExtent2D __chooseSwapExtent(GLFWwindow* vWindow, const VkSurfaceCapabilitiesKHR& vCapabilities);
 
-        CDevice::Ptr m_pDevice = nullptr;
+        sptr<CDevice> m_pDevice = nullptr;
         vk::CPointerSet<vk::CImage> m_ImageSet;
         std::vector<VkImageView> m_ImageViewSet;
         VkFormat m_ImageFormat = VkFormat::VK_FORMAT_UNDEFINED;

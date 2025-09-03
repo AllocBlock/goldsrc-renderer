@@ -16,6 +16,6 @@ private:
     void __requestFGDFile();
 
     bool m_IsOpen = true;
-    ptr<CIOGoldSrcForgeGameData> m_pIOFGD = nullptr;
+    sptr<CIOGoldSrcForgeGameData> m_pIOFGD = nullptr;
 };
 

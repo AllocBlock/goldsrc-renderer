@@ -3,7 +3,7 @@
 #include "Log.h"
 #include "ComponentMeshRenderer.h"
 
-CActor::Ptr GoldSrc::createActorByMeshAndTag(const CMeshData& vMeshData, const std::vector<std::string> vTagSet)
+sptr<CActor> GoldSrc::createActorByMeshAndTag(const CMeshData& vMeshData, const std::vector<std::string> vTagSet)
 {
     auto pActor = make<CActor>();
     auto pMesh = make<CMeshTriangleList>();

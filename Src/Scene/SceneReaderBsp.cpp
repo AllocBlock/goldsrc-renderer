@@ -20,7 +20,7 @@ glm::vec3 stringToVec3(std::string vString)
     return glm::vec3(X, Y, Z);
 }
 
-void CSceneReaderBsp::_readV(ptr<SSceneInfo> voSceneInfo)
+void CSceneReaderBsp::_readV(sptr<SSceneInfo> voSceneInfo)
 {
     m_pTargetSceneInfo = voSceneInfo;
     
@@ -53,7 +53,7 @@ void CSceneReaderBsp::__readTextures()
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 
-    std::vector<ptr<CIOImage>> TexImageSet;
+    std::vector<sptr<CIOImage>> TexImageSet;
 
     m_TexNameToIndex.clear();
     // read wads
@@ -75,7 +75,7 @@ void CSceneReaderBsp::__readTextures()
         Scene::reportProgress(u8"∂¡»°Œ∆¿Ì£®" + std::to_string(i + 1) + "/" + std::to_string(Lumps.m_LumpTexture.Textures.size()) + " " + BspTexture.Name + u8"£©");
         if (BspTexture.IsDataInBsp)
         {
-            ptr<CIOImage> pTexImage = Scene::getIOImageFromBspTexture(BspTexture);
+            sptr<CIOImage> pTexImage = Scene::getIOImageFromBspTexture(BspTexture);
             m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImageSet.size());
             TexImageSet.emplace_back(std::move(pTexImage));
         }
@@ -88,7 +88,7 @@ void CSceneReaderBsp::__readTextures()
                 if (Index.has_value())
                 {
                     Found = true;
-                    ptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
+                    sptr<CIOImage> pTexImage = Scene::getIOImageFromWad(Wad, Index.value());
                     m_TexNameToIndex[BspTexture.Name] = static_cast<uint32_t>(TexImageSet.size());
                     TexImageSet.emplace_back(std::move(pTexImage));
                     break;
@@ -125,7 +125,7 @@ void CSceneReaderBsp::__loadLeaf(size_t vLeafIndex, CMeshData& vioMeshDataNormal
     }
 }
 
-CActor::Ptr CSceneReaderBsp::__loadEntity(size_t vModelIndex)
+sptr<CActor> CSceneReaderBsp::__loadEntity(size_t vModelIndex)
 {
     const SBspLumps& Lumps = m_Bsp.getLumps();
 

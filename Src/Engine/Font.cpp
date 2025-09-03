@@ -2,9 +2,9 @@
 #include "StaticResource.h"
 #include "Common.h"
 
-CFont::Ptr pDefaultFont = nullptr;
+sptr<CFont> pDefaultFont = nullptr;
 
-CFont::Ptr CFont::getDefaultFont()
+sptr<CFont> CFont::getDefaultFont()
 {
     if (!pDefaultFont)
     {

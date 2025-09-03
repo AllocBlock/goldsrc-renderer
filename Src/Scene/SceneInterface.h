@@ -3,5 +3,5 @@
 
 namespace SceneInterface
 {
-    void read(std::string vType, std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo);
+    void read(std::string vType, std::filesystem::path vFilePath, sptr<SSceneInfo> voSceneInfo);
 }

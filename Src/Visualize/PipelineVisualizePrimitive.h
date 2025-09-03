@@ -30,8 +30,8 @@ public:
         }
     };
 
-    void updateUniformBuffer(CCamera::CPtr vCamera);
-    virtual void recordCommandV(CCommandBuffer::Ptr vCommandBuffer);
+    void updateUniformBuffer(cptr<CCamera> vCamera);
+    virtual void recordCommandV(sptr<CCommandBuffer> vCommandBuffer);
 
 protected:
     virtual void _createV() override;
@@ -45,6 +45,6 @@ protected:
 private:
     void __updateDescriptorSet();
     
-    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
-    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pVertUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
 };

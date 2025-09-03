@@ -5,7 +5,7 @@
 
 #include <glm/matrix.hpp>
 
-bool __intersectRayMesh(glm::vec3 vOrigin, glm::vec3 vDirection, CMesh::Ptr vMesh, float& voNearT)
+bool __intersectRayMesh(glm::vec3 vOrigin, glm::vec3 vDirection, sptr<CMesh> vMesh, float& voNearT)
 {
 	auto AABB = vMesh->getAABB();
 	if (!AABB.IsValid) return false;
@@ -39,7 +39,7 @@ bool __intersectRayMesh(glm::vec3 vOrigin, glm::vec3 vDirection, CMesh::Ptr vMes
 	return true;
 }
 
-bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vActor, float& voNearT)
+bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, sptr<CActor> vActor, float& voNearT)
 {
 	// check bounding box first
 	auto pTransform = vActor->getTransform();
@@ -68,7 +68,7 @@ bool __intersectRayActor(glm::vec3 vOrigin, glm::vec3 vDirection, CActor::Ptr vA
 	return false;
 }
 
-bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene, CActor::Ptr& voActor, glm::vec3& voNearestIntersection)
+bool SceneProbe::select(glm::vec2 vNDC, sptr<CCamera> vCamera, sptr<CScene> vScene, sptr<CActor>& voActor, glm::vec3& voNearestIntersection)
 {
 	if (!vScene || vScene->getActorNum() == 0) return false;
 	// normolize screen coordinate
@@ -87,7 +87,7 @@ bool SceneProbe::select(glm::vec2 vNDC, CCamera::Ptr vCamera, CScene::Ptr vScene
 	glm::vec3 Direction = glm::normalize(WorldPos - EyePos);
 
 	float NearestDistance = INFINITY;
-    CActor::Ptr pNearestActor = nullptr;
+    sptr<CActor> pNearestActor = nullptr;
 	float t = 0;
 	for (size_t i = 0; i < vScene->getActorNum(); ++i)
 	{

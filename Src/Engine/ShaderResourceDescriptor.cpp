@@ -104,7 +104,7 @@ void CShaderResourceDescriptor::add(std::string vName, uint32_t vIndex, VkDescri
     m_PoolSizeSet.emplace_back(VkDescriptorPoolSize({ vType, vSize }));
 }
 
-void CShaderResourceDescriptor::createLayout(CDevice::CPtr vDevice)
+void CShaderResourceDescriptor::createLayout(cptr<CDevice> vDevice)
 {
     __destroyLayout();
 

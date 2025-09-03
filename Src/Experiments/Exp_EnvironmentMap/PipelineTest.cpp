@@ -16,7 +16,7 @@ namespace
     };
 }
 
-void CPipelineTest::setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet)
+void CPipelineTest::setSkyBoxImage(const std::array<sptr<CIOImage>, 6>& vSkyBoxImageSet)
 {
     // format 6 image into one cubemap image
     size_t TexWidth = vSkyBoxImageSet[0]->getWidth();

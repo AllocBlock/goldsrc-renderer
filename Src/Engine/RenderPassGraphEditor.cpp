@@ -1,6 +1,6 @@
 #include "RenderPassGraphEditor.h"
 
-void IRenderPassGraphEditCommand::execute(ptr<SRenderPassGraph> vGraph)
+void IRenderPassGraphEditCommand::execute(sptr<SRenderPassGraph> vGraph)
 {
     if (m_Executed) throw std::runtime_error("Already executed");
     m_pGraph = vGraph;
@@ -22,13 +22,13 @@ CCommandAddNode::CCommandAddNode(size_t vNodeId, const SRenderPassGraphNode& vNo
     m_Node = vNode;
 }
 
-void CCommandAddNode::_executeV(ptr<SRenderPassGraph> vGraph)
+void CCommandAddNode::_executeV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(!vGraph->hasNode(m_NodeId));
     vGraph->NodeMap[m_NodeId] = m_Node;
 }
 
-void CCommandAddNode::_withdrawV(ptr<SRenderPassGraph> vGraph)
+void CCommandAddNode::_withdrawV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(vGraph->hasNode(m_NodeId));
     vGraph->NodeMap.erase(m_NodeId);
@@ -40,7 +40,7 @@ CCommandAddLink::CCommandAddLink(size_t vLinkId, const SRenderPassGraphLink& vLi
     m_Link = vLink;
 }
 
-void CCommandAddLink::_executeV(ptr<SRenderPassGraph> vGraph)
+void CCommandAddLink::_executeV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(vGraph->hasNode(m_Link.Source.NodeId));
     _ASSERTE(vGraph->hasNode(m_Link.Destination.NodeId));
@@ -59,7 +59,7 @@ void CCommandAddLink::_executeV(ptr<SRenderPassGraph> vGraph)
     vGraph->LinkMap[m_LinkId] = m_Link;
 }
 
-void CCommandAddLink::_withdrawV(ptr<SRenderPassGraph> vGraph)
+void CCommandAddLink::_withdrawV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(vGraph->hasLink(m_LinkId));
     vGraph->LinkMap.erase(m_LinkId);
@@ -75,7 +75,7 @@ CCommandRemoveLink::CCommandRemoveLink(size_t vLinkId)
     m_LinkId = vLinkId;
 }
 
-void CCommandRemoveLink::_executeV(ptr<SRenderPassGraph> vGraph)
+void CCommandRemoveLink::_executeV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(vGraph->hasLink(m_LinkId));
 
@@ -83,7 +83,7 @@ void CCommandRemoveLink::_executeV(ptr<SRenderPassGraph> vGraph)
     vGraph->LinkMap.erase(m_LinkId);
 }
 
-void CCommandRemoveLink::_withdrawV(ptr<SRenderPassGraph> vGraph)
+void CCommandRemoveLink::_withdrawV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(!vGraph->hasLink(m_LinkId));
     vGraph->LinkMap[m_LinkId] = m_Link;
@@ -95,7 +95,7 @@ CCommandRemoveNode::CCommandRemoveNode(size_t vNodeId)
     m_Node = SRenderPassGraphNode();
 }
 
-void CCommandRemoveNode::_executeV(ptr<SRenderPassGraph> vGraph)
+void CCommandRemoveNode::_executeV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(vGraph->hasNode(m_NodeId));
     m_Node = std::move(vGraph->NodeMap.at(m_NodeId));
@@ -126,7 +126,7 @@ void CCommandRemoveNode::_executeV(ptr<SRenderPassGraph> vGraph)
     }
 }
 
-void CCommandRemoveNode::_withdrawV(ptr<SRenderPassGraph> vGraph)
+void CCommandRemoveNode::_withdrawV(sptr<SRenderPassGraph> vGraph)
 {
     _ASSERTE(!vGraph->hasNode(m_NodeId));
     vGraph->NodeMap[m_NodeId] = m_Node;
@@ -144,18 +144,18 @@ CCommandSetEntry::CCommandSetEntry(size_t vNodeId, const std::string& vPortName)
     m_PortName = vPortName;
 }
 
-void CCommandSetEntry::_executeV(ptr<SRenderPassGraph> vGraph)
+void CCommandSetEntry::_executeV(sptr<SRenderPassGraph> vGraph)
 {
     m_OldOutput = vGraph->OutputPort;
     vGraph->OutputPort = { m_NodeId, m_PortName };
 }
 
-void CCommandSetEntry::_withdrawV(ptr<SRenderPassGraph> vGraph)
+void CCommandSetEntry::_withdrawV(sptr<SRenderPassGraph> vGraph)
 {
     vGraph->OutputPort = m_OldOutput;
 }
 
-void CRenderPassGraphEditor::setGraph(ptr<SRenderPassGraph> vGraph)
+void CRenderPassGraphEditor::setGraph(sptr<SRenderPassGraph> vGraph)
 {
     m_pGraph = vGraph;
     m_CurNodeId = m_CurLinkId = 0;
@@ -166,7 +166,7 @@ void CRenderPassGraphEditor::setGraph(ptr<SRenderPassGraph> vGraph)
     clearHistory();
 }
 
-void CRenderPassGraphEditor::execCommand(IRenderPassGraphEditCommand::Ptr vCommand, bool vEnableUndo)
+void CRenderPassGraphEditor::execCommand(sptr<IRenderPassGraphEditCommand> vCommand, bool vEnableUndo)
 {
     vCommand->execute(m_pGraph);
     if(m_pCurCommand != m_CommandLinkList.end())

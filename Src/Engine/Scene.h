@@ -12,28 +12,27 @@
 class CScene
 {
 public:
-    _DEFINE_PTR(CScene);
-
+    
     // actor
-    void addActor(CActor::Ptr vActor);
+    void addActor(sptr<CActor> vActor);
     size_t getActorNum() const;
-    CActor::Ptr getActor(size_t vIndex) const;
+    sptr<CActor> getActor(size_t vIndex) const;
     // return first found actor
-    CActor::Ptr findActor(std::string vName) const;
+    sptr<CActor> findActor(std::string vName) const;
     void clear();
 
     // camera
-    CCamera::Ptr getMainCamera() { return m_MainCamera; }
+    sptr<CCamera> getMainCamera() { return m_MainCamera; }
 
     // create vertex buffer of scene, each actor's mesh data is write to the buffer as a segment
     // a actor to segment map is returned, too
     // actor without mesh will not be in the buffer nor the map
 
     template <typename PointData_t>
-    std::pair<ptr<vk::CVertexBufferTyped<PointData_t>>, std::map<CActor::Ptr, size_t>> generateVertexBuffer(
-        vk::CDevice::CPtr vDevice)
+    std::pair<sptr<vk::CVertexBufferTyped<PointData_t>>, std::map<sptr<CActor>, size_t>> generateVertexBuffer(
+        cptr<vk::CDevice> vDevice)
     {
-        std::map<CActor::Ptr, size_t> ActorSegmentMap;
+        std::map<sptr<CActor>, size_t> ActorSegmentMap;
         std::vector<std::vector<PointData_t>> DataSet;
         for (auto pActor : m_ActorSet)
         {
@@ -65,7 +64,7 @@ public:
         return std::make_pair(pVertBuffer, ActorSegmentMap);
     }
 
-    static bool isActorInSight(CActor::Ptr vActor, const SFrustum& vFrustum)
+    static bool isActorInSight(sptr<CActor> vActor, const SFrustum& vFrustum)
     {
         auto pTransform = vActor->getTransform();
         auto pMeshRenderer = pTransform->findComponent<CComponentMeshRenderer>();
@@ -111,6 +110,6 @@ public:
     }
 
 private:
-    std::vector<CActor::Ptr> m_ActorSet;
-    CCamera::Ptr m_MainCamera = make<CCamera>();
+    std::vector<sptr<CActor>> m_ActorSet;
+    sptr<CCamera> m_MainCamera = make<CCamera>();
 };

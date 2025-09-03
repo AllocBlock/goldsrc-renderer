@@ -9,9 +9,9 @@ const std::regex gReGraphNode(R"X(\s*"([^"]*)"\s*"([^"]*)"\s*(-?\d*\.?\d*)\s*(-?
 const std::regex gReGraphLink(R"X(\s*"([^"]*)"\s*\"([^"]*)"\s*"([^"]*)"\s*"([^"]*)"\s*)X");
 const std::regex gReGraphEntry(R"X(\s*"([^"]*)"\s*"([^"]*)"\s*)X");
 
-ptr<SRenderPassGraph> RenderPassGraphIO::load(const std::filesystem::path& vFilePath)
+sptr<SRenderPassGraph> RenderPassGraphIO::load(const std::filesystem::path& vFilePath)
 {
-    ptr<SRenderPassGraph> pGraph = make<SRenderPassGraph>();
+    sptr<SRenderPassGraph> pGraph = make<SRenderPassGraph>();
 
     std::string Data = Common::readFileAsString(vFilePath);
 

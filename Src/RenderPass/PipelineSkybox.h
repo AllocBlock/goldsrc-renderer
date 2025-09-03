@@ -12,9 +12,9 @@
 class CPipelineSkybox : public IPipeline
 {
 public:
-    void setSkyBoxImage(const std::array<ptr<CIOImage>, 6>& vSkyBoxImageSet);
-    void updateUniformBuffer(CCamera::CPtr vCamera);
-    void recordCommand(CCommandBuffer::Ptr vCommandBuffer);
+    void setSkyBoxImage(const std::array<sptr<CIOImage>, 6>& vSkyBoxImageSet);
+    void updateUniformBuffer(cptr<CCamera> vCamera);
+    void recordCommand(sptr<CCommandBuffer> vCommandBuffer);
 
 protected:
     virtual void _initShaderResourceDescriptorV() override;
@@ -29,7 +29,7 @@ private:
     vk::CImage m_SkyBoxImage;
     vk::CBuffer m_VertexBuffer;
     size_t m_VertexNum = 0;
-    vk::CUniformBuffer::Ptr m_pVertUniformBuffer;
-    vk::CUniformBuffer::Ptr m_pFragUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pVertUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
 };
 

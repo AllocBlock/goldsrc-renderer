@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 
-void CRenderGraphAddLinkState::setGraph(ptr<SRenderPassGraph> vGraph)
+void CRenderGraphAddLinkState::setGraph(sptr<SRenderPassGraph> vGraph)
 {
     m_pGraph = vGraph;
     if (isStarted())

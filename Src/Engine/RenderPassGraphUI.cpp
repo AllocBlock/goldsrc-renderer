@@ -641,7 +641,7 @@ void CRenderPassGraphUI::_renderUIV()
     UI::endWindow();
 }
 
-void CRenderPassGraphUI::setGraph(ptr<SRenderPassGraph> vGraph, bool vResetView)
+void CRenderPassGraphUI::setGraph(sptr<SRenderPassGraph> vGraph, bool vResetView)
 {
     m_pGraph = vGraph;
     m_Editor.setGraph(vGraph);
@@ -683,7 +683,7 @@ glm::vec2 CRenderPassGraphUI::__getPortPos(const SRenderPassGraphPortInfo& vPort
         return m_NodePortPosMap.at(vPort.NodeId).Output.at(vPort.Name);
 }
 
-CPortSet::CPtr CRenderPassGraphUI::__getNodePortSet(size_t vNodeId)
+cptr<CPortSet> CRenderPassGraphUI::__getNodePortSet(size_t vNodeId)
 {
     const SRenderPassGraphNode& Node = m_pGraph->NodeMap.at(vNodeId);
     if (m_PassInstanceMap.find(vNodeId) == m_PassInstanceMap.end())

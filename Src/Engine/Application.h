@@ -44,16 +44,16 @@ protected:
     virtual void _onSwapchainRecreateV() {}
 
     GLFWwindow* m_pWindow = nullptr;
-    vk::CInstance::Ptr m_pInstance = make<vk::CInstance>();
-    ptr<vk::CDebugMessenger> m_pDebugMessenger = make<vk::CDebugMessenger>();
-    vk::CSurface::Ptr m_pSurface = make<vk::CSurface>();
-    vk::CPhysicalDevice::Ptr m_pPhysicalDevice = nullptr;
-    vk::CDevice::Ptr m_pDevice = make<vk::CDevice>();
-    vk::CSwapchain::Ptr m_pSwapchain = make<vk::CSwapchain>();
+    sptr<vk::CInstance> m_pInstance = make<vk::CInstance>();
+    sptr<vk::CDebugMessenger> m_pDebugMessenger = make<vk::CDebugMessenger>();
+    sptr<vk::CSurface> m_pSurface = make<vk::CSurface>();
+    sptr<vk::CPhysicalDevice> m_pPhysicalDevice = nullptr;
+    sptr<vk::CDevice> m_pDevice = make<vk::CDevice>();
+    sptr<vk::CSwapchain> m_pSwapchain = make<vk::CSwapchain>();
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-    vk::CFence::Ptr m_pInFlightFence;
+    sptr<vk::CFence> m_pInFlightFence;
 
     int m_CurrentFrameIndex = 0;
 
@@ -68,7 +68,7 @@ protected:
         VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME
     };
     
-    const ptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
+    const sptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();
 
 private:
     void __render();

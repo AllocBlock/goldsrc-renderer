@@ -16,17 +16,16 @@ namespace vk
     class CImage : public IVulkanHandle<VkImageView>
     {
     public:
-        _DEFINE_PTR(CImage);
-
-        void create(CDevice::CPtr vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo);
-        void createFromImage(CDevice::CPtr vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
+        
+        void create(cptr<CDevice> vDevice, const VkImageCreateInfo& vImageInfo, VkMemoryPropertyFlags vProperties, const SImageViewInfo& vViewInfo);
+        void createFromImage(cptr<CDevice> vDevice, VkImage vImage, VkFormat vFormat, uint32_t vLayerCount, const SImageViewInfo& vViewInfo);
         void destroy();
         bool isValid() const override;
-        void copyFromBuffer(CCommandBuffer::Ptr vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
+        void copyFromBuffer(sptr<CCommandBuffer> vCommandBuffer, VkBuffer vBuffer, size_t vWidth, size_t vHeight);
         void stageFill(const void* vData, VkDeviceSize vSize, bool vToShaderLayout = true);
-        void transitionLayout(CCommandBuffer::Ptr vCommandBuffer, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
-        void copyToBuffer(CCommandBuffer::Ptr vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
-        void generateMipmaps(CCommandBuffer::Ptr vCommandBuffer);
+        void transitionLayout(sptr<CCommandBuffer> vCommandBuffer, VkImageLayout vOldLayout, VkImageLayout vNewLayout, uint32_t vStartMipLevel = 0u, uint32_t vMipLevelCount = std::numeric_limits<uint32_t>::max());
+        void copyToBuffer(sptr<CCommandBuffer> vCommandBuffer, const VkBufferImageCopy& vCopyRegion, VkBuffer vTargetBuffer);
+        void generateMipmaps(sptr<CCommandBuffer> vCommandBuffer);
         uint32_t getMipmapLevelNum() const { return m_MipmapLevelNum; }
 
         VkImage getImage() const { return m_Image; }
@@ -40,10 +39,10 @@ namespace vk
         void setDebugName(const std::string& vName) const;
 
     private:
-        void __createImageView(CDevice::CPtr vDevice, const SImageViewInfo& vViewInfo);
+        void __createImageView(cptr<CDevice> vDevice, const SImageViewInfo& vViewInfo);
 
         bool m_IsOuterImage = false;
-        CDevice::CPtr m_pDevice = nullptr;
+        cptr<CDevice> m_pDevice = nullptr;
         VkImage m_Image = VK_NULL_HANDLE;
         VkDeviceMemory m_Memory = VK_NULL_HANDLE;
         uint32_t m_Width = 0, m_Height = 0, m_LayerCount = 0;

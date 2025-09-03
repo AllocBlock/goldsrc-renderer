@@ -17,7 +17,7 @@ namespace
 
 }
 
-void CPipelineVisualizePrimitive::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineVisualizePrimitive::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -30,7 +30,7 @@ void CPipelineVisualizePrimitive::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pFragUniformBuffer->update(&UBOFrag);
 }
 
-void CPipelineVisualizePrimitive::recordCommandV(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineVisualizePrimitive::recordCommandV(sptr<CCommandBuffer> vCommandBuffer)
 {
     bind(vCommandBuffer);
     

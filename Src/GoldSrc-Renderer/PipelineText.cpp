@@ -18,7 +18,7 @@ namespace
     };
 }
 
-void CPipelineText::updateUniformBuffer(CCamera::CPtr vCamera)
+void CPipelineText::updateUniformBuffer(cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Proj = vCamera->getProjMat();
@@ -29,7 +29,7 @@ void CPipelineText::updateUniformBuffer(CCamera::CPtr vCamera)
     m_pVertUniformBuffer->update(&UBOVert);
 }
 
-void CPipelineText::addTextComponent(CComponentTextRenderer::Ptr vTextRenderer)
+void CPipelineText::addTextComponent(sptr<CComponentTextRenderer> vTextRenderer)
 {
     _ASSERTE(vTextRenderer);
     _ASSERTE(vTextRenderer->getTransform());
@@ -62,7 +62,7 @@ bool CPipelineText::doesNeedRerecord()
 }
 
 // return false if no command is recorded
-bool CPipelineText::recordCommand(CCommandBuffer::Ptr vCommandBuffer)
+bool CPipelineText::recordCommand(sptr<CCommandBuffer> vCommandBuffer)
 {
     _ASSERTE(doesNeedRerecord());
 
@@ -121,7 +121,7 @@ CPipelineDescriptor CPipelineText::_getPipelineDescriptionV()
     return Descriptor;
 }
 
-void CPipelineText::_initPushConstantV(CCommandBuffer::Ptr vCommandBuffer)
+void CPipelineText::_initPushConstantV(sptr<CCommandBuffer> vCommandBuffer)
 {
     SPushConstant Data;
     vCommandBuffer->pushConstant(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, Data);

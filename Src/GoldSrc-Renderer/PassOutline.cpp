@@ -18,7 +18,7 @@ void CRenderPassOutline::_initV()
     __createVertexBuffer();
 }
 
-CPortSet::Ptr CRenderPassOutline::_createPortSetV()
+sptr<CPortSet> CRenderPassOutline::_createPortSetV()
 {
     SPortDescriptor PortDesc;
     PortDesc.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
@@ -28,13 +28,13 @@ CPortSet::Ptr CRenderPassOutline::_createPortSetV()
 void CRenderPassOutline::_updateV()
 {
     _ASSERTE(m_pSceneInfo);
-    CCamera::Ptr pCamera = m_pSceneInfo->pScene->getMainCamera();
+    sptr<CCamera> pCamera = m_pSceneInfo->pScene->getMainCamera();
     m_MaskPipeline.updateUniformBuffer(pCamera);
 }
 
 std::vector<VkCommandBuffer> CRenderPassOutline::_requestCommandBuffersV()
 {
-    CCommandBuffer::Ptr pCommandBuffer = _getCommandBuffer();
+    sptr<CCommandBuffer> pCommandBuffer = _getCommandBuffer();
 
     _beginCommand(pCommandBuffer);
 

@@ -1,6 +1,6 @@
 #include "SceneReaderBase.h"
 
-void CSceneReaderBase::read(std::filesystem::path vFilePath, ptr<SSceneInfo> voSceneInfo)
+void CSceneReaderBase::read(std::filesystem::path vFilePath, sptr<SSceneInfo> voSceneInfo)
 {
     _ASSERTE(voSceneInfo);
     m_FilePath = vFilePath;

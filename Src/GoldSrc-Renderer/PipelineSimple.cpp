@@ -29,7 +29,7 @@ void CPipelineSimple::setTextures(const vk::CPointerSet<vk::CImage>& vTextureSet
     __updateDescriptorSet();
 }
 
-void CPipelineSimple::updateUniformBuffer(glm::mat4 vModel, CCamera::CPtr vCamera)
+void CPipelineSimple::updateUniformBuffer(glm::mat4 vModel, cptr<CCamera> vCamera)
 {
     SUBOVert UBOVert = {};
     UBOVert.Model = vModel;
