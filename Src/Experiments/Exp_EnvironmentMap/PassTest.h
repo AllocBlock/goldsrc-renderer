@@ -1,10 +1,10 @@
 #pragma once
 #include "RenderPass.h"
-#include "FrameBuffer.h"
 #include "Camera.h"
 #include "Image.h"
 #include "Buffer.h"
 #include "PipelineTest.h"
+#include "RenderInfoDescriptor.h"
 
 class CRenderPassSprite : public engine::IRenderPass
 {
@@ -15,33 +15,24 @@ public:
 
 protected:
     virtual void _initV() override;
-    virtual void _initPortDescV(SPortDescriptor vDesc) override;
-    virtual CRenderPassDescriptor _getRenderPassDescV() override;
-    virtual void _updateV(uint32_t vImageIndex) override;
-    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV(uint32_t vImageIndex) override;
+    virtual sptr<CPortSet> _createPortSetV() override;
+    virtual void _updateV() override;
+    virtual std::vector<VkCommandBuffer> _requestCommandBuffersV() override;
     virtual void _destroyV() override;
-
-    virtual void _onUpdateV(const vk::SPassUpdateState& vUpdateState) override;
 
 private:
     void __loadSkyBox();
     bool __readSkyboxImages(std::string vSkyFilePrefix, std::string vExtension);
-    void __createGraphicsPipeline();
-    void __createDepthResources();
-    void __createFramebuffers(VkExtent2D vExtent);
     void __createVertexBuffer();
 
-    void __createRecreateResources();
-    void __destroyRecreateResources();
-
-    void __updateUniformBuffer(uint32_t vImageIndex);
     void __generateScene();
     void __subdivideTriangle(std::array<glm::vec3, 3> vVertexSet, int vDepth);
-   
+
+    CRenderInfoDescriptor m_RenderInfoDescriptor;
     CPipelineTest m_Pipeline;
-    vk::CPointerSet<vk::CFrameBuffer> m_FramebufferSet;
     sptr<vk::CBuffer> m_pVertexBuffer = nullptr;
-    vk::CImage m_DepthImage;
+    sptr<vk::CImage> m_pMainImage;
+    sptr<vk::CImage> m_pDepthImage;
 
     const std::string m_SkyFilePrefix = "../../../ExampleData/sky-test/neb6";
     sptr<CCamera> m_pCamera = nullptr;

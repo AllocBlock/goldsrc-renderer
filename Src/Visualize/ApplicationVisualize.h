@@ -25,8 +25,8 @@ private:
     void __linkPasses();
 
     sptr<CRenderPassVisualize> m_pPassVisualize = nullptr;
-    sptr<CRenderPassPresent> m_pPassPresent = nullptr;
     sptr<CRenderPassGUI> m_pPassGui = nullptr;
+    sptr<CRenderPassPresent> m_pPassPresent = nullptr;
 
     sptr<CInteractor> m_pInteractor = nullptr;
     sptr<SSceneInfo> m_pSceneInfo = make<SSceneInfo>();

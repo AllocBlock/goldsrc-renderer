@@ -1,76 +1,83 @@
 #include "PassTest.h"
-#include "RenderPassDescriptor.h"
 #include "ImageUtils.h"
+
+sptr<CPortSet> CRenderPassSprite::_createPortSetV()
+{
+    SPortDescriptor PortDesc;
+    PortDesc.addOutput("Main", { VK_FORMAT_B8G8R8A8_UNORM, {0, 0}, 1, EImageUsage::COLOR_ATTACHMENT });
+    PortDesc.addOutput("Depth", { VK_FORMAT_D24_UNORM_S8_UINT, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
+    return make<CPortSet>(PortDesc);
+}
 
 void CRenderPassSprite::_initV()
 {
     m_pCamera->setFov(90);
-    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
+    m_pCamera->setAspect(m_ScreenExtent.width, m_ScreenExtent.height);
     m_pCamera->setPos(glm::vec3(0.0, -1.0, 0.0));
 
     __loadSkyBox();
     __createVertexBuffer();
-    __createRecreateResources();
+
+    m_pMainImage = make<vk::CImage>();
+    ImageUtils::createImage2d(*m_pMainImage, m_pDevice, m_ScreenExtent, m_pPortSet->getOutputPort("Main")->getInfo().Format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+    m_pPortSet->setOutput("Main", m_pMainImage);
+    
+    m_pDepthImage = make<vk::CImage>();
+    ImageUtils::createDepthImage(*m_pDepthImage, m_pDevice, m_ScreenExtent);
+    m_pPortSet->setOutput("Depth", m_pDepthImage);
+
+    m_RenderInfoDescriptor.addColorAttachment(m_pPortSet->getOutputPort("Main"));
+    m_RenderInfoDescriptor.setDepthAttachment(m_pPortSet->getOutputPort("Depth"));
+
+    m_Pipeline.create(m_pDevice, m_RenderInfoDescriptor, m_ScreenExtent);
+    //m_Pipeline.setImageNum(m_pAppInfo->getImageNum());
+    m_Pipeline.setSkyBoxImage(m_SkyBoxImageSet);
 }
 
-void CRenderPassSprite::_initPortDescV(SPortDescriptor vDesc)
+void CRenderPassSprite::_updateV()
 {
-    SPortDescriptor Ports;
-    Ports.addInputOutput("Main", SPortInfo::createAnyOfUsage(EImageUsage::COLOR_ATTACHMENT));
-    VkFormat DepthFormat = m_pDevice->getPhysicalDevice()->getBestDepthFormat();
-    Ports.addOutput("Depth", { DepthFormat, {0, 0}, 1, EImageUsage::DEPTH_ATTACHMENT });
-    return Ports;
+    m_pCamera->setAspect(m_ScreenExtent.width, m_ScreenExtent.height);
+
+    glm::mat4 Model = glm::mat4(1.0f);
+    glm::mat4 View = m_pCamera->getViewMat();
+    glm::mat4 Proj = m_pCamera->getProjMat();
+    glm::vec3 EyePos = m_pCamera->getPos();
+    glm::vec3 Up = glm::normalize(m_pCamera->getUp());
+
+    m_Pipeline.updateUniformBuffer(Model, View, Proj, EyePos);
 }
 
-CRenderPassDescriptor CRenderPassSprite::_getRenderPassDescV()
+std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV()
 {
-    return CRenderPassDescriptor::generateSingleSubpassDesc(m_pPortSet->getOutputPort("Main"),
-        m_pPortSet->getOutputPort("Depth"));
-}
+    auto pCommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName);
 
-void CRenderPassSprite::_updateV(uint32_t vImageIndex)
-{
-    __updateUniformBuffer(vImageIndex);
-}
-
-std::vector<VkCommandBuffer> CRenderPassSprite::_requestCommandBuffersV(uint32_t vImageIndex)
-{
-    VkCommandBuffer CommandBuffer = m_Command.getCommandBuffer(m_DefaultCommandName, vImageIndex);
-
-    std::vector<VkClearValue> ClearValueSet(2);
-    ClearValueSet[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-    ClearValueSet[1].depthStencil = { 1.0f, 0 };
-
-    begin(CommandBuffer, *m_FramebufferSet[vImageIndex], m_FirstInputExtent, ClearValueSet);
+    _beginCommand(pCommandBuffer);
+    _beginRendering(pCommandBuffer, m_RenderInfoDescriptor.generateRendererInfo(m_ScreenExtent));
 
     if (m_pVertexBuffer->isValid())
     {
-        VkBuffer VertBuffer = *m_pVertexBuffer;
-        VkDeviceSize Offsets[] = { 0 };
-        vkCmdBindVertexBuffers(CommandBuffer, 0, 1, &VertBuffer, Offsets);
-        m_Pipeline.bind(CommandBuffer, vImageIndex);
+        pCommandBuffer->bindVertexBuffer(*m_pVertexBuffer);
+        m_Pipeline.bind(pCommandBuffer);
+
 
         uint32_t VertexNum = static_cast<uint32_t>(m_PointDataSet.size());
-        vkCmdDraw(CommandBuffer, VertexNum, 1, 0, 0);
+        pCommandBuffer->draw(0, VertexNum);
     }
     
-    _end();
-    return { CommandBuffer };
+    _endRendering();
+    _endCommand();
+    return { pCommandBuffer->get()};
 }
 
 void CRenderPassSprite::_destroyV()
 {
-    __destroyRecreateResources();
+    destroyAndClear(m_pDepthImage);
+    m_Pipeline.destroy();
+
     m_pVertexBuffer->destroy();
     m_pVertexBuffer = nullptr;
 
     IRenderPass::_destroyV();
-}
-
-void CRenderPassSprite::_onUpdateV(const vk::SPassUpdateState& vUpdateState)
-{
-    __destroyRecreateResources();
-    __createRecreateResources();
 }
 
 void CRenderPassSprite::__loadSkyBox()
@@ -112,35 +119,6 @@ bool CRenderPassSprite::__readSkyboxImages(std::string vSkyFilePrefix, std::stri
     return true;
 }
 
-void CRenderPassSprite::__createGraphicsPipeline()
-{
-    m_Pipeline.create(m_pDevice, get(), m_FirstInputExtent);
-}
-
-void CRenderPassSprite::__createDepthResources()
-{
-    ImageUtils::createDepthImage(m_DepthImage, m_pDevice, m_FirstInputExtent);
-    m_pPortSet->setOutput("Depth", m_DepthImage);
-}
-
-void CRenderPassSprite::__createFramebuffers(VkExtent2D vExtent)
-{
-    _ASSERTE(isValid());
-
-    uint32_t ImageNum = m_pAppInfo->getImageNum();
-    m_FramebufferSet.init(ImageNum);
-    for (uint32_t i = 0; i < ImageNum; ++i)
-    {
-        std::vector<VkImageView> AttachmentSet =
-        {
-            m_pPortSet->getOutputPort("Main")->getImageV(i),
-            m_DepthImage
-        };
-        
-        m_FramebufferSet[i]->create(m_pDevice, get(), AttachmentSet, m_FirstInputExtent);
-    }
-}
-
 void CRenderPassSprite::__createVertexBuffer()
 {
      __generateScene();
@@ -153,25 +131,6 @@ void CRenderPassSprite::__createVertexBuffer()
         m_pVertexBuffer->create(m_pDevice, BufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         m_pVertexBuffer->stageFill(m_PointDataSet.data(), BufferSize);
     }
-}
-
-void CRenderPassSprite::__createRecreateResources()
-{
-    __createDepthResources();
-    if (isValid())
-    {
-        __createGraphicsPipeline();
-        m_Pipeline.setImageNum(m_pAppInfo->getImageNum());
-        m_Pipeline.setSkyBoxImage(m_SkyBoxImageSet);
-        __createFramebuffers(VkExtent2D vExtent);
-    }
-}
-
-void CRenderPassSprite::__destroyRecreateResources()
-{
-    m_DepthImage.destroy();
-    m_FramebufferSet.destroyAndClearAll();
-    m_Pipeline.destroy();
 }
 
 void CRenderPassSprite::__generateScene()
@@ -211,17 +170,4 @@ void CRenderPassSprite::__subdivideTriangle(std::array<glm::vec3, 3> vVertexSet,
         __subdivideTriangle({ vVertexSet[2], Middle20, Middle12 }, vDepth - 1);
         __subdivideTriangle({ Middle01, Middle12, Middle20 }, vDepth - 1);
     }
-}
-
-void CRenderPassSprite::__updateUniformBuffer(uint32_t vImageIndex)
-{
-    m_pCamera->setAspect(m_FirstInputExtent.width, m_FirstInputExtent.height);
-
-    glm::mat4 Model = glm::mat4(1.0f);
-    glm::mat4 View = m_pCamera->getViewMat();
-    glm::mat4 Proj = m_pCamera->getProjMat();
-    glm::vec3 EyePos = m_pCamera->getPos();
-    glm::vec3 Up = glm::normalize(m_pCamera->getUp());
-
-    m_Pipeline.updateUniformBuffer(vImageIndex, Model, View, Proj, EyePos);
 }

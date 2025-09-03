@@ -1,5 +1,4 @@
 #include "PassVisualize.h"
-#include "RenderPassDescriptor.h"
 #include "ImageUtils.h"
 
 #include <vector>

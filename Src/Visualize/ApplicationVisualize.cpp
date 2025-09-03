@@ -56,14 +56,14 @@ void CApplicationVisualize::_createV()
     m_pPassPresent->init(m_pDevice, ScreenExtent);
 }
 
-void CApplicationVisualize::_updateV(uint32_t ImageIndex)
+void CApplicationVisualize::_updateV(uint32_t vImageIndex)
 {
     sptr<CCamera> pCamera = m_pSceneInfo->pScene->getMainCamera();
     pCamera->setAspect(vk::calcAspect(m_pSwapchain->getExtent()));
     m_pInteractor->update();
     m_pPassVisualize->update();
     m_pPassGui->update();
-    m_pPassPresent->updateSwapchainImageIndex(ImageIndex);
+    m_pPassPresent->updateSwapchainImageIndex(vImageIndex);
     m_pPassPresent->update();
 }
 

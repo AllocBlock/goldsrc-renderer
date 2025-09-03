@@ -9,21 +9,24 @@ void CApplicationEnvMap::_createV()
 {
     SingleTimeCommandBuffer::setup(m_pDevice, m_pDevice->getGraphicsQueueIndex());
 
-    vk::SAppInfo AppInfo = getAppInfo();
+    VkExtent2D ScreenExtent = m_pSwapchain->getExtent();
 
     m_pPassMain = make<CRenderPassSprite>();
-    m_pPassMain->init(AppInfo);
-    auto pCamera = m_pPassMain->getCamera();
-
-    m_pPassGUI = make<CRenderPassGUI>();
-    m_pPassGUI->setWindow(m_pWindow);
-    m_pPassGUI->init(AppInfo);
-
-    m_pInteractor = make<CInteractor>();
-    m_pInteractor->bindEvent(m_pWindow, pCamera);
+    m_pPassMain->createPortSet();
+    m_pPassGui = make<CRenderPassGUI>(m_pWindow);
+    m_pPassGui->createPortSet();
+    m_pPassPresent = make<CRenderPassPresent>(m_pSwapchain);
+    m_pPassPresent->createPortSet();
 
     __linkPasses();
 
+    m_pPassMain->init(m_pDevice, ScreenExtent);
+    m_pPassGui->init(m_pDevice, ScreenExtent);
+    m_pPassPresent->init(m_pDevice, ScreenExtent);
+
+    auto pCamera = m_pPassMain->getCamera();
+    m_pInteractor = make<CInteractor>();
+    m_pInteractor->bindEvent(m_pWindow, pCamera);
     pCamera->setPos(glm::vec3(2.0f));
     pCamera->setAt(glm::vec3(0.0f));
 }
@@ -31,8 +34,10 @@ void CApplicationEnvMap::_createV()
 void CApplicationEnvMap::_updateV(uint32_t vImageIndex)
 {
     m_pInteractor->update();
-    m_pPassMain->update(vImageIndex);
-    m_pPassGUI->update(vImageIndex);
+    m_pPassMain->update();
+    m_pPassGui->update();
+    m_pPassPresent->updateSwapchainImageIndex(vImageIndex);
+    m_pPassPresent->update();
 }
 
 void CApplicationEnvMap::_renderUIV()
@@ -44,30 +49,33 @@ void CApplicationEnvMap::_renderUIV()
     UI::endFrame();
 }
 
-std::vector<VkCommandBuffer> CApplicationEnvMap::_getCommandBufferSetV(uint32_t vImageIndex)
+std::vector<VkCommandBuffer> CApplicationEnvMap::_getCommandBuffers()
 {
-    std::vector<VkCommandBuffer> SceneBuffers = m_pPassMain->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> GUIBuffers = m_pPassGUI->requestCommandBuffers(vImageIndex);
-    std::vector<VkCommandBuffer> Result = SceneBuffers;
-    Result.insert(Result.end(), GUIBuffers.begin(), GUIBuffers.end());
-    return Result;
+    std::vector<sptr<engine::IRenderPass>> Passes = { m_pPassMain, m_pPassGui, m_pPassPresent };
+    auto buffers = std::vector<VkCommandBuffer>();
+    for (const auto& pPass : Passes)
+    {
+        const auto& subBuffers = pPass->requestCommandBuffers();
+        buffers.insert(buffers.end(), subBuffers.begin(), subBuffers.end());
+    }
+    return buffers;
 }
 
 void CApplicationEnvMap::_destroyV()
 {
-    destroyAndClear(m_pPassGUI);
     destroyAndClear(m_pPassMain);
+    destroyAndClear(m_pPassGui);
+    destroyAndClear(m_pPassPresent);
 
-    GlobalCommandBuffer::clean();
+    SingleTimeCommandBuffer::clean();
 }
 
 void CApplicationEnvMap::__linkPasses()
 {
     auto pPortMain = m_pPassMain->getPortSet();
-    auto pPortGui = m_pPassGUI->getPortSet();
+    auto pPortGui = m_pPassGui->getPortSet();
+    auto pPortPresent = m_pPassPresent->getPortSet();
 
-    m_pSwapchainPort->setForceNotReady(true);
-    CPortSet::link(m_pSwapchainPort, pPortMain, "Main");;
     CPortSet::link(pPortMain, "Main", pPortGui, "Main");
-    m_pSwapchainPort->setForceNotReady(false);
+    CPortSet::link(pPortGui, "Main", pPortPresent, "Main");
 }

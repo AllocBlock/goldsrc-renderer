@@ -30,7 +30,7 @@ public:
     };
 
     void setSkyBoxImage(const std::array<sptr<CIOImage>, 6>& vSkyBoxImageSet);
-    void updateUniformBuffer(uint32_t vImageIndex, glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos);
+    void updateUniformBuffer(glm::mat4 vModel, glm::mat4 vView, glm::mat4 vProj, glm::vec3 vEyePos);
 
     static size_t MaxTextureNum; // if need change, you should change this in frag shader as well
 
@@ -45,8 +45,8 @@ private:
     void __destroyResources();
 
     vk::CSampler m_Sampler;
-    vk::CPointerSet<vk::CUniformBuffer> m_VertUniformBufferSet;
-    vk::CPointerSet<vk::CUniformBuffer> m_FragUniformBufferSet;
+    sptr<vk::CUniformBuffer> m_pVertUniformBuffer;
+    sptr<vk::CUniformBuffer> m_pFragUniformBuffer;
     vk::CImage m_SkyBoxImage;
     vk::CImage m_PlaceholderImage;
 };
