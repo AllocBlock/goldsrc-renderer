@@ -32,9 +32,6 @@
     <ClInclude Include="DebugMessenger.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="FrameBuffer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Fence.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -86,9 +83,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="DebugMessenger.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="FrameBuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Fence.cpp">

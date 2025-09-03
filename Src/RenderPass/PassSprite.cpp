@@ -1,6 +1,5 @@
 #include "PassSprite.h"
 #include "SceneCommon.h"
-#include "RenderPassDescriptor.h"
 
 CRenderPassSprite::CRenderPassSprite()
 {

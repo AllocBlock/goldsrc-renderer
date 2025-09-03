@@ -71,9 +71,6 @@
     <ClCompile Include="RenderPassPort.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPassDescriptor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Application.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -209,9 +206,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RenderPassPort.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPassDescriptor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Application.h">

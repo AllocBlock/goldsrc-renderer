@@ -98,7 +98,6 @@
     <ClInclude Include="DebugMessenger.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="Fence.h" />
-    <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="SingleTimeCommandBuffer.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="Instance.h" />
@@ -121,7 +120,6 @@
     <ClCompile Include="DebugMessenger.cpp" />
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Fence.cpp" />
-    <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="Sampler.cpp" />

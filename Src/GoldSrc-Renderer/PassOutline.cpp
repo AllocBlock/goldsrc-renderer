@@ -1,6 +1,5 @@
 #include "PassOutline.h"
 #include "InterfaceGui.h"
-#include "RenderPassDescriptor.h"
 
 #include <vector>
 #include <ImageUtils.h>
